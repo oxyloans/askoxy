@@ -135,7 +135,7 @@ const LIMITS = {
   creatorMax: 50,
   roleOtherMin: 2,
   roleOtherMax: 50,
-  expMax: 120,
+  expMax: 500,
   achievementsMax: 150,
   descMin: 10,
   descMax: 250,
@@ -252,7 +252,7 @@ const CreateAgentWizard: React.FC = () => {
   const [creatorName, setCreatorName] = useState("");
   const [acheivements, setAcheivements] = useState("");
   const [name, setName] = useState("");
-  const [userRole, setUserRole] = useState("Advocate");
+  const [userRole, setUserRole] = useState("");
   const [userRoleOther, setUserRoleOther] = useState("");
   const [userExperienceSummary, setUserExperienceSummary] = useState("");
   const [description, setDescription] = useState("");
@@ -420,7 +420,7 @@ const CreateAgentWizard: React.FC = () => {
   const [conStarter2, setConStarter2] = useState("");
   const [conStarter3, setConStarter3] = useState("");
   const [conStarter4, setConStarter4] = useState("");
-  const [activeStatus, setActiveStatus] = useState(true);
+  // const [activeStatus, setActiveStatus] = useState(true);
 
   // Voice: default inactive
   const [voiceStatus] = useState<boolean>(false);
@@ -480,6 +480,35 @@ const CreateAgentWizard: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // On mount: restore step from sessionStorage or URL (?s=0..3)
+  useEffect(() => {
+    // URL param wins
+    const urlParams = new URLSearchParams(window.location.search);
+    const sParam = urlParams.get("s");
+    if (sParam !== null) {
+      const s = Number(sParam);
+      if ([0, 1, 2, 3].includes(s)) setStep(s as 0 | 1 | 2 | 3);
+    } else {
+      // fallback to session
+      const cached = sessionStorage.getItem("wizard_step");
+      if (cached !== null) {
+        const s = Number(cached);
+        if ([0, 1, 2, 3].includes(s)) setStep(s as 0 | 1 | 2 | 3);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist step on change (sessionStorage + update URL)
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("wizard_step", String(step));
+      const url = new URL(window.location.href);
+      url.searchParams.set("s", String(step));
+      window.history.replaceState({}, "", url.toString());
+    } catch {}
+  }, [step]);
 
   const effectiveUserRole = useMemo(() => {
     return userRole === "Other" ? userRoleOther.trim() || "Other" : userRole;
@@ -688,12 +717,17 @@ const CreateAgentWizard: React.FC = () => {
         setConStarter2(seed.conStarter2 || "");
         setConStarter3(seed.conStarter3 || "");
         setConStarter4(seed.conStarter4 || "");
-        setActiveStatus(Boolean(seed.activeStatus));
+        // setActiveStatus(Boolean(seed.activeStatus));
       } catch {
         // silent
       }
     };
     preloadFromAllAgents();
+    // keep step clean after hydrations
+    lastSaved0.current = snapStep0();
+    lastSaved1.current = snapStep1();
+    lastSaved2.current = snapStep2();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, userId, agentId, assistantId, editSeed]);
 
@@ -790,7 +824,7 @@ const CreateAgentWizard: React.FC = () => {
     setConStarter2("");
     setConStarter3("");
     setConStarter4("");
-    setActiveStatus(true);
+    // setActiveStatus(true);
 
     // Optional: refresh profile to ensure creator name stays synced
     try {
@@ -852,14 +886,13 @@ const CreateAgentWizard: React.FC = () => {
       );
       return false;
     }
+    if (!within(name, LIMITS.nameMin, LIMITS.nameMax)) {
+      message.error("Please Enter Agent name in 50 charcters"); // custom
+      return false;
+    }
 
     if (!creatorName.trim()) {
       missing.push("Creator Name");
-    } else if (!within(creatorName, LIMITS.creatorMin, LIMITS.creatorMax)) {
-      message.error(
-        `Creator Name must be ${LIMITS.creatorMin}–${LIMITS.creatorMax} characters.`
-      );
-      return false;
     }
 
     if (!(effectiveUserRole || "").trim()) {
@@ -1103,6 +1136,72 @@ const CreateAgentWizard: React.FC = () => {
     return ct.includes("application/json") ? res.json() : res.text();
   }
 
+  // === DIRTY SNAPSHOT HELPERS ===
+  const lastSaved0 = React.useRef<any>(null);
+  const lastSaved1 = React.useRef<any>(null);
+  const lastSaved2 = React.useRef<any>(null);
+
+  function snapStep0() {
+    return {
+      name,
+      creatorName,
+      userRole,
+      userRoleOther,
+      userExperienceSummary,
+      acheivements,
+      description,
+      language,
+      headerTitle,
+    };
+  }
+  function snapStep1() {
+    return {
+      business,
+      domain: resolvedDomain,
+      subDomain: resolvedSubDomain,
+      selectedModelId,
+      solveProblem,
+      mainProblemText,
+      uniqueSolution,
+      responseFormat,
+    };
+  }
+  function snapStep2() {
+    return {
+      targetUsers: resolvedTargetUsersString,
+      gender: genderForText || genderSelections.join(","),
+      ageLimit: resolvedAgeLimitsString,
+      converstionTone,
+      shareContact,
+      contactDetails,
+      instructions,
+    };
+  }
+  function shallowEqual(a: any, b: any) {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    const ka = Object.keys(a);
+    const kb = Object.keys(b);
+    if (ka.length !== kb.length) return false;
+    for (const k of ka) {
+      if (a[k] !== b[k]) return false;
+    }
+    return true;
+  }
+  function isDirtyForStep(st: 0 | 1 | 2): boolean {
+    if (st === 0) return !shallowEqual(snapStep0(), lastSaved0.current || {});
+    if (st === 1) return !shallowEqual(snapStep1(), lastSaved1.current || {});
+    return !shallowEqual(snapStep2(), lastSaved2.current || {});
+  }
+
+  // Initialize “last saved” to current (so edit mode with prefilled data starts clean)
+  useEffect(() => {
+    lastSaved0.current = snapStep0();
+    lastSaved1.current = snapStep1();
+    lastSaved2.current = snapStep2();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Step 1 save
   const saveStep0 = async () => {
     if (isEditMode && !agentId) {
@@ -1144,6 +1243,8 @@ const CreateAgentWizard: React.FC = () => {
       if (aId) setAgentId(String(aId));
       if (asstId) setAssistantId(String(asstId));
       message.success("Saved step 1");
+      lastSaved0.current = snapStep0();
+      setStep(1); // ✅ automatically go to next step
       return true;
     } catch (e: any) {
       message.error(e?.message || "Failed to save step 1");
@@ -1184,6 +1285,8 @@ const CreateAgentWizard: React.FC = () => {
       if (aId) setAgentId(String(aId));
       if (asstId) setAssistantId(String(asstId));
       message.success("Saved step 2");
+      lastSaved1.current = snapStep1();
+      setStep(2); // ✅ automatically go to next step
       return true;
     } catch (e: any) {
       message.error(e?.message || "Failed to save step 2");
@@ -1199,6 +1302,11 @@ const CreateAgentWizard: React.FC = () => {
       message.error(
         "Missing agentId in edit mode. Please reopen from All Agents."
       );
+      return false;
+    }
+    if (!generated) {
+      message.error("Instructions not generated. Click Generate.");
+      setShowViewInstructions(false);
       return false;
     }
     if (!validateStep2()) return false;
@@ -1227,6 +1335,8 @@ const CreateAgentWizard: React.FC = () => {
       if (aId) setAgentId(String(aId));
       if (asstId) setAssistantId(String(asstId));
       message.success("Saved step 3");
+      lastSaved2.current = snapStep2();
+      setStep(3); // ✅ automatically go to next step
       return true;
     } catch (e: any) {
       message.error(e?.message || "Failed to save step 3");
@@ -1235,21 +1345,14 @@ const CreateAgentWizard: React.FC = () => {
       setLoading(false);
     }
   };
-
   const next = async () => {
-    if (step === 0) {
-      const ok = await saveStep0();
-      if (!ok) return;
-      setStep(1);
-    } else if (step === 1) {
-      const ok = await saveStep1();
-      if (!ok) return;
-      setStep(2);
-    } else if (step === 2) {
-      const ok = await saveStep2();
-      if (!ok) return;
-      setStep(3);
+    if (step === 3) return; // last step, nothing to do
+    const dirty = isDirtyForStep(step as 0 | 1 | 2);
+    if (dirty) {
+      message.warning("You have unsaved changes. Click Save before Next.");
+      return;
     }
+    setStep((step + 1) as any);
   };
 
   const prev = () => {
@@ -1379,6 +1482,8 @@ const CreateAgentWizard: React.FC = () => {
       }
 
       setInstructions(cleaned);
+      setTempInstructions(cleaned); // ✅ seed the editor so the box isn’t empty
+      setShowInstructionsModal(true);
       setGenerated(true);
       message.success(
         "Instructions generated and inserted. You can edit them before publishing."
@@ -1398,10 +1503,10 @@ const CreateAgentWizard: React.FC = () => {
   // Instructions edit modal
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   // replace the old handler
-  const handleSaveInstructions = (opts?: { close?: boolean }) => {
+  const handleSaveInstructions = () => {
     setInstructions(tempInstructions);
     message.success("Instructions saved!");
-    if (opts?.close) setShowInstructionsModal(false);
+    setShowInstructionsModal(false); // ✅ always close automatically
   };
 
   // Require at least 2 conversation starters (before preview/publish)
@@ -1440,52 +1545,54 @@ const CreateAgentWizard: React.FC = () => {
       startersError();
       return;
     }
+
     try {
       setLoading(true);
-      // NEW: require user to choose at least one store
-      if (!storeBharat && !storeOxy) {
+
+      // ✅ If new agent, still ask for store
+      if (!isEditMode && !storeBharat && !storeOxy) {
         setLoading(false);
-        message.error("Please choose at least one store to publish.");
+        message.error("Please choose the store to publish.");
         setShowStoreModal(true);
         return;
       }
+
+      // ✅ For update, skip asking store and directly use existing BharatAIStore
       const chooseStore = "BharatAIStore";
 
       const basePayload: any = {
         agentId: agentId || undefined,
         assistantId: assistantId || undefined,
         userId,
-
-        // publish page fields
         conStarter1,
         conStarter2,
         conStarter3,
         conStarter4,
-        activeStatus,
+        activeStatus: true,
         rateThisPlatform,
         shareYourFeedback,
-
-        // store selection
-        chooseStore: chooseStore || undefined,
+        chooseStore,
       };
 
-      // Only include creation-status flags for NEW publish (not edit)
+      // Include creation status only for new publish
       const payload = isEditMode
         ? basePayload
         : {
             ...basePayload,
-            agentStatus: "CREATED", // backend expects this only during first publish
+            agentStatus: "CREATED",
             status: "REQUESTED",
           };
 
       const data = await doPatch("/ai-service/agent/agentPublish", payload);
       setShowPreview(false);
       setSuccessData(data as AgentApiResponse);
+
       message.success(
         isEditMode
           ? "Agent updated successfully!"
           : "Agent published successfully!"
       );
+
       resetWizard();
       navigate("/main/bharath-aistore/agents", { replace: true });
     } catch (e: any) {
@@ -1606,7 +1713,7 @@ const CreateAgentWizard: React.FC = () => {
     setConStarter2((editSeed as any).conStarter2 || "");
     setConStarter3((editSeed as any).conStarter3 || "");
     setConStarter4((editSeed as any).conStarter4 || "");
-    setActiveStatus(Boolean(editSeed.activeStatus));
+    // setActiveStatus(Boolean(editSeed.activeStatus));
 
     // Decide where to land the wizard in edit mode
     const jumpFromState =
@@ -1625,6 +1732,10 @@ const CreateAgentWizard: React.FC = () => {
     const initialStep = jumpFromState ?? jumpFromScreen ?? jumpFromSession ?? 0;
 
     setStep(initialStep as 0 | 1 | 2 | 3);
+    // keep step clean after hydrations in edit mode
+    lastSaved0.current = snapStep0();
+    lastSaved1.current = snapStep1();
+    lastSaved2.current = snapStep2();
   }, [isEditMode, editSeed]);
 
   // UI helpers
@@ -1714,22 +1825,7 @@ const CreateAgentWizard: React.FC = () => {
                 {data.message || "Success"}
               </div>
             </div>
-            <div>
-              <span
-                style={{
-                  padding: "2px 8px",
-                  borderRadius: 12,
-                  background: data.activeStatus ? "#f6ffed" : "#fff1f0",
-                  border: `1px solid ${
-                    data.activeStatus ? "#b7eb8f" : "#ffa39e"
-                  }`,
-                  color: data.activeStatus ? "#389e0d" : "#cf1322",
-                  fontSize: 12,
-                }}
-              >
-                {data.activeStatus ? "Active" : "Inactive"}
-              </span>
-            </div>
+            <div></div>
           </div>
 
           <div
@@ -1923,6 +2019,18 @@ const CreateAgentWizard: React.FC = () => {
                       <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        onPaste={(e) => {
+                          const pasted = (
+                            e.clipboardData?.getData("text") || ""
+                          ).trim();
+                          const projected = (name + pasted).trim();
+                          if (projected.length > 50) {
+                            e.preventDefault();
+                            message.error(
+                              "Please Enter Agent name in 50 charcters"
+                            );
+                          }
+                        }}
                         placeholder="Enter agent name"
                         maxLength={LIMITS.nameMax}
                         style={compactInputStyle}
@@ -1947,11 +2055,6 @@ const CreateAgentWizard: React.FC = () => {
                         placeholder="Enter creator name"
                         maxLength={LIMITS.creatorMax}
                         style={compactInputStyle}
-                        suffix={
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {creatorName.length}/{LIMITS.creatorMax}
-                          </Text>
-                        }
                       />
                     </div>
                   </Col>
@@ -2023,22 +2126,28 @@ const CreateAgentWizard: React.FC = () => {
                     <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
                         "Creator Experience Overview",
-                        "Optional 1–2 lines."
+                        "Optional — up to 500 characters (3 lines view)."
                       )}
-                      <Input
+                      <TextArea
                         value={userExperienceSummary}
-                        onChange={(e) =>
-                          setUserExperienceSummary(e.target.value)
-                        }
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v.length <= LIMITS.expMax) {
+                            setUserExperienceSummary(v);
+                          } else {
+                            message.warning(`Limit is ${LIMITS.expMax}`);
+                          }
+                        }}
                         placeholder="Brief summary (optional)"
-                        maxLength={LIMITS.expMax}
+                        rows={3}
                         style={compactInputStyle}
-                        suffix={
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {userExperienceSummary.length}/{LIMITS.expMax}
-                          </Text>
-                        }
                       />
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: 12, float: "right", marginTop: 2 }}
+                      >
+                        {userExperienceSummary.length}/{LIMITS.expMax}
+                      </Text>
                     </div>
                   </Col>
 
@@ -2070,18 +2179,20 @@ const CreateAgentWizard: React.FC = () => {
                         "Strengths",
                         "Optional — awards, milestones, notable cases."
                       )}
-                      <Input
+                      <TextArea
                         value={acheivements}
                         onChange={(e) => setAcheivements(e.target.value)}
                         placeholder="(optional)"
-                        maxLength={150}
+                        rows={3}
+                        maxLength={LIMITS.achievementsMax}
                         style={compactInputStyle}
-                        suffix={
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {acheivements.length}/150
-                          </Text>
-                        }
                       />
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: 12, float: "right", marginTop: 2 }}
+                      >
+                        {acheivements.length}/{LIMITS.achievementsMax}
+                      </Text>
                     </div>
                   </Col>
 
@@ -2235,7 +2346,6 @@ const CreateAgentWizard: React.FC = () => {
                             {m.owned_by ? ` · ${m.owned_by}` : ""}
                           </Option>
                         ))}
-                        
                       </Select>
                     </div>
                   </Col>
@@ -2281,22 +2391,22 @@ const CreateAgentWizard: React.FC = () => {
                     <Col xs={24}>
                       <div style={{ marginBottom: 12 }}>
                         {labelWithInfo(
-                          "Main Problem to Solve * (max 250 chars)",
-                          "What exact user problem?"
+                          "Main Problem to Solve *",
+                          "Describe the single biggest issue you are solving."
                         )}
                         <TextArea
                           value={mainProblemText}
                           onChange={(e) => setMainProblemText(e.target.value)}
-                          placeholder="e.g., 'Early-stage startups struggle to choose the right structure and miss deadlines.'"
-                          rows={2}
-                          maxLength={100}
+                          placeholder="Explain the user's core problem..."
+                          maxLength={LIMITS.problemMax} // 250
+                          rows={3}
                           style={compactInputStyle}
                         />
                         <Text
                           type="secondary"
-                          style={{ fontSize: 12, float: "right" }}
+                          style={{ fontSize: 12, float: "right", marginTop: 2 }}
                         >
-                          {mainProblemText.length}/100
+                          {mainProblemText.length}/{LIMITS.problemMax}
                         </Text>
                       </div>
                     </Col>
@@ -2313,14 +2423,15 @@ const CreateAgentWizard: React.FC = () => {
                         onChange={(e) => setUniqueSolution(e.target.value)}
                         placeholder="e.g., 'Fast triage + templates + compliance checklist with reminders.'"
                         rows={2}
-                        maxLength={100}
+                        maxLength={LIMITS.solutionMax} // ✅ 250 from LIMITS
                         style={compactInputStyle}
                       />
                       <Text
                         type="secondary"
                         style={{ fontSize: 12, float: "right" }}
                       >
-                        {uniqueSolution.length}/100
+                        {uniqueSolution.length}/{LIMITS.solutionMax}{" "}
+                        {/* ✅ live 250 counter */}
                       </Text>
                     </div>
                   </Col>
@@ -2691,21 +2802,6 @@ const CreateAgentWizard: React.FC = () => {
                   <Col xs={24} md={8}>
                     <div style={{ marginBottom: 12 }}>
                       {labelWithInfo(
-                        "Active Status",
-                        "Toggle whether this agent is visible/usable."
-                      )}
-                      <Switch
-                        checked={activeStatus}
-                        onChange={setActiveStatus}
-                        checkedChildren="Active"
-                        unCheckedChildren="Inactive"
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={8}>
-                    <div style={{ marginBottom: 12 }}>
-                      {labelWithInfo(
                         "Text Chat",
                         "Enabled by default and always available."
                       )}
@@ -2743,42 +2839,58 @@ const CreateAgentWizard: React.FC = () => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center",
+                marginTop: 16,
               }}
             >
-              <Button
-                size="large"
-                onClick={prev}
-                disabled={step === 0}
-                style={{ minWidth: 100 }}
-              >
-                Previous
-              </Button>
+              <div>
+                <Button onClick={prev} disabled={step === 0 || loading}>
+                  Previous
+                </Button>
+              </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {loading && <Text type="secondary">Working...</Text>}
-                {step < 3 ? (
-                  <Button
-                    type="primary"
-                    size="large"
-                    onClick={next}
-                    loading={loading}
-                    style={{ minWidth: 120, ...purpleBtn }}
-                  >
-                    Save & Continue
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    size="large"
-                    onClick={handleOpenPreview}
-                    loading={loading}
-                    icon={<EyeOutlined />}
-                    style={{ minWidth: 160, ...purpleBtn }}
-                  >
-                    {isEditMode ? "Preview & Update" : "Preview & Publish"}
-                  </Button>
-                )}
+              <div style={{ display: "flex", gap: 8 }}>
+                {/* SAVE — never advances step */}
+                <Button
+                  type="primary"
+                  ghost
+                  onClick={async () => {
+                    // If nothing changed on steps 0–2, nudge to use Next
+                    if (step < 3 && !isDirtyForStep(step as 0 | 1 | 2)) {
+                      message.info(
+                        "No changes to save. Click Next to continue."
+                      );
+                      return;
+                    }
+
+                    if (step === 0) await saveStep0();
+                    else if (step === 1) await saveStep1();
+                    else if (step === 2) await saveStep2();
+                    else if (step === 3) {
+                      // On Publish step, treat Save as Update/Publish, still no navigation here
+                      await handleConfirmPublish();
+                    }
+                    // ✅ No setStep() here — Save never navigates
+                  }}
+                  loading={loading}
+                  disabled={
+                    step === 3 ? false : !isDirtyForStep(step as 0 | 1 | 2)
+                  } // Save only when dirty (except Publish)
+                >
+                  Save
+                </Button>
+
+                {/* NEXT — only when clean (no unsaved changes) */}
+                <Button
+                  type="primary"
+                  onClick={next}
+                  disabled={
+                    step === 3 ||
+                    loading ||
+                    (step < 3 && isDirtyForStep(step as 0 | 1 | 2))
+                  }
+                >
+                  Next
+                </Button>
               </div>
             </div>
           </div>
@@ -3024,6 +3136,12 @@ const CreateAgentWizard: React.FC = () => {
           style={{ borderRadius: 8 }}
           placeholder="Type or speak your instructions here…"
         />
+        <Text
+          type="secondary"
+          style={{ fontSize: 12, float: "right", marginTop: 4 }}
+        >
+          {instructions.length}/{LIMITS.instructionsMax}
+        </Text>
 
         <div
           style={{
@@ -3116,6 +3234,12 @@ const CreateAgentWizard: React.FC = () => {
               >
                 Edit
               </Button>
+              <Text
+                type="secondary"
+                style={{ fontSize: 12, float: "left", marginTop: 4 }}
+              >
+                {instructions.length}/{LIMITS.instructionsMax}
+              </Text>
             </div>
           </>
         ) : (
@@ -3126,6 +3250,12 @@ const CreateAgentWizard: React.FC = () => {
               rows={10}
               style={{ borderRadius: 8 }}
             />
+            <Text
+              type="secondary"
+              style={{ fontSize: 12, float: "right", marginTop: 4 }}
+            >
+              {tempInstructions.length}/{LIMITS.instructionsMax}
+            </Text>
 
             <div
               style={{

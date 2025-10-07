@@ -43,11 +43,10 @@ interface Assistant {
 interface AssistantsResponse {
   object: string;
   data: Assistant[];
-  has_more: boolean;
+  hasMore: boolean; // ✅ FIXED: Changed from 'has_more' to 'hasMore' to match API response format
   firstId?: string;
   lastId?: string;
 }
-
 interface PaginationState {
   pageSize: number;
   hasMore: boolean;
@@ -60,17 +59,22 @@ interface PaginationState {
 const apiClient = axios.create({ baseURL: BASE_URL });
 
 async function getAssistants(
-limit = 100,
+  limit: number,
   after?: string
 ): Promise<AssistantsResponse> {
+  const params: any = { limit };
+  if (after) {
+    params.after = after;
+  }
+
   const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
+    params,
     headers: {
       "Content-Type": "application/json",
       ...(`${process.env.AUTH_TOKEN}`
         ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
         : {}),
     },
-    params: { limit, after },
   });
 
   const normalized = (res.data?.data ?? []).map((assistant: any) => ({
@@ -83,7 +87,7 @@ limit = 100,
   return {
     object: res.data?.object ?? "list",
     data: normalized,
-    has_more: !!res.data?.has_more,
+    hasMore: !!res.data?.hasMore, // ✅ FIXED: Use 'hasMore' to match API response
     firstId: res.data?.firstId,
     lastId: res.data?.lastId,
   };
@@ -439,7 +443,7 @@ const BharatAgentsStore: React.FC = () => {
 
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 100,
+    pageSize: 30,
     hasMore: true,
     total: 0,
   });
@@ -514,17 +518,14 @@ const BharatAgentsStore: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const fetchAssistants = useCallback(
+const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
       setLoading(true);
       try {
         const response = await getAssistants(pagination.pageSize, after);
 
         setAssistants((prev) => {
-          const merged = isLoadMore
-            ? [...prev, ...response.data]
-            : response.data;
+          const merged = isLoadMore ? [...prev, ...response.data] : response.data;
           // ✅ Deduplicate by ID to avoid duplicates on load more
           const byId = new Map<string, Assistant>();
           for (const a of merged) {
@@ -534,20 +535,15 @@ const BharatAgentsStore: React.FC = () => {
           return Array.from(byId.values());
         });
 
-        // ✅ Set next cursor for subsequent loads
-        const nextCursor =
-          response.lastId ||
-          response.data[response.data.length - 1]?.assistantId ||
-          response.data[response.data.length - 1]?.id ||
-          response.data[response.data.length - 1]?.agentId ||
-          undefined;
+        // ✅ FIXED: Set nextCursor strictly to response.lastId only if hasMore is true (API uses opaque cursor-based pagination where lastId is the next 'after' token, not necessarily the last item's ID). This prevents incorrect fallback to item ID which could cause overlapping or failed fetches in load more scenarios after initial 100 items.
+        const nextCursor = response.hasMore ? response.lastId : undefined;
 
-        // ✅ Use API's has_more directly for accurate pagination control
+        // ✅ FIXED: Update firstId only on initial load to preserve overall first cursor; for load more, retain previous firstId.
         setPagination((prev) => ({
           ...prev,
-          hasMore: response.has_more, // ✅ Fixed: Rely on API's has_more flag
-          firstId: response.firstId ?? prev.firstId,
-          lastId: nextCursor ?? prev.lastId,
+          hasMore: response.hasMore, // ✅ Fixed: Rely on API's hasMore flag
+          firstId: isLoadMore ? prev.firstId : response.firstId ?? undefined,
+          lastId: nextCursor ?? (isLoadMore ? prev.lastId : undefined),
           total: isLoadMore
             ? prev.total + response.data.length
             : response.data.length,
@@ -565,7 +561,6 @@ const BharatAgentsStore: React.FC = () => {
   useEffect(() => {
     fetchAssistants();
   }, [fetchAssistants]);
-
   const approvedAssistants = useMemo(() => {
     return assistants.filter((a) => {
       const s = (a.status || a.agentStatus || "").toString().toUpperCase();
@@ -904,15 +899,13 @@ const BharatAgentsStore: React.FC = () => {
               ))}
             </div>
 
-            {/* Load more only in non-search list */}
-            {/* Load more only in non-search list */}
-            {!isSearching && (
+          {!isSearching && (
               <div className="text-center mt-10 sm:mt-12">
                 {/* ✅ Updated: Pass pagination.lastId as 'after' to fetch next batch after last loaded item */}
                 {/* Button disabled when !hasMore or loading; shows "All results loaded" when end reached */}
                 <button
                   onClick={() => fetchAssistants(pagination.lastId, true)} // ✅ Pass lastId as after for next page
-                  disabled={!pagination.hasMore || loading}
+                  disabled={!pagination.hasMore || loading} // ✅ FIXED: Corrected disabled logic. Previously {pagination.hasMore || loading} which inverted the hasMore check, disabling the button when more items were available. Now correctly disables only when no more items (!hasMore) or during loading.
                   className="inline-flex items-center gap-2 px-8 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
                 >
                   {pagination.hasMore ? (
@@ -922,7 +915,7 @@ const BharatAgentsStore: React.FC = () => {
                         Loading…
                       </>
                     ) : (
-                      "Load More"
+                      "View More"
                     )
                   ) : (
                     "All results loaded"

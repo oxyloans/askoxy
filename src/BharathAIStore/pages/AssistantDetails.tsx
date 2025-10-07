@@ -9,12 +9,13 @@ import {
 } from "react-router-dom";
 import { GiElephantHead } from "react-icons/gi";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
+import { GiLion } from "react-icons/gi";
+
 import {
   Loader2,
   Send,
   User,
   Mic,
-
   Copy,
   Share2,
   Volume2,
@@ -39,10 +40,10 @@ interface Assistant {
 type APIRole = "user" | "assistant";
 type APIMessage = { role: APIRole; content: string };
 
-interface ChatMessage {
-  role: "user" | "assistant";
+type ChatMessage = {
+  role: "user" | "assistant" | "system";
   content: string;
-}
+};
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -128,7 +129,17 @@ const AssistantDetails: React.FC = () => {
   const CHAT_KEY = (aid: string, hid: string) => `assistant_chat_${aid}_${hid}`;
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [historyById, setHistoryById] = useState<Record<string, ChatMessage[]>>(
+    {}
+  );
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
+  // Whenever messages change, scroll down
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
   // prompts (starters)
   const [prompts, setPrompts] = useState<string[]>([]);
   const [isXs, setIsXs] = useState<boolean>(() =>
@@ -172,25 +183,68 @@ const AssistantDetails: React.FC = () => {
   // once true, we never allow re-rating
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  /** ---------------- History utils ---------------- */
+  // Updated: Added formatDate for displaying relative dates in history sidebar (like ChatGPT)
+  const formatDate = (timestamp: number): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
+    if (diffInDays === 0) {
+      return date.toLocaleDateString("en-US", { weekday: "short" });
+    } else if (diffInDays < 7) {
+      return date.toLocaleDateString("en-US", { weekday: "short" });
+    } else {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    }
+  };
   useEffect(() => {
     const loadHistoryFromApi = async () => {
       if (!id || !agentId || !userId) return;
       try {
         const historyData = await fetchUserHistory(userId, agentId);
-        if (Array.isArray(historyData)) {
-          const formatted = historyData.map((h: any, idx: number) => ({
-            id: `${Date.now()}_${idx}`,
-            title: extractTitleFromPrompt(h?.prompt), // ✅ should parse
-            createdAt: Date.now() - idx,
-          }));
 
-          setHistory(formatted); // uses existing state wiring
+        if (Array.isArray(historyData)) {
+          const map: Record<string, ChatMessage[]> = {};
+
+          const formatted = historyData.map((h: any, idx: number) => {
+            const hid = String(h.id ?? h.historyId ?? `${Date.now()}_${idx}`);
+
+            const msgsApi = normalizeMessages(
+              h.messages ?? h.messageHistory ?? h.history
+            );
+
+            // NEW: if nothing from API arrays, try parsing legacy prompt string
+            let msgs = msgsApi;
+            if ((!msgs || msgs.length === 0) && typeof h.prompt === "string") {
+              msgs = parseLegacyPrompt(h.prompt);
+            }
+
+            map[hid] = msgs;
+
+            const titleFromMsgs =
+              msgs.find((m) => m.role === "user")?.content ?? "";
+            const title =
+              (h?.prompt ? extractTitleFromPrompt(h.prompt) : titleFromMsgs) ||
+              "Untitled";
+
+            const created = Number(new Date(h.createdAt ?? Date.now())) - idx;
+            return { id: hid, title, createdAt: created };
+          });
+
+          setHistoryById(map);
+          setHistory(formatted);
         } else {
+          setHistoryById({});
           setHistory([]);
         }
       } catch (err) {
         console.error("Failed to fetch history:", err);
+        setHistoryById({});
         setHistory([]);
       }
     };
@@ -201,22 +255,6 @@ const AssistantDetails: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(sidebarOpen));
   }, [sidebarOpen]);
-
-  const saveMessages = useCallback(
-    (msgs: ChatMessage[]) => {
-      if (!id || !currentChatId) return;
-      localStorage.setItem(CHAT_KEY(id, currentChatId), JSON.stringify(msgs));
-    },
-    [id, currentChatId]
-  );
-
-  const saveHistory = useCallback(
-    (list: { id: string; title: string; createdAt: number }[]) => {
-      if (!id) return;
-      localStorage.setItem(HISTORY_KEY(id), JSON.stringify(list));
-    },
-    [id]
-  );
 
   // responsive: detect xs screens & auto-close sidebar on xs
   useEffect(() => {
@@ -487,43 +525,106 @@ const AssistantDetails: React.FC = () => {
     setSpeakingIdx(idx);
   };
 
-  // Put this near your other helpers
+  /*************  ✨ Windsurf Command ⭐  *************/
+  /**
+   * Extracts a title from a prompt object or string.
+   * Supports different shapes of prompt objects and strings.
+   * Returns the first user's message content, or the additionalPrompt content, or the first content= string in the prompt.
+   * If no title can be extracted, returns "Untitled".
+   * @param {any} raw The prompt object or string to extract a title from.
+   * @returns {string} The extracted title, or "Untitled" if no title can be found.
+   */
+  /*******  251ad98b-0f67-4512-a517-cf301344d82b  *******/ // Parse legacy string like: "[{role=user, content=Hello}, {role=assistant, content=...}]"
+  const parseLegacyPrompt = (raw: any): ChatMessage[] => {
+    if (typeof raw !== "string") return [];
+    const s = raw.trim();
+    if (!s.startsWith("[{") || !s.includes("role=")) return [];
+
+    // strip [ and ] then split by "},"
+    const inner = s.replace(/^\s*\[/, "").replace(/\]\s*$/, "");
+    const parts = inner.split(/}\s*,\s*\{/g).map((p, idx, arr) => {
+      let seg = p;
+      if (idx === 0 && seg.startsWith("{")) seg = seg.slice(1);
+      if (idx === arr.length - 1 && seg.endsWith("}")) seg = seg.slice(0, -1);
+      return seg;
+    });
+
+    const out: ChatMessage[] = [];
+    for (const part of parts) {
+      const roleMatch = part.match(/\brole\s*=\s*(user|assistant|system)\b/i);
+      const contentMatch = part.match(/\bcontent\s*=\s*([\s\S]*)$/i);
+      const roleRaw = roleMatch?.[1]?.toLowerCase() || "user";
+      let role: ChatMessage["role"] =
+        roleRaw === "assistant"
+          ? "assistant"
+          : roleRaw === "system"
+          ? "system"
+          : "user";
+
+      let content = (contentMatch?.[1] || "").trim();
+
+      // remove trailing commas and stray braces
+      content = content.replace(/\s*[},]\s*$/, "").trim();
+
+      // unescape common newline patterns if present
+      content = content.replace(/\\n/g, "\n");
+
+      if (content) out.push({ role, content });
+    }
+    return out;
+  };
+
   const extractTitleFromPrompt = (raw: any): string => {
     if (!raw) return "Untitled";
+
+    // If already array/object
+    if (Array.isArray(raw) && raw.length) {
+      const firstUser = raw.find((m) => m?.role === "user" && m?.content);
+      if (firstUser?.content)
+        return String(firstUser.content).trim().slice(0, 60);
+    }
+    if (typeof raw === "object" && raw?.additionalPrompt) {
+      return String(raw.additionalPrompt).trim().slice(0, 60);
+    }
 
     if (typeof raw === "string") {
       const s = raw.trim();
 
-      // Case: "[{additionalPrompt=...}]"
-      if (/^\[\{.*additionalPrompt=/.test(s)) {
-        const match = s.match(/additionalPrompt=([^}]+)}/);
-        if (match && match[1]) {
-          return match[1].trim();
-        }
+      // 2.a) Legacy role= / content= array string → use the first user message
+      if (/^\s*\[\{/.test(s) && /role\s*=/.test(s)) {
+        const msgs = parseLegacyPrompt(s);
+        const firstUser = msgs.find((m) => m.role === "user");
+        if (firstUser?.content) return firstUser.content.trim().slice(0, 60);
       }
 
-      // Case: valid JSON with additionalPrompt
+      // 2.b) "{additionalPrompt=...}" shape
+      if (/\badditionalPrompt=/.test(s)) {
+        const m = s.match(/additionalPrompt=([^}]+)}/);
+        if (m?.[1]) return m[1].trim().slice(0, 60);
+      }
+
+      // 2.c) Try valid JSON string → [{role,content}] or {additionalPrompt}
       try {
         const parsed = JSON.parse(s);
-        if (Array.isArray(parsed) && parsed[0]?.additionalPrompt) {
-          return String(parsed[0].additionalPrompt).trim();
+        if (Array.isArray(parsed) && parsed.length) {
+          const firstUser = parsed.find(
+            (m) => m?.role === "user" && m?.content
+          );
+          if (firstUser?.content)
+            return String(firstUser.content).trim().slice(0, 60);
         }
         if (parsed?.additionalPrompt) {
-          return String(parsed.additionalPrompt).trim();
+          return String(parsed.additionalPrompt).trim().slice(0, 60);
         }
       } catch {
-        /* ignore */
+        // fall through
       }
 
-      return s || "Untitled";
-    }
+      // 2.d) As a last resort, if legacy string includes "content=", take first content
+      const contentFirst = s.match(/\bcontent\s*=\s*([^}\]]+)/);
+      if (contentFirst?.[1]) return contentFirst[1].trim().slice(0, 60);
 
-    // If object/array given directly
-    if (Array.isArray(raw) && raw[0]?.additionalPrompt) {
-      return String(raw[0].additionalPrompt).trim();
-    }
-    if (typeof raw === "object" && raw.additionalPrompt) {
-      return String(raw.additionalPrompt).trim();
+      return s.slice(0, 60) || "Untitled";
     }
 
     return "Untitled";
@@ -617,41 +718,90 @@ const AssistantDetails: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId, id, navigate]);
 
-  /** ---------------- scroll & persist ---------------- */
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const normalizeMessages = (raw: any): ChatMessage[] => {
+    if (!raw) return [];
+    let arr = raw;
 
-  useEffect(() => {
-    saveMessages(messages);
-  }, [messages, saveMessages]);
+    if (typeof arr === "string") {
+      try {
+        arr = JSON.parse(arr);
+      } catch {
+        return [];
+      }
+    }
+    if (!Array.isArray(arr)) return [];
 
-  useEffect(() => {
-    saveHistory(history);
-  }, [history, saveHistory]);
+    const out: ChatMessage[] = (arr as any[])
+      .map((m: any) => {
+        const role: ChatMessage["role"] =
+          m?.role === "assistant"
+            ? "assistant"
+            : m?.role === "system"
+            ? "system"
+            : "user";
+        const content = String(m?.content ?? m?.text ?? "").trim();
+        return { role, content };
+      })
+      .filter((m) => m.content.length > 0);
 
-  useEffect(() => {
-    saveSidebarState(sidebarOpen);
-  }, [sidebarOpen]);
+    return out;
+  };
 
-  /** ---------------- history open ---------------- */
-  const openHistoryChat = (hid: string) => {
+  const openHistoryChat = async (hid: string) => {
     if (!id) return;
     setCurrentChatId(hid);
-    const raw = localStorage.getItem(CHAT_KEY(id, hid));
-    setMessages(raw ? JSON.parse(raw) : []);
-    setTimeout(
-      () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
-      0
-    );
+
+    // 1) Use the messages we already got from API load
+    const cached = historyById[hid];
+    if (cached?.length) {
+      setMessages(cached);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 0);
+      return;
+    }
+
+    // 2) Fallback: re-fetch the whole list once, and try again
+    try {
+      if (!userId || !agentId) return;
+      const historyData = await fetchUserHistory(userId, agentId);
+      if (Array.isArray(historyData)) {
+        const map: Record<string, ChatMessage[]> = {};
+        for (let i = 0; i < historyData.length; i++) {
+          const h = historyData[i];
+          const _hid = String(h.id ?? h.historyId ?? `${Date.now()}_${i}`);
+          map[_hid] = normalizeMessages(
+            h.messages ?? h.messageHistory ?? h.history
+          );
+        }
+        setHistoryById(map);
+
+        const msgs = map[hid] ?? [];
+        setMessages(msgs);
+      } else {
+        setMessages([]);
+      }
+    } catch {
+      setMessages([]);
+    }
+
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
   };
 
   // Keep optional override if you want to support edit-resend
   const buildMessageHistory = (
-    msgs: APIMessage[],
+    msgs: ChatMessage[],
     overrideContent?: string
-  ) => {
-    const safe = Array.isArray(msgs) ? msgs : [];
+  ): APIMessage[] => {
+    // start from chat messages, ignore system
+    const safe: APIMessage[] = (Array.isArray(msgs) ? msgs : [])
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role === "assistant" ? "assistant" : ("user" as APIRole),
+        content: m.content,
+      }));
 
     // For edit, override the last user content
     if (overrideContent) {
@@ -666,11 +816,7 @@ const AssistantDetails: React.FC = () => {
       }
     }
 
-    // ✅ Now return array of { role, content }
-    return safe.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    return safe;
   };
 
   const postAgentChat = async (
@@ -995,13 +1141,13 @@ const AssistantDetails: React.FC = () => {
       setMessages([]);
       setInput("");
 
-      const newEntry = {
-        id: newId,
-        title: "New chat",
-        createdAt: Date.now(),
-      };
+      // const newEntry = {
+      //   id: newId,
+      //   title: "New chat",
+      //   createdAt: Date.now(),
+      // };
 
-      setHistory((prev) => [newEntry, ...prev]);
+      // setHistory((prev) => [newEntry, ...prev]);
       setCurrentChatId(newId);
     };
 
@@ -1157,225 +1303,265 @@ const AssistantDetails: React.FC = () => {
 
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 bg-gray-100 transform transition-transform duration-200 ease-out
-  ${isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"}`}
+          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
+            isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
+          }`}
           style={{ width: sidebarWidth }}
           aria-label="Chat sidebar"
         >
-          <div className="flex items-center px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-            <GiElephantHead
-              onClick={() => navigate("/bharath-aistore")}
-              className={`h-5 w-5 text-black dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 shrink-0 ${
-                !isXs && isCollapsed ? "hidden" : ""
-              }`}
-            />
-            <div className="ml-auto flex items-center gap-1">
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="sm:hidden inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
-                aria-label="Close sidebar"
-                title="Close sidebar"
-              >
-                <LuPanelRightClose className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-              </button>
-              <button
-                onClick={() => setSidebarOpen((v) => !v)}
-                className="hidden sm:inline-flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {isCollapsed ? (
-                  <LuPanelRightClose className="w-5 h-5 text-black dark:text-white" />
-                ) : (
-                  <LuPanelLeftClose className="w-5 h-5 text-black dark:text-white" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* New Chat + Search */}
-          <div className="p-3 space-y-3">
-            <button
-              onClick={handleNewChat}
-              className={`w-full inline-flex items-center rounded-lg gap-2 px-3 py-2 text-gray-800 hover:bg-gray-100 dark:bg-indigo-600 hover:opacity-90 ${
-                isCollapsed && !isXs ? "justify-center" : "justify-start"
-              }`}
-              title="New Chat"
-              aria-label="New Chat"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="icon flex-shrink-0"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M3.2024399999999997 13.5996V10.400388C3.2024399999999997 9.29346 3.202092 8.41446 3.2598599999999998 7.70742C3.318396 6.991344000000001 3.440388 6.3807719999999994 3.7251 5.821872L3.9102479999999997 5.491404C4.371264 4.7397 5.032704 4.12794 5.822748 3.725388L6.034859999999999 3.625788C6.535991999999999 3.410796 7.081595999999999 3.310188 7.708296 3.258984C8.415263999999999 3.201228 9.293339999999999 3.201564 10.4001 3.201564H11.0001C11.440716 3.201564 11.797979999999999 3.559032 11.798148 3.9996119999999995C11.798148 4.440335999999999 11.440824 4.79766 11.0001 4.79766H10.4001C9.26712 4.79766 8.465256 4.798007999999999 7.838375999999999 4.8492239999999995C7.375332 4.887048 7.047324 4.950816 6.787212 5.043755999999999L6.546971999999999 5.146872C6.01974 5.415515999999999 5.578463999999999 5.824139999999999 5.270796 6.325788L5.147748 6.5460959999999995C4.996656 6.84264 4.9005719999999995 7.219956 4.8501 7.8374999999999995C4.798872 8.464476 4.7985359999999995 9.26712 4.7985359999999995 10.400388V13.5996C4.7985359999999995 14.73288 4.798872 15.53556 4.8501 16.16256C4.9005719999999995 16.77996 4.9966680000000006 17.15736 5.147748 17.453879999999998L5.270796 17.6742C5.578452 18.1758 6.019775999999999 18.584519999999998 6.546971999999999 18.85308L6.787212 18.95628C7.047312000000001 19.04916 7.375368 19.1118 7.838375999999999 19.1496C8.465268 19.200839999999996 9.267071999999999 19.202399999999997 10.4001 19.202399999999997H13.60044C14.73348 19.202399999999997 15.535319999999999 19.200839999999996 16.1622 19.1496C16.77948 19.0992 17.15712 19.00404 17.45364 18.85308L17.67504 18.72888C18.1764 18.42132 18.58548 17.980919999999998 18.85404 17.453879999999998L18.95712 17.213639999999998C19.05012 16.953599999999998 19.11264 16.625519999999998 19.15044 16.16256C19.20168 15.53556 19.20204 14.73288 19.20204 13.5996V12.9996C19.20216 12.559199999999999 19.55964 12.20172 20.00004 12.2016C20.440679999999997 12.2016 20.79792 12.55908 20.79816 12.9996V13.5996C20.79816 14.706599999999998 20.79972 15.585479999999999 20.74188 16.29252C20.69064 16.919159999999998 20.59008 17.46492 20.37504 17.96604L20.27544 18.17808C19.873079999999998 18.96792 19.260839999999998 19.628519999999998 18.50952 20.08944L18.17904 20.274599999999996C17.61996 20.559479999999997 17.00868 20.682479999999998 16.292279999999998 20.741039999999998C15.58536 20.798759999999998 14.7072 20.7984 13.60044 20.7984H10.4001C9.293352 20.7984 8.415252 20.798759999999998 7.708296 20.741039999999998C7.08162 20.689799999999998 6.5359799999999995 20.589239999999997 6.034859999999999 20.3742L5.822748 20.274599999999996C5.0327519999999994 19.87212 4.371252 19.26024 3.9102479999999997 18.50856L3.7251 18.17808C3.4403639999999998 17.61924 3.3184080000000002 17.00868 3.2598599999999998 16.29252C3.202092 15.585479999999999 3.2024399999999997 14.706599999999998 3.2024399999999997 13.5996ZM16.15752 3.7359359999999997C17.304119999999998 2.8008 18.99456 2.867628 20.063399999999998 3.9363239999999995L20.2638 4.15782C21.13692 5.228219999999999 21.137159999999998 6.7730760000000005 20.2638 7.843356L20.063399999999998 8.06484L14.007119999999999 14.122319999999998C13.364759999999999 14.76468 12.55488 15.20952 11.673924 15.408959999999999L11.293068 15.47928L9.112212 15.78984C8.863644 15.825239999999999 8.612411999999999 15.74244 8.434859999999999 15.56484C8.257344 15.387239999999998 8.174387999999999 15.13608 8.209859999999999 14.887559999999999L8.521584 12.70776L8.591892 12.3258C8.79144 11.444988 9.236304 10.634892 9.878616 9.992579999999998L15.934919999999998 3.9363239999999995L16.15752 3.7359359999999997Z"
-                />
-              </svg>
-              {(!isCollapsed || isXs) && <span>New Chat</span>}
-            </button>
-            <button
-              onClick={() => (window.location.href = "/main/bharat-expert")}
-              className={`w-full inline-flex items-center rounded-lg gap-2 px-3 py-2 text-gray-800 hover:bg-gray-100 dark:bg-indigo-600 hover:opacity-90 ${
-                isCollapsed && !isXs ? "justify-center" : "justify-start"
-              }`}
-              title="Create Agent"
-              aria-label="Create Agent"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="icon flex-shrink-0"
-                aria-hidden="true"
-              >
-                <path
-                  d="M12 5V19M5 12H19"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {(!isCollapsed || isXs) && <span>Create Agent</span>}
-            </button>
-            <button
-              onClick={() => (window.location.href = "/bharath-aistore")}
-              className={`w-full inline-flex items-center rounded-lg gap-2 px-3 py-2 text-gray-800 hover:bg-gray-100 dark:bg-indigo-600 hover:opacity-90 ${
-                isCollapsed && !isXs ? "justify-center" : "justify-start"
-              }`}
-              title="Explore Agents"
-              aria-label="Explore Agents"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="icon flex-shrink-0"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M7.94556 14.0277C7.9455 12.9376 7.06204 12.054 5.97192 12.054C4.88191 12.0542 3.99835 12.9376 3.99829 14.0277C3.99829 15.1177 4.88188 16.0012 5.97192 16.0013C7.06207 16.0013 7.94556 15.1178 7.94556 14.0277ZM16.0012 14.0277C16.0012 12.9376 15.1177 12.054 14.0276 12.054C12.9375 12.0541 12.054 12.9376 12.054 14.0277C12.054 15.1178 12.9375 16.0012 14.0276 16.0013C15.1177 16.0013 16.0012 15.1178 16.0012 14.0277ZM7.94556 5.97201C7.94544 4.88196 7.062 3.99837 5.97192 3.99837C4.88195 3.99849 3.99841 4.88203 3.99829 5.97201C3.99829 7.06208 4.88187 7.94552 5.97192 7.94564C7.06207 7.94564 7.94556 7.06216 7.94556 5.97201ZM16.0012 5.97201C16.0011 4.88196 15.1177 3.99837 14.0276 3.99837C12.9376 3.99843 12.0541 4.882 12.054 5.97201C12.054 7.06212 12.9375 7.94558 14.0276 7.94564C15.1177 7.94564 16.0012 7.06216 16.0012 5.97201ZM9.27563 14.0277C9.27563 15.8524 7.79661 17.3314 5.97192 17.3314C4.14734 17.3313 2.66821 15.8523 2.66821 14.0277C2.66827 12.2031 4.14737 10.7241 5.97192 10.724C7.79657 10.724 9.27558 12.203 9.27563 14.0277ZM17.3313 14.0277C17.3313 15.8524 15.8523 17.3314 14.0276 17.3314C12.203 17.3313 10.7239 15.8523 10.7239 14.0277C10.7239 12.2031 12.203 10.724 14.0276 10.724C15.8522 10.724 17.3312 12.203 17.3313 14.0277ZM9.27563 5.97201C9.27563 7.7967 7.79661 9.27572 5.97192 9.27572C4.14734 9.2756 2.66821 7.79662 2.66821 5.97201C2.66833 4.14749 4.14741 2.66841 5.97192 2.6683C7.79654 2.6683 9.27552 4.14742 9.27563 5.97201ZM17.3313 5.97201C17.3313 7.79669 15.8523 9.27572 14.0276 9.27572C12.203 9.27566 10.7239 7.79666 10.7239 5.97201C10.724 4.14746 12.203 2.66836 14.0276 2.6683C15.8522 2.6683 17.3312 4.14742 17.3313 5.97201Z"
-                />
-              </svg>
-              {(!isCollapsed || isXs) && <span>Explore Agents</span>}
-            </button>
-
-            {/* Search */}
-            {isCollapsed && !isXs ? (
-              <button
-                className="w-10 h-10 mx-auto flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-                title="Search chats"
-                aria-label="Search chats"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="opacity-80 flex-shrink-0"
+          {/* ---------- TOP (HEADER + ACTION BUTTONS) ---------- */}
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
+              <GiElephantHead
+                onClick={() => navigate("/bharath-aistore")}
+                title="Bharat AI Store"
+                className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
+                  !isXs && isCollapsed ? "hidden" : ""
+                }`}
+              />
+              <div className="flex items-center gap-1">
+                {/* Mobile close */}
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="sm:hidden inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label="Close sidebar"
                 >
-                  <path
-                    d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            ) : (
-              <div className="relative">
-                <input
-                  value={historySearch}
-                  onChange={(e) => setHistorySearch(e.target.value)}
-                  placeholder="Search chats"
-                  className="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <svg
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 opacity-60"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
+                  <LuPanelRightClose className="h-7 w-7 text-gray-700 dark:text-gray-300" />
+                </button>
+
+                {/* Collapse toggle */}
+                <button
+                  onClick={() => setSidebarOpen((v) => !v)}
+                  className="hidden sm:inline-flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label={
+                    isCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                  }
+                  title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
-                  <path
-                    d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                  {isCollapsed ? (
+                    <LuPanelRightClose className="w-7 h-7 text-black dark:text-white" />
+                  ) : (
+                    <LuPanelLeftClose className="w-7 h-7 text-black dark:text-white" />
+                  )}
+                </button>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* History List */}
-          <div className="px-2 pb-24 overflow-y-auto h-[calc(100vh-56px-48px-64px-56px)]">
-            {!isCollapsed || isXs ? (
-              <>
-                <div className="p-3 space-y-3 text-xs text-gray-500">Chats</div>
-                {filteredHistory.length === 0 ? (
-                  <div className="text-xs text-gray-500 px-2 py-8">
-                    No chats yet.
-                  </div>
-                ) : (
-                  <ul className="space-y-1">
-                    {filteredHistory.map((h) => (
-                      <li key={h.id} className="group">
-                        <button
-                          className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
-                          onClick={() => openHistoryChat(h.id)}
-                          title={h.title}
-                        >
-                          <span className="truncate text-sm">{h.title}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            ) : (
-              <ul className="space-y-2 mt-3">
-                {filteredHistory.map((h) => (
-                  <li key={h.id} className="flex justify-center">
-                    <button
-                      className="w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200"
-                      title={h.title}
-                      onClick={() => openHistoryChat(h.id)}
-                    >
-                      {(h.title || "?").trim().charAt(0).toUpperCase()}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Sidebar Footer */}
-          <div className="absolute bottom-0 left-0 right-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
-            <div
-              className={`p-2 flex items-center ${
-                isCollapsed && !isXs ? "justify-center" : "justify-center"
-              }`}
-            >
+            {/* ---------- BUTTONS + SEARCH (TOP FIXED) ---------- */}
+            <div className="flex-shrink-0 p-2 space-y-1 border-b border-gray-100 dark:border-gray-700">
+              {/* New Chat */}
               <button
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition"
+                onClick={handleNewChat}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
+                title="New Chat"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="icon flex-shrink-0"
+                  aria-hidden="true"
+                >
+                  {" "}
+                  <path
+                    fill="currentColor"
+                    d="M3.2024399999999997 13.5996V10.400388C3.2024399999999997 9.29346 3.202092 8.41446 3.2598599999999998 7.70742C3.318396 6.991344000000001 3.440388 6.3807719999999994 3.7251 5.821872L3.9102479999999997 5.491404C4.371264 4.7397 5.032704 4.12794 5.822748 3.725388L6.034859999999999 3.625788C6.535991999999999 3.410796 7.081595999999999 3.310188 7.708296 3.258984C8.415263999999999 3.201228 9.293339999999999 3.201564 10.4001 3.201564H11.0001C11.440716 3.201564 11.797979999999999 3.559032 11.798148 3.9996119999999995C11.798148 4.440335999999999 11.440824 4.79766 11.0001 4.79766H10.4001C9.26712 4.79766 8.465256 4.798007999999999 7.838375999999999 4.8492239999999995C7.375332 4.887048 7.047324 4.950816 6.787212 5.043755999999999L6.546971999999999 5.146872C6.01974 5.415515999999999 5.578463999999999 5.824139999999999 5.270796 6.325788L5.147748 6.5460959999999995C4.996656 6.84264 4.9005719999999995 7.219956 4.8501 7.8374999999999995C4.798872 8.464476 4.7985359999999995 9.26712 4.7985359999999995 10.400388V13.5996C4.7985359999999995 14.73288 4.798872 15.53556 4.8501 16.16256C4.9005719999999995 16.77996 4.9966680000000006 17.15736 5.147748 17.453879999999998L5.270796 17.6742C5.578452 18.1758 6.019775999999999 18.584519999999998 6.546971999999999 18.85308L6.787212 18.95628C7.047312000000001 19.04916 7.375368 19.1118 7.838375999999999 19.1496C8.465268 19.200839999999996 9.267071999999999 19.202399999999997 10.4001 19.202399999999997H13.60044C14.73348 19.202399999999997 15.535319999999999 19.200839999999996 16.1622 19.1496C16.77948 19.0992 17.15712 19.00404 17.45364 18.85308L17.67504 18.72888C18.1764 18.42132 18.58548 17.980919999999998 18.85404 17.453879999999998L18.95712 17.213639999999998C19.05012 16.953599999999998 19.11264 16.625519999999998 19.15044 16.16256C19.20168 15.53556 19.20204 14.73288 19.20204 13.5996V12.9996C19.20216 12.559199999999999 19.55964 12.20172 20.00004 12.2016C20.440679999999997 12.2016 20.79792 12.55908 20.79816 12.9996V13.5996C20.79816 14.706599999999998 20.79972 15.585479999999999 20.74188 16.29252C20.69064 16.919159999999998 20.59008 17.46492 20.37504 17.96604L20.27544 18.17808C19.873079999999998 18.96792 19.260839999999998 19.628519999999998 18.50952 20.08944L18.17904 20.274599999999996C17.61996 20.559479999999997 17.00868 20.682479999999998 16.292279999999998 20.741039999999998C15.58536 20.798759999999998 14.7072 20.7984 13.60044 20.7984H10.4001C9.293352 20.7984 8.415252 20.798759999999998 7.708296 20.741039999999998C7.08162 20.689799999999998 6.5359799999999995 20.589239999999997 6.034859999999999 20.3742L5.822748 20.274599999999996C5.0327519999999994 19.87212 4.371252 19.26024 3.9102479999999997 18.50856L3.7251 18.17808C3.4403639999999998 17.61924 3.3184080000000002 17.00868 3.2598599999999998 16.29252C3.202092 15.585479999999999 3.2024399999999997 14.706599999999998 3.2024399999999997 13.5996ZM16.15752 3.7359359999999997C17.304119999999998 2.8008 18.99456 2.867628 20.063399999999998 3.9363239999999995L20.2638 4.15782C21.13692 5.228219999999999 21.137159999999998 6.7730760000000005 20.2638 7.843356L20.063399999999998 8.06484L14.007119999999999 14.122319999999998C13.364759999999999 14.76468 12.55488 15.20952 11.673924 15.408959999999999L11.293068 15.47928L9.112212 15.78984C8.863644 15.825239999999999 8.612411999999999 15.74244 8.434859999999999 15.56484C8.257344 15.387239999999998 8.174387999999999 15.13608 8.209859999999999 14.887559999999999L8.521584 12.70776L8.591892 12.3258C8.79144 11.444988 9.236304 10.634892 9.878616 9.992579999999998L15.934919999999998 3.9363239999999995L16.15752 3.7359359999999997Z"
+                  />{" "}
+                </svg>
+                {(!isCollapsed || isXs) && <span>New Chat</span>}
+              </button>
+
+              {/* Create Agent */}
+              <button
+                onClick={() => (window.location.href = "/main/bharat-expert")}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
+                title="Create Agent"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="flex-shrink-0"
+                >
+                  <path
+                    d="M12 5V19M5 12H19"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {(!isCollapsed || isXs) && <span>Create Agent</span>}
+              </button>
+
+              {/* Explore Agents */}
+              <button
+                onClick={() => (window.location.href = "/bharath-aistore")}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
+                title="Explore Agents"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="icon flex-shrink-0"
+                  aria-hidden="true"
+                >
+                  {" "}
+                  <path
+                    fill="currentColor"
+                    d="M7.94556 14.0277C7.9455 12.9376 7.06204 12.054 5.97192 12.054C4.88191 12.0542 3.99835 12.9376 3.99829 14.0277C3.99829 15.1177 4.88188 16.0012 5.97192 16.0013C7.06207 16.0013 7.94556 15.1178 7.94556 14.0277ZM16.0012 14.0277C16.0012 12.9376 15.1177 12.054 14.0276 12.054C12.9375 12.0541 12.054 12.9376 12.054 14.0277C12.054 15.1178 12.9375 16.0012 14.0276 16.0013C15.1177 16.0013 16.0012 15.1178 16.0012 14.0277ZM7.94556 5.97201C7.94544 4.88196 7.062 3.99837 5.97192 3.99837C4.88195 3.99849 3.99841 4.88203 3.99829 5.97201C3.99829 7.06208 4.88187 7.94552 5.97192 7.94564C7.06207 7.94564 7.94556 7.06216 7.94556 5.97201ZM16.0012 5.97201C16.0011 4.88196 15.1177 3.99837 14.0276 3.99837C12.9376 3.99843 12.0541 4.882 12.054 5.97201C12.054 7.06212 12.9375 7.94558 14.0276 7.94564C15.1177 7.94564 16.0012 7.06216 16.0012 5.97201ZM9.27563 14.0277C9.27563 15.8524 7.79661 17.3314 5.97192 17.3314C4.14734 17.3313 2.66821 15.8523 2.66821 14.0277C2.66827 12.2031 4.14737 10.7241 5.97192 10.724C7.79657 10.724 9.27558 12.203 9.27563 14.0277ZM17.3313 14.0277C17.3313 15.8524 15.8523 17.3314 14.0276 17.3314C12.203 17.3313 10.7239 15.8523 10.7239 14.0277C10.7239 12.2031 12.203 10.724 14.0276 10.724C15.8522 10.724 17.3312 12.203 17.3313 14.0277ZM9.27563 5.97201C9.27563 7.7967 7.79661 9.27572 5.97192 9.27572C4.14734 9.2756 2.66821 7.79662 2.66821 5.97201C2.66833 4.14749 4.14741 2.66841 5.97192 2.6683C7.79654 2.6683 9.27552 4.14742 9.27563 5.97201ZM17.3313 5.97201C17.3313 7.79669 15.8523 9.27572 14.0276 9.27572C12.203 9.27566 10.7239 7.79666 10.7239 5.97201C10.724 4.14746 12.203 2.66836 14.0276 2.6683C15.8522 2.6683 17.3312 4.14742 17.3313 5.97201Z"
+                  />{" "}
+                </svg>
+                {(!isCollapsed || isXs) && <span>Explore Agents</span>}
+              </button>
+
+              {/* ASKOXY.AI */}
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
+                title="ASKOXY.AI"
+              >
+                <GiLion className="h-5 w-5" />
+                {(!isCollapsed || isXs) && <span>ASKOXY.AI</span>}
+              </a>
+
+              {/* Bharat AI Store */}
+              <a
+                href="/bharath-aistore"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
+                title="Bharat AI Store"
+              >
+                <GiElephantHead className="h-5 w-5" />
+                {(!isCollapsed || isXs) && <span>Bharat AI Store</span>}
+              </a>
+
+              {/* Search */}
+              {isCollapsed && !isXs ? (
+                <button
+                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={() => setSidebarOpen(true)}
+                  title="Search"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <div className="relative w-full">
+                  <input
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    placeholder="Search chats"
+                    className="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pr-10 pl-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <svg
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* History List */}
+            {/* History List - Updated: Added highlighting for current chat, date display, and ChatGPT-like styling */}
+            <div className="px-2 pb-24 overflow-y-auto h-[calc(100vh-56px-48px-64px-56px)]">
+              {!isCollapsed || isXs ? (
+                <>
+                  <div className="p-3 space-y-3 text-xs text-gray-500">
+                    Chat History
+                  </div>
+                  {filteredHistory.length === 0 ? (
+                    <div className="text-xs text-gray-500 px-2 py-8">
+                      No chats yet.
+                    </div>
+                  ) : (
+                    <ul className="space-y-1">
+                      {filteredHistory.map((h) => (
+                        <li key={h.id} className="group">
+                          <button
+                            className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${
+                              h.id === currentChatId
+                                ? "bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500"
+                                : ""
+                            }`}
+                            onClick={() => openHistoryChat(h.id)}
+                            title={h.title}
+                          >
+                            <div className="flex flex-col flex-1 min-w-0 pt-1">
+                              <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {h.title}
+                              </span>
+                              {/* <span className="truncate text-xs text-gray-500">
+                                {formatDate(h.createdAt)}
+                              </span> */}
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <ul className="space-y-2 mt-3">
+                  {filteredHistory.map((h) => (
+                    <li key={h.id} className="flex justify-center">
+                      <button
+                        className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${
+                          h.id === currentChatId
+                            ? "ring-2 ring-blue-500 ring-inset"
+                            : ""
+                        }`}
+                        title={h.title}
+                        onClick={() => openHistoryChat(h.id)}
+                      >
+                        {(h.title || "?").trim().charAt(0).toUpperCase()}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* ---------- FOOTER (FIXED LOGOUT BUTTON) ---------- */}
+            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2">
+              <button
                 onClick={handleLogout}
-                title="Log out"
-                aria-label="Log out"
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition"
               >
                 <LogOut className="w-4 h-4" />
                 {(!isCollapsed || isXs) && (
@@ -1868,9 +2054,13 @@ const AssistantDetails: React.FC = () => {
                   <textarea
                     rows={1}
                     className="flex-1 min-w-0 bg-transparent outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-700 dark:text-white max-h-32 overflow-y-auto resize-y"
-                    placeholder={"Ask anything..."}
+                    placeholder={
+                      loading
+                        ? "Generating reply, please wait..."
+                        : "Ask anything..."
+                    }
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={(e) => !loading && setInput(e.target.value)} // ✅ Prevent typing when loading
                     onKeyDown={handleKeyDown}
                     disabled={loading}
                   />
