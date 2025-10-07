@@ -191,7 +191,7 @@ const AllAgentsPage: React.FC = () => {
     const id = getUserId();
     return id && id !== "null" && id !== "undefined" ? id : "";
   }, []);
-  const gotoStore = () => navigate("/bharat-expert");
+  const gotoStore = () => navigate("/main/bharat-expert");
 
   useEffect(() => {
     (async () => {

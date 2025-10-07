@@ -14,7 +14,7 @@ import Logo5 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_29_20 AM.png";
 import Logo6 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_14 AM.png";
 import Logo7 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_50 AM.png";
 import Logo8 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_34_01 AM.png";
-import Logo9 from "../../assets/img/Askoxy_resized.png";
+
 // ---------- Types ----------
 interface Assistant {
   id: string;
@@ -83,7 +83,6 @@ const STATIC_ASSISTANTS: Assistant[] = [
     image: Logo2,
     link: "/genoxy",
   },
-
   {
     id: "3",
     object: "assistant",
@@ -213,21 +212,21 @@ const STATIC_ASSISTANTS: Assistant[] = [
 ];
 
 // ---------- Skeleton Loader ----------
-const AssistantSkeleton: React.FC = () => {
-  return (
-    <div className="animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden">
-      <div className="w-full h-40 bg-gray-200" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-3 bg-gray-200 rounded w-full" />
+const AssistantSkeleton: React.FC = () => (
+  <div className="animate-pulse bg-white rounded-2xl shadow-sm ring-1 ring-gray-200 overflow-hidden flex flex-col h-full">
+    <div className="h-40 bg-gray-200" />
+    <div className="p-4 flex-1 flex flex-col justify-between">
+      <div>
+        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+        <div className="h-3 bg-gray-200 rounded w-full mb-1" />
         <div className="h-3 bg-gray-200 rounded w-5/6" />
-        <div className="h-8 bg-gray-300 rounded mt-3" />
       </div>
+      <div className="h-8 bg-gray-300 rounded mt-4" />
     </div>
-  );
-};
+  </div>
+);
 
-// ---------- Card Component (with outer glow wrapper) ----------
+// ---------- Card ----------
 const AssistantCard: React.FC<{
   assistant: Assistant;
   index: number;
@@ -235,11 +234,9 @@ const AssistantCard: React.FC<{
 }> = ({ assistant, index, q }) => {
   const navigate = useNavigate();
   const seed = assistant.name || `A${index}`;
-  const badge =
-    (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
+  const badge = assistant.metadata?.category || "Tools";
 
   return (
-    // OUTER WRAPPER → holds the glow (not clipped)
     <div
       role="button"
       tabIndex={0}
@@ -247,69 +244,47 @@ const AssistantCard: React.FC<{
       onKeyDown={(e) =>
         e.key === "Enter" || e.key === " " ? navigate(assistant.link) : null
       }
-      className={[
-        "relative group cursor-pointer rounded-2xl",
-        // subtle animated glow
-        "shadow-purple-400/60",
-        "after:absolute after:-inset-[2px] after:rounded-2xl after:content-[''] after:-z-10",
-        "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)]",
-        "after:pointer-events-none after:animate-pulse",
-        "transition-transform hover:-translate-y-0.5",
-      ].join(" ")}
-      aria-label={`Open ${assistant.name}`}
+      className="group relative cursor-pointer flex flex-col rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:-translate-y-1 transition-transform duration-200 overflow-hidden h-full"
     >
-      {/* INNER CARD → can clip content cleanly */}
-      <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:bg-gray-50 transition overflow-hidden">
-        <div className="relative w-full">
-          <div
-            className={`h-0 w-full pb-[56%] bg-gradient-to-br ${gradientFor(
-              seed
-            )} overflow-hidden`}
-            aria-hidden="true"
-          >
-            <img
-              src={assistant.image}
-              alt={`${assistant.name} thumbnail`}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
-            <Bot className="h-6 w-6 text-purple-700" />
-          </div>
+      {/* Image Section */}
+      <div
+        className={`relative h-44 w-full bg-gradient-to-br ${gradientFor(
+          seed
+        )}`}
+      >
+        <img
+          src={assistant.image}
+          alt={`${assistant.name} thumbnail`}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+
+      {/* Content Section */}
+      <div className="flex flex-col justify-between flex-1 p-4">
+        <div>
+          <h3 className="font-semibold text-base text-gray-900 mb-1">
+            <Highlighter text={assistant.name} query={q} />
+          </h3>
+          <p className="text-sm text-gray-600 line-clamp-3">
+            <Highlighter text={assistant.description} query={q} />
+          </p>
         </div>
 
-        <div className="pt-8 px-4 pb-4">
-          <div className="flex items-start justify-between gap-3">
-            {/* Left: Name + Description */}
-            <div className="min-w-0">
-              <h3 className="font-semibold text-[15px] text-gray-900">
-                <Highlighter text={assistant.name || ""} query={q} />
-              </h3>
-              <p className="text-[13px] text-gray-600 line-clamp-3 mt-0.5">
-                <Highlighter text={assistant.description || ""} query={q} />
-              </p>
-            </div>
-
-            {/* Right: Badge + Button in same row */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
-                <Shield className="h-3.5 w-3.5" />
-                {badge}
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(assistant.link);
-                }}
-                className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-3 py-1.5 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
-                aria-label={`Open ${assistant.name}`}
-              >
-                View
-              </button>
-            </div>
-          </div>
+        <div className="mt-4 flex items-center justify-between">
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 border border-gray-200 text-gray-700 px-2 py-0.5 text-[11px]">
+            <Shield className="h-3.5 w-3.5" />
+            {badge}
+          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(assistant.link);
+            }}
+            className="rounded-lg bg-purple-600 px-3 py-1.5 text-white text-xs font-semibold hover:bg-purple-700 transition"
+          >
+            View
+          </button>
         </div>
       </div>
     </div>
@@ -329,28 +304,28 @@ const AiResources: React.FC = () => {
   const filteredAssistants = useMemo(() => {
     const term = (q || "").trim().toLowerCase();
     if (!term) return STATIC_ASSISTANTS;
-    return STATIC_ASSISTANTS.filter((a) => {
-      const name = a.name?.toLowerCase() || "";
-      const desc = a.description?.toLowerCase() || "";
-      return name.includes(term) || desc.includes(term);
-    });
+    return STATIC_ASSISTANTS.filter(
+      (a) =>
+        a.name.toLowerCase().includes(term) ||
+        a.description.toLowerCase().includes(term)
+    );
   }, [q]);
 
   return (
-    <div className="bg-white">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-            AI Initiatives
-          </h2>
-          <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
+    <div className="bg-white min-h-screen">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* ---- Header Section (Left-Aligned) ---- */}
+        <div className="mb-8 text-left">
+          <h2 className="text-3xl font-bold text-gray-900">AI Initiatives</h2>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Explore our curated AI initiatives.
           </p>
         </div>
 
+        {/* ---- Card Grid (One Row - 4 Cards) ---- */}
         {loading ? (
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
+          <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr">
+            {Array.from({ length: 9 }).map((_, i) => (
               <AssistantSkeleton key={i} />
             ))}
           </div>
@@ -363,8 +338,8 @@ const AiResources: React.FC = () => {
             <p className="text-gray-600">Try a different search term.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-6">
-            {filteredAssistants.map((assistant, index) => (
+          <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr">
+            {filteredAssistants.slice(0, 9).map((assistant, index) => (
               <AssistantCard
                 key={assistant.id}
                 assistant={assistant}
@@ -380,3 +355,4 @@ const AiResources: React.FC = () => {
 };
 
 export default AiResources;
+

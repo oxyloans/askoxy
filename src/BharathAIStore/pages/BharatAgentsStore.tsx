@@ -60,7 +60,7 @@ interface PaginationState {
 const apiClient = axios.create({ baseURL: BASE_URL });
 
 async function getAssistants(
-  limit = 50,
+limit = 100,
   after?: string
 ): Promise<AssistantsResponse> {
   const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
@@ -437,6 +437,7 @@ const BharatAgentsStore: React.FC = () => {
     setShowHero((prev) => !prev);
   };
 
+  // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
     pageSize: 100,
     hasMore: true,
@@ -492,27 +493,27 @@ const BharatAgentsStore: React.FC = () => {
   //   }
   // };
 
- const handleLogin = () => {
-   try {
-     setLoading(true);
- 
-     const userId = localStorage.getItem("userId");
-     const redirectPath = "/main/bharat-expert";
- 
-     if (userId) {
-       navigate(redirectPath);
-     } else {
-       sessionStorage.setItem("redirectPath", redirectPath);
-       sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
-       // Pass primaryType as query parameter
-       window.location.href = "/whatsappregister?primaryType=AGENT";
-     }
-   } catch (error) {
-     console.error("Sign in error:", error);
-   } finally {
-     setLoading(false);
-   }
- };
+  const handleLogin = () => {
+    try {
+      setLoading(true);
+
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/bharat-expert";
+
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
+        // Pass primaryType as query parameter
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
@@ -524,6 +525,7 @@ const BharatAgentsStore: React.FC = () => {
           const merged = isLoadMore
             ? [...prev, ...response.data]
             : response.data;
+          // ✅ Deduplicate by ID to avoid duplicates on load more
           const byId = new Map<string, Assistant>();
           for (const a of merged) {
             const key = a.assistantId || a.id || a.agentId || "";
@@ -532,6 +534,7 @@ const BharatAgentsStore: React.FC = () => {
           return Array.from(byId.values());
         });
 
+        // ✅ Set next cursor for subsequent loads
         const nextCursor =
           response.lastId ||
           response.data[response.data.length - 1]?.assistantId ||
@@ -539,11 +542,10 @@ const BharatAgentsStore: React.FC = () => {
           response.data[response.data.length - 1]?.agentId ||
           undefined;
 
-        const pageFull = response.data.length >= pagination.pageSize;
-
+        // ✅ Use API's has_more directly for accurate pagination control
         setPagination((prev) => ({
           ...prev,
-          hasMore: Boolean(response.has_more ?? pageFull),
+          hasMore: response.has_more, // ✅ Fixed: Rely on API's has_more flag
           firstId: response.firstId ?? prev.firstId,
           lastId: nextCursor ?? prev.lastId,
           total: isLoadMore
@@ -903,10 +905,13 @@ const BharatAgentsStore: React.FC = () => {
             </div>
 
             {/* Load more only in non-search list */}
+            {/* Load more only in non-search list */}
             {!isSearching && (
               <div className="text-center mt-10 sm:mt-12">
+                {/* ✅ Updated: Pass pagination.lastId as 'after' to fetch next batch after last loaded item */}
+                {/* Button disabled when !hasMore or loading; shows "All results loaded" when end reached */}
                 <button
-                  onClick={() => fetchAssistants(pagination.lastId, true)}
+                  onClick={() => fetchAssistants(pagination.lastId, true)} // ✅ Pass lastId as after for next page
                   disabled={!pagination.hasMore || loading}
                   className="inline-flex items-center gap-2 px-8 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
                 >
