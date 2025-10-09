@@ -1,8 +1,8 @@
 import { useCallback, useState, useEffect } from "react";
+import Papa from "papaparse";
 import BASE_URL from "../../Config";
 import { Message } from "../types/types";
 import axios from "axios";
-import { message } from "antd";
 import { LanguageConfig, ChatMessage } from "../types/types";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -328,295 +328,20 @@ export const useMessages = ({
   return { handleSend, handleEdit, handleFileUpload };
 };
 
-// class VoiceSessionService {
-//   private peerConnection: RTCPeerConnection | null = null;
-//   private micStream: MediaStream | null = null;
-//   private recognition: any = null;
-//   private dataChannel: RTCDataChannel | null = null;
-//   private sessionTimeoutId: number | null = null;
-
-//   async getEphemeralToken(
-//     instructions: string,
-//     assistantId: string,
-//     voicemode: string
-//   ): Promise<string> {
-//     try {
-//       const res = await fetch(
-//         `${BASE_URL}/student-service/user/token?assistantId=${assistantId}&voicemode=${voicemode}`,
-//         {
-//           method: "POST",
-//           headers: {
-//             Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-//             "Content-Type": "application/json",
-//           },
-//           body: JSON.stringify({ instructions }),
-//         }
-//       );
-//       const data = await res.json();
-//       return data.client_secret.value;
-//     } catch (error) {
-//       console.error("Failed to get ephemeral token:", error);
-//       throw error;
-//     }
-//   }
-
-//   async startSession(
-//     assistantId: string,
-//     selectedLanguage: LanguageConfig,
-//     selectedInstructions: string,
-//     onMessage: (message: ChatMessage) => void,
-//     onAssistantSpeaking: (speaking: boolean) => void,
-//     navigate: (path: string) => void,
-//     voicemode: string
-//   ): Promise<RTCDataChannel> {
-//     try {
-//       const EPHEMERAL_KEY = await this.getEphemeralToken(
-//         selectedInstructions,
-//         assistantId,
-//         voicemode
-//       );
-
-//       const pc = new RTCPeerConnection();
-//       this.peerConnection = pc;
-
-//       const audioEl = document.createElement("audio");
-//       audioEl.autoplay = true;
-//       pc.ontrack = (e) => {
-//         audioEl.srcObject = e.streams[0];
-//       };
-
-//       this.micStream = await navigator.mediaDevices.getUserMedia({
-//         audio: true,
-//       });
-//       pc.addTrack(this.micStream.getTracks()[0]);
-
-//       const dc = pc.createDataChannel("oai-events");
-//       this.dataChannel = dc;
-
-//       const offer = await pc.createOffer();
-//       await pc.setLocalDescription(offer);
-
-//       const model = "gpt-4o-realtime-preview-2025-06-03";
-//       const sdpRes = await fetch(
-//         `https://api.openai.com/v1/realtime?model=${model}`,
-//         {
-//           method: "POST",
-//           body: offer.sdp,
-//           headers: {
-//             Authorization: `Bearer ${EPHEMERAL_KEY}`,
-//             "Content-Type": "application/sdp",
-//           },
-//         }
-//       );
-//       const answer: RTCSessionDescriptionInit = {
-//         type: "answer",
-//         sdp: await sdpRes.text(),
-//       };
-//       await pc.setRemoteDescription(answer);
-
-//       this.setupSpeechRecognition(selectedLanguage, onMessage);
-//       this.setupDataChannelHandlers(
-//         dc,
-//         onMessage,
-//         onAssistantSpeaking,
-//         assistantId
-//       );
-
-//       // this.sessionTimeoutId = window.setTimeout(() => {
-//       //   console.log("⏰ Session auto-expired after 80s");
-//       //   message.info(
-//       //     "⏳ Your free voice session has ended. Upgrade to Premium to continue unlimited conversations!"
-//       //   );
-//       //   navigate("/voiceAssistant");
-//       //   this.stopSession();
-//       // }, 80 * 1000);
-
-//       return dc;
-//     } catch (error) {
-//       console.error("Failed to start session:", error);
-//       throw error;
-//     }
-//   }
-
-//   private setupSpeechRecognition(
-//     selectedLanguage: LanguageConfig,
-//     onMessage: (message: ChatMessage) => void
-//   ) {
-//     const SpeechRecognition =
-//       (window as any).SpeechRecognition ||
-//       (window as any).webkitSpeechRecognition;
-//     if (!SpeechRecognition) return;
-
-//     const recognition = new SpeechRecognition();
-//     recognition.lang = selectedLanguage.speechLang;
-//     recognition.continuous = true;
-//     recognition.interimResults = false;
-
-//     recognition.onresult = (event: any) => {
-//       const transcript =
-//         event.results[event.results.length - 1][0].transcript.trim();
-//       if (transcript) {
-//         const msg: ChatMessage = {
-//           role: "user",
-//           text: transcript,
-//           timestamp: new Date().toLocaleTimeString(),
-//         };
-//         onMessage(msg);
-//         // this.sendMessage(transcript);
-//       }
-//     };
-
-//     recognition.onerror = (e: any) =>
-//       console.error("Speech recognition error:", e);
-//     recognition.onend = () => {
-//       if (this.dataChannel) recognition.start();
-//     };
-
-//     recognition.start();
-//     this.recognition = recognition;
-//   }
-
-//   private setupDataChannelHandlers(
-//     dc: RTCDataChannel,
-//     onMessage: (message: ChatMessage) => void,
-//     onAssistantSpeaking: (speaking: boolean) => void,
-//     assistantId: string
-//   ) {
-//     let buffer = "";
-
-//     dc.onmessage = async (e) => {
-//       try {
-//         const event = JSON.parse(e.data);
-
-//         // Session started
-//         if (event.status === "session_started") {
-//           console.log("✅ Realtime session started");
-//           return;
-//         }
-
-//         // Assistant typing
-//         if (event.type === "response.output_text.delta" && event.delta) {
-//           buffer += event.delta;
-//           onAssistantSpeaking(true);
-//           onMessage({
-//             role: "assistant",
-//             text: buffer,
-//             timestamp: new Date().toLocaleTimeString(),
-//           });
-//         }
-
-//         // Audio streaming
-//         if (event.type === "response.audio.delta") {
-//           onAssistantSpeaking(true);
-//         }
-
-//         // Assistant finished
-//         if (event.type === "response.stop") {
-//           onAssistantSpeaking(false);
-//           buffer = "";
-//         }
-
-//         // Tool call from assistant
-//         if (event.type === "response.required_action") {
-//           const requiredAction = event.response.required_action;
-//           if (requiredAction.type === "submit_tool_outputs") {
-//             const toolCalls = requiredAction.submit_tool_outputs.tool_calls;
-//             for (const toolCall of toolCalls) {
-//               const functionName = toolCall.function.name;
-//               if (functionName === "get_detailed_info") {
-//                 const args = JSON.parse(toolCall.function.arguments);
-//                 const query = args.query;
-//                 await this.handleToolCall(toolCall.id, query, assistantId);
-//               }
-//             }
-//           }
-//         }
-//       } catch (err) {
-//         console.error("Failed to parse assistant event:", err, e.data);
-//       }
-//     };
-
-//     dc.onopen = () => console.log("Data channel opened ✅");
-//   }
-
-//   sendMessage(text: string) {
-//     if (!this.dataChannel) return;
-//     const event = {
-//       type: "conversation.item.create",
-//       item: {
-//         type: "message",
-//         role: "user",
-//         content: [{ type: "input_text", text }],
-//       },
-//     };
-//     this.dataChannel.send(JSON.stringify(event));
-//     this.dataChannel.send(JSON.stringify({ type: "response.create" }));
-//   }
-
-//   private async handleToolCall(
-//     toolCallId: string,
-//     query: string,
-//     assistantId: string
-//   ) {
-//     try {
-//       console.log("comparing-------");
-
-//       const res = await fetch(
-//         `${BASE_URL}/student-service/user/askquestion?assistantId=${assistantId}`,
-//         {
-//           method: "POST",
-//           headers: { "Content-Type": "application/json" },
-//           body: JSON.stringify({
-//             messages: [
-//               {
-//                 role: "user",
-//                 content: query,
-//               },
-//             ],
-//           }),
-//         }
-//       );
-//       const toolOutput = await res.json();
-
-//       const submitJson = {
-//         type: "response.submit_tool_outputs",
-//         response_id: toolCallId,
-//         tool_outputs: [{ tool_call_id: toolCallId, output: toolOutput.answer }],
-//       };
-
-//       this.dataChannel?.send(JSON.stringify(submitJson));
-//       console.log("✅ Tool output submitted back to assistant");
-//     } catch (err) {
-//       console.error("Failed to handle tool call:", err);
-//     }
-//   }
-
-//   // 7️⃣ Stop session
-//   stopSession() {
-//     if (this.sessionTimeoutId !== null) {
-//       clearTimeout(this.sessionTimeoutId);
-//       this.sessionTimeoutId = null;
-//     }
-
-//     this.dataChannel?.close();
-//     this.micStream?.getTracks().forEach((t) => t.stop());
-//     this.peerConnection?.close();
-//     (this.recognition as any)?.stop();
-//     this.dataChannel = null;
-//     this.micStream = null;
-//     this.peerConnection = null;
-//     this.recognition = null;
-//   }
-// }
-
-// export const voiceSessionService = new VoiceSessionService();
-
 class VoiceSessionService {
   private peerConnection: RTCPeerConnection | null = null;
   private micStream: MediaStream | null = null;
   private recognition: any = null;
   private dataChannel: RTCDataChannel | null = null;
   private sessionTimeoutId: number | null = null;
+
+  private fileUrl: string | null = null;
+  private fileContent: any[] | null = null;
+  private dataUploaded: boolean = false;
+
+  constructor(fileUrl?: string) {
+    if (fileUrl) this.fileUrl = fileUrl;
+  }
 
   async getEphemeralToken(
     instructions: string,
@@ -625,7 +350,7 @@ class VoiceSessionService {
   ): Promise<string> {
     try {
       const res = await fetch(
-        `${BASE_URL}/student-service/user/token?assistantId=${assistantId}&voicemode=${voicemode}`,
+        `${BASE_URL}/student-service/user/voicetoken?assistantId=${assistantId}&voicemode=${voicemode}`,
         {
           method: "POST",
           headers: {
@@ -640,6 +365,47 @@ class VoiceSessionService {
     } catch (error) {
       console.error("Failed to get ephemeral token:", error);
       throw error;
+    }
+  }
+
+  public async fetchFileContent(): Promise<any[]> {
+    if (!this.fileUrl) return [];
+
+    // Your sheet GIDs
+    const sheetGIDs = [
+      "0",
+      "1427934623",
+      "1411153632",
+      "1170071782",
+      "1461294814",
+      "374851585",
+      "1266860599",
+      "868260221",
+      "1286876298",
+      "1244878989",
+    ];
+
+    try {
+      const spreadsheetIdMatch = this.fileUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (!spreadsheetIdMatch) throw new Error("Invalid Google Sheet URL");
+      const spreadsheetId = spreadsheetIdMatch[1];
+
+      const allData: any[] = [];
+
+      for (const gid of sheetGIDs) {
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+        allData.push(...(parsed.data as any[]));
+      }
+
+      this.fileContent = allData;
+      console.log("📄 Fetched all sheets data:", this.fileContent);
+      return this.fileContent;
+    } catch (err) {
+      console.error("Error fetching sheets:", err);
+      return [];
     }
   }
 
@@ -662,28 +428,35 @@ class VoiceSessionService {
       const pc = new RTCPeerConnection();
       this.peerConnection = pc;
 
+      // 🔊 Incoming audio from assistant
       const audioEl = document.createElement("audio");
       audioEl.autoplay = true;
-      pc.ontrack = (e) => {
-        audioEl.srcObject = e.streams[0];
-      };
+      pc.ontrack = (e) => (audioEl.srcObject = e.streams[0]);
 
-      // ✅ Add noise suppression + echo cancellation
+      // 🎙️ Microphone input
       this.micStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1, // mono is enough for voice
-          sampleRate: 48000, // improve clarity
-        },
+        audio: true,
       });
-
       pc.addTrack(this.micStream.getTracks()[0]);
 
+      // 📡 Data channel for tool calls and events
       const dc = pc.createDataChannel("oai-events");
       this.dataChannel = dc;
 
+      dc.addEventListener("open", () => {
+        console.log("🟢 Data channel opened");
+        this.configureSessionTools();
+      });
+
+      this.setupDataChannelHandlers(
+        dc,
+        onMessage,
+        onAssistantSpeaking,
+        assistantId
+      );
+      this.setupSpeechRecognition(selectedLanguage, onMessage);
+
+      // Create and send SDP offer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -699,14 +472,17 @@ class VoiceSessionService {
           },
         }
       );
+
       const answer: RTCSessionDescriptionInit = {
         type: "answer",
         sdp: await sdpRes.text(),
       };
       await pc.setRemoteDescription(answer);
 
-      this.setupSpeechRecognition(selectedLanguage, onMessage);
-      this.setupDataChannelHandlers(dc, onMessage, onAssistantSpeaking);
+      // Preload file data
+      if (!this.fileContent && this.fileUrl) {
+        await this.fetchFileContent();
+      }
 
       return dc;
     } catch (error) {
@@ -715,6 +491,38 @@ class VoiceSessionService {
     }
   }
 
+  // -------------------- Configure single tool --------------------
+  private configureSessionTools() {
+    if (!this.dataChannel) return;
+    const event = {
+      type: "session.update",
+      session: {
+        modalities: ["text", "audio"],
+        tools: [
+          {
+            type: "function",
+            name: "getProductDetails",
+            description:
+              "Retrieves product details from uploaded CSV file by name",
+            parameters: {
+              type: "object",
+              properties: {
+                query: {
+                  type: "string",
+                  description: "Product name or keyword to search in CSV file",
+                },
+              },
+              required: ["query"],
+            },
+          },
+        ],
+      },
+    };
+    this.dataChannel.send(JSON.stringify(event));
+    console.log("🧩 Registered single tool: getProductDetails");
+  }
+
+  // -------------------- Speech recognition --------------------
   private setupSpeechRecognition(
     selectedLanguage: LanguageConfig,
     onMessage: (message: ChatMessage) => void
@@ -732,9 +540,7 @@ class VoiceSessionService {
     recognition.onresult = (event: any) => {
       const transcript =
         event.results[event.results.length - 1][0].transcript.trim();
-
-      // ✅ Ignore very short/noisy transcripts (basic noise filter)
-      if (transcript && transcript.length > 2) {
+      if (transcript) {
         const msg: ChatMessage = {
           role: "user",
           text: transcript,
@@ -754,48 +560,141 @@ class VoiceSessionService {
     this.recognition = recognition;
   }
 
+  // -------------------- Handle assistant messages --------------------
   private setupDataChannelHandlers(
     dc: RTCDataChannel,
     onMessage: (message: ChatMessage) => void,
-    onAssistantSpeaking: (speaking: boolean) => void
+    onAssistantSpeaking: (speaking: boolean) => void,
+    assistantId: string
   ) {
-    let buffer = "";
+    let pendingArgs: Record<string, string> = {};
 
     dc.onmessage = async (e) => {
       try {
         const event = JSON.parse(e.data);
 
-        if (event.status === "session_started") {
-          console.log("✅ Realtime session started");
-          return;
+        // 🧩 Function call argument chunks
+        if (event.type === "response.function_call_arguments.delta") {
+          if (!pendingArgs[event.call_id]) pendingArgs[event.call_id] = "";
+          pendingArgs[event.call_id] += event.delta;
         }
 
-        if (event.type === "response.output_text.delta" && event.delta) {
-          buffer += event.delta;
-          onAssistantSpeaking(true);
-          onMessage({
-            role: "assistant",
-            text: buffer,
-            timestamp: new Date().toLocaleTimeString(),
-          });
-        }
+        // ✅ Complete function call
+        if (event.type === "response.function_call_arguments.done") {
+          const callId = event.call_id;
+          const responseId = event.response_id;
+          const fnName = event.name || "getProductDetails";
 
-        if (event.type === "response.audio.delta") {
-          onAssistantSpeaking(true);
-        }
+          console.log(`📞 Function call received: ${fnName}`);
 
-        if (event.type === "response.stop") {
-          onAssistantSpeaking(false);
-          buffer = "";
+          const args = JSON.parse(pendingArgs[callId] || "{}");
+          console.log("🔧 Arguments parsed:", args);
+
+          const result = await this.handleToolCall(args.query);
+
+          // Send result back to assistant
+          const outputEvent = {
+            type: "conversation.item.create",
+            item: {
+              type: "function_call_output",
+              call_id: callId,
+              output: JSON.stringify(result),
+            },
+          };
+
+          dc.send(JSON.stringify(outputEvent));
+          dc.send(JSON.stringify({ type: "response.create" }));
+
+          delete pendingArgs[callId];
         }
       } catch (err) {
-        console.error("Failed to parse assistant event:", err, e.data);
+        console.error("Failed to parse assistant message:", err, e.data);
       }
     };
-
-    dc.onopen = () => console.log("Data channel opened ✅");
   }
 
+  private async handleToolCall(query: string) {
+    console.log("🔹 Tool call triggered with query:", query);
+
+    try {
+      if (!this.fileContent || this.fileContent.length === 0) {
+        await this.fetchFileContent();
+      }
+
+      const normalizedQuery = query.toLowerCase().trim();
+      const queryWords = normalizedQuery.split(/\s+/);
+      const brandAliases: Record<string, string[]> = {
+        lenovo: ["len", "lenovo"],
+        dell: ["dell"],
+        hp: ["hp", "hewlett-packard"],
+        acer: ["acer"],
+        samsung: ["samsung", "sam"],
+        oppo: ["oppo"],
+        motorola: ["motorola", "moto"],
+        apple: ["apple", "iphone"],
+        vivo: ["vivo"],
+      };
+
+      const commonWords = [
+        "mobile",
+        "mobiles",
+        "phone",
+        "phones",
+        "smartphone",
+        "smartphones",
+        "look",
+        "for",
+        "find",
+        "show",
+      ];
+
+      // All columns that may contain product info
+
+      const filteredQueryWords = queryWords.filter(
+        (word) => !commonWords.includes(word)
+      );
+      // Convert user query words to full brand names if they match an alias
+      const normalizeBrand = (word: string): string => {
+        word = word.toLowerCase();
+        for (const [brand, aliases] of Object.entries(brandAliases)) {
+          if (aliases.includes(word)) return brand;
+        }
+        return word;
+      };
+
+      const normalizedQueryWords = filteredQueryWords.map(normalizeBrand);
+
+      const matches =
+        this.fileContent?.filter((row) => {
+          const combinedText = Object.values(row)
+            .map((v) => v?.toString().toLowerCase() || "")
+            .join(" ");
+
+          if (!combinedText.trim()) return false;
+
+          // Check if all normalized query words exist in combined text (partial match)
+          return normalizedQueryWords.every((word) => {
+            const rowWords = combinedText.split(/\s+/);
+            return rowWords.some((rw) => rw.includes(word));
+          });
+        }) || [];
+
+      const topMatches = matches.slice(0, 10);
+
+      if (topMatches.length === 0) {
+        console.log("⚠️ No matching products found");
+        return { text: "Product not available" };
+      }
+
+      console.log("✅ Matching products found:", topMatches);
+      return { products: topMatches };
+    } catch (error) {
+      console.error("❌ Error handling tool call:", error);
+      return { text: "Error occurred while fetching product details" };
+    }
+  }
+
+  // -------------------- Send user text --------------------
   sendMessage(text: string) {
     if (!this.dataChannel) return;
     const event = {
@@ -810,12 +709,9 @@ class VoiceSessionService {
     this.dataChannel.send(JSON.stringify({ type: "response.create" }));
   }
 
+  // -------------------- Stop session --------------------
   stopSession() {
-    if (this.sessionTimeoutId !== null) {
-      clearTimeout(this.sessionTimeoutId);
-      this.sessionTimeoutId = null;
-    }
-
+    if (this.sessionTimeoutId !== null) clearTimeout(this.sessionTimeoutId);
     this.dataChannel?.close();
     this.micStream?.getTracks().forEach((t) => t.stop());
     this.peerConnection?.close();
@@ -824,7 +720,10 @@ class VoiceSessionService {
     this.micStream = null;
     this.peerConnection = null;
     this.recognition = null;
+    this.dataUploaded = false;
   }
 }
 
-export const voiceSessionService = new VoiceSessionService();
+export const voiceSessionService = new VoiceSessionService(
+  "https://docs.google.com/spreadsheets/d/1LOPzkaogUk3VenBt0A3-OiMHNzO8oXoodLkbXgpOeoE/export?format=csv"
+);

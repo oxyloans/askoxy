@@ -33,7 +33,7 @@ import ProductImg1 from "../assets/img/ricecard1.png";
 
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 
-import O8 from "../assets/img/zeeba.png";
+import O8 from "../assets/img/aitemplate.png";
 
 import O5 from "../assets/img/cashewoffer1.png";
 import O6 from "../assets/img/35kg1.png";
@@ -678,6 +678,15 @@ const Home: React.FC = () => {
 
   const headerImages: HeaderImage[] = [
     {
+      id: "Agent Create",
+      src: O8,
+      alt: "Agent Create",
+      path: "/main/bharat-expert",
+      onClick: () => {
+        navigate("/main/bharat-expert");
+      },
+    },
+    {
       id: "Cashback1",
       src: CB,
       alt: "Cashback Offer",
@@ -722,15 +731,6 @@ const Home: React.FC = () => {
       path: "/main/dashboard/products?weight=26.0",
       onClick: () => {
         navigate("/main/dashboard/products?type=RICE&weight=26.0");
-      },
-    },
-    {
-      id: "Limited offers",
-      src: O8,
-      alt: "Limited Offers",
-      path: "/main/dashboard/products?category=RICE",
-      onClick: () => {
-        navigate("/main/dashboard/products?category=LIMITED TIME DEAL OFFERS");
       },
     },
   ];

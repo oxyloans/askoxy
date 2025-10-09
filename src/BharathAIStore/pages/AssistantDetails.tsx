@@ -57,7 +57,7 @@ interface SpeechRecognition extends EventTarget {
   onend: ((this: SpeechRecognition, ev: Event) => any) | null;
 }
 interface SpeechRecognitionStatic {
-  new (): SpeechRecognition;
+  new(): SpeechRecognition;
 }
 declare global {
   interface Window {
@@ -558,8 +558,8 @@ const AssistantDetails: React.FC = () => {
         roleRaw === "assistant"
           ? "assistant"
           : roleRaw === "system"
-          ? "system"
-          : "user";
+            ? "system"
+            : "user";
 
       let content = (contentMatch?.[1] || "").trim();
 
@@ -737,8 +737,8 @@ const AssistantDetails: React.FC = () => {
           m?.role === "assistant"
             ? "assistant"
             : m?.role === "system"
-            ? "system"
-            : "user";
+              ? "system"
+              : "user";
         const content = String(m?.content ?? m?.text ?? "").trim();
         return { role, content };
       })
@@ -996,11 +996,10 @@ const AssistantDetails: React.FC = () => {
               type="button"
               disabled={readOnly}
               onClick={() => onChange && onChange(s)}
-              className={`p-1 rounded ${
-                readOnly
+              className={`p-1 rounded ${readOnly
                   ? "cursor-default"
                   : "hover:bg-gray-100 dark:hover:bg-gray-600"
-              }`}
+                }`}
               title={`${s} star${s > 1 ? "s" : ""}`}
             >
               <StarIcon
@@ -1092,13 +1091,13 @@ const AssistantDetails: React.FC = () => {
         ) {
           try {
             recognition.stop();
-          } catch {}
+          } catch { }
           // brief restart
           setTimeout(() => {
             if (keepListeningRef.current) {
               try {
                 recognition.start();
-              } catch {}
+              } catch { }
             }
           }, 300);
         } else {
@@ -1113,7 +1112,7 @@ const AssistantDetails: React.FC = () => {
         if (keepListeningRef.current) {
           try {
             recognition.start();
-          } catch {}
+          } catch { }
         }
       };
 
@@ -1131,7 +1130,7 @@ const AssistantDetails: React.FC = () => {
       keepListeningRef.current = false;
       try {
         recognitionRef.current?.stop();
-      } catch {}
+      } catch { }
     };
   }, []);
 
@@ -1203,13 +1202,13 @@ const AssistantDetails: React.FC = () => {
   const sidebarWidth = isXs
     ? "100%"
     : sidebarOpen
-    ? SIDEBAR_WIDTH
-    : SIDEBAR_WIDTH_COLLAPSED;
+      ? SIDEBAR_WIDTH
+      : SIDEBAR_WIDTH_COLLAPSED;
   const leftOffset = isXs
     ? 0
     : sidebarOpen
-    ? SIDEBAR_WIDTH
-    : SIDEBAR_WIDTH_COLLAPSED;
+      ? SIDEBAR_WIDTH
+      : SIDEBAR_WIDTH_COLLAPSED;
   const contentWidth = isXs ? "100%" : `calc(100% - ${sidebarWidth}px)`;
   const overlayVisible = isXs && sidebarOpen;
   const effectiveLeftOffset = userId ? leftOffset : 0;
@@ -1303,9 +1302,8 @@ const AssistantDetails: React.FC = () => {
 
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
-            isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
-          }`}
+          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
+            }`}
           style={{ width: sidebarWidth }}
           aria-label="Chat sidebar"
         >
@@ -1315,9 +1313,8 @@ const AssistantDetails: React.FC = () => {
               <GiElephantHead
                 onClick={() => navigate("/bharath-aistore")}
                 title="Bharat AI Store"
-                className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
-                  !isXs && isCollapsed ? "hidden" : ""
-                }`}
+                className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${!isXs && isCollapsed ? "hidden" : ""
+                  }`}
               />
               <div className="flex items-center gap-1">
                 {/* Mobile close */}
@@ -1352,9 +1349,8 @@ const AssistantDetails: React.FC = () => {
               {/* New Chat */}
               <button
                 onClick={handleNewChat}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
                 title="New Chat"
               >
                 <svg
@@ -1378,9 +1374,8 @@ const AssistantDetails: React.FC = () => {
               {/* Create Agent */}
               <button
                 onClick={() => (window.location.href = "/main/bharat-expert")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
                 title="Create Agent"
               >
                 <svg
@@ -1403,9 +1398,8 @@ const AssistantDetails: React.FC = () => {
               {/* Explore Agents */}
               <button
                 onClick={() => (window.location.href = "/bharath-aistore")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
                 title="Explore Agents"
               >
                 <svg
@@ -1426,11 +1420,8 @@ const AssistantDetails: React.FC = () => {
                 {(!isCollapsed || isXs) && <span>Explore Agents</span>}
               </button>
 
-              {/* ASKOXY.AI */}
-              <a
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
+             <button
+                onClick={() => (window.location.href = "/main/dashboard/home")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
                 }`}
@@ -1438,13 +1429,9 @@ const AssistantDetails: React.FC = () => {
               >
                 <GiLion className="h-5 w-5" />
                 {(!isCollapsed || isXs) && <span>ASKOXY.AI</span>}
-              </a>
-
-              {/* Bharat AI Store */}
-              <a
-                href="/bharath-aistore"
-                target="_blank"
-                rel="noopener noreferrer"
+              </button>{" "}
+              <button
+                onClick={() => (window.location.href = "/bharath-aistore")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
                 }`}
@@ -1452,7 +1439,7 @@ const AssistantDetails: React.FC = () => {
               >
                 <GiElephantHead className="h-5 w-5" />
                 {(!isCollapsed || isXs) && <span>Bharat AI Store</span>}
-              </a>
+              </button>{" "}
 
               {/* Search */}
               {isCollapsed && !isXs ? (
@@ -1514,11 +1501,10 @@ const AssistantDetails: React.FC = () => {
                       {filteredHistory.map((h) => (
                         <li key={h.id} className="group">
                           <button
-                            className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${
-                              h.id === currentChatId
+                            className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${h.id === currentChatId
                                 ? "bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500"
                                 : ""
-                            }`}
+                              }`}
                             onClick={() => openHistoryChat(h.id)}
                             title={h.title}
                           >
@@ -1541,11 +1527,10 @@ const AssistantDetails: React.FC = () => {
                   {filteredHistory.map((h) => (
                     <li key={h.id} className="flex justify-center">
                       <button
-                        className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${
-                          h.id === currentChatId
+                        className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${h.id === currentChatId
                             ? "ring-2 ring-blue-500 ring-inset"
                             : ""
-                        }`}
+                          }`}
                         title={h.title}
                         onClick={() => openHistoryChat(h.id)}
                       >
@@ -1574,11 +1559,10 @@ const AssistantDetails: React.FC = () => {
 
         {/* Overlay */}
         <div
-          className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${
-            overlayVisible
+          className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${overlayVisible
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
-          }`}
+            }`}
           onClick={() => setSidebarOpen(false)}
           aria-hidden
         />
@@ -1672,10 +1656,10 @@ const AssistantDetails: React.FC = () => {
                         countToShow === 1
                           ? "grid-cols-1 max-w-xs"
                           : countToShow === 2
-                          ? "grid-cols-2 max-w-lg"
-                          : countToShow === 3
-                          ? "grid-cols-3 max-w-3xl"
-                          : "grid-cols-4 max-w-5xl";
+                            ? "grid-cols-2 max-w-lg"
+                            : countToShow === 3
+                              ? "grid-cols-3 max-w-3xl"
+                              : "grid-cols-4 max-w-5xl";
                       return (
                         <div className={`grid gap-3 ${colClass} mx-auto`}>
                           {promptsToShow.map((prompt, idx) => (
@@ -1706,17 +1690,17 @@ const AssistantDetails: React.FC = () => {
               hasRated
                 ? []
                 : [
-                    <button
-                      key="submit"
-                      className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                      disabled={
-                        submittingRating || !(myRating && myRating >= 1)
-                      }
-                      onClick={submitMyRating}
-                    >
-                      {submittingRating ? "Submitting..." : "Submit"}
-                    </button>,
-                  ]
+                  <button
+                    key="submit"
+                    className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                    disabled={
+                      submittingRating || !(myRating && myRating >= 1)
+                    }
+                    onClick={submitMyRating}
+                  >
+                    {submittingRating ? "Submitting..." : "Submit"}
+                  </button>,
+                ]
             }
           >
             <div className="space-y-3">
@@ -1775,9 +1759,8 @@ const AssistantDetails: React.FC = () => {
                         msg.role === "user" ? (
                           <div
                             key={idx}
-                            className={`flex mb-3 sm:mb-4 justify-end group relative ${
-                              editingIndex === idx ? "w-full" : ""
-                            }`}
+                            className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${editingIndex === idx ? "w-full" : ""
+                              }`}
                           >
                             {editingIndex === idx ? (
                               <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
@@ -1794,9 +1777,9 @@ const AssistantDetails: React.FC = () => {
                                         onInput={(e) => {
                                           const target =
                                             e.target as HTMLTextAreaElement;
-                                          target.style.height = "auto"; // reset height
+                                          target.style.height = "auto";
                                           target.style.height =
-                                            target.scrollHeight + "px"; // expand to fit content
+                                            target.scrollHeight + "px";
                                         }}
                                         placeholder="Edit your message..."
                                       />
@@ -1827,34 +1810,7 @@ const AssistantDetails: React.FC = () => {
                             ) : (
                               <>
                                 <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative group">
-                                  <div className="flex gap-2">
-                                    <svg
-                                      width="20"
-                                      height="20"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1 flex-shrink-0"
-                                      aria-hidden="true"
-                                    >
-                                      <path
-                                        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      />
-                                      <circle
-                                        cx="12"
-                                        cy="7"
-                                        r="4"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        fill="none"
-                                      />
-                                    </svg>
-                                    <MarkdownRenderer content={msg.content} />
-                                  </div>
+                                  <MarkdownRenderer content={msg.content} />
                                   <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                     <button
                                       onClick={() => {
@@ -1928,20 +1884,48 @@ const AssistantDetails: React.FC = () => {
                                     </button>
                                   </div>
                                 </div>
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white mt-2">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-5 h-5"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                    <circle
+                                      cx="12"
+                                      cy="7"
+                                      r="4"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      fill="none"
+                                    />
+                                  </svg>
+                                </div>
                               </>
                             )}
                           </div>
                         ) : (
                           <div
                             key={idx}
-                            className="flex mb-3 sm:mb-4 justify-start"
+                            className="flex mb-3 sm:mb-4 justify-start gap-2"
                           >
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-400 to-cyan-400 text-white mt-1">
+                              <GiElephantHead className="w-5 h-5" />
+                            </div>
                             <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-                              {/* <GiElephantHead className="w-5 h-5 text-purple-700 dark:text-white shrink-0 mt-1" /> */}
                               <div className="items-start gap-2 flex-1">
                                 <MarkdownRenderer content={msg.content} />
                               </div>
-
                               <div className="flex justify-end gap-2 mt-2">
                                 <button
                                   onClick={() => {
@@ -2017,12 +2001,83 @@ const AssistantDetails: React.FC = () => {
                       )}
                       {loading && (
                         <div className="flex justify-start mb-3 sm:mb-4">
-                          <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 shadow flex items-center gap-2 text-gray-700 dark:text-white">
-                            <Loader2 className="w-5 h-5 animate-spin text-gray-700 dark:text-white" />
-                            <span>Assistant is thinking...</span>
+                          <div className="flex items-center gap-3 px-4 py-3  dark:bg-gray-800 ">
+                            {/* Option 2: Pulse wave */}
+                            <div className="flex items-center gap-1">
+                              <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave"></span>
+                              <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-150"></span>
+                              <span className="w-1 h-8 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-300"></span>
+                              <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-450"></span>
+                              <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-600"></span>
+                            </div>
                           </div>
                         </div>
                       )}
+
+                      <style>
+                        {`
+    /* Typing dots animation */
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
+      30% { transform: translateY(-10px); opacity: 1; }
+    }
+    .animate-typing {
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    /* Pulse wave animation */
+    @keyframes pulse-wave {
+      0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+    .animate-pulse-wave {
+      animation: pulse-wave 1.2s infinite ease-in-out;
+    }
+
+    /* Morphing animation */
+    @keyframes morph {
+      0%, 100% { transform: scale(1); border-radius: 50%; }
+      50% { transform: scale(1.5); border-radius: 30%; }
+    }
+    .animate-morph {
+      animation: morph 1s infinite ease-in-out;
+    }
+
+    /* Spinner dots */
+    @keyframes spin-dots {
+      0% { opacity: 1; transform: scale(1); }
+      50%, 100% { opacity: 0.3; transform: scale(0.5); }
+    }
+    .animate-spin-dots {
+      animation: spin-dots 1.2s infinite ease-in-out;
+    }
+
+    /* Glowing pulse */
+    @keyframes glow-pulse {
+      0%, 100% { 
+        transform: scale(1); 
+        opacity: 1;
+        box-shadow: 0 0 0 0 currentColor;
+      }
+      50% { 
+        transform: scale(1.2); 
+        opacity: 0.8;
+        box-shadow: 0 0 10px 3px currentColor;
+      }
+    }
+    .animate-glow-pulse {
+      animation: glow-pulse 1.5s infinite ease-in-out;
+    }
+
+    /* Delay classes */
+    .animation-delay-150 { animation-delay: 0.15s; }
+    .animation-delay-200 { animation-delay: 0.2s; }
+    .animation-delay-300 { animation-delay: 0.3s; }
+    .animation-delay-400 { animation-delay: 0.4s; }
+    .animation-delay-450 { animation-delay: 0.45s; }
+    .animation-delay-600 { animation-delay: 0.6s; }
+  `}
+                      </style>
                     </>
                   )}
                   <div ref={messagesEndRef} />
@@ -2041,11 +2096,10 @@ const AssistantDetails: React.FC = () => {
                 <div className="w-full max-w-4xl mx-auto flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md px-3 sm:px-5 py-2 sm:py-3 focus-within:ring-2 focus-within:ring-indigo-500 transition">
                   <button
                     onClick={handleVoiceToggle}
-                    className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition ${
-                      isRecording
+                    className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition ${isRecording
                         ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 animate-pulse"
                         : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
-                    }`}
+                      }`}
                     aria-label="Voice input"
                   >
                     <Mic className="w-4 h-4 sm:w-5 sm:h-5" />

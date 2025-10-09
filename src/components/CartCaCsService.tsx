@@ -71,7 +71,7 @@ const CartCaCsService: React.FC = () => {
     try {
       const response = await axios({
         method: "GET",
-        url: `http://meta.oxyloans.com/api/user-service/customerProfileDetails?customerId=${customerId}`,
+        url: `https://meta.oxyloans.com/api/user-service/customerProfileDetails?customerId=${customerId}`,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -347,7 +347,7 @@ const CartCaCsService: React.FC = () => {
       console.log("Placing order with data:", orderData);
 
       const response = await axios.post(
-        "http://meta.oxyloans.com/api/order-service/CACSOrderPlace",
+        "https://meta.oxyloans.com/api/order-service/CACSOrderPlace",
         orderData,
         {
           headers: {

@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
-
+import { Download } from "lucide-react";
 interface Props {
   content: string;
   className?: string;
@@ -67,24 +67,34 @@ const MarkdownRenderer: React.FC<Props> = memo(
       );
     };
 
-    const ImageRenderer = ({
-      src,
-      alt,
-    }: ImgHTMLAttributes<HTMLImageElement>) => (
-      <div className="my-6 flex justify-center">
-        <img
-          src={src || ""}
-          alt={alt || ""}
-          className="max-w-full h-auto rounded-lg border shadow-md dark:border-gray-700"
-          loading="lazy"
-        />
-        {alt && (
-          <p className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400 italic">
-            {alt}
-          </p>
-        )}
-      </div>
-    );
+  const ImageRenderer = ({ src, alt }: ImgHTMLAttributes<HTMLImageElement>) => (
+    <div className="my-4 relative group flex justify-center">
+      <img
+        src={src || ""}
+        alt={alt || ""}
+        className="max-w-full h-auto rounded-lg border shadow-md dark:border-gray-700 max-h-96 object-contain"
+        loading="lazy"
+      />
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (src) {
+            const a = document.createElement("a");
+            a.href = src;
+            a.download = alt || "downloaded-image.png";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        }}
+        className="absolute top-2 right-2 p-1 rounded-full bg-white/90 dark:bg-black/70 hover:bg-white dark:hover:bg-black opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-md"
+        title="Download image"
+      >
+        <Download className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+      </button>
+    </div>
+  );
 
     return (
       <div

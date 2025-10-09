@@ -260,7 +260,7 @@ export default function CAServicesApp() {
       };
 
       const response = await axios.post(
-        "http://meta.oxyloans.com/api/cart-service/cart/add",
+        "https://meta.oxyloans.com/api/cart-service/cart/add",
         payload,
         {
           headers: {

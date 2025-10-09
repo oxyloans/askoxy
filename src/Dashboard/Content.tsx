@@ -59,9 +59,10 @@ const Content1: React.FC = () => {
         }
       } else {
         // Open AI chat by default on desktop
-        if (!isAiChatOpen) {
-          setIsAiChatOpen(true);
-        }
+        // if (!isAiChatOpen) {
+        //   setIsAiChatOpen(true);
+        // }
+          setIsAiChatOpen(false);
       }
     };
 
