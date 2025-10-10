@@ -287,6 +287,27 @@ const CreateAgentWizard: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  // 🧭 Ref to the Instructions editor container (Step 2)
+  const instructionsRef = useRef<HTMLDivElement | null>(null);
+
+  // 🚀 Jump from Step 4 → Step 2 and focus the instructions editor
+  const goToInstructionsFromStep4 = () => {
+    // move to Audience & Configuration step (which contains Instructions)
+    setStep(2);
+
+    // show the current text (do NOT generate)
+    setShowInstructionsModal(false); // make sure modal isn't forced open
+    setTempInstructions(instructions || ""); // preserve previous
+
+    // gently scroll to the editor after the step UI renders
+    setTimeout(() => {
+      instructionsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+  };
+
   // Map UI language -> BCP-47 for SpeechRecognition
   function languageToBCP47(uiLang?: string) {
     const v = (uiLang || "").toLowerCase();
@@ -1969,7 +1990,7 @@ const CreateAgentWizard: React.FC = () => {
             level={3}
             style={{ color: "white", margin: 0, fontWeight: 600 }}
           >
-            Create Your AI Agent
+            {isEditMode ? "Edit Your AI Agent" : "Create Your AI Agent"}
           </Title>
           <Text style={{ color: "rgba(255,255,255,0.9)" }}>
             Build intelligent agents tailored to your expertise
@@ -2592,52 +2613,57 @@ const CreateAgentWizard: React.FC = () => {
                     </div>
                   </Col>
 
-                  {/* Share contact (BEFORE Instructions now) */}
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: 12 }}>
-                      {labelWithInfo(
-                        "Do you want to share Contact Details? *",
-                        "Choose Yes to show your contact."
-                      )}
-                      <Radio.Group
-                        value={shareContact}
-                        onChange={(e) => {
-                          const val = e.target.value as "YES" | "NO";
-                          setShareContact(val);
-                          if (val === "YES") {
-                            const p = profileRef.current || {};
-                            if (!contactDetails) {
-                              const best =
-                                p.mobileNumber ||
-                                p.whatsappNumber ||
-                                p.email ||
-                                "";
-                              if (best) setContactDetails(best);
-                            }
-                            setOpenProfileModal(true);
-                          }
-                        }}
-                      >
-                        <Radio value="YES">Yes</Radio>
-                        <Radio value="NO">No</Radio>
-                      </Radio.Group>
-                      {shareContact === "YES" && (
-                        <Input
-                          value={contactDetails}
-                          onChange={(e) => setContactDetails(e.target.value)}
-                          placeholder="Your best contact (email/phone)"
-                          maxLength={LIMITS.contactMax}
-                          style={compactInputStyle}
-                          suffix={
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {contactDetails.length}/{LIMITS.contactMax}
-                            </Text>
-                          }
-                        />
-                      )}
-                    </div>
-                  </Col>
                   <Row gutter={[16, 12]}>
+                    {/* Share contact (BEFORE Instructions now) */}
+                    <Col xs={24} md={12}>
+                      <div style={{ marginBottom: 12 }}>
+                        {labelWithInfo(
+                          "Do you want to share Contact Details? *",
+                          "Choose Yes to show your contact."
+                        )}
+                        <Radio.Group
+                          value={shareContact}
+                          onChange={(e) => {
+                            const val = e.target.value as "YES" | "NO";
+                            setShareContact(val);
+                            if (val === "YES") {
+                              const p = profileRef.current || {};
+                              if (!contactDetails) {
+                                const best =
+                                  p?.mobileNumber ||
+                                  p?.whatsappNumber ||
+                                  p?.email ||
+                                  "";
+                                if (best) setContactDetails(best);
+                              }
+                              setOpenProfileModal(true);
+                            }
+                          }}
+                        >
+                          <Radio value="YES">Yes</Radio>
+                          <Radio value="NO">No</Radio>
+                        </Radio.Group>
+
+                        {shareContact === "YES" && (
+                          <Input
+                            value={contactDetails}
+                            onChange={(e) => setContactDetails(e.target.value)}
+                            placeholder="Your best contact (email/phone)"
+                            maxLength={LIMITS.contactMax}
+                            style={compactInputStyle}
+                            suffix={
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                {contactDetails.length}/{LIMITS.contactMax}
+                              </Text>
+                            }
+                          />
+                        )}
+                      </div>
+                    </Col>
+
+                    {/* Spacer to keep grid neat on md+ screens */}
+                    <Col xs={24} md={12} />
+
                     {/* Box 1 – Generate */}
                     <Col xs={24} md={12}>
                       <Card
@@ -2647,14 +2673,14 @@ const CreateAgentWizard: React.FC = () => {
                           borderRadius: 8,
                           textAlign: "center",
                           position: "relative",
-                          zIndex: 1, // keeps on top
-                          background: "#fff", // prevents bleed
+                          zIndex: 1,
+                          background: "#fff",
                         }}
                       >
                         <Button
                           onClick={handleGenerate}
                           type="primary"
-                          style={{ ...purpleBtn, marginBottom: 8 }} // ✅ spread fix
+                          style={{ ...purpleBtn, marginBottom: 8 }}
                           loading={loading}
                         >
                           Generate Instructions
@@ -2665,7 +2691,7 @@ const CreateAgentWizard: React.FC = () => {
                       </Card>
                     </Col>
 
-                    {/* Box 2 – Write */}
+                    {/* Box 2 – Write / View */}
                     <Col xs={24} md={12}>
                       <Card
                         style={{
@@ -2674,8 +2700,8 @@ const CreateAgentWizard: React.FC = () => {
                           borderRadius: 8,
                           textAlign: "center",
                           position: "relative",
-                          zIndex: 1, // keeps on top
-                          background: "#fff", // prevents bleed
+                          zIndex: 1,
+                          background: "#fff",
                         }}
                       >
                         <Space
@@ -2685,12 +2711,12 @@ const CreateAgentWizard: React.FC = () => {
                         >
                           <Button
                             onClick={() => {
-                              setTempInstructions(instructions);
+                              // ✅ just open editor with existing text; DO NOT generate
+                              setTempInstructions(instructions || "");
                               setShowInstructionsModal(true);
                             }}
                             type="default"
                             style={{ marginBottom: 8 }}
-                            icon={null}
                           >
                             Write Instructions
                           </Button>
@@ -2719,6 +2745,30 @@ const CreateAgentWizard: React.FC = () => {
             {/* STEP 4 (Publish only) */}
             {step === 3 && (
               <div>
+                {isEditMode && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      marginBottom: 16,
+                    }}
+                  >
+                    <Button
+                      type="primary"
+                      icon={<EditOutlined />}
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
+                        border: "none",
+                        borderRadius: 8,
+                      }}
+                      onClick={goToInstructionsFromStep4} // ✅ jump to Step 2 + scroll; no generate
+                    >
+                      Agent Instructions
+                    </Button>
+                  </div>
+                )}
+
                 <Title
                   level={4}
                   style={{
@@ -2731,106 +2781,107 @@ const CreateAgentWizard: React.FC = () => {
                   <RocketOutlined style={{ marginRight: 8 }} />
                   Conversations & Publish
                 </Title>
-
-                <Row gutter={[16, 12]}>
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: 12 }}>
-                      {labelWithInfo(
-                        "Conversation Starter 1",
-                        'Example: "What service do you need help with today?"'
-                      )}
-                      <Input
-                        value={conStarter1}
-                        onChange={(e) => setConStarter1(e.target.value)}
-                        placeholder="Starter 1"
-                        maxLength={LIMITS.starterMax}
-                        style={compactInputStyle}
-                        suffix={
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {conStarter1.trim().length}/{LIMITS.starterMax}
-                          </Text>
-                        }
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: 12 }}>
-                      {labelWithInfo(
-                        "Conversation Starter 2",
-                        'Example: "Share your case details..."'
-                      )}
-                      <Input
-                        value={conStarter2}
-                        onChange={(e) => setConStarter2(e.target.value)}
-                        placeholder='e.g., "Share your case details..."'
-                        style={compactInputStyle}
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: 12 }}>
-                      {labelWithInfo(
-                        "Conversation Starter 3",
-                        'Example: "Do you want a document template?"'
-                      )}
-                      <Input
-                        value={conStarter3}
-                        onChange={(e) => setConStarter3(e.target.value)}
-                        placeholder='e.g., "Do you want a document template?"'
-                        style={compactInputStyle}
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={12}>
-                    <div style={{ marginBottom: 12 }}>
-                      {labelWithInfo(
-                        "Conversation Starter 4",
-                        'Example: "Prefer English/తెలుగు/हिंदी?"'
-                      )}
-                      <Input
-                        value={conStarter4}
-                        onChange={(e) => setConStarter4(e.target.value)}
-                        placeholder='e.g., "Prefer English/తెలుగు/हिंदी?"'
-                        style={compactInputStyle}
-                      />
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={8}>
-                    <div style={{ marginBottom: 12 }}>
-                      {labelWithInfo(
-                        "Text Chat",
-                        "Enabled by default and always available."
-                      )}
-                      <Tag color="green" style={{ borderRadius: 6 }}>
-                        Active (default)
-                      </Tag>
-                    </div>
-                  </Col>
-
-                  <Col xs={24} md={8}>
-                    <div style={{ marginBottom: 12 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <Text strong>Voice</Text>
-                        <Tooltip title="It may launch soon and price is applicable.">
-                          <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-                        </Tooltip>
+                <div ref={instructionsRef} id="instructions-editor">
+                  <Row gutter={[16, 12]}>
+                    <Col xs={24} md={12}>
+                      <div style={{ marginBottom: 12 }}>
+                        {labelWithInfo(
+                          "Conversation Starter 1",
+                          'Example: "What service do you need help with today?"'
+                        )}
+                        <Input
+                          value={conStarter1}
+                          onChange={(e) => setConStarter1(e.target.value)}
+                          placeholder="Starter 1"
+                          maxLength={LIMITS.starterMax}
+                          style={compactInputStyle}
+                          suffix={
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              {conStarter1.trim().length}/{LIMITS.starterMax}
+                            </Text>
+                          }
+                        />
                       </div>
-                      <Tag color="default" style={{ borderRadius: 6 }}>
-                        Disabled
-                      </Tag>
-                    </div>
-                  </Col>
-                </Row>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <div style={{ marginBottom: 12 }}>
+                        {labelWithInfo(
+                          "Conversation Starter 2",
+                          'Example: "Share your case details..."'
+                        )}
+                        <Input
+                          value={conStarter2}
+                          onChange={(e) => setConStarter2(e.target.value)}
+                          placeholder='e.g., "Share your case details..."'
+                          style={compactInputStyle}
+                        />
+                      </div>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <div style={{ marginBottom: 12 }}>
+                        {labelWithInfo(
+                          "Conversation Starter 3",
+                          'Example: "Do you want a document template?"'
+                        )}
+                        <Input
+                          value={conStarter3}
+                          onChange={(e) => setConStarter3(e.target.value)}
+                          placeholder='e.g., "Do you want a document template?"'
+                          style={compactInputStyle}
+                        />
+                      </div>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <div style={{ marginBottom: 12 }}>
+                        {labelWithInfo(
+                          "Conversation Starter 4",
+                          'Example: "Prefer English/తెలుగు/हिंदी?"'
+                        )}
+                        <Input
+                          value={conStarter4}
+                          onChange={(e) => setConStarter4(e.target.value)}
+                          placeholder='e.g., "Prefer English/తెలుగు/हिंदी?"'
+                          style={compactInputStyle}
+                        />
+                      </div>
+                    </Col>
+
+                    <Col xs={24} md={8}>
+                      <div style={{ marginBottom: 12 }}>
+                        {labelWithInfo(
+                          "Text Chat",
+                          "Enabled by default and always available."
+                        )}
+                        <Tag color="green" style={{ borderRadius: 6 }}>
+                          Active (default)
+                        </Tag>
+                      </div>
+                    </Col>
+
+                    <Col xs={24} md={8}>
+                      <div style={{ marginBottom: 12 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <Text strong>Voice</Text>
+                          <Tooltip title="It may launch soon and price is applicable.">
+                            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                          </Tooltip>
+                        </div>
+                        <Tag color="default" style={{ borderRadius: 6 }}>
+                          Disabled
+                        </Tag>
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
               </div>
             )}
 

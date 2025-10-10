@@ -91,7 +91,7 @@ const RealtimePage: React.FC = () => {
           setIsAssistantSpeaking(speaking);
         },
         navigate,
-        "alloy"
+        "coral"
       );
 
       setIsSessionActive(true);

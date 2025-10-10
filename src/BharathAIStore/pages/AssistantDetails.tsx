@@ -10,17 +10,14 @@ import {
 import { GiElephantHead } from "react-icons/gi";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import { GiLion } from "react-icons/gi";
+import { Loader2, Mic, Plus } from "lucide-react";
 
 import {
-  Loader2,
   Send,
-  User,
-  Mic,
   Copy,
   Share2,
   Volume2,
   Square,
-  Pencil,
   Share,
   RefreshCcw,
   LogOut,
@@ -40,10 +37,7 @@ interface Assistant {
 type APIRole = "user" | "assistant";
 type APIMessage = { role: APIRole; content: string };
 
-type ChatMessage = {
-  role: "user" | "assistant" | "system";
-  content: string;
-};
+type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -57,7 +51,7 @@ interface SpeechRecognition extends EventTarget {
   onend: ((this: SpeechRecognition, ev: Event) => any) | null;
 }
 interface SpeechRecognitionStatic {
-  new(): SpeechRecognition;
+  new (): SpeechRecognition;
 }
 declare global {
   interface Window {
@@ -129,6 +123,36 @@ const AssistantDetails: React.FC = () => {
   const CHAT_KEY = (aid: string, hid: string) => `assistant_chat_${aid}_${hid}`;
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  // multiple file selection + viewing/removal
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [showMobileFiles, setShowMobileFiles] = useState(false);
+
+  const [threadSource, setThreadSource] = useState<"files" | "agent" | null>(
+    null
+  );
+  // ⬇️ place with other useState hooks
+  const [remainingPrompts, setRemainingPrompts] = useState<number | null>(null);
+
+  // ⬇️ small helpers used by chat-with-file response parsing
+  const extractImageUrl = (
+    raw: any
+  ): { isImage: boolean; url: string | null } => {
+    const s = String(raw ?? "");
+    const md = s.match(/!\[[^\]]*]\((https?:\/\/[^\s)]+)\)/i);
+    const direct = s.match(/https?:\/\/\S+\.(png|jpe?g|gif|webp)/i);
+    const url = md?.[1] || direct?.[0] || null;
+    return { isImage: !!url, url };
+  };
+
+  const cleanContent = (s: string): string => {
+    return String(s ?? "")
+      .replace(/^```(?:\w+)?\n?/, "")
+      .replace(/```$/, "")
+      .trim();
+  };
+  // ⬇️ NEW: local lock so refresh won't allow re-rating again
+  const RATING_LOCK_KEY = (u: string, a: string) => `agent_rating_${u}_${a}`;
+
   const [historyById, setHistoryById] = useState<Record<string, ChatMessage[]>>(
     {}
   );
@@ -202,46 +226,84 @@ const AssistantDetails: React.FC = () => {
       });
     }
   };
+  /** ---------------- Helper: extract last user message ---------------- */
+  function getLastUserMessage(prompt: string) {
+    if (!prompt) return "Untitled";
+    try {
+      const parsed = JSON.parse(prompt);
+      const userMessages = Array.isArray(parsed)
+        ? parsed.filter((msg: any) => msg.role === "user")
+        : [];
+      if (userMessages.length > 0)
+        return userMessages[userMessages.length - 1].content;
+    } catch {
+      const legacy = parseLegacyPrompt(prompt);
+      const lastUser = legacy.reverse().find((m) => m.role === "user");
+      if (lastUser?.content) return lastUser.content;
+    }
+    return "Untitled";
+  }
+
   useEffect(() => {
     const loadHistoryFromApi = async () => {
       if (!id || !agentId || !userId) return;
       try {
         const historyData = await fetchUserHistory(userId, agentId);
 
-        if (Array.isArray(historyData)) {
-          const map: Record<string, ChatMessage[]> = {};
-
-          const formatted = historyData.map((h: any, idx: number) => {
-            const hid = String(h.id ?? h.historyId ?? `${Date.now()}_${idx}`);
-
-            const msgsApi = normalizeMessages(
-              h.messages ?? h.messageHistory ?? h.history
-            );
-
-            // NEW: if nothing from API arrays, try parsing legacy prompt string
-            let msgs = msgsApi;
-            if ((!msgs || msgs.length === 0) && typeof h.prompt === "string") {
-              msgs = parseLegacyPrompt(h.prompt);
-            }
-
-            map[hid] = msgs;
-
-            const titleFromMsgs =
-              msgs.find((m) => m.role === "user")?.content ?? "";
-            const title =
-              (h?.prompt ? extractTitleFromPrompt(h.prompt) : titleFromMsgs) ||
-              "Untitled";
-
-            const created = Number(new Date(h.createdAt ?? Date.now())) - idx;
-            return { id: hid, title, createdAt: created };
-          });
-
-          setHistoryById(map);
-          setHistory(formatted);
-        } else {
+        if (!Array.isArray(historyData) || historyData.length === 0) {
           setHistoryById({});
           setHistory([]);
+          return;
         }
+
+        const tmpMap: Record<string, ChatMessage[]> = {};
+        const seen = new Set<string>();
+        const rows: { id: string; title: string; createdAt: number }[] = [];
+
+        for (let idx = 0; idx < historyData.length; idx++) {
+          const h = historyData[idx];
+
+          // Prefer stable id fields; fallback keeps list usable
+          const hid = String(h?.id ?? h?.historyId ?? `${Date.now()}_${idx}`);
+
+          // messages can be under messages/messageHistory/history or embedded in prompt (legacy)
+          const msgsApi = normalizeMessages(
+            h?.messages ?? h?.messageHistory ?? h?.history
+          );
+          const msgs =
+            msgsApi && msgsApi.length > 0
+              ? msgsApi
+              : typeof h?.prompt === "string"
+              ? parseLegacyPrompt(h.prompt)
+              : [];
+
+          tmpMap[hid] = msgs;
+
+          // title strategy: last user content if possible; else derive from raw prompt
+          let title =
+            msgs.find((m) => m.role === "user")?.content ||
+            (typeof h?.prompt === "string"
+              ? getLastUserMessage(h.prompt)
+              : "") ||
+            "Untitled";
+
+          title = normalizeTitle(title);
+
+          const created = safeDateMs(h?.createdAt) - idx; // tiny offset keeps stability
+
+          // build a composite key to drop dupes from API
+          const key = makeHistoryKey(hid, title, created);
+          if (seen.has(key)) continue;
+          seen.add(key);
+
+          rows.push({ id: hid, title, createdAt: created });
+        }
+
+        // sort newest → oldest
+        rows.sort((a, b) => b.createdAt - a.createdAt);
+
+        setHistoryById(tmpMap);
+        setHistory(rows);
       } catch (err) {
         console.error("Failed to fetch history:", err);
         setHistoryById({});
@@ -277,18 +339,30 @@ const AssistantDetails: React.FC = () => {
     };
   }, []);
 
-  /** ---------------- global axios auth ---------------- */
   useEffect(() => {
     const id = axios.interceptors.request.use((config) => {
       const auth = getAuthHeaders();
       const h = (config.headers ??= new AxiosHeaders());
+
+      // always fine:
       h.set("Accept", "application/json");
-      h.set("Content-Type", "application/json");
-      if (auth.Authorization) {
-        h.set("Authorization", auth.Authorization);
+
+      // ✅ if this is FormData, DO NOT set Content-Type
+      const isForm =
+        typeof FormData !== "undefined" && config.data instanceof FormData;
+
+      if (isForm) {
+        // let the browser set "multipart/form-data; boundary=..."
+        // (delete in case something already set)
+        // AxiosHeaders has delete() in recent versions; fallback to set undefined if needed.
+        try {
+          (h as any).delete?.("Content-Type");
+        } catch {}
       } else {
-        console.warn("[agentChat] No Authorization header on:", config.url);
+        h.set("Content-Type", "application/json");
       }
+
+      if (auth.Authorization) h.set("Authorization", auth.Authorization);
       return config;
     });
     return () => axios.interceptors.request.eject(id);
@@ -369,6 +443,19 @@ const AssistantDetails: React.FC = () => {
     const toUi = makeToUiConverter([rawAvg]);
     return { avgUI: toUi(rawAvg), count: rawCount };
   };
+
+  // ✅ derived guard: true if either local lock OR state says rated
+  const alreadyRated = useMemo(() => {
+    if (!userId || !agentId) return hasRated;
+    return (
+      hasRated || localStorage.getItem(RATING_LOCK_KEY(userId, agentId)) === "1"
+    );
+  }, [hasRated, userId, agentId]);
+
+  // ✅ if rating is (or becomes) locked, ensure modal is closed
+  useEffect(() => {
+    if (alreadyRated && showRatingModal) setShowRatingModal(false);
+  }, [alreadyRated, showRatingModal]);
 
   const normalizeMine = (
     data: any,
@@ -452,6 +539,14 @@ const AssistantDetails: React.FC = () => {
     setHasRated(true);
   };
 
+  // ⬇️ NEW: on mount/agent change, honor local lock (blocks double-count after refresh)
+  useEffect(() => {
+    if (!userId || !agentId) return;
+    const locked = localStorage.getItem(RATING_LOCK_KEY(userId, agentId));
+    if (locked === "1") setHasRated(true);
+  }, [userId, agentId]);
+
+  // ⬇️ CHANGED: guard in submit + set local lock after success
   const submitMyRating = async () => {
     if (!agentId || !assistant?.name) {
       message.error("Missing agent information.");
@@ -459,6 +554,14 @@ const AssistantDetails: React.FC = () => {
     }
     if (!userId) {
       message.error("Please login to submit rating.");
+      return;
+    }
+
+    // 🚫 block if already rated in UI or local lock says rated
+    const locked = localStorage.getItem(RATING_LOCK_KEY(userId, agentId));
+    if (hasRated || locked === "1") {
+      message.info("You’ve already rated this agent.");
+      setHasRated(true);
       return;
     }
 
@@ -473,9 +576,7 @@ const AssistantDetails: React.FC = () => {
 
     setSubmittingRating(true);
     try {
-      // UI 1..5 → API 0..4
       const apiRating = uiStars - 1;
-
       const payload = {
         agentId,
         agentName: assistant.name,
@@ -484,21 +585,24 @@ const AssistantDetails: React.FC = () => {
         userId,
       };
 
-      // ✅ ACTUAL POST (create/update the single rating for this user+agent)
+      // ⬇️ in submitMyRating just AFTER a successful POST:
       await axios.post(`${BASE_URL}/ai-service/agent/feedback`, payload, {
         headers: { ...getAuthHeaders() },
       });
 
+      // ✅ OPTIMISTIC HIDE to avoid “shows until click” bug
+      setHasRated(true);
+      localStorage.setItem(RATING_LOCK_KEY(userId, agentId), "1");
+      setShowRatingModal(false);
+
+      // (then refresh numbers in background)
       await Promise.all([
         fetchMyRating(userId, agentId, assistant?.name || ""),
         fetchOverallRating(agentId),
       ]);
 
-      setHasRated(true); // don’t allow re-rating in UI
-      setShowRatingModal(false);
       message.success("Thanks! Your rating was submitted.");
     } catch (e: any) {
-      // If backend enforces one-per-user-per-agent and returns conflict:
       const msg =
         e?.response?.data?.message ||
         e?.message ||
@@ -558,8 +662,8 @@ const AssistantDetails: React.FC = () => {
         roleRaw === "assistant"
           ? "assistant"
           : roleRaw === "system"
-            ? "system"
-            : "user";
+          ? "system"
+          : "user";
 
       let content = (contentMatch?.[1] || "").trim();
 
@@ -718,6 +822,24 @@ const AssistantDetails: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId, id, navigate]);
 
+  // --- History helpers (dedupe + robust date parse) ---
+  const safeDateMs = (v: any): number => {
+    const d = new Date(v ?? Date.now());
+    const t = d.getTime();
+    return Number.isFinite(t) ? t : Date.now();
+  };
+
+  // stable key to remove dupes coming from API (same id OR same title within ~2 minutes)
+  const makeHistoryKey = (hid: string, title: string, createdAt: number) => {
+    // bucket createdAt to 120s to coalesce near-duplicates from rapid saves
+    const bucket = Math.floor(createdAt / 120_000);
+    return `${hid || "noid"}|${title.trim().toLowerCase()}|${bucket}`;
+  };
+
+  // normalize a title so list/search is consistent
+  const normalizeTitle = (s: string) =>
+    (s || "Untitled").replace(/\s+/g, " ").trim() || "Untitled";
+
   const normalizeMessages = (raw: any): ChatMessage[] => {
     if (!raw) return [];
     let arr = raw;
@@ -731,64 +853,64 @@ const AssistantDetails: React.FC = () => {
     }
     if (!Array.isArray(arr)) return [];
 
-    const out: ChatMessage[] = (arr as any[])
+    // map to ChatMessage and trim
+    const prelim: ChatMessage[] = (arr as any[])
       .map((m: any) => {
         const role: ChatMessage["role"] =
           m?.role === "assistant"
             ? "assistant"
             : m?.role === "system"
-              ? "system"
-              : "user";
+            ? "system"
+            : "user";
         const content = String(m?.content ?? m?.text ?? "").trim();
         return { role, content };
       })
       .filter((m) => m.content.length > 0);
 
+    // remove consecutive duplicates (same role & content back-to-back)
+    const out: ChatMessage[] = [];
+    for (const m of prelim) {
+      const last = out[out.length - 1];
+      if (last && last.role === m.role && last.content === m.content) continue;
+      out.push(m);
+    }
     return out;
   };
 
-  const openHistoryChat = async (hid: string) => {
-    if (!id) return;
-    setCurrentChatId(hid);
+const openHistoryChat = async (hid: string) => {
+  if (!id) return;
+  setCurrentChatId(hid);
 
-    // 1) Use the messages we already got from API load
-    const cached = historyById[hid];
-    if (cached?.length) {
-      setMessages(cached);
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 0);
-      return;
-    }
+  const cached = historyById[hid];
+  if (cached?.length) {
+    setMessages(cached);
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+    return;
+  }
 
-    // 2) Fallback: re-fetch the whole list once, and try again
-    try {
-      if (!userId || !agentId) return;
-      const historyData = await fetchUserHistory(userId, agentId);
-      if (Array.isArray(historyData)) {
-        const map: Record<string, ChatMessage[]> = {};
-        for (let i = 0; i < historyData.length; i++) {
-          const h = historyData[i];
-          const _hid = String(h.id ?? h.historyId ?? `${Date.now()}_${i}`);
-          map[_hid] = normalizeMessages(
-            h.messages ?? h.messageHistory ?? h.history
-          );
-        }
-        setHistoryById(map);
-
-        const msgs = map[hid] ?? [];
-        setMessages(msgs);
-      } else {
-        setMessages([]);
+  try {
+    if (!userId || !agentId) return;
+    const historyData = await fetchUserHistory(userId, agentId);
+    if (Array.isArray(historyData)) {
+      const map: Record<string, ChatMessage[]> = {};
+      for (let i = 0; i < historyData.length; i++) {
+        const h = historyData[i];
+        const _hid = String(h?.id ?? h?.historyId ?? `${Date.now()}_${i}`);
+        map[_hid] = normalizeMessages(h?.messages ?? h?.messageHistory ?? h?.history);
       }
-    } catch {
+      setHistoryById(map);
+      setMessages(map[hid] ?? []);
+    } else {
       setMessages([]);
     }
+  } catch {
+    setMessages([]);
+  }
 
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 0);
-  };
+  setTimeout(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, 0);
+};
 
   // Keep optional override if you want to support edit-resend
   const buildMessageHistory = (
@@ -819,31 +941,28 @@ const AssistantDetails: React.FC = () => {
     return safe;
   };
 
+  // ✅ agentChat NEVER receives threadId
   const postAgentChat = async (
     agentIdParam: string,
     userIdParam: string | null,
-    messageHistory: any[],
-    threadIdParam?: string | null
+    messageHistory: any[]
   ) => {
-    // ✅ define headers in this scope
     const headers = new AxiosHeaders();
     headers.set("Accept", "application/json");
     headers.set("Content-Type", "application/json");
     const auth = getAuthHeaders();
     if (auth.Authorization) headers.set("Authorization", auth.Authorization);
 
-    const payload: any = {
+    const payload = {
       agentId: agentIdParam,
       userId: userIdParam,
       messageHistory,
     };
-    if (threadIdParam) payload.threadId = threadIdParam;
 
-    // ✅ pass explicitly as { headers: headers } to avoid any shadowing issues
     const { data } = await axios.post(
       `${BASE_URL}/ai-service/agent/agentChat`,
       payload,
-      { headers: headers }
+      { headers }
     );
     return data;
   };
@@ -884,23 +1003,14 @@ const AssistantDetails: React.FC = () => {
         const historyMsgs = skipAddUser ? working : [...working, userMsg!];
         const apiHistory = buildMessageHistory(historyMsgs);
 
-        const resp = await postAgentChat(
-          agentId!,
-          userId,
-          apiHistory,
-          threadId
-        );
-        let answer = "";
-        let newThreadId: string | undefined;
+        const resp = await postAgentChat(agentId!, userId, apiHistory);
 
+        let answer = "";
         if (typeof resp === "string") {
           answer = resp;
         } else if (resp && typeof resp === "object") {
           answer = resp.answer ?? resp.content ?? resp.text ?? "";
-          newThreadId = resp.threadId ?? resp.data?.threadId;
         }
-        if (newThreadId) setThreadId(newThreadId);
-
         if (!isStopped.current) {
           setMessages((prev) => [
             ...prev,
@@ -941,7 +1051,7 @@ const AssistantDetails: React.FC = () => {
 
     try {
       const apiHistory = buildMessageHistory(newMsgs, newContent);
-      const resp = await postAgentChat(agentId!, userId, apiHistory, threadId);
+      const resp = await postAgentChat(agentId!, userId, apiHistory);
 
       let answer = "";
       let newThreadId: string | undefined;
@@ -996,10 +1106,11 @@ const AssistantDetails: React.FC = () => {
               type="button"
               disabled={readOnly}
               onClick={() => onChange && onChange(s)}
-              className={`p-1 rounded ${readOnly
+              className={`p-1 rounded ${
+                readOnly
                   ? "cursor-default"
                   : "hover:bg-gray-100 dark:hover:bg-gray-600"
-                }`}
+              }`}
               title={`${s} star${s > 1 ? "s" : ""}`}
             >
               <StarIcon
@@ -1091,13 +1202,13 @@ const AssistantDetails: React.FC = () => {
         ) {
           try {
             recognition.stop();
-          } catch { }
+          } catch {}
           // brief restart
           setTimeout(() => {
             if (keepListeningRef.current) {
               try {
                 recognition.start();
-              } catch { }
+              } catch {}
             }
           }, 300);
         } else {
@@ -1112,7 +1223,7 @@ const AssistantDetails: React.FC = () => {
         if (keepListeningRef.current) {
           try {
             recognition.start();
-          } catch { }
+          } catch {}
         }
       };
 
@@ -1124,45 +1235,294 @@ const AssistantDetails: React.FC = () => {
       keepListeningRef.current = false;
     }
   };
+  const handleToggleVoice = handleVoiceToggle;
+
+  /**
+   * Upload a file + optional user prompt to Student Service "chat-with-file".
+   * Endpoint: /api/student-service/user/chat-with-file
+   */
+  const chatWithFile = async (file: File, userPrompt: string) => {
+    const url = `${BASE_URL}/student-service/user/chat-with-files`; // BASE_URL already includes /api
+    const form = new FormData();
+    form.append("files", file);
+    form.append("prompt", userPrompt || "");
+
+    const headers = { ...getAuthHeaders() };
+    const { data } = await axios.post(url, form, { headers });
+    return data;
+  };
+
+  // Send a message over the SAME chat-with-files thread without re-uploading files
+  const chatWithFilesFollowup = async (userPrompt: string) => {
+    const url = `${BASE_URL}/student-service/user/chat-with-files`;
+
+    const formData = new FormData();
+    formData.append("prompt", userPrompt || "");
+    selectedFiles.forEach((f) => formData.append("files[]", f));
+    if (threadId) formData.append("threadId", threadId);
+
+    const headers = { ...getAuthHeaders() };
+    const { data } = await axios.post(url, formData, { headers });
+
+    const {
+      answer,
+      threadId: newThreadId,
+      remainingPrompts: updatedPrompts,
+    } = data ?? {};
+
+    if (newThreadId) setThreadId(newThreadId);
+    if (typeof updatedPrompts !== "undefined") {
+      setRemainingPrompts(updatedPrompts);
+      if (Number(updatedPrompts) === 0) {
+        // ⛔ stop continuity: surface an explicit error string to caller
+        message.error("File search limit reached. Please try again later.");
+        return "File search limit reached. Please try again later.";
+      }
+    }
+
+    setThreadSource("files");
+    return String(answer ?? "").trim();
+  };
+
+  // ⬇️ NEW: small utility to validate allowed types
+  const isAllowedType = (type: string) =>
+    [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "text/csv",
+      "text/plain",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ].includes(type);
+
+  // accept multiple files and filter dupes by name+size
+  const handleFilePicker = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files || []);
+    if (!picked.length) return;
+    setSelectedFiles((prev) => {
+      const key = (f: File) => `${f.name}_${f.size}`;
+      const map = new Map(prev.map((f) => [key(f), f]));
+      picked.forEach((f) => map.set(key(f), f));
+      return Array.from(map.values());
+    });
+    // optional: clear the input so picking same file again re-triggers change
+    e.currentTarget.value = "";
+  };
+
+  const removeFileAt = (idx: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleFileUpload = async (
+    _file: File | null, // kept for signature compatibility; we now use `selectedFiles`
+    userPrompt: string
+  ): Promise<string | null> => {
+    if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
+      return await Promise.resolve(null);
+    }
+
+    setLoading(true);
+
+    // push user's message into chat immediately
+    // push user's message into chat immediately
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: userPrompt,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    setInput("");
+
+    try {
+      // ✅ branch: if there are files selected → multipart; else → JSON search
+      let answerData: any;
+
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach((f) => formData.append("files", f)); // keep "files"
+
+        formData.append("prompt", userPrompt || "");
+        if (threadId) formData.append("threadId", threadId);
+
+        // ⛔ no explicit headers; interceptor must NOT force Content-Type for FormData
+        answerData = (
+          await axios.post(
+            `${BASE_URL}/student-service/user/chat-with-files`,
+            formData
+          )
+        ).data;
+      } else {
+        const jsonPayload: any = { prompt: userPrompt };
+        if (threadId) jsonPayload.threadId = threadId;
+
+        answerData = (
+          await axios.post(
+            `${BASE_URL}/student-service/user/chat-with-files`,
+            jsonPayload
+          )
+        ).data;
+      }
+
+      const {
+        answer,
+        threadId: newThreadId,
+        remainingPrompts: updatedPrompts,
+      } = answerData ?? {};
+
+      // ✅ keep thread + source
+      if (newThreadId) {
+        setThreadId(newThreadId);
+        setThreadSource("files");
+      }
+
+      // ✅ persist remaining prompts
+      if (typeof updatedPrompts !== "undefined") {
+        setRemainingPrompts(updatedPrompts);
+        if (Number(updatedPrompts) === 0) {
+          // ⛔ hard stop: show user error and do NOT render normal assistant content
+          message.error(
+            "File search limit reached. Please try again tomorrow."
+          );
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: "File search limit reached. Please try again tomorrow.",
+            },
+          ]);
+
+          // (optional) clear selected files to avoid accidental re-sends
+          setSelectedFiles([]);
+          return newThreadId || null;
+        }
+      }
+
+      // normal success → render content
+      const { isImage, url } = extractImageUrl(answer);
+      const content = isImage
+        ? url || String(answer).trim()
+        : cleanContent(String(answer));
+      setMessages((prev) => [...prev, { role: "assistant", content }]);
+
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      // clear after success
+      setSelectedFiles([]);
+      return newThreadId || null;
+
+      return newThreadId || null;
+    } catch (error) {
+      console.error("File upload/search failed:", error);
+      const errorMessage: ChatMessage = {
+        role: "assistant",
+        content: "⚠️ File upload failed. Please try again after a few seconds.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     return () => {
       keepListeningRef.current = false;
       try {
         recognitionRef.current?.stop();
-      } catch { }
+      } catch {}
     };
   }, []);
 
-  /** ---------------- History utils ---------------- */ const handleNewChat =
-    () => {
-      const newId = `${Date.now()}`;
-      setMessages([]);
-      setInput("");
+  const handleNewChat = () => {
+    const newId = `${Date.now()}`;
+    setMessages([]);
+    setInput("");
+    setCurrentChatId(newId);
 
-      // const newEntry = {
-      //   id: newId,
-      //   title: "New chat",
-      //   createdAt: Date.now(),
-      // };
-
-      // setHistory((prev) => [newEntry, ...prev]);
-      setCurrentChatId(newId);
-    };
+    // 👇 reset files routing so next prompt goes to agentChat
+    setThreadId(null);
+    setThreadSource(null);
+    setSelectedFiles([]);
+  };
 
   const generateChatTitle = (text: string) => {
     if (!text) return `New Chat`;
     return text.length > 40 ? text.slice(0, 40) + "…" : text;
   };
+  const handlePromptClick = async (prompt: string) => {
+    if (!prompt.trim() || loading || !id) return;
 
-  const handlePromptClick = (prompt: string) => {
-    if (prompt.trim() && !loading && id) sendMessage(prompt);
+    // 👇 Stick to files thread if that's how the thread started
+    if (threadSource === "files") {
+      const userMessage: ChatMessage = { role: "user", content: prompt };
+      setMessages((prev) => [...prev, userMessage]);
+      setLoading(true);
+      try {
+        const answer = await chatWithFilesFollowup(prompt);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: cleanContent(answer) },
+        ]);
+      } catch {
+        message.error("Failed to contact file chat.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Otherwise use your normal agent chat
+    await sendMessage(prompt);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+
+      if (selectedFiles.length > 0) {
+        await handleFileUpload(
+          null,
+          input || "please describe the file content properly"
+        );
+        setInput("");
+        setShowMobileFiles(false);
+        return;
+      }
+
+      if (input.trim()) {
+        // 👇 NEW: stick to chat-with-files if the thread was created there
+        if (threadSource === "files") {
+          const userMessage: ChatMessage = { role: "user", content: input };
+          setMessages((prev) => [...prev, userMessage]);
+          setInput("");
+          setLoading(true);
+          try {
+            const answer = await chatWithFilesFollowup(userMessage.content);
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: cleanContent(answer) },
+            ]);
+          } catch (err) {
+            message.error("Failed to contact file chat.");
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: "Sorry, something went wrong." },
+            ]);
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          // fallback to your existing agentChat flow
+          await sendMessage();
+        }
+      }
     }
   };
 
@@ -1202,13 +1562,13 @@ const AssistantDetails: React.FC = () => {
   const sidebarWidth = isXs
     ? "100%"
     : sidebarOpen
-      ? SIDEBAR_WIDTH
-      : SIDEBAR_WIDTH_COLLAPSED;
+    ? SIDEBAR_WIDTH
+    : SIDEBAR_WIDTH_COLLAPSED;
   const leftOffset = isXs
     ? 0
     : sidebarOpen
-      ? SIDEBAR_WIDTH
-      : SIDEBAR_WIDTH_COLLAPSED;
+    ? SIDEBAR_WIDTH
+    : SIDEBAR_WIDTH_COLLAPSED;
   const contentWidth = isXs ? "100%" : `calc(100% - ${sidebarWidth}px)`;
   const overlayVisible = isXs && sidebarOpen;
   const effectiveLeftOffset = userId ? leftOffset : 0;
@@ -1302,8 +1662,9 @@ const AssistantDetails: React.FC = () => {
 
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
-            }`}
+          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
+            isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
+          }`}
           style={{ width: sidebarWidth }}
           aria-label="Chat sidebar"
         >
@@ -1313,8 +1674,9 @@ const AssistantDetails: React.FC = () => {
               <GiElephantHead
                 onClick={() => navigate("/bharath-aistore")}
                 title="Bharat AI Store"
-                className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${!isXs && isCollapsed ? "hidden" : ""
-                  }`}
+                className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
+                  !isXs && isCollapsed ? "hidden" : ""
+                }`}
               />
               <div className="flex items-center gap-1">
                 {/* Mobile close */}
@@ -1349,8 +1711,9 @@ const AssistantDetails: React.FC = () => {
               {/* New Chat */}
               <button
                 onClick={handleNewChat}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${isCollapsed && !isXs ? "justify-center" : "justify-start"
-                  }`}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
                 title="New Chat"
               >
                 <svg
@@ -1370,12 +1733,12 @@ const AssistantDetails: React.FC = () => {
                 </svg>
                 {(!isCollapsed || isXs) && <span>New Chat</span>}
               </button>
-
               {/* Create Agent */}
               <button
                 onClick={() => (window.location.href = "/main/bharat-expert")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${isCollapsed && !isXs ? "justify-center" : "justify-start"
-                  }`}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
                 title="Create Agent"
               >
                 <svg
@@ -1394,12 +1757,12 @@ const AssistantDetails: React.FC = () => {
                 </svg>
                 {(!isCollapsed || isXs) && <span>Create Agent</span>}
               </button>
-
               {/* Explore Agents */}
               <button
                 onClick={() => (window.location.href = "/bharath-aistore")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${isCollapsed && !isXs ? "justify-center" : "justify-start"
-                  }`}
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  isCollapsed && !isXs ? "justify-center" : "justify-start"
+                }`}
                 title="Explore Agents"
               >
                 <svg
@@ -1419,8 +1782,7 @@ const AssistantDetails: React.FC = () => {
                 </svg>
                 {(!isCollapsed || isXs) && <span>Explore Agents</span>}
               </button>
-
-             <button
+              <button
                 onClick={() => (window.location.href = "/main/dashboard/home")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
@@ -1439,8 +1801,8 @@ const AssistantDetails: React.FC = () => {
               >
                 <GiElephantHead className="h-5 w-5" />
                 {(!isCollapsed || isXs) && <span>Bharat AI Store</span>}
-              </button>{" "}
-
+                  
+              </button>
               {/* Search */}
               {isCollapsed && !isXs ? (
                 <button
@@ -1501,10 +1863,11 @@ const AssistantDetails: React.FC = () => {
                       {filteredHistory.map((h) => (
                         <li key={h.id} className="group">
                           <button
-                            className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${h.id === currentChatId
+                            className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${
+                              h.id === currentChatId
                                 ? "bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500"
                                 : ""
-                              }`}
+                            }`}
                             onClick={() => openHistoryChat(h.id)}
                             title={h.title}
                           >
@@ -1527,10 +1890,11 @@ const AssistantDetails: React.FC = () => {
                   {filteredHistory.map((h) => (
                     <li key={h.id} className="flex justify-center">
                       <button
-                        className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${h.id === currentChatId
+                        className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${
+                          h.id === currentChatId
                             ? "ring-2 ring-blue-500 ring-inset"
                             : ""
-                          }`}
+                        }`}
                         title={h.title}
                         onClick={() => openHistoryChat(h.id)}
                       >
@@ -1559,10 +1923,11 @@ const AssistantDetails: React.FC = () => {
 
         {/* Overlay */}
         <div
-          className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${overlayVisible
+          className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${
+            overlayVisible
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
-            }`}
+          }`}
           onClick={() => setSidebarOpen(false)}
           aria-hidden
         />
@@ -1625,10 +1990,16 @@ const AssistantDetails: React.FC = () => {
                       : "Not rated yet"}
                   </span>
 
-                  {!hasRated && (
+                  {!alreadyRated && (
                     <div className="flex justify-center">
                       <button
-                        onClick={() => setShowRatingModal(true)}
+                        onClick={() => {
+                          if (alreadyRated) {
+                            message.info("You’ve already rated this agent.");
+                            return;
+                          }
+                          setShowRatingModal(true);
+                        }}
                         disabled={loadingRatings}
                         title="Rate & Comments"
                         aria-label="Rate and add comments"
@@ -1656,10 +2027,10 @@ const AssistantDetails: React.FC = () => {
                         countToShow === 1
                           ? "grid-cols-1 max-w-xs"
                           : countToShow === 2
-                            ? "grid-cols-2 max-w-lg"
-                            : countToShow === 3
-                              ? "grid-cols-3 max-w-3xl"
-                              : "grid-cols-4 max-w-5xl";
+                          ? "grid-cols-2 max-w-lg"
+                          : countToShow === 3
+                          ? "grid-cols-3 max-w-3xl"
+                          : "grid-cols-4 max-w-5xl";
                       return (
                         <div className={`grid gap-3 ${colClass} mx-auto`}>
                           {promptsToShow.map((prompt, idx) => (
@@ -1690,17 +2061,17 @@ const AssistantDetails: React.FC = () => {
               hasRated
                 ? []
                 : [
-                  <button
-                    key="submit"
-                    className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                    disabled={
-                      submittingRating || !(myRating && myRating >= 1)
-                    }
-                    onClick={submitMyRating}
-                  >
-                    {submittingRating ? "Submitting..." : "Submit"}
-                  </button>,
-                ]
+                    <button
+                      key="submit"
+                      className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                      disabled={
+                        submittingRating || !(myRating && myRating >= 1)
+                      }
+                      onClick={submitMyRating}
+                    >
+                      {submittingRating ? "Submitting..." : "Submit"}
+                    </button>,
+                  ]
             }
           >
             <div className="space-y-3">
@@ -1759,8 +2130,9 @@ const AssistantDetails: React.FC = () => {
                         msg.role === "user" ? (
                           <div
                             key={idx}
-                            className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${editingIndex === idx ? "w-full" : ""
-                              }`}
+                            className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${
+                              editingIndex === idx ? "w-full" : ""
+                            }`}
                           >
                             {editingIndex === idx ? (
                               <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
@@ -2086,57 +2458,164 @@ const AssistantDetails: React.FC = () => {
 
               {/* Composer */}
               <div
-                className="fixed bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent px-3 sm:px-4 pb-4 pt-2"
+                className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent px-3 sm:px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
                 style={{
                   left: effectiveLeftOffset,
                   width: effectiveContentWidth,
                   zIndex: 29,
                 }}
               >
-                <div className="w-full max-w-4xl mx-auto flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md px-3 sm:px-5 py-2 sm:py-3 focus-within:ring-2 focus-within:ring-indigo-500 transition">
-                  <button
-                    onClick={handleVoiceToggle}
-                    className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition ${isRecording
-                        ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 animate-pulse"
-                        : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
-                      }`}
-                    aria-label="Voice input"
-                  >
-                    <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+                {/* MOBILE: Always visible files panel (simple layout with close button) */}
+                {selectedFiles.length > 0 && (
+                  <div className="sm:hidden w-full max-w-4xl mx-auto mb-2">
+                    <div className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl p-2 shadow-sm">
+                      {selectedFiles.map((f, i) => (
+                        <div
+                          key={`file_${f.name}_${i}`}
+                          className="flex items-center justify-between px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-600 mb-1 last:mb-0"
+                        >
+                          <span className="text-xs truncate flex-1 mr-2 text-gray-800 dark:text-gray-100">
+                            {f.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeFileAt(i)}
+                            className="text-red-500 hover:text-red-700 text-lg leading-none"
+                            title="Remove file"
+                            aria-label={`Remove ${f.name}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                  <textarea
-                    rows={1}
-                    className="flex-1 min-w-0 bg-transparent outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-700 dark:text-white max-h-32 overflow-y-auto resize-y"
-                    placeholder={
-                      loading
-                        ? "Generating reply, please wait..."
-                        : "Ask anything..."
-                    }
-                    value={input}
-                    onChange={(e) => !loading && setInput(e.target.value)} // ✅ Prevent typing when loading
-                    onKeyDown={handleKeyDown}
-                    disabled={loading}
-                  />
+                {/* ===== DESKTOP: Chips row above bar ===== */}
+                {selectedFiles.length > 0 && (
+                  <div className="hidden sm:block w-full max-w-4xl mx-auto mb-2">
+                    <div className="flex flex-wrap gap-2 p-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow">
+                      {selectedFiles.map((f, i) => (
+                        <div
+                          key={`${f.name}_${f.size}_${i}`}
+                          className="flex items-center gap-2 px-2 py-1 rounded-full border text-sm bg-gray-50 dark:bg-gray-600"
+                        >
+                          <span
+                            className="truncate max-w-[220px]"
+                            title={f.name}
+                          >
+                            {f.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeFileAt(i)}
+                            className="rounded-full px-2 py-0.5 hover:bg-red-100 dark:hover:bg-red-800"
+                            title="Remove file"
+                            aria-label={`Remove ${f.name}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                  {loading ? (
-                    <button
-                      onClick={handleStop}
-                      className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-red-700 dark:text-white hover:bg-gray-800 hover:text-white transition"
-                      title="Stop"
-                    >
-                      <Square className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => sendMessage()}
-                      disabled={!input.trim()}
-                      className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-gray-700 dark:text-white hover:bg-gray-800 hover:text-white disabled:opacity-50 transition"
-                      title="Send"
-                    >
-                      <Send className="w-4 h-4 sm:w-5 h-5" />
-                    </button>
-                  )}
+                {/* ===== CHAT BAR (mobile-first, responsive grid) ===== */}
+                <div className="w-full max-w-4xl mx-auto rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500">
+                  {/* Grid: [ + ] [ textarea ] [ mic/send ] on all sizes; spacing adapts */}
+                  <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3">
+                    {/* LEFT: + file picker */}
+                    <label className="inline-flex items-center justify-center cursor-pointer">
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleFilePicker}
+                        accept=".pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp"
+                      />
+                      <span
+                        className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                        title="Add files"
+                        aria-label="Add files"
+                      >
+                        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </span>
+                    </label>
+
+                    {/* CENTER: Textarea (grows, no overlap) */}
+                    <div className="min-w-0">
+                      <textarea
+                        rows={1}
+                        className="w-full bg-transparent outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-40 overflow-y-auto resize-y"
+                        placeholder={
+                          loading
+                            ? "Generating reply, please wait..."
+                            : "Ask anything..."
+                        }
+                        value={input}
+                        onChange={(e) => !loading && setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={loading}
+                        inputMode="text"
+                      />
+                    </div>
+
+                    {/* RIGHT: Mic + Send / Stop */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleToggleVoice}
+                        className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition ${
+                          isRecording
+                            ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 animate-pulse"
+                            : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                        }`}
+                        aria-label="Voice input"
+                        title="Voice input"
+                      >
+                        <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </button>
+
+                      {loading ? (
+                        <button
+                          onClick={handleStop}
+                          className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-red-700 dark:text-white hover:bg-gray-800 hover:text-white transition"
+                          title="Stop"
+                          aria-label="Stop"
+                        >
+                          <Square className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            if (selectedFiles.length) {
+                              await handleFileUpload(
+                                null,
+                                input ||
+                                  "please describe the file content properly"
+                              );
+                              setInput("");
+                              setShowMobileFiles(false);
+                            } else {
+                              if (!input.trim()) return;
+                              await sendMessage();
+                            }
+                          }}
+                          disabled={
+                            (input.trim().length === 0 &&
+                              selectedFiles.length === 0) ||
+                            loading
+                          }
+                          className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-700 dark:text-white hover:bg-gray-800 hover:text-white disabled:opacity-50 transition"
+                          title="Send"
+                          aria-label="Send"
+                        >
+                          <Send className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </>

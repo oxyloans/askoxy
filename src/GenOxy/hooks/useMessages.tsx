@@ -480,9 +480,13 @@ class VoiceSessionService {
       await pc.setRemoteDescription(answer);
 
       // Preload file data
-      if (!this.fileContent && this.fileUrl) {
-        await this.fetchFileContent();
-      }
+  if (!this.fileContent && this.fileUrl) {
+        setTimeout(() => {
+          this.fetchFileContent().catch((err) =>
+            console.error("File fetch failed:", err)
+          );
+        }, 0);
+      }
 
       return dc;
     } catch (error) {

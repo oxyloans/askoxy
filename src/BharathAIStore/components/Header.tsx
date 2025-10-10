@@ -37,6 +37,7 @@ const Header: React.FC<HeaderProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
 const handleLogin = () => {
   try {
     setLoading(true);
@@ -58,6 +59,12 @@ const handleLogin = () => {
     setLoading(false);
   }
 };
+
+  useEffect(() => {
+    sessionStorage.removeItem("primaryType");
+    sessionStorage.removeItem("fromAISTore");
+    sessionStorage.removeItem("redirectPath");
+  }, []);
   const nav = [
     {
       label: "AI INITIATIVES",

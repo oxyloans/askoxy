@@ -10,7 +10,7 @@ import Highlighter from "../components/Highlighter";
 import CA3image from "../../assets/img/ca3.png";
 
 // ---------- constants ----------
-const OG_IMAGE = "https://i.ibb.co/h1fpCXzw/fanofog.png";
+
 const ELEPHANT = "https://i.ibb.co/cSPD6dCH/elephantbg.png";
 
 // ---------- types ----------
@@ -123,12 +123,7 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
   }));
 }
 
-// ---------- helpers ----------
-const normalizeList = (data: any) => {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.data)) return data.data;
-  return data ? [data] : [];
-};
+
 
 // Feedback API → /ai-service/agent/feedbackByAgentId?agentId=...
 export interface Feedback {
@@ -141,17 +136,7 @@ export interface Feedback {
   createdAt?: string;
 }
 
-async function getFeedbackByAgent(agentId: string): Promise<Feedback[] | null> {
-  try {
-    const res = await apiClient.get("/ai-service/agent/feedbackByAgentId", {
-      params: { agentId },
-      headers: { "Content-Type": "application/json" },
-    });
-    return normalizeList(res.data) as Feedback[];
-  } catch {
-    return null;
-  }
-}
+
 
 const PLAY_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"] as const;
 
@@ -293,134 +278,8 @@ const AssistantCard: React.FC<{
   );
 };
 
-const ReadMoreModal: React.FC<{
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  body: string;
-}> = ({ open, onClose, title, body }) => {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[120]">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
-              {title}
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-1 rounded-md hover:bg-gray-100"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-          <div className="px-5 py-4">
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{body}</p>
-          </div>
-          <div className="px-5 pb-5">
-            <button
-              className="ml-auto block px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
-              onClick={onClose}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
-// const FeaturedOGCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
-//   const [readMoreOpen, setReadMoreOpen] = useState(false);
 
-//   const shortDesc =
-//     "Become a true fan of OG! 🔥 Upload your photo and instantly transform it into a powerful OG-style cinematic poster.";
-//   const fullDesc =
-//     "Become a true fan of OG! 🔥 Upload your photo and instantly transform it into a powerful OG-style cinematic poster. Share it with friends, show your fandom, and join the #OGFever community. Stand out with personalized OG visuals that capture the spirit of the movie and spread the fever everywhere!";
-
-//   return (
-//     <>
-//       <div
-//         role="button"
-//         tabIndex={0}
-//         onClick={onOpen}
-//         onKeyDown={(e) =>
-//           e.key === "Enter" || e.key === " " ? onOpen() : null
-//         }
-//         className="relative group rounded-2xl shadow-purple-400/60 transition-transform hover:-translate-y-0.5 h-full"
-//         aria-label="Open THE FAN OF OG"
-//       >
-//         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden h-full flex flex-col">
-//           {/* Thumbnail */}
-//           <div className="relative w-full h-52 bg-black">
-//             <img
-//               src={OG_IMAGE}
-//               alt="THE FAN OF OG"
-//               className="absolute inset-0 w-full h-full object-cover"
-//               loading="eager"
-//               decoding="async"
-//             />
-//             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-//             <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
-//               <Bot className="h-6 w-6 text-purple-700" />
-//             </div>
-//           </div>
-
-//           {/* Content */}
-//           <div className="pt-8 px-5 pb-5 flex flex-col flex-1">
-//             <div className="flex items-start justify-between gap-3">
-//               <div className="min-w-0">
-//                 <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
-//                   THE FAN OF OG
-//                 </h3>
-//                 <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">
-//                   {shortDesc}
-//                 </p>
-//                 <button
-//                   className="mt-1 text-xs font-medium text-purple-700 hover:underline"
-//                   onClick={(e) => {
-//                     e.stopPropagation();
-//                     setReadMoreOpen(true);
-//                   }}
-//                 >
-//                   Read more
-//                 </button>
-//               </div>
-
-//               <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 text-[11px] font-semibold">
-//                 <Flame className="h-3.5 w-3.5 text-red-600" />
-//                 #OGFever
-//               </span>
-//             </div>
-
-//             <div className="mt-auto pt-4 flex items-center gap-2">
-//               <button
-//                 onClick={(e) => {
-//                   e.stopPropagation();
-//                   onOpen();
-//                 }}
-//                 className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
-//               >
-//                 Open
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       <ReadMoreModal
-//         open={readMoreOpen}
-//         onClose={() => setReadMoreOpen(false)}
-//         title="THE FAN OF OG"
-//         body={fullDesc}
-//       />
-//     </>
-//   );
-// };
 
 // ---------- page ----------
 const BharatAgentsStore: React.FC = () => {
@@ -437,10 +296,11 @@ const BharatAgentsStore: React.FC = () => {
   const location = useLocation();
   const [showHero, setShowHero] = useState(false); // 🔑 toggle state
 
-  const toggleHero = () => {
-    setShowHero((prev) => !prev);
-  };
-
+useEffect(() => {
+  sessionStorage.removeItem("primaryType");
+  sessionStorage.removeItem("fromAISTore");
+  sessionStorage.removeItem("redirectPath");
+}, []);
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
     pageSize: 30,
@@ -479,23 +339,8 @@ const BharatAgentsStore: React.FC = () => {
     "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
   ]);
 
-  const NEXT_PATH = "/main/bharat-expert";
-  // const handleCreateAgentClick = () => {
-  //   try {
-  //     setLoading(true);
-  //     const userId = localStorage.getItem("userId");
-  //     if (userId) {
-  //       navigate(NEXT_PATH);
-  //     } else {
-  //       sessionStorage.setItem("redirectPath", NEXT_PATH);
-  //       navigate(`/whatsapplogin?next=${encodeURIComponent(NEXT_PATH)}`);
-  //     }
-  //   } catch (e) {
-  //     console.error("Create Agent CTA error:", e);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  
+
 
   const handleLogin = () => {
     try {

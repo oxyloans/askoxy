@@ -262,7 +262,10 @@ const UserSelectionPage = () => {
   const [authRequired, setAuthRequired] = useState(false);
   const [activeLink, setActiveLink] = useState("home");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const LOGIN_URL = "/whatsapplogin?primaryType=STUDENT";
+ useEffect(() => {
+   sessionStorage.removeItem("primaryType");
+   sessionStorage.removeItem("redirectPath");
+ }, []);
     
   // Check if user is authenticated on component mount
   useEffect(() => {
