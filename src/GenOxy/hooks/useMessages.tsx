@@ -336,13 +336,25 @@ class VoiceSessionService {
   private sessionTimeoutId: number | null = null;
 
   private fileUrl: string | null = null;
-  private fileContent: any[] | null = null;
-  private dataUploaded: boolean = false;
+  private fileContent: Record<string, any[]> = {}; // brand → data
+  private sheetMap: Record<string, string> = {
+    lenovo: "0",
+    acer: "1427934623",
+    hp: "1411153632",
+    dell: "1170071782",
+    asus: "1461294814",
+    motorola: "374851585",
+    iphone: "1266860599",
+    samsung: "868260221",
+    oppo: "1286876298",
+    vivo: "1244878989",
+  };
 
   constructor(fileUrl?: string) {
     if (fileUrl) this.fileUrl = fileUrl;
   }
 
+  // ------------------ Fetch ephemeral token ------------------
   async getEphemeralToken(
     instructions: string,
     assistantId: string,
@@ -368,47 +380,80 @@ class VoiceSessionService {
     }
   }
 
-  public async fetchFileContent(): Promise<any[]> {
+  private async fetchSheetByBrand(brand: string): Promise<any[]> {
+    const lowerBrand = brand.toLowerCase();
+    const gid = this.sheetMap[lowerBrand] || this.sheetMap["others"];
+
     if (!this.fileUrl) return [];
 
-    // Your sheet GIDs
-    const sheetGIDs = [
-      "0",
-      "1427934623",
-      "1411153632",
-      "1170071782",
-      "1461294814",
-      "374851585",
-      "1266860599",
-      "868260221",
-      "1286876298",
-      "1244878989",
-    ];
+    // Return cached data if available
+    if (this.fileContent[lowerBrand]) {
+      console.log(`⚡ Using cached data for ${lowerBrand}`);
+      return this.fileContent[lowerBrand];
+    }
 
     try {
       const spreadsheetIdMatch = this.fileUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
       if (!spreadsheetIdMatch) throw new Error("Invalid Google Sheet URL");
       const spreadsheetId = spreadsheetIdMatch[1];
 
-      const allData: any[] = [];
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+      const res = await fetch(csvUrl);
 
-      for (const gid of sheetGIDs) {
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-        const res = await fetch(csvUrl);
-        const text = await res.text();
-        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-        allData.push(...(parsed.data as any[]));
+      if (!res.ok) {
+        console.warn(`⚠️ Failed to fetch sheet: ${lowerBrand}`);
+        return [];
       }
 
-      this.fileContent = allData;
-      console.log("📄 Fetched all sheets data:", this.fileContent);
-      return this.fileContent;
-    } catch (err) {
-      console.error("Error fetching sheets:", err);
+      const text = await res.text();
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+      this.fileContent[lowerBrand] = parsed.data as any[];
+
+      console.log(
+        `📄 Fetched "${lowerBrand}" sheet, rows: ${parsed.data.length}`
+      );
+      return this.fileContent[lowerBrand];
+    } catch (error) {
+      console.error("❌ Error fetching sheet:", error);
       return [];
     }
   }
+  // ------------------ Fetch CSV sheet data for a brand ------------------
+  private async fetchSheetData(brand: string): Promise<any[]> {
+    const brandKey = brand.toLowerCase();
+    const matchedSheet = Object.keys(this.sheetMap).find((sheet) =>
+      brandKey.includes(sheet)
+    );
+    if (!matchedSheet) {
+      console.warn(`⚠️ No sheet found for brand "${brand}"`);
+      return [];
+    }
 
+    if (this.fileContent[matchedSheet]) {
+      return this.fileContent[matchedSheet];
+    }
+
+    const gid = this.sheetMap[matchedSheet];
+    const spreadsheetIdMatch = this.fileUrl!.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (!spreadsheetIdMatch) throw new Error("Invalid Google Sheet URL");
+    const spreadsheetId = spreadsheetIdMatch[1];
+
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+    const res = await fetch(csvUrl);
+
+    if (!res.ok) {
+      console.warn(`⚠️ Failed to fetch sheet "${matchedSheet}"`);
+      return [];
+    }
+
+    const text = await res.text();
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    this.fileContent[matchedSheet] = parsed.data as any[];
+    console.log(`📄 Fetched "${matchedSheet}" rows: ${parsed.data.length}`);
+    return this.fileContent[matchedSheet];
+  }
+
+  // ------------------ Start voice session ------------------
   async startSession(
     assistantId: string,
     selectedLanguage: LanguageConfig,
@@ -428,18 +473,15 @@ class VoiceSessionService {
       const pc = new RTCPeerConnection();
       this.peerConnection = pc;
 
-      // 🔊 Incoming audio from assistant
       const audioEl = document.createElement("audio");
       audioEl.autoplay = true;
       pc.ontrack = (e) => (audioEl.srcObject = e.streams[0]);
 
-      // 🎙️ Microphone input
       this.micStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
       pc.addTrack(this.micStream.getTracks()[0]);
 
-      // 📡 Data channel for tool calls and events
       const dc = pc.createDataChannel("oai-events");
       this.dataChannel = dc;
 
@@ -456,7 +498,6 @@ class VoiceSessionService {
       );
       this.setupSpeechRecognition(selectedLanguage, onMessage);
 
-      // Create and send SDP offer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -479,15 +520,6 @@ class VoiceSessionService {
       };
       await pc.setRemoteDescription(answer);
 
-      // Preload file data
-  if (!this.fileContent && this.fileUrl) {
-        setTimeout(() => {
-          this.fetchFileContent().catch((err) =>
-            console.error("File fetch failed:", err)
-          );
-        }, 0);
-      }
-
       return dc;
     } catch (error) {
       console.error("Failed to start session:", error);
@@ -495,7 +527,6 @@ class VoiceSessionService {
     }
   }
 
-  // -------------------- Configure single tool --------------------
   private configureSessionTools() {
     if (!this.dataChannel) return;
     const event = {
@@ -507,13 +538,14 @@ class VoiceSessionService {
             type: "function",
             name: "getProductDetails",
             description:
-              "Retrieves product details from uploaded CSV file by name",
+              "Fetches the relevant sheet based on user query (brand, model, etc.)",
             parameters: {
               type: "object",
               properties: {
                 query: {
                   type: "string",
-                  description: "Product name or keyword to search in CSV file",
+                  description:
+                    "User query mentioning brand, price, color, etc.",
                 },
               },
               required: ["query"],
@@ -523,10 +555,32 @@ class VoiceSessionService {
       },
     };
     this.dataChannel.send(JSON.stringify(event));
-    console.log("🧩 Registered single tool: getProductDetails");
+    console.log("🧩 Registered tool: getProductDetails");
   }
 
-  // -------------------- Speech recognition --------------------
+  private async handleToolCall(query: string) {
+    console.log("🔹 Tool call triggered with query:", query);
+
+    const lowerQuery = query.toLowerCase();
+
+    // Detect brand from query
+    const brands = Object.keys(this.sheetMap);
+    const matchedBrand = brands.find((b) => lowerQuery.includes(b)) || "others";
+
+    console.log("🏷️ Matched brand:", matchedBrand);
+
+    // Fetch only that sheet
+    const brandData = await this.fetchSheetByBrand(matchedBrand);
+
+    if (!brandData || brandData.length === 0) {
+      return { text: `No data found for ${matchedBrand}` };
+    }
+
+    // Return full sheet data to assistant
+    return { brand: matchedBrand, fullData: brandData };
+  }
+
+  // ------------------ Speech recognition ------------------
   private setupSpeechRecognition(
     selectedLanguage: LanguageConfig,
     onMessage: (message: ChatMessage) => void
@@ -545,26 +599,23 @@ class VoiceSessionService {
       const transcript =
         event.results[event.results.length - 1][0].transcript.trim();
       if (transcript) {
-        const msg: ChatMessage = {
+        onMessage({
           role: "user",
           text: transcript,
           timestamp: new Date().toLocaleTimeString(),
-        };
-        onMessage(msg);
+        });
       }
     };
 
     recognition.onerror = (e: any) =>
       console.error("Speech recognition error:", e);
-    recognition.onend = () => {
-      if (this.dataChannel) recognition.start();
-    };
+    recognition.onend = () => recognition.start();
 
     recognition.start();
     this.recognition = recognition;
   }
 
-  // -------------------- Handle assistant messages --------------------
+  // ------------------ Data channel handlers ------------------
   private setupDataChannelHandlers(
     dc: RTCDataChannel,
     onMessage: (message: ChatMessage) => void,
@@ -577,38 +628,27 @@ class VoiceSessionService {
       try {
         const event = JSON.parse(e.data);
 
-        // 🧩 Function call argument chunks
         if (event.type === "response.function_call_arguments.delta") {
           if (!pendingArgs[event.call_id]) pendingArgs[event.call_id] = "";
           pendingArgs[event.call_id] += event.delta;
         }
 
-        // ✅ Complete function call
         if (event.type === "response.function_call_arguments.done") {
           const callId = event.call_id;
-          const responseId = event.response_id;
-          const fnName = event.name || "getProductDetails";
-
-          console.log(`📞 Function call received: ${fnName}`);
-
           const args = JSON.parse(pendingArgs[callId] || "{}");
-          console.log("🔧 Arguments parsed:", args);
-
           const result = await this.handleToolCall(args.query);
 
-          // Send result back to assistant
-          const outputEvent = {
-            type: "conversation.item.create",
-            item: {
-              type: "function_call_output",
-              call_id: callId,
-              output: JSON.stringify(result),
-            },
-          };
-
-          dc.send(JSON.stringify(outputEvent));
+          dc.send(
+            JSON.stringify({
+              type: "conversation.item.create",
+              item: {
+                type: "function_call_output",
+                call_id: callId,
+                output: JSON.stringify(result),
+              },
+            })
+          );
           dc.send(JSON.stringify({ type: "response.create" }));
-
           delete pendingArgs[callId];
         }
       } catch (err) {
@@ -617,117 +657,66 @@ class VoiceSessionService {
     };
   }
 
-  private async handleToolCall(query: string) {
-    console.log("🔹 Tool call triggered with query:", query);
-
-    try {
-      if (!this.fileContent || this.fileContent.length === 0) {
-        await this.fetchFileContent();
-      }
-
-      const normalizedQuery = query.toLowerCase().trim();
-      const queryWords = normalizedQuery.split(/\s+/);
-      const brandAliases: Record<string, string[]> = {
-        lenovo: ["len", "lenovo"],
-        dell: ["dell"],
-        hp: ["hp", "hewlett-packard"],
-        acer: ["acer"],
-        samsung: ["samsung", "sam"],
-        oppo: ["oppo"],
-        motorola: ["motorola", "moto"],
-        apple: ["apple", "iphone"],
-        vivo: ["vivo"],
-      };
-
-      const commonWords = [
-        "mobile",
-        "mobiles",
-        "phone",
-        "phones",
-        "smartphone",
-        "smartphones",
-        "look",
-        "for",
-        "find",
-        "show",
-      ];
-
-      // All columns that may contain product info
-
-      const filteredQueryWords = queryWords.filter(
-        (word) => !commonWords.includes(word)
-      );
-      // Convert user query words to full brand names if they match an alias
-      const normalizeBrand = (word: string): string => {
-        word = word.toLowerCase();
-        for (const [brand, aliases] of Object.entries(brandAliases)) {
-          if (aliases.includes(word)) return brand;
-        }
-        return word;
-      };
-
-      const normalizedQueryWords = filteredQueryWords.map(normalizeBrand);
-
-      const matches =
-        this.fileContent?.filter((row) => {
-          const combinedText = Object.values(row)
-            .map((v) => v?.toString().toLowerCase() || "")
-            .join(" ");
-
-          if (!combinedText.trim()) return false;
-
-          // Check if all normalized query words exist in combined text (partial match)
-          return normalizedQueryWords.every((word) => {
-            const rowWords = combinedText.split(/\s+/);
-            return rowWords.some((rw) => rw.includes(word));
-          });
-        }) || [];
-
-      const topMatches = matches.slice(0, 10);
-
-      if (topMatches.length === 0) {
-        console.log("⚠️ No matching products found");
-        return { text: "Product not available" };
-      }
-
-      console.log("✅ Matching products found:", topMatches);
-      return { products: topMatches };
-    } catch (error) {
-      console.error("❌ Error handling tool call:", error);
-      return { text: "Error occurred while fetching product details" };
-    }
-  }
-
-  // -------------------- Send user text --------------------
   sendMessage(text: string) {
     if (!this.dataChannel) return;
-    const event = {
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text }],
-      },
-    };
-    this.dataChannel.send(JSON.stringify(event));
+    this.dataChannel.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text }],
+        },
+      })
+    );
     this.dataChannel.send(JSON.stringify({ type: "response.create" }));
   }
 
-  // -------------------- Stop session --------------------
-  stopSession() {
-    if (this.sessionTimeoutId !== null) clearTimeout(this.sessionTimeoutId);
-    this.dataChannel?.close();
-    this.micStream?.getTracks().forEach((t) => t.stop());
-    this.peerConnection?.close();
-    (this.recognition as any)?.stop();
-    this.dataChannel = null;
-    this.micStream = null;
-    this.peerConnection = null;
-    this.recognition = null;
-    this.dataUploaded = false;
+stopSession() {
+  console.log("🛑 Stopping voice session...");
+  if (this.sessionTimeoutId !== null) {
+    clearTimeout(this.sessionTimeoutId);
+    this.sessionTimeoutId = null;
   }
+  if (this.recognition) {
+    this.recognition.onend = null; // prevent auto-restart
+    this.recognition.stop();
+    this.recognition = null;
+    console.log("🎙️ Speech recognition stopped");
+  }
+  if (this.micStream) {
+    this.micStream.getTracks().forEach((track) => {
+      track.stop();
+      this.peerConnection?.removeTrack(
+        this.peerConnection
+          .getSenders()
+          .find((sender) => sender.track === track)!
+      );
+    });
+    this.micStream = null;
+    console.log("🎧 Microphone stream stopped");
+  }
+  if (this.dataChannel) {
+    if (this.dataChannel.readyState !== "closed") {
+      this.dataChannel.close();
+      console.log("📡 Data channel closed");
+    }
+    this.dataChannel = null;
+  }
+  if (this.peerConnection) {
+    this.peerConnection.ontrack = null;
+    this.peerConnection.onicecandidate = null;
+    this.peerConnection.close();
+    this.peerConnection = null;
+    console.log("🔌 Peer connection closed");
+  }
+  this.fileContent = {};
+
+  console.log("✅ Voice session fully stopped and cleaned up");
+}
+
 }
 
 export const voiceSessionService = new VoiceSessionService(
-  "https://docs.google.com/spreadsheets/d/1LOPzkaogUk3VenBt0A3-OiMHNzO8oXoodLkbXgpOeoE/export?format=csv"
+  "https://docs.google.com/spreadsheets/d/1LOPzkaogUk3VenBt0A3-OiMHNzO8oXoodLkbXgpOeoE"
 );

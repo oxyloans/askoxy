@@ -37,7 +37,6 @@ const Header: React.FC<HeaderProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-
 const handleLogin = () => {
   try {
     setLoading(true);
@@ -59,12 +58,6 @@ const handleLogin = () => {
     setLoading(false);
   }
 };
-
-  useEffect(() => {
-    sessionStorage.removeItem("primaryType");
-    sessionStorage.removeItem("fromAISTore");
-    sessionStorage.removeItem("redirectPath");
-  }, []);
   const nav = [
     {
       label: "AI INITIATIVES",
@@ -74,6 +67,14 @@ const handleLogin = () => {
         aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
       },
     },
+  {
+    label: "RADHA'S AI LAB",
+    to: "/bharath-aistore/RadhaAgents",
+    sectionId: "radhas-ai-lab",
+    scrollTo: () => {
+      aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
+    },
+  },
     // inside the `nav` array
     {
       label: "AWARDS & REWARDS",
@@ -185,20 +186,25 @@ const handleLogin = () => {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // AFTER:
-  const isActive = (sectionId: string) => {
-    if (
-      location.pathname === "/bharath-aistore/ai-initiatives" &&
-      sectionId === "ai-initiatives"
-    )
-      return true;
-    if (
-      location.pathname === "/awards-rewards" &&
-      sectionId === "awards-rewards"
-    )
-      return true;
-    return activeSection === sectionId;
-  };
+const isActive = (sectionId: string) => {
+  if (
+    location.pathname === "/bharath-aistore/ai-initiatives" &&
+    sectionId === "ai-initiatives"
+  )
+    return true;
+  if (
+    location.pathname === "/bharath-aistore/RadhaAgents" &&
+    sectionId === "radhas-ai-lab"
+  )
+    return true;
+  if (
+    location.pathname === "/awards-rewards" &&
+    sectionId === "awards-rewards"
+  )
+    return true;
+  return activeSection === sectionId;
+};
+
 
   const stored =
     localStorage.getItem("display_name") ||

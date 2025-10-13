@@ -223,6 +223,8 @@ import EmployeeInteractions from "./Taskmanagement/EmployeeInstructions";
 import EmployeeViewChat from "./Taskmanagement/EmployeeChatView";
 import HealthcareAgentsPage from "./BharathAIStore/pages/Healthcareagents";
 import RemoveTrailingSlash from "./auth/RemoveTrailingSlash";
+import AdminMyAgentsPage from "./BharathAIStore/pages/AdminMyAgentsPage";
+import RadhaHiddenAgents from "./BharathAIStore/pages/RadhaHiddenAgents";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -314,6 +316,8 @@ const App: React.FC = () => {
                 path="/bharath-aistore/insurance"
                 element={<InsuranceAgentsPage />}
               />
+               <Route path="/bharath-aistore/RadhaAgents" element={<AdminMyAgentsPage/>} />
+               <Route path="/bharath-aistore/hiddenagents" element={<RadhaHiddenAgents/>} />
               <Route
                 path="/bharath-aistore/healthcare"
                 element={<HealthcareAgentsPage />}
@@ -633,6 +637,7 @@ const App: React.FC = () => {
                 path="bharath-aistore/agents"
                 element={<AllAgentsPage />}
               />
+             
               <Route path="create-aiagent" element={<CreateAgentWizard />} />
               <Route path="bharat-expert" element={<CreateAgentMain />} />
               <Route

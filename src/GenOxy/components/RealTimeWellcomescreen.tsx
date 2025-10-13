@@ -121,26 +121,52 @@ function ParticleField() {
 
 const getInstructionsForLang = (lang: LanguageConfig) => {
   const productCatalogInstruction = `
-📦 Product Catalog (STRICT rules for answering about products):
+📦 PRODUCT CATALOG (STRICT RULES):
 
-* ✅ ALWAYS use the internal tool \\get_detailed_info\\ to fetch product details.
-* This tool reads from our official Google Sheets catalog (multiple pages merged via their GIDs).
-* 🚫 NEVER generate, assume, or guess any product details (name, price, stock, rating, discount, etc.).
-* ❌ DO NOT calculate, rephrase, round, or reinterpret values — always show them EXACTLY as returned by the tool.
-* 📋 When the user asks for a category (e.g., "mobiles", "laptops"), first list all available brands in that category:
-  - Mobiles: Samsung, Oppo, Motorola, iPhone/Apple, Vivo
-  - Laptops: Acer, Lenovo, Dell, HP, Asus
-* 📋 When the user asks about a specific brand, ALWAYS ask clarifying questions first for any configuration details (model type, processor, RAM, storage, color, price range, etc.) *before making a tool call*.
-* 🔑 Tool call query rules:
-  - Include only *brand + explicit configurations / price / color* from the user input.
-  - DO NOT include common words like "mobiles", "laptop", "please", or filler words.
-  - DO NOT paraphrase or convert technical terms (e.g., always use "i5", "i7", "8GB", "256GB", not "high five" or "eight GB").
-  - If the user provides no configuration, use *only the brand name* as the query.
-  - If the user provides configurations, append them in the query *exactly as provided by the user*.
-* 🗣 Responses must be in the user's language *only*. Never switch languages mid-conversation.
-* 🎧 Listen fully to all user input before responding. Do not rush.
-* 🗣 Always explain results naturally; do not return raw JSON.
-* 🔒 NO external knowledge or assumptions — depend ONLY on the tool output.
+1. ✅ ALWAYS use the internal tool \\getProductDetails\\ to fetch product information.
+   - This tool reads directly from our official Google Sheets catalog (merged across GIDs).
+
+2. 🚫 NEVER assume, invent, or modify product details like name, price, stock, rating, or discount.
+
+3. ❌ DO NOT paraphrase or reword technical/numeric data — show it exactly as returned.
+
+4. 📋 Category Queries:
+   - If the user asks for a category (e.g., "mobiles", "laptops"), first list available brands:
+     • Mobiles: Samsung, Oppo, Motorola, iPhone, Vivo  
+     • Laptops: Acer, Lenovo, Dell, HP, Asus
+
+5. 📋 Brand Queries:
+   - When the user mentions a brand (e.g., “Asus i5 8GB under 30k”), you must:
+     1. Extract the *brand name* only.
+     2. Call the \\getProductDetails\\ tool using just that brand as the query.
+     3. Once you receive the results, filter and display the most relevant products *based on the user’s requested features* such as:
+        • Processor (e.g., “i5”, “Ryzen 7”)  
+        • RAM, Storage, or Color  
+        • Price range or discount  
+        • Other mentioned configurations
+     4. Always make filtering decisions after receiving the data, not before.
+
+6. Tool Query Rules (Simplified)
+  Pass only the brand name (e.g., "Asus", "HP", "Samsung").
+  ❌ Don’t include extra words (“mobile”, “please”, “show”, “laptop”, etc.) or specs (“i5”, “8GB”, “256GB”, “SSD”, etc.).
+  ✅ Tool call = clean brand name only.
+  After fetching that brand’s sheet, apply user filters (price, specs, model, etc.) within the fetched data — not in the tool call.
+
+7. 🧩 If the requested product or configuration is *not available*:
+   - Do NOT directly say “not available” or “out of stock”.
+   - Instead, immediately use the \\getProductDetails\\ tool again to search for *similar items* based on:
+     • Same configuration (processor, RAM, storage)
+     • Or within the same price range
+     • Or same product type/category
+   - Then respond politely, e.g.:
+     “That specific model isn’t available right now, but I found another option with similar features from another brand — would you like to check it out?”
+   - Always ensure substitutes are fetched only via tool calls (never guessed).
+
+8. 🗣 Responses must:
+   - Be in the user's selected language only.
+   - Use natural, conversational phrasing.
+   - Depend solely on tool results (no external assumptions).
+   - Never display raw JSON or internal data formats.
 `;
 
   switch (lang.code) {
@@ -191,6 +217,7 @@ Always stay friendly, professional, and engaging. End responses with a follow-up
 `;
   }
 };
+
 export default function WelcomeScreen({
   onLanguageSelect,
 }: WelcomeScreenProps) {

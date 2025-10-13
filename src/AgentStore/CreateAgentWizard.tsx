@@ -4,6 +4,7 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   Steps,
   Input,
+  Tabs,
   Select,
   Button,
   Card,
@@ -241,8 +242,9 @@ function cleanInstructionText(txt: string): string {
     .replace(/[ \t]*\n[ \t]*/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-  return t.slice(0, 7000);
+  return t; // no silent .slice()
 }
+
 
 const CreateAgentWizard: React.FC = () => {
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
@@ -289,6 +291,25 @@ const CreateAgentWizard: React.FC = () => {
 
   // 🧭 Ref to the Instructions editor container (Step 2)
   const instructionsRef = useRef<HTMLDivElement | null>(null);
+
+  const stepSaveMap: Record<0 | 1 | 2, () => Promise<boolean>> = {
+    0: async () => !!(await saveStep0()),
+    1: async () => !!(await saveStep1()),
+    2: async () => !!(await saveStep2()),
+  };
+
+  async function goToStep(next: 0 | 1 | 2 | 3) {
+    if (next === step) return;
+    // Only steps 0..2 are editable and need save
+    if (step <= 2) {
+      const dirty = isDirtyForStep(step as 0 | 1 | 2);
+      if (dirty) {
+        const ok = await stepSaveMap[step as 0 | 1 | 2]();
+        if (!ok) return; // stay on the same step if save failed
+      }
+    }
+    setStep(next);
+  }
 
   // 🚀 Jump from Step 4 → Step 2 and focus the instructions editor
   const goToInstructionsFromStep4 = () => {
@@ -445,6 +466,23 @@ const CreateAgentWizard: React.FC = () => {
 
   // Voice: default inactive
   const [voiceStatus] = useState<boolean>(false);
+
+  const openInstructionsAnywhere = React.useCallback(() => {
+    // show the modal with current text
+    setTempInstructions(instructions || "");
+    setShowInstructionsModal(true);
+
+    // jump to Step 2 and scroll to editor if needed
+    if (step !== 2) {
+      setStep(2);
+      setTimeout(() => {
+        instructionsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 80);
+    }
+  }, [instructions, step]);
 
   // profile cache (for Share Contact flow)
   const profileRef = useRef<{
@@ -907,10 +945,6 @@ const CreateAgentWizard: React.FC = () => {
       );
       return false;
     }
-    if (!within(name, LIMITS.nameMin, LIMITS.nameMax)) {
-      message.error("Please Enter Agent name in 50 charcters"); // custom
-      return false;
-    }
 
     if (!creatorName.trim()) {
       missing.push("Creator Name");
@@ -940,7 +974,6 @@ const CreateAgentWizard: React.FC = () => {
       missing.push("Language");
     }
 
-    // soft caps already on inputs:
     if (userExperienceSummary.length > LIMITS.expMax) {
       message.error(
         `Creator Experience must be ≤ ${LIMITS.expMax} characters.`
@@ -1103,7 +1136,7 @@ const CreateAgentWizard: React.FC = () => {
       missing.push("Instructions (Generate or Write your own)");
     } else if (instructions.length > LIMITS.instructionsMax) {
       message.error(
-        `Instructions must be ≤ ${LIMITS.instructionsMax} characters.`
+        `Instructions must be ≤ ${LIMITS.instructionsMax} characters. You currently have ${instructions.length}.`
       );
       return false;
     }
@@ -1317,7 +1350,6 @@ const CreateAgentWizard: React.FC = () => {
     }
   };
 
-  // Step 3 save (Audience + Config + Contact is BEFORE Instructions in UI, but payload unchanged)
   const saveStep2 = async () => {
     if (isEditMode && !agentId) {
       message.error(
@@ -1325,11 +1357,18 @@ const CreateAgentWizard: React.FC = () => {
       );
       return false;
     }
-    if (!generated) {
-      message.error("Instructions not generated. Click Generate.");
-      setShowViewInstructions(false);
+    if (!instructions.trim()) {
+      message.error("Please write or generate instructions before saving.");
       return false;
     }
+    // ❗ Hard error if > 7000
+    if (instructions.length > LIMITS.instructionsMax) {
+      message.error(
+        `Instructions must be ≤ ${LIMITS.instructionsMax} characters.`
+      );
+      return false;
+    }
+
     if (!validateStep2()) return false;
 
     setLoading(true);
@@ -1345,11 +1384,11 @@ const CreateAgentWizard: React.FC = () => {
         gender: genderForText || genderSelections.join(",") || undefined,
         ageLimit: finalAgeLimits,
         converstionTone,
-        instructions,
-        // contact moved in UI but stays in this screen's payload
+        instructions, // ✅ send as-is (already validated ≤7000)
         contactDetails: shareContact === "YES" ? contactDetails : undefined,
         shareContact: shareContact,
       };
+
       const data = await doPatch("/ai-service/agent/agentScreen3", payload);
       const aId = (data as any)?.agentId || (data as any)?.id || "";
       const asstId = (data as any)?.assistantId || "";
@@ -1357,7 +1396,7 @@ const CreateAgentWizard: React.FC = () => {
       if (asstId) setAssistantId(String(asstId));
       message.success("Saved step 3");
       lastSaved2.current = snapStep2();
-      setStep(3); // ✅ automatically go to next step
+      setStep(3); // go to Publish
       return true;
     } catch (e: any) {
       message.error(e?.message || "Failed to save step 3");
@@ -1366,6 +1405,7 @@ const CreateAgentWizard: React.FC = () => {
       setLoading(false);
     }
   };
+
   const next = async () => {
     if (step === 3) return; // last step, nothing to do
     const dirty = isDirtyForStep(step as 0 | 1 | 2);
@@ -1523,11 +1563,22 @@ const CreateAgentWizard: React.FC = () => {
 
   // Instructions edit modal
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
-  // replace the old handler
+
   const handleSaveInstructions = () => {
+    if (!tempInstructions.trim()) {
+      message.error("Please enter instructions.");
+      return;
+    }
+    if (tempInstructions.length > LIMITS.instructionsMax) {
+      message.error(
+        `Instructions must be ≤ ${LIMITS.instructionsMax} characters.`
+      );
+      return;
+    }
     setInstructions(tempInstructions);
+    setGenerated(true);
     message.success("Instructions saved!");
-    setShowInstructionsModal(false); // ✅ always close automatically
+    setShowInstructionsModal(false);
   };
 
   // Require at least 2 conversation starters (before preview/publish)
@@ -2002,8 +2053,9 @@ const CreateAgentWizard: React.FC = () => {
         >
           <Steps
             current={step}
+            onChange={(s) => goToStep(s as 0 | 1 | 2 | 3)}
             items={[
-              { title: "Profile", icon: <UserOutlined /> },
+              { title: "Agent Profile", icon: <UserOutlined /> },
               { title: "Business & GPT Model", icon: <SettingOutlined /> },
               { title: "Audience & Configuration", icon: <BulbOutlined /> },
               { title: "Publish", icon: <RocketOutlined /> },
@@ -3170,71 +3222,69 @@ const CreateAgentWizard: React.FC = () => {
           editing the agent.
         </div>
       </Modal>
+  <Modal
+  open={showInstructionsModal}
+  onCancel={() => {
+    stopListening();
+    setShowInstructionsModal(false);
+  }}
+  footer={null}
+  title="Write Instructions"
+>
+  <TextArea
+    value={tempInstructions}
+    onChange={(e) => {
+      const val = e.target.value;
+      setTempInstructions(val);
 
-      <Modal
-        open={showInstructionsModal}
-        onCancel={() => {
+      if (val.length === LIMITS.instructionsMax) {
+        message.error("Please write within 7000 characters below.");
+      } else if (val.length > LIMITS.instructionsMax) {
+        message.error("Exceeded 7000 characters — please shorten your instructions.");
+      }
+    }}
+    rows={8}
+    style={{ borderRadius: 8 }}
+    placeholder="Type or speak your instructions here…"
+    maxLength={LIMITS.instructionsMax}
+  />
+  <Text type="secondary" style={{ fontSize: 12, float: "right", marginTop: 4 }}>
+    {tempInstructions.length}/{LIMITS.instructionsMax}
+  </Text>
+
+  <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", gap: 8 }}>
+    <Button
+      onClick={() => (isListening ? stopListening() : startListening({ toModal: true }))}
+      icon={isListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+      danger={isListening}
+    >
+      {isListening ? "Stop" : "Speak"}
+    </Button>
+
+    <div>
+      <Button
+        onClick={() => {
           stopListening();
           setShowInstructionsModal(false);
         }}
-        footer={null}
-        title="Write Instructions"
+        style={{ marginRight: 8 }}
       >
-        <TextArea
-          value={tempInstructions}
-          onChange={(e) => setTempInstructions(e.target.value)}
-          rows={8}
-          style={{ borderRadius: 8 }}
-          placeholder="Type or speak your instructions here…"
-        />
-        <Text
-          type="secondary"
-          style={{ fontSize: 12, float: "right", marginTop: 4 }}
-        >
-          {instructions.length}/{LIMITS.instructionsMax}
-        </Text>
+        Cancel
+      </Button>
 
-        <div
-          style={{
-            marginTop: 12,
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 8,
-          }}
-        >
-          <Button
-            onClick={() =>
-              isListening ? stopListening() : startListening({ toModal: true })
-            }
-            icon={isListening ? <AudioMutedOutlined /> : <AudioOutlined />}
-            danger={isListening}
-          >
-            {isListening ? "Stop" : "Speak"}
-          </Button>
+      <Button
+        onClick={() => {
+          stopListening();
+          handleSaveInstructions();
+        }}
+        style={{ marginRight: 8 }}
+      >
+        Save
+      </Button>
+    </div>
+  </div>
+</Modal>
 
-          <div>
-            <Button
-              onClick={() => {
-                stopListening();
-                setShowInstructionsModal(false);
-              }}
-              style={{ marginRight: 8 }}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              onClick={() => {
-                stopListening();
-                handleSaveInstructions(); // ✅ stays open
-              }}
-              style={{ marginRight: 8 }}
-            >
-              Save
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal
         open={showViewInstructions}
@@ -3296,17 +3346,28 @@ const CreateAgentWizard: React.FC = () => {
         ) : (
           <>
             <TextArea
-              value={tempInstructions}
-              onChange={(e) => setTempInstructions(e.target.value)}
-              rows={10}
-              style={{ borderRadius: 8 }}
-            />
-            <Text
-              type="secondary"
-              style={{ fontSize: 12, float: "right", marginTop: 4 }}
-            >
-              {tempInstructions.length}/{LIMITS.instructionsMax}
-            </Text>
+  value={tempInstructions}
+  onChange={(e) => {
+    const val = e.target.value;
+    setTempInstructions(val);
+
+    if (val.length === LIMITS.instructionsMax) {
+      message.error("Please write within 7000 characters below.");
+    } else if (val.length > LIMITS.instructionsMax) {
+      message.error("Exceeded 7000 characters — please shorten your instructions.");
+    }
+  }}
+  rows={10}
+  style={{ borderRadius: 8 }}
+  maxLength={LIMITS.instructionsMax}
+/>
+<Text
+  type="secondary"
+  style={{ fontSize: 12, float: "right", marginTop: 4 }}
+>
+  {tempInstructions.length}/{LIMITS.instructionsMax}
+</Text>
+
 
             <div
               style={{

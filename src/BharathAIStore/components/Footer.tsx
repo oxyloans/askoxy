@@ -1,6 +1,5 @@
-// src/components/Footer.tsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Logo from "../../assets/img/bharatAI.png";
 import {
   Mail,
@@ -16,7 +15,13 @@ import { SiThreads } from "react-icons/si";
 const year = new Date().getFullYear();
 
 const Footer: React.FC = () => {
-  // ✅ Your requested social links (with consistent sizing & hover states)
+  const location = useLocation();
+
+  // Restrict the secret link to admin role only
+  const isAdmin =
+    typeof window !== "undefined" &&
+    localStorage.getItem("userRole") === "admin";
+
   const socialLinks: {
     icon: React.ReactNode;
     href: string;
@@ -62,7 +67,10 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-white border-t border-gray-200" role="contentinfo">
+    <footer
+      className="bg-white border-t border-gray-200 relative"
+      role="contentinfo"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         {/* Top Section */}
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -124,7 +132,6 @@ const Footer: React.FC = () => {
                   AI Resources
                 </Link>
               </li>
-             
             </ul>
           </nav>
 
@@ -203,8 +210,15 @@ const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="text-sm text-gray-600">
-            © {year} ASKOXY.AI. All rights reserved.
+          {/* 👇 Copyright + Secret Dot */}
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            <span>© {year} ASKOXY.AI. All rights reserved.</span>
+              <Link
+                to="/bharath-aistore/hiddenagents"
+                aria-label="Hidden Agents"
+                title="Hidden Agents"
+                className="inline-block h-2 w-2 rounded-full bg-gray-700 hover:bg-purple-600 transition"
+              />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">

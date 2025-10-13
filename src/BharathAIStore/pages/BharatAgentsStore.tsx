@@ -10,7 +10,7 @@ import Highlighter from "../components/Highlighter";
 import CA3image from "../../assets/img/ca3.png";
 
 // ---------- constants ----------
-
+const OG_IMAGE = "https://i.ibb.co/h1fpCXzw/fanofog.png";
 const ELEPHANT = "https://i.ibb.co/cSPD6dCH/elephantbg.png";
 
 // ---------- types ----------
@@ -58,6 +58,25 @@ interface PaginationState {
 // ---------- api ----------
 const apiClient = axios.create({ baseURL: BASE_URL });
 
+// ==== Hidden Agent Filter (add once, near top) ===============================
+type AssistantBase = {
+  agentId?: string | number;
+  assistantId?: string | number;
+  id?: string | number;
+} & Record<string, any>;
+
+const HIDE_AGENT_IDS = new Set<string>([
+  "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0", // blocklisted agent
+]);
+
+export const isHiddenAgent = (a: AssistantBase): boolean => {
+  const ids = [a?.agentId, a?.assistantId, a?.id]
+    .filter((v): v is string | number => v != null)
+    .map((v) => String(v).toLowerCase());
+  return ids.some((id) => HIDE_AGENT_IDS.has(id));
+};
+// =============================================================================
+
 async function getAssistants(
   limit: number,
   after?: string
@@ -77,12 +96,19 @@ async function getAssistants(
     },
   });
 
-  const normalized = (res.data?.data ?? []).map((assistant: any) => ({
-    ...assistant,
-    assistantId: assistant.assistantId || assistant.id,
-    agentId: assistant.agentId || assistant.id,
-    imageUrl: assistant.imageUrl || assistant.image || assistant.thumbUrl || "",
-  }));
+  const normalized: Assistant[] = (res.data?.data ?? []).map(
+    (assistant: any) => ({
+      ...assistant,
+      assistantId: assistant.assistantId || assistant.id,
+      agentId: assistant.agentId || assistant.id,
+      imageUrl:
+        assistant.imageUrl || assistant.image || assistant.thumbUrl || "",
+    })
+  );
+
+  const visible: Assistant[] = normalized.filter(
+    (a: Assistant) => !isHiddenAgent(a)
+  );
 
   return {
     object: res.data?.object ?? "list",
@@ -92,7 +118,6 @@ async function getAssistants(
     lastId: res.data?.lastId,
   };
 }
-
 // /ai-service/agent/webSearchForAgent?message=...
 async function searchAssistants(query: string): Promise<Assistant[]> {
   const res = await apiClient.get("/ai-service/agent/webSearchForAgent", {
@@ -105,7 +130,7 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     },
   });
 
-  const raw = Array.isArray(res.data)
+  const raw: any[] = Array.isArray(res.data)
     ? res.data
     : Array.isArray(res.data?.data)
     ? res.data.data
@@ -113,17 +138,36 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     ? [res.data]
     : [];
 
-  return raw.map((a: any, idx: number) => ({
-    ...a,
-    assistantId: a.assistantId || a.id || a.agentId || "",
-    agentId: a.agentId || a.assistantId || a.id || "",
-    name: a.name ?? `Agent ${idx + 1}`,
-    description: a.description ?? a.desc ?? "",
-    imageUrl: a.imageUrl || a.image || a.thumbUrl || "",
-  }));
+  const mapped: Assistant[] = raw.map(
+    (a: any, idx: number): Assistant => ({
+      assistantId: a?.assistantId || a?.id || a?.agentId || "",
+      agentId: a?.agentId || a?.assistantId || a?.id || "",
+      name: a?.name ?? `Agent ${idx + 1}`,
+      description: a?.description ?? a?.desc ?? "",
+      imageUrl: a?.imageUrl || a?.image || a?.thumbUrl || "",
+      ...a,
+    })
+  );
+
+  const visible: Assistant[] = mapped.filter(
+    (a: Assistant) => !isHiddenAgent(a)
+  );
+  const seen = new Set<string>();
+  const deduped: Assistant[] = visible.filter((a: Assistant) => {
+    const key = (a.assistantId || a.agentId || "").toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return deduped;
 }
 
-
+// ---------- helpers ----------
+const normalizeList = (data: any) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return data ? [data] : [];
+};
 
 // Feedback API → /ai-service/agent/feedbackByAgentId?agentId=...
 export interface Feedback {
@@ -136,7 +180,17 @@ export interface Feedback {
   createdAt?: string;
 }
 
-
+async function getFeedbackByAgent(agentId: string): Promise<Feedback[] | null> {
+  try {
+    const res = await apiClient.get("/ai-service/agent/feedbackByAgentId", {
+      params: { agentId },
+      headers: { "Content-Type": "application/json" },
+    });
+    return normalizeList(res.data) as Feedback[];
+  } catch {
+    return null;
+  }
+}
 
 const PLAY_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"] as const;
 
@@ -278,8 +332,134 @@ const AssistantCard: React.FC<{
   );
 };
 
+const ReadMoreModal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  body: string;
+}> = ({ open, onClose, title, body }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[120]">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
+              {title}
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md hover:bg-gray-100"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{body}</p>
+          </div>
+          <div className="px-5 pb-5">
+            <button
+              className="ml-auto block px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
+// const FeaturedOGCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
+//   const [readMoreOpen, setReadMoreOpen] = useState(false);
 
+//   const shortDesc =
+//     "Become a true fan of OG! 🔥 Upload your photo and instantly transform it into a powerful OG-style cinematic poster.";
+//   const fullDesc =
+//     "Become a true fan of OG! 🔥 Upload your photo and instantly transform it into a powerful OG-style cinematic poster. Share it with friends, show your fandom, and join the #OGFever community. Stand out with personalized OG visuals that capture the spirit of the movie and spread the fever everywhere!";
+
+//   return (
+//     <>
+//       <div
+//         role="button"
+//         tabIndex={0}
+//         onClick={onOpen}
+//         onKeyDown={(e) =>
+//           e.key === "Enter" || e.key === " " ? onOpen() : null
+//         }
+//         className="relative group rounded-2xl shadow-purple-400/60 transition-transform hover:-translate-y-0.5 h-full"
+//         aria-label="Open THE FAN OF OG"
+//       >
+//         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden h-full flex flex-col">
+//           {/* Thumbnail */}
+//           <div className="relative w-full h-52 bg-black">
+//             <img
+//               src={OG_IMAGE}
+//               alt="THE FAN OF OG"
+//               className="absolute inset-0 w-full h-full object-cover"
+//               loading="eager"
+//               decoding="async"
+//             />
+//             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+//             <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
+//               <Bot className="h-6 w-6 text-purple-700" />
+//             </div>
+//           </div>
+
+//           {/* Content */}
+//           <div className="pt-8 px-5 pb-5 flex flex-col flex-1">
+//             <div className="flex items-start justify-between gap-3">
+//               <div className="min-w-0">
+//                 <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
+//                   THE FAN OF OG
+//                 </h3>
+//                 <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">
+//                   {shortDesc}
+//                 </p>
+//                 <button
+//                   className="mt-1 text-xs font-medium text-purple-700 hover:underline"
+//                   onClick={(e) => {
+//                     e.stopPropagation();
+//                     setReadMoreOpen(true);
+//                   }}
+//                 >
+//                   Read more
+//                 </button>
+//               </div>
+
+//               <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 text-[11px] font-semibold">
+//                 <Flame className="h-3.5 w-3.5 text-red-600" />
+//                 #OGFever
+//               </span>
+//             </div>
+
+//             <div className="mt-auto pt-4 flex items-center gap-2">
+//               <button
+//                 onClick={(e) => {
+//                   e.stopPropagation();
+//                   onOpen();
+//                 }}
+//                 className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
+//               >
+//                 Open
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       <ReadMoreModal
+//         open={readMoreOpen}
+//         onClose={() => setReadMoreOpen(false)}
+//         title="THE FAN OF OG"
+//         body={fullDesc}
+//       />
+//     </>
+//   );
+// };
 
 // ---------- page ----------
 const BharatAgentsStore: React.FC = () => {
@@ -296,11 +476,35 @@ const BharatAgentsStore: React.FC = () => {
   const location = useLocation();
   const [showHero, setShowHero] = useState(false); // 🔑 toggle state
 
-useEffect(() => {
-  sessionStorage.removeItem("primaryType");
-  sessionStorage.removeItem("fromAISTore");
-  sessionStorage.removeItem("redirectPath");
-}, []);
+  const [loadingMine, setLoadingMine] = useState(false);
+
+  // 🔽 put these near other React hooks in BharatAgentsStore component:
+  const [tab, setTab] = useState<"EXPLORE" | "MINE">("EXPLORE");
+
+  // read once; if not logged in, this will be null and we'll hide the "My Agents" tab
+  const loggedInUserId =
+    (typeof window !== "undefined" ? localStorage.getItem("userId") : null)
+      ?.toString()
+      .toLowerCase() || null;
+
+  // who owns an agent? matches any of ownerId / userId / createdBy fields
+  const isOwnedBy = (a: any, uid: string | null) => {
+    if (!uid) return false;
+    const target = uid.toLowerCase();
+    const o1 = (a.ownerId || "").toString().toLowerCase();
+    const o2 = (a.userId || "").toString().toLowerCase();
+    const o3 = (a.createdBy || "").toString().toLowerCase();
+    return [o1, o2, o3].some((v) => v && v === target);
+  };
+
+  // strictly APPROVED?
+  const isApproved = (a: any) =>
+    ((a.status || a.agentStatus || "") + "").toUpperCase() === "APPROVED";
+
+  const toggleHero = () => {
+    setShowHero((prev) => !prev);
+  };
+
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
     pageSize: 30,
@@ -339,8 +543,23 @@ useEffect(() => {
     "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
   ]);
 
-  
-
+  const NEXT_PATH = "/main/bharat-expert";
+  // const handleCreateAgentClick = () => {
+  //   try {
+  //     setLoading(true);
+  //     const userId = localStorage.getItem("userId");
+  //     if (userId) {
+  //       navigate(NEXT_PATH);
+  //     } else {
+  //       sessionStorage.setItem("redirectPath", NEXT_PATH);
+  //       navigate(`/whatsapplogin?next=${encodeURIComponent(NEXT_PATH)}`);
+  //     }
+  //   } catch (e) {
+  //     console.error("Create Agent CTA error:", e);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleLogin = () => {
     try {
@@ -363,14 +582,16 @@ useEffect(() => {
       setLoading(false);
     }
   };
-const fetchAssistants = useCallback(
+  const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
       setLoading(true);
       try {
         const response = await getAssistants(pagination.pageSize, after);
 
         setAssistants((prev) => {
-          const merged = isLoadMore ? [...prev, ...response.data] : response.data;
+          const merged = isLoadMore
+            ? [...prev, ...response.data]
+            : response.data;
           // ✅ Deduplicate by ID to avoid duplicates on load more
           const byId = new Map<string, Assistant>();
           for (const a of merged) {
@@ -406,6 +627,69 @@ const fetchAssistants = useCallback(
   useEffect(() => {
     fetchAssistants();
   }, [fetchAssistants]);
+
+  // 🚀 Auto-fetch all remaining pages when user switches to "My Agents"
+  useEffect(() => {
+    if (tab !== "MINE") return; // only when My Agents is active
+    if (!loggedInUserId) return; // must be logged in
+    if (!pagination.hasMore) return; // nothing else to load
+
+    let cancelled = false;
+
+    const loadAllRemaining = async () => {
+      setLoadingMine(true);
+      try {
+        let after = pagination.lastId;
+        let hasMore = pagination.hasMore;
+
+        // Keep fetching until API says no more pages (cursor-based)
+        while (hasMore && !cancelled) {
+          const res = await getAssistants(pagination.pageSize, after);
+
+          // Merge + dedupe by ID
+          setAssistants((prev) => {
+            const merged = [...prev, ...res.data];
+            const byId = new Map<string, Assistant>();
+            for (const a of merged) {
+              const key = a.assistantId || a.id || a.agentId || "";
+              if (key) byId.set(key, a);
+            }
+            return Array.from(byId.values());
+          });
+
+          // Advance the cursor strictly using API's lastId when hasMore = true
+          after = res.hasMore ? res.lastId : undefined;
+          hasMore = res.hasMore;
+
+          // keep pagination state in sync
+          setPagination((prev) => ({
+            ...prev,
+            hasMore,
+            lastId: after,
+            firstId: prev.firstId ?? res.firstId,
+            total: prev.total + res.data.length,
+          }));
+        }
+      } catch (e) {
+        console.error("My Agents auto-load failed:", e);
+      } finally {
+        if (!cancelled) setLoadingMine(false);
+      }
+    };
+
+    loadAllRemaining();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tab,
+    loggedInUserId,
+    pagination.hasMore,
+    pagination.lastId,
+    pagination.pageSize,
+  ]);
+
   const approvedAssistants = useMemo(() => {
     return assistants.filter((a) => {
       const s = (a.status || a.agentStatus || "").toString().toUpperCase();
@@ -465,6 +749,20 @@ const fetchAssistants = useCallback(
       return (a.name || "").localeCompare(b.name || "");
     });
   }, [q, searchResults, approvedAssistants]);
+
+  // your existing `shownAssistants` remains unchanged...
+
+  // mine (approved + owned by me); no search override here per requirement
+  const myApprovedAssistants = useMemo(() => {
+    if (!loggedInUserId) return [];
+    return approvedAssistants.filter(
+      (a) => isApproved(a) && isOwnedBy(a, loggedInUserId)
+    );
+  }, [approvedAssistants, loggedInUserId]);
+
+  // final list shown on screen (tab-aware)
+  const finalAssistants =
+    tab === "MINE" ? myApprovedAssistants : shownAssistants;
 
   const SkeletonCard = () => (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse h-full flex flex-col">
@@ -535,7 +833,8 @@ const fetchAssistants = useCallback(
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-  const handleOpen = (a: any) => {
+  const handleOpen = (a: Assistant) => {
+    if (isHiddenAgent(a)) return;
     // 1) Block guests → hard redirect to WhatsApp login
     const userId =
       typeof window !== "undefined" ? localStorage.getItem("userId") : null;
@@ -685,12 +984,49 @@ const fetchAssistants = useCallback(
           </div>
         </section>
 
+        {/* Tabs */}
+        <div className="mb-4 sm:mb-6">
+          <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1">
+            <button
+              onClick={() => setTab("EXPLORE")}
+              className={[
+                "px-4 py-2 text-sm font-medium rounded-lg transition",
+                tab === "EXPLORE"
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100",
+              ].join(" ")}
+              aria-pressed={tab === "EXPLORE"}
+            >
+              Explore AI Agents
+            </button>
+
+            {/* "My Agents" appears only when logged in */}
+            {loggedInUserId && (
+              <button
+                onClick={() => setTab("MINE")}
+                className={[
+                  "ml-1 px-4 py-2 text-sm font-medium rounded-lg transition",
+                  tab === "MINE"
+                    ? "bg-purple-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100",
+                ].join(" ")}
+                aria-pressed={tab === "MINE"}
+              >
+                My Agents
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Heading & subtext stay the same */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-            AI Agents
+            {tab === "MINE" ? "My Agents" : "AI Agents"}
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-            Discover expert AI Agents.
+            {tab === "MINE"
+              ? "Your approved agents"
+              : "Discover expert AI Agents."}
           </p>
         </div>
 
@@ -705,14 +1041,24 @@ const fetchAssistants = useCallback(
           <div className="text-sm text-red-600 mb-4">{searchError}</div>
         )}
 
-        {shownAssistants.length === 0 ? (
+        {finalAssistants.length === 0 ? (
           <div className="text-center py-16">
             <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900">
-              {isSearching ? "No results found" : "No Assistants Found"}
+              {tab === "MINE"
+                ? loggedInUserId
+                  ? "No approved agents found for your account."
+                  : "Please log in to view your agents."
+                : isSearching
+                ? "No results found"
+                : "No Assistants Found"}
             </h3>
             <p className="text-gray-600">
-              {isSearching
+              {tab === "MINE"
+                ? loggedInUserId
+                  ? "Create an agent or wait for approval to see it here."
+                  : "Sign in to access your personal agents."
+                : isSearching
                 ? "Try a different search term."
                 : "Try a different search term."}
             </p>
@@ -724,7 +1070,7 @@ const fetchAssistants = useCallback(
               {/* Featured OG card first when NOT searching */}
               {/* {!isSearching && <FeaturedOGCard onOpen={openOG} />} */}
 
-              {shownAssistants.map((assistant, index) => (
+              {finalAssistants.map((assistant, index) => (
                 <div
                   key={
                     assistant.assistantId ||
@@ -744,13 +1090,11 @@ const fetchAssistants = useCallback(
               ))}
             </div>
 
-          {!isSearching && (
+            {!isSearching && tab === "EXPLORE" && (
               <div className="text-center mt-10 sm:mt-12">
-                {/* ✅ Updated: Pass pagination.lastId as 'after' to fetch next batch after last loaded item */}
-                {/* Button disabled when !hasMore or loading; shows "All results loaded" when end reached */}
                 <button
-                  onClick={() => fetchAssistants(pagination.lastId, true)} // ✅ Pass lastId as after for next page
-                  disabled={!pagination.hasMore || loading} // ✅ FIXED: Corrected disabled logic. Previously {pagination.hasMore || loading} which inverted the hasMore check, disabling the button when more items were available. Now correctly disables only when no more items (!hasMore) or during loading.
+                  onClick={() => fetchAssistants(pagination.lastId, true)}
+                  disabled={!pagination.hasMore || loading}
                   className="inline-flex items-center gap-2 px-8 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
                 >
                   {pagination.hasMore ? (

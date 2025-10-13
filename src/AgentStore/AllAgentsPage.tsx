@@ -28,6 +28,12 @@ function authHeadersBase(): Record<string, string> {
   }
   return h;
 }
+
+// Prefer profileImagePath; fallback to imageUrl if present
+function getBestAvatar(a: any): string | null {
+  return a?.profileImagePath || a?.imageUrl || null;
+}
+
 async function authFetch(
   input: RequestInfo | URL,
   init: RequestInit = {}
@@ -167,6 +173,14 @@ const AllAgentsPage: React.FC = () => {
   const [data, setData] = useState<AllAgentDataResponse | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // ⬇️ place with the other React.useState hooks (top of component)
+  const [avatarMenuFor, setAvatarMenuFor] = useState<string | null>(null);
+  const [genLoadingFor, setGenLoadingFor] = useState<string | null>(null);
+  const [genPreviewUrl, setGenPreviewUrl] = useState<string | null>(null);
+  const [genPreviewAssistantId, setGenPreviewAssistantId] = useState<
+    string | null
+  >(null);
+
   const [editMap, setEditMap] = useState<Record<string, EditDraft>>({});
   const [fileModalOpen, setFileModalOpen] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState<string | null>(null);
@@ -187,7 +201,7 @@ const AllAgentsPage: React.FC = () => {
     try {
       if (!resolvedUserId) return;
       const ref = await authFetch(
-        `${BASE_URL}/api/ai-service/agent/allAgentDataList?userId=${encodeURIComponent(
+        `${BASE_URL}/ai-service/agent/allAgentDataList?userId=${encodeURIComponent(
           resolvedUserId
         )}`,
         { method: "GET" }
@@ -224,6 +238,134 @@ const AllAgentsPage: React.FC = () => {
       // ignore transient refresh errors
     }
   };
+
+  // Small helper: fetch remote image URL → File, then reuse your uploadImage()
+  async function uploadFromUrlToAssistant(assistantId: string, url: string) {
+    try {
+      const res = await fetch(url, { mode: "cors", cache: "no-store" });
+      if (!res.ok) throw new Error(`Fetch image failed: ${res.status}`);
+      const blob = await res.blob();
+      // Try to preserve extension if present
+      const ext = (blob.type?.split("/")?.[1] || "png").toLowerCase();
+      const file = new File([blob], `ai-profile.${ext}`, {
+        type: blob.type || "image/png",
+      });
+      await uploadImage(assistantId, file); // ✅ uses your existing upload API
+    } catch (e: any) {
+      message.error(e?.message || "Failed to save generated image.");
+      throw e;
+    }
+  }
+
+  // ⬇️ add with the other React.useState hooks
+const [pendingSave, setPendingSave] = useState<null | {
+  agentId: string;
+  imageUrl: string;
+  userId: string;
+}>(null);
+
+// POST /api/ai-service/agent/save-image-url  (make sure /api prefix is present)
+async function saveImageUrl(payload: {
+  agentId: string;
+  imageUrl: string;
+  saveOption: "yes" | "no";
+  userId: string;
+}) {
+  const res = await authFetch(
+    `${BASE_URL}/ai-service/agent/save-image-url`,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+
+  const text = await res.text().catch(() => "");
+
+  if (!res.ok) {
+    // Surface backend error text if present
+    throw new Error(
+      `Save image URL failed (${res.status})${text ? `: ${text}` : ""}`
+    );
+  }
+
+  // Some backends return plain text (e.g., "Image URL saved successfully")
+  const ct = (res.headers.get("content-type") || "").toLowerCase();
+  if (ct.includes("application/json")) {
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      // If server mislabeled but content is not valid JSON, fall back to text
+      return { message: text || "OK" };
+    }
+  }
+  // Non-JSON success
+  return { message: text || "OK" };
+}
+
+
+
+  /** Generate Profile Pic via PATCH /api/ai-service/agent/generateProfilePic
+   *  - payload: { agentName, description, userId }
+   *  - response: { imageUrl, prompt }  // we won't show the prompt
+   *  - then show a confirm modal asking to use it as profile now
+   */
+  async function generateProfilePicForAssistant(a: Assistant) {
+    if (!a) return;
+    const uid = resolvedUserId;
+    if (!uid) return message.error("Missing userId.");
+    try {
+      setGenLoadingFor(a.id);
+      const body = {
+        agentName: a.agentName || a.name || "AI Agent",
+        description: a.description || "",
+        userId: uid,
+      };
+
+      const res = await authFetch(
+        `${BASE_URL}/ai-service/agent/generateProfilePic`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        }
+      );
+      const text = await res.text().catch(() => "");
+      if (!res.ok) {
+        let msg = `Generate failed (${res.status})`;
+        if (text) msg += `: ${text}`;
+        throw new Error(msg);
+      }
+      const json = text ? JSON.parse(text) : {};
+      const url: string | null = json?.imageUrl || null;
+      if (!url) throw new Error("No imageUrl in response.");
+
+      // Show confirm modal (we DO NOT show 'prompt' to user)
+      setGenPreviewUrl(url);
+      setGenPreviewAssistantId(a.assistantId || null);
+    } catch (e: any) {
+      message.error(e?.message || "Failed to generate profile image.");
+    } finally {
+      setGenLoadingFor(null);
+      setAvatarMenuFor(null);
+    }
+  }
+
+async function getAiProfileImage(agentId: string, userId: string) {
+  try {
+    const url = new URL(`/ai-service/agent/getAiProfileImage`, BASE_URL);
+    url.searchParams.set("agentId", agentId);
+    url.searchParams.set("userId", userId);
+    const res = await authFetch(url.toString(), { method: "GET" });
+    const txt = await res.text().catch(() => "");
+    if (!res.ok)
+      throw new Error(`Fetch AI image failed: ${res.status}${txt ? ` ${txt}` : ""}`);
+    const json = txt ? JSON.parse(txt) : {};
+    return json as {
+      userId: string;
+      agentName: string;
+      imageUrl: string;
+      agentId: string;
+    };
+  } catch (e) {
+    return null;
+  }
+}
 
   useEffect(() => {
     (async () => {
@@ -275,6 +417,43 @@ const AllAgentsPage: React.FC = () => {
       }
     })();
   }, [resolvedUserId]);
+
+  // ▶️ After clicking "Use as Profile", this effect runs the POST then GET, then shows the image
+useEffect(() => {
+  if (!pendingSave) return;
+
+  let cancelled = false;
+  (async () => {
+    try {
+      // 1) Save (backend returns an error if saveOption === 'no'; we always send 'yes')
+      await saveImageUrl({
+        agentId: pendingSave.agentId,
+        imageUrl: pendingSave.imageUrl,
+        saveOption: "yes",
+        userId: pendingSave.userId,
+      });
+
+      // 2) GET the saved profile image and show it
+      const got = await getAiProfileImage(pendingSave.agentId, pendingSave.userId);
+      if (!cancelled && got?.imageUrl) {
+        setPreviewSrc(got.imageUrl);
+      }
+
+      // 3) Refresh list so profileImagePath (highest priority) shows up
+      await refreshData();
+      if (!cancelled) message.success("Profile image saved.");
+    } catch (err: any) {
+      if (!cancelled) message.error(err?.message || "Failed to save profile image.");
+    } finally {
+      if (!cancelled) setPendingSave(null);
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [pendingSave]);
+
 
   // 🔹 Cache to avoid duplicate profile fetches across renders
   const requestedProfileIdsRef = React.useRef<Set<string>>(new Set());
@@ -700,7 +879,7 @@ const AllAgentsPage: React.FC = () => {
             size="large"
             className="w-full sm:w-[220px]"
             options={[
-              { value: "All", label: "ALL STATUSES" },
+              { value: "All", label: "ALL " },
               { value: "APPROVED", label: "APPROVED" },
               { value: "DELETED", label: "DELETED" },
               { value: "REQUESTED", label: "REQUESTED" },
@@ -770,87 +949,128 @@ const AllAgentsPage: React.FC = () => {
                       <div className="flex items-start gap-3 mb-4 w-full">
                         {/* Avatar with camera overlay (WhatsApp style) */}
                         <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              a.profileImagePath &&
-                              setPreviewSrc(a.profileImagePath)
-                            }
-                            className="h-14 w-14 rounded-full overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-100 to-amber-100 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-purple-400"
-                            title={a.profileImagePath ? "Tap to preview" : ""}
-                          >
-                            {a.profileImagePath ? (
-                              <img
-                                src={a.profileImagePath}
-                                alt={
-                                  a.agentName
-                                    ? `${a.agentName} avatar`
-                                    : "AI Agent avatar"
-                                }
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                                decoding="async"
-                              />
-                            ) : (
-                              <span className="text-purple-600 text-lg font-bold">
-                                {a.agentName?.[0]?.toUpperCase() || "A"}
-                              </span>
-                            )}
-                          </button>
+                          {(() => {
+                            const bestAvatar = getBestAvatar(a);
+                            return (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    bestAvatar && setPreviewSrc(bestAvatar)
+                                  }
+                                  className="h-14 w-14 rounded-full overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-100 to-amber-100 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                  title={bestAvatar ? "Tap to preview" : ""}
+                                >
+                                  {bestAvatar ? (
+                                    <img
+                                      src={bestAvatar}
+                                      alt={
+                                        a.agentName
+                                          ? `${a.agentName} avatar`
+                                          : "AI Agent avatar"
+                                      }
+                                      className="h-full w-full object-cover"
+                                      loading="lazy"
+                                      decoding="async"
+                                    />
+                                  ) : (
+                                    <span className="text-purple-600 text-lg font-bold">
+                                      {a.agentName?.[0]?.toUpperCase() || "A"}
+                                    </span>
+                                  )}
+                                </button>
 
-                          {/* hidden input */}
-                          <input
-                            id={`img_${a.id}`}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.currentTarget.files?.[0];
-                              if (f && a.assistantId)
-                                uploadImage(a.assistantId, f);
-                              else if (!a.assistantId)
-                                message.error(
-                                  "Missing assistantId for image upload."
-                                );
-                              e.currentTarget.value = "";
-                            }}
-                          />
+                                {/* hidden file input */}
+                                <input
+                                  id={`img_${a.id}`}
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.currentTarget.files?.[0];
+                                    if (f && a.assistantId)
+                                      uploadImage(a.assistantId, f);
+                                    else if (!a.assistantId)
+                                      message.error(
+                                        "Missing assistantId for image upload."
+                                      );
+                                    e.currentTarget.value = "";
+                                    setAvatarMenuFor(null);
+                                  }}
+                                />
 
-                          {/* camera icon */}
-                          <label
-                            htmlFor={`img_${a.id}`}
-                            title="Edit profile image"
-                            className="absolute -right-1 -bottom-1 h-6 w-6 rounded-full bg-white border border-purple-200 shadow flex items-center justify-center cursor-pointer hover:scale-[1.05]"
-                          >
-                            {isUploadingImg ? (
-                              <svg
-                                className="animate-spin h-4 w-4"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                  fill="none"
-                                />
-                                <path
-                                  d="M4 12a8 8 0 018-8"
-                                  fill="currentColor"
-                                />
-                              </svg>
-                            ) : (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-3.5 w-3.5"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                              >
-                                <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-2.382l-.724-1.447A1 1 0 0 0 14 2H9Zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z" />
-                              </svg>
-                            )}
-                          </label>
+                                {/* camera icon → opens small actions menu */}
+                                <button
+                                  title="Generate or Upload profile"
+                                  onClick={(ev) => {
+                                    ev.stopPropagation();
+                                    setAvatarMenuFor((curr) =>
+                                      curr === a.id ? null : a.id
+                                    );
+                                  }}
+                                  className="absolute -right-1 -bottom-1 h-6 w-6 rounded-full bg-white border border-purple-200 shadow flex items-center justify-center hover:scale-[1.05]"
+                                >
+                                  {isUploadingImg || genLoadingFor === a.id ? (
+                                    <svg
+                                      className="animate-spin h-4 w-4"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                        fill="none"
+                                      />
+                                      <path
+                                        d="M4 12a8 8 0 0 1 8-8"
+                                        fill="currentColor"
+                                      />
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-3.5 w-3.5"
+                                      viewBox="0 0 24 24"
+                                      fill="currentColor"
+                                    >
+                                      <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-2.382l-.724-1.447A1 1 0 0 0 14 2H9Zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z" />
+                                    </svg>
+                                  )}
+                                </button>
+
+                                {/* tiny action sheet */}
+                                {avatarMenuFor === a.id && (
+                                  <div className="absolute z-20 left-1/2 -translate-x-1/2 bottom-8 w-[180px] rounded-xl bg-white border border-purple-200 shadow-lg p-2">
+                                    <button
+                                      onClick={() => {
+                                        // OPEN native file picker (your upload image API)
+                                        const el = document.getElementById(
+                                          `img_${a.id}`
+                                        ) as HTMLInputElement | null;
+                                        if (el) el.click();
+                                      }}
+                                      className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-purple-50"
+                                    >
+                                      Upload Profile…
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        generateProfilePicForAssistant(a)
+                                      }
+                                      className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-purple-50"
+                                      disabled={!!genLoadingFor}
+                                    >
+                                      {genLoadingFor === a.id
+                                        ? "Generating…"
+                                        : "Generate with AI"}
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
 
                         <div className="flex-1 min-w-0">
@@ -862,7 +1082,20 @@ const AllAgentsPage: React.FC = () => {
 
                           <div className="flex flex-wrap gap-1 mb-1">
                             {a.status && (
-                              <span className="text-[11px] rounded-full px-2 py-0.5 bg-purple-100 text-purple-700 border border-purple-200">
+                              <span
+                                className={`text-[11px] rounded-full px-2 py-0.5 font-semibold border 
+      ${
+        a.status === "APPROVED"
+          ? "bg-green-100 text-green-800 border-green-200"
+          : a.status === "REQUESTED"
+          ? "bg-sky-100 text-sky-700 border-sky-200"
+          : a.status === "DELETED"
+          ? "bg-red-100 text-red-700 border-red-200"
+          : a.status === "REJECTED"
+          ? "bg-orange-100 text-orange-700 border-orange-200"
+          : "bg-purple-100 text-purple-700 border-purple-200"
+      }`}
+                              >
                                 {a.status}
                               </span>
                             )}
@@ -1237,6 +1470,127 @@ const AllAgentsPage: React.FC = () => {
                                   })}
                                 </ul>
                               )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ✅ Confirm Generated Image Modal */}
+                      {genPreviewUrl && genPreviewAssistantId && (
+                        <div
+                          className="fixed inset-0 z-[70] bg-black/55 backdrop-blur-[2px] flex items-center justify-center px-4"
+                          onMouseDown={(e) => {
+                            if (e.target === e.currentTarget) {
+                              setGenPreviewUrl(null);
+                              setGenPreviewAssistantId(null);
+                            }
+                          }}
+                          role="dialog"
+                          aria-modal="true"
+                        >
+                          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-purple-200 overflow-hidden">
+                            <div className="px-5 py-4 border-b border-purple-100 flex items-center justify-between">
+                              <h3 className="text-lg font-semibold text-purple-900">
+                                Use this as profile?
+                              </h3>
+                              <button
+                                onClick={() => {
+                                  setGenPreviewUrl(null);
+                                  setGenPreviewAssistantId(null);
+                                }}
+                                className="p-2 rounded-full hover:bg-gray-100"
+                                aria-label="Close"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            <div className="p-5">
+                              <div className="w-full rounded-xl overflow-hidden bg-gray-50 border">
+                                <img
+                                  src={genPreviewUrl}
+                                  alt="Generated profile"
+                                  className="w-full h-[280px] object-contain bg-white"
+                                />
+                              </div>
+
+                              <p className="mt-3 text-xs text-gray-500">
+                                We won’t show any “prompt” details — only the
+                                image is used.
+                              </p>
+
+                              <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                                {/* ✅ USE AS PROFILE: upload, then GET & show the image */}
+<button
+  onClick={async () => {
+    // Close the modal right away
+    const agent = (data?.assistants || []).find(
+      x => x.assistantId === genPreviewAssistantId
+    );
+    const uid = resolvedUserId;
+
+    setGenPreviewUrl(null);
+    setGenPreviewAssistantId(null);
+
+    if (!agent?.id || !uid) {
+      return message.error("Missing agentId or userId.");
+    }
+
+    // Kick off the effect: POST save-image-url, then GET and show
+    setPendingSave({
+      agentId: agent.id,
+      imageUrl: genPreviewUrl!, // from generation response
+      userId: uid,
+    });
+  }}
+  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+>
+  Use as Profile
+</button>
+
+
+                                {/* 🔄 GENERATE AGAIN: close modal, show loader while generating */}
+                                <button
+                                  onClick={() => {
+                                    // Close modal & clear preview
+                                    const asst = (data?.assistants || []).find(
+                                      (x) =>
+                                        x.assistantId === genPreviewAssistantId
+                                    );
+                                    setGenPreviewUrl(null);
+                                    setGenPreviewAssistantId(null);
+                                    if (asst) {
+                                      // generateProfilePicForAssistant will set genLoadingFor (spinner on camera)
+                                      generateProfilePicForAssistant(asst);
+                                    }
+                                  }}
+                                  className="px-4 py-2 rounded-lg bg-white border hover:bg-gray-50 font-semibold text-gray-800"
+                                >
+                                  Generate again
+                                </button>
+
+                                {/* ⬆️ UPLOAD PROFILE: opens your upload image API (file picker) */}
+                                <button
+                                  onClick={() => {
+                                    // Find the agent card DOM input by AGENT id (not assistantId)
+                                    const agent = (data?.assistants || []).find(
+                                      (x) =>
+                                        x.assistantId === genPreviewAssistantId
+                                    );
+                                    const picker = document.getElementById(
+                                      `img_${agent?.id || ""}`
+                                    ) as HTMLInputElement | null;
+                                    if (picker) picker.click();
+
+                                    // Optional: close the modal to avoid confusion
+                                    setGenPreviewUrl(null);
+                                    setGenPreviewAssistantId(null);
+                                  }}
+                                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-semibold text-gray-800"
+                                >
+                                  Upload Profile…
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
