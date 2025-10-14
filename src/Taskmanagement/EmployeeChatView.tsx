@@ -29,8 +29,7 @@ import {
   FileOutlined,
   UserOutlined,
   CalendarOutlined,
-  EditOutlined,
-  DeleteOutlined,
+ 
   DownloadOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
@@ -64,6 +63,8 @@ interface InstructionData {
   radhaInstructions: string;
   radhaInstructeddate: string;
   radhaUpdateDate: string;
+  employeesName:string;
+
   documents?: Document[];
   employeeInteractions?: Interaction[];
 }
@@ -127,15 +128,7 @@ const RadhaInstructionView: React.FC = () => {
     if (id) fetchInstructionData();
   }, [id]);
 
-  const handleDeleteDocument = async (documentId: string) => {
-    try {
-      await axios.delete(`${BASE_URL}/user-service/write/delete/${documentId}`);
-      message.success("✅ Document deleted successfully");
-      fetchInstructionData(); // Refresh data after delete
-    } catch (err) {
-      message.error("❌ Failed to delete document");
-    }
-  };
+
 
   if (loading || !instructionData) {
     return (
@@ -302,59 +295,67 @@ const RadhaInstructionView: React.FC = () => {
             {/* Left Section - Instructions */}
             <Col xs={24} lg={14}>
               <Card
-                className="shadow-lg rounded-2xl border-0 h-full"
-                bodyStyle={{ padding: "32px" }}
+                className="shadow-xl rounded-2xl border-0 h-full"
+                bodyStyle={{ padding: "28px" }}
               >
                 <div className="mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Title level={3} className="mb-0 text-gray-800 font-bold">
-                      Radha Instructions
-                    </Title>
-                  </div>
+                  <Title
+                    level={3}
+                    className="text-gray-900 font-extrabold mb-0 tracking-tight"
+                  >
+                    Radha Instructions
+                  </Title>
                   <Divider className="my-4" />
                 </div>
 
                 <div className="space-y-6">
-                  {/* Header */}
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-                    <Title
-                      level={4}
-                      className="mb-3 text-blue-800 flex items-center gap-2"
-                    >
-                      Instruction Header
-                    </Title>
+                  {/* Instruction Header */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 hover:shadow-md transition">
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                      <Title
+                        level={4}
+                        className="text-blue-800 mb-0 font-semibold"
+                      >
+                        Instruction Header
+                      </Title>
+                      <Tag
+                        color="blue"
+                        className="px-3 py-1 rounded-lg text-sm"
+                      >
+                        Assigned to {instructionData.employeesName}
+                      </Tag>
+                    </div>
                     <Paragraph className="text-gray-700 text-base leading-relaxed mb-0">
-                      {instructionData.instructionHeader}
+                      {instructionData.instructionHeader ||
+                        "No header available."}
                     </Paragraph>
                   </div>
 
-                  {/* Main Instructions */}
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100">
+                  {/* Detailed Instructions */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100 hover:shadow-md transition">
                     <Title
                       level={4}
-                      className="mb-3 text-purple-800 flex items-center gap-2"
+                      className="text-purple-800 mb-3 font-semibold flex items-center gap-2"
                     >
                       Detailed Instructions
                     </Title>
-                    <Paragraph className="text-gray-700 text-base leading-relaxed mb-0 whitespace-pre-wrap">
-                      {instructionData.radhaInstructions}
+                    <Paragraph className="text-gray-700 text-base leading-relaxed whitespace-pre-wrap mb-0">
+                      {instructionData.radhaInstructions ||
+                        "No detailed instructions available."}
                     </Paragraph>
                   </div>
 
-                  {/* Metadata */}
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
+                  {/* Timeline Info */}
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100 hover:shadow-md transition">
                     <Title
                       level={4}
-                      className="mb-4 text-green-800 flex items-center gap-2"
+                      className="text-green-800 mb-4 font-semibold flex items-center gap-2"
                     >
                       Timeline Information
                     </Title>
                     <Row gutter={[16, 16]}>
                       <Col xs={24} sm={12}>
-                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <CalendarOutlined className="text-blue-600" />
-                          </div>
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100">
                           <div>
                             <Text strong className="block text-gray-800">
                               Created
@@ -368,10 +369,7 @@ const RadhaInstructionView: React.FC = () => {
                         </div>
                       </Col>
                       <Col xs={24} sm={12}>
-                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                          <div className="p-2 bg-green-100 rounded-lg">
-                            <EditOutlined className="text-green-600" />
-                          </div>
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100">
                           <div>
                             <Text strong className="block text-gray-800">
                               Last Updated
@@ -504,21 +502,38 @@ const RadhaInstructionView: React.FC = () => {
               bodyStyle={{ padding: "32px" }}
             >
               <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <Title level={3} className="mb-1 text-gray-800 font-bold">
-                        Team Conversations
-                      </Title>
-                      <Text className="text-gray-500">
-                        {interactions.length} conversation
-                        {interactions.length !== 1 ? "s" : ""}
-                      </Text>
-                    </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
+                  <div>
+                    <Title level={3} className="mb-1 text-gray-800 font-bold">
+                      Team Conversations
+                    </Title>
+                    <Text className="text-gray-500">
+                      {interactions.length} conversation
+                      {interactions.length !== 1 ? "s" : ""}
+                    </Text>
                   </div>
 
-                  <Badge count={interactions.length} showZero color="#722ed1" />
+                  <div className="flex items-center gap-3 mt-4 sm:mt-0">
+                    <Button
+                      icon={<MessageOutlined />}
+                      style={{
+                        backgroundColor: "#1c84c6",
+                        color: "white",
+                        borderRadius: "6px",
+                      }}
+                      onClick={() => setIsInteractionModalOpen(true)}
+                    >
+                      Write Message
+                    </Button>
+
+                    <Badge
+                      count={interactions.length}
+                      showZero
+                      color="#722ed1"
+                    />
+                  </div>
                 </div>
+
                 <Divider className="my-4" />
               </div>
 

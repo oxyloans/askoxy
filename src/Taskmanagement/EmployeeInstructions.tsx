@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Table, Spin, message, Form, Input, Button, Modal } from "antd";
+import { Table, Spin, message, Form, Input, Button,Space, Modal,Tooltip } from "antd";
 import { MessageOutlined, SearchOutlined } from "@ant-design/icons";
 import { MdForum } from "react-icons/md";
 import axios from "axios";
@@ -114,12 +114,7 @@ const EmployeeInteractions: React.FC = () => {
       render: (_: any, __: any, index: number) => index + 1,
       align: "center",
     },
-    {
-      title: "Admin User ID",
-      dataIndex: "adminUserId",
-      align: "center",
-      render: (text: string) => (text ? `#${text.slice(-4)}` : "-"),
-    },
+
     {
       title: "Instruction ID",
       dataIndex: "radhaInstructionsId",
@@ -135,25 +130,67 @@ const EmployeeInteractions: React.FC = () => {
       title: "Instructions",
       dataIndex: "radhaInstructions",
       align: "center",
+      render: (text) => (
+        // <Tooltip title={text}>
+        <div
+          style={{
+            maxWidth: 250,
+            textAlign: "center",
+            display: "-webkit-box",
+
+            WebkitBoxOrient: "vertical",
+            maxHeight: 110, // limit height
+            overflowX: "auto", // horizontal scroll
+          }}
+        >
+          {text}
+        </div>
+        // </Tooltip>
+      ),
     },
     {
-      title: "Created Date",
-      dataIndex: "radhaInstructeddate",
+      title: "Employee Names",
+      dataIndex: "employeesName",
       align: "center",
-      render: (text) => formatDateIST(text),
+      width: 160,
+      render: (text) => (
+        <Tooltip title={text}>
+          <div
+            style={{
+              maxWidth: 140,
+              maxHeight: 80, // limit height
+              overflowX: "auto", // horizontal scroll
+            }}
+          >
+            {text || "-"}
+          </div>
+        </Tooltip>
+      ),
     },
+
     {
-      title: "Updated Date",
-      dataIndex: "radhaUpdateDate",
+      title: "Created/Updated",
+      dataIndex: "radhaInstructeddate", // Use one as primary dataIndex, but render will access both
       align: "center",
-      render: (text) => formatDateIST(text),
+      render: (text, record) => (
+        <div style={{ textAlign: "left" }}>
+          <div>
+            <span style={{ fontWeight: "400" }}>Created: </span>
+            {formatDateIST(record.radhaInstructeddate)}
+          </div>
+          <div>
+            <span style={{ fontWeight: "400" }}>Updated: </span>
+            {formatDateIST(record.radhaUpdateDate)}
+          </div>
+        </div>
+      ),
     },
     {
       title: "Action",
       key: "action",
       align: "center",
       render: (_: any, record: any) => (
-        <div style={{ display: "flex", justifyContent: "center", gap: "8px" }}>
+        <Space align="center" size="middle">
           {/* Write To Us Button */}
           <Button
             onClick={() => {
@@ -177,7 +214,7 @@ const EmployeeInteractions: React.FC = () => {
           >
             Chat View
           </Button>
-        </div>
+        </Space>
       ),
     },
   ];
@@ -210,7 +247,7 @@ const EmployeeInteractions: React.FC = () => {
           dataSource={filteredData}
           columns={columns}
           bordered
-          pagination={{ pageSize: 50 }}
+          pagination={{ pageSize: 10 }}
           scroll={{ x: true }}
         />
       )}

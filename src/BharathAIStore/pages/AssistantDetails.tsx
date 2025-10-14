@@ -39,6 +39,16 @@ type APIMessage = { role: APIRole; content: string };
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
+type SpeechRecognitionEvent = Event & {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+};
+
+type SpeechRecognitionErrorEvent = Event & {
+  error: string;
+  message?: string;
+};
+
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -1131,111 +1141,51 @@ const openHistoryChat = async (hid: string) => {
 
   const keepListeningRef = useRef(false);
 
-  const handleVoiceToggle = () => {
-    try {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) {
-        message.error("Speech Recognition is not supported in this browser.");
-        return;
-      }
+const handleToggleVoice = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
-      // If currently recording, stop and prevent auto-restart
-      if (recognitionRef.current && isRecording) {
-        keepListeningRef.current = false;
-        recognitionRef.current.stop();
-        return;
-      }
-
-      // Start (or re-start) continuous listening
-      const recognition = new SR();
-      recognition.lang = "en-IN"; // better for India; use "en-US" if you prefer
-      recognition.interimResults = true;
-      recognition.continuous = true; // <-- stay alive across short silences
-
-      recognitionRef.current = recognition;
-      keepListeningRef.current = true;
-
-      recognition.onstart = () => {
-        setIsRecording(true);
-        message.info("🎤 Listening… speak anytime");
-      };
-
-      recognition.onresult = (event: any) => {
-        let finalChunk = "";
-        let interimChunk = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const res = event.results[i];
-          if (res.isFinal) {
-            finalChunk += res[0].transcript + " ";
-          } else {
-            interimChunk += res[0].transcript + " ";
-          }
-        }
-
-        // Append finals permanently
-        if (finalChunk.trim()) {
-          setInput((prev) =>
-            (prev + " " + finalChunk).replace(/\s+/g, " ").trim()
-          );
-        }
-        // Optionally show interim text live (comment out if you don’t want it)
-        if (interimChunk && !finalChunk) {
-          setInput((prev) =>
-            (prev + " " + interimChunk).replace(/\s+/g, " ").trim()
-          );
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech Recognition Error:", event.error);
-        if (event.error === "not-allowed") {
-          message.error("Microphone permission denied. Enable it in settings.");
-          keepListeningRef.current = false; // don't loop if blocked
-          setIsRecording(false);
-          return;
-        }
-        // Auto-recover on transient errors
-        if (
-          keepListeningRef.current &&
-          ["no-speech", "audio-capture", "network"].includes(event.error)
-        ) {
-          try {
-            recognition.stop();
-          } catch {}
-          // brief restart
-          setTimeout(() => {
-            if (keepListeningRef.current) {
-              try {
-                recognition.start();
-              } catch {}
-            }
-          }, 300);
-        } else {
-          message.error("Speech recognition error. Try again.");
-          setIsRecording(false);
-        }
-      };
-
-      recognition.onend = () => {
-        // Chrome fires onend after brief silence; auto-restart if we’re supposed to keep listening
-        setIsRecording(false);
-        if (keepListeningRef.current) {
-          try {
-            recognition.start();
-          } catch {}
-        }
-      };
-
-      recognition.start();
-    } catch (error) {
-      console.error("Voice init error:", error);
-      message.error("Failed to start voice input.");
-      setIsRecording(false);
-      keepListeningRef.current = false;
+    if (!SpeechRecognition) {
+      alert("Speech Recognition not supported in this browser.");
+      return;
     }
-  };
-  const handleToggleVoice = handleVoiceToggle;
+
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => setIsRecording(true);
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) transcript += result[0].transcript + " ";
+      }
+      if (transcript.trim()) {
+        setInput((prev) => (prev.trim() + " " + transcript.trim()).trim());
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      alert("Voice input failed: " + event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => setIsRecording(false);
+
+    recognition.start();
+  };
 
   /**
    * Upload a file + optional user prompt to Student Service "chat-with-file".
