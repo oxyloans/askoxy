@@ -38,6 +38,7 @@ interface Assistant {
   status?: string;
   agentStatus?: string;
   imageUrl?: string; // ✅ new
+  activeStatus?: boolean; // ✅ NEW: Add activeStatus field
 }
 
 interface AssistantsResponse {
@@ -106,10 +107,7 @@ async function getAssistants(
     })
   );
 
-  const visible: Assistant[] = normalized.filter(
-    (a: Assistant) => !isHiddenAgent(a)
-  );
-
+ 
   return {
     object: res.data?.object ?? "list",
     data: normalized,
@@ -152,8 +150,12 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
   const visible: Assistant[] = mapped.filter(
     (a: Assistant) => !isHiddenAgent(a)
   );
+
+  const activeVisible: Assistant[] = visible.filter(
+  (a: Assistant) => a.activeStatus === true
+);
   const seen = new Set<string>();
-  const deduped: Assistant[] = visible.filter((a: Assistant) => {
+  const deduped: Assistant[] = activeVisible.filter((a: Assistant) => {
     const key = (a.assistantId || a.agentId || "").toLowerCase();
     if (!key || seen.has(key)) return false;
     seen.add(key);
@@ -690,17 +692,20 @@ const BharatAgentsStore: React.FC = () => {
     pagination.pageSize,
   ]);
 
-  const approvedAssistants = useMemo(() => {
-    return assistants.filter((a) => {
-      const s = (a.status || a.agentStatus || "").toString().toUpperCase();
-      const name = (a.name || "").trim().toLowerCase();
-      const isApproved = s === "APPROVED";
-      const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
-        (n) => n.toLowerCase() === name
-      );
-      return isApproved || isWhitelisted;
-    });
-  }, [assistants]);
+// In approvedAssistants useMemo:
+const approvedAssistants = useMemo(() => {
+  return assistants.filter((a) => {
+    const s = (a.status || a.agentStatus || "").toString().toUpperCase();
+    const name = (a.name || "").trim().toLowerCase();
+    const isApproved = s === "APPROVED";
+    const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
+      (n) => n.toLowerCase() === name
+    );
+    // ✅ CHANGED: Add activeStatus filter
+    const isActive = a.activeStatus === true;
+    return (isApproved || isWhitelisted) && isActive;
+  });
+}, [assistants]);
 
   useEffect(() => {
     let active = true;

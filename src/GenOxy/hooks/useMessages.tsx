@@ -337,7 +337,7 @@ class VoiceSessionService {
 
   private fileUrl: string | null = null;
   private fileContent: Record<string, any[]> = {}; // brand → data
-  private sheetMap: Record<string, string> = {
+  private sheetMap: Record<string, string | string[]> = {
     lenovo: "0",
     acer: "1427934623",
     hp: "1411153632",
@@ -348,13 +348,23 @@ class VoiceSessionService {
     samsung: "868260221",
     oppo: "1286876298",
     vivo: "1244878989",
+    others: [
+      "1244878989",
+      "1286876298",
+      "1266860599",
+      "868260221",
+      "0",
+      "1427934623",
+      "1170071782",
+      "1411153632",
+      "374851585",
+    ], // multiple GIDs
   };
 
   constructor(fileUrl?: string) {
     if (fileUrl) this.fileUrl = fileUrl;
   }
 
-  // ------------------ Fetch ephemeral token ------------------
   async getEphemeralToken(
     instructions: string,
     assistantId: string,
@@ -382,9 +392,11 @@ class VoiceSessionService {
 
   private async fetchSheetByBrand(brand: string): Promise<any[]> {
     const lowerBrand = brand.toLowerCase();
-    const gid = this.sheetMap[lowerBrand] || this.sheetMap["others"];
-
+    let gids = this.sheetMap[lowerBrand] || this.sheetMap["others"];
     if (!this.fileUrl) return [];
+
+    // Convert single GID to array
+    if (!Array.isArray(gids)) gids = [gids];
 
     // Return cached data if available
     if (this.fileContent[lowerBrand]) {
@@ -392,65 +404,36 @@ class VoiceSessionService {
       return this.fileContent[lowerBrand];
     }
 
+    const mergedData: any[] = [];
+
     try {
       const spreadsheetIdMatch = this.fileUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
       if (!spreadsheetIdMatch) throw new Error("Invalid Google Sheet URL");
       const spreadsheetId = spreadsheetIdMatch[1];
 
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-      const res = await fetch(csvUrl);
+      for (const gid of gids) {
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+        const res = await fetch(csvUrl);
 
-      if (!res.ok) {
-        console.warn(`⚠️ Failed to fetch sheet: ${lowerBrand}`);
-        return [];
+        if (!res.ok) {
+          console.warn(`⚠️ Failed to fetch sheet for GID: ${gid}`);
+          continue;
+        }
+
+        const text = await res.text();
+        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+        mergedData.push(...(parsed.data as any[]));
       }
 
-      const text = await res.text();
-      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-      this.fileContent[lowerBrand] = parsed.data as any[];
-
+      this.fileContent[lowerBrand] = mergedData;
       console.log(
-        `📄 Fetched "${lowerBrand}" sheet, rows: ${parsed.data.length}`
+        `📄 Fetched "${lowerBrand}" sheets, total rows: ${mergedData.length}`
       );
-      return this.fileContent[lowerBrand];
+      return mergedData;
     } catch (error) {
       console.error("❌ Error fetching sheet:", error);
       return [];
     }
-  }
-  // ------------------ Fetch CSV sheet data for a brand ------------------
-  private async fetchSheetData(brand: string): Promise<any[]> {
-    const brandKey = brand.toLowerCase();
-    const matchedSheet = Object.keys(this.sheetMap).find((sheet) =>
-      brandKey.includes(sheet)
-    );
-    if (!matchedSheet) {
-      console.warn(`⚠️ No sheet found for brand "${brand}"`);
-      return [];
-    }
-
-    if (this.fileContent[matchedSheet]) {
-      return this.fileContent[matchedSheet];
-    }
-
-    const gid = this.sheetMap[matchedSheet];
-    const spreadsheetIdMatch = this.fileUrl!.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    if (!spreadsheetIdMatch) throw new Error("Invalid Google Sheet URL");
-    const spreadsheetId = spreadsheetIdMatch[1];
-
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-    const res = await fetch(csvUrl);
-
-    if (!res.ok) {
-      console.warn(`⚠️ Failed to fetch sheet "${matchedSheet}"`);
-      return [];
-    }
-
-    const text = await res.text();
-    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-    this.fileContent[matchedSheet] = parsed.data as any[];
-    console.log(`📄 Fetched "${matchedSheet}" rows: ${parsed.data.length}`);
-    return this.fileContent[matchedSheet];
   }
 
   // ------------------ Start voice session ------------------
@@ -463,6 +446,7 @@ class VoiceSessionService {
     navigate: (path: string) => void,
     voicemode: string
   ): Promise<RTCDataChannel> {
+    this.stopSession();
     try {
       const EPHEMERAL_KEY = await this.getEphemeralToken(
         selectedInstructions,
@@ -672,51 +656,50 @@ class VoiceSessionService {
     this.dataChannel.send(JSON.stringify({ type: "response.create" }));
   }
 
-stopSession() {
-  console.log("🛑 Stopping voice session...");
-  if (this.sessionTimeoutId !== null) {
-    clearTimeout(this.sessionTimeoutId);
-    this.sessionTimeoutId = null;
-  }
-  if (this.recognition) {
-    this.recognition.onend = null; // prevent auto-restart
-    this.recognition.stop();
-    this.recognition = null;
-    console.log("🎙️ Speech recognition stopped");
-  }
-  if (this.micStream) {
-    this.micStream.getTracks().forEach((track) => {
-      track.stop();
-      this.peerConnection?.removeTrack(
-        this.peerConnection
-          .getSenders()
-          .find((sender) => sender.track === track)!
-      );
-    });
-    this.micStream = null;
-    console.log("🎧 Microphone stream stopped");
-  }
-  if (this.dataChannel) {
-    if (this.dataChannel.readyState !== "closed") {
-      this.dataChannel.close();
-      console.log("📡 Data channel closed");
+  stopSession() {
+    console.log("🛑 Stopping voice session...");
+    if (this.sessionTimeoutId !== null) {
+      clearTimeout(this.sessionTimeoutId);
+      this.sessionTimeoutId = null;
     }
-    this.dataChannel = null;
-  }
-  if (this.peerConnection) {
-    this.peerConnection.ontrack = null;
-    this.peerConnection.onicecandidate = null;
-    this.peerConnection.close();
-    this.peerConnection = null;
-    console.log("🔌 Peer connection closed");
-  }
-  this.fileContent = {};
+    if (this.recognition) {
+      this.recognition.onend = null; // prevent auto-restart
+      this.recognition.stop();
+      this.recognition = null;
+      console.log("🎙️ Speech recognition stopped");
+    }
+    if (this.micStream) {
+      this.micStream.getTracks().forEach((track) => {
+        track.stop();
+        this.peerConnection?.removeTrack(
+          this.peerConnection
+            .getSenders()
+            .find((sender) => sender.track === track)!
+        );
+      });
+      this.micStream = null;
+      console.log("🎧 Microphone stream stopped");
+    }
+    if (this.dataChannel) {
+      if (this.dataChannel.readyState !== "closed") {
+        this.dataChannel.close();
+        console.log("📡 Data channel closed");
+      }
+      this.dataChannel = null;
+    }
+    if (this.peerConnection) {
+      this.peerConnection.ontrack = null;
+      this.peerConnection.onicecandidate = null;
+      this.peerConnection.close();
+      this.peerConnection = null;
+      console.log("🔌 Peer connection closed");
+    }
+    this.fileContent = {};
 
-  console.log("✅ Voice session fully stopped and cleaned up");
-}
-
+    console.log("✅ Voice session fully stopped and cleaned up");
+  }
 }
 
 export const voiceSessionService = new VoiceSessionService(
   "https://docs.google.com/spreadsheets/d/1LOPzkaogUk3VenBt0A3-OiMHNzO8oXoodLkbXgpOeoE"
-);
+);  

@@ -46,7 +46,7 @@ type SpeechRecognitionEvent = Event & {
 
 type SpeechRecognitionErrorEvent = Event & {
   error: string;
-  message?: string;
+  message?: string;
 };
 
 interface SpeechRecognition extends EventTarget {
@@ -91,6 +91,9 @@ const HEADER_HEIGHT = 56; // px (h-14)
 const HISTORY_KEY = (aid: string) => `assistant_history_${aid}`;
 const MESSAGES_KEY = (aid: string) => `assistant_messages_${aid}`;
 const SIDEBAR_STATE_KEY = "chat_sidebar_open";
+const RIGHT_SIDEBAR_WIDTH = 240; // px (open)
+const RIGHT_SIDEBAR_STATE_KEY = "chat_right_sidebar_open";
+
 
 /** ========================================================================
  *  Component
@@ -136,6 +139,69 @@ const AssistantDetails: React.FC = () => {
   // multiple file selection + viewing/removal
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showMobileFiles, setShowMobileFiles] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
+const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
+    return saved ? JSON.parse(saved) : true;
+  });
+  const loadingMessages: string[] = [
+    "Thinking longer for a better answer",
+
+    "Analyzing details to improve accuracy",
+    "Cross-checking facts for you",
+    "Formulating a clearer response",
+    "Digging deeper — one sec...",
+    "Almost there — refining the reply",
+  ];
+const promos = [
+  {
+    id: "p1",
+    src: "https://i.ibb.co/9kg8gwyh/i1.png",
+    alt: "Launch Your AI Agent",
+    href: "/main/bharat-expert",
+  },
+  {
+    id: "p2",
+    src: "https://i.ibb.co/20gqcPYw/i2.png",
+    alt: "Invest & Earn",
+    href: "https://oxyloans.com/", // internal
+  },
+  {
+    id: "p3",
+    src: "https://i.ibb.co/dsT9XMsV/i3.png",
+    alt: "Study Abroad",
+    href: "/studyabroad",
+  },
+  {
+    id: "p4",
+    src: "https://i.ibb.co/MknqmWm0/i4.png",
+    alt: "ASKOXY.AI",
+    href: "/main/dashboard/home", // internal
+  },
+];
+
+// helper: internal routes use navigate; external open new tab
+const openPromo = (href: string) => {
+  if (!href) return;
+  const isExternal = /^https?:\/\//i.test(href);
+  if (isExternal) {
+    window.open(href, "_blank", "noopener,noreferrer");
+  } else {
+    navigate(href);
+  }
+};
+  useEffect(() => {
+    if (!loading) {
+      setLoadingMessageIndex(0); // reset when loading stops
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 4000); // change every 5 seconds
+
+    return () => clearInterval(intervalId);
+  }, [loading]);
 
   const [threadSource, setThreadSource] = useState<"files" | "agent" | null>(
     null
@@ -336,6 +402,9 @@ const AssistantDetails: React.FC = () => {
         "matches" in e ? e.matches : (e as MediaQueryList).matches;
       setIsXs(isXsScreen);
       if (isXsScreen) setSidebarOpen(false);
+      if (isXsScreen) {
+        setRightSidebarOpen(false); // Auto-close right on mobile
+      }
     };
     onChange(mql);
     const handler = (e: MediaQueryListEvent) => onChange(e);
@@ -887,40 +956,45 @@ const AssistantDetails: React.FC = () => {
     return out;
   };
 
-const openHistoryChat = async (hid: string) => {
-  if (!id) return;
-  setCurrentChatId(hid);
+  const openHistoryChat = async (hid: string) => {
+    if (!id) return;
+    setCurrentChatId(hid);
 
-  const cached = historyById[hid];
-  if (cached?.length) {
-    setMessages(cached);
-    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
-    return;
-  }
+    const cached = historyById[hid];
+    if (cached?.length) {
+      setMessages(cached);
+      setTimeout(
+        () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+        0
+      );
+      return;
+    }
 
-  try {
-    if (!userId || !agentId) return;
-    const historyData = await fetchUserHistory(userId, agentId);
-    if (Array.isArray(historyData)) {
-      const map: Record<string, ChatMessage[]> = {};
-      for (let i = 0; i < historyData.length; i++) {
-        const h = historyData[i];
-        const _hid = String(h?.id ?? h?.historyId ?? `${Date.now()}_${i}`);
-        map[_hid] = normalizeMessages(h?.messages ?? h?.messageHistory ?? h?.history);
+    try {
+      if (!userId || !agentId) return;
+      const historyData = await fetchUserHistory(userId, agentId);
+      if (Array.isArray(historyData)) {
+        const map: Record<string, ChatMessage[]> = {};
+        for (let i = 0; i < historyData.length; i++) {
+          const h = historyData[i];
+          const _hid = String(h?.id ?? h?.historyId ?? `${Date.now()}_${i}`);
+          map[_hid] = normalizeMessages(
+            h?.messages ?? h?.messageHistory ?? h?.history
+          );
+        }
+        setHistoryById(map);
+        setMessages(map[hid] ?? []);
+      } else {
+        setMessages([]);
       }
-      setHistoryById(map);
-      setMessages(map[hid] ?? []);
-    } else {
+    } catch {
       setMessages([]);
     }
-  } catch {
-    setMessages([]);
-  }
 
-  setTimeout(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, 0);
-};
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
+  };
 
   // Keep optional override if you want to support edit-resend
   const buildMessageHistory = (
@@ -1141,7 +1215,7 @@ const openHistoryChat = async (hid: string) => {
 
   const keepListeningRef = useRef(false);
 
-const handleToggleVoice = () => {
+  const handleToggleVoice = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
@@ -1185,7 +1259,7 @@ const handleToggleVoice = () => {
     recognition.onend = () => setIsRecording(false);
 
     recognition.start();
-  };
+  };
 
   /**
    * Upload a file + optional user prompt to Student Service "chat-with-file".
@@ -1523,6 +1597,25 @@ const handleToggleVoice = () => {
   const overlayVisible = isXs && sidebarOpen;
   const effectiveLeftOffset = userId ? leftOffset : 0;
   const effectiveContentWidth = userId ? contentWidth : "100%";
+ 
+  const rightSidebarWidth = !isXs ? RIGHT_SIDEBAR_WIDTH : 0;
+  const rightOffset = !isXs ? RIGHT_SIDEBAR_WIDTH : 0;
+
+  const rightOverlayVisible = isXs && rightSidebarOpen;
+  const effectiveRightOffset = userId && !isXs ? rightOffset : 0;
+
+  const totalSidebarWidth = leftOffset + rightOffset;
+  const effectiveContentWidth1 = isXs
+    ? "100%"
+    : `calc(100% - ${totalSidebarWidth}px)`;
+
+  // Add effect to persist right sidebar state (mirror left)
+  useEffect(() => {
+    localStorage.setItem(
+      RIGHT_SIDEBAR_STATE_KEY,
+      JSON.stringify(rightSidebarOpen)
+    );
+  }, [rightSidebarOpen]);
 
   return (
     <>
@@ -1550,8 +1643,9 @@ const handleToggleVoice = () => {
         <header
           className="sticky top-0 z-30 flex items-center border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur h-14 px-2 sm:px-4"
           style={{
-            marginLeft: effectiveLeftOffset,
-            width: effectiveContentWidth,
+            left: effectiveLeftOffset,
+            right: effectiveRightOffset,
+            width: effectiveContentWidth1,
           }}
         >
           {/* Left controls */}
@@ -1870,7 +1964,140 @@ const handleToggleVoice = () => {
             </div>
           </div>
         </aside>
+        {userId && !isXs && (
+          <aside
+            className={`fixed right-0 top-0 h-full z-30 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-600 transition-all duration-300 overflow-y-auto`}
+            style={{
+              width: rightSidebarWidth,
+              right: 0,
+            }}
+          >
+            {/* 💡 Inline glow animations for each color */}
+            <style>
+              {`
+      @keyframes glowPurple {
+        0%, 100% {
+          box-shadow: 0 0 6px rgba(168, 85, 247, 0.3),
+                      0 0 12px rgba(168, 85, 247, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.6),
+                      0 0 40px rgba(168, 85, 247, 0.4);
+        }
+      }
 
+      @keyframes glowBlue {
+        0%, 100% {
+          box-shadow: 0 0 6px rgba(59, 130, 246, 0.3),
+                      0 0 12px rgba(59, 130, 246, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.6),
+                      0 0 40px rgba(59, 130, 246, 0.4);
+        }
+      }
+
+      @keyframes glowGreen {
+        0%, 100% {
+          box-shadow: 0 0 6px rgba(34, 197, 94, 0.3),
+                      0 0 12px rgba(34, 197, 94, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(34, 197, 94, 0.6),
+                      0 0 40px rgba(34, 197, 94, 0.4);
+        }
+      }
+
+      @keyframes glowOrange {
+        0%, 100% {
+          box-shadow: 0 0 6px rgba(249, 115, 22, 0.3),
+                      0 0 12px rgba(249, 115, 22, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(249, 115, 22, 0.6),
+                      0 0 40px rgba(249, 115, 22, 0.4);
+        }
+      }
+
+      .glow-purple {
+        animation: glowPurple 3s ease-in-out infinite;
+        border: 1px solid rgba(168, 85, 247, 0.4);
+        border-radius: 0.75rem;
+      }
+
+      .glow-blue {
+        animation: glowBlue 3s ease-in-out infinite;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        border-radius: 0.75rem;
+      }
+
+      .glow-green {
+        animation: glowGreen 3s ease-in-out infinite;
+        border: 1px solid rgba(34, 197, 94, 0.4);
+        border-radius: 0.75rem;
+      }
+
+      .glow-orange {
+        animation: glowOrange 3s ease-in-out infinite;
+        border: 1px solid rgba(249, 115, 22, 0.4);
+        border-radius: 0.75rem;
+      }
+    `}
+            </style>
+
+            {/* Right sidebar content */}
+            <div className="p-4">
+              <div className="space-y-3">
+                {promos.map((p, index) => {
+                  // Assign different glow classes based on index
+                  const glowClasses = [
+                    "glow-purple",
+                    "glow-blue",
+                    "glow-green",
+                    "glow-orange",
+                  ];
+                  const glowClass = glowClasses[index % glowClasses.length]; // loops if >4
+
+                  return (
+                    <div
+                      key={p.id}
+                      className={`bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden cursor-pointer shadow-sm transition ${glowClass}`}
+                      onClick={() => openPromo(p.href)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && openPromo(p.href)}
+                    >
+                      <img
+                        src={p.src}
+                        alt={p.alt}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-32 object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            "data:image/svg+xml;charset=UTF-8," +
+                            encodeURIComponent(
+                              `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='200'>
+                      <rect width='100%' height='100%' fill='#eee'/>
+                      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#999' font-family='Arial' font-size='16'>
+                        Image unavailable
+                      </text>
+                    </svg>`
+                            );
+                        }}
+                      />
+                      <div className="p-3">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">
+                          {p.alt}
+                        </h3>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
+        )}
         {/* Overlay */}
         <div
           className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${
@@ -1884,10 +2111,13 @@ const handleToggleVoice = () => {
 
         {/* Main */}
         <main
-          className={`flex flex-col bg-white dark:bg-gray-800 transition-all duration-200 min-h-[calc(100vh-var(--header))]`}
+          className={`flex flex-col bg-white dark:bg-gray-800 transition-all duration-200 min-h-[calc(100vh-var(--header))] ${
+            isXs ? "" : `ml-[${leftOffset}px] mr-[${rightOffset}px]`
+          }`}
           style={{
             marginLeft: effectiveLeftOffset,
-            width: effectiveContentWidth,
+            marginRight: effectiveRightOffset,
+            width: effectiveContentWidth1,
             ["--header" as any]: `${HEADER_HEIGHT}px`,
           }}
         >
@@ -2332,6 +2562,14 @@ const handleToggleVoice = () => {
                               <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-450"></span>
                               <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-600"></span>
                             </div>
+
+                            {/* Thinking text */}
+                            <span
+                              className="text-sm text-gray-600 dark:text-gray-300 font-bold ml-2 transition-opacity duration-300"
+                              aria-live="polite"
+                            >
+                              {loadingMessages[loadingMessageIndex]}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -2411,7 +2649,8 @@ const handleToggleVoice = () => {
                 className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent px-3 sm:px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
                 style={{
                   left: effectiveLeftOffset,
-                  width: effectiveContentWidth,
+                  right: effectiveRightOffset,
+                  width: effectiveContentWidth1,
                   zIndex: 29,
                 }}
               >

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Logo from "../../assets/img/bharatAI.png";
-import Logo1 from "../../assets/img/askoxylogonew.png";
+import Logo1 from "../../assets/img/logo1lion.png";
 const getInitials = (nameOrEmail?: string) => {
   if (!nameOrEmail) return "";
   const name = nameOrEmail.replace(/\s+/g, " ").trim();
@@ -86,23 +86,8 @@ const handleLogin = () => {
     },
   ];
 
-  const NEXT_PATH = "/main/bharat-expert";
-  const handleCreateAgentClick = () => {
-    try {
-      setLoading(true);
-      const userId = localStorage.getItem("userId");
-      if (userId) {
-        navigate(NEXT_PATH);
-      } else {
-        sessionStorage.setItem("redirectPath", NEXT_PATH);
-        navigate(`/whatsapplogin?next=${encodeURIComponent(NEXT_PATH)}`);
-      }
-    } catch (e) {
-      console.error("Create Agent CTA error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+
 
   // Observe sections to set active nav highlight
   useEffect(() => {
@@ -330,18 +315,18 @@ const isActive = (sectionId: string) => {
                 </button>
 
                 {/* Logo1 (hidden on mobile, visible on sm and above) */}
-                {/* <button
-                  onClick={() => navigate("/bharath-aistore")}
+                <button
+                  onClick={() => navigate("/")}
                   className="hidden sm:flex items-center min-w-0"
                   aria-label="Go to Home"
-                  title="Bharat AI Store"
+                  title="ASKOXY.AI"
                 >
                   <img
                     src={Logo1}
-                    alt="Bharat AI Store"
+                    alt="ASKOXY.AI"
                     className="h-10 w-auto"
                   />
-                </button> */}
+                </button>
               </div>
 
               {/* CENTER: Desktop nav */}

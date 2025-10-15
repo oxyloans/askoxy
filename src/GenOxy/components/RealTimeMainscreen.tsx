@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -5,6 +6,7 @@ import {
   Navigate,
   useParams,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 
 import RealTimeHeader from "./RealTimeHeader";
@@ -12,15 +14,17 @@ import RealTimeWelcomeScreen from "./RealTimeWellcomescreen";
 import StartScreen from "./RealTimeStartScreen";
 import ConversationScreen from "./RealTImeConversation";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LanguageConfig, ChatMessage } from "../types/types";
 import { voiceSessionService } from "../hooks/useMessages";
+import { message } from "antd";
 
 type Screen = "welcome" | "start" | "conversation";
 
 const RealtimePage: React.FC = () => {
   const { screen } = useParams<{ screen?: Screen }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // States for language, chat etc
   const [selectedLanguage, setSelectedLanguage] =
@@ -31,13 +35,89 @@ const RealtimePage: React.FC = () => {
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
   const [selectedInstructions, setSelectedInstructions] = useState<string>("");
 
+  // Track if user is intentionally navigating
+  const isIntentionalNavigation = useRef(false);
+
   // Default to 'welcome' if screen param is invalid or missing
   const currentScreen: Screen =
     screen === "start" || screen === "conversation" ? screen : "welcome";
 
-  // When screen changes to welcome, reset language and session states
+  // Handle beforeunload event (browser close/refresh)
   useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSessionActive) {
+        e.preventDefault();
+        e.returnValue =
+          "You have an active voice session. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isSessionActive]);
+
+  // Handle browser back/forward navigation - IMMEDIATE STOP
+  useEffect(() => {
+    const handleNavigation = (e: PopStateEvent) => {
+      console.log("Browser back detected, isSessionActive:", isSessionActive);
+
+      if (isSessionActive && !isIntentionalNavigation.current) {
+        console.log("Stopping session immediately on browser back");
+        // Stop the session IMMEDIATELY when user navigates back
+        voiceSessionService.stopSession();
+        setIsSessionActive(false);
+        setIsAssistantSpeaking(false);
+        setChat([]);
+      }
+      // Reset the flag
+      isIntentionalNavigation.current = false;
+    };
+
+    // Listen to popstate for browser back/forward
+    window.addEventListener("popstate", handleNavigation);
+
+    return () => {
+      window.removeEventListener("popstate", handleNavigation);
+    };
+  }, [isSessionActive]);
+
+  // Monitor current screen changes and enforce session rules
+  useEffect(() => {
+    console.log(
+      "Screen changed to:",
+      currentScreen,
+      "isSessionActive:",
+      isSessionActive,
+      "intentional:",
+      isIntentionalNavigation.current
+    );
+
+    // If we're on start screen and session was active (user pressed back from conversation)
+    if (
+      currentScreen === "start" &&
+      isSessionActive &&
+      !isIntentionalNavigation.current
+    ) {
+      console.log(
+        "User navigated back to start screen with active session - stopping now"
+      );
+      voiceSessionService.stopSession();
+      setIsSessionActive(false);
+      setIsAssistantSpeaking(false);
+      setChat([]);
+    }
+
+    // If we're on welcome screen, reset everything
     if (currentScreen === "welcome") {
+      console.log("On welcome screen - resetting all states");
+      if (isSessionActive && !isIntentionalNavigation.current) {
+        voiceSessionService.stopSession();
+      }
+
       setSelectedLanguage(null);
       setIsSessionActive(false);
       setIsAssistantSpeaking(false);
@@ -45,10 +125,16 @@ const RealtimePage: React.FC = () => {
       setIsConnecting(false);
       setSelectedInstructions("");
     }
-  }, [currentScreen]);
+
+    // Always reset the intentional navigation flag after screen change
+    setTimeout(() => {
+      isIntentionalNavigation.current = false;
+    }, 100);
+  }, [currentScreen, isSessionActive]);
 
   // Navigation helpers to move between screens via URL
   const goToScreen = (newScreen: Screen) => {
+    isIntentionalNavigation.current = true;
     navigate(`/voiceAssistant/${newScreen}`);
   };
 
@@ -62,6 +148,23 @@ const RealtimePage: React.FC = () => {
   };
 
   const handleBackToWelcome = () => {
+    // Stop session before going back
+    if (isSessionActive) {
+      const shouldStop = window.confirm(
+        "You have an active voice session. Do you want to stop it and go back?"
+      );
+
+      if (!shouldStop) {
+        return; // Don't navigate if user cancels
+      }
+
+      voiceSessionService.stopSession();
+      setIsSessionActive(false);
+      setIsAssistantSpeaking(false);
+      setChat([]);
+      setSelectedLanguage(null);
+      setSelectedInstructions("");
+    }
     goToScreen("welcome");
   };
 
@@ -91,7 +194,7 @@ const RealtimePage: React.FC = () => {
           setIsAssistantSpeaking(speaking);
         },
         navigate,
-        "coral"
+        "shimmer"
       );
 
       setIsSessionActive(true);
@@ -110,6 +213,7 @@ const RealtimePage: React.FC = () => {
     setIsAssistantSpeaking(false);
     setChat([]);
     setSelectedLanguage(null);
+    setSelectedInstructions("");
     goToScreen("welcome");
   };
 
@@ -124,6 +228,10 @@ const RealtimePage: React.FC = () => {
   };
 
   const renderCurrentScreen = () => {
+    if (!selectedLanguage && currentScreen !== "welcome") {
+      message.info("No language is selected please select any language");
+      goToScreen("welcome");
+    }
     switch (currentScreen) {
       case "welcome":
         return (
@@ -163,7 +271,7 @@ const RealtimePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" key={currentScreen}>
       {currentScreen !== "welcome" && (
         <RealTimeHeader
           selectedLanguage={selectedLanguage}

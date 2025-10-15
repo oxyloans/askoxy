@@ -1028,14 +1028,14 @@ const AdminMyAgentsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="max-w-7xl mx-auto">
 
         <section className="soft-animated-bg p-[2px] rounded-2xl mb-8">
           <div className="bg-white/90 backdrop-blur rounded-2xl px-5 sm:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 items-center">
               {/* Text: first on mobile, left on desktop */}
               <div className="order-1 md:order-1 md:col-span-3 text-gray-800 leading-relaxed">
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-purple-600 mb-3" >
                   Greetings from Radhakrishna!
                 </h2>
                 <p className="text-[15px] sm:text-base mb-3">
@@ -1055,7 +1055,7 @@ const AdminMyAgentsPage: React.FC = () => {
                   they represent the foundation of the AI-driven enterprise of
                   tomorrow.
                 </p>
-                <div className="mt-2 font-semibold text-gray-900">
+                <div className="mt-2 font-semibold text-brown-900">
                   CEO &amp; Founder <br />
                   ASKOXY.AI AI-Z Marketplace <br />
                   OxyLoans — RBI Approved P2P NBFC
@@ -1066,8 +1066,8 @@ const AdminMyAgentsPage: React.FC = () => {
               <div className="order-2 md:order-2 md:col-span-2 flex justify-center items-center">
                 <div className="w-[90%] aspect-[3/4] md:aspect-[4/5] rounded-2xl overflow-hidden flex items-center justify-center bg-white">
                   <img
-                    src="https://i.ibb.co/MxpZNd32/radha-Prompt.png"
-                    alt="Radhakrishna"
+                    src="https://i.ibb.co/TBMnfC2K/radha-Prompt.png"
+                    alt="Radhakrishna. Thatavarti"
                     className="object-contain rounded-2xl w-full h-full md:h-[360px] lg:h-[410px]"
                     loading="lazy"
                     decoding="async"
