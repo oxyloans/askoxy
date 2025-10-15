@@ -103,11 +103,14 @@ async function getAssistants(
       assistantId: assistant.assistantId || assistant.id,
       agentId: assistant.agentId || assistant.id,
       imageUrl:
-        assistant.imageUrl || assistant.image || assistant.thumbUrl || "",
+        assistant.profileImagePath?.trim() ||
+        assistant.imageUrl?.trim() ||
+        assistant.image?.trim() ||
+        assistant.thumbUrl?.trim() ||
+        "",
     })
   );
 
- 
   return {
     object: res.data?.object ?? "list",
     data: normalized,
@@ -136,31 +139,37 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     ? [res.data]
     : [];
 
-  const mapped: Assistant[] = raw.map(
-    (a: any, idx: number): Assistant => ({
+  const mapped: Assistant[] = raw.map((a: any, idx: number): Assistant => {
+    const finalImage =
+      a?.profileImagePath?.trim() ||
+      a?.imageUrl?.trim() ||
+      a?.image?.trim() ||
+      a?.thumbUrl?.trim() ||
+      "";
+
+    return {
       assistantId: a?.assistantId || a?.id || a?.agentId || "",
       agentId: a?.agentId || a?.assistantId || a?.id || "",
       name: a?.name ?? `Agent ${idx + 1}`,
       description: a?.description ?? a?.desc ?? "",
-      imageUrl: a?.imageUrl || a?.image || a?.thumbUrl || "",
-      ...a,
-    })
-  );
+      imageUrl: finalImage,
+    };
+  });
 
-  const visible: Assistant[] = mapped.filter(
-    (a: Assistant) => !isHiddenAgent(a)
-  );
+  const visible: Assistant[] = mapped.filter((a) => !isHiddenAgent(a));
 
-  const activeVisible: Assistant[] = visible.filter(
-  (a: Assistant) => a.activeStatus === true
-);
+  // 🔁 Only exclude agents that are explicitly inactive; allow "undefined"
+  const filtered: Assistant[] = visible.filter((a) => a.activeStatus !== false);
+
+  // 🔁 Dedupe by assistant/agent id
   const seen = new Set<string>();
-  const deduped: Assistant[] = activeVisible.filter((a: Assistant) => {
+  const deduped: Assistant[] = filtered.filter((a) => {
     const key = (a.assistantId || a.agentId || "").toLowerCase();
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+
   return deduped;
 }
 
@@ -673,7 +682,7 @@ const BharatAgentsStore: React.FC = () => {
           }));
         }
       } catch (e) {
-        console.error("My Agents auto-load failed:", e);
+        console.error("My AI Agents auto-load failed:", e);
       } finally {
         if (!cancelled) setLoadingMine(false);
       }
@@ -692,20 +701,19 @@ const BharatAgentsStore: React.FC = () => {
     pagination.pageSize,
   ]);
 
-// In approvedAssistants useMemo:
-const approvedAssistants = useMemo(() => {
-  return assistants.filter((a) => {
-    const s = (a.status || a.agentStatus || "").toString().toUpperCase();
-    const name = (a.name || "").trim().toLowerCase();
-    const isApproved = s === "APPROVED";
-    const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
-      (n) => n.toLowerCase() === name
-    );
-    // ✅ CHANGED: Add activeStatus filter
-    const isActive = a.activeStatus === true;
-    return (isApproved || isWhitelisted) && isActive;
-  });
-}, [assistants]);
+  const approvedAssistants = useMemo(() => {
+    return assistants.filter((a) => {
+      const s = (a.status || a.agentStatus || "").toString().toUpperCase();
+      const name = (a.name || "").trim().toLowerCase();
+      const isApproved = s === "APPROVED";
+      const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
+        (n) => n.toLowerCase() === name
+      );
+      // ✅ Hide only if explicitly false
+      const isActive = a.activeStatus !== false;
+      return (isApproved || isWhitelisted) && isActive;
+    });
+  }, [assistants]);
 
   useEffect(() => {
     let active = true;
@@ -1017,7 +1025,7 @@ const approvedAssistants = useMemo(() => {
                 ].join(" ")}
                 aria-pressed={tab === "MINE"}
               >
-                My Agents
+                My AI Agents
               </button>
             )}
           </div>
@@ -1026,12 +1034,10 @@ const approvedAssistants = useMemo(() => {
         {/* Heading & subtext stay the same */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-            {tab === "MINE" ? "My Agents" : "AI Agents"}
+            {tab === "MINE" ? "My AI Agents" : "AI Agents"}
           </h2>
           <p className="text-sm sm:text-[15px] text-gray-600 mt-1">
-            {tab === "MINE"
-              ? "Your approved agents"
-              : "Discover expert AI Agents."}
+            {tab === "MINE" ? "Approved agents" : "Discover expert AI Agents."}
           </p>
         </div>
 
@@ -1046,7 +1052,21 @@ const approvedAssistants = useMemo(() => {
           <div className="text-sm text-red-600 mb-4">{searchError}</div>
         )}
 
-        {finalAssistants.length === 0 ? (
+        {tab === "MINE" && loadingMine && myApprovedAssistants.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 p-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={`mine-skel-${i}`}
+                className="animate-pulse bg-gray-200 dark:bg-gray-700 h-52 rounded-xl"
+                style={{
+                  animationDelay: `${i * 0.15}s`,
+                  animationDuration: "1.2s",
+                }}
+              />
+            ))}
+          </div>
+        ) : finalAssistants.length === 0 ? (
+          // 🧾 Empty state (shown only after loading finishes)
           <div className="text-center py-16">
             <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900">
@@ -1070,11 +1090,8 @@ const approvedAssistants = useMemo(() => {
           </div>
         ) : (
           <>
-            {/* GRID */}
+            {/* ✅ Grid of real cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
-              {/* Featured OG card first when NOT searching */}
-              {/* {!isSearching && <FeaturedOGCard onOpen={openOG} />} */}
-
               {finalAssistants.map((assistant, index) => (
                 <div
                   key={
@@ -1095,6 +1112,7 @@ const approvedAssistants = useMemo(() => {
               ))}
             </div>
 
+            {/* Explore pagination (unchanged) */}
             {!isSearching && tab === "EXPLORE" && (
               <div className="text-center mt-10 sm:mt-12">
                 <button

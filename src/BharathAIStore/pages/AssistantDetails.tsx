@@ -84,20 +84,15 @@ const getAuthHeaders = () => {
 };
 
 /** ---------------- constants ---------------- */
-/** ---------- constants ---------- */
+
 const SIDEBAR_WIDTH = 240; // px (open)
 const SIDEBAR_WIDTH_COLLAPSED = 60; // px (collapsed)
 const HEADER_HEIGHT = 56; // px (h-14)
-const HISTORY_KEY = (aid: string) => `assistant_history_${aid}`;
-const MESSAGES_KEY = (aid: string) => `assistant_messages_${aid}`;
+
 const SIDEBAR_STATE_KEY = "chat_sidebar_open";
 const RIGHT_SIDEBAR_WIDTH = 240; // px (open)
 const RIGHT_SIDEBAR_STATE_KEY = "chat_right_sidebar_open";
 
-
-/** ========================================================================
- *  Component
- *  ===================================================================== */
 const AssistantDetails: React.FC = () => {
   const { id, agentId } = useParams<{ id: string; agentId: string }>();
   const navigate = useNavigate();
@@ -108,9 +103,7 @@ const AssistantDetails: React.FC = () => {
     localStorage.getItem("userId")
   );
   const currentPath = `${location.pathname}${location.search || ""}`;
-  // ✅ FIXED: Add auth check at the top of the component to redirect unauthenticated users to register/login
-  // This ensures that if someone directly accesses the assistant URL without auth, they are redirected properly
-  // with redirectPath preserved for return after auth
+
   useEffect(() => {
     if (!userId) {
       // Set the current full path as redirectPath for return after auth
@@ -136,60 +129,66 @@ const AssistantDetails: React.FC = () => {
   const CHAT_KEY = (aid: string, hid: string) => `assistant_chat_${aid}_${hid}`;
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
-  // multiple file selection + viewing/removal
+  // Add loading state for history
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showMobileFiles, setShowMobileFiles] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
-const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
+  const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
     return saved ? JSON.parse(saved) : true;
   });
   const loadingMessages: string[] = [
     "Thinking longer for a better answer",
-
     "Analyzing details to improve accuracy",
     "Cross-checking facts for you",
     "Formulating a clearer response",
     "Digging deeper — one sec...",
     "Almost there — refining the reply",
+    "Gathering more insights for precision",
+    "Reviewing context to ensure quality",
+    "Double-checking your request for accuracy",
+    "Fine-tuning the best possible answer",
   ];
-const promos = [
-  {
-    id: "p1",
-    src: "https://i.ibb.co/9kg8gwyh/i1.png",
-    alt: "Launch Your AI Agent",
-    href: "/main/bharat-expert",
-  },
-  {
-    id: "p2",
-    src: "https://i.ibb.co/20gqcPYw/i2.png",
-    alt: "Invest & Earn",
-    href: "https://oxyloans.com/", // internal
-  },
-  {
-    id: "p3",
-    src: "https://i.ibb.co/dsT9XMsV/i3.png",
-    alt: "Study Abroad",
-    href: "/studyabroad",
-  },
-  {
-    id: "p4",
-    src: "https://i.ibb.co/MknqmWm0/i4.png",
-    alt: "ASKOXY.AI",
-    href: "/main/dashboard/home", // internal
-  },
-];
 
-// helper: internal routes use navigate; external open new tab
-const openPromo = (href: string) => {
-  if (!href) return;
-  const isExternal = /^https?:\/\//i.test(href);
-  if (isExternal) {
-    window.open(href, "_blank", "noopener,noreferrer");
-  } else {
-    navigate(href);
-  }
-};
+  const promos = [
+    {
+      id: "p1",
+      src: "https://i.ibb.co/9kg8gwyh/i1.png",
+      alt: "Launch Your AI Agent",
+      href: "/main/bharat-expert",
+    },
+     {
+      id: "p4",
+      src: "https://i.ibb.co/zVYCGLzT/i4.png",
+      alt: "ASKOXY.AI",
+      href: "/main/dashboard/home", // internal
+    },
+    {
+      id: "p2",
+      src: "https://i.ibb.co/20gqcPYw/i2.png",
+      alt: "Invest & Earn",
+      href: "https://oxyloans.com/", // internal
+    },
+    {
+      id: "p3",
+      src: "https://i.ibb.co/dsT9XMsV/i3.png",
+      alt: "Study Abroad",
+      href: "/studyabroad",
+    },
+   
+  ];
+
+  // helper: internal routes use navigate; external open new tab
+  const openPromo = (href: string) => {
+    if (!href) return;
+    const isExternal = /^https?:\/\//i.test(href);
+    if (isExternal) {
+      window.open(href, "_blank", "noopener,noreferrer");
+    } else {
+      navigate(href);
+    }
+  };
   useEffect(() => {
     if (!loading) {
       setLoadingMessageIndex(0); // reset when loading stops
@@ -283,25 +282,7 @@ const openPromo = (href: string) => {
   // once true, we never allow re-rating
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
-  /** ---------------- History utils ---------------- */
-  // Updated: Added formatDate for displaying relative dates in history sidebar (like ChatGPT)
-  const formatDate = (timestamp: number): string => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    if (diffInDays === 0) {
-      return date.toLocaleDateString("en-US", { weekday: "short" });
-    } else if (diffInDays < 7) {
-      return date.toLocaleDateString("en-US", { weekday: "short" });
-    } else {
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-    }
-  };
   /** ---------------- Helper: extract last user message ---------------- */
   function getLastUserMessage(prompt: string) {
     if (!prompt) return "Untitled";
@@ -322,6 +303,7 @@ const openPromo = (href: string) => {
 
   useEffect(() => {
     const loadHistoryFromApi = async () => {
+      setHistoryLoading(true);
       if (!id || !agentId || !userId) return;
       try {
         const historyData = await fetchUserHistory(userId, agentId);
@@ -331,6 +313,7 @@ const openPromo = (href: string) => {
           setHistory([]);
           return;
         }
+        // FIXED: Auto-open sidebar if history exists after load
 
         const tmpMap: Record<string, ChatMessage[]> = {};
         const seen = new Set<string>();
@@ -380,10 +363,15 @@ const openPromo = (href: string) => {
 
         setHistoryById(tmpMap);
         setHistory(rows);
+        if (rows.length > 0 && !sidebarOpen) {
+          setTimeout(() => setSidebarOpen(true), 100);
+        }
       } catch (err) {
         console.error("Failed to fetch history:", err);
         setHistoryById({});
         setHistory([]);
+      } finally {
+        setHistoryLoading(false);
       }
     };
 
@@ -431,9 +419,6 @@ const openPromo = (href: string) => {
         typeof FormData !== "undefined" && config.data instanceof FormData;
 
       if (isForm) {
-        // let the browser set "multipart/form-data; boundary=..."
-        // (delete in case something already set)
-        // AxiosHeaders has delete() in recent versions; fallback to set undefined if needed.
         try {
           (h as any).delete?.("Content-Type");
         } catch {}
@@ -473,27 +458,6 @@ const openPromo = (href: string) => {
     return (n: number) => Math.max(1, Math.min(5, n + 1)); // convert 0..4 → 1..5
   };
 
-  // Try to match a rating record to the current agent.
-  // Prefer agentId; if missing/null, fall back to agentName.
-  const matchesCurrentAgent = (
-    rec: any,
-    currentAgentId: string,
-    currentAgentName: string
-  ) => {
-    const recAgentId = (rec?.agentId ?? "").toString().trim();
-    const recName = (rec?.agentName ?? "").toString().trim();
-    if (currentAgentId && recAgentId) {
-      return recAgentId === currentAgentId;
-    }
-    if (currentAgentName && recName) {
-      // Case-insensitive, trimmed match
-      return recName.toLowerCase() === currentAgentName.toLowerCase();
-    }
-    return false;
-  };
-
-  // Overall: API may return array of records for the agent.
-  // We compute average and detect scale automatically.
   const normalizeOverall = (data: any): { avgUI: number; count: number } => {
     if (data == null) return { avgUI: 0, count: 0 };
 
@@ -708,16 +672,6 @@ const openPromo = (href: string) => {
     setSpeakingIdx(idx);
   };
 
-  /*************  ✨ Windsurf Command ⭐  *************/
-  /**
-   * Extracts a title from a prompt object or string.
-   * Supports different shapes of prompt objects and strings.
-   * Returns the first user's message content, or the additionalPrompt content, or the first content= string in the prompt.
-   * If no title can be extracted, returns "Untitled".
-   * @param {any} raw The prompt object or string to extract a title from.
-   * @returns {string} The extracted title, or "Untitled" if no title can be found.
-   */
-  /*******  251ad98b-0f67-4512-a517-cf301344d82b  *******/ // Parse legacy string like: "[{role=user, content=Hello}, {role=assistant, content=...}]"
   const parseLegacyPrompt = (raw: any): ChatMessage[] => {
     if (typeof raw !== "string") return [];
     const s = raw.trim();
@@ -757,61 +711,7 @@ const openPromo = (href: string) => {
     return out;
   };
 
-  const extractTitleFromPrompt = (raw: any): string => {
-    if (!raw) return "Untitled";
-
-    // If already array/object
-    if (Array.isArray(raw) && raw.length) {
-      const firstUser = raw.find((m) => m?.role === "user" && m?.content);
-      if (firstUser?.content)
-        return String(firstUser.content).trim().slice(0, 60);
-    }
-    if (typeof raw === "object" && raw?.additionalPrompt) {
-      return String(raw.additionalPrompt).trim().slice(0, 60);
-    }
-
-    if (typeof raw === "string") {
-      const s = raw.trim();
-
-      // 2.a) Legacy role= / content= array string → use the first user message
-      if (/^\s*\[\{/.test(s) && /role\s*=/.test(s)) {
-        const msgs = parseLegacyPrompt(s);
-        const firstUser = msgs.find((m) => m.role === "user");
-        if (firstUser?.content) return firstUser.content.trim().slice(0, 60);
-      }
-
-      // 2.b) "{additionalPrompt=...}" shape
-      if (/\badditionalPrompt=/.test(s)) {
-        const m = s.match(/additionalPrompt=([^}]+)}/);
-        if (m?.[1]) return m[1].trim().slice(0, 60);
-      }
-
-      // 2.c) Try valid JSON string → [{role,content}] or {additionalPrompt}
-      try {
-        const parsed = JSON.parse(s);
-        if (Array.isArray(parsed) && parsed.length) {
-          const firstUser = parsed.find(
-            (m) => m?.role === "user" && m?.content
-          );
-          if (firstUser?.content)
-            return String(firstUser.content).trim().slice(0, 60);
-        }
-        if (parsed?.additionalPrompt) {
-          return String(parsed.additionalPrompt).trim().slice(0, 60);
-        }
-      } catch {
-        // fall through
-      }
-
-      // 2.d) As a last resort, if legacy string includes "content=", take first content
-      const contentFirst = s.match(/\bcontent\s*=\s*([^}\]]+)/);
-      if (contentFirst?.[1]) return contentFirst[1].trim().slice(0, 60);
-
-      return s.slice(0, 60) || "Untitled";
-    }
-
-    return "Untitled";
-  };
+  
 
   const fetchUserHistory = async (
     userIdParam: string,
@@ -1088,6 +988,16 @@ const openPromo = (href: string) => {
         const apiHistory = buildMessageHistory(historyMsgs);
 
         const resp = await postAgentChat(agentId!, userId, apiHistory);
+        if (!currentChatId) {
+          const newId = `${Date.now()}`;
+          const newTitle = generateChatTitle(messageContent);
+          setHistory((prev) => [
+            { id: newId, title: newTitle, createdAt: Date.now() },
+            ...prev,
+          ]);
+          setCurrentChatId(newId);
+          setSidebarOpen(true);
+        }
 
         let answer = "";
         if (typeof resp === "string") {
@@ -1100,6 +1010,10 @@ const openPromo = (href: string) => {
             ...prev,
             { role: "assistant", content: answer },
           ]);
+        }
+        if (!sidebarOpen && history.length > 0) {
+          // Only if history exists
+          setSidebarOpen(true);
         }
       } catch (e: any) {
         message.error(e?.message || "Failed to contact assistant.");
@@ -1136,7 +1050,7 @@ const openPromo = (href: string) => {
     try {
       const apiHistory = buildMessageHistory(newMsgs, newContent);
       const resp = await postAgentChat(agentId!, userId, apiHistory);
-
+  
       let answer = "";
       let newThreadId: string | undefined;
 
@@ -1153,6 +1067,14 @@ const openPromo = (href: string) => {
           ...prev,
           { role: "assistant", content: answer },
         ]);
+      }
+      // FIXED: Auto-open left sidebar after successful prompt
+      if (!sidebarOpen) {
+        setSidebarOpen(true);
+      }
+      // Similarly in handleEditSave, after setMessages:
+      if (!sidebarOpen && history.length > 0) {
+        setSidebarOpen(true);
       }
     } catch (e: any) {
       message.error(e?.message || "Failed to contact assistant.");
@@ -1256,24 +1178,18 @@ const openPromo = (href: string) => {
       setIsRecording(false);
     };
 
-    recognition.onend = () => setIsRecording(false);
+    recognition.onend = () => {
+      setIsRecording(false);
+      // ✅ Like ChatGPT: After voice ends, focus input and ensure transcript is in input
+      const inputEl = document.querySelector(
+        'textarea[placeholder*="Ask anything"]'
+      ) as HTMLTextAreaElement;
+      if (inputEl) {
+        inputEl.focus();
+      }
+    };
 
     recognition.start();
-  };
-
-  /**
-   * Upload a file + optional user prompt to Student Service "chat-with-file".
-   * Endpoint: /api/student-service/user/chat-with-file
-   */
-  const chatWithFile = async (file: File, userPrompt: string) => {
-    const url = `${BASE_URL}/student-service/user/chat-with-files`; // BASE_URL already includes /api
-    const form = new FormData();
-    form.append("files", file);
-    form.append("prompt", userPrompt || "");
-
-    const headers = { ...getAuthHeaders() };
-    const { data } = await axios.post(url, form, { headers });
-    return data;
   };
 
   // Send a message over the SAME chat-with-files thread without re-uploading files
@@ -1351,8 +1267,6 @@ const openPromo = (href: string) => {
 
     setLoading(true);
 
-    // push user's message into chat immediately
-    // push user's message into chat immediately
     const userMessage: ChatMessage = {
       role: "user",
       content: userPrompt,
@@ -1564,10 +1478,11 @@ const openPromo = (href: string) => {
     }
   };
 
-  const filteredHistory = history.filter((h) =>
-    h.title.toLowerCase().includes(historySearch.toLowerCase())
-  );
-
+  const filteredHistory = useMemo(() => {
+    if (!historySearch.trim()) return history;
+    const searchLower = historySearch.toLowerCase();
+    return history.filter((h) => h.title.toLowerCase().includes(searchLower));
+  }, [history, historySearch]);
   const handleLogout = () => {
     try {
       localStorage.removeItem("userId");
@@ -1588,26 +1503,27 @@ const openPromo = (href: string) => {
     : sidebarOpen
     ? SIDEBAR_WIDTH
     : SIDEBAR_WIDTH_COLLAPSED;
-  const leftOffset = isXs
-    ? 0
-    : sidebarOpen
-    ? SIDEBAR_WIDTH
-    : SIDEBAR_WIDTH_COLLAPSED;
+  const leftOffset = useMemo(() => {
+    if (isXs) return 0;
+    return sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_COLLAPSED;
+  }, [sidebarOpen, isXs]);
   const contentWidth = isXs ? "100%" : `calc(100% - ${sidebarWidth}px)`;
   const overlayVisible = isXs && sidebarOpen;
   const effectiveLeftOffset = userId ? leftOffset : 0;
   const effectiveContentWidth = userId ? contentWidth : "100%";
- 
-  const rightSidebarWidth = !isXs ? RIGHT_SIDEBAR_WIDTH : 0;
-  const rightOffset = !isXs ? RIGHT_SIDEBAR_WIDTH : 0;
 
-  const rightOverlayVisible = isXs && rightSidebarOpen;
+  const rightSidebarWidth = !isXs ? RIGHT_SIDEBAR_WIDTH : 0;
+  const rightOffset = useMemo(() => {
+    if (isXs) return 0;
+    return rightSidebarOpen ? RIGHT_SIDEBAR_WIDTH : 0;
+  }, [rightSidebarOpen, isXs]);
+
   const effectiveRightOffset = userId && !isXs ? rightOffset : 0;
 
-  const totalSidebarWidth = leftOffset + rightOffset;
-  const effectiveContentWidth1 = isXs
-    ? "100%"
-    : `calc(100% - ${totalSidebarWidth}px)`;
+  const effectiveContentWidth1 = useMemo(
+    () => `calc(100vw - ${leftOffset}px - ${rightOffset}px)`,
+    [leftOffset, rightOffset]
+  );
 
   // Add effect to persist right sidebar state (mirror left)
   useEffect(() => {
@@ -1890,15 +1806,23 @@ const openPromo = (href: string) => {
               )}
             </div>
 
-            {/* History List */}
-            {/* History List - Updated: Added highlighting for current chat, date display, and ChatGPT-like styling */}
             <div className="px-2 pb-24 overflow-y-auto h-[calc(100vh-56px-48px-64px-56px)]">
               {!isCollapsed || isXs ? (
                 <>
                   <div className="p-3 space-y-3 text-xs text-gray-500">
                     Chat History
                   </div>
-                  {filteredHistory.length === 0 ? (
+
+                  {historyLoading ? (
+                    <div className="p-3 space-y-3">
+                      {[...Array(6)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ) : filteredHistory.length === 0 ? (
                     <div className="text-xs text-gray-500 px-2 py-8">
                       No chats yet.
                     </div>
@@ -1919,9 +1843,6 @@ const openPromo = (href: string) => {
                               <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {h.title}
                               </span>
-                              {/* <span className="truncate text-xs text-gray-500">
-                                {formatDate(h.createdAt)}
-                              </span> */}
                             </div>
                           </button>
                         </li>
@@ -1964,7 +1885,27 @@ const openPromo = (href: string) => {
             </div>
           </div>
         </aside>
-        {userId && !isXs && (
+        {/* FIXED: Right Sidebar Toggle Button */}
+        {!isXs && (
+          <button
+            onClick={() => setRightSidebarOpen((prev) => !prev)}
+            className="fixed top-1/2 -translate-y-1/2 z-40 w-6 h-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 animate-pulse rounded-full shadow-md"
+            style={{
+              right: `${rightSidebarOpen ? RIGHT_SIDEBAR_WIDTH : 0}px`,
+            }}
+            title={
+              rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
+            }
+          >
+            <LuPanelRightClose
+              className="w-5 h-5 text-purple-600 dark:text-purple-400"
+              style={{
+                transform: rightSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </button>
+        )}
+        {userId && !isXs && rightSidebarOpen && (
           <aside
             className={`fixed right-0 top-0 h-full z-30 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-600 transition-all duration-300 overflow-y-auto`}
             style={{
@@ -2105,7 +2046,10 @@ const openPromo = (href: string) => {
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
           }`}
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => {
+            setSidebarOpen(false);
+            setRightSidebarOpen(false);
+          }}
           aria-hidden
         />
 
@@ -2736,15 +2680,34 @@ const openPromo = (href: string) => {
                     {/* CENTER: Textarea (grows, no overlap) */}
                     <div className="min-w-0">
                       <textarea
+                        ref={(el) => {
+                          if (!el) return;
+                          // Auto-resize height dynamically
+                          el.style.height = "auto";
+                          el.style.height = `${Math.min(
+                            el.scrollHeight,
+                            128
+                          )}px`; // 128px = max-h-32
+                        }}
+                        onInput={(e) => {
+                          const el = e.currentTarget;
+                          el.style.height = "auto";
+                          el.style.height = `${Math.min(
+                            el.scrollHeight,
+                            128
+                          )}px`;
+                          if (!loading) setInput(el.value);
+                        }}
                         rows={1}
-                        className="w-full bg-transparent outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-40 overflow-y-auto resize-y"
+                        className="w-full bg-transparent text-[16px] focus:outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-32 overflow-y-auto p-1 resize-none"
                         placeholder={
                           loading
-                            ? "Generating reply, please wait..."
+                            ? "AI is responding... you can type your next question"
                             : "Ask anything..."
                         }
                         value={input}
                         onChange={(e) => !loading && setInput(e.target.value)}
+                        style={{ minHeight: "20px" }}
                         onKeyDown={handleKeyDown}
                         disabled={loading}
                         inputMode="text"
@@ -2753,18 +2716,33 @@ const openPromo = (href: string) => {
 
                     {/* RIGHT: Mic + Send / Stop */}
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleToggleVoice}
-                        className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition ${
-                          isRecording
-                            ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 animate-pulse"
-                            : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
-                        }`}
-                        aria-label="Voice input"
-                        title="Voice input"
-                      >
-                        <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </button>
+                      {/* Updated Voice Button: Round mic normally, square red stop when recording with pulse animation */}
+                      {isRecording ? (
+                        <button
+                          onClick={handleToggleVoice}
+                          className="w-10 h-10 flex items-center justify-center bg-red-500 text-white border-0 shadow-md animate-pulse"
+                          style={{ borderRadius: 0 }} // Square (not rounded)
+                          title="Stop Voice"
+                          aria-label="Stop Voice"
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave"></span>
+                            <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-150"></span>
+                            <span className="w-1 h-4 bg-white rounded-full animate-pulse-wave animation-delay-300"></span>
+                            <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-450"></span>
+                            <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave animation-delay-600"></span>
+                          </div>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleToggleVoice}
+                          className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600`}
+                          aria-label="Voice input"
+                          title="Voice input"
+                        >
+                          <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </button>
+                      )}
 
                       {loading ? (
                         <button
@@ -2814,5 +2792,4 @@ const openPromo = (href: string) => {
     </>
   );
 };
-
 export default AssistantDetails;

@@ -225,6 +225,7 @@ import HealthcareAgentsPage from "./BharathAIStore/pages/Healthcareagents";
 import RemoveTrailingSlash from "./auth/RemoveTrailingSlash";
 import AdminMyAgentsPage from "./BharathAIStore/pages/AdminMyAgentsPage";
 import RadhaHiddenAgents from "./BharathAIStore/pages/RadhaHiddenAgents";
+import AdminTasks from "./Taskmanagement/AdminTasks";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -430,7 +431,7 @@ const App: React.FC = () => {
             <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
             <Route path="/leavestatus" element={<TeamLeaveStatus />} />
             <Route path="/all-statuses" element={<AllStatusPage />} />
-            <Route path="/assigned-task" element={<AssignedTasksPage />} />
+            <Route path="/assigned-task" element={<AdminTasks />} />
             <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
             <Route path="/hiddenlogin" element={<HiddenLogin />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />

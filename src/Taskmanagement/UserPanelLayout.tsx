@@ -4,7 +4,7 @@ import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
 import { FaClipboardCheck, FaExchangeAlt } from "react-icons/fa";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaWhatsapp } from "react-icons/fa";
 import { MdChat } from "react-icons/md";
 
 import {
@@ -88,11 +88,15 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         icon: <FaHistory className="text-green-500" />,
       },
       {
-  key: "/userinstructionsview",
-  label: <Link to="/userinstructionsview">Employee Interactions</Link>,
-  icon: <MdChat className="text-blue-500" />, // better chat icon
-},
-
+        key: "/assigned-task",
+        label: <Link to="/assigned-task">Assigned Tasks WhatsApp</Link>,
+        icon: <FaWhatsapp className="text-orange-500" />,
+      },
+      {
+        key: "/userinstructionsview",
+        label: <Link to="/userinstructionsview">Employee Interactions</Link>,
+        icon: <MdChat className="text-blue-500" />, // better chat icon
+      },
 
       {
         key: "Employee Leave Request",
@@ -123,11 +127,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
 
         label: <Link to="/usermobilenumberupdate">Update Mobile Number</Link>,
       },
-      {
-        key: "/assigned-task",
-        label: <Link to="/assigned-task">Team Task Management</Link>,
-        icon: <FaExchangeAlt className="text-orange-500" />,
-      },
+
       {
         key: "/taskassigneduser",
         label: <Link to="/taskassigneduser">My Tasks</Link>,

@@ -1,4 +1,3 @@
-// /src/AgentStore/CreateAgentWizard.tsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
@@ -692,13 +691,13 @@ const CreateAgentWizard: React.FC = () => {
         setAgentId(String(seed.id || seed.agentId || ""));
         setAssistantId(String(seed.assistantId || ""));
 
-        // Step 1 – Profile
-        setName(seed.Name || seed.name || "");
+        setName(seed.agentName || seed.AgentName || seed.Name || "");
+setCreatorName(String(seed.creatorName || seed.name || ""));
         setDescription(seed.description || "");
         setLanguage(seed.language || "English");
         setUserExperienceSummary(seed.userExperienceSummary || "");
         setUserRole(seed.userRole || "Advocate");
-        setCreatorName(String(seed.creatorName || ""));
+
         setAcheivements(String(seed.acheivements || ""));
 
         // Step 2 – Business/model/problem
@@ -1256,57 +1255,63 @@ const CreateAgentWizard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Step 1 save
-  const saveStep0 = async () => {
-    if (isEditMode && !agentId) {
-      message.error(
-        "Missing agentId in edit mode. Please reopen from All Agents."
-      );
-      return;
-    }
-    if (!validateStep0()) return false;
+// Step 1 save
+const saveStep0 = async () => {
+  if (isEditMode && !agentId) {
+    message.error("Missing agentId in edit mode. Please reopen from All Agents.");
+    return;
+  }
+  if (!validateStep0()) return false;
 
-    setLoading(true);
-    try {
-      const payload = {
-        // IDs
-        agentId: agentId || undefined,
-        assistantId: assistantId || undefined,
-        userId,
+  setLoading(true);
+  try {
+    const payload = {
+      // IDs
+      agentId: agentId || undefined,
+      assistantId: assistantId || undefined,
+      userId,
 
-        // Header
-        headerTitle,
-        headerStatus: false,
+      // Header
+      headerTitle,
+      headerStatus: false,
 
-        // Profile
-        name: creatorName,
-        userRole: effectiveUserRole || "Developer",
+      // Profile (mapping clarified)
+      // 'name'  -> Creator Name
+      // 'agentName' -> Agent Name (the AI agent's display name)
+      name: creatorName,
+      agentName: name,
+      creatorName, // send explicitly for backend clarity
+      userRole: effectiveUserRole || "Developer",
 
-        userExperienceSummary,
-        userExperience: undefined,
+      userExperienceSummary,
+      userExperience: undefined,
 
-        acheivements,
-        description, // keep only 'description' (removed misspelled 'discription')
-        language,
-        voiceStatus: false,
-        agentName: name, // legacy field, same as 'name'
-      };
-      const data = await doPatch("/ai-service/agent/agentScreen1", payload);
-      const aId = (data as any)?.agentId || (data as any)?.id || "";
-      const asstId = (data as any)?.assistantId || "";
-      if (aId) setAgentId(String(aId));
-      if (asstId) setAssistantId(String(asstId));
-      message.success("Saved step 1");
-      lastSaved0.current = snapStep0();
-      setStep(1); // ✅ automatically go to next step
-      return true;
-    } catch (e: any) {
-      message.error(e?.message || "Failed to save step 1");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+      acheivements,
+      description,
+      language,
+
+      // Voice + Status
+      voiceStatus: false,
+      activeStatus: true, // ✅ make agent active at Step-1 (create & edit)
+    };
+
+    const data = await doPatch("/ai-service/agent/agentScreen1", payload);
+    const aId = (data as any)?.agentId || (data as any)?.id || "";
+    const asstId = (data as any)?.assistantId || "";
+    if (aId) setAgentId(String(aId));
+    if (asstId) setAssistantId(String(asstId));
+
+    message.success("Saved step 1");
+    lastSaved0.current = snapStep0();
+    setStep(1);
+    return true;
+  } catch (e: any) {
+    message.error(e?.message || "Failed to save step 1");
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Step 2 save
   const saveStep1 = async () => {
@@ -1697,14 +1702,21 @@ const CreateAgentWizard: React.FC = () => {
 
     setAgentId(String(editSeed.id || editSeed.agentId || ""));
     setAssistantId(String(editSeed.assistantId || ""));
-
-    // Step 1 – Profile
-    setName(editSeed.Name || (editSeed as any).name || "");
+    setName(
+  (editSeed as any).agentName ||
+    (editSeed as any).AgentName ||
+    (editSeed as any).Name || // legacy agent name sometimes stored as "Name"
+    ""
+);
+setCreatorName(
+  String(
+    (editSeed as any).creatorName || ""
+  )
+);
     setDescription(editSeed.description || "");
     setLanguage(editSeed.language || "English");
     setUserExperienceSummary((editSeed as any).userExperienceSummary || "");
     setUserRole(editSeed.userRole || "Advocate");
-    setCreatorName(String(editSeed.creatorName || ""));
     setAcheivements(String(editSeed.acheivements || ""));
 
     // Step 2 – Business & Model & Problem
