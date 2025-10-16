@@ -32,7 +32,7 @@ const AdminTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
-  const accessToken = localStorage.getItem("token");
+  const accessToken = sessionStorage.getItem("accessToken");
 
   // Fetch API data
   const fetchTasks = async () => {
@@ -86,7 +86,7 @@ const AdminTasks: React.FC = () => {
       title: "S.No",
       key: "serial",
       align: "center" as const,
-      width: 60,
+
       render: (_text: any, _record: Task, index: number) => index + 1,
     },
     {
@@ -94,30 +94,56 @@ const AdminTasks: React.FC = () => {
       dataIndex: "taskAssignBy",
       key: "taskAssignBy",
       align: "center" as const,
-      width: 150,
+      width: 160,
     },
     {
       title: "Assigned To",
       dataIndex: "taskAssignTo",
       key: "taskAssignTo",
       align: "center" as const,
-      width: 180,
-      render: (assigned: string[]) => assigned?.join(", ") || "-",
+      width: 160,
+      render: (text: any) => (
+        <div
+          style={{
+            maxWidth: 160,
+            maxHeight: 80, // limit height
+            overflowX: "auto", // horizontal scroll
+          }}
+        >
+          {text || "-"}
+        </div>
+      ),
     },
     {
       title: "Task Name",
       dataIndex: "taskName",
       key: "taskName",
       align: "center" as const,
-      width: 250,
-    
+      width: 300,
+      render: (text: any) => (
+        <div
+          style={{
+            maxWidth: 300,
+            margin: "0 auto", // centers the box horizontally
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            textAlign: "center",
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            overflowX: "auto",
+            maxHeight: 120, // limit height
+          }}
+        >
+          {text || "-"}
+        </div>
+      ),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
       align: "center" as const,
-      width: 120,
+
       render: (status: string) => {
         let color = "orange";
         if (status === "assigned") color = "#008cba";
@@ -135,7 +161,7 @@ const AdminTasks: React.FC = () => {
       dataIndex: "image",
       key: "image",
       align: "center" as const,
-      width: 120,
+
       render: (url?: string | null) =>
         url ? (
           <Image

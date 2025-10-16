@@ -6,11 +6,17 @@ import React, {
   type AnchorHTMLAttributes,
   type ImgHTMLAttributes,
 } from "react";
+
+import { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import "highlight.js/styles/github-dark.css";
 import { Download } from "lucide-react";
+import "katex/dist/katex.min.css";
+
 interface Props {
   content: string;
   className?: string;
@@ -53,6 +59,24 @@ const MarkdownRenderer: React.FC<Props> = memo(
       HTMLAnchorElement
     >) => {
       const isExternal = href?.startsWith("http");
+      const isYouTube =
+        href?.includes("youtube.com/watch") || href?.includes("youtu.be");
+
+      // Auto-embed YouTube
+      // Auto-embed YouTube with smaller width
+      if (isYouTube && href) {
+        const videoId = href.split("v=")[1] || href.split("/").pop();
+        return (
+          <div className="my-4 flex justify-center">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              className="w-full max-w-xl aspect-video rounded-xl shadow-md"
+              style={{ maxHeight: "360px" }}
+              allowFullScreen
+            ></iframe>
+          </div>
+        );
+      }
       return (
         <a
           href={href}
@@ -66,43 +90,66 @@ const MarkdownRenderer: React.FC<Props> = memo(
         </a>
       );
     };
+    // Flowchart renderer
+    // const FlowchartRenderer = ({ children }: { children: string }) => {
+    //   const chartId = `flowchart-${Math.random().toString(36).substr(2, 9)}`;
 
-  const ImageRenderer = ({ src, alt }: ImgHTMLAttributes<HTMLImageElement>) => (
-    <div className="my-4 relative group flex justify-center">
-      <img
-        src={src || ""}
-        alt={alt || ""}
-        className="max-w-full h-auto rounded-lg border shadow-md dark:border-gray-700 max-h-96 object-contain"
-        loading="lazy"
-      />
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (src) {
-            const a = document.createElement("a");
-            a.href = src;
-            a.download = alt || "downloaded-image.png";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-          }
-        }}
-        className="absolute top-2 right-2 p-1 rounded-full bg-white/90 dark:bg-black/70 hover:bg-white dark:hover:bg-black opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-md"
-        title="Download image"
-      >
-        <Download className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-      </button>
-    </div>
-  );
+    //   useEffect(() => {
+    //     try {
+    //       mermaid.initialize({ startOnLoad: true });
+    //       mermaid.contentLoaded();
+    //     } catch (err) {
+    //       console.error("Mermaid render error:", err);
+    //     }
+    //   }, []);
+
+    //   return (
+    //     <div className="my-4 overflow-auto">
+    //       <div className="flowchart" id={chartId}>
+    //         {children}
+    //       </div>
+    //     </div>
+    //   );
+    // };
+    const ImageRenderer = ({
+      src,
+      alt,
+    }: ImgHTMLAttributes<HTMLImageElement>) => (
+      <div className="my-4 relative group flex justify-center">
+        <img
+          src={src || ""}
+          alt={alt || ""}
+          className="max-w-full h-auto rounded-lg border shadow-md dark:border-gray-700 max-h-96 object-contain"
+          loading="lazy"
+        />
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (src) {
+              const a = document.createElement("a");
+              a.href = src;
+              a.download = alt || "downloaded-image.png";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            }
+          }}
+          className="absolute top-2 right-2 p-1 rounded-full bg-white/90 dark:bg-black/70 hover:bg-white dark:hover:bg-black opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-md"
+          title="Download image"
+        >
+          <Download className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+        </button>
+      </div>
+    );
 
     return (
       <div
         className={`prose prose-sm sm:prose-base lg:prose-lg max-w-full dark:prose-invert break-words text-gray-800 dark:text-gray-100 ${className}`}
       >
         <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeHighlight]}
+          remarkPlugins={[remarkGfm, remarkMath]}
+          rehypePlugins={[rehypeHighlight, rehypeKatex]}
           components={{
             h1: ({ children }) => (
               <h1 className="text-3xl font-bold mt-10 mb-4 border-b border-gray-300 dark:border-gray-700 pb-2">
@@ -161,6 +208,24 @@ const MarkdownRenderer: React.FC<Props> = memo(
             code: CodeBlock,
             a: LinkRenderer,
             img: ImageRenderer,
+            // div: ({ className, children }) => {
+            //   if (className?.includes("flowchart")) {
+            //     return (
+            //       <FlowchartRenderer>{children as string}</FlowchartRenderer>
+            //     );
+            //   }
+            //   return <div className={className}>{children}</div>;
+            // },
+            details: ({ children }) => (
+              <details className="my-4 rounded-md bg-gray-100 dark:bg-gray-800 p-3">
+                {children}
+              </details>
+            ),
+            summary: ({ children }) => (
+              <summary className="font-semibold cursor-pointer text-blue-600 dark:text-blue-400">
+                {children}
+              </summary>
+            ),
             table: ({ children }) => (
               <div className="overflow-x-auto my-6">
                 <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg">

@@ -1214,10 +1214,11 @@ useEffect(() => {
                           <button
                             onClick={() =>
                               navigate(
-                                `/main/chatinterface/assistant/${a.assistantId}/${a.id}`
+                                `/bharath-aistore/assistant/${a.assistantId}/${a.id}`
                               )
                             }
                             title="View"
+                            
                             className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
                bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 
                text-white hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 
@@ -1521,33 +1522,35 @@ useEffect(() => {
 
                               <div className="mt-5 grid gap-2 sm:grid-cols-3">
                                 {/* ✅ USE AS PROFILE: upload, then GET & show the image */}
-<button
-  onClick={async () => {
-    // Close the modal right away
-    const agent = (data?.assistants || []).find(
-      x => x.assistantId === genPreviewAssistantId
-    );
-    const uid = resolvedUserId;
+                                <button
+                                  onClick={async () => {
+                                    // Close the modal right away
+                                    const agent = (data?.assistants || []).find(
+                                      (x) =>
+                                        x.assistantId === genPreviewAssistantId
+                                    );
+                                    const uid = resolvedUserId;
 
-    setGenPreviewUrl(null);
-    setGenPreviewAssistantId(null);
+                                    setGenPreviewUrl(null);
+                                    setGenPreviewAssistantId(null);
 
-    if (!agent?.id || !uid) {
-      return message.error("Missing agentId or userId.");
-    }
+                                    if (!agent?.id || !uid) {
+                                      return message.error(
+                                        "Missing agentId or userId."
+                                      );
+                                    }
 
-    // Kick off the effect: POST save-image-url, then GET and show
-    setPendingSave({
-      agentId: agent.id,
-      imageUrl: genPreviewUrl!, // from generation response
-      userId: uid,
-    });
-  }}
-  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold"
->
-  Use as Profile
-</button>
-
+                                    // Kick off the effect: POST save-image-url, then GET and show
+                                    setPendingSave({
+                                      agentId: agent.id,
+                                      imageUrl: genPreviewUrl!, // from generation response
+                                      userId: uid,
+                                    });
+                                  }}
+                                  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                                >
+                                  Use as Profile
+                                </button>
 
                                 {/* 🔄 GENERATE AGAIN: close modal, show loader while generating */}
                                 <button
