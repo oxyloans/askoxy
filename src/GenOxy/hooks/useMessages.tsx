@@ -276,7 +276,7 @@ export const useMessages = ({
       if (threadId) formData.append("threadId", threadId);
 
       const response = await axios.post(
-        `${BASE_URL}/student-service/user/chat-with-file`,
+        `${BASE_URL}/student-service/user/chat-with-files`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
