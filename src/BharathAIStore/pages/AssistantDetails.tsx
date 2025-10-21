@@ -158,7 +158,7 @@ const AssistantDetails: React.FC = () => {
       alt: "Launch Your AI Agent",
       href: "/main/bharat-expert",
     },
-     {
+    {
       id: "p4",
       src: "https://i.ibb.co/zVYCGLzT/i4.png",
       alt: "ASKOXY.AI",
@@ -176,7 +176,6 @@ const AssistantDetails: React.FC = () => {
       alt: "Study Abroad",
       href: "/studyabroad",
     },
-   
   ];
 
   // helper: internal routes use navigate; external open new tab
@@ -711,8 +710,6 @@ const AssistantDetails: React.FC = () => {
     return out;
   };
 
-  
-
   const fetchUserHistory = async (
     userIdParam: string,
     agentIdParam: string
@@ -960,6 +957,15 @@ const AssistantDetails: React.FC = () => {
       const messageContent = prompt || input;
       if (!messageContent.trim() && !skipAddUser) return;
       if (loading || !id) return;
+      // ✅ Stop voice recording automatically when user clicks send
+      if (isRecording) {
+        try {
+          recognitionRef.current?.stop();
+        } catch (err) {
+          console.warn("Failed to stop voice recognition:", err);
+        }
+        setIsRecording(false);
+      }
 
       let userMsg: ChatMessage | undefined;
       const working = baseMessages ?? messages;
@@ -982,6 +988,7 @@ const AssistantDetails: React.FC = () => {
 
       isStopped.current = false;
       setLoading(true);
+      // Stop voice if active before sending
 
       try {
         const historyMsgs = skipAddUser ? working : [...working, userMsg!];
@@ -1050,7 +1057,7 @@ const AssistantDetails: React.FC = () => {
     try {
       const apiHistory = buildMessageHistory(newMsgs, newContent);
       const resp = await postAgentChat(agentId!, userId, apiHistory);
-  
+
       let answer = "";
       let newThreadId: string | undefined;
 
@@ -1137,60 +1144,48 @@ const AssistantDetails: React.FC = () => {
 
   const keepListeningRef = useRef(false);
 
-  const handleToggleVoice = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
+  /** ---------------- Voice ---------------- */
+  // const handleToggleVoice = () => {
+    const handleToggleVoice = (): void => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
       alert("Speech Recognition not supported in this browser.");
       return;
     }
-
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
       setIsRecording(false);
       return;
     }
-
-    const recognition = new SpeechRecognition();
+    const recognition = new SR();
     recognition.lang = "en-US";
     recognition.interimResults = true;
     recognition.continuous = true;
-
     recognitionRef.current = recognition;
-
-    recognition.onstart = () => setIsRecording(true);
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onstart = (): void => setIsRecording(true);
+    recognition.onresult = (event: any): void => {
       let transcript = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) transcript += result[0].transcript + " ";
       }
-      if (transcript.trim()) {
+      if (transcript.trim())
         setInput((prev) => (prev.trim() + " " + transcript.trim()).trim());
-      }
     };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      alert("Voice input failed: " + event.error);
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-      // ✅ Like ChatGPT: After voice ends, focus input and ensure transcript is in input
-      const inputEl = document.querySelector(
-        'textarea[placeholder*="Ask anything"]'
-      ) as HTMLTextAreaElement;
-      if (inputEl) {
-        inputEl.focus();
-      }
-    };
-
+    recognition.onerror = (): void => setIsRecording(false);
+    recognition.onend = (): void => setIsRecording(false);
     recognition.start();
   };
+
+  /** ✅ Ensure recording stops when message is sent */
+  useEffect(() => {
+    if (!loading && isRecording) {
+      try {
+        recognitionRef.current?.stop();
+        setIsRecording(false);
+      } catch {}
+    }
+  }, [loading]);
 
   // Send a message over the SAME chat-with-files thread without re-uploading files
   const chatWithFilesFollowup = async (userPrompt: string) => {
@@ -1424,6 +1419,15 @@ const AssistantDetails: React.FC = () => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
 
+      // ✅ Stop voice recording automatically when sending
+      if (isRecording) {
+        try {
+          recognitionRef.current?.stop();
+        } catch (err) {
+          console.warn("Failed to stop recognition:", err);
+        }
+        setIsRecording(false);
+      }
       if (selectedFiles.length > 0) {
         await handleFileUpload(
           null,
@@ -2755,7 +2759,15 @@ const AssistantDetails: React.FC = () => {
                         </button>
                       ) : (
                         <button
-                          onClick={async () => {
+                              onClick={async () => {
+                                 if (isRecording) {
+      try {
+        recognitionRef.current?.stop();
+      } catch (err) {
+        console.warn("Failed to stop voice recognition:", err);
+      }
+      setIsRecording(false);
+    }
                             if (selectedFiles.length) {
                               await handleFileUpload(
                                 null,

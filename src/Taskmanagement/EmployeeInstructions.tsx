@@ -1,6 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Table, Spin, message, Form, Input, Button,Space, Modal,Tooltip } from "antd";
+import {
+  Table,
+  Spin,
+  message,
+  
+  Form,
+  Input,
+  Button,
+  Space,
+  Modal,
+  Typography,
+  Tooltip,
+} from "antd";
 import { MessageOutlined, SearchOutlined } from "@ant-design/icons";
 import { MdForum } from "react-icons/md";
 import axios from "axios";
@@ -8,7 +20,7 @@ import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
 import { useNavigate } from "react-router-dom";
 import type { ColumnsType } from "antd/es/table";
-
+const { Text } = Typography;
 const EmployeeInteractions: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -130,41 +142,17 @@ const EmployeeInteractions: React.FC = () => {
       title: "Instructions",
       dataIndex: "radhaInstructions",
       align: "center",
-      render: (text) => (
-        // <Tooltip title={text}>
-        <div
-          style={{
-            maxWidth: 250,
-            textAlign: "center",
-            display: "-webkit-box",
-
-            WebkitBoxOrient: "vertical",
-            maxHeight: 110, // limit height
-            overflowX: "auto", // horizontal scroll
-          }}
-        >
-          {text}
-        </div>
-        // </Tooltip>
+      render: (text: any) => (
+        <Text style={{ display: "block", textAlign: "center" }}>{text}</Text>
       ),
     },
     {
       title: "Employee Names",
       dataIndex: "employeesName",
       align: "center",
-      width: 160,
-      render: (text) => (
-        <Tooltip title={text}>
-          <div
-            style={{
-              maxWidth: 140,
-              maxHeight: 80, // limit height
-              overflowX: "auto", // horizontal scroll
-            }}
-          >
-            {text || "-"}
-          </div>
-        </Tooltip>
+
+      render: (text: any) => (
+        <Text style={{ display: "block", textAlign: "center" }}>{text}</Text>
       ),
     },
 
@@ -189,6 +177,7 @@ const EmployeeInteractions: React.FC = () => {
       title: "Action",
       key: "action",
       align: "center",
+     
       render: (_: any, record: any) => (
         <Space align="center" size="middle">
           {/* Write To Us Button */}

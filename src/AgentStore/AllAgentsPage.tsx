@@ -14,12 +14,32 @@ function getAccessToken(): string | null {
     null
   );
 }
-function copy(text: string) {
-  navigator.clipboard?.writeText(text).then(
-    () => message.success("Link copied"),
-    () => message.error("Copy failed")
-  );
+
+// Safely resolve a display name from historyData (fallback to userId)
+function resolveUserDisplayName(
+  userId: string | null | undefined,
+  map?: Record<string, string | null>
+) {
+  if (!userId) return "Unknown User";
+  const n = map?.[userId];
+  return (n && n.trim()) || userId; // ✅ fallback to id when name missing
 }
+
+// Filter history list by selected user (or return all)
+function filterHistoryByUser(rawList: any[], selected?: string | null) {
+  if (!Array.isArray(rawList)) return [];
+  if (!selected) return rawList;
+  return rawList.filter((e) => e?.userId === selected);
+}
+
+// ✅ Helper: formats date/time safely
+function fmtDate(dateString?: string) {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return dateString; // fallback if invalid
+  return d.toLocaleString(); // or use toLocaleDateString() if you want only date
+}
+
 function authHeadersBase(): Record<string, string> {
   const token = getAccessToken();
   const h: Record<string, string> = { Accept: "*/*" };
@@ -181,6 +201,12 @@ const AllAgentsPage: React.FC = () => {
     string | null
   >(null);
 
+  // 🔹 User History (Public Chats) modal state
+  const [historyOpenFor, setHistoryOpenFor] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyData, setHistoryData] = useState<any | null>(null);
+
   const [editMap, setEditMap] = useState<Record<string, EditDraft>>({});
   const [fileModalOpen, setFileModalOpen] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState<string | null>(null);
@@ -190,6 +216,33 @@ const AllAgentsPage: React.FC = () => {
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [removingFileId, setRemovingFileId] = useState<string | null>(null);
   const showId = showEdit ?? "";
+
+  // 🔎 Selected user detail view for full history
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  // Parse your prompt string into [{role, content}] safely (full text, no trimming)
+  function parsePromptToMessages(
+    prompt?: string
+  ): { role: string; content: string }[] {
+    if (!prompt) return [];
+    // Strip surrounding [ ... ] if present
+    let t = String(prompt)
+      .trim()
+      .replace(/^\s*\[\s*|\s*\]\s*$/g, "");
+    // Grab each {...} block
+    const objs = t.match(/\{[^}]*\}/g) || [];
+    const out: { role: string; content: string }[] = [];
+    for (const raw of objs) {
+      // role=user, content=...
+      const r = /role\s*=\s*(user|assistant)/i.exec(raw);
+      const c = /content\s*=\s*([\s\S]*)$/i.exec(raw);
+      const role = (r?.[1] || "").toLowerCase();
+      // Remove trailing } and trim spaces for content
+      const content = (c?.[1] || "").replace(/\}\s*$/, "").trim();
+      if (role) out.push({ role, content });
+    }
+    return out;
+  }
 
   const resolvedUserId = useMemo(() => {
     const id = getUserId();
@@ -239,67 +292,168 @@ const AllAgentsPage: React.FC = () => {
     }
   };
 
-  // Small helper: fetch remote image URL → File, then reuse your uploadImage()
-  async function uploadFromUrlToAssistant(assistantId: string, url: string) {
+  function normalizeCreatorAgentDetails(raw: any) {
+    const list = Array.isArray(raw?.agentChatListList)
+      ? raw.agentChatListList
+      : [];
+
+    // Aggregate per-user chat counts
+    const byUser: Record<
+      string,
+      {
+        userId: string;
+        name?: string;
+        chats: number;
+        lastChatAt?: string | null;
+      }
+    > = {};
+    list.forEach((e: any) => {
+      const uid = e?.userId || "unknown";
+      if (!byUser[uid])
+        byUser[uid] = {
+          userId: uid,
+          name: e?.name,
+          chats: 0,
+          lastChatAt: e?.createdAt ?? null,
+        };
+      byUser[uid].chats += 1;
+      // If a timestamp exists, keep the latest
+      if (
+        e?.createdAt &&
+        (!byUser[uid].lastChatAt ||
+          new Date(e.createdAt) > new Date(byUser[uid].lastChatAt!))
+      ) {
+        byUser[uid].lastChatAt = e.createdAt;
+      }
+    });
+
+    // Build recentConversations previews
+    const recentConversations = list.map((e: any, i: number) => {
+      const p = String(e?.prompt ?? "");
+      // strip outer [] if present and compress
+      const short = p
+        .replace(/^\s*\[\s*|\s*\]\s*$/g, "")
+        .replace(/\s+/g, " ")
+        .replace(/role=/g, "")
+        .replace(/content=/g, "")
+        .slice(0, 280);
+      return {
+        id: i + 1,
+        userId: e?.userId ?? null,
+        name: e?.name ?? null,
+        createdAt: e?.createdAt ?? null,
+        preview: short,
+      };
+    });
+
+    const users = Object.values(byUser).sort((a, b) => b.chats - a.chats);
+
+    return {
+      agentName: raw?.agentName ?? null,
+      agentId: raw?.agentId ?? null,
+      creatorName: raw?.creatorName ?? null,
+      totalChats: list.length,
+      totalUsers: users.length,
+      users,
+      // keep whole raw for detail view filtering
+      rawList: list,
+      // quick map for showing names in detail view
+      userNameMap: users.reduce((m, u) => {
+        m[u.userId] = u.name || null;
+        return m;
+      }, {} as Record<string, string | null>),
+    };
+  }
+  useEffect(() => {
+    if (!historyOpenFor) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [historyOpenFor]);
+
+  async function fetchCreatorAgentDetails(agentId: string, userId: string) {
+    if (!agentId || !userId) {
+      message.error("Missing agentId or userId.");
+      return;
+    }
+    setHistoryLoading(true);
+    setHistoryError(null);
+    setHistoryData(null);
+
     try {
-      const res = await fetch(url, { mode: "cors", cache: "no-store" });
-      if (!res.ok) throw new Error(`Fetch image failed: ${res.status}`);
-      const blob = await res.blob();
-      // Try to preserve extension if present
-      const ext = (blob.type?.split("/")?.[1] || "png").toLowerCase();
-      const file = new File([blob], `ai-profile.${ext}`, {
-        type: blob.type || "image/png",
-      });
-      await uploadImage(assistantId, file); // ✅ uses your existing upload API
+      const url = new URL(
+        "/api/ai-service/agent/getCreatorAgentDeatils",
+        BASE_URL
+      );
+      url.searchParams.set("agentId", agentId);
+      url.searchParams.set("userId", userId);
+
+      const res = await authFetch(url.toString(), { method: "GET" });
+      const text = await res.text().catch(() => "");
+      if (!res.ok) {
+        throw new Error(
+          `Request failed (${res.status})${text ? `: ${text}` : ""}`
+        );
+      }
+
+      let json: any = {};
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch {
+        json = {};
+      }
+
+      setHistoryData(normalizeCreatorAgentDetails(json));
     } catch (e: any) {
-      message.error(e?.message || "Failed to save generated image.");
-      throw e;
+      setHistoryError(e?.message || "Failed to load user history.");
+    } finally {
+      setHistoryLoading(false);
     }
   }
 
   // ⬇️ add with the other React.useState hooks
-const [pendingSave, setPendingSave] = useState<null | {
-  agentId: string;
-  imageUrl: string;
-  userId: string;
-}>(null);
+  const [pendingSave, setPendingSave] = useState<null | {
+    agentId: string;
+    imageUrl: string;
+    userId: string;
+  }>(null);
 
-// POST /api/ai-service/agent/save-image-url  (make sure /api prefix is present)
-async function saveImageUrl(payload: {
-  agentId: string;
-  imageUrl: string;
-  saveOption: "yes" | "no";
-  userId: string;
-}) {
-  const res = await authFetch(
-    `${BASE_URL}/ai-service/agent/save-image-url`,
-    { method: "POST", body: JSON.stringify(payload) }
-  );
+  // POST /api/ai-service/agent/save-image-url  (make sure /api prefix is present)
+  async function saveImageUrl(payload: {
+    agentId: string;
+    imageUrl: string;
+    saveOption: "yes" | "no";
+    userId: string;
+  }) {
+    const res = await authFetch(`${BASE_URL}/ai-service/agent/save-image-url`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
 
-  const text = await res.text().catch(() => "");
+    const text = await res.text().catch(() => "");
 
-  if (!res.ok) {
-    // Surface backend error text if present
-    throw new Error(
-      `Save image URL failed (${res.status})${text ? `: ${text}` : ""}`
-    );
-  }
-
-  // Some backends return plain text (e.g., "Image URL saved successfully")
-  const ct = (res.headers.get("content-type") || "").toLowerCase();
-  if (ct.includes("application/json")) {
-    try {
-      return text ? JSON.parse(text) : {};
-    } catch {
-      // If server mislabeled but content is not valid JSON, fall back to text
-      return { message: text || "OK" };
+    if (!res.ok) {
+      // Surface backend error text if present
+      throw new Error(
+        `Save image URL failed (${res.status})${text ? `: ${text}` : ""}`
+      );
     }
+
+    // Some backends return plain text (e.g., "Image URL saved successfully")
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (ct.includes("application/json")) {
+      try {
+        return text ? JSON.parse(text) : {};
+      } catch {
+        // If server mislabeled but content is not valid JSON, fall back to text
+        return { message: text || "OK" };
+      }
+    }
+    // Non-JSON success
+    return { message: text || "OK" };
   }
-  // Non-JSON success
-  return { message: text || "OK" };
-}
-
-
 
   /** Generate Profile Pic via PATCH /api/ai-service/agent/generateProfilePic
    *  - payload: { agentName, description, userId }
@@ -346,26 +500,28 @@ async function saveImageUrl(payload: {
     }
   }
 
-async function getAiProfileImage(agentId: string, userId: string) {
-  try {
-    const url = new URL(`/ai-service/agent/getAiProfileImage`, BASE_URL);
-    url.searchParams.set("agentId", agentId);
-    url.searchParams.set("userId", userId);
-    const res = await authFetch(url.toString(), { method: "GET" });
-    const txt = await res.text().catch(() => "");
-    if (!res.ok)
-      throw new Error(`Fetch AI image failed: ${res.status}${txt ? ` ${txt}` : ""}`);
-    const json = txt ? JSON.parse(txt) : {};
-    return json as {
-      userId: string;
-      agentName: string;
-      imageUrl: string;
-      agentId: string;
-    };
-  } catch (e) {
-    return null;
+  async function getAiProfileImage(agentId: string, userId: string) {
+    try {
+      const url = new URL(`/ai-service/agent/getAiProfileImage`, BASE_URL);
+      url.searchParams.set("agentId", agentId);
+      url.searchParams.set("userId", userId);
+      const res = await authFetch(url.toString(), { method: "GET" });
+      const txt = await res.text().catch(() => "");
+      if (!res.ok)
+        throw new Error(
+          `Fetch AI image failed: ${res.status}${txt ? ` ${txt}` : ""}`
+        );
+      const json = txt ? JSON.parse(txt) : {};
+      return json as {
+        userId: string;
+        agentName: string;
+        imageUrl: string;
+        agentId: string;
+      };
+    } catch (e) {
+      return null;
+    }
   }
-}
 
   useEffect(() => {
     (async () => {
@@ -419,41 +575,44 @@ async function getAiProfileImage(agentId: string, userId: string) {
   }, [resolvedUserId]);
 
   // ▶️ After clicking "Use as Profile", this effect runs the POST then GET, then shows the image
-useEffect(() => {
-  if (!pendingSave) return;
+  useEffect(() => {
+    if (!pendingSave) return;
 
-  let cancelled = false;
-  (async () => {
-    try {
-      // 1) Save (backend returns an error if saveOption === 'no'; we always send 'yes')
-      await saveImageUrl({
-        agentId: pendingSave.agentId,
-        imageUrl: pendingSave.imageUrl,
-        saveOption: "yes",
-        userId: pendingSave.userId,
-      });
+    let cancelled = false;
+    (async () => {
+      try {
+        // 1) Save (backend returns an error if saveOption === 'no'; we always send 'yes')
+        await saveImageUrl({
+          agentId: pendingSave.agentId,
+          imageUrl: pendingSave.imageUrl,
+          saveOption: "yes",
+          userId: pendingSave.userId,
+        });
 
-      // 2) GET the saved profile image and show it
-      const got = await getAiProfileImage(pendingSave.agentId, pendingSave.userId);
-      if (!cancelled && got?.imageUrl) {
-        setPreviewSrc(got.imageUrl);
+        // 2) GET the saved profile image and show it
+        const got = await getAiProfileImage(
+          pendingSave.agentId,
+          pendingSave.userId
+        );
+        if (!cancelled && got?.imageUrl) {
+          setPreviewSrc(got.imageUrl);
+        }
+
+        // 3) Refresh list so profileImagePath (highest priority) shows up
+        await refreshData();
+        if (!cancelled) message.success("Profile image saved.");
+      } catch (err: any) {
+        if (!cancelled)
+          message.error(err?.message || "Failed to save profile image.");
+      } finally {
+        if (!cancelled) setPendingSave(null);
       }
+    })();
 
-      // 3) Refresh list so profileImagePath (highest priority) shows up
-      await refreshData();
-      if (!cancelled) message.success("Profile image saved.");
-    } catch (err: any) {
-      if (!cancelled) message.error(err?.message || "Failed to save profile image.");
-    } finally {
-      if (!cancelled) setPendingSave(null);
-    }
-  })();
-
-  return () => {
-    cancelled = true;
-  };
-}, [pendingSave]);
-
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingSave]);
 
   // 🔹 Cache to avoid duplicate profile fetches across renders
   const requestedProfileIdsRef = React.useRef<Set<string>>(new Set());
@@ -1191,6 +1350,18 @@ useEffect(() => {
 
                         {/* ✅ Action Buttons: Edit | View | Delete */}
                         <div className="flex gap-2 ml-auto flex-wrap justify-end w-full sm:w-auto">
+                          <button
+                            onClick={() => {
+                              setSelectedUserId(null); // ✅ reset selection
+                              setHistoryOpenFor(a.id);
+                              fetchCreatorAgentDetails(a.id, resolvedUserId);
+                            }}
+                            className="rounded-md px-3 py-2 text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            title="View public chat history (creator view)"
+                          >
+                            User History
+                          </button>
+
                           {/* ✏️ Edit Button */}
                           <button
                             onClick={() => openUpdateWizard(a)}
@@ -1218,7 +1389,6 @@ useEffect(() => {
                               )
                             }
                             title="View"
-                            
                             className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
                bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 
                text-white hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 
@@ -1662,6 +1832,192 @@ useEffect(() => {
                           </div>
                         </div>
                       )}
+
+                   {historyOpenFor && (
+  <div
+    className="fixed inset-0 z-[75] bg-black/40 flex items-center justify-center px-4"
+    onMouseDown={(e) => {
+      if (e.target === e.currentTarget) setHistoryOpenFor(null);
+    }}
+    role="dialog"
+    aria-modal="true"
+  >
+    <div className="w-full max-w-6xl rounded-2xl bg-white border border-purple-200 shadow-2xl overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-purple-100 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 text-white flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4 4h16v2H4V4Zm0 6h16v2H4v-2Zm0 6h10v2H4v-2Z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-purple-900">
+            Users Chat History
+          </h3>
+        </div>
+        <button
+          onClick={() => setHistoryOpenFor(null)}
+          className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-0 max-h-[80vh]">
+        {historyLoading ? (
+          <div className="flex items-center gap-3 text-sm text-gray-600 px-5 py-4">
+            <svg className="animate-spin h-5 w-5 text-gray-500" viewBox="0 0 24 24">
+              <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z" />
+            </svg>
+            Loading user history…
+          </div>
+        ) : historyError ? (
+          <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm m-5">
+            {historyError}
+          </div>
+        ) : !historyData ? (
+          <div className="text-sm text-gray-500 italic px-5 py-4">No data.</div>
+        ) : (
+          <div className="grid grid-cols-12 gap-0">
+            {/* LEFT: Users list */}
+            <aside className="col-span-12 md:col-span-4 border-r border-purple-100 max-h-[80vh] overflow-y-auto">
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {"totalUsers" in historyData && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      Users: <b>{historyData.totalUsers}</b>
+                    </span>
+                  )}
+                  {"totalChats" in historyData && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      Chats: <b>{historyData.totalChats}</b>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <ul className="px-3 pb-3 space-y-2">
+                {(historyData.users || []).map((u: any) => {
+                  const display = resolveUserDisplayName(u.userId, historyData.userNameMap);
+                  const active = selectedUserId === u.userId;
+                  return (
+                    <li key={u.userId}>
+                      <button
+                        onClick={() => setSelectedUserId(u.userId)}
+                        className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
+                          active
+                            ? "bg-purple-600 text-white border-purple-600"
+                            : "bg-white text-gray-800 border-gray-200 hover:bg-purple-50"
+                        }`}
+                        title={display}
+                      >
+                        <div className="text-sm font-medium truncate">{display}</div>
+                        <div className={`text-[11px] mt-0.5 ${active ? "text-purple-100" : "text-gray-500"}`}>
+                          {u.chats ?? 0} chats{u.lastChatAt ? ` · last: ${fmtDate(u.lastChatAt)}` : ""}
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </aside>
+
+            {/* RIGHT: Full history for selected user (or all) */}
+            <section className="col-span-12 md:col-span-8 max-h-[80vh] overflow-y-auto">
+              <div className="p-4 border-b border-purple-100">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-purple-900 truncate">
+                      {selectedUserId
+                        ? resolveUserDisplayName(selectedUserId, historyData.userNameMap)
+                        : "All Users"}
+                    </div>
+                  </div>
+                  {selectedUserId && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard?.writeText(selectedUserId);
+                      }}
+                      className="text-xs px-2 py-1 rounded-md border bg-white hover:bg-gray-50"
+                      title="Copy user id"
+                    >
+                      Copy User ID
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {filterHistoryByUser(historyData.rawList || [], selectedUserId).length === 0 ? (
+                  <div className="text-sm text-gray-500 italic">No chats found for this selection.</div>
+                ) : (
+                  filterHistoryByUser(historyData.rawList || [], selectedUserId).map((e: any, idx: number) => {
+                    const display = resolveUserDisplayName(e?.userId, historyData.userNameMap);
+                    const msgs = parsePromptToMessages(e?.prompt); // ✅ uses your existing parser (full content)
+                    return (
+                      <div
+                        key={`${e?.userId || "u"}_${idx}`}
+                        className="rounded-xl border border-gray-200 bg-white shadow-sm p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">{display}</div>
+                            <div className="text-[11px] text-gray-500">{fmtDate(e?.createdAt)}</div>
+                          </div>
+
+                          {/* Clickable id as well (requested) */}
+                          {e?.userId && (
+                            <button
+                              className="text-[11px] px-2 py-1 rounded-md border hover:bg-gray-50"
+                              onClick={() => setSelectedUserId(e.userId)}
+                              title="Filter by this user"
+                            >
+                              {e.userId}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Full chat (no cutting) */}
+                        {msgs.length > 0 ? (
+                          <div className="mt-3 space-y-2">
+                            {msgs.map((m, i) => (
+                              <div
+                                key={i}
+                                className={`rounded-md px-3 py-2 text-sm whitespace-pre-wrap ${
+                                  m.role === "assistant"
+                                    ? "bg-purple-50 text-purple-900 border border-purple-100"
+                                    : "bg-gray-50 text-gray-900 border border-gray-200"
+                                }`}
+                              >
+                                <div className="text-[11px] uppercase tracking-wide mb-1 opacity-70">
+                                  {m.role === "assistant" ? "Assistant" : "User"}
+                                </div>
+                                {m.content || "(empty message)"}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-3 text-sm text-gray-600 break-words">
+                            {/* Fallback: show raw prompt if parser found nothing */}
+                            {(e?.prompt || "").toString().trim() || "(no content)"}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
 
                       {/* ✅ Delete / Inactive Confirmation (no "Archive") */}
                       {deleteConfirmId === a.id && (

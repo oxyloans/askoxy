@@ -128,11 +128,11 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         label: <Link to="/usermobilenumberupdate">Update Mobile Number</Link>,
       },
 
-      {
-        key: "/taskassigneduser",
-        label: <Link to="/taskassigneduser">My Tasks</Link>,
-        icon: <FaUsers className="text-red-500" />,
-      },
+      // {
+      //   key: "/taskassigneduser",
+      //   label: <Link to="/taskassigneduser">My Tasks</Link>,
+      //   icon: <FaUsers className="text-red-500" />,
+      // },
     ];
   };
   const navigate = useNavigate();
@@ -326,12 +326,12 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
           </div>
         </Header>
 
-        <Content className="bg-gray-50" style={contentStyles}>
+        <Content className="bg-white" style={contentStyles}>
           <div className="">{children}</div>
         </Content>
 
         <Footer
-          className="text-center bg-white shadow-inner text-gray-500 text-sm flex items-center justify-center"
+          className="text-center bg-gray-50 shadow-inner text-gray-500 text-sm flex items-center justify-center"
           style={footerStyles}
         >
           <div className="w-full flex justify-center items-center">
