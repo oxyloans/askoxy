@@ -207,6 +207,7 @@ const AllStatusPage: React.FC = () => {
               ? {
                   ...task,
                   [field]: values[field as keyof EditFormValues] || "",
+                  taskStatus: "PENDING",
                 }
               : task
           )
@@ -217,6 +218,7 @@ const AllStatusPage: React.FC = () => {
               ? {
                   ...task,
                   [field]: values[field as keyof EditFormValues] || "",
+                  taskStatus: "PENDING",
                 }
               : task
           )
@@ -459,7 +461,6 @@ const AllStatusPage: React.FC = () => {
                   >
                     {response.updateBy === "ADMIN" ? "ADMIN" : "YOU"}
                   </Tag>
-                
 
                   {response.adminFilePath && (
                     <div className="flex items-center ml-auto">
@@ -606,7 +607,7 @@ const AllStatusPage: React.FC = () => {
               </Text>
             </div>
           )}
-          {task.taskStatus === "PENDING" && !isEditingPlan(task.id) && (
+          {!isEditingPlan(task.id) && (
             <Button
               onClick={() => handleEditPlan(task)}
               style={editButtonStyle}
@@ -660,7 +661,7 @@ const AllStatusPage: React.FC = () => {
               </Text>
             </div>
           )}
-          {task.taskStatus === "PENDING" && !isEditingEod(task.id) && (
+          {!isEditingEod(task.id) && (
             <Button
               onClick={() => handleEditEod(task)}
               style={editButtonStyle}

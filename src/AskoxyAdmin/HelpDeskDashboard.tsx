@@ -37,6 +37,7 @@ interface UserData {
   userId: string;
   fullName: string;
   mobileNumber: string;
+  whatsappNumber: string; // <-- NEW
   userType: string;
   address: string;
 }
@@ -146,42 +147,97 @@ const HelpDeskDashboard: React.FC = () => {
   const handleUserDetailsClick = async (userId: string) => {
     setLoadingRows((prev) => ({ ...prev, [userId]: true }));
 
+    const buildAddress = (src: any) =>
+      [src.flatNo, src.landMark, src.address, src.pincode]
+        .filter((x) => x && String(x).trim())
+        .join(", ") || "No";
+
+    const normalizeFromListApi = (user: any): UserData => {
+      const fullName = `${user.userName || user.firstName || ""} ${
+        user.lastName || ""
+      }`.trim();
+      const mobile =
+        (user.mobileNumber && String(user.mobileNumber).trim()) ||
+        (user.whastappNumber && String(user.whastappNumber).trim()) ||
+        "";
+      const whatsapp =
+        (user.whastappNumber && String(user.whastappNumber).trim()) || "";
+
+      return {
+        userId: user.userId,
+        fullName: fullName || "—",
+        mobileNumber: mobile || "—",
+        whatsappNumber: whatsapp || "—",
+        userType: user.userType || "N/A",
+        address: buildAddress(user),
+      };
+    };
+
+    const normalizeFromSingleApi = (user: any): UserData => {
+      // matches response sample you shared for getDataWithMobileOrUserId
+      const fullName = `${user.firstName || user.userName || ""} ${
+        user.lastName || ""
+      }`.trim();
+      const mobile =
+        (user.mobileNumber && String(user.mobileNumber).trim()) ||
+        (user.whastappNumber && String(user.whastappNumber).trim()) ||
+        "";
+      const whatsapp =
+        (user.whastappNumber && String(user.whastappNumber).trim()) || "";
+
+      return {
+        userId: user.userId,
+        fullName: fullName || "—",
+        mobileNumber: mobile || "—",
+        whatsappNumber: whatsapp || "—",
+        userType: user.userType || "N/A",
+        address: buildAddress(user),
+      };
+    };
+
     try {
-      const response = await axios.post(
+      // 1) PRIMARY: POST /getDataWithMobileOrWhatsappOrUserId
+      const primary = await axios.post(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
-        {
-          userId: userId || null,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { userId: userId || null },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      if (
-        response.status === 200 &&
-        response.data.activeUsersResponse.length > 0
-      ) {
-        const user = response.data.activeUsersResponse[0];
-        const fullAddress = `${user.flatNo || ""}, ${user.landMark || ""}, ${
-          user.address || ""
-        } ${user.pincode || ""}`.trim();
+      const list = primary?.data?.activeUsersResponse || [];
+      if (primary.status === 200 && Array.isArray(list) && list.length > 0) {
+        const transformed = normalizeFromListApi(list[0]);
+        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+        return;
+      }
 
-        const transformed: UserData = {
-          userId: user.userId,
-          fullName: `${user.userName || ""} ${user.lastName || ""}`.trim(),
-          mobileNumber: user.mobileNumber || "",
-          userType: user.userType || "N/A",
-          address: fullAddress === ", ," ? "No" : fullAddress,
-        };
+      // 2) FALLBACK: GET /getDataWithMobileOrUserId?userId=...
+      const fallback = await axios.get(
+        `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
+        { params: { userId } }
+      );
 
+      if (fallback?.status === 200 && fallback?.data) {
+        const transformed = normalizeFromSingleApi(fallback.data);
         setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
       } else {
         message.error("Failed to fetch user details");
       }
     } catch (error) {
-      message.error("Failed to fetch user details");
+      try {
+        // If primary threw, still attempt fallback once
+        const fb = await axios.get(
+          `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
+          { params: { userId } }
+        );
+        if (fb?.status === 200 && fb?.data) {
+          const transformed = normalizeFromSingleApi(fb.data);
+          setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+        } else {
+          message.error("Failed to fetch user details");
+        }
+      } catch (e) {
+        message.error("Failed to fetch user details");
+      }
     } finally {
       setLoadingRows((prev) => ({ ...prev, [userId]: false }));
     }
@@ -333,6 +389,15 @@ const HelpDeskDashboard: React.FC = () => {
         const isLoading = loadingRows[userId];
         const details = userDetails[userId];
 
+        const onViewClick = () => {
+          if (isLoading) return; // guard against double-click races
+          if (details) {
+            setUserDetails((prev) => ({ ...prev, [userId]: null }));
+          } else {
+            handleUserDetailsClick(userId);
+          }
+        };
+
         return (
           <div>
             <div className="flex items-center">
@@ -340,14 +405,7 @@ const HelpDeskDashboard: React.FC = () => {
               <Button
                 size="small"
                 className="bg-blue-500 ml-2 text-white text-xs px-1 py-0 rounded hover:bg-blue-600 h-5 leading-none"
-                onClick={() => {
-                  if (details) {
-                    setUserDetails((prev) => ({ ...prev, [userId]: null }));
-                  } else {
-                    // Show details logic
-                    handleUserDetailsClick(userId);
-                  }
-                }}
+                onClick={onViewClick}
               >
                 {isLoading ? <Spin size="small" /> : details ? "Hide" : "View"}
               </Button>
@@ -360,6 +418,9 @@ const HelpDeskDashboard: React.FC = () => {
                 </p>
                 <p>
                   <strong>Mobile:</strong> {details.mobileNumber}
+                </p>
+                <p>
+                  <strong>WhatsApp:</strong> {details.whatsappNumber}
                 </p>
                 <p>
                   <strong>Type:</strong> {details.userType}

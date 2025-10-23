@@ -229,6 +229,9 @@ import AdminTasks from "./Taskmanagement/AdminTasks";
 import AllKukatpallyDataPage from "./AskoxyAdmin/kukatapallyData";
 import ChatBasedAgent from "./BharathAIStore/pages/chatbasedAgent";
 import AgentEntryPage from "./BharathAIStore/pages/AgentEntryPage";
+import WeAreHiringAdd from "./AskoxyAdmin/WeAreHiringAdd";
+import AdvocatesDataPage from "./AskoxyAdmin/Advoatedata";
+import HiringPages from "./Dashboard/hiringpages";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -276,7 +279,7 @@ const App: React.FC = () => {
             <Route path="/carnival-form" element={<CarnivalFormPage />} />
             <Route path="/carnival-list" element={<CarnivalListPage />} />
             <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
-            <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
+            <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}
@@ -320,12 +323,18 @@ const App: React.FC = () => {
                 path="/bharath-aistore/insurance"
                 element={<InsuranceAgentsPage />}
               />
-               <Route path="/bharath-aistore/RadhaAgents" element={<AdminMyAgentsPage/>} />
-               <Route path="/bharath-aistore/hiddenagents" element={<RadhaHiddenAgents/>} />
+              <Route
+                path="/bharath-aistore/RadhaAgents"
+                element={<AdminMyAgentsPage />}
+              />
+              <Route
+                path="/bharath-aistore/hiddenagents"
+                element={<RadhaHiddenAgents />}
+              />
               <Route
                 path="/bharath-aistore/healthcare"
                 element={<HealthcareAgentsPage />}
-              />
+              />
               <Route path="/awards-rewards" element={<AwardsRewardsVideo />} />
               <Route
                 path="/bharath-aistore/ai-initiatives"
@@ -338,6 +347,8 @@ const App: React.FC = () => {
               element={<AssistantDetails />}
             />
             <Route path="/myblogs" element={<BlogsPage />} />
+            <Route path="/wearehiring" element={<HiringPages />} />
+            <Route path="/myservices" element={<ServicesPage/>} />
             <Route
               path="/termsandconditions"
               element={<TermsAndConditions />}
@@ -412,7 +423,7 @@ const App: React.FC = () => {
               path="/visavoice"
               element={<Navigate to="/visavoice/welcome" replace />}
             />
-            <Route path="/visavoice/:screen" element={<VisaVoice />} />
+            <Route path="/visavoice/:screen" element={<VisaVoice />} />
             <Route
               path="/goldandsilveranddiamonds"
               element={<GoldAndSilverAndDiamond />}
@@ -428,8 +439,14 @@ const App: React.FC = () => {
             <Route path="/userlogin" element={<UserLogin />} />{" "}
             <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
             <Route path="/planoftheday" element={<PlanOfTheDay />} />
-            <Route path="/userinstructionsview" element={<EmployeeInteractions />} />
-            <Route path="/taskmanagement/chatview/:id" element={<EmployeeViewChat/>}/>
+            <Route
+              path="/userinstructionsview"
+              element={<EmployeeInteractions />}
+            />
+            <Route
+              path="/taskmanagement/chatview/:id"
+              element={<EmployeeViewChat />}
+            />
             <Route path="/taskupdated" element={<TaskUpdate />} />
             <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
             <Route path="/leavestatus" element={<TeamLeaveStatus />} />
@@ -591,7 +608,7 @@ const App: React.FC = () => {
               <Route path="caserviceitems" element={<CAServicesItems />} />
               <Route path="cartcaservice" element={<CartCaCsService />} />
               <Route path="servicecalist" element={<ServiceCAList />} />
-              <Route path="servicedashboard" element={<ServiceDashboard/>}/>
+              <Route path="servicedashboard" element={<ServiceDashboard />} />
               {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
               {/* <Route
                 path="services/freerudraksha"
@@ -641,17 +658,10 @@ const App: React.FC = () => {
                 path="bharath-aistore/agents"
                 element={<AllAgentsPage />}
               />
-             
               <Route path="create-aiagent" element={<CreateAgentWizard />} />
               <Route path="bharat-expert" element={<CreateAgentMain />} />
-              <Route
-                path="createagent"
-                element={<AgentEntryPage/>}
-              />
-<Route
-                path="chatbasedagent"
-                element={<ChatBasedAgent />}
-              />
+              <Route path="createagent" element={<AgentEntryPage />} />
+              <Route path="chatbasedagent" element={<ChatBasedAgent />} />
               <Route
                 path="chatinterface/assistant/:id/:agentId"
                 element={<ChatInterface1 />}
@@ -789,7 +799,9 @@ const App: React.FC = () => {
                 element={<AllCampaignsDetails />}
               />
               <Route path="campaignsadd" element={<CampaignsAdd />} />
-              <Route path="kukatpally" element={< AllKukatpallyDataPage/>} />
+              <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
+              <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
+              <Route path="advocates" element={<AdvocatesDataPage />} />
               <Route path="assignedData" element={<AssignedDataPage />} />
               <Route path="addjobs" element={<AddJob />} />
               <Route

@@ -9,7 +9,7 @@ import {
   FaBars,
   FaTimes,
   FaUserCircle,
-  FaClipboardList,
+  FaClipboardList,FaBriefcase ,
   FaHeadset,
   FaUsers,
   FaFileAlt,
@@ -37,7 +37,7 @@ import {
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
-  SolutionOutlined,
+  SolutionOutlined,BookOutlined ,
   UserOutlined,
   HomeOutlined,EnvironmentOutlined ,
 } from "@ant-design/icons";
@@ -144,6 +144,12 @@ const Sidebar: React.FC = () => {
           link: "/admn/kukatpally",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
+           {
+          title: "Advocate Data",
+          icon: <BookOutlined   className="text-green-400" />,
+          link: "/admn/advocates",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
         {
           title: "Assigned Data",
           icon: <FaClipboardList className="text-yellow-400" />,
@@ -167,6 +173,12 @@ const Sidebar: React.FC = () => {
           title: "Add Service / Product",
           icon: <FaStore className="text-green-400" />,
           link: "/admn/campaignsadd",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+          {
+          title: "Add We are hiring",
+          icon: <FaBriefcase  className="text-green-400" />,
+          link: "/admn/wearehiringadd",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {

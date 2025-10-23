@@ -1,3 +1,4 @@
+// src/.../campaignDetails.tsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -27,7 +28,9 @@ interface Campaign {
   imageUrls: Image[];
   campaignTypeAddBy: string;
   campaignStatus: boolean;
-  campainInputType: string;
+  campainInputType: "PRODUCT" | "SERVICE" | "BLOG" | string;
+  /** Used to switch UI to We Are Hiring */
+  addServiceType?: string | null;
 }
 
 const CampaignDetails: React.FC = () => {
@@ -35,26 +38,35 @@ const CampaignDetails: React.FC = () => {
   const location = useLocation();
   const pathParts = location.pathname.split("/");
   const campaignId = pathParts[pathParts.indexOf("services") + 1];
+
   const userId = localStorage.getItem("userId");
   const [isLoading, setIsLoading] = useState(true);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+
   const [issuccessOpen, setSuccessOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+
   const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
   const email = profileData.customerEmail || null;
   const accessToken = localStorage.getItem("accessToken");
+
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const [query, setQuery] = useState("");
+
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const mobileNumber = localStorage.getItem("mobileNumber");
   const finalMobileNumber = whatsappNumber || mobileNumber || null;
+
   const [interested, setInterested] = useState<boolean>(false);
   const submitclicks = sessionStorage.getItem("submitclicks");
+
+  // Role modal state
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
   const [userRole, setUserRole] = useState<string | undefined>(undefined);
+
 
   useEffect(() => {
     const loadCampaign = async () => {
@@ -62,12 +74,13 @@ const CampaignDetails: React.FC = () => {
       try {
         const allCampaigns = await fetchCampaigns();
         const foundCampaign = allCampaigns.find(
-          (c) => c.campaignId.slice(-4) === campaignId
+          (c: Campaign) => c.campaignId.slice(-4) === campaignId
         );
         if (
           foundCampaign &&
           (foundCampaign.campainInputType === "PRODUCT" ||
-            foundCampaign.campainInputType === "SERVICE")
+            foundCampaign.campainInputType === "SERVICE" ||
+            foundCampaign.campainInputType === "BLOG")
         ) {
           setCampaign(foundCampaign);
         } else {
@@ -139,12 +152,12 @@ const CampaignDetails: React.FC = () => {
     if (!userId || !campaign?.campaignType) return;
 
     const result = await checkUserInterest(userId, campaign.campaignType);
-
-    setInterested(result?.exists);
+    setInterested(!!result?.exists);
     setUserRole(result?.userRole);
 
     if (submitclicks) {
-      handleSubmit(result?.exists);
+      // open modal, let user pick / confirm inside
+      setIsRoleModalOpen(true);
     }
   };
 
@@ -157,34 +170,28 @@ const CampaignDetails: React.FC = () => {
       .replace(/^-+|-+$/g, "")
       .slice(0, 50);
 
-  const handleSubmit = (isAlreadyInterested: boolean) => {
+  const handleSubmitClick = () => {
     sessionStorage.setItem("submitclicks", "true");
-    if (campaign?.campaignType !== undefined) {
+    if (campaign?.campaignType) {
       sessionStorage.setItem("campaigntype", campaign.campaignType);
     }
 
     if (!userId) {
       message.warning("Please login to submit your interest.");
       navigate("/whatsappregister");
-      if (campaign?.campainInputType === "BLOG") {
-        sessionStorage.setItem(
-          "redirectPath",
-          `/main/blog/${campaign?.campaignId.slice(-4)}/${slugify(
-            campaign?.campaignType
-          )}`
-        );
-      } else {
-        sessionStorage.setItem(
-          "redirectPath",
-          `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
-            campaign?.campaignType || ""
-          )}`
-        );
-      }
+      const redirect =
+        campaign?.campainInputType === "BLOG"
+          ? `/main/blog/${campaign?.campaignId.slice(-4)}/${slugify(
+              campaign?.campaignType || ""
+            )}`
+          : `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
+              campaign?.campaignType || ""
+            )}`;
+      sessionStorage.setItem("redirectPath", redirect);
       return;
     }
 
-    if (isAlreadyInterested) {
+    if (interested) {
       message.warning("You have already participated. Thank you!", 7);
       setTimeout(() => {
         sessionStorage.removeItem("submitclicks");
@@ -192,8 +199,45 @@ const CampaignDetails: React.FC = () => {
       return;
     }
 
+    // Always open modal (WEAREHIRING shows Employee card; else 3 cards)
     setIsRoleModalOpen(true);
   };
+
+const handleEmployeeInterest = async () => {
+  if (!userId) {
+    message.warning("Please login to submit your interest.");
+    navigate("/whatsappregister");
+    sessionStorage.setItem(
+      "redirectPath",
+      `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
+        campaign?.campaignType || ""
+      )}`
+    );
+    return;
+  }
+
+  if (interested) {
+    message.info("You have already participated. Thank you!");
+    return;
+  }
+
+  if (campaign?.campaignType) {
+    sessionStorage.setItem("campaigntype", campaign.campaignType);
+  }
+
+  Modal.confirm({
+    title: "Confirm Participation",
+    content:
+      "Are you sure you want to join as Employee for this campaign?",
+    okText: "Yes, I'm sure",
+    cancelText: "Cancel",
+    onOk: async () => {
+      await submitInterestHandler("EMPLOYEE");
+      setIsRoleModalOpen(false);
+    },
+  });
+};
+
 
   const handleRoleToggle = (role: string) => {
     setSelectedRole((prev) => {
@@ -206,43 +250,41 @@ const CampaignDetails: React.FC = () => {
   };
 
   const handleRoleSelection = (roles: string) => {
-    setIsRoleModalOpen(false);
-
     Modal.confirm({
       title: "Confirm Participation",
       content: `Are you sure you want to join as ${roles || "no role"}?`,
       okText: "Yes, I'm sure",
       cancelText: "Cancel",
-      onOk: () => submitInterestHandler(roles),
-      onCancel: () => {
-        sessionStorage.removeItem("submitclicks");
-        setSelectedRole("");
+      onOk: async () => {
+        await submitInterestHandler(roles);
+        setIsRoleModalOpen(false);
       },
     });
   };
 
-  const submitInterestHandler = async (userRole: string) => {
-    const campaignType = sessionStorage.getItem("campaigntype") || "";
+  const submitInterestHandler = async (userRoleParam: string) => {
+    const campaignType =
+      sessionStorage.getItem("campaigntype") || campaign?.campaignType || "";
     const success = await submitInterest(
       campaignType,
       finalMobileNumber,
       userId,
-      userRole
+      userRoleParam
     );
 
     if (success) {
       message.success(
-        `Thank you for joining as ${userRole || "no role"} in our ${
+        `Thank you for joining as ${userRoleParam || "no role"} in our ${
           campaign?.campaignType
         } offer campaign!`
       );
       setInterested(true);
       setIsButtonDisabled(true);
-      sessionStorage.removeItem("campaigntype");
     } else {
       message.error("Failed to submit your interest. Please try again.");
     }
     sessionStorage.removeItem("submitclicks");
+    sessionStorage.removeItem("campaigntype");
     setSelectedRole("");
   };
 
@@ -263,7 +305,6 @@ const CampaignDetails: React.FC = () => {
 
   const formatCampaignDescription = (description: string) => {
     if (!description) return null;
-
     const lines = description.split("\n").filter((line) => line.trim());
 
     return lines
@@ -301,7 +342,6 @@ const CampaignDetails: React.FC = () => {
           trimmedLine.startsWith("•") ||
           trimmedLine.startsWith("-")
         ) {
-          // Remove all * characters except the first one (bullet symbol)
           let cleanBulletText = trimmedLine;
           const firstChar = cleanBulletText.charAt(0);
 
@@ -320,15 +360,13 @@ const CampaignDetails: React.FC = () => {
             </div>
           );
         } else {
-          // Remove all * characters from regular paragraphs
           const cleanText = trimmedLine.replace(/\*/g, "");
-
-          const renderTextWithLinks = (text: string) => {
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            const parts = text.split(urlRegex);
-            return parts.map((part, i) => {
-              if (urlRegex.test(part)) {
-                return (
+          const urlRegex = /(https?:\/\/[^\s]+)/g;
+          const parts = cleanText.split(urlRegex);
+          return (
+            <p key={`para-${index}`} className="text-gray-600 mb-2 text-sm sm:text-base">
+              {parts.map((part, i) =>
+                urlRegex.test(part) ? (
                   <a
                     key={i}
                     href={part}
@@ -338,18 +376,10 @@ const CampaignDetails: React.FC = () => {
                   >
                     {part}
                   </a>
-                );
-              }
-              return <span key={i}>{part}</span>;
-            });
-          };
-
-          return (
-            <p
-              key={`para-${index}`}
-              className="text-gray-600 mb-2 text-sm sm:text-base"
-            >
-              {renderTextWithLinks(cleanText)}
+                ) : (
+                  <span key={i}>{part}</span>
+                )
+              )}
             </p>
           );
         }
@@ -388,49 +418,118 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
-  const renderNotFoundPage = () => {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] py-10">
-        <div className="text-center">
-          <div className="mb-6 text-red-500">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="120"
-              height="120"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mx-auto"
-            >
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="15" y1="9" x2="9" y2="15"></line>
-              <line x1="9" y1="9" x2="15" y2="15"></line>
-            </svg>
-          </div>
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">404</h1>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            Campaign Not Found
-          </h2>
-          <p className="text-lg text-gray-600 mb-6">
-            The product or service is currently inactive or unavailable.
-          </p>
-          <button
-            onClick={() => navigate("/main")}
-            className="px-6 py-3 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#2a1d4e] transition-all"
-          >
-            Return Home
-          </button>
+const HiringEmployeeCard = () => (
+  <div className="w-full max-w-3xl mx-auto">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold">
+          AI
         </div>
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+          Join as Employee
+        </h3>
       </div>
-    );
-  };
+      <p className="text-gray-700 text-sm sm:text-base mb-4">
+        Join our AI team and build the future! Explore exciting roles across tech, marketing, operations, and innovation.
+      </p>
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700 disabled:opacity-50"
+          onClick={handleEmployeeInterest}
+          disabled={isButtonDisabled || interested}
+          aria-label="I'm Interested (Employee)"
+        >
+          {interested ? "Already Participated" : "I'm Interested"}
+        </button>
+        <button
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+          onClick={() => {
+            setIsRoleModalOpen(false);
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+
+  const ThreeJoinCards = () => (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        {/* Partner */}
+        <button
+          className={`p-4 text-left rounded-xl border transition-all hover:shadow ${selectedRole.includes("PARTNER") ? "bg-blue-50 border-blue-400" : "bg-white border-gray-200"}`}
+          onClick={() => setSelectedRole("PARTNER")}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">P</div>
+            <div>
+              <div className="font-semibold text-gray-900">Join as Partner</div>
+              <div className="text-xs text-gray-600">Sell your products & services</div>
+            </div>
+          </div>
+        </button>
+        {/* User */}
+        <button
+          className={`p-4 text-left rounded-xl border transition-all hover:shadow ${selectedRole.includes("USER") ? "bg-green-50 border-green-400" : "bg-white border-gray-200"}`}
+          onClick={() => setSelectedRole("USER")}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-600 text-white flex items-center justify-center">U</div>
+            <div>
+              <div className="font-semibold text-gray-900">Join as User</div>
+              <div className="text-xs text-gray-600">Buy our products & services</div>
+            </div>
+          </div>
+        </button>
+        {/* Freelancer */}
+        <button
+          className={`p-4 text-left rounded-xl border transition-all hover:shadow ${selectedRole.includes("FREELANCER") ? "bg-purple-50 border-purple-400" : "bg-white border-gray-200"}`}
+          onClick={() => setSelectedRole("FREELANCER")}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-600 text-white flex items-center justify-center">F</div>
+            <div>
+              <div className="font-semibold text-gray-900">Join as Freelancer</div>
+              <div className="text-xs text-gray-600">Bring partners/users & earn</div>
+            </div>
+          </div>
+        </button>
+      </div>
+      <div className="flex justify-end gap-2">
+        <button
+          className="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+          onClick={() => {
+            setIsRoleModalOpen(false);
+            setSelectedRole("");
+            sessionStorage.removeItem("submitclicks");
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          className={`py-2 px-4 rounded-lg text-white ${
+            selectedRole === ""
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+          onClick={() => handleRoleSelection(selectedRole)}
+          disabled={selectedRole === "" || isButtonDisabled || interested}
+        >
+          {interested ? "Already Participated" : "Submit Interest"}
+        </button>
+      </div>
+    </>
+  );
+
+  // === Render ===
   return (
     <div className="w-full lg:max-w-full px-4 py-6 min-h-screen overflow-y-auto">
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
+
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -444,9 +543,44 @@ const CampaignDetails: React.FC = () => {
       ) : (
         <div className="flex flex-col h-full">
           {!campaign || !campaign.campaignStatus ? (
-            renderNotFoundPage()
+            <div className="flex flex-col items-center justify-center min-h-[60vh] py-10">
+              <div className="text-center">
+                <div className="mb-6 text-red-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="120"
+                    height="120"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mx-auto"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                </div>
+                <h1 className="text-5xl font-bold text-gray-800 mb-4">404</h1>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+                  Campaign Not Found
+                </h2>
+                <p className="text-lg text-gray-600 mb-6">
+                  The product or service is currently inactive or unavailable.
+                </p>
+                <button
+                  onClick={() => navigate("/main")}
+                  className="px-6 py-3 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#2a1d4e] transition-all"
+                >
+                  Return Home
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="p-4">
+              {/* Title + actions */}
               <div className="flex flex-col mb-6 w-full">
                 <h1 className="text-3xl font-bold text-gray-800 text-center mb-4">
                   {campaign.campaignType}
@@ -462,14 +596,17 @@ const CampaignDetails: React.FC = () => {
                       Buy Now
                     </button>
                   )}
+
+                  {/* Main CTA — opens modal only */}
                   <button
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => handleSubmit(interested)}
+                    onClick={handleSubmitClick}
                     aria-label="I'm Interested"
                     disabled={isButtonDisabled || interested}
                   >
                     {!interested ? "I'm Interested" : "Already Participated"}
                   </button>
+
                   <button
                     className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f4a307] transition-all"
                     aria-label="Write To Us"
@@ -480,6 +617,7 @@ const CampaignDetails: React.FC = () => {
                 </div>
               </div>
 
+              {/* Media & description */}
               <div className="flex flex-col gap-8 mb-8">
                 {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
                   campaign.imageUrls.length === 1 ? (
@@ -656,8 +794,7 @@ const CampaignDetails: React.FC = () => {
                               Explore Our Professional CA Services!
                             </h4>
                             <p className="text-sm text-purple-600 mt-0.5">
-                              Discover comprehensive accounting solutions for
-                              your business needs 🚀
+                              Discover comprehensive accounting solutions for your business needs 🚀
                             </p>
                           </div>
 
@@ -674,11 +811,7 @@ const CampaignDetails: React.FC = () => {
                               stroke="currentColor"
                               strokeWidth={2}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M9 5l7 7-7 7"
-                              />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                             </svg>
                             {userRole?.includes("PARTNER")
                               ? "Go to partner dashboard"
@@ -698,6 +831,8 @@ const CampaignDetails: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Write To Us Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
           <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
@@ -710,10 +845,7 @@ const CampaignDetails: React.FC = () => {
               Write To Us
             </h2>
             <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="phone"
-              >
+              <label className="block text-sm text-gray-700 font-semibold mb-1" htmlFor="phone">
                 Mobile Number
               </label>
               <input
@@ -726,10 +858,7 @@ const CampaignDetails: React.FC = () => {
               />
             </div>
             <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="email"
-              >
+              <label className="block text-sm text-gray-700 font-semibold mb-1" htmlFor="email">
                 Email
               </label>
               <input
@@ -742,10 +871,7 @@ const CampaignDetails: React.FC = () => {
               />
             </div>
             <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="query"
-              >
+              <label className="block text-sm text-gray-700 font-semibold mb-1" htmlFor="query">
                 Query
               </label>
               <textarea
@@ -770,6 +896,8 @@ const CampaignDetails: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Profile reminder modal */}
       {isprofileOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
@@ -796,6 +924,33 @@ const CampaignDetails: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Role selection modal — now the ONLY place showing Employee/3 cards */}
+      {isRoleModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                {campaign?.addServiceType === "WEAREHIRING"
+                  ? "Join as Employee"
+                  : "Join ASKOXY.AI"}
+              </h2>
+              <p className="text-gray-600 text-sm">
+                {campaign?.addServiceType === "WEAREHIRING"
+                  ? "Become part of our AI-first team."
+                  : `Choose how you'd like to participate in our ${campaign?.campaignType} offer`}
+              </p>
+            </div>
+
+            {campaign?.addServiceType === "WEAREHIRING" ? (
+              <HiringEmployeeCard />
+            ) : (
+              <ThreeJoinCards />
+            )}
+          </div>
+        </div>
+      )}
+
       {issuccessOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
@@ -814,185 +969,8 @@ const CampaignDetails: React.FC = () => {
           </div>
         </div>
       )}
-      {isRoleModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-700 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000"
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-gray-800 mb-2">
-                Join ASKOXY.AI
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Choose how you'd like to participate in our{" "}
-                {campaign?.campaignType} offer
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-              <button
-                className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
-                  selectedRole.includes("PARTNER")
-                    ? "bg-blue-100 border-blue-500"
-                    : "bg-gray-50 border-gray-200"
-                }`}
-                onClick={() => handleRoleToggle("PARTNER")}
-              >
-                <div className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
-                      selectedRole.includes("PARTNER")
-                        ? "bg-blue-600"
-                        : "bg-blue-400"
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2"
-                    >
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800 text-sm">
-                      Join as Partner
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      Sell your products and services
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <button
-                className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
-                  selectedRole.includes("USER")
-                    ? "bg-green-100 border-green-500"
-                    : "bg-gray-50 border-gray-200"
-                }`}
-                onClick={() => handleRoleToggle("USER")}
-              >
-                <div className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
-                      selectedRole.includes("USER")
-                        ? "bg-green-600"
-                        : "bg-green-400"
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2"
-                    >
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800 text-sm">
-                      Join as User
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      Buy my products and services
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <button
-                className={`p-3 text-left rounded-lg border transition-all duration-300 hover:scale-105 ${
-                  selectedRole.includes("FREELANCER")
-                    ? "bg-purple-100 border-purple-500"
-                    : "bg-gray-50 border-gray-200"
-                }`}
-                onClick={() => handleRoleToggle("FREELANCER")}
-              >
-                <div className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
-                      selectedRole.includes("FREELANCER")
-                        ? "bg-purple-600"
-                        : "bg-purple-400"
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2"
-                    >
-                      <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                      <path d="M2 17l10 5-7"></path>
-                      <path d="M2 12l10 5 10-5"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800 text-sm">
-                      Join as Freelancer
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      Bring partners and users to earn money
-                    </p>
-                  </div>
-                </div>
-              </button>
-            </div>
-            <div className="flex justify-between">
-              <button
-                className="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                onClick={() => {
-                  setIsRoleModalOpen(false);
-                  setSelectedRole("");
-                  sessionStorage.removeItem("submitclicks");
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className={`py-2 px-4 rounded-lg text-white ${
-                  selectedRole === ""
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-                onClick={() => handleRoleSelection(selectedRole)}
-                disabled={selectedRole === ""}
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+
 export default CampaignDetails;

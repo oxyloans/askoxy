@@ -243,6 +243,16 @@ const ChatBasedAgent: React.FC = () => {
     recognition.start();
   };
 
+  const safeAssistantIdFromResponse = (data: any): string | null =>
+    data?.assistantId ||
+    data?.data?.assistantId ||
+    data?.result?.assistantId ||
+    data?.payload?.assistantId ||
+    null;
+
+  // Keep the most recently-created assistantId
+  const [createdAssistantId, setCreatedAssistantId] = useState<string>("");
+
   const handleStop = () => {
     isStopped.current = true;
     setLoading(false);
@@ -253,7 +263,7 @@ const ChatBasedAgent: React.FC = () => {
   /** step-by-step slots (unchanged) */
   const [slots, setSlots] = useState({
     agentName: "",
-    mainProblemSolved: "",
+    description: "",
     acheivements: "",
     targetUser: "",
     instructions: "",
@@ -265,7 +275,7 @@ const ChatBasedAgent: React.FC = () => {
 
   const stepToField: (keyof typeof slots)[] = [
     "agentName",
-    "mainProblemSolved",
+    "description",
     "acheivements",
     "targetUser",
     "instructions",
@@ -424,8 +434,12 @@ const ChatBasedAgent: React.FC = () => {
       content: m.content,
     }));
 
-  /** AGENT CHAT — uses MAIN agent id always */
-  const postAgentChat = async (agentId: string, history: APIMessage[]) => {
+  /** AGENT CHAT — uses MAIN agent id always, but can pass assistantId for routing */
+  const postAgentChat = async (
+    agentId: string,
+    history: APIMessage[],
+    opts?: { assistantId?: string }
+  ) => {
     if (!agentId) throw new Error("agentId missing for chat call");
     const headers = new AxiosHeaders();
     headers.set("Accept", "application/json");
@@ -433,12 +447,57 @@ const ChatBasedAgent: React.FC = () => {
     const auth = getAuthHeaders();
     if (auth.Authorization) headers.set("Authorization", auth.Authorization);
 
+    const body: any = { agentId, userId, messageHistory: history };
+    if (opts?.assistantId) body.assistantId = opts.assistantId;
+
     const { data } = await axios.post(
       `${BASE_URL}/ai-service/agent/agentChat`,
-      { agentId, userId, messageHistory: history },
+      body,
       { headers }
     );
     return data;
+  };
+
+  /** Fire one welcome chat once assistant is created */
+  const triggerWelcomeChat = async (agentId: string, assistantId?: string) => {
+    try {
+      // Seed a simple first question. You can customize this string.
+      const firstUser: ChatMessage = {
+        role: "user",
+        content: "Give a quick 2-line intro about what you can do.",
+      };
+      const apiHistory = buildMessageHistory([firstUser]);
+
+      // Show user's seeded message in UI (so the flow looks natural)
+      setMessages((prev) => [...prev, firstUser]);
+      setLoading(true);
+
+      const resp = await postAgentChat(agentId, apiHistory, { assistantId });
+
+      let answer = "";
+      if (typeof resp === "string") answer = resp;
+      else if (resp && typeof resp === "object")
+        answer = resp.answer ?? resp.content ?? resp.text ?? "";
+
+      const assistantMsg: ChatMessage = {
+        role: "assistant",
+        content:
+          `✅ **Assistant created successfully!**\n\n**Assistant ID:** \`${
+            assistantId || "N/A"
+          }\`\n\n` +
+          (String(answer || "").trim() || "Hello! I'm ready to help."),
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch (e: any) {
+      message.error(
+        e?.response?.data?.message ||
+          e?.message ||
+          "Failed to run the first assistant chat."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   /** Create parent agent once (first user msg becomes headerTitle) */
@@ -465,12 +524,26 @@ const ChatBasedAgent: React.FC = () => {
           }
         );
 
-        const newId = safeAgentIdFromResponse(data);
-        if (!newId)
+        const newAgentId = safeAgentIdFromResponse(data);
+        const newAssistantId = safeAssistantIdFromResponse(data);
+
+        if (!newAgentId)
           throw new Error("AgentId not found in createAgentPublish response");
 
-        setCurrentAgentId(newId);
-        return newId;
+        // Keep both IDs
+        setCurrentAgentId(newAgentId);
+        if (newAssistantId) {
+          setCreatedAssistantId(newAssistantId);
+          message.success(`Assistant created. ID: ${newAssistantId}`);
+        } else {
+          message.success(`Assistant created.`);
+        }
+
+        // 🔔 Immediately run ONE welcome chat, passing assistantId so backend can route it.
+        // Note: We use the MAIN_AGENT_ID for your chat router, but pass newAssistantId.
+        await triggerWelcomeChat(MAIN_AGENT_ID, newAssistantId || undefined);
+
+        return newAgentId;
       } catch (e: any) {
         message.error(
           e?.response?.data?.message || e?.message || "Failed to create agent."
@@ -490,7 +563,7 @@ const ChatBasedAgent: React.FC = () => {
       try {
         const {
           agentName,
-          mainProblemSolved,
+          description,
           acheivements,
           targetUser,
           instructions,
@@ -506,7 +579,7 @@ const ChatBasedAgent: React.FC = () => {
             mainAgentId: MAIN_AGENT_ID,
             mainAssistantId: MAIN_ASSISTANT_ID,
             agentName,
-            mainProblemSolved,
+            description,
             acheivements,
             targetUser,
             instructions,
@@ -661,7 +734,7 @@ const ChatBasedAgent: React.FC = () => {
             // ⬇️ Clear all editable fields
             headerTitle: "",
             agentName: "",
-            mainProblemSolved: "",
+            description: "",
             acheivements: "",
             targetUser: "",
             instructions: "",
@@ -685,7 +758,7 @@ const ChatBasedAgent: React.FC = () => {
       // reset local state too
       setSlots({
         agentName: "",
-        mainProblemSolved: "",
+        description: "",
         acheivements: "",
         targetUser: "",
         instructions: "",
@@ -801,40 +874,40 @@ const ChatBasedAgent: React.FC = () => {
       </style>
 
       {/* ---------- FIXED BACK BUTTON (only after first message) ---------- */}
-{!showHero && (
-  <>
-    <div
-      className="fixed border-b border-gray-200 bg-white/95 backdrop-blur z-[9999]"
-      style={{
-        top: "80px",   // keep your layout offset
-        height: "56px",
-        width: "100%",
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        className="w-full max-w-7xl h-full px-4 sm:px-6 flex items-center"
-        role="toolbar"
-        aria-label="Chat header"
-      >
-        <button
-          type="button"
-          onClick={clearPayloadAndNavigateBack}
-          className="flex items-center gap-2 text-base sm:text-lg text-black hover:text-purple-600 transition"
-        >
-          <ArrowLeft className="h-5 w-5 shrink-0" />
-          <span className="truncate hidden md:inline">
-            {assistant?.title || "Assistant"}
-          </span>
-        </button>
-      </div>
-    </div>
+      {!showHero && (
+        <>
+          <div
+            className="fixed border-b border-gray-200 bg-white/95 backdrop-blur z-[9999]"
+            style={{
+              top: "80px", // keep your layout offset
+              height: "56px",
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              className="w-full max-w-7xl h-full px-4 sm:px-6 flex items-center"
+              role="toolbar"
+              aria-label="Chat header"
+            >
+              <button
+                type="button"
+                onClick={clearPayloadAndNavigateBack}
+                className="flex items-center gap-2 text-base sm:text-lg text-black hover:text-purple-600 transition"
+              >
+                <ArrowLeft className="h-5 w-5 shrink-0" />
+                <span className="truncate hidden md:inline">
+                  {assistant?.title || "Assistant"}
+                </span>
+              </button>
+            </div>
+          </div>
 
-    {/* Spacer to keep content below fixed header */}
-    <div style={{ height: "56px" }} />
-  </>
-)}
+          {/* Spacer to keep content below fixed header */}
+          <div style={{ height: "56px" }} />
+        </>
+      )}
 
       {/* spacer to prevent content from hiding behind fixed bar */}
       {showHero && (

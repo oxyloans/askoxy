@@ -35,7 +35,9 @@ interface Campaign {
   createdAt: string;
   updatedAt: string;
   campaignPostsUrls: PostUrl[];
+  addServiceType?: string; // 👈 NEW
 }
+
 interface PostUrl {
   id: string;
   campaignId: string;
@@ -70,7 +72,36 @@ const AllCampaignsDetails: React.FC = () => {
     socialMediaCaption: "",
     createdAt: "",
     updatedAt: "",
+    addServiceType: "", // 👈 NEW
   });
+
+  // 1) Add these states near your other useState hooks
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    return localStorage.getItem("allCampaigns_activeTab") || "wearehiring";
+  });
+
+  // 2) Save scroll position before refresh/route change and restore on mount
+  useEffect(() => {
+    // Restore scroll after campaigns load (so DOM exists)
+    const saved = localStorage.getItem("allCampaigns_scrollY");
+    if (saved) {
+      // Use a short timeout to ensure layout is ready
+      setTimeout(() => {
+        window.scrollTo(0, Number(saved));
+      }, 0);
+    }
+
+    const handleBeforeUnload = () => {
+      localStorage.setItem("allCampaigns_scrollY", String(window.scrollY));
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      // Optional: also save when navigating away inside SPA
+      localStorage.setItem("allCampaigns_scrollY", String(window.scrollY));
+    };
+  }, []);
 
   const baseUrl = window.location.href.includes("sandbox")
     ? "https://www.sandbox.askoxy.ai"
@@ -138,9 +169,19 @@ const AllCampaignsDetails: React.FC = () => {
             {
               askOxyCampaignDto: [
                 {
+                  addServiceType: campaign.addServiceType || "",
+                  campaignDescription: campaign.campaignDescription,
                   campaignId: campaign.campaignId,
+                  campaignStatus: !campaign.campaignStatus, // 👈 toggle active/inactive
                   campaignType: campaign.campaignType,
-                  campaignStatus: !campaign.campaignStatus,
+                  campaignTypeAddBy: campaign.campaignTypeAddBy,
+                  campainInputType: campaign.campainInputType,
+                  images: campaign.imageUrls.map((img) => ({
+                    imageId: img.imageId,
+                    imageUrl: img.imageUrl,
+                    status: img.status,
+                  })),
+                  socialMediaCaption: campaign.socialMediaCaption,
                 },
               ],
             },
@@ -180,6 +221,7 @@ const AllCampaignsDetails: React.FC = () => {
       socialMediaCaption: campaign.socialMediaCaption,
       createdAt: "",
       updatedAt: "",
+      addServiceType: campaign.addServiceType, // 👈 NEW
     });
     setIsUpdateModalVisible(true);
   };
@@ -731,6 +773,9 @@ const AllCampaignsDetails: React.FC = () => {
   const blogCampaigns = campaigns.filter(
     (campaign) => campaign.campainInputType === "BLOG"
   );
+  const weAreHiringCampaigns = campaigns.filter(
+    (c) => c.addServiceType === "WEAREHIRING"
+  );
 
   const renderTable = (
     data: Campaign[],
@@ -761,19 +806,40 @@ const AllCampaignsDetails: React.FC = () => {
             <Spin tip="Loading Campaigns..." size="large" />
           </div>
         ) : (
-          <Tabs defaultActiveKey="service" type="card">
+          <Tabs
+            type="card"
+            activeKey={activeTab}
+            onChange={(key) => {
+              setActiveTab(key);
+              localStorage.setItem("allCampaigns_activeTab", key);
+              // Also store a per-tab scroll if you want (optional)
+              localStorage.setItem(
+                "allCampaigns_scrollY",
+                String(window.scrollY)
+              );
+            }}
+          >
+            <TabPane
+              tab={`We are Hiring (${weAreHiringCampaigns.length})`}
+              key="wearehiring"
+            >
+              {renderTable(weAreHiringCampaigns, "We are Hiring")}
+            </TabPane>
+
             <TabPane
               tab={`Services (${serviceCampaigns.length})`}
               key="service"
             >
               {renderTable(serviceCampaigns, "Service")}
             </TabPane>
+
             <TabPane
               tab={`Products (${productCampaigns.length})`}
               key="product"
             >
               {renderTable(productCampaigns, "Product")}
             </TabPane>
+
             <TabPane tab={`Blogs (${blogCampaigns.length})`} key="blog">
               {renderTable(blogCampaigns, "Blog", true)}
             </TabPane>
