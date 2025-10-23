@@ -39,6 +39,7 @@ import {
   MenuFoldOutlined,
   SolutionOutlined,
   UserOutlined,
+  HomeOutlined,EnvironmentOutlined ,
 } from "@ant-design/icons";
 import { message } from "antd";
 import { MdPayment, MdWork } from "react-icons/md";
@@ -135,6 +136,12 @@ const Sidebar: React.FC = () => {
           title: "All AskOxy Users",
           icon: <FaRegAddressCard className="text-green-400" />,
           link: "/admn/dataAssigned",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
+         {
+          title: "Kukatpally Data",
+          icon: <EnvironmentOutlined  className="text-green-400" />,
+          link: "/admn/kukatpally",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {

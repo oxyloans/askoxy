@@ -675,23 +675,7 @@ const canUpdateTask = (task: Task): boolean => {
                           {task.planOftheDay}
                         </Paragraph>
 
-                        {/* Show pending update count badge if there are any */}
-                        {pendingUpdatesCount > 0 && (
-                          <div className="mt-3">
-                            <Badge
-                              count={pendingUpdatesCount}
-                              overflowCount={99}
-                            >
-                              <Tag
-                                color="blue"
-                                className="flex items-center"
-                                icon={<HistoryOutlined />}
-                              >
-                                Previous Updates
-                              </Tag>
-                            </Badge>
-                          </div>
-                        )}
+                     
                       </div>
                     </div>
                   </List.Item>
@@ -803,7 +787,12 @@ const canUpdateTask = (task: Task): boolean => {
                         rules={[
                           {
                             required: true,
-                            message: "Please enter an end of day note",
+                            message: "End of day note is required.",
+                          },
+                          {
+                            min: 120,
+                            message:
+                              "End of day note must be at least 120 characters long.",
                           },
                         ]}
                       >

@@ -1035,7 +1035,7 @@ const WhatsappRegister = () => {
               </p>
             </div>
           )}
-          {showGoogleButton && primaryType === "CUSTOMER" && (
+          {/* {showGoogleButton && primaryType === "CUSTOMER" && (
             <div className="flex items-center my-6">
               <div className="flex-1 border-t border-gray-300"></div>
               <span className="px-4 text-sm text-gray-500 bg-white">or</span>
@@ -1089,7 +1089,7 @@ const WhatsappRegister = () => {
                 </button>
               )}
             </div>
-          )}
+          )} */}
         </div>
 
         <div className="border-t p-6 bg-gray-50">

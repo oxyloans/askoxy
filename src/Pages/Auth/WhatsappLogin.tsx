@@ -129,9 +129,7 @@ const WhatsappLogin: React.FC = () => {
 
   // OAuth URL for Gmail authentication
   const state = encodeURIComponent(JSON.stringify({ primaryType }));
-  const oauthUrl = `http://ec2-65-0-147-157.ap-south-1.compute.amazonaws.com:9024/oauth2/authorize/google?redirect_uri=${encodeURIComponent(
-    "https://www.askoxy.ai/whatsapplogin"
-  )}&state=${state}`;
+  const oauthUrl = `http://ec2-65-0-147-157.ap-south-1.compute.amazonaws.com:9024/oauth2/authorize/google?redirect_uri="https://www.askoxy.ai/whatsapplogin"`;
 
   // Fetch user details
   const fetchUserDetails = async (accessToken: string) => {
@@ -1031,7 +1029,7 @@ const handleClose = () => {
               </div>
             )}
           </form>
-          {showGoogleButton && primaryType === "CUSTOMER" && (
+          {/* {showGoogleButton && primaryType === "CUSTOMER" && (
             <div className="flex items-center my-4">
               <div className="flex-1 border-t border-gray-300"></div>
               <span className="px-4 text-sm text-gray-500 bg-white">or</span>
@@ -1086,7 +1084,7 @@ const handleClose = () => {
                 </button>
               )}
             </div>
-          )}
+          )} */}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">

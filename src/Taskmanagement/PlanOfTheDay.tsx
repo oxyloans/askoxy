@@ -87,8 +87,9 @@ const PlanOfTheDay: React.FC = () => {
   const [todayTask, setTodayTask] = useState<Task | null>(null);
   const [errorState, setErrorState] = useState<boolean>(false);
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
-  // Added state to track if submission window is open
   const [isSubmissionWindowOpen, setIsSubmissionWindowOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
   useEffect(() => {
     const today = new Date();
     const options: Intl.DateTimeFormatOptions = {
@@ -105,33 +106,37 @@ const PlanOfTheDay: React.FC = () => {
     const storedUserName = sessionStorage.getItem("Name") || "";
     setUserName(storedUserName);
 
-    // Check if user has already submitted a plan for today
     checkPendingTasksForToday(storedUserId);
-    // Added: Initialize time-based submission window check
+
     const checkSubmissionWindow = () => {
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
-      const openTimeInMinutes = 7 * 60 + 0; // 7:00 AM
-      const closeTimeInMinutes = 11 * 60 + 25; // 10:25 AM
+      const openTimeInMinutes = 7 * 60 + 0;
+      const closeTimeInMinutes = 11 * 60 + 25;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes
       );
     };
 
-    // Initial check
     checkSubmissionWindow();
 
-    // Added: Set up interval to check submission window every minute
     const intervalId = setInterval(checkSubmissionWindow, 60000);
 
-    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  // Function to check if there's a pending task for today
+  useEffect(() => {
+    if (isEditing && todayTask) {
+      form.setFieldsValue({
+        planOftheDay: todayTask.planOftheDay,
+        taskTeam: todayTask.taskTeam,
+      });
+    }
+  }, [isEditing, todayTask, form]);
+
   const checkPendingTasksForToday = async (userIdValue: string) => {
     setFetchingStatus(true);
     setErrorState(false);
@@ -151,7 +156,6 @@ const PlanOfTheDay: React.FC = () => {
 
       const tasks: Task[] = response.data;
 
-      // Get today's date in YYYY-MM-DD format for comparison
       const today = new Date();
       const todayStr =
         today.getFullYear() +
@@ -160,9 +164,7 @@ const PlanOfTheDay: React.FC = () => {
         "-" +
         String(today.getDate()).padStart(2, "0");
 
-      // Find if any task has today's date
       const foundTodayTask = tasks.find((task) => {
-        // Extract date part from planCreatedAt (format: "2025-04-23 10:41:33.879271")
         const taskDateStr = task.planCreatedAt.split(" ")[0];
         return taskDateStr === todayStr;
       });
@@ -197,41 +199,59 @@ const PlanOfTheDay: React.FC = () => {
         return;
       }
 
-      const response = await axios.patch<TaskResponse>(
-        `${BASE_URL}/user-service/write/userTaskUpdate`,
-        {
+      let payload;
+      const isEditMode = isEditing && todayTask;
+      if (isEditMode) {
+        payload = {
+          id: todayTask.id,
+          planOftheDay: values.planOftheDay,
+          taskStatus: "PENDING",
+          userId: userId,
+        };
+      } else {
+        payload = {
           planOftheDay: values.planOftheDay,
           taskAssinedBy: sessionStorage.getItem("Name"),
           taskTeam: values.taskTeam,
           userId: userId,
-        }
+        };
+      }
+
+      const response = await axios.patch<TaskResponse>(
+        `${BASE_URL}/user-service/write/userTaskUpdate`,
+        payload
       );
       if (response.data.success) {
-        sessionStorage.setItem("taskId", response.data.id);
+        if (!isEditMode) {
+          sessionStorage.setItem("taskId", response.data.id);
+        }
 
         setSubmissionSuccess(true);
 
-        // Show success message with animation
-        setTimeout(() => {
-          // Refresh the task list to reflect the newly created task
-          checkPendingTasksForToday(userId);
-          setSubmissionSuccess(false);
-        }, 1000);
-
+        const action = isEditMode ? "updated" : "submitted";
         notification.success({
           message: "Success",
-          description: "Your daily plan has been submitted successfully.",
+          description: `Your daily plan has been ${action} successfully.`,
           placement: "topRight",
         });
+
+        setTimeout(() => {
+          checkPendingTasksForToday(userId);
+          setSubmissionSuccess(false);
+          if (isEditMode) {
+            setIsEditing(false);
+          }
+        }, 1000);
+
         form.resetFields();
       } else {
-        message.error("Failed to create task.");
+        message.error("Failed to update task.");
       }
     } catch (error) {
-      console.error("Error creating task:", error);
+      console.error("Error updating task:", error);
       notification.error({
         message: "Error",
-        description: "An error occurred while creating the task.",
+        description: "An error occurred while updating the task.",
         placement: "topRight",
       });
     } finally {
@@ -310,13 +330,13 @@ const PlanOfTheDay: React.FC = () => {
               </Text>
             </div>
 
-            {/* Time Tag */}
-            <div className="flex items-center">
+            {/* Time Tag and Edit Button */}
+            <div className="flex items-center gap-2">
               {/* Show Tooltip only on non-touch devices */}
               <Tooltip
                 title={`Submitted at ${formatTime(todayTask.planCreatedAt)}`}
                 placement="top"
-                overlayClassName="hidden sm:block" // Hide tooltip on mobile
+                overlayClassName="hidden sm:block"
               >
                 <Tag
                   icon={<ClockCircleOutlined />}
@@ -330,6 +350,17 @@ const PlanOfTheDay: React.FC = () => {
               <span className="block sm:hidden text-xs text-gray-600 ml-2">
                 Submitted at {formatTime(todayTask.planCreatedAt)}
               </span>
+           
+                <Button
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => setIsEditing(true)}
+                  style={{ color: "#f7f7f7",backgroundColor:"#008cba" ,border:"#008cba"}}
+                  size="small"
+                >
+                  Edit
+                </Button>
+          
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg mb-4">
@@ -338,22 +369,12 @@ const PlanOfTheDay: React.FC = () => {
             </Paragraph>
           </div>
 
-          {/* <div className="flex justify-between items-center">
-            <Tag
-              icon={<TeamOutlined />}
-              color={TEAM_COLORS[todayTask.taskTeam] || "default"}
-            >
-              {formatTeamName(todayTask.taskTeam)}
-            </Tag>
-            <Text className="text-gray-500 text-xs">
-              ID: {todayTask.id.substring(0, 4)}
-            </Text>
-          </div> */}
+         
         </Card>
       )}
     </div>
   );
-  // Added: Render message when submission window is closed
+
   const renderClosedState = () => (
     <Result
       status="info"
@@ -362,7 +383,7 @@ const PlanOfTheDay: React.FC = () => {
         <span>
           You can submit your <strong>Plan of the Day</strong> only between
           <br />
-          <strong>7:00 AM to 10:15 AM</strong> (daily).
+          <strong>7:00 AM to 10:30 AM</strong> (daily).
           <br />
           Please come back during this window tomorrow.
         </span>
@@ -386,6 +407,75 @@ const PlanOfTheDay: React.FC = () => {
     />
   );
 
+  const renderSubmitButtons = () => {
+    const isEditMode = isEditing && todayTask;
+    const buttonText = submissionSuccess
+      ? isEditMode
+        ? "Plan Updated!"
+        : "Plan Submitted!"
+      : loading
+      ? isEditMode
+        ? "Updating..."
+        : "Submitting..."
+      : isEditMode
+      ? "Update Daily Plan"
+      : "Submit Daily Plan";
+    const icon = submissionSuccess ? <CheckCircleOutlined /> : <SendOutlined />;
+    const buttonClass = `h-8 rounded-md shadow-md hover:shadow-lg font-medium text-base transition-all ${
+      submissionSuccess
+        ? "bg-green-500 hover:bg-green-600 border-none"
+        : "bg-gradient-to-r from-blue-[#008cba] to-blue-[#008cba] border-none"
+    }`;
+
+    if (isEditMode) {
+      return (
+        <Space style={{ display: "flex", gap: 8, width: "100%" }}>
+          <Button
+            block
+            onClick={() => {
+              form.resetFields();
+              setIsEditing(false);
+            }}
+            className="flex-1 h-8 rounded-md"
+          >
+            Cancel
+          </Button>
+          <Button
+            style={{
+              color: "#f7f7f7",
+              backgroundColor: "#008cba",
+              border: "#008cba",
+            }}
+            htmlType="submit"
+            loading={loading}
+            block
+          
+            className={`flex-1 ${buttonClass}`}
+          >
+            {buttonText}
+          </Button>
+        </Space>
+      );
+    }
+
+    return (
+      <Button
+        style={{
+          color: "#f7f7f7",
+          backgroundColor: "#008cba",
+          border: "#008cba",
+        }}
+        htmlType="submit"
+        loading={loading}
+        block
+        icon={icon}
+        className={buttonClass}
+      >
+        {buttonText}
+      </Button>
+    );
+  };
+
   const renderFormState = () => (
     <Form
       form={form}
@@ -398,8 +488,9 @@ const PlanOfTheDay: React.FC = () => {
         name="planOftheDay"
         label={
           <span className="text-gray-700 font-medium text-sm sm:text-base flex items-center">
-            <EditOutlined className="mr-2" />
-            What's your plan for today?
+            {isEditing
+              ? "Edit your plan for today?"
+              : "What's your plan for today?"}
           </span>
         }
         rules={[
@@ -408,8 +499,8 @@ const PlanOfTheDay: React.FC = () => {
             message: "Please enter your plan for the day!",
           },
           {
-            min: 10,
-            message: "Your plan should be at least 10 characters",
+            min: 120,
+            message: "Your plan should be at least 120 characters",
           },
         ]}
       >
@@ -426,11 +517,14 @@ const PlanOfTheDay: React.FC = () => {
         name="taskTeam"
         label={
           <span className="text-gray-700 font-medium text-sm sm:text-base flex items-center">
-            <TeamOutlined className="mr-2" />
             Select Team
           </span>
         }
-        rules={[{ required: true, message: "Please select a team!" }]}
+        rules={
+          isEditing
+            ? []
+            : [{ required: true, message: "Please select a team!" }]
+        }
       >
         <Select
           placeholder="Select your team"
@@ -438,6 +532,7 @@ const PlanOfTheDay: React.FC = () => {
           size="large"
           optionLabelProp="label"
           showSearch
+          disabled={isEditing}
           filterOption={(input, option) =>
             (typeof option?.label === "string" &&
               option.label.toLowerCase().includes(input.toLowerCase())) ??
@@ -456,29 +551,9 @@ const PlanOfTheDay: React.FC = () => {
           ))}
         </Select>
       </Form.Item>
-
       <Divider className="my-6" />
 
-      <Form.Item className="mb-0">
-        <Button
-          type="primary"
-          htmlType="submit"
-          loading={loading}
-          block
-          icon={submissionSuccess ? <CheckCircleOutlined /> : <SendOutlined />}
-          className={`h-12 rounded-lg shadow-md hover:shadow-lg font-medium text-base transition-all ${
-            submissionSuccess
-              ? "bg-green-500 hover:bg-green-600 border-none"
-              : "bg-gradient-to-r from-blue-600 to-blue-500 border-none"
-          }`}
-        >
-          {submissionSuccess
-            ? "Plan Submitted!"
-            : loading
-            ? "Submitting..."
-            : "Submit Daily Plan"}
-        </Button>
-      </Form.Item>
+      <Form.Item className="mb-0">{renderSubmitButtons()}</Form.Item>
     </Form>
   );
 
@@ -530,7 +605,9 @@ const PlanOfTheDay: React.FC = () => {
               : errorState
               ? renderErrorState()
               : isSubmitted
-              ? renderSubmittedState()
+              ? isEditing
+                ? renderFormState()
+                : renderSubmittedState()
               : isSubmissionWindowOpen
               ? renderFormState()
               : renderClosedState()}

@@ -34,7 +34,7 @@ interface Task {
   image?: string | null;
   status: string;
   taskAssignBy: string;
-  taskAssignTo: string[] | string | null;
+  taskAssignTo: string[];
   taskName: string;
 }
 
@@ -45,6 +45,7 @@ const AdminTasks: React.FC = () => {
   const accessToken = sessionStorage.getItem("accessToken");
   const userId = sessionStorage.getItem("userId") || "";
   const [searchText, setSearchText] = useState(""); // ✅ added missing state
+  // ✅ Fetch tasks
   const fetchTasks = async () => {
     setLoading(true);
     try {
@@ -54,44 +55,16 @@ const AdminTasks: React.FC = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-
-      // ✅ Reverse tasks so latest appear first
       const reversedTasks = response.data.slice().reverse();
-
-      // ✅ Filter out invalid or empty tasks
-      const validTasks = reversedTasks.filter((task) => {
-        const { taskAssignTo, taskName } = task;
-
-        // 🔹 Check valid assigned users
-        const hasValidAssignee = (() => {
-          if (!taskAssignTo) return false;
-          if (Array.isArray(taskAssignTo))
-            return taskAssignTo.some(
-              (a) => typeof a === "string" && a.trim() !== ""
-            );
-          if (typeof taskAssignTo === "string")
-            return taskAssignTo.trim() !== "";
-          return false;
-        })();
-
-        // 🔹 Check valid task name
-        const hasValidTaskName =
-          typeof taskName === "string" && taskName.trim() !== "";
-
-        // ✅ Keep only valid records
-        return hasValidAssignee && hasValidTaskName;
-      });
-
-      setTasks(validTasks);
-      setFilteredTasks(validTasks);
+      setTasks(reversedTasks);
+      setFilteredTasks(reversedTasks);
     } catch (error) {
-      console.error("Task Fetch Error:", error);
+      console.error(error);
       message.error("Failed to fetch tasks");
     } finally {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchTasks();
@@ -100,39 +73,20 @@ const AdminTasks: React.FC = () => {
   // ✅ Search tasks
   const handleSearch = (value: string) => {
     setSearchText(value);
-    const query = value.trim().toLowerCase();
-    if (!query) {
+    if (!value.trim()) {
       setFilteredTasks(tasks);
       return;
     }
 
-    const filtered = tasks.filter((task) => {
-      // check taskAssignBy
-      if (task.taskAssignBy && task.taskAssignBy.toLowerCase().includes(query)) {
-        return true;
-      }
-
-      // normalize taskAssignTo to array before checking
-      const assignees: string[] = Array.isArray(task.taskAssignTo)
-        ? task.taskAssignTo.filter((a) => typeof a === "string" && a.trim() !== "")
-        : task.taskAssignTo && typeof task.taskAssignTo === "string"
-        ? [task.taskAssignTo]
-        : [];
-
-      if (assignees.some((t) => t.toLowerCase().includes(query))) {
-        return true;
-      }
-
-      if (task.taskName && task.taskName.toLowerCase().includes(query)) {
-        return true;
-      }
-
-      if (task.status && task.status.toLowerCase().includes(query)) {
-        return true;
-      }
-
-      return false;
-    });
+    const filtered = tasks.filter(
+      (task) =>
+        task.taskAssignBy?.toLowerCase().includes(value.toLowerCase()) ||
+        task.taskAssignTo?.some((t) =>
+          t.toLowerCase().includes(value.toLowerCase())
+        ) ||
+        task.taskName?.toLowerCase().includes(value.toLowerCase()) ||
+        task.status?.toLowerCase().includes(value.toLowerCase())
+    );
 
     setFilteredTasks(filtered);
   };
@@ -164,26 +118,26 @@ const AdminTasks: React.FC = () => {
     let text: string;
 
      switch (status?.toLowerCase()) {
-       case "assigned":
-         color = "blue";
-         text = "Assigned";
-         break;
-       case "completed":
-         color = "green";
-         text = "Completed";
-         break;
-       case "rejected":
-         color = "red";
-         text = "Rejected";
-         break;
-       case "deleted":
-         color = "gray";
-         text = "Deleted";
-         break;
-       default:
-         color = "gold";
-         text = "Pending";
-     }
+      case "assigned":
+        color = "blue";
+        text = "Assigned";
+        break;
+      case "completed":
+        color = "green";
+        text = "Completed";
+        break;
+      case "rejected":
+        color = "red";
+        text = "Rejected";
+        break;
+      case "deleted":
+        color = "gray";
+        text = "Deleted";
+        break;
+      default:
+        color = "gold";
+        text = "Pending";
+    }
     return (
       <Tag
         color={color}
@@ -221,38 +175,7 @@ const AdminTasks: React.FC = () => {
         </Text>
       ),
     },
-    {
-      title: "Assigned To",
-      dataIndex: "taskAssignTo",
-      key: "taskAssignTo",
-      align: "center" as const,
-      render: (assignees: string[] | string | null) => {
-        // Normalize data to always be an array
-        const validAssignees = Array.isArray(assignees)
-          ? assignees.filter((a) => a && a.trim() !== "")
-          : assignees
-          ? [assignees]
-          : [];
-
-        return (
-          <div style={{ textAlign: "center" }}>
-            {validAssignees.length > 0 ? (
-              validAssignees.map((a, i) => (
-                <Tag
-                  color="geekblue"
-                  key={i}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {a}
-                </Tag>
-              ))
-            ) : (
-              <Text type="secondary">Not Assigned</Text>
-            )}
-          </div>
-        );
-      },
-    },
+   
 
     {
       title: "Task Name",

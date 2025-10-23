@@ -577,7 +577,7 @@ const BharatAgentsStore: React.FC = () => {
       setLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/bharat-expert";
+      const redirectPath = "/main/createagent";
 
       if (userId) {
         navigate(redirectPath);

@@ -17,10 +17,10 @@ import {
   Tag,
   Avatar,
   Collapse,
-  Timeline,
   Input,
   Space,
   Radio,
+  Form,
 } from "antd";
 import {
   CalendarOutlined,
@@ -36,6 +36,7 @@ import {
   InfoCircleOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -61,6 +62,7 @@ interface UserQueryDocumentStatus {
 interface PendingUserTaskResponse {
   taskId: string;
   pendingEod: string | null;
+  endOftheDay: string | null;
   createdAt: string | null;
   taskStatus: string;
   updateBy: string;
@@ -97,6 +99,11 @@ interface TaskData {
   endOftheDay: string | null;
 }
 
+interface EditFormValues {
+  planOftheDay?: string;
+  endOftheDay?: string;
+}
+
 // Consistent styles for all buttons
 const buttonStyle = {
   width: "120px",
@@ -106,7 +113,14 @@ const buttonStyle = {
   alignItems: "center",
 };
 
+const editButtonStyle = {
+  backgroundColor: "#008cba",
+  color: "white",
+  borderColor: "#008cba",
+};
+
 const AllStatusPage: React.FC = () => {
+  const [editForm] = Form.useForm<EditFormValues>();
   const [status, setStatus] = useState<string>("PENDING"); // Default status changed to PENDING
   const [tasks, setTasks] = useState<TaskData[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<TaskData[]>([]);
@@ -116,6 +130,8 @@ const AllStatusPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("general");
   const [searchText, setSearchText] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<"plan" | "eod" | null>(null);
   const taskId = sessionStorage.getItem("taskId");
 
   useEffect(() => {
@@ -161,6 +177,99 @@ const AllStatusPage: React.FC = () => {
   const handleSortOrderChange = (order: "asc" | "desc") => {
     setSortOrder(order);
   };
+
+  const handleUpdate = async (values: EditFormValues) => {
+    if (!editingTaskId || !editingField) return;
+
+    const field = editingField === "plan" ? "planOftheDay" : "endOftheDay";
+    const payload = {
+      id: editingTaskId,
+      [field]: values[field as keyof EditFormValues] || "",
+      taskStatus: "PENDING",
+      userId: userId,
+    };
+
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/user-service/write/userTaskUpdate`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.id === editingTaskId
+              ? {
+                  ...task,
+                  [field]: values[field as keyof EditFormValues] || "",
+                }
+              : task
+          )
+        );
+        setFilteredTasks((prev) =>
+          prev.map((task) =>
+            task.id === editingTaskId
+              ? {
+                  ...task,
+                  [field]: values[field as keyof EditFormValues] || "",
+                }
+              : task
+          )
+        );
+        notification.success({
+          message: "Success",
+          description: `${
+            editingField === "plan" ? "Plan of the Day" : "End of the Day"
+          } updated successfully.`,
+          placement: "topRight",
+        });
+        setEditingTaskId(null);
+        setEditingField(null);
+        editForm.resetFields();
+      } else {
+        notification.error({
+          message: "Error",
+          description: "Failed to update task.",
+          placement: "topRight",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+      notification.error({
+        message: "Error",
+        description: "An error occurred while updating the task.",
+        placement: "topRight",
+      });
+    }
+  };
+
+  const handleEditPlan = (task: TaskData) => {
+    setEditingTaskId(task.id);
+    setEditingField("plan");
+    editForm.setFieldsValue({ planOftheDay: task.planOftheDay });
+  };
+
+  const handleEditEod = (task: TaskData) => {
+    setEditingTaskId(task.id);
+    setEditingField("eod");
+    editForm.setFieldsValue({ endOftheDay: task.endOftheDay ?? undefined });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTaskId(null);
+    setEditingField(null);
+    editForm.resetFields();
+  };
+
+  const isEditingPlan = (taskId: string) =>
+    editingTaskId === taskId && editingField === "plan";
+  const isEditingEod = (taskId: string) =>
+    editingTaskId === taskId && editingField === "eod";
 
   const fetchAllTasks = async () => {
     setLoading(true);
@@ -348,11 +457,9 @@ const AllStatusPage: React.FC = () => {
                   <Tag
                     color={response.updateBy === "ADMIN" ? "purple" : "blue"}
                   >
-                    {response.updateBy==="ADMIN" ? "ADMIN":"YOU"}
+                    {response.updateBy === "ADMIN" ? "ADMIN" : "YOU"}
                   </Tag>
-                  {/* <Text className="text-xs text-gray-500">
-                    {formatDate(response.createdAt)}
-                  </Text> */}
+                
 
                   {response.adminFilePath && (
                     <div className="flex items-center ml-auto">
@@ -467,22 +574,103 @@ const AllStatusPage: React.FC = () => {
           <Text className="text-gray-600 font-medium block mb-2">
             Plan of the Day:
           </Text>
-          <div className="max-h-32 overflow-y-auto bg-white p-3 rounded-md border border-gray-100">
-            <Text className="whitespace-pre-wrap text-gray-700">
-              {task.planOftheDay || "No plan recorded"}
-            </Text>
-          </div>
+          {isEditingPlan(task.id) ? (
+            <Form form={editForm} onFinish={handleUpdate} layout="vertical">
+              <Form.Item
+                name="planOftheDay"
+                rules={[{ required: true, message: "Please enter your plan!" }]}
+              >
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Enter plan of the day..."
+                  maxLength={8000}
+                  showCount
+                />
+              </Form.Item>
+              <Space style={{ display: "flex", gap: 8 }}>
+                <Button
+                  htmlType="submit"
+                  type="primary"
+                  style={editButtonStyle}
+                  icon={<EditOutlined />}
+                >
+                  Save Changes
+                </Button>
+                <Button onClick={handleCancelEdit}>Cancel</Button>
+              </Space>
+            </Form>
+          ) : (
+            <div className="max-h-32 overflow-y-auto bg-white p-3 rounded-md border border-gray-100">
+              <Text className="whitespace-pre-wrap text-gray-700">
+                {task.planOftheDay || "No plan recorded"}
+              </Text>
+            </div>
+          )}
+          {task.taskStatus === "PENDING" && !isEditingPlan(task.id) && (
+            <Button
+              onClick={() => handleEditPlan(task)}
+              style={editButtonStyle}
+              size="small"
+              className="mt-2"
+              icon={<EditOutlined />}
+            >
+              Edit Plan
+            </Button>
+          )}
         </div>
 
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
           <Text className="text-gray-600 font-medium block mb-2">
             End of the Day:
           </Text>
-          <div className="max-h-32 overflow-y-auto bg-white p-3 rounded-md border border-gray-100">
-            <Text className="whitespace-pre-wrap text-gray-700">
-              {task.endOftheDay || "No end-of-day report"}
-            </Text>
-          </div>
+          {isEditingEod(task.id) ? (
+            <Form form={editForm} onFinish={handleUpdate} layout="vertical">
+              <Form.Item
+                name="endOftheDay"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter end of day report!",
+                  },
+                ]}
+              >
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Enter end of the day report..."
+                  maxLength={8000}
+                  showCount
+                />
+              </Form.Item>
+              <Space style={{ display: "flex", gap: 8 }}>
+                <Button
+                  htmlType="submit"
+                  type="primary"
+                  style={editButtonStyle}
+                  icon={<EditOutlined />}
+                >
+                  Save Changes
+                </Button>
+                <Button onClick={handleCancelEdit}>Cancel</Button>
+              </Space>
+            </Form>
+          ) : (
+            <div className="max-h-32 overflow-y-auto bg-white p-3 rounded-md border border-gray-100">
+              <Text className="whitespace-pre-wrap text-gray-700">
+                {task.endOftheDay || "No end-of-day report"}
+              </Text>
+            </div>
+          )}
+          {task.taskStatus === "PENDING" && !isEditingEod(task.id) && (
+            <Button
+              onClick={() => handleEditEod(task)}
+              style={editButtonStyle}
+              size="small"
+              className="mt-2"
+              icon={<EditOutlined />}
+            >
+              Edit EOD
+            </Button>
+          )}
         </div>
       </div>
 
@@ -500,9 +688,7 @@ const AllStatusPage: React.FC = () => {
 
         <div className="flex items-center gap-2 text-gray-500">
           <CalendarOutlined />
-          <Text>
-            Updated: {formatDate(task.planUpdatedAt)}
-          </Text>
+          <Text>Updated: {formatDate(task.planUpdatedAt)}</Text>
         </div>
       </div>
     </Card>

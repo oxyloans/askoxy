@@ -226,6 +226,9 @@ import RemoveTrailingSlash from "./auth/RemoveTrailingSlash";
 import AdminMyAgentsPage from "./BharathAIStore/pages/AdminMyAgentsPage";
 import RadhaHiddenAgents from "./BharathAIStore/pages/RadhaHiddenAgents";
 import AdminTasks from "./Taskmanagement/AdminTasks";
+import AllKukatpallyDataPage from "./AskoxyAdmin/kukatapallyData";
+import ChatBasedAgent from "./BharathAIStore/pages/chatbasedAgent";
+import AgentEntryPage from "./BharathAIStore/pages/AgentEntryPage";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -642,6 +645,14 @@ const App: React.FC = () => {
               <Route path="create-aiagent" element={<CreateAgentWizard />} />
               <Route path="bharat-expert" element={<CreateAgentMain />} />
               <Route
+                path="createagent"
+                element={<AgentEntryPage/>}
+              />
+<Route
+                path="chatbasedagent"
+                element={<ChatBasedAgent />}
+              />
+              <Route
                 path="chatinterface/assistant/:id/:agentId"
                 element={<ChatInterface1 />}
               />
@@ -778,6 +789,7 @@ const App: React.FC = () => {
                 element={<AllCampaignsDetails />}
               />
               <Route path="campaignsadd" element={<CampaignsAdd />} />
+              <Route path="kukatpally" element={< AllKukatpallyDataPage/>} />
               <Route path="assignedData" element={<AssignedDataPage />} />
               <Route path="addjobs" element={<AddJob />} />
               <Route
