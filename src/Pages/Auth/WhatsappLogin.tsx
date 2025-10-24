@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FaWhatsapp, FaGoogle } from "react-icons/fa6";
 import axios, { AxiosError } from "axios";
 import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
@@ -15,7 +16,7 @@ import {
   CheckCircle2,
   Smartphone,
   ShieldCheck,
-  AlertTriangle,
+  ChevronRight,
 } from "lucide-react";
 import BASE_URL from "../../Config";
 
@@ -716,22 +717,22 @@ const handleClose = () => {
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
-        <div className="bg-purple-600 p-4 sm:p-6 lg:p-8 relative rounded-t-lg  shadow-lg mx-4 sm:mx-0 max-w-md sm:max-w-lg w-full">
-          <button
-            onClick={handleClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white touch-manipulation z-10"
-          >
-            <X className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-          <div className="flex flex-col items-center gap-4 sm:gap-6 text-center pr-8 sm:pr-0">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">
+        <div className="bg-purple-600 p-4  relative rounded-t-lg  shadow-lg max-w-md sm:max-w-lg w-full">
+          <div className="flex flex-col items-center gap-3  text-center ">
+            <h2 className="text-xl font-bold text-white text-center">
               {primaryType === "STUDENT"
                 ? "Login to Study Abroad"
                 : primaryType === "AGENT"
                 ? "Login to Bharat AI Store"
                 : "Login to ASKOXY.AI"}
             </h2>
-            <div className="flex flex-row gap-2 sm:gap-3 justify-center w-full">
+            <button
+              onClick={handleClose}
+              className="absolute right-2 sm:right-4 top-2 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white touch-manipulation z-10"
+            >
+              <X className="w-5 h-5 sm:w-5 sm:h-5" />
+            </button>
+            <div className="  flex gap-4 mt-2 justify-center w-full">
               <button
                 onClick={() => {
                   const loginPath =
@@ -740,13 +741,13 @@ const handleClose = () => {
                       : "/whatsapplogin";
                   navigate(loginPath);
                 }}
-                className="bg-white text-purple-600 px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
+                className="bg-white text-purple-600  px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
               >
                 Login
               </button>
               <button
                 onClick={handleRegisterRedirectClick}
-                className="bg-transparent border-2 border-white text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
+                className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg  font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
               >
                 Register
               </button>
@@ -1029,7 +1030,7 @@ const handleClose = () => {
               </div>
             )}
           </form>
-          {/* {showGoogleButton && primaryType === "CUSTOMER" && (
+          {showGoogleButton && primaryType === "CUSTOMER" && (
             <div className="flex items-center my-4">
               <div className="flex-1 border-t border-gray-300"></div>
               <span className="px-4 text-sm text-gray-500 bg-white">or</span>
@@ -1084,17 +1085,22 @@ const handleClose = () => {
                 </button>
               )}
             </div>
-          )} */}
+          )}
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+          <div className="mt-6 flex justify-center items-center text-center px-2 sm:px-4">
+            <p className="text-sm text-gray-600 leading-relaxed max-w-full sm:max-w-xs">
               Don't have an account?{" "}
-              <button
-                onClick={handleRegisterRedirectClick}
-                className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group"
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleRegisterRedirectClick();
+                }}
+                className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group cursor-pointer"
               >
                 Register here
-              </button>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </a>
             </p>
           </div>
         </div>

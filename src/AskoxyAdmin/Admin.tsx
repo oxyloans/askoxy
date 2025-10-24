@@ -12,8 +12,12 @@ import {
   Space,
   Grid,
 } from "antd";
-import { SearchOutlined } from '@ant-design/icons';
-import { DownloadOutlined, FilterOutlined, ReloadOutlined } from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
+import {
+  DownloadOutlined,
+  FilterOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 import BASE_URL from "../Config";
 import "antd/dist/reset.css";
@@ -111,7 +115,10 @@ const Admin: React.FC = () => {
 
   // debounce search
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedTerm(searchText.trim().toLowerCase()), 250);
+    const t = setTimeout(
+      () => setDebouncedTerm(searchText.trim().toLowerCase()),
+      250
+    );
     return () => clearTimeout(t);
   }, [searchText]);
 
@@ -122,7 +129,9 @@ const Admin: React.FC = () => {
       const res = await Promise.allSettled([
         axios.get(`${BASE_URL}/auth-service/auth/usersOfferesDetails`),
         axios.get(`${BASE_URL}/auth-service/auth/AllusersAddress`),
-        axios.get(`${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`),
+        axios.get(
+          `${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`
+        ),
         axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
       ]);
 
@@ -168,14 +177,17 @@ const Admin: React.FC = () => {
     const set = new Set<string>();
     for (const o of rawOffers) {
       const label = (o.askOxyOfers || "").trim();
-      if (label && !knownOfferTypes.includes(label.toUpperCase())) set.add(label);
+      if (label && !knownOfferTypes.includes(label.toUpperCase()))
+        set.add(label);
     }
     return Array.from(set);
   }, [rawOffers]);
 
   // options: known + dynamic, unique
   const serviceOptions = useMemo(() => {
-    const all = Array.from(new Set([...knownOfferTypes, ...dynamicLabels])).filter(Boolean);
+    const all = Array.from(
+      new Set([...knownOfferTypes, ...dynamicLabels])
+    ).filter(Boolean);
     return all.map((s) => ({ label: s, value: s }));
   }, [dynamicLabels]);
 
@@ -195,18 +207,24 @@ const Admin: React.FC = () => {
     );
   }, [rawOffers, users]);
 
-  // filtering + searching
   const filteredRows = useMemo(() => {
-    return mergedRows.filter((o) => {
-      if (serviceFilter.length > 0) {
+    return mergedRows.filter((o: any) => {
+      // Filter WE ARE HIRING users
+      if (serviceFilter.includes("WEAREHIRING") && o.userRole !== "EMPLOYEE") {
+        return false;
+      }
+      if (serviceFilter.length > 0 && !serviceFilter.includes("WEAREHIRING")) {
         const val = (o.askOxyOfers || "").trim().toUpperCase();
-        const matchesFilter = serviceFilter.some((f) => val === f.toUpperCase());
+        const matchesFilter = serviceFilter.some(
+          (f) => val === f.toUpperCase()
+        );
         if (!matchesFilter) return false;
       }
       if (debouncedTerm) {
         const service = (o.askOxyOfers || "").toLowerCase();
         const mobile = (o.mobileNumber || "").toLowerCase();
-        if (!service.includes(debouncedTerm) && !mobile.includes(debouncedTerm)) return false;
+        if (!service.includes(debouncedTerm) && !mobile.includes(debouncedTerm))
+          return false;
       }
       return true;
     });
@@ -233,11 +251,15 @@ const Admin: React.FC = () => {
   };
   const handleDownload = () => {
     if (!filteredRows.length) return;
-    const blob = new Blob([toCSV(filteredRows)], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([toCSV(filteredRows)], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const tag = serviceFilter.length ? serviceFilter.join("-").toLowerCase() : "all";
+    const tag = serviceFilter.length
+      ? serviceFilter.join("-").toLowerCase()
+      : "all";
     a.download = `askoxy-interested-${tag}.csv`;
     document.body.appendChild(a);
     a.click();
@@ -246,14 +268,17 @@ const Admin: React.FC = () => {
   };
 
   /** ---------- Table columns (desktop/tablet) ---------- */
-  const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | null>("descend");
+  const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | null>(
+    "descend"
+  );
   const columns: TableProps<OfferDetails>["columns"] = [
     {
       title: "S.No",
       key: "index",
       align: "center",
       width: 80,
-      render: (_: any, __: any, index: number) => index + 1 + (currentPage - 1) * pageSize,
+      render: (_: any, __: any, index: number) =>
+        index + 1 + (currentPage - 1) * pageSize,
     },
     {
       title: "Mobile Number",
@@ -277,13 +302,15 @@ const Admin: React.FC = () => {
       key: "_createdAtMs",
       align: "center",
       width: 220,
-      render: (_: any, row: OfferDetails) => fmt(row._createdAtMs || row.createdAt),
+      render: (_: any, row: OfferDetails) =>
+        fmt(row._createdAtMs || row.createdAt),
       sorter: (a, b) => (a._createdAtMs || 0) - (b._createdAtMs || 0),
       sortOrder: sortOrder as any,
       defaultSortOrder: "descend",
       sortDirections: ["descend", "ascend"],
       onHeaderCell: () => ({
-        onClick: () => setSortOrder((prev) => (prev === "descend" ? "ascend" : "descend")),
+        onClick: () =>
+          setSortOrder((prev) => (prev === "descend" ? "ascend" : "descend")),
       }),
     },
   ];
@@ -319,12 +346,15 @@ const Admin: React.FC = () => {
       setServiceFilter([]);
     } else {
       setServiceFilter((prev) =>
-        prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
+        prev.includes(filter)
+          ? prev.filter((f) => f !== filter)
+          : [...prev, filter]
       );
     }
     setCurrentPage(1);
     // When a filter is chosen from dock, jump list to top (mobile)
-    if (listRef.current) listRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    if (listRef.current)
+      listRef.current.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Calculate page range
@@ -344,12 +374,22 @@ const Admin: React.FC = () => {
               Admin Dashboard
             </h1>
             <Space size="small" wrap className="w-full lg:w-auto">
-              <Button block={isMobile} icon={<ReloadOutlined />} onClick={fetchAll}>
+              <Button
+                block={isMobile}
+                icon={<ReloadOutlined />}
+                onClick={fetchAll}
+              >
                 Refresh
               </Button>
-              <Button block={isMobile} icon={<FilterOutlined />} onClick={resetFilters}>
+
+              <Button
+                block={isMobile}
+                icon={<FilterOutlined />}
+                onClick={resetFilters}
+              >
                 Clear
               </Button>
+
               <Button
                 block={isMobile}
                 type="primary"
@@ -359,74 +399,118 @@ const Admin: React.FC = () => {
               >
                 Export
               </Button>
+
+              {/* 💼 WE ARE HIRING Button (Purple + Highlighted on Active) */}
+              <Button
+                block={isMobile}
+                style={{
+                  fontWeight: 600,
+                  borderColor: serviceFilter.includes("WEAREHIRING")
+                    ? "#722ed1"
+                    : "#b37feb",
+                  color: serviceFilter.includes("WEAREHIRING")
+                    ? "white"
+                    : "#722ed1",
+                  background: serviceFilter.includes("WEAREHIRING")
+                    ? "linear-gradient(90deg, #722ed1 0%, #9254de 100%)"
+                    : "transparent",
+                  boxShadow: serviceFilter.includes("WEAREHIRING")
+                    ? "0 0 10px rgba(114,46,209,0.5)"
+                    : "none",
+                  transition: "all 0.3s ease",
+                }}
+                onClick={() => {
+                  setServiceFilter((prev) =>
+                    prev.includes("WEAREHIRING") ? [] : ["WEAREHIRING"]
+                  );
+                  setCurrentPage(1);
+                }}
+              >
+                WE ARE HIRING
+              </Button>
             </Space>
           </div>
 
           {/* Search + Select (stacked on mobile) */}
- <div className="mt-2 space-y-3 sm:space-y-0">
-      {/* Mobile-first stacked layout */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        {/* Search Input */}
-        <div className="flex-1 min-w-0">
-          <Search
-            allowClear
-            placeholder={isMobile ? "Search..." : "Search by service or mobile…"}
-            value={searchText}
-            onChange={(e) => {
-              setSearchText(e.target.value);
-              setCurrentPage(1);
-            }}
-            className={`w-full ${isMobile ? "search-mobile" : "search-desktop"}`}
-            size={isMobile ? "large" : "middle"} // Large on mobile for better touch targets
-            prefix={<SearchOutlined style={{ 
-              fontSize: isMobile ? 16 : 14, 
-              color: '#8c8c8c' 
-            }} />}
-            style={{
-              fontSize: isMobile ? '16px' : '14px', // Prevents zoom on iOS
-            }}
-          />
-        </div>
+          <div className="mt-2 space-y-3 sm:space-y-0">
+            {/* Mobile-first stacked layout */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              {/* Search Input */}
+              <div className="flex-1 min-w-0">
+                <Search
+                  allowClear
+                  placeholder={
+                    isMobile ? "Search..." : "Search by service or mobile…"
+                  }
+                  value={searchText}
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full ${
+                    isMobile ? "search-mobile" : "search-desktop"
+                  }`}
+                  size={isMobile ? "large" : "middle"} // Large on mobile for better touch targets
+                  prefix={
+                    <SearchOutlined
+                      style={{
+                        fontSize: isMobile ? 16 : 14,
+                        color: "#8c8c8c",
+                      }}
+                    />
+                  }
+                  style={{
+                    fontSize: isMobile ? "16px" : "14px", // Prevents zoom on iOS
+                  }}
+                />
+              </div>
 
-   {/* Service Filter Select */}
-<div
-  className={`w-full sm:w-72 lg:w-80 ${
-    isMobile ? "max-w-[260px] self-start" : ""
-  }`}
->
-  <Select
-    mode="multiple"
-    size={isMobile ? "middle" : "middle"}             // smaller height on mobile
-    maxTagCount={isMobile ? 0 : 2}
-    maxTagTextLength={isMobile ? 8 : 12}
-    allowClear
-    showSearch
-    placeholder={isMobile ? "Filter" : "Filter Services"}
-    options={serviceOptions}
-    value={serviceFilter}
-    onChange={(vals) => {
-      setServiceFilter(vals || []);
-      setCurrentPage(1);
-    }}
-    className="w-full"
-    style={isMobile ? { height: 40 } : undefined}     // keep control neat
-    dropdownMatchSelectWidth={true}                    // dropdown = control width (prevents overflow)
-    dropdownStyle={{ maxHeight: isMobile ? 300 : 320, zIndex: 1050 }}
-    filterOption={(input, option) =>
-      (option?.label as string).toLowerCase().includes(input.toLowerCase())
-    }
-    showArrow={!isMobile || serviceFilter.length === 0}
-    tagRender={
-      isMobile
-        ? undefined
-        : (props) => <span className="ant-select-selection-item">{props.label}</span>
-    }
-  />
-</div>
-
-      </div>
-</div>
-
+              {/* Service Filter Select */}
+              <div
+                className={`w-full sm:w-72 lg:w-80 ${
+                  isMobile ? "max-w-[260px] self-start" : ""
+                }`}
+              >
+                <Select
+                  mode="multiple"
+                  size={isMobile ? "middle" : "middle"} // smaller height on mobile
+                  maxTagCount={isMobile ? 0 : 2}
+                  maxTagTextLength={isMobile ? 8 : 12}
+                  allowClear
+                  showSearch
+                  placeholder={isMobile ? "Filter" : "Filter Services"}
+                  options={serviceOptions}
+                  value={serviceFilter}
+                  onChange={(vals) => {
+                    setServiceFilter(vals || []);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full"
+                  style={isMobile ? { height: 40 } : undefined} // keep control neat
+                  dropdownMatchSelectWidth={true} // dropdown = control width (prevents overflow)
+                  dropdownStyle={{
+                    maxHeight: isMobile ? 300 : 320,
+                    zIndex: 1050,
+                  }}
+                  filterOption={(input, option) =>
+                    (option?.label as string)
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                  showArrow={!isMobile || serviceFilter.length === 0}
+                  tagRender={
+                    isMobile
+                      ? undefined
+                      : (props) => (
+                          <span className="ant-select-selection-item">
+                            {props.label}
+                          </span>
+                        )
+                  }
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Quick Filters (top row; non-sticky) */}
           <div
@@ -434,7 +518,10 @@ const Admin: React.FC = () => {
             style={{ scrollbarWidth: "thin", WebkitOverflowScrolling: "touch" }}
           >
             {quickFilters.map((filter) => {
-              const selected = filter === "All" ? serviceFilter.length === 0 : serviceFilter.includes(filter);
+              const selected =
+                filter === "All"
+                  ? serviceFilter.length === 0
+                  : serviceFilter.includes(filter);
               return (
                 <Button
                   key={filter}
@@ -457,23 +544,43 @@ const Admin: React.FC = () => {
           <StatCard title="Total" value={filteredRows.length} />
           <StatCard
             title="Samples"
-            value={filteredRows.filter((o) => (o.askOxyOfers || "").toUpperCase().includes("SAMPLE")).length}
+            value={
+              filteredRows.filter((o) =>
+                (o.askOxyOfers || "").toUpperCase().includes("SAMPLE")
+              ).length
+            }
           />
           <StatCard
             title="Rudraksha"
-            value={filteredRows.filter((o) => (o.askOxyOfers || "").toUpperCase().includes("RUDRAK")).length}
+            value={
+              filteredRows.filter((o) =>
+                (o.askOxyOfers || "").toUpperCase().includes("RUDRAK")
+              ).length
+            }
           />
           <StatCard
             title="Free AI"
-            value={filteredRows.filter((o) => (o.askOxyOfers || "").toUpperCase().includes("FREEAI")).length}
+            value={
+              filteredRows.filter((o) =>
+                (o.askOxyOfers || "").toUpperCase().includes("FREEAI")
+              ).length
+            }
           />
           <StatCard
             title="Study"
-            value={filteredRows.filter((o) => (o.askOxyOfers || "").toUpperCase().includes("STUDY")).length}
+            value={
+              filteredRows.filter((o) =>
+                (o.askOxyOfers || "").toUpperCase().includes("STUDY")
+              ).length
+            }
           />
           <StatCard
             title="Legal"
-            value={filteredRows.filter((o) => (o.askOxyOfers || "").toUpperCase().includes("LEGAL")).length}
+            value={
+              filteredRows.filter((o) =>
+                (o.askOxyOfers || "").toUpperCase().includes("LEGAL")
+              ).length
+            }
           />
         </div>
       </div>
@@ -482,7 +589,11 @@ const Admin: React.FC = () => {
       <div
         className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 pb-6"
         // Reserve space for bottom dock on iOS/Android
-        style={{ paddingBottom: isMobile ? "calc(env(safe-area-inset-bottom, 0px) + 64px)" : undefined }}
+        style={{
+          paddingBottom: isMobile
+            ? "calc(env(safe-area-inset-bottom, 0px) + 64px)"
+            : undefined,
+        }}
       >
         {loading ? (
           <div className="bg-white border rounded-xl p-4">
@@ -491,7 +602,11 @@ const Admin: React.FC = () => {
         ) : error ? (
           <div className="bg-white border rounded-xl p-6 text-center">
             <p className="text-red-600">{error}</p>
-            <Button className="mt-3" onClick={fetchAll} icon={<ReloadOutlined />}>
+            <Button
+              className="mt-3"
+              onClick={fetchAll}
+              icon={<ReloadOutlined />}
+            >
               Retry
             </Button>
           </div>
@@ -509,7 +624,12 @@ const Admin: React.FC = () => {
               </span>
               {filteredRows.length > pageSize && (
                 <div className="flex items-center gap-1">
-                  <Button size="small" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)} className="h-8">
+                  <Button
+                    size="small"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                    className="h-8"
+                  >
                     ‹
                   </Button>
                   <span className="text-xs px-2 py-1">
@@ -517,7 +637,9 @@ const Admin: React.FC = () => {
                   </span>
                   <Button
                     size="small"
-                    disabled={currentPage >= Math.ceil(filteredRows.length / pageSize)}
+                    disabled={
+                      currentPage >= Math.ceil(filteredRows.length / pageSize)
+                    }
                     onClick={() => setCurrentPage((p) => p + 1)}
                     className="h-8"
                   >
@@ -546,25 +668,31 @@ const Admin: React.FC = () => {
                     style={{ touchAction: "manipulation" }}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="font-medium text-gray-900 text-[15px]">{o.mobileNumber || "N/A"}</div>
+                      <div className="font-medium text-gray-900 text-[15px]">
+                        {o.mobileNumber || "N/A"}
+                      </div>
                       <div className="text-[11px] text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">
                         #{startIndex + i + 1}
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <Tag color={tagColor(o.askOxyOfers)} className="text-[11px] px-2 py-0.5 rounded-md w-fit">
+                      <Tag
+                        color={tagColor(o.askOxyOfers)}
+                        className="text-[11px] px-2 py-0.5 rounded-md w-fit"
+                      >
                         {(o.askOxyOfers || "N/A").length > 22
                           ? `${(o.askOxyOfers || "N/A").substring(0, 22)}…`
                           : o.askOxyOfers || "N/A"}
                       </Tag>
-                      <div className="text-[11px] text-gray-500">{fmt(o._createdAtMs || o.createdAt)}</div>
+                      <div className="text-[11px] text-gray-500">
+                        {fmt(o._createdAtMs || o.createdAt)}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
           </div>
         ) : (
           /* --------- DESKTOP / LARGE TABLE --------- */
@@ -572,7 +700,9 @@ const Admin: React.FC = () => {
             <Table
               dataSource={filteredRows.map((o, i) => ({
                 ...o,
-                key: `${o.userId ?? "x"}-${o.mobileNumber ?? "na"}-${i}-${o._createdAtMs ?? 0}`,
+                key: `${o.userId ?? "x"}-${o.mobileNumber ?? "na"}-${i}-${
+                  o._createdAtMs ?? 0
+                }`,
               }))}
               columns={columns}
               pagination={{
@@ -581,7 +711,8 @@ const Admin: React.FC = () => {
                 total: filteredRows.length,
                 onChange: (p) => setCurrentPage(p),
                 showSizeChanger: false,
-                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} items`,
                 size: "small",
               }}
               scroll={{ x: 720, y: 520, scrollToFirstRowOnChange: true }}
@@ -590,17 +721,23 @@ const Admin: React.FC = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };
 
 /** ========= Compact stat card ========= */
-const StatCard: React.FC<{ title: string; value: number }> = ({ title, value }) => {
+const StatCard: React.FC<{ title: string; value: number }> = ({
+  title,
+  value,
+}) => {
   return (
     <div className="rounded-lg border bg-white p-2 shadow-sm">
-      <div className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">{title}</div>
-      <div className="mt-0.5 text-sm sm:text-lg font-bold text-gray-800">{value}</div>
+      <div className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">
+        {title}
+      </div>
+      <div className="mt-0.5 text-sm sm:text-lg font-bold text-gray-800">
+        {value}
+      </div>
     </div>
   );
 };

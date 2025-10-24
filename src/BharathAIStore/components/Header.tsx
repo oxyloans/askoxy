@@ -37,6 +37,11 @@ const Header: React.FC<HeaderProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+   useEffect(() => {
+     sessionStorage.removeItem("primaryType");
+     sessionStorage.removeItem("fromAISTore");
+     sessionStorage.removeItem("redirectPath");
+   }, []);
 const handleLogin = () => {
   try {
     setLoading(true);

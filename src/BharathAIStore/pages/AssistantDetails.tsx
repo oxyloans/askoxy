@@ -134,6 +134,11 @@ const AssistantDetails: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showMobileFiles, setShowMobileFiles] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
+  useEffect(() => {
+    sessionStorage.removeItem("primaryType");
+    sessionStorage.removeItem("fromAISTore");
+    sessionStorage.removeItem("redirectPath");
+  }, []);
   const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
     return saved ? JSON.parse(saved) : true;

@@ -75,6 +75,18 @@ const AllCampaignsDetails: React.FC = () => {
     addServiceType: "", // 👈 NEW
   });
 
+  // Put this near other helpers
+  const resolveAddServiceType = (
+    c?: Campaign | null,
+    tab?: string
+  ): "WEAREHIRING" | null => {
+    // If the campaign itself is flagged, keep it.
+    if (c?.addServiceType === "WEAREHIRING") return "WEAREHIRING";
+    // Or if user is on the We Are Hiring tab, treat it as hiring.
+    if ((tab || activeTab) === "wearehiring") return "WEAREHIRING";
+    return null;
+  };
+
   // 1) Add these states near your other useState hooks
   const [activeTab, setActiveTab] = useState<string>(() => {
     return localStorage.getItem("allCampaigns_activeTab") || "wearehiring";
@@ -169,10 +181,14 @@ const AllCampaignsDetails: React.FC = () => {
             {
               askOxyCampaignDto: [
                 {
-                  addServiceType: campaign.addServiceType || "",
+                  // IMPORTANT: null when not hiring, "WEAREHIRING" only for hiring
+                  addServiceType:
+                    campaign.addServiceType === "WEAREHIRING"
+                      ? "WEAREHIRING"
+                      : null,
                   campaignDescription: campaign.campaignDescription,
                   campaignId: campaign.campaignId,
-                  campaignStatus: !campaign.campaignStatus, // 👈 toggle active/inactive
+                  campaignStatus: !campaign.campaignStatus, // toggle
                   campaignType: campaign.campaignType,
                   campaignTypeAddBy: campaign.campaignTypeAddBy,
                   campainInputType: campaign.campainInputType,
@@ -457,12 +473,13 @@ const AllCampaignsDetails: React.FC = () => {
     const requestPayload = {
       askOxyCampaignDto: [
         {
+          // NEW: set addServiceType only for WEAREHIRING, else null
+          addServiceType: resolveAddServiceType(currentCampaign, activeTab),
           campaignDescription: formData.campaignDescription,
           campaignId: formData.campaignId,
           campaignType: formData.campaignType,
           campaignTypeAddBy: formData.campaignTypeAddBy,
           campainInputType: formData.campainInputType,
-          // Include socialMediaCaption in the payload
           ...(currentCampaign?.campainInputType === "BLOG" && {
             socialMediaCaption: formData.socialMediaCaption,
           }),

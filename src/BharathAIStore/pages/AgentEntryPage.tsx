@@ -137,7 +137,7 @@ const AgentEntryPage: React.FC = () => {
           outline: none;
           text-align: center;
           position: relative;
-          overflow: hidden;
+          overflow: none;
           min-height: 160px;
         }
 

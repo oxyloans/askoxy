@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { FaWhatsapp, FaGoogle } from "react-icons/fa6";
 import axios from "axios";
@@ -741,8 +742,8 @@ const WhatsappRegister = () => {
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
-        <div className="bg-purple-600 p-3 sm:p-4 lg:p-6 relative">
-          <h2 className="text-2xl font-bold text-white text-center">
+        <div className="bg-purple-600 p-3 sm:p-4 lg:p-4 relative">
+          <h2 className="text-xl font-bold text-white text-center">
             {primaryType === "STUDENT"
               ? "Register to Study Abroad"
               : primaryType === "AGENT"
@@ -778,7 +779,6 @@ const WhatsappRegister = () => {
             </div>
           </div>
         </div>
-
         {showSuccessPopup && (
           <div className="mx-6 mt-6 animate-fadeIn">
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
@@ -787,7 +787,6 @@ const WhatsappRegister = () => {
             </div>
           </div>
         )}
-
         {error && (
           <div className="mx-6 mt-6 animate-fadeIn">
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
@@ -796,7 +795,6 @@ const WhatsappRegister = () => {
             </div>
           </div>
         )}
-
         <div className="p-6">
           {!isRegistering ? (
             <>
@@ -1035,7 +1033,7 @@ const WhatsappRegister = () => {
               </p>
             </div>
           )}
-          {/* {showGoogleButton && primaryType === "CUSTOMER" && (
+          {showGoogleButton && primaryType === "CUSTOMER" && (
             <div className="flex items-center my-6">
               <div className="flex-1 border-t border-gray-300"></div>
               <span className="px-4 text-sm text-gray-500 bg-white">or</span>
@@ -1089,19 +1087,23 @@ const WhatsappRegister = () => {
                 </button>
               )}
             </div>
-          )} */}
+          )}
         </div>
 
-        <div className="border-t p-6 bg-gray-50">
-          <p className="text-sm text-gray-600 text-center">
+        <div className="border-t bg-gray-50 p-3 flex justify-center items-center">
+          <p className="text-sm text-gray-600 text-center max-w-full sm:max-w-xs px-2 sm:px-4 leading-relaxed">
             Already registered?{" "}
-            <button
-              onClick={handleLoginRedirectClick}
-              className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group"
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault(); // stops page reload
+                handleLoginRedirectClick();
+              }}
+              className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group cursor-pointer"
             >
               Login Now
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </a>
           </p>
         </div>
       </div>

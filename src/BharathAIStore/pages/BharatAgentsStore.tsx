@@ -571,6 +571,11 @@ const BharatAgentsStore: React.FC = () => {
   //     setLoading(false);
   //   }
   // };
+  useEffect(() => {
+    sessionStorage.removeItem("primaryType");
+    sessionStorage.removeItem("fromAISTore");
+    sessionStorage.removeItem("redirectPath");
+  }, []);
 
   const handleLogin = () => {
     try {

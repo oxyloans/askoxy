@@ -42,25 +42,38 @@ const HiringPages: React.FC = () => {
   const getInputType = (c: Campaign & { campainInputType?: string; campaignInputType?: string }) =>
     c?.campainInputType ?? c?.campaignInputType ?? "";
 
-  const handleCampaignClick = (campaign: Campaign & { campainInputType?: string; campaignInputType?: string }) => {
-    if (!campaign?.campaignId || !campaign?.campaignType) return;
-    const inputType = getInputType(campaign);
-    const slug = slugify(campaign.campaignType);
-    const shortId = campaign.campaignId.slice(-4);
+const handleCampaignClick = (
+  campaign: Campaign & { campainInputType?: string; campaignInputType?: string }
+) => {
+  if (!campaign?.campaignId || !campaign?.campaignType) return;
 
-    if (inputType === "SERVICE" || inputType === "PRODUCT") {
-      navigate(`${base}/services/${shortId}/${slug}`);
-      return;
-    }
-    if (inputType === "BLOG") {
-      navigate(`${base}/blog/${shortId}/${slug}`);
-      return;
-    }
-    if (inputType === "CATEGORY") {
-      navigate(`${base}/categories/${shortId}/${slug}`);
-      return;
-    }
-  };
+  const inputType = getInputType(campaign);
+  const slug = slugify(campaign.campaignType);
+  const shortId = campaign.campaignId.slice(-4);
+
+  // Determine target path
+  let targetPath = "";
+  if (inputType === "SERVICE" || inputType === "PRODUCT") {
+    targetPath = `${base}/services/${shortId}/${slug}`;
+  } else if (inputType === "BLOG") {
+    targetPath = `${base}/blog/${shortId}/${slug}`;
+  } else if (inputType === "CATEGORY") {
+    targetPath = `${base}/categories/${shortId}/${slug}`;
+  }
+
+  if (!targetPath) return;
+
+  // ✅ If not logged in, store redirect path and go to login
+  if (!accessToken) {
+    localStorage.setItem("redirectAfterLogin", targetPath);
+    navigate("/login"); // change if your login route differs
+    return;
+  }
+
+  // ✅ If logged in, go directly
+  navigate(targetPath);
+};
+
 
   const getPrimaryImageUrl = (c: any) => {
     const imgs = c?.imageUrls as Array<{ imageUrl?: string; status?: boolean }> | undefined;

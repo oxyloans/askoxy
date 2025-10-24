@@ -180,6 +180,32 @@ const ChatBasedAgent: React.FC = () => {
     localStorage.getItem("userId")
   );
 
+  const heroInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const ONE_LINE_PX = 24;
+  const [autoGrow, setAutoGrow] = useState(true);
+
+  const resetComposerHeight = () => {
+    if (heroInputRef.current) {
+      heroInputRef.current.style.height = `${ONE_LINE_PX}px`;
+      heroInputRef.current.style.overflowY = "hidden";
+    }
+    if (chatInputRef.current) {
+      chatInputRef.current.style.height = `${ONE_LINE_PX}px`;
+      chatInputRef.current.style.overflowY = "hidden";
+    }
+  };
+
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el || !autoGrow) return; // ⬅️ only when autoGrow is true
+    el.style.height = "auto";
+    const max = 160;
+    const next = Math.min(el.scrollHeight, max);
+    el.style.height = `${next}px`;
+    el.style.overflowY = el.scrollHeight > max ? "auto" : "hidden";
+  };
+
   const [isRecording, setIsRecording] = useState(false);
 
   const [isXs, setIsXs] = useState<boolean>(() =>
@@ -242,16 +268,6 @@ const ChatBasedAgent: React.FC = () => {
 
     recognition.start();
   };
-
-  const safeAssistantIdFromResponse = (data: any): string | null =>
-    data?.assistantId ||
-    data?.data?.assistantId ||
-    data?.result?.assistantId ||
-    data?.payload?.assistantId ||
-    null;
-
-  // Keep the most recently-created assistantId
-  const [createdAssistantId, setCreatedAssistantId] = useState<string>("");
 
   const handleStop = () => {
     isStopped.current = true;
@@ -341,6 +357,13 @@ const ChatBasedAgent: React.FC = () => {
       ro?.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (!autoGrow) return;
+    // Resize both composers defensively; only the mounted one will take effect.
+    autoResize(heroInputRef.current);
+    autoResize(chatInputRef.current);
+  }, [input, autoGrow]);
 
   // Loader messages
   const loadingMessages: string[] = [
@@ -434,12 +457,8 @@ const ChatBasedAgent: React.FC = () => {
       content: m.content,
     }));
 
-  /** AGENT CHAT — uses MAIN agent id always, but can pass assistantId for routing */
-  const postAgentChat = async (
-    agentId: string,
-    history: APIMessage[],
-    opts?: { assistantId?: string }
-  ) => {
+  /** AGENT CHAT — uses MAIN agent id always */
+  const postAgentChat = async (agentId: string, history: APIMessage[]) => {
     if (!agentId) throw new Error("agentId missing for chat call");
     const headers = new AxiosHeaders();
     headers.set("Accept", "application/json");
@@ -447,57 +466,12 @@ const ChatBasedAgent: React.FC = () => {
     const auth = getAuthHeaders();
     if (auth.Authorization) headers.set("Authorization", auth.Authorization);
 
-    const body: any = { agentId, userId, messageHistory: history };
-    if (opts?.assistantId) body.assistantId = opts.assistantId;
-
     const { data } = await axios.post(
       `${BASE_URL}/ai-service/agent/agentChat`,
-      body,
+      { agentId, userId, messageHistory: history },
       { headers }
     );
     return data;
-  };
-
-  /** Fire one welcome chat once assistant is created */
-  const triggerWelcomeChat = async (agentId: string, assistantId?: string) => {
-    try {
-      // Seed a simple first question. You can customize this string.
-      const firstUser: ChatMessage = {
-        role: "user",
-        content: "Give a quick 2-line intro about what you can do.",
-      };
-      const apiHistory = buildMessageHistory([firstUser]);
-
-      // Show user's seeded message in UI (so the flow looks natural)
-      setMessages((prev) => [...prev, firstUser]);
-      setLoading(true);
-
-      const resp = await postAgentChat(agentId, apiHistory, { assistantId });
-
-      let answer = "";
-      if (typeof resp === "string") answer = resp;
-      else if (resp && typeof resp === "object")
-        answer = resp.answer ?? resp.content ?? resp.text ?? "";
-
-      const assistantMsg: ChatMessage = {
-        role: "assistant",
-        content:
-          `✅ **Assistant created successfully!**\n\n**Assistant ID:** \`${
-            assistantId || "N/A"
-          }\`\n\n` +
-          (String(answer || "").trim() || "Hello! I'm ready to help."),
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch (e: any) {
-      message.error(
-        e?.response?.data?.message ||
-          e?.message ||
-          "Failed to run the first assistant chat."
-      );
-    } finally {
-      setLoading(false);
-    }
   };
 
   /** Create parent agent once (first user msg becomes headerTitle) */
@@ -524,26 +498,12 @@ const ChatBasedAgent: React.FC = () => {
           }
         );
 
-        const newAgentId = safeAgentIdFromResponse(data);
-        const newAssistantId = safeAssistantIdFromResponse(data);
-
-        if (!newAgentId)
+        const newId = safeAgentIdFromResponse(data);
+        if (!newId)
           throw new Error("AgentId not found in createAgentPublish response");
 
-        // Keep both IDs
-        setCurrentAgentId(newAgentId);
-        if (newAssistantId) {
-          setCreatedAssistantId(newAssistantId);
-          message.success(`Assistant created. ID: ${newAssistantId}`);
-        } else {
-          message.success(`Assistant created.`);
-        }
-
-        // 🔔 Immediately run ONE welcome chat, passing assistantId so backend can route it.
-        // Note: We use the MAIN_AGENT_ID for your chat router, but pass newAssistantId.
-        await triggerWelcomeChat(MAIN_AGENT_ID, newAssistantId || undefined);
-
-        return newAgentId;
+        setCurrentAgentId(newId);
+        return newId;
       } catch (e: any) {
         message.error(
           e?.response?.data?.message || e?.message || "Failed to create agent."
@@ -556,7 +516,6 @@ const ChatBasedAgent: React.FC = () => {
     [userId]
   );
 
-  /** Save draft fields each step (PATCH) */
   const persistDraft = useCallback(
     async (agentId: string) => {
       setSavingStep(true);
@@ -578,13 +537,13 @@ const ChatBasedAgent: React.FC = () => {
             userId,
             mainAgentId: MAIN_AGENT_ID,
             mainAssistantId: MAIN_ASSISTANT_ID,
-            agentName,
-            description,
-            acheivements,
-            targetUser,
-            instructions,
-            conStarter1,
-            conStarter2,
+            agentName: agentName || null,
+            description: description || null,
+            acheivements: acheivements || null,
+            targetUser: targetUser || null,
+            instructions: instructions?.trim() ? instructions : null, // ✅ Force null when empty
+            conStarter1: conStarter1 || null,
+            conStarter2: conStarter2 || null,
           },
           {
             headers: {
@@ -648,6 +607,11 @@ const ChatBasedAgent: React.FC = () => {
       const userMsg: ChatMessage = { role: "user", content };
       setMessages((prev) => [...prev, userMsg]);
       if (!prompt) setInput("");
+      setAutoGrow(true); // default back to normal typing behavior
+      setTimeout(() => {
+        autoResize(heroInputRef.current);
+        autoResize(chatInputRef.current);
+      }, 0);
 
       // 🔔 Set loading BEFORE calling API so typing/loader shows immediately
       setLoading(true);
@@ -1006,7 +970,24 @@ const ChatBasedAgent: React.FC = () => {
                       {promptsToShow.map((prompt: string, idx: number) => (
                         <button
                           key={`${prompt}-${idx}`}
-                          onClick={() => setInput(prompt)}
+                          onClick={() => {
+                            // Put the prompt in the textarea
+                            setInput(prompt);
+
+                            // ✅ Re-enable auto-grow for programmatic fills
+                            setAutoGrow(true);
+
+                            // ✅ Resize whichever composer is on screen
+                            setTimeout(() => {
+                              if (showHero) {
+                                autoResize(heroInputRef.current);
+                                heroInputRef.current?.focus();
+                              } else {
+                                autoResize(chatInputRef.current);
+                                chatInputRef.current?.focus();
+                              }
+                            }, 0);
+                          }}
                           className="w-full p-4 rounded-lg shadow bg-white hover:bg-gray-50 transition text-gray-700 text-left text-sm"
                           style={{ WebkitTapHighlightColor: "transparent" }}
                         >
@@ -1022,11 +1003,27 @@ const ChatBasedAgent: React.FC = () => {
           {/* ---------- Composer (fixed bottom + centered alignment) ---------- */}
           <div className="fixed left-1/2 -translate-x-1/2 bottom-6 w-full max-w-4xl px-4">
             <div className="border rounded-2xl bg-white shadow-lg flex items-center p-2">
-              {/* Textarea */}
               <textarea
+                ref={heroInputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  autoResize(heroInputRef.current); // will no-op if autoGrow=false
+                }}
+                onInput={(e) => autoResize(e.currentTarget)} // same gate
                 onKeyDown={async (e) => {
+                  // Turn on auto-grow only when user starts typing (not arrows/ctrl etc.)
+                  if (
+                    !autoGrow &&
+                    (e.key.length === 1 ||
+                      e.key === "Backspace" ||
+                      e.key === "Delete" ||
+                      e.key === "Paste")
+                  ) {
+                    setAutoGrow(true);
+                    // after enabling, resize once to fit current content
+                    setTimeout(() => autoResize(heroInputRef.current), 0);
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     await sendMessage();
@@ -1036,8 +1033,9 @@ const ChatBasedAgent: React.FC = () => {
                   assistant?.composerHint ||
                   "Choose one AI role to create agent…"
                 }
-                className="flex-1 resize-none outline-none px-4 py-3 text-sm md:text-base rounded-xl"
+                className="flex-1 outline-none px-4 py-3 text-sm md:text-base rounded-xl resize-none overflow-hidden"
                 rows={1}
+                style={{ minHeight: ONE_LINE_PX, maxHeight: 160 }}
               />
 
               {/* Send Button */}
@@ -1085,9 +1083,26 @@ const ChatBasedAgent: React.FC = () => {
             <div className="w-full max-w-4xl flex items-center border border-gray-200 bg-white rounded-2xl shadow-sm px-3 py-2 sm:py-3">
               {/* Middle: Textarea */}
               <textarea
+                ref={chatInputRef}
                 value={input}
-                onChange={(e) => !loading && setInput(e.target.value)}
+                onChange={(e) => {
+                  if (!loading) {
+                    setInput(e.target.value);
+                    autoResize(chatInputRef.current); // gated by autoGrow
+                  }
+                }}
+                onInput={(e) => !loading && autoResize(e.currentTarget)}
                 onKeyDown={async (e) => {
+                  if (
+                    !autoGrow &&
+                    (e.key.length === 1 ||
+                      e.key === "Backspace" ||
+                      e.key === "Delete" ||
+                      e.key === "Paste")
+                  ) {
+                    setAutoGrow(true);
+                    setTimeout(() => autoResize(chatInputRef.current), 0);
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     if (!loading && input.trim()) await sendMessage();
@@ -1095,8 +1110,8 @@ const ChatBasedAgent: React.FC = () => {
                 }}
                 placeholder={assistant?.composerHint || "Ask anything…"}
                 rows={1}
-                className="flex-1 mx-3 bg-transparent outline-none resize-none text-sm sm:text-base text-gray-800 placeholder-gray-400 max-h-32 "
-                style={{ minHeight: "24px" }}
+                className="flex-1 mx-3 bg-transparent outline-none resize-none text-sm sm:text-base text-gray-800 placeholder-gray-400 overflow-hidden"
+                style={{ minHeight: ONE_LINE_PX, maxHeight: 160 }}
                 disabled={loading}
               />
 
