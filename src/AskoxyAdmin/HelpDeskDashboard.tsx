@@ -144,104 +144,196 @@ const HelpDeskDashboard: React.FC = () => {
     setFilteredData(result);
   }, [callerData, selectedCaller, searchUserId]);
 
-  const handleUserDetailsClick = async (userId: string) => {
-    setLoadingRows((prev) => ({ ...prev, [userId]: true }));
+const handleUserDetailsClick = async (userId: string) => {
+  setLoadingRows((prev) => ({ ...prev, [userId]: true }));
 
-    const buildAddress = (src: any) =>
-      [src.flatNo, src.landMark, src.address, src.pincode]
-        .filter((x) => x && String(x).trim())
-        .join(", ") || "No";
+  const buildAddress = (src: any) => {
+    // supports both user & advocate shapes
+    const parts = [
+      src.flatNo,
+      src.flatNumber,
+      src.houseNo,
+      src.addressLine1 || src.address,
+      src.addressLine2,
+      src.landMark || src.landmark,
+      src.area,
+      src.city,
+      src.state,
+      src.pincode,
+    ]
+      .filter((x) => x && String(x).trim())
+      .join(", ");
+    return parts || "No";
+  };
 
-    const normalizeFromListApi = (user: any): UserData => {
-      const fullName = `${user.userName || user.firstName || ""} ${
-        user.lastName || ""
-      }`.trim();
-      const mobile =
-        (user.mobileNumber && String(user.mobileNumber).trim()) ||
-        (user.whastappNumber && String(user.whastappNumber).trim()) ||
-        "";
-      const whatsapp =
-        (user.whastappNumber && String(user.whastappNumber).trim()) || "";
+  const pickPhone = (obj: any) =>
+    (obj.mobileNumber && String(obj.mobileNumber).trim()) ||
+    (obj.whastappNumber && String(obj.whastappNumber).trim()) ||
+    (obj.whatsappNumber && String(obj.whatsappNumber).trim()) ||
+    "";
 
-      return {
-        userId: user.userId,
-        fullName: fullName || "—",
-        mobileNumber: mobile || "—",
-        whatsappNumber: whatsapp || "—",
-        userType: user.userType || "N/A",
-        address: buildAddress(user),
-      };
+  const normalizeFromListApi = (user: any): UserData => {
+    const fullName = `${user.userName || user.firstName || ""} ${
+      user.lastName || ""
+    }`.trim();
+    const mobile = pickPhone(user);
+    const whatsapp =
+      (user.whastappNumber && String(user.whastappNumber).trim()) ||
+      (user.whatsappNumber && String(user.whatsappNumber).trim()) ||
+      "";
+    return {
+      userId: user.userId,
+      fullName: fullName || "—",
+      mobileNumber: mobile || "—",
+      whatsappNumber: whatsapp || "—",
+      userType: user.userType || user.role || "N/A",
+      address: buildAddress(user),
     };
+  };
 
-    const normalizeFromSingleApi = (user: any): UserData => {
-      // matches response sample you shared for getDataWithMobileOrUserId
-      const fullName = `${user.firstName || user.userName || ""} ${
-        user.lastName || ""
-      }`.trim();
-      const mobile =
-        (user.mobileNumber && String(user.mobileNumber).trim()) ||
-        (user.whastappNumber && String(user.whastappNumber).trim()) ||
-        "";
-      const whatsapp =
-        (user.whastappNumber && String(user.whastappNumber).trim()) || "";
-
-      return {
-        userId: user.userId,
-        fullName: fullName || "—",
-        mobileNumber: mobile || "—",
-        whatsappNumber: whatsapp || "—",
-        userType: user.userType || "N/A",
-        address: buildAddress(user),
-      };
+  const normalizeFromSingleApi = (user: any): UserData => {
+    const fullName = `${user.firstName || user.userName || ""} ${
+      user.lastName || ""
+    }`.trim();
+    const mobile = pickPhone(user);
+    const whatsapp =
+      (user.whastappNumber && String(user.whastappNumber).trim()) ||
+      (user.whatsappNumber && String(user.whatsappNumber).trim()) ||
+      "";
+    return {
+      userId: user.userId,
+      fullName: fullName || "—",
+      mobileNumber: mobile || "—",
+      whatsappNumber: whatsapp || "—",
+      userType: user.userType || user.role || "N/A",
+      address: buildAddress(user),
     };
+  };
 
+  // Advocate API might have slightly different keys (e.g., advocateName)
+  const normalizeFromAdvocateApi = (adv: any): UserData => {
+    const nameGuess =
+      adv.fullName ||
+      adv.advocateName ||
+      `${adv.firstName || adv.userName || ""} ${adv.lastName || ""}`.trim();
+    const mobile = pickPhone(adv);
+    const whatsapp =
+      (adv.whastappNumber && String(adv.whastappNumber).trim()) ||
+      (adv.whatsappNumber && String(adv.whatsappNumber).trim()) ||
+      "";
+    return {
+      userId: adv.userId || adv.advocateUserId || adv.id || userId,
+      fullName: (nameGuess && String(nameGuess).trim()) || "—",
+      mobileNumber: mobile || "—",
+      whatsappNumber: whatsapp || "—",
+      userType: adv.userType || adv.role || "ADVOCATE",
+      address: buildAddress(adv),
+    };
+  };
+
+  try {
+    // 1) PRIMARY: POST /getDataWithMobileOrWhatsappOrUserId
+    const primary = await axios.post(
+      `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
+      { userId: userId || null },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const list = primary?.data?.activeUsersResponse || [];
+    if (primary.status === 200 && Array.isArray(list) && list.length > 0) {
+      const transformed = normalizeFromListApi(list[0]);
+      setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+      return;
+    }
+
+    // 2) FALLBACK: GET /getDataWithMobileOrUserId?userId=...
+    const fallback = await axios.get(
+      `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
+      { params: { userId } }
+    );
+
+    if (fallback?.status === 200 && fallback?.data) {
+      const transformed = normalizeFromSingleApi(fallback.data);
+      setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+      return;
+    }
+
+    // 3) FINAL FALLBACK (Kukatpally style):
+    //    /getAdvocatesDataWithMobileOrUserId
+    // Prefer GET with params; if API expects POST, we'll try that too.
     try {
-      // 1) PRIMARY: POST /getDataWithMobileOrWhatsappOrUserId
-      const primary = await axios.post(
-        `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
-        { userId: userId || null },
-        { headers: { "Content-Type": "application/json" } }
+      const advGet = await axios.get(
+        `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
+        { params: { userId } }
       );
-
-      const list = primary?.data?.activeUsersResponse || [];
-      if (primary.status === 200 && Array.isArray(list) && list.length > 0) {
-        const transformed = normalizeFromListApi(list[0]);
+      if (advGet?.status === 200 && advGet?.data) {
+        const data = Array.isArray(advGet.data) ? advGet.data[0] : advGet.data;
+        const transformed = normalizeFromAdvocateApi(data);
         setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
         return;
       }
+    } catch {
+      // If GET fails (or API expects body), try POST
+      const advPost = await axios.post(
+        `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
+        { userId },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      if (advPost?.status === 200 && advPost?.data) {
+        const data = Array.isArray(advPost.data) ? advPost.data[0] : advPost.data;
+        const transformed = normalizeFromAdvocateApi(data);
+        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+        return;
+      }
+    }
 
-      // 2) FALLBACK: GET /getDataWithMobileOrUserId?userId=...
-      const fallback = await axios.get(
+    message.error("No user details found in all sources.");
+  } catch (error) {
+    // If primary threw an exception, still attempt the subsequent fallbacks:
+    try {
+      const fb = await axios.get(
         `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
         { params: { userId } }
       );
-
-      if (fallback?.status === 200 && fallback?.data) {
-        const transformed = normalizeFromSingleApi(fallback.data);
+      if (fb?.status === 200 && fb?.data) {
+        const transformed = normalizeFromSingleApi(fb.data);
         setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-      } else {
-        message.error("Failed to fetch user details");
+        return;
       }
-    } catch (error) {
+    } catch { /* swallow and continue */ }
+
+    try {
+      const advGet = await axios.get(
+        `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
+        { params: { userId } }
+      );
+      if (advGet?.status === 200 && advGet?.data) {
+        const data = Array.isArray(advGet.data) ? advGet.data[0] : advGet.data;
+        const transformed = normalizeFromAdvocateApi(data);
+        setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
+        return;
+      }
+    } catch {
       try {
-        // If primary threw, still attempt fallback once
-        const fb = await axios.get(
-          `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
-          { params: { userId } }
+        const advPost = await axios.post(
+          `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
+          { userId },
+          { headers: { "Content-Type": "application/json" } }
         );
-        if (fb?.status === 200 && fb?.data) {
-          const transformed = normalizeFromSingleApi(fb.data);
+        if (advPost?.status === 200 && advPost?.data) {
+          const data = Array.isArray(advPost.data) ? advPost.data[0] : advPost.data;
+          const transformed = normalizeFromAdvocateApi(data);
           setUserDetails((prev) => ({ ...prev, [userId]: transformed }));
-        } else {
-          message.error("Failed to fetch user details");
+          return;
         }
-      } catch (e) {
-        message.error("Failed to fetch user details");
+      } catch {
+        message.error("Failed to fetch user/advocate details");
       }
-    } finally {
-      setLoadingRows((prev) => ({ ...prev, [userId]: false }));
     }
-  };
+  } finally {
+    setLoadingRows((prev) => ({ ...prev, [userId]: false }));
+  }
+};
 
   const handleCommentChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,

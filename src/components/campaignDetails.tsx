@@ -343,7 +343,10 @@ const CampaignDetails: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Header (for logged-out) */}
-      <div className="px-4 pt-4">{!userId ? <Header1 /> : null}</div>
+    <div className={`px-4 ${!userId ? "pt-8 pb-4" : ""}`}>
+  {!userId ? <Header1 /> : null}
+</div>
+
 
       {/* Main Content */}
       <main className="flex-1 w-full px-4 pb-6">
@@ -701,7 +704,18 @@ const CampaignDetails: React.FC = () => {
       {/* Role selection modal */}
       {isRoleModalOpen && (
         <div className="fixed inset-0 bg-black/75 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
+       <div className="bg-white relative rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
+            <button
+  className="absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700"
+  onClick={() => {
+    setIsRoleModalOpen(false);
+    sessionStorage.removeItem("submitclicks");
+    setSelectedRole("");
+  }}
+  aria-label="Close"
+>
+  ×
+</button>
             <div className="text-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">
                 {campaign?.addServiceType === "WEAREHIRING"

@@ -701,9 +701,9 @@ const Home: React.FC = () => {
       id: "Cashew Offer",
       src: Cashew,
       alt: "Cashew Offer",
-      path: "/main/dashboard/products?category=Monsoon Magic",
+      path: "/main/dashboard/products?type=RICE&weight=1.0",
       onClick: () => {
-        navigate("/main/dashboard/products?category=Monsoon Magic");
+        navigate("/main/dashboard/products?type=RICE&weight=1.0");
       },
     },
     {

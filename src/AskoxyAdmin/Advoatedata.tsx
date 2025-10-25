@@ -8,6 +8,10 @@ import {
   Button,
   Card,
   Tag,
+  Input,
+  Empty,
+  Row,
+  Col,
 } from "antd";
 import axios from "axios";
 import BASE_URL from "../Config";
@@ -37,6 +41,8 @@ interface AdminComment {
   customerExpectedOrderDate: string | null;
 }
 
+type VHState = "idle" | "loading" | "ready" | "error";
+
 const COMMENTS_API =
   "https://meta.oxyloans.com/api/user-service/fetchAdminComments";
 
@@ -60,7 +66,9 @@ const AdvocatesDataPage: React.FC = () => {
   const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
   const storedUniqueId = localStorage.getItem("admin_uniquId");
 
-  // -------- data fetch ----------
+  // ---------------------------
+  // 1) List Data Fetch (unchanged)
+  // ---------------------------
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -154,6 +162,46 @@ const AdvocatesDataPage: React.FC = () => {
     return colorPalette[index];
   };
 
+  // ---------------------------
+  // 2) Search (new)
+  // ---------------------------
+  const [searchInput, setSearchInput] = useState("");
+  const [searchState, setSearchState] = useState<VHState>("idle");
+  const [searchResult, setSearchResult] = useState<any>(null);
+
+  const doSearch = async () => {
+    const q = (searchInput || "").trim();
+    if (!q) {
+      setSearchResult(null);
+      setSearchState("idle");
+      return;
+    }
+    try {
+      setSearchState("loading");
+      const isMobile = /^\d{8,}$/.test(q);
+      const params = isMobile ? { mobileNumber: q } : { userId: q };
+      const res = await axios.get(
+        `${BASE_URL}/user-service/getAdvocatesDataWithMobileOrUserId`,
+        { params }
+      );
+      setSearchResult(res.data || null);
+      setSearchState("ready");
+      if (!res.data) message.info("No user found for the given input");
+    } catch {
+      message.error("Search failed");
+      setSearchState("error");
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    setSearchResult(null);
+    setSearchState("idle");
+  };
+
+  // ---------------------------
+  // 3) Table
+  // ---------------------------
   const columns = [
     {
       title: "User ID",
@@ -261,11 +309,76 @@ const AdvocatesDataPage: React.FC = () => {
 
   return (
     <Card className="shadow-md rounded-lg border-0">
+      {/* Header + Search */}
       <div className="mb-3">
-        <h2 className="text-xl font-bold text-gray-800 m-0">All Advocates Data</h2>
- 
+        <Row gutter={[12, 12]} align="middle" justify="space-between">
+          <Col flex="auto">
+            <h2 className="text-xl font-bold text-gray-800 m-0">All Advocates Data</h2>
+          </Col>
+          <Col flex="360px">
+            <div className="flex gap-2">
+              <Input.Search
+                placeholder="Search Advocate by Mobile or User ID"
+                allowClear
+                enterButton="Search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onSearch={doSearch}
+              />
+              {searchState === "ready" && (
+                <Button onClick={clearSearch}>Clear</Button>
+              )}
+            </div>
+          </Col>
+        </Row>
       </div>
 
+      {/* Search Result Card */}
+      {searchState !== "idle" && (
+        <div className="mb-3">
+          <Card size="small" className="border border-gray-200">
+            {searchState === "loading" && (
+              <div className="py-2">
+                <Spin size="small" /> Searching…
+              </div>
+            )}
+            {searchState === "error" && <Empty description="Search failed" />}
+            {searchState === "ready" && searchResult && (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
+                <div>
+                  <div className="text-gray-500">Name</div>
+                  <div className="font-medium">
+                    {searchResult.userName || searchResult.name1 || "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Mobile</div>
+                  <div className="font-medium">
+                    {searchResult.mobileNumber || "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Whatsapp</div>
+                  <div className="font-medium">
+                    {searchResult.whastappNumber || searchResult.whatsappNumber || "—"}
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <div className="text-gray-500">Address</div>
+                  <div className="font-medium">
+                    {searchResult.address || "—"}
+                  </div>
+                </div>
+              </div>
+            )}
+            {searchState === "ready" && !searchResult && (
+              <Empty description="No user found" />
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Main Table */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <Spin size="large" tip="Loading Advocates..." />
@@ -275,7 +388,7 @@ const AdvocatesDataPage: React.FC = () => {
           <Table
             size="small"
             rowClassName={() => "compact-row"}
-            columns={columns}
+            columns={columns as any}
             dataSource={data}
             rowKey="id"
             pagination={false}

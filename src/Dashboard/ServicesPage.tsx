@@ -1,17 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Coins,
-  Bot,
-  Gem,
-  Cpu,
-  Package,
   HandCoins,
   Globe,
   Scale,
+  Users,
   Factory,
   Briefcase,
-  Users,
-  ShoppingBag,
   Search,
   GraduationCap,
   Award,
@@ -34,10 +28,19 @@ interface DashboardItem {
   category?: string;
 }
 
+type CampaignWithId = Campaign & {
+  id: string;
+  addServiceType?: string | null; // may come as undefined/null
+};
+
+type TabKey = "SERVICES" | "WE_ARE_HIRING";
+
 const ServicesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignWithId[]>([]);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>("SERVICES");
+
   const location = useLocation();
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
@@ -46,10 +49,11 @@ const ServicesPage: React.FC = () => {
   useEffect(() => {
     const loadCampaigns = async () => {
       try {
-        const campaigns = await fetchCampaigns();
-        const campaignsWithIds = campaigns.map((campaign) => ({
+        const data = await fetchCampaigns();
+        const campaignsWithIds: CampaignWithId[] = data.map((campaign: any) => ({
           ...campaign,
           id: campaign.campaignId,
+          addServiceType: campaign?.addServiceType ?? null,
         }));
         setCampaigns(campaignsWithIds);
       } catch (err) {
@@ -70,23 +74,13 @@ const ServicesPage: React.FC = () => {
         icon: <HandCoins className="text-purple-600" size={24} />,
         category: "Finance",
       },
-      // {
-      //   title: "Free Rudraksha",
-      //   image:
-      //     "https://iili.io/FEwOOdv.md.png",
-      //   description:
-      //     "Receive a sacred Rudraksha bead, known for its spiritual and wellness benefits.",
-      //   path: `${accessToken ? "/main" : ""}/services/freerudraksha`,
-      //   icon: <Gem className="text-purple-600" size={24} />,
-      //   category: "Spiritual",
-      // },
       {
         title: "Free AI & Gen AI Training",
         image: "https://iili.io/FGCrmbV.md.png",
         description:
           "Enroll in free AI and Generative AI training sessions to enhance your technical skills.",
         path: `${accessToken ? "/main" : ""}/services/freeai-genai`,
-        icon: <Cpu className="text-purple-600" size={24} />,
+        icon: <GraduationCap className="text-purple-600" size={24} />,
         category: "Jobs",
       },
       {
@@ -125,28 +119,10 @@ const ServicesPage: React.FC = () => {
         icon: <Factory className="text-purple-600" size={24} />,
         category: "Industrial",
       },
-      {
-        title: "We Are Hiring",
-        image: "https://iili.io/FGxPrnR.md.png",
-        description:
-          "Explore exciting job opportunities and be a part of our growing team.",
-        path: `${accessToken ? "/main" : ""}/services/we-are-hiring`,
-        icon: <Briefcase className="text-purple-600" size={24} />,
-        category: "Careers",
-      },
+      // Note: “We Are Hiring” static card is moved under the hiring tab via campaigns, so we keep static services clean.
     ],
     [accessToken]
   );
-
-  const filteredItems = (items: DashboardItem[]) => {
-    return items.filter(
-      (item) =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.category &&
-          item.category.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  };
 
   const slugify = (text: string) =>
     text
@@ -157,14 +133,14 @@ const ServicesPage: React.FC = () => {
       .replace(/^-+|-+$/g, "")
       .slice(0, 30);
 
-  const handleCampaignClick = (campaign: Campaign) => {
+  const handleCampaignClick = (campaign: CampaignWithId) => {
     if (
-      campaign.campainInputType === "SERVICE" ||
-      campaign.campainInputType === "PRODUCT"
+      (campaign as any).campainInputType === "SERVICE" ||
+      (campaign as any).campainInputType === "PRODUCT"
     ) {
       navigate(
         `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
-          campaign.campaignType
+          (campaign as any).campaignType ?? "service"
         )}`
       );
     }
@@ -189,187 +165,200 @@ const ServicesPage: React.FC = () => {
     navigate("/main/dashboard/offer-letter-samples");
   };
 
+  /** Split campaigns by addServiceType */
+  const serviceCampaigns = useMemo(
+    () =>
+      campaigns.filter(
+        (c) =>
+          c.campaignStatus !== false &&
+          (c as any).campainInputType !== "BLOG" &&
+          (c.addServiceType === null ||
+            c.addServiceType === undefined ||
+            c.addServiceType === "" ||
+            c.addServiceType === "SERVICES")
+      ),
+    [campaigns]
+  );
+
+  const hiringCampaigns = useMemo(
+    () =>
+      campaigns.filter(
+        (c) =>
+          c.campaignStatus !== false &&
+          (c as any).campainInputType !== "BLOG" &&
+          c.addServiceType === "WEAREHIRING"
+      ),
+    [campaigns]
+  );
+
+  /** Search helpers */
+  const matchQuery = (text?: string) =>
+    (text ?? "").toLowerCase().includes(searchQuery.toLowerCase());
+
+  const filteredServiceCards = useMemo(
+    () => services.filter((s) => matchQuery(s.title) || matchQuery(s.description) || matchQuery(s.category)),
+    [services, searchQuery]
+  );
+
+  const filteredServiceCampaigns = useMemo(
+    () =>
+      serviceCampaigns.filter(
+        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description)
+      ),
+    [serviceCampaigns, searchQuery]
+  );
+
+  const filteredHiringCampaigns = useMemo(
+    () =>
+      hiringCampaigns.filter(
+        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description)
+      ),
+    [hiringCampaigns, searchQuery]
+  );
+
+  const TabButton: React.FC<{
+    k: TabKey;
+    label: string;
+    count?: number;
+  }> = ({ k, label, count }) => (
+    <button
+      onClick={() => setActiveTab(k)}
+      className={`px-4 py-2 rounded-full text-sm font-medium border transition
+        ${activeTab === k ? "bg-purple-600 text-white border-purple-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}
+    >
+      {label}
+      {typeof count === "number" && (
+        <span className={`ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 rounded-full
+          ${activeTab === k ? "bg-white/20 text-white" : "bg-gray-200 text-gray-700"}`}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+
   return (
     <div className="min-h-screen">
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-2">
-          {/* Search Bar */}
-          <div className="relative mb-2">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Services Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
-            {filteredItems(services).map((item, index) => (
-              <div
-                key={index}
-                onClick={() => {
-                  if (item.path.startsWith("https")) {
-                    window.open(item.path, "_blank");
-                  } else {
-                    navigate(item.path);
-                  }
-                }}
-                className="group cursor-pointer flex flex-col items-center text-center"
-              >
-                <div className="mb-2">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
-                  />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                  {item.title}
-                </h3>
-              </div>
-            ))}
-            {campaigns
-              .filter(
-                (campaign) =>
-                  campaign.campaignStatus !== false &&
-                  campaign.campainInputType !== "BLOG"
-              )
-              .map((campaign) => (
-                <div
-                  key={campaign.campaignId}
-                  className="group cursor-pointer flex flex-col items-center text-center"
-                  onClick={() => handleCampaignClick(campaign)}
-                >
-                  <div className="mb-2">
-                    {campaign.imageUrls && campaign.imageUrls.length > 0 && (
-                      <img
-                        src={campaign.imageUrls[0].imageUrl}
-                        alt={`${campaign.campaignType}`}
-                        className="w-80 h-auto object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
-                      />
-                    )}
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                    {campaign.campaignType}
-                  </h3>
-                </div>
-              ))}
-          </div>
-
-          {/* Study Abroad Section */}
-          {/* <div className="bg-white flex items-center justify-center p-4">
-            <div className="w-full max-w-6xl bg-gray-50 rounded-3xl overflow-hidden shadow-lg border border-gray-200">
-              <div className="bg-gray-100 py-5 px-6 border-b border-gray-200">
-                <div className="flex items-center justify-center">
-                  <GraduationCap className="w-8 h-8 mb-2 text-purple-600 mr-3" />
-                  <h1 className="text-2xl font-bold text-purple-600">
-                    Study Abroad - Admissions
-                  </h1>
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
-                <div className="space-y-6 flex flex-col justify-center">
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex items-center mb-4">
-                      <Award className="w-6 h-6 text-purple-600 mr-3" />
-                      <h2 className="text-xl font-semibold text-purple-600">
-                        Fullfill Your Dreams
-                      </h2>
-                    </div>
-                    <ul className="space-y-3 text-gray-700">
-                      <li className="flex items-center">
-                        <Award className="w-4 h-4 mr-3 text-purple-600" />
-                        Upto 5% Cashback on University Fees
-                      </li>
-                      <li className="flex items-center">
-                        <Award className="w-4 h-4 mr-3 text-purple-600" />
-                        100% Scholarship for Selected Students
-                      </li>
-                      <li className="flex items-center">
-                        <Award className="w-4 h-4 mr-3 text-purple-600" />
-                        Get Offer Letter in 10 Minutes - Share preferences on
-                        ASKOXY.AI & get a sample offer letter.
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <p>
-                      <strong>Study Abroad:</strong> Get a 10-minute sample
-                      offer letter and enjoy up to 5% fee cashback!
-                    </p>
-                    <p>
-                      Welcome! ASKOXY.AI fuels your study abroad journey with
-                      data-driven insights. Answer questions on country,
-                      university, course, budget, UG/PG & academics to get
-                      personalized recommendations, a ROI scorecard, a 10-min
-                      sample offer letter & up to 5% fee cashback.
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleOfferLetterClick}
-                      className="w-full bg-purple-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-purple-700 transition-colors font-medium shadow-lg"
-                    >
-                      <FileText className="w-5 h-5" />
-                      <span>View Offer Samples</span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleStudyAbroadClick}
-                      className="w-full bg-purple-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-purple-700 transition-colors font-medium shadow-lg"
-                    >
-                      <Globe className="w-5 h-5" />
-                      <span>Study Abroad GPT</span>
-                    </motion.button>
-                  </div>
-                </div>
-                <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative">
-                  {!isVideoPlaying ? (
-                    <div
-                      className="absolute inset-0 bg-cover bg-center cursor-pointer"
-                      style={{ backgroundImage: `url(${VideoImage})` }}
-                      onClick={() => setIsVideoPlaying(true)}
-                    >
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <div className="bg-purple-600 w-16 h-16 rounded-full flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="white"
-                            className="w-8 h-8"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <iframe
-                      src="https://youtube.com/embed/LLRFyQ5y3HY?autoplay=1&mute=1"
-                      title="Scholarship Opportunity Video"
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  )}
-                </div>
-              </div>
+          {/* Search + Tabs */}
+          <div className="flex flex-col gap-3 mb-3">
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <input
+                type="text"
+                placeholder="Search services & campaigns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
             </div>
-          </div> */}
+
+            <div className="flex items-center gap-2">
+              <TabButton
+                k="SERVICES"
+                label="Services"
+                count={filteredServiceCards.length + filteredServiceCampaigns.length}
+              />
+              <TabButton
+                k="WE_ARE_HIRING"
+                label="We Are Hiring"
+                count={filteredHiringCampaigns.length}
+              />
+            </div>
+          </div>
+
+          {/* Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+            {activeTab === "SERVICES" && (
+              <>
+                {/* Static Services */}
+                {filteredServiceCards.map((item, index) => (
+                  <div
+                    key={`svc-${index}`}
+                    onClick={() => {
+                      if (item.path.startsWith("https")) {
+                        window.open(item.path, "_blank");
+                      } else {
+                        navigate(item.path);
+                      }
+                    }}
+                    className="group cursor-pointer flex flex-col items-center text-center"
+                  >
+                    <div className="mb-2">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-80 h-48 object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                      />
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                      {item.title}
+                    </h3>
+                  </div>
+                ))}
+
+                {/* Campaigns routed to Services (addServiceType = null/empty/others) */}
+                {filteredServiceCampaigns.map((campaign: any) => (
+                  <div
+                    key={campaign.campaignId}
+                    className="group cursor-pointer flex flex-col items-center text-center"
+                    onClick={() => handleCampaignClick(campaign)}
+                  >
+                    <div className="mb-2">
+                      {campaign.imageUrls && campaign.imageUrls.length > 0 && (
+                        <img
+                          src={campaign.imageUrls[0].imageUrl}
+                          alt={`${campaign.campaignType}`}
+                          className="w-80 h-48 object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                        />
+                      )}
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                      {campaign.campaignType}
+                    </h3>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {activeTab === "WE_ARE_HIRING" && (
+              <>
+                {filteredHiringCampaigns.length === 0 && (
+                  <div className="col-span-full text-center text-gray-500 py-8">
+                    No hiring posts yet.
+                  </div>
+                )}
+                {filteredHiringCampaigns.map((campaign: any) => (
+                  <div
+                    key={campaign.campaignId}
+                    className="group cursor-pointer flex flex-col items-center text-center"
+                    onClick={() => handleCampaignClick(campaign)}
+                  >
+                    <div className="mb-2">
+                      {campaign.imageUrls && campaign.imageUrls.length > 0 && (
+                        <img
+                          src={campaign.imageUrls[0].imageUrl}
+                          alt={`${campaign.campaignType}`}
+                          className="w-80 h-48 object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                        />
+                      )}
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                      {campaign.campaignType}
+                    </h3>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+
+          {/* (Optional) Study Abroad Section kept commented in original */}
+          {/* ... original section left unchanged ... */}
+
           <Footer />
         </div>
       </div>

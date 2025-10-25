@@ -46,25 +46,49 @@ const AdminTasks: React.FC = () => {
   const userId = sessionStorage.getItem("userId") || "";
   const [searchText, setSearchText] = useState(""); // ✅ added missing state
   // ✅ Fetch tasks
-  const fetchTasks = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get<Task[]>(
-        `${BASE_URL}/ai-service/agent/showingTaskBasedOnUserId?userId=${userId}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      const reversedTasks = response.data.slice().reverse();
-      setTasks(reversedTasks);
-      setFilteredTasks(reversedTasks);
-    } catch (error) {
-      console.error(error);
-      message.error("Failed to fetch tasks");
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+      
+const fetchTasks = async () => {
+  setLoading(true);
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/ai-service/agent/showingTaskBasedOnUserId?userId=${userId}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    console.log("API Response:", response.data);
+
+    // normalize response
+    const tasksArray = Array.isArray(response.data)
+      ? response.data
+      : Array.isArray(response.data.data)
+      ? response.data.data
+      : [];
+
+    const reversedTasks = tasksArray.slice().reverse();
+
+    const validTasks = reversedTasks.filter((task: any) => {
+      const assignedArray = Array.isArray(task.taskAssignTo)
+        ? task.taskAssignTo
+        : task.taskAssignTo
+        ? [task.taskAssignTo]
+        : [];
+      const hasValidAssignee = assignedArray.length > 0;
+      const hasValidTaskName = task.taskName && task.taskName.trim() !== "";
+      return hasValidAssignee && hasValidTaskName;
+    });
+
+    setTasks(validTasks);
+    setFilteredTasks(validTasks);
+  } catch (error) {
+    message.error("Failed to fetch tasks");
+    console.error("Task Fetch Error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   useEffect(() => {
     fetchTasks();
@@ -117,7 +141,7 @@ const AdminTasks: React.FC = () => {
     let color: string;
     let text: string;
 
-     switch (status?.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "assigned":
         color = "blue";
         text = "Assigned";
@@ -175,7 +199,6 @@ const AdminTasks: React.FC = () => {
         </Text>
       ),
     },
-   
 
     {
       title: "Task Name",
@@ -298,12 +321,11 @@ const AdminTasks: React.FC = () => {
 
           <Col xs={24} sm={8}>
             <Input
-              prefix={<SearchOutlined  />} // icon color white
+              prefix={<SearchOutlined />} // icon color white
               placeholder="Search tasks..."
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
               allowClear
-            
             />
           </Col>
         </Row>
