@@ -39,10 +39,16 @@ const HiringPages: React.FC = () => {
       .slice(0, 30);
 
   // Normalize input-type key (API sometimes sends "campainInputType" vs "campaignInputType")
-  const getInputType = (c: Campaign & { campainInputType?: string; campaignInputType?: string }) =>
-    c?.campainInputType ?? c?.campaignInputType ?? "";
+  const getInputType = (
+    c: Campaign & { campainInputType?: string; campaignInputType?: string }
+  ) => c?.campainInputType ?? c?.campaignInputType ?? "";
 
-  const handleCampaignClick = (campaign: Campaign & { campainInputType?: string; campaignInputType?: string }) => {
+  const handleCampaignClick = (
+    campaign: Campaign & {
+      campainInputType?: string;
+      campaignInputType?: string;
+    }
+  ) => {
     if (!campaign?.campaignId || !campaign?.campaignType) return;
     const inputType = getInputType(campaign);
     const slug = slugify(campaign.campaignType);
@@ -63,7 +69,9 @@ const HiringPages: React.FC = () => {
   };
 
   const getPrimaryImageUrl = (c: any) => {
-    const imgs = c?.imageUrls as Array<{ imageUrl?: string; status?: boolean }> | undefined;
+    const imgs = c?.imageUrls as
+      | Array<{ imageUrl?: string; status?: boolean }>
+      | undefined;
     if (!imgs || imgs.length === 0) return undefined;
     const active = imgs.find((i) => i?.status && i?.imageUrl);
     return (active?.imageUrl || imgs[0]?.imageUrl) ?? undefined;
@@ -71,20 +79,22 @@ const HiringPages: React.FC = () => {
 
   // ---------- NEW: filter by addServiceType === "WEAREHIRING" ----------
   const weAreHiringCampaigns = useMemo(() => {
-    return (campaigns || [])
-      .filter((c: any) => {
-        const inputType = getInputType(c);
-        const notBlog = inputType !== "BLOG";
-        const active = c?.campaignStatus !== false; // accept true/undefined/"ACTIVE"
-        const isHiring = c?.addServiceType === "WEAREHIRING";
-        return isHiring && notBlog && active;
-      })
-      // Optional: sort newest first if createdAt exists
-      .sort((a: any, b: any) => {
-        const ta = new Date(a?.createdAt || 0).getTime();
-        const tb = new Date(b?.createdAt || 0).getTime();
-        return tb - ta;
-      });
+    return (
+      (campaigns || [])
+        .filter((c: any) => {
+          const inputType = getInputType(c);
+          const notBlog = inputType !== "BLOG";
+          const active = c?.campaignStatus !== false; // accept true/undefined/"ACTIVE"
+          const isHiring = c?.addServiceType === "WEAREHIRING";
+          return isHiring && notBlog && active;
+        })
+        // Optional: sort newest first if createdAt exists
+        .sort((a: any, b: any) => {
+          const ta = new Date(a?.createdAt || 0).getTime();
+          const tb = new Date(b?.createdAt || 0).getTime();
+          return tb - ta;
+        })
+    );
   }, [campaigns]);
 
   return (
@@ -106,9 +116,13 @@ const HiringPages: React.FC = () => {
           </h1>
 
           {loading ? (
-            <div className="w-full py-16 text-center text-gray-500">Loading…</div>
+            <div className="w-full py-16 text-center text-gray-500">
+              Loading…
+            </div>
           ) : weAreHiringCampaigns.length === 0 ? (
-            <div className="w-full py-16 text-center text-gray-500">No active campaigns.</div>
+            <div className="w-full py-16 text-center text-gray-500">
+              No active campaigns.
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 place-items-center">
               {weAreHiringCampaigns.map((c: any) => {
@@ -134,7 +148,6 @@ const HiringPages: React.FC = () => {
                       <h3 className="mt-3 text-center text-base font-semibold text-gray-900 line-clamp-2">
                         {c.campaignType}
                       </h3>
-                     
                     </div>
                   </div>
                 );

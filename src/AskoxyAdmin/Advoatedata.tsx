@@ -5,6 +5,7 @@ import {
   Spin,
   Pagination,
   message,
+  Select,
   Button,
   Card,
   Tag,
@@ -15,6 +16,7 @@ import {
 } from "antd";
 import axios from "axios";
 import BASE_URL from "../Config";
+
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
 interface AdvocateUser {
@@ -69,6 +71,58 @@ const AdvocatesDataPage: React.FC = () => {
   // ---------------------------
   // 1) List Data Fetch (unchanged)
   // ---------------------------
+  const handleQuickActiveChange = async (
+    userId: string,
+    value: "true" | "false"
+  ) => {
+    try {
+      const commentsUpdateBy =
+        localStorage.getItem("admin_primaryType") === "HELPDESKSUPERADMIN"
+          ? "ADMIN"
+          : updatedBy || "ADMIN";
+
+      await axios.patch(
+        `${BASE_URL}/user-service/adminUpdateComments`,
+        {
+          adminComments: "Updated user active status via Advocates page",
+          adminUserId: storedUniqueId,
+          commentsUpdateBy,
+          userId,
+          isActive: value === "true",
+          customerBehaviour: "UNDERSTANDING",
+        },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      message.success("User active status updated");
+
+      setCommentsMap((prev) => {
+        const old = prev[userId];
+
+        // ✅ Always produce a fully-typed AdminComment (boolean isActive)
+        const materialized: AdminComment =
+          old && old !== "loading" && old !== "error"
+            ? (old as AdminComment)
+            : {
+                adminComments: "—",
+                commentsCreatedDate: new Date().toISOString(),
+                commentsUpdateBy,
+                adminUserId: String(storedUniqueId || ""),
+                customerBehaviour: "UNDERSTANDING",
+                customerExpectedOrderDate: null,
+                isActive: value === "true", // <-- boolean, not undefined
+              };
+
+        return {
+          ...prev,
+          [userId]: { ...materialized, isActive: value === "true" },
+        };
+      });
+    } catch {
+      message.error("Failed to update status");
+    }
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -110,6 +164,14 @@ const AdvocatesDataPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // (near other state)
+  const getSelectedIsActive = () => {
+    if (!selectedRecord) return null;
+    const info = commentsMap[selectedRecord.id];
+    if (!info || info === "loading" || info === "error") return null;
+    return (info as AdminComment).isActive; // boolean
   };
 
   useEffect(() => {
@@ -211,7 +273,10 @@ const AdvocatesDataPage: React.FC = () => {
       render: (text: string) => {
         const lastFour = text ? text.slice(-4) : "";
         return (
-          <Tag color="blue" style={{ fontSize: 12, padding: "2px 6px", margin: 0 }}>
+          <Tag
+            color="blue"
+            style={{ fontSize: 12, padding: "2px 6px", margin: 0 }}
+          >
             #{lastFour}
           </Tag>
         );
@@ -232,7 +297,10 @@ const AdvocatesDataPage: React.FC = () => {
       key: "mobileNumber",
       width: 160,
       render: (text: string) => (
-        <Tag color="green" style={{ padding: "0 8px", fontSize: 12, margin: 0 }}>
+        <Tag
+          color="green"
+          style={{ padding: "0 8px", fontSize: 12, margin: 0 }}
+        >
           {text ? `📞 ${text}` : "No Mobile"}
         </Tag>
       ),
@@ -244,27 +312,73 @@ const AdvocatesDataPage: React.FC = () => {
       width: 440,
       render: (_: any, record: AdvocateUser) => {
         const info = commentsMap[record.id];
-        if (info === "loading" || info === undefined) return <Spin size="small" />;
+        if (info === "loading" || info === undefined)
+          return <Spin size="small" />;
         if (info === "error" || info === null)
           return (
             <div className="text-gray-500 text-sm" style={{ lineHeight: 1.2 }}>
               <Tag style={{ margin: 0 }}>—</Tag> No recent comments
             </div>
           );
+       // when info.isActive is null/undefined
+const statusTag =
+  info.isActive === null || info.isActive === undefined ? (
+    <div className="flex items-center gap-3">
+      <span className="text-gray-700 text-xs">User Active:</span>
+      <Select
+        style={{ width: 160 }}
+        placeholder="Select status"
+        options={[
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ]}
+        value={"true"} // ✅ default to Yes
+        onChange={(value: string) =>
+          handleQuickActiveChange(record.id, value as "true" | "false")
+        }
+      />
+      {/* Removed the extra "Comment…" link */}
+    </div>
+  ) : (
+    <div className="flex items-center gap-2">
+      {info.isActive ? (
+        <Tag color="green" style={{ margin: 0 }}>ACTIVE</Tag>
+      ) : (
+        <Tag color="red" style={{ margin: 0 }}>INACTIVE</Tag>
+      )}
+      <Button
+        type="link"
+        size="small"
+        onClick={() => showCommentsModal(record)}
+        className="p-0"
+      >
+        Change
+      </Button>
+    </div>
+  );
 
-        const statusTag = info.isActive ? (
-          <Tag color="green" style={{ margin: 0 }}>ACTIVE</Tag>
-        ) : (
-          <Tag color="red" style={{ margin: 0 }}>INACTIVE</Tag>
-        );
 
         const name = info.commentsUpdateBy || "—";
         const color = getColorForName(name.toUpperCase());
         const when = formatWhen(info.commentsCreatedDate);
 
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, lineHeight: 1.2 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              lineHeight: 1.2,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
               {statusTag}
               <span
                 className="text-gray-800"
@@ -279,12 +393,23 @@ const AdvocatesDataPage: React.FC = () => {
                 {info.adminComments || "—"}
               </span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "#666" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+                fontSize: 12,
+                color: "#666",
+              }}
+            >
               <Tag color={color} style={{ margin: 0 }}>
                 <strong>{name}</strong>
               </Tag>
               <span>at {when || "—"}</span>
-              {info.customerBehaviour && <span>• {info.customerBehaviour}</span>}
+              {info.customerBehaviour && (
+                <span>• {info.customerBehaviour}</span>
+              )}
             </div>
           </div>
         );
@@ -313,7 +438,9 @@ const AdvocatesDataPage: React.FC = () => {
       <div className="mb-3">
         <Row gutter={[12, 12]} align="middle" justify="space-between">
           <Col flex="auto">
-            <h2 className="text-xl font-bold text-gray-800 m-0">All Advocates Data</h2>
+            <h2 className="text-xl font-bold text-gray-800 m-0">
+              All Advocates Data
+            </h2>
           </Col>
           <Col flex="360px">
             <div className="flex gap-2">
@@ -360,7 +487,9 @@ const AdvocatesDataPage: React.FC = () => {
                 <div>
                   <div className="text-gray-500">Whatsapp</div>
                   <div className="font-medium">
-                    {searchResult.whastappNumber || searchResult.whatsappNumber || "—"}
+                    {searchResult.whastappNumber ||
+                      searchResult.whatsappNumber ||
+                      "—"}
                   </div>
                 </div>
                 <div className="md:col-span-2">
@@ -404,7 +533,9 @@ const AdvocatesDataPage: React.FC = () => {
               showQuickJumper
               showSizeChanger
               pageSizeOptions={["50", "100", "200", "300"]}
-              showTotal={(t, range) => `${range[0]}-${range[1]} of ${t} advocates`}
+              showTotal={(t, range) =>
+                `${range[0]}-${range[1]} of ${t} advocates`
+              }
             />
           </div>
         </>
@@ -418,6 +549,7 @@ const AdvocatesDataPage: React.FC = () => {
         storedUniqueId={storedUniqueId}
         record={selectedRecord}
         BASE_URL={BASE_URL}
+        initialIsActive={getSelectedIsActive()}
       />
 
       {/* Compact row styles */}

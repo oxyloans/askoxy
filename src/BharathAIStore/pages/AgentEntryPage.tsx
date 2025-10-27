@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AgentEntryPage: React.FC = () => {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setMounted(true);
+    });
+  }, []);
 
   return (
     <>
@@ -10,17 +17,21 @@ const AgentEntryPage: React.FC = () => {
         @keyframes fadeInUp {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translate3d(0, 30px, 0);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
           }
         }
 
         @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+          0%, 100% { 
+            transform: translate3d(0, 0, 0); 
+          }
+          50% { 
+            transform: translate3d(0, -15px, 0); 
+          }
         }
 
         * {
@@ -29,299 +40,363 @@ const AgentEntryPage: React.FC = () => {
           box-sizing: border-box;
         }
 
-        /* Page */
-        .page {
+        body {
+          overflow-x: hidden;
+        }
+
+        .agent-page {
           min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 50%, #faf8ff 100%);
           display: flex;
           align-items: center;
           justify-content: center;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           padding: 20px;
-          overflow-x: hidden;
           position: relative;
+          overflow: hidden;
         }
 
-        /* Animated background orbs */
-        .page::before,
-        .page::after {
-          content: '';
+        /* Animated background orbs - Soft purple accents */
+        .bg-orb {
           position: absolute;
           border-radius: 50%;
-          filter: blur(80px);
-          opacity: 0.3;
-          animation: float 8s ease-in-out infinite;
+          filter: blur(120px);
           pointer-events: none;
+          will-change: transform;
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
         }
 
-        .page::before {
-          width: 400px;
-          height: 400px;
-          background: #ff6b9d;
-          top: -100px;
-          left: -100px;
-          animation-delay: 0s;
+        .bg-orb-1 {
+          width: 600px;
+          height: 600px;
+          background: #9b87f5;
+          top: -200px;
+          right: -200px;
+          opacity: 0.15;
+          animation: float 12s ease-in-out infinite;
         }
 
-        .page::after {
-          width: 350px;
-          height: 350px;
-          background: #feca57;
-          bottom: -80px;
-          right: -80px;
-          animation-delay: 2s;
+        .bg-orb-2 {
+          width: 500px;
+          height: 500px;
+          background: #7c6bdf;
+          bottom: -150px;
+          left: -150px;
+          opacity: 0.12;
+          animation: float 15s ease-in-out infinite 3s;
         }
 
         @media (max-width: 768px) {
-          .page::before {
-            width: 250px;
-            height: 250px;
-            top: -50px;
-            left: -50px;
+          .bg-orb-1 {
+            width: 350px;
+            height: 350px;
+            top: -100px;
+            right: -100px;
           }
           
-          .page::after {
-            width: 200px;
-            height: 200px;
-            bottom: -40px;
-            right: -40px;
+          .bg-orb-2 {
+            width: 300px;
+            height: 300px;
+            bottom: -100px;
+            left: -100px;
           }
         }
 
-        /* Glass container */
-        .wrap {
+        /* Container */
+        .agent-wrap {
           width: 100%;
-          max-width: 850px;
+          max-width: 950px;
           position: relative;
           z-index: 1;
-          animation: fadeInUp 0.8s ease-out;
+          opacity: 0;
+          transform: translate3d(0, 0, 0);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+          transition: opacity 0.6s ease-out;
         }
 
-        .title {
-          font-size: clamp(24px, 5vw, 42px);
+        .agent-wrap.mounted {
+          opacity: 1;
+        }
+
+        .agent-header {
+          text-align: center;
+          margin-bottom: 60px;
+        }
+
+        .agent-title {
+          font-size: clamp(29px, 4.8vw, 45px);
           font-weight: 800;
-          color: #ffffff;
-          margin-bottom: 0;
-          letter-spacing: -0.5px;
-          line-height: 1.2;
+          background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 16px;
+          letter-spacing: -2px;
+          line-height: 1.1;
         }
 
-        /* Options grid */
-        .grid {
+        .agent-subtitle {
+          font-size: clamp(16px, 2.5vw, 20px);
+          color: #64748b;
+          font-weight: 400;
+          letter-spacing: 0.1px;
+        }
+
+        /* Grid */
+        .agent-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 20px;
+          gap: 28px;
           margin: 0;
         }
         
         @media (min-width: 680px) {
-          .grid { 
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
+          .agent-grid { 
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
           }
         }
 
-        /* Card option */
-        .option {
+        /* Card - Clean and modern */
+        .agent-card {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          padding: 28px 20px;
-          border: 2px solid rgba(255, 255, 255, 0.2);
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          border-radius: 20px;
+          align-items: flex-start;
+          gap: 20px;
+          padding: 40px 36px;
+          border: 2px solid #e9d5ff;
+          background: #ffffff;
+          border-radius: 24px;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           outline: none;
-          text-align: center;
+          text-align: left;
           position: relative;
-          overflow: none;
-          min-height: 160px;
+          overflow: hidden;
+          min-height: 240px;
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          will-change: transform;
+          transform: translate3d(0, 0, 0);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
         }
 
-        @media (min-width: 680px) {
-          .option {
-            padding: 32px 24px;
-            padding-right: 60px;
-            min-height: 180px;
-          }
-        }
-
-        .option::before {
+        /* Soft gradient overlay on hover */
+        .agent-card::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.1),
-            transparent
-          );
-          transition: left 0.5s;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(167, 139, 250, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+          opacity: 0;
+          transition: opacity 0.35s ease;
+          border-radius: 24px;
         }
 
-        .option:hover::before {
-          left: 100%;
+        .agent-card:hover::before {
+          opacity: 1;
         }
 
-        .option:hover {
-          border-color: rgba(255, 255, 255, 0.5);
-          background: rgba(255, 255, 255, 0.2);
-          transform: translateY(-4px);
-          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        .agent-card:hover {
+          border-color: #c4b5fd;
+          transform: translate3d(0, -6px, 0);
+          box-shadow: 0 12px 40px rgba(124, 58, 237, 0.16);
         }
 
-        @media (min-width: 680px) {
-          .option:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-          }
+        .agent-card:focus-visible {
+          box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.3);
+          border-color: #a78bfa;
         }
 
-        .option:focus-visible {
-          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
-          border-color: rgba(255, 255, 255, 0.6);
+        .agent-card:active {
+          transform: translate3d(0, -3px, 0);
+          transition: transform 0.1s ease;
         }
 
-        .option:active {
-          transform: translateY(-2px);
-        }
-
-        /* Icon container */
-        .icon {
-          width: 56px; 
-          height: 56px;
-          border-radius: 16px;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+        /* Icon - Soft purple gradient */
+        .agent-icon {
+          width: 80px; 
+          height: 80px;
+          border-radius: 20px;
+          background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
           display: flex; 
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          transition: transform 0.3s ease;
+          box-shadow: 0 8px 24px rgba(124, 58, 237, 0.2);
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
           flex-shrink: 0;
+          will-change: transform;
+          transform: translate3d(0, 0, 0);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+          position: relative;
+          z-index: 1;
         }
 
-        @media (min-width: 680px) {
-          .icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 20px;
-          }
+        .agent-card:hover .agent-icon {
+          transform: translate3d(0, -4px, 0) scale(1.05);
+          box-shadow: 0 12px 32px rgba(124, 58, 237, 0.28);
         }
 
-        .option:hover .icon {
-          transform: scale(1.05) rotate(3deg);
-        }
-
-        @media (min-width: 680px) {
-          .option:hover .icon {
-            transform: scale(1.1) rotate(5deg);
-          }
-        }
-
-        .icon svg {
-          width: 24px;
-          height: 24px;
-        }
-
-        @media (min-width: 680px) {
-          .icon svg {
-            width: 28px;
-            height: 28px;
-          }
+        .agent-icon svg {
+          width: 36px;
+          height: 36px;
         }
 
         /* Content */
-        .content {
+        .agent-content {
           flex: 1;
-          text-align: center;
           width: 100%;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 12px;
+          position: relative;
+          z-index: 1;
         }
 
-        .name {
-          font-size: 18px;
+        .agent-name {
+          font-size: 28px;
           font-weight: 700;
-          color: #ffffff;
-          letter-spacing: -0.3px;
-          line-height: 1.3;
+          color: #1e293b;
+          letter-spacing: -0.7px;
+          line-height: 1.2;
+          margin-bottom: 4px;
         }
 
-        @media (min-width: 680px) {
-          .name {
-            font-size: 22px;
-          }
+        .agent-note {
+          font-size: 16px;
+          color: #64748b;
+          line-height: 1.6;
+          font-weight: 400;
         }
 
-        .note {
+        .agent-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 9px 18px;
+          background: linear-gradient(135deg, #f3f0ff 0%, #ede9fe 100%);
+          border-radius: 12px;
           font-size: 13px;
-          color: rgba(255, 255, 255, 0.85);
-          line-height: 1.5;
+          font-weight: 600;
+          color: #7c3aed;
+          margin-top: 12px;
+          width: fit-content;
+          letter-spacing: 0.2px;
+          border: 1px solid #e9d5ff;
         }
 
-        @media (min-width: 680px) {
-          .note {
-            font-size: 15px;
+        /* Arrow */
+        .agent-arrow {
+          position: absolute;
+          right: 32px;
+          bottom: 32px;
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          background: #f5f3ff;
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          will-change: transform;
+          transform: translate3d(0, 0, 0);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+        }
+
+        .agent-card:hover .agent-arrow {
+          background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+          transform: translate3d(8px, 0, 0);
+          box-shadow: 0 4px 16px rgba(124, 58, 237, 0.25);
+        }
+
+        .agent-card:hover .agent-arrow svg {
+          stroke: #ffffff;
+        }
+
+        @media (max-width: 680px) {
+          .agent-arrow {
+            width: 44px;
+            height: 44px;
+            right: 28px;
+            bottom: 28px;
           }
         }
 
-        /* Arrow indicator - only on larger screens */
-        .arrow {
-          display: none;
-        }
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+          .agent-page {
+            padding: 16px;
+          }
 
-        @media (min-width: 680px) {
-          .arrow {
-            display: flex;
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
+          .agent-card {
+            padding: 32px 28px;
+            min-height: 220px;
+          }
+
+          .agent-icon {
+            width: 72px;
+            height: 72px;
+          }
+
+          .agent-icon svg {
             width: 32px;
             height: 32px;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
           }
 
-          .option:hover .arrow {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-50%) translateX(4px);
+          .agent-name {
+            font-size: 24px;
+          }
+
+          .agent-note {
+            font-size: 15px;
+          }
+
+          .agent-header {
+            margin-bottom: 48px;
           }
         }
 
-        /* Smooth scrolling for mobile */
-        @media (max-width: 480px) {
-          .page {
-            padding: 16px;
+        /* Smooth scrolling */
+        html {
+          scroll-behavior: smooth;
+        }
+
+        /* Reduce motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+          *,
+          *::before,
+          *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
           }
         }
       `}</style>
 
-      <div className="page">
-        <div
-          className="wrap"
-          role="region"
+      <div className="agent-page">
+        {/* Background orbs */}
+        <div className="bg-orb bg-orb-1"></div>
+        <div className="bg-orb bg-orb-2"></div>
+
+        <div 
+          className={`agent-wrap ${mounted ? 'mounted' : ''}`}
+          role="region" 
           aria-label="Choose agent creation mode"
         >
-          <div className="mt-18 mb-8 flex justify-center">
-            <h1 className="title">Create your AI Agent</h1>
+          <div className="agent-header">
+            <h1 className="agent-title">Create your AI Agent</h1>
+            {/* <p className="agent-subtitle">Choose your preferred creation method</p> */}
           </div>
 
-          <div className="grid">
+          <div className="agent-grid">
             {/* Steps-based flow */}
             <button
-              className="option"
+              className="agent-card"
               onClick={() => navigate("/main/bharat-expert")}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -331,7 +406,7 @@ const AgentEntryPage: React.FC = () => {
               }}
               aria-label="Build with Steps (4-Tab Modal)"
             >
-              <div className="icon" aria-hidden="true">
+              <div className="agent-icon" aria-hidden="true">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -345,20 +420,26 @@ const AgentEntryPage: React.FC = () => {
                   <path d="m8.5 13.5 2 2 5-5" />
                 </svg>
               </div>
-              <div className="content">
-                <p className="name">Build with Steps</p>
-                <p className="note">
-                  Guided 4-tab setup for clean, structured agent creation
+              <div className="agent-content">
+                <p className="agent-name">Build with Steps</p>
+                <p className="agent-note">
+                  Guided 4-tab setup for clean, structured agent creation with full control
                 </p>
+                <span className="agent-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  Recommended
+                </span>
               </div>
-              <div className="arrow">
+              <div className="agent-arrow">
                 <svg
-                  width="16"
-                  height="16"
+                  width="22"
+                  height="22"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="3"
+                  stroke="#7c3aed"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -369,7 +450,7 @@ const AgentEntryPage: React.FC = () => {
 
             {/* Chat-based flow */}
             <button
-              className="option"
+              className="agent-card"
               onClick={() => navigate("/main/chatbasedagent")}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -379,7 +460,7 @@ const AgentEntryPage: React.FC = () => {
               }}
               aria-label="Chat-based Agent"
             >
-              <div className="icon" aria-hidden="true">
+              <div className="agent-icon" aria-hidden="true">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -388,26 +469,31 @@ const AgentEntryPage: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M21 12a7 7 0 0 1-7 7H8l-4 3v-5a7 7 0 0 1 0-10 7 7 0 0 1 5-2h5a7 7 0 0 1 7 7z" />
-                  <circle cx="9" cy="12" r="1" />
-                  <circle cx="15" cy="12" r="1" />
-                  <circle cx="12" cy="12" r="1" />
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  <path d="M8 10h.01M12 10h.01M16 10h.01" />
                 </svg>
               </div>
-              <div className="content">
-                <p className="name">Chat-based Agent</p>
-                <p className="note">
-                  Conversational setup—just talk and we'll handle the rest
+              <div className="agent-content">
+                <p className="agent-name">Chat-based Agent</p>
+                <p className="agent-note">
+                  Natural conversational setup—just describe what you need and AI handles the rest
                 </p>
+                <span className="agent-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="2"/>
+                    <path d="M12 2v4m0 12v4m8.66-14.66l-2.83 2.83m-11.66 11.66L3.34 19.66m16.32 0l-2.83-2.83M6.17 6.17L3.34 3.34"/>
+                  </svg>
+                  AI-Powered
+                </span>
               </div>
-              <div className="arrow">
+              <div className="agent-arrow">
                 <svg
-                  width="16"
-                  height="16"
+                  width="22"
+                  height="22"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="3"
+                  stroke="#7c3aed"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >

@@ -889,31 +889,46 @@ const handleClose = () => {
               )}
             </div>
 
-            {!showOtp && (
-              <button
-                type="submit"
-                disabled={isGetOtpButtonDisabled || isLoading}
-                className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 ${
-                  isGetOtpButtonDisabled || isLoading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : otpMethod === "whatsapp"
-                    ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
-                    : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
-                } transform hover:scale-105 active:scale-95`}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Sending OTP...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    Get OTP via {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
-                  </>
-                )}
-              </button>
-            )}
+        {!showOtp && (
+  <>
+    {/* ✅ Added Notes Above Get OTP Button */}
+    <div className="mb-2 text-center text-sm">
+      {otpMethod === "whatsapp" ? (
+        <p className="text-green-600 ">
+          <strong>Note:</strong>🌍 WhatsApp OTP works globally — India and beyond!
+        </p>
+      ) : (
+        <p className="text-purple-600 ">
+           <strong>Note:</strong>📩 SMS OTP is for Indian numbers (+91) only.
+        </p>
+      )}
+    </div>
+
+    <button
+      type="submit"
+      disabled={isGetOtpButtonDisabled || isLoading}
+      className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 ${
+        isGetOtpButtonDisabled || isLoading
+          ? "bg-gray-400 cursor-not-allowed"
+          : otpMethod === "whatsapp"
+          ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
+          : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
+      } transform hover:scale-105 active:scale-95`}
+    >
+      {isLoading ? (
+        <>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Sending OTP...
+        </>
+      ) : (
+        <>
+          <Send className="w-5 h-5" />
+          Get OTP via {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
+        </>
+      )}
+    </button>
+  </>
+)}
 
             {showOtp && (
               <div

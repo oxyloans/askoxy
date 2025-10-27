@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import axios, { AxiosHeaders } from "axios";
 import { message, Modal } from "antd";
-import { Send, Square, Mic, ArrowLeft } from "lucide-react";
+import { Send, Mic, ArrowLeft, Square } from "lucide-react";
 import {
   Navigate,
   useLocation,
@@ -28,8 +28,6 @@ type SpeechRecognitionEvent = Event & {
   results: SpeechRecognitionResultList;
   resultIndex: number;
 };
-type SpeechRecognitionErrorEvent = Event & { error: string; message?: string };
-
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -41,10 +39,6 @@ interface SpeechRecognition extends EventTarget {
   onerror: ((this: SpeechRecognition, ev: any) => any) | null;
   onend: ((this: SpeechRecognition, ev: Event) => any) | null;
 }
-interface SpeechRecognitionStatic {
-  new (): SpeechRecognition;
-}
-
 type RemoteCard = { title?: string; description?: string };
 type ConversationPayload = {
   agentId?: string;
@@ -163,18 +157,15 @@ const normalizeMessages = (raw: any): ChatMessage[] => {
 
 // Force-light CSS so the UI looks identical even when OS is in dark mode
 const FORCE_LIGHT_CSS = `
-/* Base always-light */
 :root, html, body, #root { background:#ffffff !important; color-scheme: light !important; }
-html, body { color:#111827 !important; } /* gray-900 */
-* { border-color:#e5e7eb !important; }   /* gray-200 */
+html, body { color:#111827 !important; }
+* { border-color:#e5e7eb !important; }
 input, textarea, select, button {
   color-scheme: light !important;
   background-color:#ffffff !important;
   color:#111827 !important;
 }
-::placeholder { color:#6b7280 !important; opacity:1; } /* gray-500 */
-
-/* Hard override when the browser requests dark colors */
+::placeholder { color:#6b7280 !important; opacity:1; }
 @media (prefers-color-scheme: dark) {
   :root, html, body, #root { background:#ffffff !important; color:#111827 !important; }
   .bg-white        { background-color:#ffffff !important; }
@@ -192,25 +183,201 @@ input, textarea, select, button {
 }
 `;
 
+const ONE_LINE_PX = 48;
+// small validator
+const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
 const ChatBasedAgent: React.FC = () => {
   const { agentId: agentIdParam } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const isStopped = useRef(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const initialRouteAgentId = (agentIdParam && String(agentIdParam)) || "";
   const [currentAgentId, setCurrentAgentId] =
     useState<string>(initialRouteAgentId);
+
+  // right after:
   const [userId] = useState<string | null>(() =>
     localStorage.getItem("userId")
   );
 
+  // ADD:
+  const customerId = useMemo(
+    () => localStorage.getItem("customerId") || userId || "",
+    [userId]
+  );
+
+  // ---- Profile validation errors ----
+  type ProfileErrors = { name?: string; email?: string };
+  const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
+
+  // State
+  const [profileModalOpen, setProfileModalOpen] = useState(false); // edit dialog
+  const [confirmOpen, setConfirmOpen] = useState(false); // confirm-only dialog
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [isMandatoryGate, setIsMandatoryGate] = useState(false); // true when any required field missing
+
+  // form values
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+
+  // for dirty-check
+  const [initialFirstName, setInitialFirstName] = useState("");
+  const [initialLastName, setInitialLastName] = useState("");
+  const [initialEmail, setInitialEmail] = useState("");
+
+  // map server → UI safely (supports both key styles)
+  const pick = (obj: any, ...keys: string[]) => {
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (
+        v !== null &&
+        v !== undefined &&
+        String(v).trim() &&
+        String(v) !== "null" &&
+        String(v) !== "undefined"
+      ) {
+        return String(v).trim();
+      }
+    }
+    return "";
+  };
+
+  useEffect(() => {
+    const run = async () => {
+      if (!customerId) return; // make sure you have this from your page scope
+
+      try {
+        setProfileLoading(true);
+
+        // ✅ RIGHT (use GET to fetch existing profile)
+        const response = await axios.get(
+          `${BASE_URL}/user-service/customerProfileDetails`,
+          {
+            params: { customerId },
+            headers: { ...getAuthHeaders() },
+          }
+        );
+
+        const data = response?.data || {};
+
+        // Build the same object you referenced (for your local use if needed)
+        const profileData = {
+          userFirstName: pick(data, "firstName", "userFirstName"),
+          userLastName: pick(data, "lastName", "userLastName"),
+          customerEmail: pick(data, "email", "customerEmail"),
+          alterMobileNumber: pick(data, "alterMobileNumber"),
+          whatsappNumber: pick(data, "whatsappNumber"),
+          mobileNumber: pick(data, "mobileNumber"),
+          customerId: customerId || "",
+        };
+
+        // Fill UI state
+        setFirstName(profileData.userFirstName);
+        setLastName(profileData.userLastName);
+        setEmail(profileData.customerEmail);
+
+        setInitialFirstName(profileData.userFirstName);
+        setInitialLastName(profileData.userLastName);
+        setInitialEmail(profileData.customerEmail);
+
+        // Required: firstName + email (lastName optional, adjust if you want)
+        const missing =
+          !profileData.userFirstName || !profileData.customerEmail;
+
+        setIsMandatoryGate(missing);
+        setProfileModalOpen(missing); // open edit if missing
+        setConfirmOpen(!missing); // otherwise show Confirm dialog
+      } catch (e: any) {
+        // If fetch fails, don’t block usage; allow edit if they want
+        setIsMandatoryGate(false);
+        setProfileModalOpen(false);
+        setConfirmOpen(true);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerId]);
+
+  // 2) Dirty check
+  const isDirty =
+    firstName.trim() !== initialFirstName.trim() ||
+    lastName.trim() !== initialLastName.trim() ||
+    email.trim() !== initialEmail.trim();
+
+  const handleSaveOrUpdateProfile = async () => {
+    // simple required fields check + set UI errors
+    const nextErrors: ProfileErrors = {};
+    if (!firstName.trim()) nextErrors.name = "Name is required";
+    if (!email.trim()) nextErrors.email = "Email is required";
+    else if (!emailOk(email)) nextErrors.email = "Enter a valid email";
+
+    setProfileErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+    // simple required fields check
+    if (!firstName.trim()) {
+      message.warning("Name is required");
+      return;
+    }
+    if (!email.trim() || !emailOk(email)) {
+      message.warning("Enter a valid email");
+      return;
+    }
+
+    try {
+      setProfileLoading(true);
+
+      // your expected payload (keys match what you asked for)
+      const payload = {
+        userFirstName: firstName.trim(),
+        userLastName: lastName.trim() || null,
+        customerEmail: email.trim(),
+        customerId,
+      };
+
+      // Only patch if mandatory or changed
+      if (isMandatoryGate || isDirty) {
+        await axios.patch(`${BASE_URL}/user-service/profileUpdate`, payload, {
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        });
+        message.success(
+          isMandatoryGate ? "Profile saved!" : "Profile updated!"
+        );
+        setInitialFirstName(payload.userFirstName);
+        setInitialLastName(payload.userLastName || "");
+        setInitialEmail(payload.customerEmail);
+      }
+
+      setIsMandatoryGate(false);
+      setProfileModalOpen(false);
+    } catch (e: any) {
+      message.error(
+        e?.response?.data?.message ||
+          e?.message ||
+          "Error updating profile. Please try again."
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // 4) Cancel behavior
+  const handleCancelProfile = () => {
+    if (isMandatoryGate) {
+      message.warning("Please enter Name and Email to continue.");
+      return;
+    }
+    setProfileModalOpen(false);
+  };
+
+  // ---------- Chat stuff ----------
   const heroInputRef = useRef<HTMLTextAreaElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const ONE_LINE_PX = 24;
   const [autoGrow, setAutoGrow] = useState(true);
 
   const autoResize = (el: HTMLTextAreaElement | null) => {
@@ -223,7 +390,6 @@ const ChatBasedAgent: React.FC = () => {
   };
 
   const [isRecording, setIsRecording] = useState(false);
-
   const [isXs] = useState<boolean>(() =>
     typeof window !== "undefined"
       ? window.matchMedia("(max-width: 640px)").matches
@@ -268,27 +434,25 @@ const ChatBasedAgent: React.FC = () => {
     recognition.onend = () => setIsRecording(false);
     recognition.start();
   };
-  
-useEffect(() => {
-  document.documentElement.classList.remove("dark");
-  (document.documentElement as HTMLElement).style.colorScheme = "light";
 
-  // Inject meta hints to stop UA auto-darkening/inversion
-  const meta1 = document.createElement("meta");
-  meta1.name = "color-scheme";
-  meta1.content = "light";
-  const meta2 = document.createElement("meta");
-  meta2.name = "supported-color-schemes";
-  meta2.content = "light";
-  document.head.appendChild(meta1);
-  document.head.appendChild(meta2);
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+    (document.documentElement as HTMLElement).style.colorScheme = "light";
 
-  return () => {
-    document.head.removeChild(meta1);
-    document.head.removeChild(meta2);
-  };
-}, []);
+    const meta1 = document.createElement("meta");
+    meta1.name = "color-scheme";
+    meta1.content = "light";
+    const meta2 = document.createElement("meta");
+    meta2.name = "supported-color-schemes";
+    meta2.content = "light";
+    document.head.appendChild(meta1);
+    document.head.appendChild(meta2);
 
+    return () => {
+      document.head.removeChild(meta1);
+      document.head.removeChild(meta2);
+    };
+  }, []);
 
   const [assistant, setAssistant] = useState<AssistantInfo | null>(null);
 
@@ -313,7 +477,7 @@ useEffect(() => {
     "conStarter1",
     "conStarter2",
   ];
-  const [stepIndex, setStepIndex] = useState<number>(0);
+  const [stepIndex, setStepIndex] = useState<number>(0); // ✅ Only defined once
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -335,14 +499,11 @@ useEffect(() => {
   const needsRedirect = !userId;
 
   useLayoutEffect(() => {
-    // reserve space under any external app header if present
     const hostHeader =
       (document.querySelector("[data-app-header]") as HTMLElement) ||
       (document.querySelector(".app-header") as HTMLElement) ||
       (document.querySelector("header[role='banner']") as HTMLElement);
-    const update = () => {
-      // no-op but keeps behavior consistent for your shell layout
-    };
+    const update = () => {};
     update();
     const ro = hostHeader ? new ResizeObserver(update) : null;
     if (hostHeader && ro) ro.observe(hostHeader);
@@ -355,7 +516,6 @@ useEffect(() => {
     autoResize(chatInputRef.current);
   }, [input, autoGrow]);
 
-  // rotating loading captions (unchanged)
   const loadingMessages: string[] = [
     "Thinking longer for a better answer",
     "Analyzing details to improve accuracy",
@@ -454,6 +614,16 @@ useEffect(() => {
       { headers }
     );
     return data;
+  };
+
+  const TypingBubble: React.FC = () => {
+    return (
+      <div className="flex items-center gap-1 px-3 py-2">
+        <span className="inline-block w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.30s]" />
+        <span className="inline-block w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.15s]" />
+        <span className="inline-block w-2 h-2 rounded-full bg-gray-400 animate-bounce" />
+      </div>
+    );
   };
 
   /** Create parent agent once */
@@ -556,7 +726,7 @@ useEffect(() => {
         } catch {
           return;
         }
-        return; // next message starts fields
+        return;
       }
 
       if (stepIndex >= stepToField.length) return;
@@ -568,7 +738,6 @@ useEffect(() => {
         persistDraft(ensureAgentId!);
       }, 0);
 
-      // ✅ use the single setter
       setStepIndex((i) => i + 1);
     },
     [currentAgentId, stepIndex, stepToField, createParentAgent, persistDraft]
@@ -578,6 +747,12 @@ useEffect(() => {
   const sendMessage = useCallback(
     async (prompt?: string) => {
       if (needsRedirect) return;
+
+      // BLOCK sending only if the modal is a mandatory gate
+      if (profileModalOpen && isMandatoryGate) {
+        message.warning("Please complete your Name & Email to continue.");
+        return;
+      }
 
       const content = (prompt ?? input).trim();
       if (!content || loading) return;
@@ -595,6 +770,7 @@ useEffect(() => {
 
       setLoading(true);
       try {
+        // Use MAIN_AGENT_ID for chat until personalized agent is created
         const apiHistory = buildMessageHistory([...messages, userMsg]);
         const resp = await postAgentChat(MAIN_AGENT_ID, apiHistory);
 
@@ -616,7 +792,15 @@ useEffect(() => {
         setLoading(false);
       }
     },
-    [needsRedirect, input, loading, messages, captureUserStepAndSave]
+    [
+      needsRedirect,
+      input,
+      loading,
+      messages,
+      captureUserStepAndSave,
+      profileModalOpen,
+      isMandatoryGate,
+    ]
   );
 
   /** ----- Conversations modal (unchanged) ----- */
@@ -664,7 +848,6 @@ useEffect(() => {
             userId,
             mainAgentId: MAIN_AGENT_ID,
             mainAssistantId: MAIN_ASSISTANT_ID,
-            // IMPORTANT: send NULLs, not empty strings
             headerTitle: null,
             agentName: null,
             description: null,
@@ -685,7 +868,6 @@ useEffect(() => {
         );
       }
     } catch {
-      // even if the patch fails, still go back
     } finally {
       if (window.history.length > 1) navigate(-1);
       else navigate("/main/chatbasedagent", { replace: true });
@@ -706,41 +888,123 @@ useEffect(() => {
 
   const showHero = messages.length === 0;
 
-  /** Typing bubble */
-  const TypingBubble = () => (
-    <div className="text-left">
-      <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-900 rounded-2xl px-4 py-3">
-        <span className="w-2 h-2 rounded-full bg-gray-600 animate-typing"></span>
-        <span className="w-2 h-2 rounded-full bg-gray-600 animate-typing animation-delay-200"></span>
-        <span className="w-2 h-2 rounded-full bg-gray-600 animate-typing animation-delay-400"></span>
-        <span className="ml-2 text-xs text-gray-600">Updating....</span>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen w-full flex flex-col bg-white text-gray-900">
-      {/* animations */}
-      <style>
-        {`
-        @keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.7} 30%{transform:translateY(-10px);opacity:1} }
-        .animate-typing{animation:typing 1.4s infinite ease-in-out}
-        .animation-delay-200{animation-delay:.2s}
-        .animation-delay-400{animation-delay:.4s}
-      `}
+      <style>{FORCE_LIGHT_CSS}</style>
+      {/* Profile Confirm (non-blocking) */}
+      <Modal
+        open={confirmOpen}
+        maskClosable
+        closable
+        onCancel={() => setConfirmOpen(false)}
+        footer={
+          <div className="w-full flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setConfirmOpen(false);
+                setIsMandatoryGate(false);
+                setProfileModalOpen(true); // open edit if they want to change
+              }}
+              className="px-4 py-2 rounded-lg border border-gray-300 bg-white"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => setConfirmOpen(false)}
+              className="px-4 py-2 rounded-lg border border-gray-300 bg-white"
+            >
+              Confirm
+            </button>
+          </div>
+        }
+      >
+        <div className="py-2">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Profile looks good
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Name:{" "}
+            <b>{[firstName, lastName].filter(Boolean).join(" ") || "—"}</b>
+            &nbsp; · &nbsp; Email: <b>{email || "—"}</b>
+          </p>
+        </div>
+      </Modal>
 
-        {`
-  ${FORCE_LIGHT_CSS}
+      <Modal
+        open={profileModalOpen}
+        maskClosable={!isMandatoryGate}
+        closable={!isMandatoryGate}
+        onCancel={handleCancelProfile}
+        footer={
+          <div className="w-full flex justify-end gap-2">
+            {!isMandatoryGate && (
+              <button
+                onClick={handleCancelProfile}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              onClick={handleSaveOrUpdateProfile}
+              disabled={profileLoading || (!isMandatoryGate && !isDirty)}
+              className="px-4 py-2 rounded-lg border border-gray-300 bg-white disabled:opacity-60"
+            >
+              {profileLoading
+                ? "Saving..."
+                : isMandatoryGate
+                ? "Save & Continue"
+                : "Update"}
+            </button>
+          </div>
+        }
+      >
+        <div className="py-2">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Complete your profile
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Please provide your <b>Name</b> and <b>Email</b>.
+          </p>
 
-/* existing animations… */
-@keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.7} 30%{transform:translateY(-10px);opacity:1} }
-.animate-typing{animation:typing 1.4s infinite ease-in-out}
-.animation-delay-200{animation-delay:.2s}
-.animation-delay-400{animation-delay:.4s}
-  `}
-      </style>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            First Name *
+          </label>
+          <input
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Your name"
+            className="w-full border rounded-lg px-3 py-2 mb-3 border-gray-300"
+          />
 
-      {/* ---------- HEADER (opaque now) ---------- */}
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Last Name (optional)
+          </label>
+          <input
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Surname"
+            className="w-full border rounded-lg px-3 py-2 mb-3 border-gray-300"
+          />
+
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email *
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="w-full border rounded-lg px-3 py-2 mb-2 border-gray-300"
+          />
+          <div className="text-xs text-gray-500">
+            We’ll use this for receipts and notifications.
+          </div>
+        </div>
+      </Modal>
+      {/* ---------- HEADER ---------- */}
       {!showHero && (
         <>
           <div
@@ -778,7 +1042,6 @@ useEffect(() => {
       {showHero && (
         <div className="flex flex-col justify-center items-center min-h-[calc(100vh-56px)] w-full relative bg-white overflow-hidden">
           <div className="max-w-5xl w-full px-4 text-center pb-32 sm:pb-40">
-            {/* Avatar */}
             <div className="flex justify-center mb-4">
               {assistant?.imageUrl ? (
                 <img
@@ -791,14 +1054,12 @@ useEffect(() => {
               )}
             </div>
 
-            {/* Title */}
             {assistant?.title && (
               <h1 className="text-2xl md:text-3xl font-bold text-purple-900">
                 {assistant.title}
               </h1>
             )}
 
-            {/* Subtitle */}
             {assistant?.subtitle && (
               <p className="text-sm md:text-base font-semibold text-gray-900 mt-2 mb-6">
                 {assistant.subtitle}
@@ -811,7 +1072,6 @@ useEffect(() => {
               </p>
             )}
 
-            {/* Cards */}
             {assistant?.cards?.length ? (
               <div className="mt-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 justify-items-center">
@@ -836,7 +1096,6 @@ useEffect(() => {
               </div>
             ) : null}
 
-            {/* Starters */}
             {assistant?.starters?.length ? (
               <div className="w-full mt-6 flex justify-center">
                 {(() => {
@@ -894,6 +1153,11 @@ useEffect(() => {
                 }}
                 onInput={(e) => autoResize(e.currentTarget)}
                 onKeyDown={async (e) => {
+                  if (profileModalOpen && isMandatoryGate) {
+                    e.preventDefault();
+                    message.warning("Please complete your Name & Email first.");
+                    return;
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     await sendMessage();
@@ -906,10 +1170,15 @@ useEffect(() => {
                 className="flex-1 outline-none px-4 py-3 text-sm md:text-base rounded-xl resize-none overflow-hidden bg-transparent text-gray-900 placeholder-gray-500"
                 rows={1}
                 style={{ minHeight: ONE_LINE_PX, maxHeight: 160 }}
+                disabled={profileModalOpen && isMandatoryGate}
               />
               <button
                 onClick={() => sendMessage()}
-                disabled={loading || !input.trim()}
+                disabled={
+                  loading ||
+                  !input.trim() ||
+                  (profileModalOpen && isMandatoryGate)
+                }
                 className="ml-2 flex items-center justify-center rounded-full w-11 h-11 bg-white text-gray-900 shadow-sm border border-gray-200 disabled:opacity-50 transition"
               >
                 <Send className="w-5 h-5" />
@@ -943,7 +1212,6 @@ useEffect(() => {
             {loading && <TypingBubble />}
             <div ref={endRef} />
           </div>
-
           {/* Bottom composer */}
           <div className="fixed bottom-0 left-0 right-0 flex justify-center px-3 sm:px-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40">
             <div className="w-full max-w-4xl flex items-center border border-gray-200 bg-white rounded-2xl shadow-sm px-3 py-2 sm:py-3">
@@ -958,6 +1226,11 @@ useEffect(() => {
                 }}
                 onInput={(e) => !loading && autoResize(e.currentTarget)}
                 onKeyDown={async (e) => {
+                  if (profileModalOpen && isMandatoryGate) {
+                    e.preventDefault();
+                    message.warning("Please complete your Name & Email first.");
+                    return;
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     if (!loading && input.trim()) await sendMessage();
@@ -966,7 +1239,7 @@ useEffect(() => {
                 placeholder={assistant?.composerHint || "Ask anything…"}
                 rows={1}
                 className="flex-1 mx-3 bg-transparent outline-none resize-none text-sm sm:text-base text-gray-800 placeholder-gray-500 overflow-hidden"
-                disabled={loading}
+                disabled={loading || (profileModalOpen && isMandatoryGate)}
               />
 
               <div className="flex items-center gap-2">
@@ -975,6 +1248,7 @@ useEffect(() => {
                     onClick={handleToggleVoice}
                     className="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full animate-pulse"
                     title="Stop"
+                    disabled={profileModalOpen && isMandatoryGate}
                   >
                     <Square className="w-4 h-4" />
                   </button>
@@ -983,6 +1257,7 @@ useEffect(() => {
                     onClick={handleToggleVoice}
                     className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-purple-600 transition"
                     title="Voice"
+                    disabled={profileModalOpen && isMandatoryGate}
                   >
                     <Mic className="w-5 h-5" />
                   </button>
@@ -993,7 +1268,11 @@ useEffect(() => {
                     if (!input.trim()) return;
                     await sendMessage();
                   }}
-                  disabled={loading || input.trim().length === 0}
+                  disabled={
+                    loading ||
+                    input.trim().length === 0 ||
+                    (profileModalOpen && isMandatoryGate)
+                  }
                   className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-purple-600 transition"
                   title="Send"
                 >

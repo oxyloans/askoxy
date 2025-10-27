@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
-import Askoxylogo from "../../assets/img/askoxylogostatic.png";
+import Askoxylogo from "../../assets/img/askoxylogonew.png";
 import { motion, AnimatePresence } from "framer-motion"; // optional animation
 const images = [
   "https://i.ibb.co/chQ2MPVX/job-street.png",
@@ -336,10 +336,7 @@ const JobStreet: React.FC = () => {
               <h3 className="text-lg sm:text-xl font-semibold text-indigo-700">
                 {currentUseCase.title}
               </h3>
-
-              {!imageLoaded && (
-                <div className="w-full h-[300px] sm:h-[400px] bg-gray-200 rounded-md animate-pulse" />
-              )}
+       
 
               <AnimatePresence mode="wait">
                 <motion.img
@@ -372,4 +369,3 @@ const JobStreet: React.FC = () => {
 };
 
 export default JobStreet;
-

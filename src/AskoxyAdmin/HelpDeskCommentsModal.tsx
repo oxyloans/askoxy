@@ -19,6 +19,7 @@ interface Props {
   storedUniqueId: string | null | undefined;
   record: any;
   BASE_URL: string;
+  initialIsActive?: boolean | null;
 }
 
 const HelpDeskCommentsModal: React.FC<Props> = ({
@@ -338,29 +339,29 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
         {/* User Active Status */}
         <div className="mt-4">
           <h3 className="text-base font-semibold text-gray-800 mb-3">
-            User Active
+            User Active (Yes / No)
           </h3>
-          {currentIsActiveStatus === null ||
-          currentIsActiveStatus === undefined ? (
-            <Select
-              style={{ width: "100%" }}
-              placeholder="Select user active status"
-              options={isActiveOptions}
-              value={isActive}
-              onChange={handleIsActiveChange}
-            />
-          ) : (
-            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
-              <span className="text-sm text-gray-600">Current Status:</span>
-              <span
-                className={`text-sm px-3 py-1 rounded-full border ${getIsActiveBadgeColor(
-                  currentIsActiveStatus
-                )}`}
-              >
-                {getIsActiveDisplayText(currentIsActiveStatus)}
-              </span>
-            </div>
-          )}
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Select user active status"
+            options={isActiveOptions}
+            value={isActive ?? "true"} // ✅ Default to "Yes"
+            onChange={handleIsActiveChange}
+          />
+
+          {currentIsActiveStatus !== null &&
+            currentIsActiveStatus !== undefined && (
+              <div className="mt-2 text-sm text-gray-600">
+                <span>Current Status: </span>
+                <span
+                  className={`px-3 py-1 rounded-full border ${getIsActiveBadgeColor(
+                    currentIsActiveStatus
+                  )}`}
+                >
+                  {getIsActiveDisplayText(currentIsActiveStatus)}
+                </span>
+              </div>
+            )}
         </div>
 
         {/* New Comment */}

@@ -244,7 +244,6 @@ function cleanInstructionText(txt: string): string {
   return t; // no silent .slice()
 }
 
-
 const CreateAgentWizard: React.FC = () => {
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [loading, setLoading] = useState(false);
@@ -692,7 +691,7 @@ const CreateAgentWizard: React.FC = () => {
         setAssistantId(String(seed.assistantId || ""));
 
         setName(seed.agentName || seed.AgentName || seed.Name || "");
-setCreatorName(String(seed.creatorName || seed.name || ""));
+        setCreatorName(String(seed.creatorName || seed.name || ""));
         setDescription(seed.description || "");
         setLanguage(seed.language || "English");
         setUserExperienceSummary(seed.userExperienceSummary || "");
@@ -1255,63 +1254,65 @@ setCreatorName(String(seed.creatorName || seed.name || ""));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-// Step 1 save
-const saveStep0 = async () => {
-  if (isEditMode && !agentId) {
-    message.error("Missing agentId in edit mode. Please reopen from All Agents.");
-    return;
-  }
-  if (!validateStep0()) return false;
+  // Step 1 save
+  const saveStep0 = async () => {
+    if (isEditMode && !agentId) {
+      message.error(
+        "Missing agentId in edit mode. Please reopen from All Agents."
+      );
+      return;
+    }
+    if (!validateStep0()) return false;
 
-  setLoading(true);
-  try {
-    const payload = {
-      // IDs
-      agentId: agentId || undefined,
-      assistantId: assistantId || undefined,
-      userId,
+    setLoading(true);
+    try {
+      const payload = {
+        // IDs
+        agentId: agentId || undefined,
+        assistantId: assistantId || undefined,
+        userId,
 
-      // Header
-      headerTitle,
-      headerStatus: false,
+        // Header
+        headerTitle,
+        headerStatus: false,
 
-      // Profile (mapping clarified)
-      // 'name'  -> Creator Name
-      // 'agentName' -> Agent Name (the AI agent's display name)
-      name: creatorName,
-      agentName: name,
-      creatorName, // send explicitly for backend clarity
-      userRole: effectiveUserRole || "Developer",
+        // Profile (mapping clarified)
+        // 'name'  -> Creator Name
+        // 'agentName' -> Agent Name (the AI agent's display name)
+        name: creatorName,
+        agentName: name,
+        creatorName, // send explicitly for backend clarity
+        userRole: effectiveUserRole || "Developer",
 
-      userExperienceSummary,
-      userExperience: undefined,
+        userExperienceSummary,
+        userExperience: undefined,
 
-      acheivements,
-      description,
-      language,
+        acheivements,
+        description,
+        language,
 
-      // Voice + Status
-      voiceStatus: false,
-      activeStatus: true, // ✅ make agent active at Step-1 (create & edit)
-    };
+        // Voice + Status
+        voiceStatus: false,
+        activeStatus: true, // ✅ make agent active at Step-1 (create & edit)
+      };
 
-    const data = await doPatch("/ai-service/agent/agentScreen1", payload);
-    const aId = (data as any)?.agentId || (data as any)?.id || "";
-    const asstId = (data as any)?.assistantId || "";
-    if (aId) setAgentId(String(aId));
-    if (asstId) setAssistantId(String(asstId));
+      const data = await doPatch("/ai-service/agent/agentScreen1", payload);
+      const aId = (data as any)?.agentId || (data as any)?.id || "";
+      const asstId = (data as any)?.assistantId || "";
+      if (aId) setAgentId(String(aId));
+      if (asstId) setAssistantId(String(asstId));
 
-    message.success("Saved step 1");
-    lastSaved0.current = snapStep0();
-    setStep(1);
-    return true;
-  } catch (e: any) {
-    message.error(e?.message || "Failed to save step 1");
-    return false;
-  } finally {
-    setLoading(false);
-  }
-};
+      message.success("Saved step 1");
+      lastSaved0.current = snapStep0();
+      setStep(1);
+      return true;
+    } catch (e: any) {
+      message.error(e?.message || "Failed to save step 1");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Step 2 save
   const saveStep1 = async () => {
@@ -1703,16 +1704,12 @@ const saveStep0 = async () => {
     setAgentId(String(editSeed.id || editSeed.agentId || ""));
     setAssistantId(String(editSeed.assistantId || ""));
     setName(
-  (editSeed as any).agentName ||
-    (editSeed as any).AgentName ||
-    (editSeed as any).Name || // legacy agent name sometimes stored as "Name"
-    ""
-);
-setCreatorName(
-  String(
-    (editSeed as any).creatorName || ""
-  )
-);
+      (editSeed as any).agentName ||
+        (editSeed as any).AgentName ||
+        (editSeed as any).Name || // legacy agent name sometimes stored as "Name"
+        ""
+    );
+    setCreatorName(String((editSeed as any).creatorName || ""));
     setDescription(editSeed.description || "");
     setLanguage(editSeed.language || "English");
     setUserExperienceSummary((editSeed as any).userExperienceSummary || "");
@@ -2432,6 +2429,16 @@ setCreatorName(
                           </Option>
                         ))}
                       </Select>
+
+                      {/* Highlighted 2-line note */}
+                      <p
+                        style={{ marginTop: 6, fontSize: 13, color: "#595959" }}
+                      >
+                        <b>Note:</b> <b style={{ color: "#722ed1" }}>GPT-4o</b>{" "}
+                        is for text-based responses, and{" "}
+                        <b style={{ color: "#fa8c16" }}>DALL-E</b> is for image
+                        generation.
+                      </p>
                     </div>
                   </Col>
 
@@ -3234,69 +3241,82 @@ setCreatorName(
           editing the agent.
         </div>
       </Modal>
-  <Modal
-  open={showInstructionsModal}
-  onCancel={() => {
-    stopListening();
-    setShowInstructionsModal(false);
-  }}
-  footer={null}
-  title="Write Instructions"
->
-  <TextArea
-    value={tempInstructions}
-    onChange={(e) => {
-      const val = e.target.value;
-      setTempInstructions(val);
-
-      if (val.length === LIMITS.instructionsMax) {
-        message.error("Please write within 7000 characters below.");
-      } else if (val.length > LIMITS.instructionsMax) {
-        message.error("Exceeded 7000 characters — please shorten your instructions.");
-      }
-    }}
-    rows={8}
-    style={{ borderRadius: 8 }}
-    placeholder="Type or speak your instructions here…"
-    maxLength={LIMITS.instructionsMax}
-  />
-  <Text type="secondary" style={{ fontSize: 12, float: "right", marginTop: 4 }}>
-    {tempInstructions.length}/{LIMITS.instructionsMax}
-  </Text>
-
-  <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", gap: 8 }}>
-    <Button
-      onClick={() => (isListening ? stopListening() : startListening({ toModal: true }))}
-      icon={isListening ? <AudioMutedOutlined /> : <AudioOutlined />}
-      danger={isListening}
-    >
-      {isListening ? "Stop" : "Speak"}
-    </Button>
-
-    <div>
-      <Button
-        onClick={() => {
+      <Modal
+        open={showInstructionsModal}
+        onCancel={() => {
           stopListening();
           setShowInstructionsModal(false);
         }}
-        style={{ marginRight: 8 }}
+        footer={null}
+        title="Write Instructions"
       >
-        Cancel
-      </Button>
+        <TextArea
+          value={tempInstructions}
+          onChange={(e) => {
+            const val = e.target.value;
+            setTempInstructions(val);
 
-      <Button
-        onClick={() => {
-          stopListening();
-          handleSaveInstructions();
-        }}
-        style={{ marginRight: 8 }}
-      >
-        Save
-      </Button>
-    </div>
-  </div>
-</Modal>
+            if (val.length === LIMITS.instructionsMax) {
+              message.error("Please write within 7000 characters below.");
+            } else if (val.length > LIMITS.instructionsMax) {
+              message.error(
+                "Exceeded 7000 characters — please shorten your instructions."
+              );
+            }
+          }}
+          rows={8}
+          style={{ borderRadius: 8 }}
+          placeholder="Type or speak your instructions here…"
+          maxLength={LIMITS.instructionsMax}
+        />
+        <Text
+          type="secondary"
+          style={{ fontSize: 12, float: "right", marginTop: 4 }}
+        >
+          {tempInstructions.length}/{LIMITS.instructionsMax}
+        </Text>
 
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <Button
+            onClick={() =>
+              isListening ? stopListening() : startListening({ toModal: true })
+            }
+            icon={isListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+            danger={isListening}
+          >
+            {isListening ? "Stop" : "Speak"}
+          </Button>
+
+          <div>
+            <Button
+              onClick={() => {
+                stopListening();
+                setShowInstructionsModal(false);
+              }}
+              style={{ marginRight: 8 }}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={() => {
+                stopListening();
+                handleSaveInstructions();
+              }}
+              style={{ marginRight: 8 }}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={showViewInstructions}
@@ -3358,28 +3378,29 @@ setCreatorName(
         ) : (
           <>
             <TextArea
-  value={tempInstructions}
-  onChange={(e) => {
-    const val = e.target.value;
-    setTempInstructions(val);
+              value={tempInstructions}
+              onChange={(e) => {
+                const val = e.target.value;
+                setTempInstructions(val);
 
-    if (val.length === LIMITS.instructionsMax) {
-      message.error("Please write within 7000 characters below.");
-    } else if (val.length > LIMITS.instructionsMax) {
-      message.error("Exceeded 7000 characters — please shorten your instructions.");
-    }
-  }}
-  rows={10}
-  style={{ borderRadius: 8 }}
-  maxLength={LIMITS.instructionsMax}
-/>
-<Text
-  type="secondary"
-  style={{ fontSize: 12, float: "right", marginTop: 4 }}
->
-  {tempInstructions.length}/{LIMITS.instructionsMax}
-</Text>
-
+                if (val.length === LIMITS.instructionsMax) {
+                  message.error("Please write within 7000 characters below.");
+                } else if (val.length > LIMITS.instructionsMax) {
+                  message.error(
+                    "Exceeded 7000 characters — please shorten your instructions."
+                  );
+                }
+              }}
+              rows={10}
+              style={{ borderRadius: 8 }}
+              maxLength={LIMITS.instructionsMax}
+            />
+            <Text
+              type="secondary"
+              style={{ fontSize: 12, float: "right", marginTop: 4 }}
+            >
+              {tempInstructions.length}/{LIMITS.instructionsMax}
+            </Text>
 
             <div
               style={{

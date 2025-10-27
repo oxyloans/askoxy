@@ -10,6 +10,7 @@ import {
   Tag,
   Input,
   Empty,
+  Select,
   Row,
   Col,
 } from "antd";
@@ -105,6 +106,64 @@ const AllKukatpallyDataPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Quick toggle Active/Inactive inline in the table (defaults to YES if unset)
+  const handleQuickActiveChange = async (
+    userId: string,
+    value: "true" | "false"
+  ) => {
+    try {
+      const commentsUpdateBy =
+        localStorage.getItem("admin_primaryType") === "HELPDESKSUPERADMIN"
+          ? "ADMIN"
+          : updatedBy || "ADMIN";
+
+      await axios.patch(
+        `${BASE_URL}/user-service/adminUpdateComments`,
+        {
+          adminComments: "Updated user active status via Kukatpally page",
+          adminUserId: storedUniqueId,
+          commentsUpdateBy,
+          userId,
+          isActive: value === "true",
+          customerBehaviour: "UNDERSTANDING",
+        },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      message.success("User active status updated");
+
+      // Update local cache
+      setCommentsMap((prev) => {
+        const old = prev[userId];
+        const materialized =
+          old && old !== "loading" && old !== "error"
+            ? old
+            : {
+                adminComments: "—",
+                commentsCreatedDate: new Date().toISOString(),
+                commentsUpdateBy,
+                adminUserId: String(storedUniqueId || ""),
+                customerBehaviour: "UNDERSTANDING",
+                customerExpectedOrderDate: null,
+                isActive: value === "true",
+              };
+        return {
+          ...prev,
+          [userId]: { ...materialized, isActive: value === "true" },
+        };
+      });
+    } catch {
+      message.error("Failed to update status");
+    }
+  };
+
+  const getSelectedIsActive = () => {
+    if (!selectedRecord) return null;
+    const info = commentsMap[selectedRecord.id];
+    if (!info || info === "loading" || info === "error") return null;
+    return (info as AdminComment).isActive; // boolean
   };
 
   useEffect(() => {
@@ -272,14 +331,45 @@ const AllKukatpallyDataPage: React.FC = () => {
             </div>
           );
 
-        const statusTag = info.isActive ? (
-          <Tag color="green" style={{ margin: 0 }}>
-            ACTIVE
-          </Tag>
+        const needsDecision =
+          info.isActive === null || info.isActive === undefined;
+
+        const statusTag = needsDecision ? (
+          <div className="flex items-center gap-3">
+            <span className="text-gray-700 text-xs">User Active:</span>
+            <Select
+              style={{ width: 160 }}
+              placeholder="Select status"
+              options={[
+                { label: "Yes", value: "true" },
+                { label: "No", value: "false" },
+              ]}
+              value={"true"} // ✅ default to Yes
+              onChange={(value: string) =>
+                handleQuickActiveChange(record.id, value as "true" | "false")
+              }
+            />
+          </div>
         ) : (
-          <Tag color="red" style={{ margin: 0 }}>
-            INACTIVE
-          </Tag>
+          <div className="flex items-center gap-2">
+            {info.isActive ? (
+              <Tag color="green" style={{ margin: 0 }}>
+                ACTIVE
+              </Tag>
+            ) : (
+              <Tag color="red" style={{ margin: 0 }}>
+                INACTIVE
+              </Tag>
+            )}
+            <Button
+              type="link"
+              size="small"
+              onClick={() => showCommentsModal(record)}
+              className="p-0"
+            >
+              Change
+            </Button>
+          </div>
         );
 
         const name = info.commentsUpdateBy || "—";
@@ -452,6 +542,7 @@ const AllKukatpallyDataPage: React.FC = () => {
         storedUniqueId={storedUniqueId}
         record={selectedRecord}
         BASE_URL={BASE_URL}
+        initialIsActive={getSelectedIsActive()} // ✅ add this
       />
 
       <style>

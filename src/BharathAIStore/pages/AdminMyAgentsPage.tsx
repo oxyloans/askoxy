@@ -134,47 +134,6 @@ function normalizeAssistantsPayload(resData: any): Assistant[] {
     status: a?.status || a?.agentStatus,
   }));
 }
-async function getAssistantsByUserId(userId: string): Promise<Assistant[]> {
-  const headers = getOptionalAuthHeaders();
-
-  try {
-    const resp = await apiClient.get(
-      "/ai-service/agent/getAssistantsByUserId",
-      {
-        headers,
-        params: { userId },
-      }
-    );
-    const list = normalizeAssistantsPayload(resp?.data);
-    if (Array.isArray(list) && list.length) return list;
-  } catch {}
-
-  let after: string | undefined;
-  let collected: Assistant[] = [];
-  for (let page = 0; page < 8; page++) {
-    const config: any = { headers };
-    if (after) config.params = { after };
-    const res = await apiClient.get(
-      "/ai-service/agent/getAllAssistants",
-      config
-    );
-
-    const normalized = normalizeAssistantsPayload(res?.data);
-    collected = collected.concat(normalized);
-
-    const hasMore = !!(res?.data?.has_more ?? res?.data?.hasMore);
-    after = res?.data?.lastId;
-    if (!hasMore) break;
-  }
-
-  const target = (userId || "").trim().toLowerCase();
-  return collected.filter((a) => {
-    const o1 = (a.ownerId || "").toString().toLowerCase();
-    const o2 = (a.userId || "").toString().toLowerCase();
-    const o3 = (a.createdBy || "").toString().toLowerCase();
-    return [o1, o2, o3].some((v) => v && v === target);
-  });
-}
 
 const AdminCard: React.FC<{ a: Assistant; onOpen: () => void }> = ({
   a,
@@ -248,11 +207,7 @@ const MyAgentsTab: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const approvedAgents = useMemo(
-    () =>
-      agents.filter((a) => isOwnedBy(a, USER_ID) && isApprovedStatus(a.status)),
-    [agents]
-  );
+  const approvedAgents = useMemo(() => agents, [agents]);
 
   const handleOpen = (a: Assistant) => {
     const loggedIn = !!localStorage.getItem("userId");
@@ -288,8 +243,37 @@ const MyAgentsTab: React.FC = () => {
       try {
         setLoading(true);
         setErr(null);
-        const list = await getAssistantsByUserId(USER_ID);
-        setAgents(list);
+
+        const resp = await apiClient.get("/ai-service/agent/allAgentDataList", {
+          headers: getOptionalAuthHeaders(),
+          params: { userId: USER_ID },
+        });
+
+        const raw = Array.isArray(resp?.data)
+          ? resp.data
+          : Array.isArray(resp?.data?.assistants)
+          ? resp.data.assistants
+          : [];
+
+        // Keep only approved agents and normalize for card rendering
+        const approvedNormalized = raw
+          .filter(
+            (a: any) =>
+              a?.status?.toLowerCase() === "approved" ||
+              a?.agentStatus?.toLowerCase() === "approved"
+          )
+          .map((a: any) => ({
+            ...a,
+            assistantId: a?.assistantId || a?.id,
+            agentId: a?.agentId || a?.id || a?.assistantId,
+            name: a?.agentName || a?.AgentName || a?.Name || "Untitled Agent",
+            description: a?.description ?? a?.desc ?? "",
+            status: a?.status || a?.agentStatus || "Approved",
+            imageUrl: a?.imageUrl || a?.image || a?.thumbUrl || "",
+            userId: a?.userId || a?.ownerId || a?.createdBy,
+          }));
+
+        setAgents(approvedNormalized);
       } catch (e: any) {
         const status = e?.response?.status;
         const body = e?.response?.data;
@@ -298,8 +282,7 @@ const MyAgentsTab: React.FC = () => {
         setLoading(false);
       }
     })();
-  }, [USER_ID]);
-
+  }, []);
   if (err) {
     return (
       <div className="mb-6 rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
@@ -384,44 +367,150 @@ async function getAllAssistants(after?: string) {
   const config: any = { headers: getOptionalAuthHeaders() };
   if (after) config.params = { after };
   const res = await apiClient.get("/ai-service/agent/getAllAssistants", config);
-  const normalized = (res.data?.data ?? []).map((a: any) => ({
+
+  // NEW: accept data | assistants | root-array
+  const raw = Array.isArray(res.data?.data)
+    ? res.data.data
+    : Array.isArray(res.data?.assistants)
+    ? res.data.assistants
+    : Array.isArray(res.data)
+    ? res.data
+    : [];
+
+  const normalized = raw.map((a: any) => ({
     ...a,
     assistantId: a?.assistantId || a?.id,
     agentId: a?.agentId || a?.id || a?.assistantId,
     imageUrl: a?.imageUrl || a?.image || a?.thumbUrl || "",
     description: a?.description ?? a?.desc ?? "",
     status: a?.status || a?.agentStatus,
+    name:
+      a?.agentName || a?.AgentName || a?.name || a?.Name || "Untitled Agent",
   }));
+
   return {
     data: normalized as Assistant[],
     has_more: !!(res.data?.has_more ?? res.data?.hasMore),
     lastId: res.data?.lastId as string | undefined,
   };
 }
+
+const normalizeTitle = (s: string) =>
+  (s || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+const INS_ALIASES: Record<InsCanonical, string[]> = {
+  "AI-Based IRDAI GI Reg Audit": [
+    "irdai gi reg audit",
+    "irdai general insurance audit",
+    "gi audit"
+  ],
+  "AI-Based IRDAI LI Reg Audit by ASKOXY.AI": [
+    "irdai li reg audit",
+    "irdai life insurance audit",
+    "li audit",
+    "life insurance audit"
+  ],
+  "IRDAI Enforcement Actions": [
+    "irdai enforcement",
+    "irdai actions",
+    "enforcement action",
+    "irdai penalties"
+  ],
+  "General Insurance Discovery": [
+    "general insurance discovery",
+    "gi discovery",
+    "insurance discovery"
+  ],
+  "Life Insurance Citizen Discovery": [
+    "life insurance discovery",
+    "li discovery",
+    "citizen discovery"
+  ],
+};
+
+// Build fast lookup: exact normalized canonical + aliases
+const INS_NAME_TO_CANONICAL_FALLBACK: Record<string, InsCanonical> = (() => {
+  const map: Record<string, InsCanonical> = {};
+  for (const c of INS_CANONICAL) {
+    map[normalizeTitle(c)] = c;
+    for (const alias of (INS_ALIASES[c] || [])) {
+      map[normalizeTitle(alias)] = c;
+    }
+  }
+  return map;
+})();
+
+
 function insMapImage(displayName: InsCanonical, apiImage?: string) {
   const cleaned = (apiImage || "").trim();
   return cleaned || INS_NAME_TO_IMAGE[displayName];
 }
 function buildInsuranceListById(all: Assistant[]): InsView[] {
-  return all
-    .filter((a) => {
-      const id = (a.assistantId || a.id || "").trim();
-      return id && INS_ID_TO_CANONICAL[id];
-    })
-    .map((a) => {
-      const id = (a.assistantId || a.id || "").trim();
-      const displayName = INS_ID_TO_CANONICAL[id] as InsCanonical;
-      return {
-        ...a,
-        displayName,
-        imageUrl: insMapImage(displayName, a.imageUrl),
-      } as InsView;
-    })
-    .sort(
-      (a, b) =>
-        INS_CANONICAL.indexOf(a.displayName) -
-        INS_CANONICAL.indexOf(b.displayName)
-    );
+  const seen = new Set<string>();
+  const picked: InsView[] = [];
+
+  for (const a of all) {
+    const id = (a.assistantId || a.id || "").trim();
+    let displayName: InsCanonical | undefined;
+
+    // 1) Strict ID allowlist
+    if (id && INS_ID_TO_CANONICAL[id]) {
+      displayName = INS_ID_TO_CANONICAL[id] as InsCanonical;
+    } else {
+      // 2) Name-based fallbacks: exact, alias, and partial
+      const raw =
+        (a.name ||
+          (a as any).agentName ||
+          (a as any).Name ||
+          (a as any).AgentName ||
+          "") + "";
+      const nm = normalizeTitle(raw);
+
+      // 2a) Exact/alias map
+      if (INS_NAME_TO_CANONICAL_FALLBACK[nm]) {
+        displayName = INS_NAME_TO_CANONICAL_FALLBACK[nm];
+      } else {
+        // 2b) Partial contains: canonical in api-name OR api-name in canonical
+        for (const canonical of INS_CANONICAL) {
+          const cn = normalizeTitle(canonical);
+          if (nm.includes(cn) || cn.includes(nm)) {
+            displayName = canonical;
+            break;
+          }
+          // 2c) Alias partials
+          const aliases = INS_ALIASES[canonical] || [];
+          for (const al of aliases) {
+            const an = normalizeTitle(al);
+            if (nm.includes(an) || an.includes(nm)) {
+              displayName = canonical;
+              break;
+            }
+          }
+          if (displayName) break;
+        }
+      }
+    }
+
+    if (!displayName) continue;
+    if (seen.has(displayName)) continue;
+    seen.add(displayName);
+
+    picked.push({
+      ...a,
+      displayName,
+      imageUrl: insMapImage(displayName, a.imageUrl),
+    } as InsView);
+  }
+
+  return picked.sort(
+    (a, b) =>
+      INS_CANONICAL.indexOf(a.displayName) -
+      INS_CANONICAL.indexOf(b.displayName)
+  );
 }
 
 const ReadMoreModal: React.FC<{
@@ -1029,13 +1118,12 @@ const AdminMyAgentsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <main className="max-w-7xl mx-auto">
-
         <section className="soft-animated-bg p-[2px] rounded-2xl mb-8">
           <div className="bg-white/90 backdrop-blur rounded-2xl px-5 sm:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 items-center">
               {/* Text: first on mobile, left on desktop */}
               <div className="order-1 md:order-1 md:col-span-3 text-gray-800 leading-relaxed">
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-purple-600 mb-3" >
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-purple-600 mb-3">
                   Greetings from Radhakrishna!
                 </h2>
                 <p className="text-[15px] sm:text-base mb-3">

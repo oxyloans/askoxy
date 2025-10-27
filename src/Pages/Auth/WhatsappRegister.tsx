@@ -932,6 +932,23 @@ const WhatsappRegister = () => {
                   </div>
                 )}
                 <div className="space-y-3">
+                  {/* ✅ Added Notes Above Get OTP Button */}
+                  {!showOtp && (
+                    <div className="mb-2 text-center text-sm">
+                      {otpMethod === "whatsapp" ? (
+                        <p className="text-green-600 ">
+                          <strong>Note:</strong>🌍 WhatsApp OTP works globally
+                          — India and beyond!
+                        </p>
+                      ) : (
+                        <p className="text-purple-600 ">
+                          <strong>Note:</strong>📩 SMS OTP is for Indian
+                          numbers (+91) only.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <button
                     id="otpSubmitButton"
                     type="submit"
@@ -960,6 +977,7 @@ const WhatsappRegister = () => {
                       </>
                     )}
                   </button>
+
                   <div className="space-y-3 mb-6">
                     <div className="flex items-start">
                       <input
