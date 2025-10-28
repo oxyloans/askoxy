@@ -1,10 +1,12 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { FaWhatsapp, FaGoogle } from "react-icons/fa6";
 import axios, { AxiosError } from "axios";
-import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
+import PhoneInput, {
+  isValidPhoneNumber,
+  parsePhoneNumber,
+} from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import {
   X,
@@ -200,41 +202,41 @@ const WhatsappLogin: React.FC = () => {
   }, [location, navigate]);
 
   // Check for existing authentication
- useEffect(() => {
-   const queryParams = new URLSearchParams(location.search);
-   // UPDATED: Include AGENT in detectedPrimaryType type
-   let detectedPrimaryType: "CUSTOMER" | "STUDENT" | "AGENT" = "CUSTOMER";
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    // UPDATED: Include AGENT in detectedPrimaryType type
+    let detectedPrimaryType: "CUSTOMER" | "STUDENT" | "AGENT" = "CUSTOMER";
 
-   // UPDATED: Handle primaryType for AGENT similar to STUDENT
-   const urlPrimaryType = queryParams.get("primaryType");
-   if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
-     detectedPrimaryType = urlPrimaryType as "STUDENT" | "AGENT";
-   } else if (
-     queryParams.get("from") === "studyabroad" ||
-     location.state?.from?.includes("/studyabroad") ||
-     document.referrer.includes("/studyabroad") ||
-     sessionStorage.getItem("primaryType") === "STUDENT" ||
-     sessionStorage.getItem("fromStudyAbroad") === "true"
-   ) {
-     detectedPrimaryType = "STUDENT";
-   } else if (
-     queryParams.get("from") === "bharath-aistore" ||
-     location.state?.from?.includes("/bharath-aistore") ||
-     document.referrer.includes("/bharath-aistore") ||
-     sessionStorage.getItem("primaryType") === "AGENT" ||
-     // ✅ FIXED: Detect fromAISTore flag for AGENT primaryType
-     sessionStorage.getItem("fromAISTore") === "true"
-   ) {
-     detectedPrimaryType = "AGENT";
-   }
+    // UPDATED: Handle primaryType for AGENT similar to STUDENT
+    const urlPrimaryType = queryParams.get("primaryType");
+    if (urlPrimaryType === "STUDENT" || urlPrimaryType === "AGENT") {
+      detectedPrimaryType = urlPrimaryType as "STUDENT" | "AGENT";
+    } else if (
+      queryParams.get("from") === "studyabroad" ||
+      location.state?.from?.includes("/studyabroad") ||
+      document.referrer.includes("/studyabroad") ||
+      sessionStorage.getItem("primaryType") === "STUDENT" ||
+      sessionStorage.getItem("fromStudyAbroad") === "true"
+    ) {
+      detectedPrimaryType = "STUDENT";
+    } else if (
+      queryParams.get("from") === "bharath-aistore" ||
+      location.state?.from?.includes("/bharath-aistore") ||
+      document.referrer.includes("/bharath-aistore") ||
+      sessionStorage.getItem("primaryType") === "AGENT" ||
+      // ✅ FIXED: Detect fromAISTore flag for AGENT primaryType
+      sessionStorage.getItem("fromAISTore") === "true"
+    ) {
+      detectedPrimaryType = "AGENT";
+    }
 
-   setPrimaryType(detectedPrimaryType);
-   // UPDATED: Handle showEriceAlert for AGENT similar to STUDENT
-   setShowEriceAlert(detectedPrimaryType === "CUSTOMER");
-   // UPDATED: Handle showGoogleButton for AGENT similar to STUDENT
-   setShowGoogleButton(detectedPrimaryType === "CUSTOMER");
-   sessionStorage.setItem("primaryType", detectedPrimaryType);
- }, [location]);
+    setPrimaryType(detectedPrimaryType);
+    // UPDATED: Handle showEriceAlert for AGENT similar to STUDENT
+    setShowEriceAlert(detectedPrimaryType === "CUSTOMER");
+    // UPDATED: Handle showGoogleButton for AGENT similar to STUDENT
+    setShowGoogleButton(detectedPrimaryType === "CUSTOMER");
+    sessionStorage.setItem("primaryType", detectedPrimaryType);
+  }, [location]);
 
   // Redirect to mobile app stores
   //  useEffect(() => {
@@ -312,23 +314,23 @@ const WhatsappLogin: React.FC = () => {
     }
   };
 
-const handleClose = () => {
-  setIsClosing(true);
-  // UPDATED: Handle defaultPath for AGENT similar to STUDENT
-  const defaultPath =
-    primaryType === "AGENT"
-      ? "/bharath-aistore"
-      : primaryType === "STUDENT"
-      ? "/studyabroad"
-      : "/";
-  // ✅ FIXED: Prefer stored redirectPath if available
-  const entryPoint =
-    sessionStorage.getItem("redirectPath") ||
-    localStorage.getItem("entryPoint") ||
-    defaultPath;
-  console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
-  setTimeout(() => navigate(entryPoint), 300);
-};
+  const handleClose = () => {
+    setIsClosing(true);
+    // UPDATED: Handle defaultPath for AGENT similar to STUDENT
+    const defaultPath =
+      primaryType === "AGENT"
+        ? "/bharath-aistore"
+        : primaryType === "STUDENT"
+        ? "/studyabroad"
+        : "/";
+    // ✅ FIXED: Prefer stored redirectPath if available
+    const entryPoint =
+      sessionStorage.getItem("redirectPath") ||
+      localStorage.getItem("entryPoint") ||
+      defaultPath;
+    console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
+    setTimeout(() => navigate(entryPoint), 300);
+  };
 
   const handleOtpChange = (value: string, index: number) => {
     const sanitizedValue = value.replace(/[^0-9]/g, "");
@@ -889,46 +891,49 @@ const handleClose = () => {
               )}
             </div>
 
-        {!showOtp && (
-  <>
-    {/* ✅ Added Notes Above Get OTP Button */}
-    <div className="mb-2 text-center text-sm">
-      {otpMethod === "whatsapp" ? (
-        <p className="text-green-600 ">
-          <strong>Note:</strong>🌍 WhatsApp OTP works globally — India and beyond!
-        </p>
-      ) : (
-        <p className="text-purple-600 ">
-           <strong>Note:</strong>📩 SMS OTP is for Indian numbers (+91) only.
-        </p>
-      )}
-    </div>
+            {!showOtp && (
+              <>
+                {/* ✅ Added Notes Above Get OTP Button */}
+                <div className="mb-2 text-center text-sm">
+                  {otpMethod === "whatsapp" ? (
+                    <p className="text-green-600 ">
+                      <strong>Note:</strong>🌍 WhatsApp OTP works globally —
+                      India and beyond!
+                    </p>
+                  ) : (
+                    <p className="text-purple-600 ">
+                      <strong>Note:</strong>📩 SMS OTP is for Indian numbers
+                      (+91) only.
+                    </p>
+                  )}
+                </div>
 
-    <button
-      type="submit"
-      disabled={isGetOtpButtonDisabled || isLoading}
-      className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 ${
-        isGetOtpButtonDisabled || isLoading
-          ? "bg-gray-400 cursor-not-allowed"
-          : otpMethod === "whatsapp"
-          ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
-          : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
-      } transform hover:scale-105 active:scale-95`}
-    >
-      {isLoading ? (
-        <>
-          <Loader2 className="w-5 h-5 animate-spin" />
-          Sending OTP...
-        </>
-      ) : (
-        <>
-          <Send className="w-5 h-5" />
-          Get OTP via {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
-        </>
-      )}
-    </button>
-  </>
-)}
+                <button
+                  type="submit"
+                  disabled={isGetOtpButtonDisabled || isLoading}
+                  className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 ${
+                    isGetOtpButtonDisabled || isLoading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : otpMethod === "whatsapp"
+                      ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
+                      : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
+                  } transform hover:scale-105 active:scale-95`}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Sending OTP...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Get OTP via{" "}
+                      {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
+                    </>
+                  )}
+                </button>
+              </>
+            )}
 
             {showOtp && (
               <div

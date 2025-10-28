@@ -155,10 +155,16 @@ const normalizeMessages = (raw: any): ChatMessage[] => {
   return out;
 };
 
-// Force-light CSS so the UI looks identical even when OS is in dark mode
 const FORCE_LIGHT_CSS = `
+html, body, #root { margin:0 !important; padding:0 !important; height:100% !important; }
+* { box-sizing: border-box; }
+
 :root, html, body, #root { background:#ffffff !important; color-scheme: light !important; }
 html, body { color:#111827 !important; }
+
+/* avoid collapsing top margins of first child producing phantom gap */
+body > *:first-child { padding-top: 1px; margin-top: 0; }
+
 * { border-color:#e5e7eb !important; }
 input, textarea, select, button {
   color-scheme: light !important;
@@ -1007,16 +1013,14 @@ const ChatBasedAgent: React.FC = () => {
       {/* ---------- HEADER ---------- */}
       {!showHero && (
         <>
-          <div
-            className="fixed border-b border-gray-200 bg-white backdrop-blur z-[9999]"
-            style={{
-              top: "80px",
-              height: "56px",
-              width: "100%",
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
+         <div
+  className="fixed top-0 left-0 right-0 border-b border-gray-200 bg-white backdrop-blur z-[9999]"
+  style={{
+    height: "56px",
+    display: "flex",
+    justifyContent: "center",
+  }}
+>
             <div
               className="w-full max-w-7xl h-full px-4 sm:px-6 flex items-center"
               role="toolbar"
@@ -1039,8 +1043,8 @@ const ChatBasedAgent: React.FC = () => {
       )}
 
       {/* ---------- HERO ---------- */}
-      {showHero && (
-        <div className="flex flex-col justify-center items-center min-h-[calc(100vh-56px)] w-full relative bg-white overflow-hidden">
+{showHero && (
+  <div className="flex flex-col justify-center items-center min-h-screen w-full relative bg-white overflow-hidden">
           <div className="max-w-5xl w-full px-4 text-center pb-32 sm:pb-40">
             <div className="flex justify-center mb-4">
               {assistant?.imageUrl ? (

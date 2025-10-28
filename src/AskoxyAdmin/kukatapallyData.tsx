@@ -25,6 +25,13 @@ interface KukatpallyUser {
   mobileNumber: string;
   createdAt: string;
   houseNumber: string;
+  assignedHelpdeskId?: string | null; // ✅ NEW
+}
+
+interface HelpDeskUser {
+  userId: string;
+  name: string;
+  mail?: string;
 }
 
 interface ApiResponse {
@@ -53,6 +60,9 @@ const AllKukatpallyDataPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
+
+  const [helpdeskUsers, setHelpdeskUsers] = useState<HelpDeskUser[]>([]);
+  const [helpdeskMap, setHelpdeskMap] = useState<Record<string, string>>({});
 
   const [commentsModalVisible, setCommentsModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<KukatpallyUser | null>(
@@ -107,6 +117,30 @@ const AllKukatpallyDataPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/user-service/getAllHelpDeskUsers`,
+          {
+            headers: { accept: "*/*" },
+          }
+        );
+        const list: HelpDeskUser[] = Array.isArray(res.data) ? res.data : [];
+        setHelpdeskUsers(list);
+        const m: Record<string, string> = {};
+        list.forEach((u) => {
+          if (u.userId) m[u.userId] = u.name || u.userId;
+        });
+        setHelpdeskMap(m);
+      } catch {
+        // Non-fatal; column will fallback to ID/—.
+        setHelpdeskUsers([]);
+        setHelpdeskMap({});
+      }
+    })();
+  }, []);
 
   // Quick toggle Active/Inactive inline in the table (defaults to YES if unset)
   const handleQuickActiveChange = async (
@@ -298,6 +332,23 @@ const AllKukatpallyDataPage: React.FC = () => {
           {text ? `📞 ${text}` : "No Mobile"}
         </Tag>
       ),
+    },
+
+    {
+      title: "Assigned To",
+      dataIndex: "assignedHelpdeskId",
+      key: "assignedHelpdeskId",
+      width: 120,
+      render: (id: string | null, record: KukatpallyUser) => {
+        const name = id ? helpdeskMap[id] : null;
+        return (
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <Tag color={name ? "geekblue" : "default"} style={{ margin: 0 }}>
+              {name || "—"}
+            </Tag>
+          </div>
+        );
+      },
     },
 
     {

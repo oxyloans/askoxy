@@ -26,8 +26,9 @@ import {
   FaStore,
   FaBlog,
   FaBoxes,
-  FaRobot
+  FaRobot 
 } from "react-icons/fa";
+import { RiFileUserLine } from "react-icons/ri";
 import {
   RiAdminLine,
   RiBriefcaseLine,
@@ -139,10 +140,16 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
          {
-          title: "Kukatpally Data",
+          title: "All Kukatpally Data",
           icon: <EnvironmentOutlined  className="text-green-400" />,
           link: "/admn/kukatpally",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
+              {
+          title: "Kukatpally Assign Data",
+          icon: <RiFileUserLine  className="text-yellow-400" />,
+          link: "/admn/kukatpallyassignedData",
+          roles: ["HELPDESKADMIN"],
         },
            {
           title: "Advocate Data",
@@ -151,11 +158,12 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
-          title: "Assigned Data",
+          title: "ASKOXY Assigned Data",
           icon: <FaClipboardList className="text-yellow-400" />,
           link: "/admn/assignedData",
           roles: ["HELPDESKADMIN"],
         },
+     
         {
           title: "Referred Data",
           icon: <FaUsers className="text-blue-500" />,

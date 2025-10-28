@@ -232,6 +232,7 @@ import AgentEntryPage from "./BharathAIStore/pages/AgentEntryPage";
 import WeAreHiringAdd from "./AskoxyAdmin/WeAreHiringAdd";
 import AdvocatesDataPage from "./AskoxyAdmin/Advoatedata";
 import HiringPages from "./Dashboard/hiringpages";
+import KukatpallyAssignedDataPage from "./AskoxyAdmin/KukatapallyAssignedData";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -803,6 +804,7 @@ const App: React.FC = () => {
               <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
               <Route path="advocates" element={<AdvocatesDataPage />} />
               <Route path="assignedData" element={<AssignedDataPage />} />
+               <Route path="kukatpallyassignedData" element={<KukatpallyAssignedDataPage />} />
               <Route path="addjobs" element={<AddJob />} />
               <Route
                 path="helpDeskUsers"

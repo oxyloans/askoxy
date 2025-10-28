@@ -166,6 +166,7 @@ const HelpDeskUsers: React.FC = () => {
   const [selectedHelpDeskUser, setSelectedHelpDeskUser] = useState<
     string | null
   >(null);
+  const [assignMode, setAssignMode] = useState<"all" | "kukatpally">("all");
   const [assignUserPage, setAssignUserPage] = useState(1);
   const [assignUserTotal, setAssignUserTotal] = useState(0);
   const [assignUserId, setAssignUserId] = useState("");
@@ -232,6 +233,45 @@ const HelpDeskUsers: React.FC = () => {
       setReportLoading(false);
     }
   };
+
+  const handleKukatpallyAssignedUsers = async (
+  helpdeskUserId: string,
+  helpdeskUserName: string,
+  page = 1,
+  size = 10
+) => {
+  setAssignUserLoading(true);
+  setAssignMode("kukatpally");
+  try {
+    setAssignUserId(helpdeskUserId);
+    setSelectedHelpDeskUser(helpdeskUserName);
+
+    const response = await axios.get(
+      `${BASE_URL}/user-service/assigned-kukatpally-users/${helpdeskUserId}`,
+      { params: { page, size } }
+    );
+
+    const result = response?.data;
+    setAssignUserData(
+      Array.isArray(result?.activeUsersResponse)
+        ? result.activeUsersResponse
+        : []
+    );
+    setAssignUserTotal(result?.totalCount || 0);
+    setAssignUserPage(page);
+
+    setTimeout(() => {
+      assignedUsersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  } catch (err) {
+    console.error("Failed to fetch Kukatpally assigned users", err);
+    setAssignUserData([]);
+  } finally {
+    setAssignUserLoading(false);
+  }
+};
+
+
 
   const assignedUsersRef = useRef<HTMLDivElement>(null);
   const fetchUserDetails = async (userId: string, commentIndex: number) => {
@@ -373,11 +413,15 @@ const HelpDeskUsers: React.FC = () => {
     }
   };
 
-  const handleAssignUserPageChange = (page: number) => {
-    if (assignUserId && selectedHelpDeskUser) {
+const handleAssignUserPageChange = (page: number) => {
+  if (assignUserId && selectedHelpDeskUser) {
+    if (assignMode === "kukatpally") {
+      handleKukatpallyAssignedUsers(assignUserId, selectedHelpDeskUser, page, 10);
+    } else {
       handleAssignUsers(assignUserId, selectedHelpDeskUser, page);
     }
-  };
+  }
+};
 
   const handleToggleTestUser = async (record: HelpDeskUser) => {
     setLoading(true);
@@ -465,6 +509,19 @@ const HelpDeskUsers: React.FC = () => {
       ),
     },
     {
+  title: "Kukatpally Assigned Users",
+  key: "kukatpallyAssignedUsers",
+  render: (_: any, record: TableUser) => (
+    <Button
+      size="small"
+      className="border border-purple-500 text-purple-600 hover:bg-purple-50 hover:text-purple-700 font-medium rounded px-1.5 py-0.5 text-sm transition-all duration-200"
+      onClick={() => handleKukatpallyAssignedUsers(record.userId, record.name, 1, 10)}
+    >
+      Kukatpally Users
+    </Button>
+  ),
+},
+    {
       title: "Report",
       key: "report",
       render: (_: any, record: TableUser) => (
@@ -512,179 +569,138 @@ const HelpDeskUsers: React.FC = () => {
     );
   }
 
-  const assignedUserColumns: ColumnsType<UserData> = [
-    {
-      title: "User ID",
-      dataIndex: "lastFourDigitsUserId",
-      key: "lastFourDigitsUserId",
-      width: 50,
-      render: (text: string) => (
-        <Tag color="blue" className="font-normal text-sm">
-          {text}
-        </Tag>
-      ),
-    },
-    {
-      title: "User Info",
-      key: "userInfo",
-      width: 140,
-      render: (_: any, record: UserData) => {
-        const {
-          mobileNumber,
-          whastappNumber,
-          alterNativeMobileNumber,
-          firstName,
-          lastName,
-          email,
-        } = record;
+  const assignedUserColumns: ColumnsType<UserData> = assignMode === "kukatpally"
+    ? [
+        {
+          title: "User ID",
+          dataIndex: "userId",
+          key: "userId",
+          width: 100,
+          render: (text: string) => (
+            <Tag color="blue" className="font-normal text-sm">
+              {text?.slice(0, 4) || "N/A"}
+            </Tag>
+          ),
+        },
+        {
+          title: "User Name",
+          dataIndex: "userName",
+          key: "userName",
+          width: 160,
+          render: (text: string) => (
+            <span className="font-medium text-gray-800">
+              {text || "No Name"}
+            </span>
+          ),
+        },
+        {
+          title: "Mobile / WhatsApp",
+          key: "contact",
+          width: 160,
+          render: (_: any, record: any) => (
+            <span className="text-gray-700">
+              📞 {record.mobileNumber || record.whastappNumber || "N/A"}
+            </span>
+          ),
+        },
+        {
+          title: "Family Member Name",
+          dataIndex: "familyMemberName",
+          key: "familyMemberName",
+          width: 160,
+          render: (text: string) => (
+            <span className="text-gray-700">
+              👪 {text || "Not Provided"}
+            </span>
+          ),
+        },
+      ]
+    : [
+        {
+          title: "User ID",
+          dataIndex: "lastFourDigitsUserId",
+          key: "lastFourDigitsUserId",
+          width: 50,
+          render: (text: string) => (
+            <Tag color="blue" className="font-normal text-sm">
+              {text}
+            </Tag>
+          ),
+        },
+        {
+          title: "User Info",
+          key: "userInfo",
+          width: 140,
+          render: (_: any, record: UserData) => {
+            const {
+              mobileNumber,
+              whastappNumber,
+              alterNativeMobileNumber,
+              firstName,
+              lastName,
+              email,
+            } = record;
 
-        const fullName = `${firstName || ""} ${lastName || ""}`.trim();
-        const displayName = fullName || "No Name";
+            const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+            const displayName = fullName || "No Name";
 
-        return (
-          <div className="space-y-1 text-sm">
-            {/* Name */}
-            <div className="font-medium">{displayName}</div>
-
-            {/* Mobile Numbers */}
-            <div className="text-gray-700">
-              📞{" "}
-              {mobileNumber ||
-                whastappNumber ||
-                alterNativeMobileNumber ||
-                "No Mobile"}
-            </div>
-
-            {/* Email */}
-            <div className="text-gray-500 text-xs truncate max-w-[200px]">
-              ✉️ {email || "No Email"}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Assigned to",
-      key: "actions",
-      width: 40,
-      render: (_text: any, record: any) => {
-        const name = selectedHelpDeskUser;
-
-        return name ? (
-          <Tag color="cyan" className="capitalize mt-1 w-fit flex items-center">
-            <UserOutlined className="mr-1" />
-            {name}
-          </Tag>
-        ) : (
-          <Tag color="gray" className="text-sm">
-            Not Assigned
-          </Tag>
-        );
-      },
-    },
-
-    {
-      title: "Actions",
-      key: "actions",
-      width: 80,
-      render: (_text, record) => (
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-1 w-full">
-          <Button
-            type="default"
-            size="small"
-            onClick={() => {
-              setSelectedUser(record);
-              showCommentsModal(record);
-            }}
-            className="w-full sm:w-auto whitespace-nowrap rounded-md border border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-colors text-xs px-2 py-1"
-          >
-            Comments
-          </Button>
-        </div>
-      ),
-    },
-    {
-      title: "Registration Date",
-      dataIndex: "userRegisterCreatedDate",
-      key: "userRegisterCreatedDate",
-      width: 90,
-      render: (date: string) => (
-        <span className="flex items-center">
-          {/* <CalendarOutlined className="mr-2 text-gray-500" /> */}
-          {new Date(date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      ),
-    },
-    {
-      title: "Registered From",
-      dataIndex: "userType",
-      key: "userType",
-      width: 80,
-      render: (_: string, record: UserData) => (
-        <>
-          <Tag className="mb-1" color="green">
-            {record.userType}
-          </Tag>
-          <Tag color="geekblue">{record.registeredFrom}</Tag>
-        </>
-      ),
-    },
-    {
-      title: "Address",
-      dataIndex: "address",
-      key: "address",
-      width: 120,
-      ellipsis: true,
-      render: (text: string | null) => (
-        <Tooltip title={text || "No Address Provided"}>
-          <span className="flex items-center">
-            {/* <HomeOutlined className="mr-2 text-gray-500" /> */}
-            {text ? (
-              text.length > 15 ? (
-                `${text.substring(0, 15)}...`
-              ) : (
-                text
-              )
+            return (
+              <div className="space-y-1 text-sm">
+                <div className="font-medium">{displayName}</div>
+                <div className="text-gray-700">
+                  📞{" "}
+                  {mobileNumber ||
+                    whastappNumber ||
+                    alterNativeMobileNumber ||
+                    "No Mobile"}
+                </div>
+                <div className="text-gray-500 text-xs truncate max-w-[200px]">
+                  ✉️ {email || "No Email"}
+                </div>
+              </div>
+            );
+          },
+        },
+        {
+          title: "Assigned to",
+          key: "actions",
+          width: 40,
+          render: (_text: any) => {
+            const name = selectedHelpDeskUser;
+            return name ? (
+              <Tag color="cyan" className="capitalize mt-1 w-fit flex items-center">
+                <UserOutlined className="mr-1" />
+                {name}
+              </Tag>
             ) : (
-              <span className="text-gray-400">No Address</span>
-            )}
-          </span>
-        </Tooltip>
-      ),
-    },
-    // {
-    //   title: "Actions",
-    //   key: "actions",
-    //   width: 140, // increased to accommodate both buttons with space
-    //   render: (_text, record) => (
-    //     <div className="flex gap-2">
-    //       <Button
-    //         type="default"
-    //         size="small"
-    //         onClick={() => {
-    //           setRecord(record);
-    //           showCommentsModal(record);
-    //         }}
-    //         className="rounded-md border border-blue-400 text-blue-600 hover:bg-blue-100"
-    //       >
-    //         Comments
-    //       </Button>
-    //       <Button
-    //         type="default"
-    //         size="small"
-    //         onClick={() => viewOrderDetails(record)}
-    //         className="rounded-md border border-green-400 text-green-600 hover:bg-green-100"
-    //       >
-    //         Orders
-    //       </Button>
-    //     </div>
-    //   ),
-    // },
-  ];
+              <Tag color="gray" className="text-sm">
+                Not Assigned
+              </Tag>
+            );
+          },
+        },
+        {
+          title: "Actions",
+          key: "actions",
+          width: 80,
+          render: (_text, record) => (
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-1 w-full">
+              <Button
+                type="default"
+                size="small"
+                onClick={() => {
+                  setSelectedUser(record);
+                  showCommentsModal(record);
+                }}
+                className="w-full sm:w-auto whitespace-nowrap rounded-md border border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-colors text-xs px-2 py-1"
+              >
+                Comments
+              </Button>
+            </div>
+          ),
+        },
+      ];
+
 
   if (error) {
     return (
