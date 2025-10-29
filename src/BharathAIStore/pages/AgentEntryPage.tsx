@@ -171,7 +171,7 @@ const AgentEntryPage: React.FC = () => {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M20 6L9 17l-5-5"/>
                   </svg>
-                  Recommended
+                  Recommended Agent Creation Flow
                 </span>
               </div>
               <div className="agent-arrow" aria-hidden="true">
@@ -204,7 +204,7 @@ const AgentEntryPage: React.FC = () => {
                     <circle cx="12" cy="12" r="2"/>
                     <path d="M12 2v4m0 12v4m8.66-14.66l-2.83 2.83m-11.66 11.66L3.34 19.66m16.32 0l-2.83-2.83M6.17 6.17L3.34 3.34"/>
                   </svg>
-                  AI-Powered
+                   AI-Powered Agent Creation Flow
                 </span>
               </div>
               <div className="agent-arrow" aria-hidden="true">

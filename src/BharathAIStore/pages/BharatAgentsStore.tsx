@@ -1002,39 +1002,50 @@ const BharatAgentsStore: React.FC = () => {
           </div>
         </section>
 
-        {/* Tabs */}
         <div className="mb-4 sm:mb-6">
-          <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1">
-            <button
-              onClick={() => setTab("EXPLORE")}
-              className={[
-                "px-4 py-2 text-sm font-medium rounded-lg transition",
-                tab === "EXPLORE"
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100",
-              ].join(" ")}
-              aria-pressed={tab === "EXPLORE"}
-            >
-              Explore AI Agents
-            </button>
+  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
+    {/* Tabs capsule */}
+    <div className="inline-flex w-full sm:w-auto rounded-lg border border-gray-200 bg-white p-1">
+      <button
+        onClick={() => setTab("EXPLORE")}
+        className={[
+          "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
+          tab === "EXPLORE"
+            ? "bg-purple-600 text-white"
+            : "text-gray-700 hover:bg-gray-100",
+        ].join(" ")}
+        aria-pressed={tab === "EXPLORE"}
+      >
+        Explore AI Agents
+      </button>
 
-            {/* "My Agents" appears only when logged in */}
-            {loggedInUserId && (
-              <button
-                onClick={() => setTab("MINE")}
-                className={[
-                  "ml-1 px-4 py-2 text-sm font-medium rounded-lg transition",
-                  tab === "MINE"
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-700 hover:bg-gray-100",
-                ].join(" ")}
-                aria-pressed={tab === "MINE"}
-              >
-                My AI Agents
-              </button>
-            )}
-          </div>
-        </div>
+      {loggedInUserId && (
+        <button
+          onClick={() => setTab("MINE")}
+          className={[
+            "ml-1 flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
+            tab === "MINE"
+              ? "bg-purple-600 text-white"
+              : "text-gray-700 hover:bg-gray-100",
+          ].join(" ")}
+          aria-pressed={tab === "MINE"}
+        >
+          My AI Agents
+        </button>
+      )}
+    </div>
+
+    {/* Create button — hide on mobile */}
+    <button
+      onClick={handleLogin}
+      className="hidden sm:inline-flex px-3 py-2 text-sm font-semibold rounded-md border border-purple-600 text-black bg-white hover:bg-purple-600 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+      aria-label="Create AI Agent"
+    >
+      + Create AI Agent
+    </button>
+  </div>
+</div>
+
 
         {/* Heading & subtext stay the same */}
         <div className="mb-6 sm:mb-8">

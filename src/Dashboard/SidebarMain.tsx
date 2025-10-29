@@ -108,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     {
       to: "/main/bharath-aistore/agents",
       icon: <Bot size={18} />,
-      label: "My Agents",
+      label: "My AI Agents",
     },
     {
       to: "/main/dashboard/myservices",
