@@ -203,6 +203,8 @@ const ChatBasedAgent: React.FC = () => {
   const [currentAgentId, setCurrentAgentId] =
     useState<string>(initialRouteAgentId);
 
+  const [appHeaderH, setAppHeaderH] = useState(0);
+
   // right after:
   const [userId] = useState<string | null>(() =>
     localStorage.getItem("userId")
@@ -213,6 +215,21 @@ const ChatBasedAgent: React.FC = () => {
     () => localStorage.getItem("customerId") || userId || "",
     [userId]
   );
+
+  // ===== Step-5 Instruction Suggestion UI state =====
+  const INSTRUCTIONS_MAX = 500;
+
+  const [instrModalOpen, setInstrModalOpen] = useState(false);
+  const [instrLoading, setInstrLoading] = useState(false);
+  const [suggestedInstr, setSuggestedInstr] = useState("");
+  const [manualInstr, setManualInstr] = useState("");
+
+  /** Small cleaner to avoid weird transport chars */
+  const cleanForTransport = (s: string) =>
+    String(s || "")
+      .replace(/\s+/g, " ")
+      .replace(/[\u0000-\u001F]+/g, "")
+      .trim();
 
   // ---- Profile validation errors ----
   type ProfileErrors = { name?: string; email?: string };
@@ -509,7 +526,16 @@ const ChatBasedAgent: React.FC = () => {
       (document.querySelector("[data-app-header]") as HTMLElement) ||
       (document.querySelector(".app-header") as HTMLElement) ||
       (document.querySelector("header[role='banner']") as HTMLElement);
-    const update = () => {};
+
+    const update = () => {
+      const h = hostHeader
+        ? Math.round(hostHeader.getBoundingClientRect().height)
+        : 0;
+      setAppHeaderH(h);
+      // Optional: expose for CSS if needed elsewhere
+      document.documentElement.style.setProperty("--app-header-h", `${h}px`);
+    };
+
     update();
     const ro = hostHeader ? new ResizeObserver(update) : null;
     if (hostHeader && ro) ro.observe(hostHeader);
@@ -621,6 +647,103 @@ const ChatBasedAgent: React.FC = () => {
     );
     return data;
   };
+
+  /** Step-5: Ask backend to suggest instructions (POST with query params only) */
+  const requestSuggestedInstructions = useCallback(async () => {
+    if (!currentAgentId) return; // must exist by Step-5
+
+    const description = cleanForTransport(slots.description || "");
+    if (!description) {
+      message.warning("Please enter a Description first.");
+      return;
+    }
+
+    setInstrLoading(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    try {
+      const headers: any = {
+        ...getAuthHeaders(), // ✅ Include auth token
+      };
+
+      // ✅ Build query params
+      const q = new URLSearchParams({
+        description,
+        agentId: currentAgentId,
+      });
+
+      // ✅ POST with no body (backend expects query params only)
+      const res = await fetch(
+        `${BASE_URL}/ai-service/agent/classifyInstruct?${q.toString()}`,
+        {
+          method: "POST",
+          headers,
+          signal: controller.signal,
+        }
+      );
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`classifyInstruct failed: ${res.status} ${txt}`);
+      }
+
+      // ✅ Handle text or JSON response
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      let raw: string;
+      if (ct.includes("application/json")) {
+        const data = await res.json();
+        raw =
+          typeof data === "string"
+            ? data
+            : data.instructions || data.message || JSON.stringify(data);
+      } else {
+        raw = await res.text();
+        try {
+          const maybe = JSON.parse(raw);
+          raw =
+            typeof maybe === "string"
+              ? maybe
+              : maybe.instructions || maybe.message || raw;
+        } catch {
+          raw = raw.trim();
+        }
+      }
+
+      const text = String(raw || "").trim();
+      if (!text) {
+        message.warning("No instruction suggestion returned.");
+        return;
+      }
+
+      // ✅ Optional: limit long output
+      const limitedText =
+        text.length > 1500 ? text.slice(0, 1500) + "..." : text;
+
+      setSuggestedInstr(limitedText);
+      setManualInstr("");
+      setInstrModalOpen(true);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message?.slice(0, 200) ||
+        "Failed to suggest instructions.";
+      message.error(msg);
+    } finally {
+      clearTimeout(timeout);
+      setInstrLoading(false);
+    }
+  }, [currentAgentId, slots.description]);
+
+  // When we reach Step-5 (instructions) & we don't already have instructions, ask backend
+  useEffect(() => {
+    const isStep5 = stepIndex === 4; // 0..4 → Step-5
+    const empty = !String(slots.instructions || "").trim();
+    if (isStep5 && empty && !instrModalOpen && !instrLoading) {
+      requestSuggestedInstructions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex, slots.instructions, requestSuggestedInstructions]);
 
   const TypingBubble: React.FC = () => {
     return (
@@ -1010,17 +1133,106 @@ const ChatBasedAgent: React.FC = () => {
           </div>
         </div>
       </Modal>
-      {/* ---------- HEADER ---------- */}
+
+      {/* ===== Step-5 Suggested Instructions Modal (Centered) ===== */}
+      <Modal
+        open={instrModalOpen}
+        onCancel={() => setInstrModalOpen(false)}
+        footer={null}
+        title="Use AI-Suggested Instructions?"
+        destroyOnClose
+        centered // ✅ this makes the modal appear vertically centered
+        bodyStyle={{
+          paddingTop: 20,
+          paddingBottom: 16,
+          paddingLeft: 20,
+          paddingRight: 20,
+        }}
+        style={{
+          top: "auto", // ✅ override default top positioning
+          transform: "translateY(0)", // ensure proper center alignment
+        }}
+      >
+        <div className="space-y-3">
+          {instrLoading ? (
+            <div className="text-sm text-gray-600 text-center">
+              Generating instructions…
+            </div>
+          ) : suggestedInstr ? (
+            <>
+              <div className="text-xs uppercase tracking-wide text-gray-500 text-center">
+                Suggested Instructions
+              </div>
+
+              <div
+                className="border border-gray-200 rounded-md p-3 bg-gray-50 whitespace-pre-wrap text-sm"
+                style={{
+                  maxHeight: 240,
+                  overflowY: "auto",
+                  backgroundColor: "#fafafa",
+                  lineHeight: 1.5,
+                }}
+              >
+                {suggestedInstr}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3">
+                <button
+                  onClick={() => {
+                    // ✅ Insert suggested text into composer (not auto-save)
+                    setInput(suggestedInstr.trim());
+                    setAutoGrow(true);
+                    setTimeout(() => {
+                      autoResize(chatInputRef.current);
+                      chatInputRef.current?.focus();
+                    }, 100);
+                    setInstrModalOpen(false);
+                    message.success(
+                      "Instructions added to composer. You can edit or send them now."
+                    );
+                  }}
+                  className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition"
+                >
+                  Yes, Use These
+                </button>
+
+                <button
+                  onClick={() => {
+                    // ✅ Switch to manual entry mode
+                    setSuggestedInstr("");
+                    setManualInstr("");
+                    message.info(
+                      "Please write your own instructions (max 500 characters) below and send."
+                    );
+                    setInstrModalOpen(false);
+                    setStepIndex(4); // ensure user stays on Step 5
+                    setInput("");
+                    setTimeout(() => {
+                      chatInputRef.current?.focus();
+                    }, 100);
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition"
+                >
+                  No, I’ll Write Manually
+                </button>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </Modal>
+
       {!showHero && (
         <>
-         <div
-  className="fixed top-0 left-0 right-0 border-b border-gray-200 bg-white backdrop-blur z-[9999]"
-  style={{
-    height: "56px",
-    display: "flex",
-    justifyContent: "center",
-  }}
->
+          <div
+            className="fixed border-b border-gray-200 bg-white/95 backdrop-blur z-[9999]"
+            style={{
+              top: "80px", // adjust this offset as needed
+              height: "56px",
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
             <div
               className="w-full max-w-7xl h-full px-4 sm:px-6 flex items-center"
               role="toolbar"
@@ -1029,7 +1241,7 @@ const ChatBasedAgent: React.FC = () => {
               <button
                 type="button"
                 onClick={navigateBackAndNullifyDraft}
-                className="flex items-center gap-2 text-base sm:text-lg text-gray-900 hover:text-purple-600 transition"
+                className="flex items-center gap-2 text-base sm:text-lg text-black hover:text-purple-600 transition"
               >
                 <ArrowLeft className="h-5 w-5 shrink-0" />
                 <span className="truncate hidden md:inline">
@@ -1038,13 +1250,15 @@ const ChatBasedAgent: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Spacer to keep content below fixed header */}
           <div style={{ height: "56px" }} />
         </>
       )}
 
       {/* ---------- HERO ---------- */}
-{showHero && (
-  <div className="flex flex-col justify-center items-center min-h-screen w-full relative bg-white overflow-hidden">
+      {showHero && (
+        <div className="flex flex-col justify-center items-center min-h-screen w-full relative bg-white overflow-hidden">
           <div className="max-w-5xl w-full px-4 text-center pb-32 sm:pb-40">
             <div className="flex justify-center mb-4">
               {assistant?.imageUrl ? (

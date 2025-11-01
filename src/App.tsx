@@ -234,6 +234,7 @@ import AdvocatesDataPage from "./AskoxyAdmin/Advoatedata";
 import HiringPages from "./Dashboard/hiringpages";
 import KukatpallyAssignedDataPage from "./AskoxyAdmin/KukatapallyAssignedData";
 import CelebShieldPage from "./components/celebshieldpage";
+import QuickAgentCreate from "./BharathAIStore/pages/Agentcreation";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -352,6 +353,7 @@ const App: React.FC = () => {
             <Route path="/wearehiring" element={<HiringPages />} />
             <Route path="/myservices" element={<ServicesPage/>} />
             <Route path="/celebshield" element={<CelebShieldPage/>} />
+            <Route path="/agentcreate" element={<QuickAgentCreate/>} />
             <Route
               path="/termsandconditions"
               element={<TermsAndConditions />}

@@ -293,7 +293,7 @@ const AssistantCard: React.FC<{
         {/* Thumbnail / Header */}
         <div className="relative w-full">
           <div
-            className="h-0 w-full pb-[56%] overflow-hidden"
+            className="relative h-0 w-full pb-[56%] overflow-hidden"
             aria-hidden="true"
           >
             <img
@@ -311,7 +311,7 @@ const AssistantCard: React.FC<{
         </div>
 
         {/* Content */}
-        <div className="pt-8 px-5 pb-5 flex flex-col h-full">
+        <div className="pt-9 px-4 sm:px-5 pb-5 flex flex-col h-full">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
@@ -518,7 +518,7 @@ const BharatAgentsStore: React.FC = () => {
 
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 30,
+    pageSize: 100,
     hasMore: true,
     total: 0,
   });
@@ -815,7 +815,7 @@ const BharatAgentsStore: React.FC = () => {
           </section>
 
           {/* SKELETON GRID */}
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-6 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 items-stretch">
             {Array.from({ length: 12 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -936,8 +936,6 @@ const BharatAgentsStore: React.FC = () => {
       /> */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* ==== HERO ==== */}
-
-        {/* ==== HERO ==== */}
         {showHero && (
           <section className="w-full mb-6 sm:mb-8">
             <div className="mx-auto max-w-7xl px-0 py-6 md:py-8 lg:py-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
@@ -1003,49 +1001,48 @@ const BharatAgentsStore: React.FC = () => {
         </section>
 
         <div className="mb-4 sm:mb-6">
-  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
-    {/* Tabs capsule */}
-    <div className="inline-flex w-full sm:w-auto rounded-lg border border-gray-200 bg-white p-1">
-      <button
-        onClick={() => setTab("EXPLORE")}
-        className={[
-          "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-          tab === "EXPLORE"
-            ? "bg-purple-600 text-white"
-            : "text-gray-700 hover:bg-gray-100",
-        ].join(" ")}
-        aria-pressed={tab === "EXPLORE"}
-      >
-        Explore AI Agents
-      </button>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
+            {/* Tabs capsule */}
+            <div className="inline-flex w-full sm:w-auto rounded-lg border border-gray-200 bg-white p-1 sticky top-0 sm:static z-10">
+              <button
+                onClick={() => setTab("EXPLORE")}
+                className={[
+                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
+                  tab === "EXPLORE"
+                    ? "bg-purple-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100",
+                ].join(" ")}
+                aria-pressed={tab === "EXPLORE"}
+              >
+                Explore AI Agents
+              </button>
 
-      {loggedInUserId && (
-        <button
-          onClick={() => setTab("MINE")}
-          className={[
-            "ml-1 flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-            tab === "MINE"
-              ? "bg-purple-600 text-white"
-              : "text-gray-700 hover:bg-gray-100",
-          ].join(" ")}
-          aria-pressed={tab === "MINE"}
-        >
-          My AI Agents
-        </button>
-      )}
-    </div>
+              {loggedInUserId && (
+                <button
+                  onClick={() => setTab("MINE")}
+                  className={[
+                    "ml-1 flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
+                    tab === "MINE"
+                      ? "bg-purple-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100",
+                  ].join(" ")}
+                  aria-pressed={tab === "MINE"}
+                >
+                  My AI Agents
+                </button>
+              )}
+            </div>
 
-    {/* Create button — hide on mobile */}
-    <button
-      onClick={handleLogin}
-      className="hidden sm:inline-flex px-3 py-2 text-sm font-semibold rounded-md border border-purple-600 text-black bg-white hover:bg-purple-600 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
-      aria-label="Create AI Agent"
-    >
-      + Create AI Agent
-    </button>
-  </div>
-</div>
-
+            {/* Create button — hide on mobile */}
+            <button
+              onClick={handleLogin}
+              className="hidden sm:inline-flex px-3 py-2 text-sm font-semibold rounded-md border border-purple-600 text-black bg-white hover:bg-purple-600 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              aria-label="Create AI Agent"
+            >
+              + Create AI Agent
+            </button>
+          </div>
+        </div>
 
         {/* Heading & subtext stay the same */}
         <div className="mb-6 sm:mb-8">

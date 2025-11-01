@@ -104,15 +104,15 @@ const AssistantDetails: React.FC = () => {
   );
   const currentPath = `${location.pathname}${location.search || ""}`;
 
-  useEffect(() => {
-    if (!userId) {
-      // Set the current full path as redirectPath for return after auth
-      sessionStorage.setItem("redirectPath", currentPath);
-      sessionStorage.setItem("fromAISTore", "true"); // Flag for primaryType detection
-      window.location.href = "/whatsappregister?primaryType=AGENT"; // Hard redirect to preserve session
-      return;
-    }
-  }, [userId, currentPath]);
+useEffect(() => {
+  if (!userId) {
+    // Set the current full path as redirectPath for return after auth
+    sessionStorage.setItem("redirectPath", currentPath);
+    sessionStorage.setItem("fromAISTore", "true"); // Flag for primaryType detection
+    window.location.href = "/whatsappregister?primaryType=AGENT"; // Hard redirect to preserve session
+    return;
+  }
+}, [userId, currentPath]);
   // assistant + chat state
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -137,7 +137,7 @@ const AssistantDetails: React.FC = () => {
   useEffect(() => {
     sessionStorage.removeItem("primaryType");
     sessionStorage.removeItem("fromAISTore");
-    sessionStorage.removeItem("redirectPath");
+    // sessionStorage.removeItem("redirectPath");
   }, []);
   const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
@@ -1224,21 +1224,6 @@ const AssistantDetails: React.FC = () => {
     return String(answer ?? "").trim();
   };
 
-  // ⬇️ NEW: small utility to validate allowed types
-  const isAllowedType = (type: string) =>
-    [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "text/csv",
-      "text/plain",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ].includes(type);
-
   // accept multiple files and filter dupes by name+size
   const handleFilePicker = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files || []);
@@ -1546,21 +1531,21 @@ const AssistantDetails: React.FC = () => {
     <>
       {!userId &&
         (() => {
-          try {
-            sessionStorage.setItem(
-              "returnTo",
-              `${location.pathname}${location.search || ""}`
-            );
-          } catch (e) {
-            console.warn("Could not save returnTo:", e);
-          }
-          return (
-            <Navigate
-              to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
-                currentPath
-              )}`}
-            />
+        try {
+          sessionStorage.setItem(
+            "returnTo",
+            `${location.pathname}${location.search || ""}`
           );
+        } catch (e) {
+          console.warn("Could not save returnTo:", e);
+        }
+        return (
+          <Navigate
+            to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
+              currentPath
+            )}`}
+          />
+        );
         })()}
 
       <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">

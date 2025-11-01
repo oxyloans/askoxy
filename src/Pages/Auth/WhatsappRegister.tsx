@@ -27,16 +27,16 @@ import BASE_URL from "../../Config";
 const handleAuthError = (err: any, navigate: any) => {
   if (err.response?.status === 401) {
     // ✅ FIXED: Do NOT overwrite existing redirectPath; preserve the original (e.g., assistant URL)
-    if (!sessionStorage.getItem("redirectPath")) {
-      sessionStorage.setItem(
-        "redirectPath",
-        window.location.pathname + window.location.search
-      );
-    }
-    // ✅ FIXED: Preserve fromAISTore flag if set
-    if (!sessionStorage.getItem("fromAISTore")) {
-      sessionStorage.setItem("fromAISTore", "true");
-    }
+     if (!sessionStorage.getItem("redirectPath")) {
+       sessionStorage.setItem(
+         "redirectPath",
+         window.location.pathname + window.location.search
+       );
+     }
+     // ✅ FIXED: Preserve fromAISTore flag if set
+     if (!sessionStorage.getItem("fromAISTore")) {
+       sessionStorage.setItem("fromAISTore", "true");
+     }
     const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
     sessionStorage.setItem("fromStudyAbroad", "true");
     // ✅ FIXED: Toggle based on current page: register -> login, else -> register
@@ -44,7 +44,6 @@ const handleAuthError = (err: any, navigate: any) => {
       window.location.pathname.includes("whatsappregister");
     const targetPath = isRegisterPage ? "/whatsapplogin" : "/whatsappregister";
     navigate(`${targetPath}?primaryType=${primaryType}`);
-    return true;
   }
   return false;
 };
@@ -932,23 +931,77 @@ const WhatsappRegister = () => {
                   </div>
                 )}
                 <div className="space-y-3">
-                  {/* ✅ Added Notes Above Get OTP Button */}
+                  {/* ✅ Note (already there, kept for context) */}
                   {!showOtp && (
                     <div className="mb-2 text-center text-sm">
                       {otpMethod === "whatsapp" ? (
                         <p className="text-green-600 ">
-                          <strong>Note:</strong>🌍 WhatsApp OTP works globally
-                          — India and beyond!
+                          <strong>Note:</strong>🌍 WhatsApp OTP works globally —
+                          India and beyond!
                         </p>
                       ) : (
                         <p className="text-purple-600 ">
-                          <strong>Note:</strong>📩 SMS OTP is for Indian
-                          numbers (+91) only.
+                          <strong>Note:</strong>📩 SMS OTP is for Indian numbers
+                          (+91) only.
                         </p>
                       )}
                     </div>
                   )}
 
+                  {/* ✅ UPDATED: Checkboxes now shown BELOW phone input, BEFORE button (only pre-OTP) */}
+                  {!showOtp && (
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-start">
+                        <input
+                          type="checkbox"
+                          id="notifications"
+                          checked={receiveNotifications}
+                          onChange={(e) =>
+                            setReceiveNotifications(e.target.checked)
+                          }
+                          className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
+                        />
+                        <label
+                          htmlFor="notifications"
+                          className="ml-2 text-sm text-gray-700"
+                        >
+                          I want to receive notifications on SMS, RCS & Email
+                          from ASKOXY.AI
+                        </label>
+                      </div>
+                      <div className="flex items-start">
+                        <input
+                          type="checkbox"
+                          id="terms"
+                          checked={agreeToTerms}
+                          onChange={(e) => setAgreeToTerms(e.target.checked)}
+                          className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
+                        />
+                        <label
+                          htmlFor="terms"
+                          className="ml-2 text-sm text-gray-700"
+                        >
+                          I agree to all the{" "}
+                          <Link
+                            to="/termsandconditions"
+                            className="text-blue-600 hover:underline"
+                          >
+                            Terms of Services
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            to="/privacypolicy"
+                            className="text-blue-600 hover:underline"
+                          >
+                            Privacy Policy
+                          </Link>
+                          .
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ✅ Button (already there; enables via isOtpButtonEnabled) */}
                   <button
                     id="otpSubmitButton"
                     type="submit"
@@ -978,55 +1031,7 @@ const WhatsappRegister = () => {
                     )}
                   </button>
 
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-start">
-                      <input
-                        type="checkbox"
-                        id="notifications"
-                        checked={receiveNotifications}
-                        onChange={(e) =>
-                          setReceiveNotifications(e.target.checked)
-                        }
-                        className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
-                      />
-                      <label
-                        htmlFor="notifications"
-                        className="ml-2 text-sm text-gray-700"
-                      >
-                        I want to receive notifications on SMS, RCS & Email from
-                        ASKOXY.AI
-                      </label>
-                    </div>
-                    <div className="flex items-start">
-                      <input
-                        type="checkbox"
-                        id="terms"
-                        checked={agreeToTerms}
-                        onChange={(e) => setAgreeToTerms(e.target.checked)}
-                        className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
-                      />
-                      <label
-                        htmlFor="terms"
-                        className="ml-2 text-sm text-gray-700"
-                      >
-                        I agree to all the{" "}
-                        <Link
-                          to="/termsandconditions"
-                          className="text-blue-600 hover:underline"
-                        >
-                          Terms of Services
-                        </Link>{" "}
-                        and{" "}
-                        <Link
-                          to="/privacypolicy"
-                          className="text-blue-600 hover:underline"
-                        >
-                          Privacy Policy
-                        </Link>
-                        .
-                      </label>
-                    </div>
-                  </div>
+                  {/* ✅ Change Number (already there) */}
                   {isButtonEnabled && (
                     <button
                       type="button"

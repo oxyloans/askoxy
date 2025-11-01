@@ -36,6 +36,8 @@ interface Task {
   taskAssignBy: string;
   taskAssignTo: string[];
   taskName: string;
+  taskAssignedDate: string;
+  taskCompleteDate: string;
 }
 
 const AdminTasks: React.FC = () => {
@@ -47,7 +49,26 @@ const AdminTasks: React.FC = () => {
   const [searchText, setSearchText] = useState(""); // ✅ added missing state
   // ✅ Fetch tasks
   
-      
+const formatDate = (dateString:string) => {
+  if (!dateString) return "N/A";
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date as any)) return dateString; // if not a valid date
+
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      weekday: "short",
+    };
+
+    return date.toLocaleDateString("en-IN", options);
+  } catch (error) {
+    return dateString;
+  }
+};
+
 const fetchTasks = async () => {
   setLoading(true);
   try {
@@ -188,6 +209,13 @@ const fetchTasks = async () => {
       render: (_: any, __: Task, index: number) => index + 1,
     },
     {
+      title: "Task Id",
+      key: "id",
+      dataIndex: "id",
+      align: "center" as const,
+      render: (text: string) => (text ? `#${text.slice(-4)}` : "-"),
+    },
+    {
       title: "Assigned By",
       dataIndex: "taskAssignBy",
       key: "taskAssignBy",
@@ -208,6 +236,34 @@ const fetchTasks = async () => {
       render: (text: any) => (
         <Text style={{ display: "block", textAlign: "center" }}>{text}</Text>
       ),
+    },
+    {
+      title: "Task Assigned Date",
+      dataIndex: "taskAssignedDate",
+      key: "taskAssignedDate",
+      align: "center" as const,
+      render: (date:any) => {
+        if (!date) return <Text type="secondary">N/A</Text>;
+        return (
+          <Text style={{ color: "#1677ff", fontWeight: 500 }}>
+            {formatDate(date)}
+          </Text>
+        );
+      },
+    },
+    {
+      title: "Task Complete Date",
+      dataIndex: "taskCompleteDate",
+      key: "taskCompleteDate",
+      align: "center" as const,
+      render: (date:any) => {
+        if (!date) return <Text type="secondary">Pending</Text>;
+        return (
+          <Text style={{ color: "#52c41a", fontWeight: 500 }}>
+            {formatDate(date)}
+          </Text>
+        );
+      },
     },
     {
       title: "Status",
@@ -340,7 +396,7 @@ const fetchTasks = async () => {
               minHeight: 300,
             }}
           >
-            <Spin tip="Loading tasks..." size="small" />
+            <Spin tip="Loading tasks..." size="large" />
           </div>
         ) : (
           <Table

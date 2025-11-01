@@ -1441,6 +1441,33 @@ const CreateAgentWizard: React.FC = () => {
     return t;
   }
 
+  function parseStartersFromText(raw: string): string[] {
+  if (!raw) return [];
+  // Split by newlines or numbered bullets like "1. ..." "2) ..." "- ..."
+  const lines = raw
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const items: string[] = [];
+  const bulletRe = /^\s*(?:\d+[\.\)]|\-|\•|\*)\s*/;
+
+  for (const line of lines) {
+    // some APIs return all in one line separated by "  1. ...  2. ..."
+    const splitOnInline = line.split(/(?=\s*\d+[\.\)]\s+)/g).map((s) => s.trim()).filter(Boolean);
+    const candidates = splitOnInline.length > 1 ? splitOnInline : [line];
+
+    for (let c of candidates) {
+      c = c.replace(bulletRe, "").trim();
+      // keep short but meaningful prompts
+      if (c.length >= 5 && c.length <= 180) items.push(c);
+    }
+  }
+  // de-dupe, keep order
+  return Array.from(new Set(items)).slice(0, 6);
+}
+
+
   async function postJson(url: string, body: any, signal?: AbortSignal) {
     return fetch(url, {
       method: "POST",
@@ -1450,122 +1477,328 @@ const CreateAgentWizard: React.FC = () => {
     });
   }
 
-  // ===== Generate Instructions (appends contact line if shared) =====
-  const handleGenerate = async () => {
-    const baseErr =
-      "Please fill either ‘Description’ or ‘Unique Solution’ before generating instructions.";
-    if (
-      !description.trim() &&
-      !(solveProblem === "YES" && uniqueSolution.trim())
-    ) {
-      message.error(baseErr);
-      return;
+// ===== Generate Instructions (single keyed toast; no error→success flicker) =====
+const handleGenerate = async () => {
+  const baseErr =
+    "Please fill either ‘Description’ or ‘Unique Solution’ before generating instructions.";
+  if (!description.trim() && !(solveProblem === "YES" && uniqueSolution.trim())) {
+    message.error(baseErr);
+    return;
+  }
+
+  // pick best text and normalize defensively
+  const sourceText =
+    classifyText || description || "Create helpful assistant instructions";
+
+  const cleanForTransport = (s: string) =>
+    (s || "")
+      .trim()
+      .replace(/\u2014|\u2013/g, "-")
+      .replace(/\s+/g, " ")
+      .replace(/^"+|"+$|^'+|'+$/g, "")
+      .slice(0, 7000);
+
+  const descClean = cleanForTransport(sourceText);
+
+  const baseUrl = `${BASE_URL}/ai-service/agent/classifyInstruct`;
+  const auth = getAuthHeader();
+  if (!auth.Authorization) {
+    message.error("You’re not signed in. Please log in and try again.");
+    return;
+  }
+
+  const key = "gen-instructions"; // ← single-key toast
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 20000);
+
+  // helpers
+  const qs = new URLSearchParams({
+    description: descClean,
+    ...(agentId ? { agentId } : {}),
+  });
+
+  const parseSmart = async (res: Response) => {
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (ct.includes("application/json")) {
+      const data = await res.json();
+      return typeof data === "string"
+        ? data
+        : data.instructions || data.message || JSON.stringify(data);
     }
-
-    // Build a rich classification text (you already do this)
-    const sourceText =
-      classifyText || description || "Create helpful assistant instructions";
-
-    // Clean description for transport (avoid %22 and embedded JSON)
-    const descClean = cleanForTransport(sourceText);
-
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 20000);
-
-    const baseUrl = `${BASE_URL}/ai-service/agent/classifyInstruct`;
-    const auth = getAuthHeader();
-    if (!auth.Authorization) {
-      message.error("You’re not signed in. Please log in and try again.");
-      return;
-    }
-
+    let raw = await res.text();
     try {
-      setLoading(true);
+      const maybe = JSON.parse(raw);
+      return typeof maybe === "string"
+        ? maybe
+        : maybe.instructions || maybe.message || raw;
+    } catch {
+      return raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
+    }
+  };
 
-      // --- Primary: POST JSON (preferred) ---
-      let res = await postJson(
-        baseUrl,
-        { description: descClean, agentId: agentId || undefined },
-        ctrl.signal
-      );
+  const cleanInstructionText = (txt: string) =>
+    (txt || "")
+      .replace(/^\uFEFF/, "")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/^#+\s?/gm, "")
+      .replace(/\*+/g, "")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\r\n?/g, "\n")
+      .replace(/[ \t]*\n[ \t]*/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
 
-      // --- Fallback 1: POST with no JSON body, pass via query ---
-      if (!res.ok && (res.status === 400 || res.status === 415)) {
-        const q = new URLSearchParams({
-          description: descClean,
-          ...(agentId ? { agentId } : {}),
-        });
-        res = await fetch(`${baseUrl}?${q.toString()}`, {
+  try {
+    setLoading(true);
+    message.open({ key, type: "loading", content: "Generating instructions…", duration: 0 });
+
+    // 1) Primary: POST JSON
+    let res: Response | undefined;
+    try {
+      res = await fetch(baseUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...auth },
+        body: JSON.stringify({ description: descClean, agentId: agentId || undefined }),
+        signal: ctrl.signal,
+      });
+    } catch {
+      // swallow; we’ll fallback
+    }
+
+    const needsFallback =
+      !res || (!res.ok && [400, 401, 403, 404, 405, 415, 500, 502, 503, 504].includes(res.status));
+
+    // 2) Fallback A: POST with query, no body/Content-Type (avoid preflight)
+    if (needsFallback) {
+      try {
+        const r2 = await fetch(`${baseUrl}?${qs.toString()}`, {
           method: "POST",
-          headers: { ...auth }, // no Content-Type and no body
-          signal: ctrl.signal,
-        });
-      }
-
-      // --- Fallback 2: GET with query ---
-      if (!res.ok && (res.status === 400 || res.status === 415)) {
-        const q2 = new URLSearchParams({
-          description: descClean,
-          ...(agentId ? { agentId } : {}),
-        });
-        res = await fetch(`${baseUrl}?${q2.toString()}`, {
           headers: { ...auth },
           signal: ctrl.signal,
         });
+        res = r2;
+      } catch {
+        // swallow; try next
       }
+    }
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`classifyInstruct failed: ${res.status} ${txt}`);
+    // 3) Fallback B: GET with query
+    if (!res || !res.ok) {
+      try {
+        const r3 = await fetch(`${baseUrl}?${qs.toString()}`, {
+          method: "GET",
+          headers: { ...auth },
+          signal: ctrl.signal,
+        });
+        res = r3;
+      } catch {
+        // final failure handled below
       }
+    }
 
-      // Parse text or JSON softly
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
-      let raw: string;
-      if (ct.includes("application/json")) {
-        const data = await res.json();
-        raw =
-          typeof data === "string"
-            ? data
-            : data.instructions || data.message || JSON.stringify(data);
-      } else {
-        raw = await res.text();
-        try {
-          const maybe = JSON.parse(raw);
-          raw =
-            typeof maybe === "string"
-              ? maybe
-              : maybe.instructions || maybe.message || raw;
-        } catch {
-          raw = raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
-        }
+    if (!res || !res.ok) {
+      const status = res?.status ?? "network";
+      const txt = res ? await res.text().catch(() => "") : "Network / CORS error";
+      throw new Error(`classifyInstruct failed: ${status} ${txt}`);
+    }
+
+    // success path — single toast gets updated (no extra popups)
+    let raw = await parseSmart(res);
+    let cleaned = cleanInstructionText(raw);
+
+    if (shareContact === "YES" && contactDetails.trim()) {
+      cleaned = `${cleaned}\n\nContact: ${contactDetails.trim()}.\nIf you have any queries, feel free to reach out.`.trim();
+    }
+
+    if (!cleaned) {
+      message.open({ key, type: "warning", content: "No instructions were returned. Try refining your description." });
+      return;
+    }
+
+    setInstructions(cleaned);
+    setTempInstructions(cleaned);
+    setShowInstructionsModal(true);
+    setGenerated(true);
+
+    message.open({
+      key,
+      type: "success",
+      content: "Instructions generated. You can edit them before publishing.",
+      duration: 2.2,
+    });
+  } catch (e: any) {
+    const msg =
+      e?.name === "AbortError"
+        ? "Request timed out. Please try again."
+        : e?.message || "Failed to generate instructions";
+    message.open({ key, type: "error", content: msg, duration: 3 });
+  } finally {
+    clearTimeout(timeout);
+    setLoading(false);
+  }
+};
+
+  const [startersLoading, setStartersLoading] = useState(false);
+
+// ---- Starters: POST-only version ----
+async function suggestStartersFromAPI() {
+  // 1) Auth
+  const rawAuth = getAuthHeader() as Record<string, string> | undefined;
+  const token = rawAuth?.Authorization;
+  if (!token) {
+    message.error("You’re not signed in. Please log in and try again.");
+    return;
+  }
+  const authHeaders = new Headers({ Authorization: token });
+
+  // 2) Input
+  const baseDesc = (description || classifyText || "").trim();
+  if (!baseDesc) {
+    message.error("Please enter a Description first (Step-1).");
+    return;
+  }
+
+  // 3) Clean
+  const descClean = cleanForTransport(
+    baseDesc
+      .replace(/[,’”“]/g, s => ({"’":"'", "”":'"', "“":'"', "，":","} as any)[s] || s)
+      .replace(/,+\s*$/g, "")
+      .slice(0, 7000)
+  );
+
+  const urlBase = `${BASE_URL}/ai-service/agent/classifyStartConversation`;
+
+  setStartersLoading(true);
+  const ctrl = new AbortController();
+  const timeoutId = setTimeout(() => ctrl.abort(), 20_000);
+
+  const qs = (obj: Record<string, string | undefined>) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(obj)) {
+      if (typeof v === "string" && v.trim()) p.set(k, v);
+    }
+    return p.toString();
+  };
+
+  const parseFlexible = async (res: Response) => {
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (ct.includes("application/json")) {
+      const data = await res.json();
+      if (Array.isArray(data)) return data.join("\n");
+      if (data && typeof data === "object") {
+        return data.questions || data.message || data.result || data.text || JSON.stringify(data);
       }
-
-      // Clean and append contact if chosen
-      let cleaned = cleanInstructionText(raw);
-      if (shareContact === "YES" && contactDetails.trim()) {
-        cleaned =
-          `${cleaned}\n\nContact: ${contactDetails.trim()}.\nIf you have any queries, feel free to reach out.`.trim();
+      return String(data ?? "");
+    }
+    let txt = await res.text();
+    try {
+      const maybe = JSON.parse(txt);
+      if (Array.isArray(maybe)) return maybe.join("\n");
+      if (maybe && typeof maybe === "object") {
+        return maybe.questions || maybe.message || maybe.result || txt;
       }
-
-      setInstructions(cleaned);
-      setTempInstructions(cleaned); // ✅ seed the editor so the box isn’t empty
-      setShowInstructionsModal(true);
-      setGenerated(true);
-      message.success(
-        "Instructions generated and inserted. You can edit them before publishing."
-      );
-    } catch (e: any) {
-      message.error(
-        e?.name === "AbortError"
-          ? "Request timed out. Please try again."
-          : e?.message || "Failed to generate instructions"
-      );
-    } finally {
-      clearTimeout(timeout);
-      setLoading(false);
+      return String(maybe ?? txt);
+    } catch {
+      return txt;
     }
   };
+
+  const applyPrompts = (raw: string) => {
+    const prompts = parseStartersFromText(raw) || [];
+    if (!prompts.length) {
+      message.warning("No suggestions returned. Please tweak your Description and try again.");
+      return false;
+    }
+    setConStarter1(prompts[0] || "");
+    setConStarter2(prompts[1] || "");
+    setConStarter3(prompts[2] || "");
+    setConStarter4(prompts[3] || "");
+    message.success(`Added ${Math.min(prompts.length, 4)} conversation starters.`);
+    return true;
+  };
+
+  try {
+    let res: Response | undefined;
+
+    // --- POST #1: JSON body (preferred) ---
+    try {
+      const h = new Headers(authHeaders);
+      h.set("Content-Type", "application/json");
+      res = await fetch(urlBase, {
+        method: "POST",
+        headers: h,
+        body: JSON.stringify(
+          stripEmpty({
+            agentId: agentId || undefined,
+            description: descClean,
+          })
+        ),
+        signal: ctrl.signal,
+      });
+    } catch {
+      // network/CORS/etc → fall through to POST #2
+      res = undefined;
+    }
+
+    // If server rejects JSON body (400/415), or request failed above, try POST with query
+    if (!res || (!res.ok && (res.status === 400 || res.status === 415))) {
+      try {
+        const url = `${urlBase}?${qs({
+          description: descClean,
+          agentId: agentId || undefined,
+        })}`;
+        // NOTE: no Content-Type header and no body here
+        res = await fetch(url, {
+          method: "POST",
+          headers: authHeaders,
+          signal: ctrl.signal,
+        });
+      } catch {
+        res = undefined;
+      }
+    }
+
+    if (!res) {
+      throw new Error(
+        "Network/CORS error calling starters API. Ensure POST is allowed on this route and CORS is enabled."
+      );
+    }
+
+    // Retry once for transient 5xx
+    if (!res.ok && [500, 502, 503, 504].includes(res.status)) {
+      await new Promise(r => setTimeout(r, 500));
+      const url = `${urlBase}?${qs({
+        description: descClean,
+        agentId: agentId || undefined,
+      })}`;
+      res = await fetch(url, {
+        method: "POST",
+        headers: authHeaders,
+        signal: ctrl.signal,
+      });
+    }
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`classifyStartConversation failed: ${res.status} ${txt}`);
+    }
+
+    if (res.status === 204) {
+      message.warning("No content returned from server.");
+      return;
+    }
+
+    const raw = await parseFlexible(res);
+    if (!applyPrompts(raw)) return;
+  } catch (e: any) {
+    message.error(
+      e?.name === "AbortError" ? "Starter suggestion timed out. Try again." : e?.message || "Failed to fetch conversation starters."
+    );
+  } finally {
+    clearTimeout(timeoutId);
+    setStartersLoading(false);
+  }
+}
 
   // Instructions edit modal
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
@@ -2814,147 +3047,223 @@ const CreateAgentWizard: React.FC = () => {
             )}
 
             {/* STEP 4 (Publish only) */}
-            {step === 3 && (
-              <div>
-                {isEditMode && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      marginBottom: 16,
-                    }}
-                  >
-                    <Button
-                      type="primary"
-                      icon={<EditOutlined />}
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
-                        border: "none",
-                        borderRadius: 8,
-                      }}
-                      onClick={goToInstructionsFromStep4} // ✅ jump to Step 2 + scroll; no generate
-                    >
-                      Agent Instructions
-                    </Button>
-                  </div>
-                )}
+          {step === 3 && (
+  <div>
+    {isEditMode && (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginBottom: 16,
+        }}
+      >
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
+          style={{
+            background: "linear-gradient(135deg, #722ed1 0%, #fa8c16 100%)",
+            border: "none",
+            borderRadius: 8,
+          }}
+          onClick={goToInstructionsFromStep4} // ✅ jump to Step 2 + scroll; no generate
+        >
+          Agent Instructions
+        </Button>
+      </div>
+    )}
 
-                <Title
-                  level={4}
-                  style={{
-                    color: "#722ed1",
-                    marginBottom: 20,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <RocketOutlined style={{ marginRight: 8 }} />
-                  Conversations & Publish
-                </Title>
-                <div ref={instructionsRef} id="instructions-editor">
-                  <Row gutter={[16, 12]}>
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: 12 }}>
-                        {labelWithInfo(
-                          "Conversation Starter 1",
-                          'Example: "What service do you need help with today?"'
-                        )}
-                        <Input
-                          value={conStarter1}
-                          onChange={(e) => setConStarter1(e.target.value)}
-                          placeholder="Starter 1"
-                          maxLength={LIMITS.starterMax}
-                          style={compactInputStyle}
-                          suffix={
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {conStarter1.trim().length}/{LIMITS.starterMax}
-                            </Text>
-                          }
-                        />
-                      </div>
-                    </Col>
+    <Title
+      level={4}
+      style={{
+        color: "#722ed1",
+        marginBottom: 20,
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
+      <RocketOutlined style={{ marginRight: 8 }} />
+      Conversations & Publish
+    </Title>
 
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: 12 }}>
-                        {labelWithInfo(
-                          "Conversation Starter 2",
-                          'Example: "Share your case details..."'
-                        )}
-                        <Input
-                          value={conStarter2}
-                          onChange={(e) => setConStarter2(e.target.value)}
-                          placeholder='e.g., "Share your case details..."'
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
+{/* 🌟 Smart Starter Generator — Responsive Unique Block */}
+<div
+  style={{
+    background: "linear-gradient(135deg, #ffffff 0%, #f7f0ff 100%)",
+    border: "2px dashed #722ed1",
+    borderRadius: 12,
+    padding: 16,
+    margin: "12px 0 24px",
+    boxShadow: "0 4px 12px rgba(114,46,209,0.10)",
+  }}
+>
+  <Row gutter={[12, 12]} align="middle">
+    {/* Left: Title + Subtitle (stacks on mobile) */}
+    <Col xs={24} md={16}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Icon badge */}
+        <div
+          aria-hidden
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            display: "grid",
+            placeItems: "center",
+            background:
+              "linear-gradient(135deg, rgba(114,46,209,0.12), rgba(250,140,22,0.12))",
+            border: "1px solid rgba(114,46,209,0.25)",
+          }}
+        >
+          <RocketOutlined style={{ fontSize: 18, color: "#722ed1" }} />
+        </div>
 
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: 12 }}>
-                        {labelWithInfo(
-                          "Conversation Starter 3",
-                          'Example: "Do you want a document template?"'
-                        )}
-                        <Input
-                          value={conStarter3}
-                          onChange={(e) => setConStarter3(e.target.value)}
-                          placeholder='e.g., "Do you want a document template?"'
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
+        <div>
+          <div
+            style={{
+              fontWeight: 700,
+              color: "#3b2a54",
+              fontSize: "clamp(14px, 2.2vw, 16px)",
+              lineHeight: 1.2,
+            }}
+          >
+            Smart Conversations Generator
+          </div>
+          <div
+            style={{
+              color: "#6b6b6b",
+              fontSize: "clamp(12px, 1.9vw, 13px)",
+              marginTop: 2,
+            }}
+          >
+            Auto-create 4 engaging conversations
+          </div>
+        </div>
+      </div>
+    </Col>
 
-                    <Col xs={24} md={12}>
-                      <div style={{ marginBottom: 12 }}>
-                        {labelWithInfo(
-                          "Conversation Starter 4",
-                          'Example: "Prefer English/తెలుగు/हिंदी?"'
-                        )}
-                        <Input
-                          value={conStarter4}
-                          onChange={(e) => setConStarter4(e.target.value)}
-                          placeholder='e.g., "Prefer English/తెలుగు/हिंदी?"'
-                          style={compactInputStyle}
-                        />
-                      </div>
-                    </Col>
+    {/* Right: CTA Button (full width on mobile) */}
+    <Col xs={24} md={8} style={{ textAlign: "right" }}>
+      <Button
+        onClick={suggestStartersFromAPI}
+        loading={startersLoading}
+        block
+        style={{
+          background:
+            "linear-gradient(135deg, #fa8c16 0%, #ffd666 100%)",
+          color: "#000",
+          fontWeight: 700,
+          border: "none",
+          borderRadius: 10,
+          boxShadow: "0 3px 8px rgba(250,140,22,0.28)",
+          padding: "10px 16px",
+        }}
+      >
+        Generate Conversations
+      </Button>
+    </Col>
+  </Row>
+</div>
 
-                    <Col xs={24} md={8}>
-                      <div style={{ marginBottom: 12 }}>
-                        {labelWithInfo(
-                          "Text Chat",
-                          "Enabled by default and always available."
-                        )}
-                        <Tag color="green" style={{ borderRadius: 6 }}>
-                          Active (default)
-                        </Tag>
-                      </div>
-                    </Col>
 
-                    <Col xs={24} md={8}>
-                      <div style={{ marginBottom: 12 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <Text strong>Voice</Text>
-                          <Tooltip title="It may launch soon and price is applicable.">
-                            <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
-                          </Tooltip>
-                        </div>
-                        <Tag color="default" style={{ borderRadius: 6 }}>
-                          Disabled
-                        </Tag>
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
-              </div>
+
+    <div ref={instructionsRef} id="instructions-editor">
+      <Row gutter={[16, 12]}>
+        <Col xs={24} md={12}>
+          <div style={{ marginBottom: 12 }}>
+            {labelWithInfo(
+              "Conversation Starter 1",
+              'Example: "What service do you need help with today?"'
             )}
+            <Input
+              value={conStarter1}
+              onChange={(e) => setConStarter1(e.target.value)}
+              placeholder="Starter 1"
+              maxLength={LIMITS.starterMax}
+              style={compactInputStyle}
+              suffix={
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {conStarter1.trim().length}/{LIMITS.starterMax}
+                </Text>
+              }
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} md={12}>
+          <div style={{ marginBottom: 12 }}>
+            {labelWithInfo(
+              "Conversation Starter 2",
+              'Example: "Share your case details..."'
+            )}
+            <Input
+              value={conStarter2}
+              onChange={(e) => setConStarter2(e.target.value)}
+              placeholder='e.g., "Share your case details..."'
+              style={compactInputStyle}
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} md={12}>
+          <div style={{ marginBottom: 12 }}>
+            {labelWithInfo(
+              "Conversation Starter 3",
+              'Example: "Do you want a document template?"'
+            )}
+            <Input
+              value={conStarter3}
+              onChange={(e) => setConStarter3(e.target.value)}
+              placeholder='e.g., "Do you want a document template?"'
+              style={compactInputStyle}
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} md={12}>
+          <div style={{ marginBottom: 12 }}>
+            {labelWithInfo(
+              "Conversation Starter 4",
+              'Example: "Prefer English/తెలుగు/हिंदी?"'
+            )}
+            <Input
+              value={conStarter4}
+              onChange={(e) => setConStarter4(e.target.value)}
+              placeholder='e.g., "Prefer English/తెలుగు/हिंदी?"'
+              style={compactInputStyle}
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} md={8}>
+          <div style={{ marginBottom: 12 }}>
+            {labelWithInfo(
+              "Text Chat",
+              "Enabled by default and always available."
+            )}
+            <Tag color="green" style={{ borderRadius: 6 }}>
+              Active (default)
+            </Tag>
+          </div>
+        </Col>
+
+        <Col xs={24} md={8}>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Text strong>Voice</Text>
+              <Tooltip title="It may launch soon and price is applicable.">
+                <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+              </Tooltip>
+            </div>
+            <Tag color="default" style={{ borderRadius: 6 }}>
+              Disabled
+            </Tag>
+          </div>
+        </Col>
+      </Row>
+    </div>
+  </div>
+)}
+
 
             <Divider style={{ margin: "20px 0" }} />
             <div

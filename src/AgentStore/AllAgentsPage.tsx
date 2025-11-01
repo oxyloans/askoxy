@@ -248,7 +248,7 @@ const AllAgentsPage: React.FC = () => {
     const id = getUserId();
     return id && id !== "null" && id !== "undefined" ? id : "";
   }, []);
-  const gotoStore = () => navigate("/bharath-aistore");
+  const gotoStore = () => navigate("/main/createagent");
 
   const refreshData = async () => {
     try {

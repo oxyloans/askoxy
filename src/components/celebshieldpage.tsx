@@ -272,17 +272,17 @@ export default function CelebShieldPage() {
                 24/7 monitoring and High Court verification.
               </p>
             </div>
-            {/* Right Side - Video */}
-            <div className="lg:pl-8">
-              <div className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-2xl ring-2 ring-purple-500/50">
-                <iframe
-                  src="https://www.youtube.com/embed/FR0y9kmy2eY?autoplay=1&mute=1&rel=0&modestbranding=1&loop=1&playlist=FR0y9kmy2eY"
-                  title="CelebShield Introduction"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="w-full h-full rounded-2xl"
-                ></iframe>
-              </div>
+            <div className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-[0_25px_40px_rgba(168,85,247,0.4)] ring-2 ring-purple-500/50 transform hover:scale-[1.02] transition-all duration-500">
+              {/* Soft glow layer */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/10 via-fuchsia-500/10 to-transparent blur-xl"></div>
+
+              <iframe
+                src="https://www.youtube.com/embed/FR0y9kmy2eY?autoplay=1&mute=1&rel=0&modestbranding=1&loop=1&playlist=FR0y9kmy2eY"
+                title="CelebShield Introduction"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="relative w-full h-full rounded-2xl z-10"
+              ></iframe>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mt-12 max-w-6xl mx-auto">
@@ -525,34 +525,66 @@ export default function CelebShieldPage() {
         </section>
 
         {/* ===== PDF VIEWER ===== */}
-        <section className="mx-auto my-20 sm:my-32 w-full max-w-6xl px-4 sm:px-6 lg:px-8 pb-8">
-          <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl rounded-3xl p-8 sm:p-10 border border-purple-500/30 shadow-2xl">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              CelebShield Complete PDF
-            </h2>
-            <p className="text-center text-purple-300 mb-8 max-w-2xl mx-auto">
-              Detailed insights from 9+ celebrity personality-rights cases,
-              covering all 8 misuse types and protection strategies
-            </p>
-            <div className="overflow-hidden rounded-2xl shadow-2xl border-2 border-purple-500/50">
+        <section className="mx-auto my-20 sm:my-28 w-full max-w-6xl px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-purple-500/30 shadow-2xl">
+            {/* Header Row */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+              <div className="flex-1">
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+                  CelebShield Complete PDF
+                </h2>
+                <p className="text-sm sm:text-base text-purple-300 mt-1 max-w-2xl leading-snug">
+                  Detailed insights from 9+ celebrity personality-rights cases —
+                  covering all 8 misuse types and protection strategies.
+                </p>
+              </div>
+
+              {/* Right-Aligned Compact Download Button */}
+              <a
+                href={PDF_DIRECT}
+                download
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold text-sm shadow-md shadow-amber-600/30 hover:shadow-amber-400/60 hover:scale-105 transition-all duration-300 whitespace-nowrap"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                  />
+                </svg>
+                Download
+              </a>
+            </div>
+
+            {/* PDF Viewer */}
+            <div className="overflow-hidden rounded-2xl shadow-xl border border-purple-500/40">
               <iframe
                 src={pdfSrc}
                 title="CelebShield PDF"
-                className="h-96 w-full sm:h-[800px] bg-slate-900"
+                className="h-[500px] sm:h-[700px] w-full bg-slate-900"
                 onError={() => setPdfSrc(PDF_GVIEW)} // auto-fallback if preview fails
               />
-              <p className="mt-6 text-center text-purple-300">
-                If the PDF doesn't load,&nbsp;
-                <a
-                  href={PDF_DIRECT}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-amber-400 underline font-semibold hover:text-amber-300"
-                >
-                  click here to open in a new tab
-                </a>
-              </p>
             </div>
+
+            {/* Fallback link */}
+            <p className="mt-4 text-center text-purple-300 text-sm">
+              If the PDF doesn’t load,&nbsp;
+              <a
+                href={PDF_DIRECT}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-400 underline font-semibold hover:text-amber-300"
+              >
+                open it in a new tab
+              </a>
+            </p>
           </div>
         </section>
 
