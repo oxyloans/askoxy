@@ -12,7 +12,7 @@ import {
   Col,
   Popconfirm,
   Tag,
-  Card,
+  Modal,
  
   Space,
 } from "antd";
@@ -21,13 +21,19 @@ import {
   CheckOutlined,
   CloseOutlined,
   DeleteOutlined,
+  CommentOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 
 const { Text } = Typography;
-
+interface CommentType {
+  commentsBy: string;
+  comments: string;
+  status?: string;
+}
 
 interface Task {
   id: string;
@@ -47,6 +53,11 @@ const AdminTasks: React.FC = () => {
   const accessToken = sessionStorage.getItem("accessToken");
   const userId = sessionStorage.getItem("userId") || "";
   const [searchText, setSearchText] = useState(""); // ✅ added missing state
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [viewModalVisible, setViewModalVisible] = useState(false);
+    const [commentsModalVisible, setCommentsModalVisible] = useState(false);
+    const [commentsData, setCommentsData] = useState<CommentType[]>([]);
+    const [comments, setComments] = useState("");
   // ✅ Fetch tasks
   
 const formatDate = (dateString:string) => {
@@ -198,6 +209,56 @@ const fetchTasks = async () => {
       </Tag>
     );
   };
+const handleCommentsAdd = (task: Task) => {
+  setSelectedTask(task);
+  setCommentsModalVisible(true);
+};
+
+const handleCommentsUpdate = async () => {
+  if (!comments.trim()) {
+    message.warning("Please enter a comment before submitting.");
+    return;
+  }
+  try {
+    await axios.post(
+      `${BASE_URL}/ai-service/agent/userAndRadhaSirComments`,
+      {
+        taskId: selectedTask?.id,
+        comments,
+        commentsBy: "EMPLOYEE",
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    message.success("Comments added successfully!");
+    setCommentsModalVisible(false);
+    setComments("");
+    fetchTasks();
+  } catch (error) {
+    console.error("Update Error:", error);
+    message.error("Failed to add comment");
+  }
+};
+
+const handleViewComments = async (task: Task) => {
+  try {
+    setLoading(true);
+    setSelectedTask(task);
+    const response = await axios.get(
+      `${BASE_URL}/ai-service/agent/taskedIdBasedOnComments`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { taskId: task.id },
+      }
+    );
+    setCommentsData(response.data || []);
+    setViewModalVisible(true);
+  } catch (error) {
+    console.error("View Comments Error:", error);
+    message.error("Failed to fetch comments");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ✅ Table columns
   const columns = [
@@ -205,27 +266,54 @@ const fetchTasks = async () => {
       title: "S.No",
       key: "serial",
       align: "center" as const,
-      width: 80,
+
       render: (_: any, __: Task, index: number) => index + 1,
     },
+
     {
-      title: "Task Id",
-      key: "id",
-      dataIndex: "id",
+      title: "Task Information",
+      key: "task_info",
       align: "center" as const,
-      render: (text: string) => (text ? `#${text.slice(-4)}` : "-"),
-    },
-    {
-      title: "Assigned By",
-      dataIndex: "taskAssignBy",
-      key: "taskAssignBy",
-      align: "center" as const,
-      render: (text: any) => (
-        <Text style={{ display: "block", textAlign: "center" }} strong>
-          {" "}
-          {text}{" "}
-        </Text>
-      ),
+      render: (_: any, record: any) => {
+        // Handle assignedTo array
+        const hasValidAssignee =
+          Array.isArray(record.taskAssignTo) &&
+          record.taskAssignTo.length > 0 &&
+          record.taskAssignTo.some((a: any) => a && a.trim() !== "");
+
+        const assignedToText = hasValidAssignee
+          ? Array.isArray(record.taskAssignTo)
+            ? record.taskAssignTo.join(", ")
+            : record.taskAssignTo
+          : "N/A";
+
+        return (
+          <div
+            style={{
+              backgroundColor: "#f9f9f9",
+
+              borderRadius: 8,
+              padding: "8px 12px",
+              textAlign: "left",
+              display: "inline-block",
+              minWidth: 200,
+            }}
+          >
+            <div style={{ fontWeight: 600, color: "#351664", fontSize: 15 }}>
+              Task ID:{" "}
+              <span style={{ color: "#008cba" }}>
+                {record.id ? `#${record.id.slice(-4)}` : "N/A"}
+              </span>
+            </div>
+            <div style={{ color: "#555", fontSize: 13 }}>
+              Assigned By:{" "}
+              <span style={{ fontWeight: 500, color: "#1ab394" }}>
+                {record.taskAssignBy || "N/A"}
+              </span>
+            </div>
+          </div>
+        );
+      },
     },
 
     {
@@ -234,43 +322,72 @@ const fetchTasks = async () => {
       key: "taskName",
       align: "center" as const,
       render: (text: any) => (
-        <Text style={{ display: "block", textAlign: "center" }}>{text}</Text>
+        <div
+          style={{
+            width: "320px", // enforce width
+            maxWidth: "320px",
+
+            WebkitBoxOrient: "vertical",
+            display: "-webkit-box",
+            textAlign: "center",
+            margin: "0 auto",
+            maxHeight: " 11em", // approx 3 lines
+            overflowX: "auto", // horizontal scroll
+          }}
+          title={text} // show full text on hover
+        >
+          {text}
+        </div>
       ),
     },
+
     {
-      title: "Task Assigned Date",
-      dataIndex: "taskAssignedDate",
-      key: "taskAssignedDate",
+      title: "Task Timeline",
+      key: "task_timeline",
       align: "center" as const,
-      render: (date:any) => {
-        if (!date) return <Text type="secondary">N/A</Text>;
+      render: (_: any, record: any) => {
+        const { taskAssignedDate, taskCompleteDate, status } = record;
+
         return (
-          <Text style={{ color: "#1677ff", fontWeight: 500 }}>
-            {formatDate(date)}
-          </Text>
+          <div
+            style={{
+              backgroundColor: "#f9f9f9",
+
+              borderRadius: 8,
+              padding: "8px 12px",
+              textAlign: "left",
+              display: "inline-block",
+              minWidth: 170,
+            }}
+          >
+            <div style={{ fontWeight: 600, color: "#351664", fontSize: 15 }}>
+              Task Timeline
+            </div>
+
+            <div style={{ color: "#555", fontSize: 13 }}>
+              Assigned Date:{" "}
+              <span style={{ color: "#008cba", fontWeight: 500 }}>
+                {taskAssignedDate ? formatDate(taskAssignedDate) : "N/A"}
+              </span>
+            </div>
+
+            <div style={{ color: "#555", fontSize: 13 }}>
+              Completed Date:{" "}
+              <span
+                style={{
+                  color: taskCompleteDate ? "#1ab394" : "#faad14",
+                  fontWeight: 500,
+                }}
+              >
+                {taskCompleteDate ? formatDate(taskCompleteDate) : "N/A"}
+              </span>
+            </div>
+            <div style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
+              Status: {getStatusTag(status)}
+            </div>
+          </div>
         );
       },
-    },
-    {
-      title: "Task Complete Date",
-      dataIndex: "taskCompleteDate",
-      key: "taskCompleteDate",
-      align: "center" as const,
-      render: (date:any) => {
-        if (!date) return <Text type="secondary">Pending</Text>;
-        return (
-          <Text style={{ color: "#52c41a", fontWeight: 500 }}>
-            {formatDate(date)}
-          </Text>
-        );
-      },
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      align: "center" as const,
-      render: (status: string) => getStatusTag(status),
     },
     {
       title: "Image",
@@ -354,6 +471,31 @@ const fetchTasks = async () => {
               Delete
             </Button>
           </Popconfirm>
+          <Button
+            icon={<CommentOutlined />}
+            style={{
+              background: "#1ab394",
+              color: "white",
+              borderColor: "#1ab394",
+            }}
+            size="small"
+            onClick={() => handleCommentsAdd(record)}
+          >
+            Add Comments
+          </Button>
+
+          <Button
+            icon={<EyeOutlined />}
+            style={{
+              background: "#351664",
+              color: "white",
+              borderColor: "#351664",
+            }}
+            size="small"
+            onClick={() => handleViewComments(record)}
+          >
+            View
+          </Button>
         </Space>
       ),
     },
@@ -409,9 +551,81 @@ const fetchTasks = async () => {
             }}
             bordered
             scroll={{ x: "true" }}
+            style={{ width: "100%" }}
           />
         )}
       </div>
+      {/* View Comments Modal */}
+      <Modal
+        title={`Task Comments - ${
+          selectedTask ? `#${selectedTask.id.slice(-4)}` : ""
+        }`}
+        open={viewModalVisible}
+        onCancel={() => setViewModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        {commentsData.length > 0 ? (
+          commentsData.map((comment, index) => (
+            <div
+              key={index}
+              style={{
+                background: "#f9f9f9",
+                borderLeft: "4px solid #008cba",
+                borderRadius: 6,
+                padding: "10px 12px",
+                marginBottom: 10,
+              }}
+            >
+              <p style={{ margin: 0, fontWeight: 500, color: "#351664" }}>
+                Comment By:{" "}
+                <span style={{ color: "#1ab394" }}>{comment.commentsBy}</span>
+              </p>
+              <p style={{ margin: "4px 0", color: "#333" }}>
+                {comment.comments}
+              </p>
+              <Tag
+                color={
+                  comment.status?.toLowerCase() === "completed"
+                    ? "green"
+                    : comment.status?.toLowerCase() === "rejected"
+                    ? "red"
+                    : "blue"
+                }
+              >
+                {comment.status || "N/A"}
+              </Tag>
+            </div>
+          ))
+        ) : (
+          <Text type="secondary">No comments found for this task.</Text>
+        )}
+      </Modal>
+
+      {/* Add Comments Modal */}
+      <Modal
+        title="Add Comments"
+        open={commentsModalVisible}
+        onCancel={() => setCommentsModalVisible(false)}
+        onOk={handleCommentsUpdate}
+        okText="Add Comments"
+        okButtonProps={{
+          style: {
+            backgroundColor: "#008cba",
+            color: "white",
+            border: "none",
+            fontWeight: 500,
+          },
+        }}
+      >
+        <p style={{ marginBottom: 8, fontWeight: 500 }}>Enter Comments:</p>
+        <Input.TextArea
+          rows={3}
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          placeholder="Enter your comments"
+        />
+      </Modal>
     </UserPanelLayout>
   );
 };

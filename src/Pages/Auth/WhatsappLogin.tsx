@@ -713,50 +713,59 @@ const WhatsappLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-4 row">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4">
       <div
-        className={`max-w-md w-full bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${
+        className={`w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden transition-all duration-300 ${
           isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
+        role="dialog"
+        aria-modal="true"
       >
-        <div className="bg-purple-600 p-4  relative rounded-t-lg  shadow-lg max-w-md sm:max-w-lg w-full">
-          <div className="flex flex-col items-center gap-3  text-center ">
-            <h2 className="text-xl font-bold text-white text-center">
+        {/* ===== Header (title + close + CTA buttons) ===== */}
+        <div className="relative bg-purple-600 px-3 py-3 sm:px-5 sm:py-4 rounded-t-xl">
+          {/* Title (dynamic; unchanged) */}
+          <div className="text-center">
+            <h2 className="text-lg sm:text-xl font-bold text-white leading-tight">
               {primaryType === "STUDENT"
                 ? "Login to Study Abroad"
                 : primaryType === "AGENT"
                 ? "Login to Bharat AI Store"
                 : "Login to ASKOXY.AI"}
             </h2>
+          </div>
+
+          {/* Close button — improved focus/hover; same handler */}
+          <button
+            onClick={handleClose}
+            aria-label="Close"
+            className="absolute right-2 sm:right-4 top-2 sm:top-4 p-1.5 rounded-full text-white/90 hover:text-white hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Top CTAs — keep single row on mobile; wrap only if ultra-narrow */}
+          <div className="mt-3 flex items-center justify-center gap-3">
             <button
-              onClick={handleClose}
-              className="absolute right-2 sm:right-4 top-2 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-white/20 transition-colors text-white/80 hover:text-white touch-manipulation z-10"
+              onClick={() => {
+                const loginPath =
+                  primaryType === "STUDENT" || primaryType === "AGENT"
+                    ? `/whatsapplogin?primaryType=${primaryType}`
+                    : "/whatsapplogin";
+                navigate(loginPath);
+              }}
+              className="inline-flex flex-1 sm:flex-none sm:min-w-[100px] items-center justify-center rounded-lg bg-white px-5 py-2 text-sm sm:text-base font-semibold text-purple-700 hover:bg-purple-100 hover:shadow-md active:bg-white transition"
             >
-              <X className="w-5 h-5 sm:w-5 sm:h-5" />
+              Login
             </button>
-            <div className="  flex gap-4 mt-2 justify-center w-full">
-              <button
-                onClick={() => {
-                  const loginPath =
-                    primaryType === "STUDENT" || primaryType === "AGENT"
-                      ? `/whatsapplogin?primaryType=${primaryType}`
-                      : "/whatsapplogin";
-                  navigate(loginPath);
-                }}
-                className="bg-white text-purple-600  px-6 py-2 rounded-lg font-medium hover:bg-purple-100 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
-              >
-                Login
-              </button>
-              <button
-                onClick={handleRegisterRedirectClick}
-                className="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg  font-medium hover:bg-white hover:text-purple-600 hover:shadow-md hover:scale-105 transition-all duration-200 active:bg-white active:text-purple-600 active:font-bold flex-1 sm:flex-none sm:min-w-[100px] text-sm sm:text-base"
-              >
-                Register
-              </button>
-            </div>
+
+            <button
+              onClick={handleRegisterRedirectClick}
+              className="inline-flex flex-1 sm:flex-none sm:min-w-[100px] items-center justify-center rounded-lg border-2 border-white px-5 py-2 text-sm sm:text-base font-semibold text-white hover:bg-white hover:text-purple-700 hover:shadow-md active:bg-white active:text-purple-700 transition"
+            >
+              Register
+            </button>
           </div>
         </div>
-
         {/* {showEriceAlert && primaryType === "CUSTOMER" && (
           <div className="mx-2 xs:mx-3 sm:mx-4 mt-2">
             <div className="bg-amber-50 border border-amber-200 text-amber-800 px-2 xs:px-3 sm:px-4 py-2 sm:py-3 rounded-lg relative">
@@ -801,30 +810,33 @@ const WhatsappLogin: React.FC = () => {
         )} */}
 
         {showSuccessPopup && (
-          <div className="mx-6 mt-2 animate-fadeIn">
-            <div className="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
+          <div className="mx-4 sm:mx-6 mt-3 animate-fadeIn">
+            <div className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-100 px-3 py-2 text-green-800">
               <CheckCircle2 className="w-5 h-5" />
               {message}
             </div>
           </div>
         )}
 
-        <div className="p-6">
+        {/* ===== Body ===== */}
+        <div className="p-4 sm:p-6">
           <form
             onSubmit={showOtp ? handleOtpSubmit : handleSubmit}
             className="space-y-6"
           >
-            <div className="flex flex-col items-center gap-4 p-2  pb-4">
-              <div className="flex gap-4">
+            {/* Method toggle (WhatsApp / SMS) */}
+            <div className="flex flex-col items-center">
+              <div className="flex gap-3 sm:gap-4">
+                {/* WhatsApp */}
                 <button
                   type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
                     otpMethod === "whatsapp"
-                      ? "bg-green-500 text-white shadow-md"
+                      ? "bg-green-500 text-white shadow"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   } ${
                     isPhoneDisabled || isMethodDisabled
-                      ? "opacity-70 cursor-not-allowed"
+                      ? "opacity-60 cursor-not-allowed"
                       : ""
                   }`}
                   onClick={() => switchOtpMethod("whatsapp")}
@@ -833,15 +845,17 @@ const WhatsappLogin: React.FC = () => {
                   <FaWhatsapp className="w-5 h-5" />
                   WhatsApp
                 </button>
+
+                {/* SMS */}
                 <button
                   type="button"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
                     otpMethod === "mobile"
-                      ? "bg-purple-600 text-white shadow-md"
+                      ? "bg-purple-600 text-white shadow"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   } ${
                     isPhoneDisabled || isMethodDisabled
-                      ? "opacity-70 cursor-not-allowed"
+                      ? "opacity-60 cursor-not-allowed"
                       : ""
                   }`}
                   onClick={() => switchOtpMethod("mobile")}
@@ -877,94 +891,95 @@ const WhatsappLogin: React.FC = () => {
                     } as any
                   }
                 />
-                {otpMethod === "whatsapp" ? (
-                  <FaWhatsapp className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
-                ) : (
-                  <PhoneCall className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
-                )}
-              </div>
-              {error && (
-                <p className="text-red-500 text-sm mt-2 flex items-center gap-1 animate-fadeIn">
-                  <X className="w-4 h-4" />
-                  {error}
-                </p>
+              {otpMethod === "whatsapp" ? (
+                <FaWhatsapp className="pointer-events-none absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              ) : (
+                <PhoneCall className="pointer-events-none absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               )}
             </div>
 
-            {!showOtp && (
-              <>
-                {/* ✅ Added Notes Above Get OTP Button */}
-                <div className="mb-2 text-center text-sm">
-                  {otpMethod === "whatsapp" ? (
-                    <p className="text-green-600 ">
-                      <strong>Note:</strong>🌍 WhatsApp OTP works globally —
-                      India and beyond!
-                    </p>
-                  ) : (
-                    <p className="text-purple-600 ">
-                      <strong>Note:</strong>📩 SMS OTP is for Indian numbers
-                      (+91) only.
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isGetOtpButtonDisabled || isLoading}
-                  className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 ${
-                    isGetOtpButtonDisabled || isLoading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : otpMethod === "whatsapp"
-                      ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
-                      : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
-                  } transform hover:scale-105 active:scale-95`}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Sending OTP...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Get OTP via{" "}
-                      {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
-                    </>
-                  )}
-                </button>
-              </>
+            {/* Inline error (kept) */}
+            {error && (
+              <p className="mt-2 animate-fadeIn flex items-center gap-1 text-sm text-red-600">
+                <X className="w-4 h-4" />
+                {error}
+              </p>
             )}
+          </div>
 
-            {showOtp && (
-              <div
-                className={`space-y-4 transition-all duration-500 ${
-                  animateOtp ? "animate-slideInUp" : ""
+          {/* Pre-OTP note + Get OTP button */}
+          {!showOtp && (
+            <>
+              {/* Informational note (method-specific) */}
+              <div className="text-center text-sm">
+                {otpMethod === "whatsapp" ? (
+                  <p className="text-green-600">
+                    <strong>Note:</strong> 🌍 WhatsApp OTP works globally — India and beyond!
+                  </p>
+                ) : (
+                  <p className="text-purple-600">
+                    <strong>Note:</strong> 📩 SMS OTP is for Indian numbers (+91) only.
+                  </p>
+                )}
+              </div>
+
+              {/* Primary action: Get OTP (method color) */}
+              <button
+                type="submit"
+                disabled={isGetOtpButtonDisabled || isLoading}
+                className={`mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed ${
+                  isGetOtpButtonDisabled || isLoading
+                    ? "bg-gray-400 opacity-60"
+                    : otpMethod === "whatsapp"
+                    ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
+                    : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
                 }`}
               >
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    {otpMethod === "whatsapp" ? (
-                      <MessageCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Smartphone className="w-5 h-5 text-purple-500" />
-                    )}
-                    <span className="text-sm text-gray-600">
-                      OTP sent to your{" "}
-                      {otpMethod === "whatsapp" ? "WhatsApp" : "mobile"}
-                    </span>
-                  </div>
-                </div>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Sending OTP...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5" />
+                    Get OTP via {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
+                  </>
+                )}
+              </button>
+            </>
+          )}
 
-                <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Enter {otpMethod === "whatsapp" ? "4" : "6"}-digit OTP{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-2 justify-center">
-                    {(otpMethod === "whatsapp"
-                      ? credentials.otp
-                      : credentials.mobileOTP
-                    ).map((digit, index) => (
+          {/* OTP entry section */}
+          {showOtp && (
+            <div
+              className={`space-y-4 transition-all duration-500 ${
+                animateOtp ? "animate-slideInUp" : ""
+              }`}
+            >
+              {/* Sent info line */}
+              <div className="text-center">
+                <div className="mb-2 flex items-center justify-center gap-2">
+                  {otpMethod === "whatsapp" ? (
+                    <MessageCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <Smartphone className="h-5 w-5 text-purple-500" />
+                  )}
+                  <span className="text-sm text-gray-600">
+                    OTP sent to your {otpMethod === "whatsapp" ? "WhatsApp" : "mobile"}
+                  </span>
+                </div>
+              </div>
+
+              {/* OTP inputs (same logic; consistent sizes/focus) */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Enter {otpMethod === "whatsapp" ? "4" : "6"}-digit OTP{" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <div className="flex justify-center gap-2 sm:gap-3">
+                  {(otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP).map(
+                    (digit, index) => (
                       <input
                         key={index}
                         ref={(el) => {
@@ -978,86 +993,85 @@ const WhatsappLogin: React.FC = () => {
                         onChange={(e) => handleOtpChange(e.target.value, index)}
                         onKeyDown={(e) => handleKeyDown(e, index)}
                         onPaste={handlePaste}
-                        className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition-colors"
                         disabled={isLoading}
+                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg border text-center text-lg font-semibold outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        aria-label={`OTP digit ${index + 1}`}
                       />
-                    ))}
-                  </div>
-                  {otpError && (
-                    <p className="text-red-500 text-sm text-center flex items-center justify-center gap-1 animate-fadeIn">
-                      <X className="w-4 h-4" />
-                      {otpError}
-                    </p>
+                    )
                   )}
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center gap-2 ${
-                    isLoading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
-                  } transform hover:scale-105 active:scale-95`}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-5 h-5" />
-                      Verify OTP
-                    </>
-                  )}
-                </button>
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={resendDisabled || isLoading}
-                    className={`text-sm font-medium transition-colors ${
-                      resendDisabled || isLoading
-                        ? "text-gray-400 cursor-not-allowed"
-                        : "text-purple-600 hover:text-purple-700"
-                    }`}
-                  >
-                    {resendDisabled ? (
-                      <>
-                        <RefreshCcw className="w-4 h-4 inline mr-1" />
-                        Resend OTP in {resendTimer}s
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCcw className="w-4 h-4 inline mr-1" />
-                        Resend OTP
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={handleChangeNumber}
-                    className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    Change Number
-                  </button>
-                </div>
+                {/* OTP error (unchanged) */}
+                {otpError && (
+                  <p className="animate-fadeIn text-center text-sm text-red-600 flex items-center justify-center gap-1">
+                    <X className="w-4 h-4" />
+                    {otpError}
+                  </p>
+                )}
               </div>
-            )}
-          </form>
-          {showGoogleButton && primaryType === "CUSTOMER" && (
-            <div className="flex items-center my-4">
-              <div className="flex-1 border-t border-gray-300"></div>
-              <span className="px-4 text-sm text-gray-500 bg-white">or</span>
-              <div className="flex-1 border-t border-gray-300"></div>
+
+              {/* Verify button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed ${
+                  isLoading
+                    ? "bg-gray-400 opacity-60"
+                    : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-5 w-5" />
+                    Verify OTP
+                  </>
+                )}
+              </button>
+
+              {/* Resend + Change number */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resendDisabled || isLoading}
+                  className={`text-sm font-medium transition-colors ${
+                    resendDisabled || isLoading
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-purple-600 hover:text-purple-800"
+                  }`}
+                >
+                  <RefreshCcw className="mr-1 inline h-4 w-4" />
+                  {resendDisabled ? `Resend OTP in ${resendTimer}s` : "Resend OTP"}
+                </button>
+              </div>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleChangeNumber}
+                  className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Change Number
+                </button>
+              </div>
             </div>
           )}
-          {!showOtp && (
+          </form>
+      
+
+          {/* {showGoogleButton && primaryType === "CUSTOMER" && (
+            <div className="flex items-center my-4">
+              <div className="flex-1 border-t border-gray-300"></div>
+           
+              <div className="flex-1 border-t border-gray-300"></div>
+            </div>
+          )} */}
+          {/* {!showOtp && (
             <div className="mb-4">
               {showGoogleButton && primaryType === "CUSTOMER" && (
                 <button
@@ -1105,21 +1119,21 @@ const WhatsappLogin: React.FC = () => {
                 </button>
               )}
             </div>
-          )}
+          )} */}
 
-          <div className="mt-6 flex justify-center items-center text-center px-2 sm:px-4">
-            <p className="text-sm text-gray-600 leading-relaxed max-w-full sm:max-w-xs">
-              Don't have an account?{" "}
+          <div className="mt-6 flex items-center justify-center px-2 sm:px-4 text-center">
+            <p className="max-w-full text-sm leading-relaxed text-gray-600 sm:max-w-xs">
+              Don&apos;t have an account?{" "}
               <a
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
                   handleRegisterRedirectClick();
                 }}
-                className="text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1 group cursor-pointer"
+                className="group inline-flex items-center gap-1 font-medium text-purple-700 hover:text-purple-900"
               >
                 Register here
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </a>
             </p>
           </div>
