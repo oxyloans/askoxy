@@ -37,7 +37,7 @@ const KLM_DISCLAIMER =
   "Disclaimer :- This content is auto-processed to provide helpful insights, but roles, timelines, or designations may sometimes be mismatched or outdated. Please treat it as guidance, not absolute truth.";
 
 const ASSISTANTS: AssistantOption[] = [
-  { id: "asst_5g20JJbZ88NvcSgNYLMeQTm2", name: "TiE AI LLM", slug: "tie-llm" },
+  { id: "asst_r72ouwQLn406qEjw9ftYjc85", name: "TiE AI LLM", slug: "tie-llm" },
   {
     id: "", // keep empty; actual ID for Insurance is chosen per type
     name: "Insurance AI LLM",
@@ -396,7 +396,7 @@ const GenOxy: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<Message[][]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [activeAssistant, setActiveAssistant] =
     useState<AssistantOption | null>(null);
 
@@ -419,7 +419,7 @@ const GenOxy: React.FC = () => {
   const [insuranceAssistantId, setInsuranceAssistantId] = useState<string>("");
   const [generalCategory, setGeneralCategory] =
     useState<GeneralCategoryKey | null>(null);
-  
+
   const [questionCount, setQuestionCount] = useState<number>(0);
   const [showModal, setShowModal] = useState<boolean>(false);
 
@@ -693,32 +693,38 @@ const GenOxy: React.FC = () => {
       e.preventDefault();
       const trimmedInput = input.trim();
 
-      if (!trimmedInput && !selectedFile) {
-        antdMessage.error("Please enter a message or upload a file.");
+      if (!trimmedInput && selectedFiles.length === 0) {
+        antdMessage.error("Please enter a message or upload files.");
         return;
       }
 
-      if (editingMessageId && selectedFile && trimmedInput) {
-        await handleFileUpload(selectedFile, trimmedInput);
-        setEditingMessageId(null);
-        setSelectedFile(null);
+      // ✅ Continue file thread if active and prompts remain
+      if (threadId && remainingPrompts && Number(remainingPrompts) > 0) {
+        await handleFileUpload(null, trimmedInput);
+        setInput("");
         return;
       }
+
+      // ✅ Handle file upload (fresh)
+      if (selectedFiles.length > 0) {
+        if (!trimmedInput) {
+          antdMessage.error("Please add a short instruction for the files.");
+        } else {
+          await handleFileUpload(selectedFiles, trimmedInput);
+          setInput("");
+          setSelectedFiles([]);
+        }
+        return;
+      }
+
+      // ✅ Editing existing message
       if (editingMessageId && trimmedInput) {
         await handleEdit(editingMessageId, trimmedInput);
         setEditingMessageId(null);
         return;
       }
-      if (selectedFile) {
-        if (!trimmedInput) {
-          antdMessage.error("Please add a short instruction for the file.");
-        } else {
-          await handleFileUpload(selectedFile, trimmedInput);
-          setInput("");
-        }
-        return;
-      }
 
+      // ✅ Normal assistant / default chat path
       if (activeAssistant) {
         await handleAssistantSend();
         return;
@@ -730,7 +736,6 @@ const GenOxy: React.FC = () => {
       }
     }
   };
-
   const clearChat = () => {
     if (messagesRef.current.length > 0) {
       setChatHistory((prev) => [...prev, [...messagesRef.current]]);
@@ -740,9 +745,11 @@ const GenOxy: React.FC = () => {
       chatCache.current[activeAssistant.slug] = messagesRef.current;
     }
 
-    setSelectedFile(null);
+    // ✅ clear file/thread context
+    setSelectedFiles([]);
     setThreadId(null);
     setRemainingPrompts(null);
+
     setMessages([]);
     setIsSidebarOpen(false);
     setEditingMessageId(null);
@@ -750,7 +757,7 @@ const GenOxy: React.FC = () => {
     setKlmMode(null);
     setActiveAssistant(null);
 
-    // Insurance
+    // Insurance reset
     setInsuranceLanding(true);
     setInsuranceType(null);
     setInsuranceAssistantId("");
@@ -784,19 +791,20 @@ const GenOxy: React.FC = () => {
   const showCenteredLayout = messages.length === 0 && !loading && !isChatRoute;
 
   /* Derived Send Handler */
-  const resolvedSendHandler = selectedFile
-    ? async () => {
-        if (!input.trim()) {
-          antdMessage.error("Please add a short instruction for the file.");
-          return;
+  const resolvedSendHandler =
+    selectedFiles.length > 0
+      ? async () => {
+          if (!input.trim()) {
+            antdMessage.error("Please add a short instruction for the files.");
+            return;
+          }
+          await handleFileUpload(selectedFiles, input);
         }
-        await handleFileUpload(selectedFile, input);
-      }
-    : editingMessageId
-    ? () => handleEdit(editingMessageId, input)
-    : activeAssistant
-    ? handleAssistantSend
-    : handleSend;
+      : editingMessageId
+      ? () => handleEdit(editingMessageId, input)
+      : activeAssistant
+      ? handleAssistantSend
+      : handleSend;
 
   /* TiE Starter Panel */
   const showTieStarter =
@@ -1648,8 +1656,8 @@ const GenOxy: React.FC = () => {
               textareaRef={textareaRef}
               handleFileUpload={handleFileUpload}
               remainingPrompts={remainingPrompts}
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
+              selectedFile={selectedFiles}
+              setSelectedFile={setSelectedFiles}
             />
           </div>
         ) : (
@@ -1696,8 +1704,8 @@ const GenOxy: React.FC = () => {
                   isEditing={!!editingMessageId}
                   handleFileUpload={handleFileUpload}
                   remainingPrompts={remainingPrompts}
-                  uploadedFile={selectedFile}
-                  setUploadedFile={setSelectedFile}
+                  uploadedFile={selectedFiles}
+                  setUploadedFile={setSelectedFiles}
                   disclaimerText={
                     isChatRoute && activeAssistant
                       ? disclaimerForAssistant(activeAssistant.name)

@@ -251,79 +251,84 @@ export const useMessages = ({
     ]
   );
 
-  const handleFileUpload = async (
-    file: File | null,
-    userPrompt: string
-  ): Promise<string | null> => {
-    if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
-      return await Promise.resolve(null);
-    }
+const handleFileUpload = async (  
+  files: File[] | null,
+  userPrompt: string
+): Promise<string | null> => {
+  if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
+    return await Promise.resolve(null);
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: userPrompt,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-
-    try {
-      const formData = new FormData();
-      if (file && threadId === null) formData.append("file", file);
-      formData.append("prompt", userPrompt);
-      if (threadId) formData.append("threadId", threadId);
-
-      const response = await axios.post(
-        `${BASE_URL}/student-service/user/chat-with-files`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      const {
-        answer,
-        threadId: newThreadId,
-        remainingPrompts: updatedPrompts,
-      } = response.data;
-
-      setThreadId(newThreadId);
-      setRemainingPrompts(updatedPrompts);
-
-      const { isImage, url } = extractImageUrl(answer);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: isImage
-          ? url || String(answer).trim()
-          : cleanContent(String(answer)),
-        isImage,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      messagesEndRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-
-      if (location.pathname === "/genoxy") {
-        navigate("/genoxy/chat");
-      }
-
-      return newThreadId;
-    } catch (error) {
-      console.error("File upload failed:", error);
-      const errorMessage: Message = {
-        id: (Date.now() + 2).toString(),
-        role: "assistant",
-        content: "Sorry, the file upload failed. Please try again.",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-      return null;
-    } finally {
-      setLoading(false);
-    }
+  const userMessage: Message = {
+    id: Date.now().toString(),
+    role: "user",
+    content: userPrompt,
   };
+  setMessages((prev) => [...prev, userMessage]);
+  setInput("");
+
+  try {
+    const formData = new FormData();
+
+    // append multiple
+    if (files && threadId === null) {
+      files.forEach((file) => formData.append("files", file));
+    }
+
+    formData.append("prompt", userPrompt);
+    if (threadId) formData.append("threadId", threadId);
+
+    const response = await axios.post(
+      `${BASE_URL}/student-service/user/chat-with-files`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    const {
+      answer,
+      threadId: newThreadId,
+      remainingPrompts: updatedPrompts,
+    } = response.data;
+
+    setThreadId(newThreadId);
+    setRemainingPrompts(updatedPrompts);
+
+    const { isImage, url } = extractImageUrl(answer);
+
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant",
+      content: isImage ? url || String(answer).trim() : cleanContent(String(answer)),
+      isImage,
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    if (location.pathname === "/genoxy") {
+      navigate("/genoxy/chat");
+    }
+
+    return newThreadId;
+  } catch (error) {
+    console.error("File upload failed:", error);
+    const errorMessage: Message = {
+      id: (Date.now() + 2).toString(),
+      role: "assistant",
+      content: "Sorry, the file upload failed. Please try again.",
+    };
+    setMessages((prev) => [...prev, errorMessage]);
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return { handleSend, handleEdit, handleFileUpload };
 };
@@ -347,6 +352,7 @@ class VoiceSessionService {
     iphone: "1266860599",
     samsung: "868260221",
     oppo: "1286876298",
+    Realme:"1601014869",
     vivo: "1244878989",
     others: [
       "1244878989",
@@ -702,4 +708,4 @@ class VoiceSessionService {
 
 export const voiceSessionService = new VoiceSessionService(
   "https://docs.google.com/spreadsheets/d/1LOPzkaogUk3VenBt0A3-OiMHNzO8oXoodLkbXgpOeoE"
-);  
+);

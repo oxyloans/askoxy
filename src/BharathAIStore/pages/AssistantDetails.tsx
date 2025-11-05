@@ -39,16 +39,6 @@ type APIMessage = { role: APIRole; content: string };
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
-type SpeechRecognitionEvent = Event & {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-};
-
-type SpeechRecognitionErrorEvent = Event & {
-  error: string;
-  message?: string;
-};
-
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -85,8 +75,10 @@ const getAuthHeaders = () => {
 
 /** ---------------- constants ---------------- */
 
-const SIDEBAR_WIDTH = 240; // px (open)
-const SIDEBAR_WIDTH_COLLAPSED = 60; // px (collapsed)
+// ---------------- constants ----------------
+const DESKTOP_SIDEBAR_WIDTH_OPEN = 240; // px (open on desktop)
+const MOBILE_SIDEBAR_WIDTH_OPEN = 220; // px (open on mobile)
+const SIDEBAR_WIDTH_COLLAPSED = 60; // px (collapsed on desktop)
 const HEADER_HEIGHT = 56; // px (h-14)
 
 const SIDEBAR_STATE_KEY = "chat_sidebar_open";
@@ -104,15 +96,15 @@ const AssistantDetails: React.FC = () => {
   );
   const currentPath = `${location.pathname}${location.search || ""}`;
 
-useEffect(() => {
-  if (!userId) {
-    // Set the current full path as redirectPath for return after auth
-    sessionStorage.setItem("redirectPath", currentPath);
-    sessionStorage.setItem("fromAISTore", "true"); // Flag for primaryType detection
-    window.location.href = "/whatsappregister?primaryType=AGENT"; // Hard redirect to preserve session
-    return;
-  }
-}, [userId, currentPath]);
+  useEffect(() => {
+    if (!userId) {
+      // Set the current full path as redirectPath for return after auth
+      sessionStorage.setItem("redirectPath", currentPath);
+      sessionStorage.setItem("fromAISTore", "true"); // Flag for primaryType detection
+      window.location.href = "/whatsappregister?primaryType=AGENT"; // Hard redirect to preserve session
+      return;
+    }
+  }, [userId, currentPath]);
   // assistant + chat state
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -259,10 +251,6 @@ useEffect(() => {
         .filter((s) => s.length > 0),
     [prompts]
   );
-  const shownPrompts = useMemo(
-    () => (isXs ? visiblePrompts.slice(0, 2) : visiblePrompts.slice(0, 4)),
-    [isXs, visiblePrompts]
-  );
 
   // sidebar + history
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
@@ -367,7 +355,9 @@ useEffect(() => {
 
         setHistoryById(tmpMap);
         setHistory(rows);
-        if (rows.length > 0 && !sidebarOpen) {
+
+        // After:
+        if (!isXs && rows.length > 0 && !sidebarOpen) {
           setTimeout(() => setSidebarOpen(true), 100);
         }
       } catch (err) {
@@ -865,10 +855,11 @@ useEffect(() => {
     const cached = historyById[hid];
     if (cached?.length) {
       setMessages(cached);
-      setTimeout(
-        () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
-        0
-      );
+     setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      if (isXs) setSidebarOpen(false);   // ✅ close drawer on mobile after select
+    }, 0);
+     
       return;
     }
 
@@ -893,9 +884,10 @@ useEffect(() => {
       setMessages([]);
     }
 
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 0);
+   setTimeout(() => {
+     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+     if (isXs) setSidebarOpen(false); // ✅ close drawer on mobile after fetch path
+   }, 0);
   };
 
   // Keep optional override if you want to support edit-resend
@@ -1008,7 +1000,7 @@ useEffect(() => {
             ...prev,
           ]);
           setCurrentChatId(newId);
-          setSidebarOpen(true);
+          if (!isXs) setSidebarOpen(true); // <-- guard
         }
 
         let answer = "";
@@ -1023,9 +1015,8 @@ useEffect(() => {
             { role: "assistant", content: answer },
           ]);
         }
-        if (!sidebarOpen && history.length > 0) {
-          // Only if history exists
-          setSidebarOpen(true);
+        if (!isXs && !sidebarOpen && history.length > 0) {
+          setSidebarOpen(true); // <-- guard
         }
       } catch (e: any) {
         message.error(e?.message || "Failed to contact assistant.");
@@ -1081,11 +1072,11 @@ useEffect(() => {
         ]);
       }
       // FIXED: Auto-open left sidebar after successful prompt
-      if (!sidebarOpen) {
+      // After:
+      if (!isXs && !sidebarOpen) {
         setSidebarOpen(true);
       }
-      // Similarly in handleEditSave, after setMessages:
-      if (!sidebarOpen && history.length > 0) {
+      if (!isXs && !sidebarOpen && history.length > 0) {
         setSidebarOpen(true);
       }
     } catch (e: any) {
@@ -1151,7 +1142,7 @@ useEffect(() => {
 
   /** ---------------- Voice ---------------- */
   // const handleToggleVoice = () => {
-    const handleToggleVoice = (): void => {
+  const handleToggleVoice = (): void => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       alert("Speech Recognition not supported in this browser.");
@@ -1339,8 +1330,6 @@ useEffect(() => {
       // clear after success
       setSelectedFiles([]);
       return newThreadId || null;
-
-      return newThreadId || null;
     } catch (error) {
       console.error("File upload/search failed:", error);
       const errorMessage: ChatMessage = {
@@ -1373,6 +1362,7 @@ useEffect(() => {
     setThreadId(null);
     setThreadSource(null);
     setSelectedFiles([]);
+    if (isXs) setSidebarOpen(false); // ✅ close on mobile
   };
 
   const generateChatTitle = (text: string) => {
@@ -1492,19 +1482,28 @@ useEffect(() => {
 
   const isCollapsed = !isXs && !sidebarOpen;
 
-  const sidebarWidth = isXs
-    ? "100%"
+  const sidebarWidth: number = isXs
+    ? sidebarOpen
+      ? MOBILE_SIDEBAR_WIDTH_OPEN
+      : 0
     : sidebarOpen
-    ? SIDEBAR_WIDTH
+    ? DESKTOP_SIDEBAR_WIDTH_OPEN
     : SIDEBAR_WIDTH_COLLAPSED;
-  const leftOffset = useMemo(() => {
-    if (isXs) return 0;
-    return sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_COLLAPSED;
-  }, [sidebarOpen, isXs]);
+
+  // compute left offset only for desktop
+  const leftOffset = !isXs ? (sidebarOpen ? 240 : 60) : 0;
+
   const contentWidth = isXs ? "100%" : `calc(100% - ${sidebarWidth}px)`;
   const overlayVisible = isXs && sidebarOpen;
   const effectiveLeftOffset = userId ? leftOffset : 0;
-  const effectiveContentWidth = userId ? contentWidth : "100%";
+  useEffect(() => {
+    if (isXs) {
+      document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    }
+    return () => {
+      if (isXs) document.body.style.overflow = "";
+    };
+  }, [isXs, sidebarOpen]);
 
   const rightSidebarWidth = !isXs ? RIGHT_SIDEBAR_WIDTH : 0;
   const rightOffset = useMemo(() => {
@@ -1531,27 +1530,27 @@ useEffect(() => {
     <>
       {!userId &&
         (() => {
-        try {
-          sessionStorage.setItem(
-            "returnTo",
-            `${location.pathname}${location.search || ""}`
+          try {
+            sessionStorage.setItem(
+              "returnTo",
+              `${location.pathname}${location.search || ""}`
+            );
+          } catch (e) {
+            console.warn("Could not save returnTo:", e);
+          }
+          return (
+            <Navigate
+              to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
+                currentPath
+              )}`}
+            />
           );
-        } catch (e) {
-          console.warn("Could not save returnTo:", e);
-        }
-        return (
-          <Navigate
-            to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
-              currentPath
-            )}`}
-          />
-        );
         })()}
 
       <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">
         {/* Header */}
         <header
-          className="sticky top-0 z-30 flex items-center border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur h-14 px-2 sm:px-4"
+          className="sticky top-0  flex items-center border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur h-14 px-2 sm:px-4 z-20"
           style={{
             left: effectiveLeftOffset,
             right: effectiveRightOffset,
@@ -1619,7 +1618,7 @@ useEffect(() => {
           className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
             isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
           }`}
-          style={{ width: sidebarWidth }}
+          style={{ width: isXs ? 220 : sidebarOpen ? 240 : 60 }}
           aria-label="Chat sidebar"
         >
           {/* ---------- TOP (HEADER + ACTION BUTTONS) ---------- */}
@@ -1883,7 +1882,7 @@ useEffect(() => {
         {!isXs && (
           <button
             onClick={() => setRightSidebarOpen((prev) => !prev)}
-            className="fixed top-1/2 -translate-y-1/2 z-40 w-6 h-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 animate-pulse rounded-full shadow-md"
+            className="fixed top-1/2 -translate-y-1/2 z-30 w-6 h-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 animate-pulse rounded-full shadow-md"
             style={{
               right: `${rightSidebarOpen ? RIGHT_SIDEBAR_WIDTH : 0}px`,
             }}
@@ -2053,7 +2052,8 @@ useEffect(() => {
             isXs ? "" : `ml-[${leftOffset}px] mr-[${rightOffset}px]`
           }`}
           style={{
-            marginLeft: effectiveLeftOffset,
+            marginLeft: leftOffset, // desktop pushes content, mobile stays 0 (overlay pattern)
+            paddingTop: 56, // header height (h-14)
             marginRight: effectiveRightOffset,
             width: effectiveContentWidth1,
             ["--header" as any]: `${HEADER_HEIGHT}px`,
@@ -2749,15 +2749,18 @@ useEffect(() => {
                         </button>
                       ) : (
                         <button
-                              onClick={async () => {
-                                 if (isRecording) {
-      try {
-        recognitionRef.current?.stop();
-      } catch (err) {
-        console.warn("Failed to stop voice recognition:", err);
-      }
-      setIsRecording(false);
-    }
+                          onClick={async () => {
+                            if (isRecording) {
+                              try {
+                                recognitionRef.current?.stop();
+                              } catch (err) {
+                                console.warn(
+                                  "Failed to stop voice recognition:",
+                                  err
+                                );
+                              }
+                              setIsRecording(false);
+                            }
                             if (selectedFiles.length) {
                               await handleFileUpload(
                                 null,

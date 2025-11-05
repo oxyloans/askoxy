@@ -18,10 +18,10 @@ interface InputBarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   stopGeneration: () => void;
   isEditing: boolean;
-  handleFileUpload: (file: File, prompt: string) => void;
+  handleFileUpload: (file: File[], prompt: string) => void;
   remainingPrompts: string | null;
-  uploadedFile: File | null;
-  setUploadedFile: React.Dispatch<React.SetStateAction<File | null>>;
+  uploadedFile: File[] | null;
+  setUploadedFile: React.Dispatch<React.SetStateAction<File[]>>;
   questionCount: number;
   showModal: boolean;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -66,6 +66,8 @@ const InputBar: React.FC<InputBarProps> = ({
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const barRef = useRef<HTMLDivElement | null>(null);
   const LOGIN_URL = "/whatsapplogin";
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<string[]>([]);
 
   // Handle sign-in logic for redirecting to login or navigating to genoxy
   const handleSignIn = () => {
@@ -165,67 +167,73 @@ const InputBar: React.FC<InputBarProps> = ({
 
   // Handle file selection for upload
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      setIsLocallyUploaded(true);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
+    setUploadedFiles((prev) => [...prev, ...files]);
+    setIsLocallyUploaded(true);
+
+    // Generate previews for images
+    files.forEach((file) => {
       if (file.type.startsWith("image/")) {
         const reader = new FileReader();
-        reader.onload = (ev) => setFilePreview(ev.target?.result as string);
+        reader.onload = (ev) => {
+          setFilePreviews((prev) => [...prev, ev.target?.result as string]);
+        };
         reader.readAsDataURL(file);
-      } else {
-        setFilePreview(null);
       }
-      e.target.value = "";
-    }
+    });
+
+    e.target.value = "";
   };
 
   // Remove uploaded file
-  const removeFile = () => {
-    setUploadedFile(null);
-    setFilePreview(null);
-    setIsLocallyUploaded(false);
+  const removeFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFilePreviews((prev) => prev.filter((_, i) => i !== index));
+    if (uploadedFiles.length === 1) {
+      setIsLocallyUploaded(false);
+    }
   };
 
-  // Handle form submission (text or file)
-  const handleSubmit = async () => {
-    // Check if limit is reached before attempting to submit
-    if (isLimitReached) {
-      setShowModal(true); // Show modal if user tries to submit after limit
-      message.error("You've reached the 4-prompt limit. Please sign in.");
-      return;
-    }
+const handleSubmit = async () => {
+  if (isLimitReached) {
+    setShowModal(true);
+    message.error("You've reached the 4-prompt limit. Please sign in.");
+    return;
+  }
 
-    const trimmedInput = input.trim();
-    const defaultPrompt = "Summarize what this file contains in simple terms.";
+  const trimmedInput = input.trim();
+  const defaultPrompt = "Summarize what these files contain in simple terms.";
 
-    if (!trimmedInput && !uploadedFile) {
-      message.error("Please enter a message or upload a file.");
-      return;
-    }
+  if (!trimmedInput && uploadedFiles.length === 0) {
+    message.error("Please enter a message or upload files.");
+    return;
+  }
 
-    if (uploadedFile) {
-      const hasPromptsLeft = Number(remainingPrompts) > 0;
+  if (uploadedFiles.length > 0) {
+    const hasPromptsLeft = Number(remainingPrompts) > 0;
 
-      if (remainingPrompts !== null) {
-        if (hasPromptsLeft) {
-          handleFileUpload(uploadedFile, trimmedInput || defaultPrompt);
-        } else if (trimmedInput) {
-          await handleSend(trimmedInput);
-        } else {
-          return;
-        }
+    if (remainingPrompts !== null) {
+      if (hasPromptsLeft) {
+        handleFileUpload(uploadedFiles, trimmedInput || defaultPrompt);
+      } else if (trimmedInput) {
+        await handleSend(trimmedInput);
       } else {
-        handleFileUpload(uploadedFile, trimmedInput || defaultPrompt);
+        return;
       }
-
-      setInput("");
-      return;
+    } else {
+      handleFileUpload(uploadedFiles, trimmedInput || defaultPrompt);
     }
 
-    await handleSend();
-  };
+    setInput("");
+    setUploadedFiles([]);
+    setFilePreviews([]);
+    return;
+  }
+
+  await handleSend();
+};
 
   // Get appropriate icon for uploaded file
   const getFileIcon = (file: File) => {
@@ -280,35 +288,42 @@ const InputBar: React.FC<InputBarProps> = ({
                 transition-all duration-200 overflow-hidden
               "
             >
-              {uploadedFile && isLocallyUploaded && (
+              {uploadedFiles.length > 0 && isLocallyUploaded && (
                 <div className="px-3 pt-1 pb-1 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 p-1 bg-gray-50 dark:bg-gray-700 rounded-md">
-                    {filePreview ? (
-                      <img
-                        src={filePreview}
-                        alt="File preview"
-                        className="w-10 h-10 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                        {getFileIcon(uploadedFile)}
+                  <div className="flex flex-wrap gap-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-1 bg-gray-50 dark:bg-gray-700 rounded-md"
+                      >
+                        {filePreviews[index] ? (
+                          <img
+                            src={filePreviews[index]}
+                            alt={`Preview ${index}`}
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                            {getFileIcon(file)}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-white leading-tight truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-400 transition-colors"
+                          title="Remove file"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-gray-900 dark:text-white leading-tight truncate">
-                        {uploadedFile.name}
-                      </p>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">
-                        {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <button
-                      onClick={removeFile}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-400 transition-colors"
-                      title="Remove file"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -329,7 +344,7 @@ const InputBar: React.FC<InputBarProps> = ({
                           ? "Limit reached! Sign in for unlimited prompts."
                           : isEditing
                           ? "Edit your message..."
-                          : uploadedFile
+                          : uploadedFiles.length > 0
                           ? "Add a message about your file..."
                           : loading
                           ? "Generating reply, no need to wait."
@@ -363,6 +378,7 @@ const InputBar: React.FC<InputBarProps> = ({
                         id="file-upload"
                         type="file"
                         accept="image/*,.pdf"
+                        multiple // Add this
                         className="hidden"
                         onChange={handleFileSelect}
                       />

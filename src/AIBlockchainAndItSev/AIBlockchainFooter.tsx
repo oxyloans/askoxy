@@ -27,7 +27,7 @@ const solutions = [
   { label: "Rice 2 Robo Ecommerce", path: "/rice2roboecommers" },
   {
     label: "Software Training - 100% job placement",
-    path: "/softwaretraining",
+    path: "/glms",
   },
   { label: "Study Abroad", path: "/studyabroad" },
 ];
