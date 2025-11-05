@@ -248,7 +248,7 @@ const AllAgentsPage: React.FC = () => {
     const id = getUserId();
     return id && id !== "null" && id !== "undefined" ? id : "";
   }, []);
-  const gotoStore = () => navigate("/main/createagent");
+  const gotoStore = () => navigate("/main/agentcreate");
 
   const refreshData = async () => {
     try {
@@ -1833,191 +1833,268 @@ const AllAgentsPage: React.FC = () => {
                         </div>
                       )}
 
-                   {historyOpenFor && (
-  <div
-    className="fixed inset-0 z-[75] bg-black/40 flex items-center justify-center px-4"
-    onMouseDown={(e) => {
-      if (e.target === e.currentTarget) setHistoryOpenFor(null);
-    }}
-    role="dialog"
-    aria-modal="true"
-  >
-    <div className="w-full max-w-6xl rounded-2xl bg-white border border-purple-200 shadow-2xl overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-purple-100 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 text-white flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 4h16v2H4V4Zm0 6h16v2H4v-2Zm0 6h10v2H4v-2Z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-purple-900">
-            Users Chat History
-          </h3>
-        </div>
-        <button
-          onClick={() => setHistoryOpenFor(null)}
-          className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Body */}
-      <div className="p-0 max-h-[80vh]">
-        {historyLoading ? (
-          <div className="flex items-center gap-3 text-sm text-gray-600 px-5 py-4">
-            <svg className="animate-spin h-5 w-5 text-gray-500" viewBox="0 0 24 24">
-              <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z" />
-            </svg>
-            Loading user history…
-          </div>
-        ) : historyError ? (
-          <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm m-5">
-            {historyError}
-          </div>
-        ) : !historyData ? (
-          <div className="text-sm text-gray-500 italic px-5 py-4">No data.</div>
-        ) : (
-          <div className="grid grid-cols-12 gap-0">
-            {/* LEFT: Users list */}
-            <aside className="col-span-12 md:col-span-4 border-r border-purple-100 max-h-[80vh] overflow-y-auto">
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {"totalUsers" in historyData && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                      Users: <b>{historyData.totalUsers}</b>
-                    </span>
-                  )}
-                  {"totalChats" in historyData && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                      Chats: <b>{historyData.totalChats}</b>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <ul className="px-3 pb-3 space-y-2">
-                {(historyData.users || []).map((u: any) => {
-                  const display = resolveUserDisplayName(u.userId, historyData.userNameMap);
-                  const active = selectedUserId === u.userId;
-                  return (
-                    <li key={u.userId}>
-                      <button
-                        onClick={() => setSelectedUserId(u.userId)}
-                        className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
-                          active
-                            ? "bg-purple-600 text-white border-purple-600"
-                            : "bg-white text-gray-800 border-gray-200 hover:bg-purple-50"
-                        }`}
-                        title={display}
-                      >
-                        <div className="text-sm font-medium truncate">{display}</div>
-                        <div className={`text-[11px] mt-0.5 ${active ? "text-purple-100" : "text-gray-500"}`}>
-                          {u.chats ?? 0} chats{u.lastChatAt ? ` · last: ${fmtDate(u.lastChatAt)}` : ""}
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </aside>
-
-            {/* RIGHT: Full history for selected user (or all) */}
-            <section className="col-span-12 md:col-span-8 max-h-[80vh] overflow-y-auto">
-              <div className="p-4 border-b border-purple-100">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-purple-900 truncate">
-                      {selectedUserId
-                        ? resolveUserDisplayName(selectedUserId, historyData.userNameMap)
-                        : "All Users"}
-                    </div>
-                  </div>
-                  {selectedUserId && (
-                    <button
-                      onClick={() => {
-                        navigator.clipboard?.writeText(selectedUserId);
-                      }}
-                      className="text-xs px-2 py-1 rounded-md border bg-white hover:bg-gray-50"
-                      title="Copy user id"
-                    >
-                      Copy User ID
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="p-4 space-y-3">
-                {filterHistoryByUser(historyData.rawList || [], selectedUserId).length === 0 ? (
-                  <div className="text-sm text-gray-500 italic">No chats found for this selection.</div>
-                ) : (
-                  filterHistoryByUser(historyData.rawList || [], selectedUserId).map((e: any, idx: number) => {
-                    const display = resolveUserDisplayName(e?.userId, historyData.userNameMap);
-                    const msgs = parsePromptToMessages(e?.prompt); // ✅ uses your existing parser (full content)
-                    return (
-                      <div
-                        key={`${e?.userId || "u"}_${idx}`}
-                        className="rounded-xl border border-gray-200 bg-white shadow-sm p-3"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">{display}</div>
-                            <div className="text-[11px] text-gray-500">{fmtDate(e?.createdAt)}</div>
-                          </div>
-
-                          {/* Clickable id as well (requested) */}
-                          {e?.userId && (
-                            <button
-                              className="text-[11px] px-2 py-1 rounded-md border hover:bg-gray-50"
-                              onClick={() => setSelectedUserId(e.userId)}
-                              title="Filter by this user"
-                            >
-                              {e.userId}
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Full chat (no cutting) */}
-                        {msgs.length > 0 ? (
-                          <div className="mt-3 space-y-2">
-                            {msgs.map((m, i) => (
-                              <div
-                                key={i}
-                                className={`rounded-md px-3 py-2 text-sm whitespace-pre-wrap ${
-                                  m.role === "assistant"
-                                    ? "bg-purple-50 text-purple-900 border border-purple-100"
-                                    : "bg-gray-50 text-gray-900 border border-gray-200"
-                                }`}
-                              >
-                                <div className="text-[11px] uppercase tracking-wide mb-1 opacity-70">
-                                  {m.role === "assistant" ? "Assistant" : "User"}
+                      {historyOpenFor && (
+                        <div
+                          className="fixed inset-0 z-[75] bg-black/40 flex items-center justify-center px-4"
+                          onMouseDown={(e) => {
+                            if (e.target === e.currentTarget)
+                              setHistoryOpenFor(null);
+                          }}
+                          role="dialog"
+                          aria-modal="true"
+                        >
+                          <div className="w-full max-w-6xl rounded-2xl bg-white border border-purple-200 shadow-2xl overflow-hidden">
+                            {/* Header */}
+                            <div className="px-5 py-4 border-b border-purple-100 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 text-white flex items-center justify-center">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                  >
+                                    <path d="M4 4h16v2H4V4Zm0 6h16v2H4v-2Zm0 6h10v2H4v-2Z" />
+                                  </svg>
                                 </div>
-                                {m.content || "(empty message)"}
+                                <h3 className="text-lg font-semibold text-purple-900">
+                                  Users Chat History
+                                </h3>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="mt-3 text-sm text-gray-600 break-words">
-                            {/* Fallback: show raw prompt if parser found nothing */}
-                            {(e?.prompt || "").toString().trim() || "(no content)"}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </section>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+                              <button
+                                onClick={() => setHistoryOpenFor(null)}
+                                className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                                aria-label="Close"
+                              >
+                                ✕
+                              </button>
+                            </div>
 
+                            {/* Body */}
+                            <div className="p-0 max-h-[80vh]">
+                              {historyLoading ? (
+                                <div className="flex items-center gap-3 text-sm text-gray-600 px-5 py-4">
+                                  <svg
+                                    className="animate-spin h-5 w-5 text-gray-500"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-20"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    />
+                                    <path
+                                      className="opacity-80"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z"
+                                    />
+                                  </svg>
+                                  Loading user history…
+                                </div>
+                              ) : historyError ? (
+                                <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm m-5">
+                                  {historyError}
+                                </div>
+                              ) : !historyData ? (
+                                <div className="text-sm text-gray-500 italic px-5 py-4">
+                                  No data.
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-12 gap-0">
+                                  {/* LEFT: Users list */}
+                                  <aside className="col-span-12 md:col-span-4 border-r border-purple-100 max-h-[80vh] overflow-y-auto">
+                                    <div className="p-4 flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        {"totalUsers" in historyData && (
+                                          <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                                            Users:{" "}
+                                            <b>{historyData.totalUsers}</b>
+                                          </span>
+                                        )}
+                                        {"totalChats" in historyData && (
+                                          <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                                            Chats:{" "}
+                                            <b>{historyData.totalChats}</b>
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <ul className="px-3 pb-3 space-y-2">
+                                      {(historyData.users || []).map(
+                                        (u: any) => {
+                                          const display =
+                                            resolveUserDisplayName(
+                                              u.userId,
+                                              historyData.userNameMap
+                                            );
+                                          const active =
+                                            selectedUserId === u.userId;
+                                          return (
+                                            <li key={u.userId}>
+                                              <button
+                                                onClick={() =>
+                                                  setSelectedUserId(u.userId)
+                                                }
+                                                className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
+                                                  active
+                                                    ? "bg-purple-600 text-white border-purple-600"
+                                                    : "bg-white text-gray-800 border-gray-200 hover:bg-purple-50"
+                                                }`}
+                                                title={display}
+                                              >
+                                                <div className="text-sm font-medium truncate">
+                                                  {display}
+                                                </div>
+                                                <div
+                                                  className={`text-[11px] mt-0.5 ${
+                                                    active
+                                                      ? "text-purple-100"
+                                                      : "text-gray-500"
+                                                  }`}
+                                                >
+                                                  {u.chats ?? 0} chats
+                                                  {u.lastChatAt
+                                                    ? ` · last: ${fmtDate(
+                                                        u.lastChatAt
+                                                      )}`
+                                                    : ""}
+                                                </div>
+                                              </button>
+                                            </li>
+                                          );
+                                        }
+                                      )}
+                                    </ul>
+                                  </aside>
+
+                                  {/* RIGHT: Full history for selected user (or all) */}
+                                  <section className="col-span-12 md:col-span-8 max-h-[80vh] overflow-y-auto">
+                                    <div className="p-4 border-b border-purple-100">
+                                      <div className="flex items-center justify-between flex-wrap gap-2">
+                                        <div className="min-w-0">
+                                          <div className="text-sm font-semibold text-purple-900 truncate">
+                                            {selectedUserId
+                                              ? resolveUserDisplayName(
+                                                  selectedUserId,
+                                                  historyData.userNameMap
+                                                )
+                                              : "All Users"}
+                                          </div>
+                                        </div>
+                                        {selectedUserId && (
+                                          <button
+                                            onClick={() => {
+                                              navigator.clipboard?.writeText(
+                                                selectedUserId
+                                              );
+                                            }}
+                                            className="text-xs px-2 py-1 rounded-md border bg-white hover:bg-gray-50"
+                                            title="Copy user id"
+                                          >
+                                            Copy User ID
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="p-4 space-y-3">
+                                      {filterHistoryByUser(
+                                        historyData.rawList || [],
+                                        selectedUserId
+                                      ).length === 0 ? (
+                                        <div className="text-sm text-gray-500 italic">
+                                          No chats found for this selection.
+                                        </div>
+                                      ) : (
+                                        filterHistoryByUser(
+                                          historyData.rawList || [],
+                                          selectedUserId
+                                        ).map((e: any, idx: number) => {
+                                          const display =
+                                            resolveUserDisplayName(
+                                              e?.userId,
+                                              historyData.userNameMap
+                                            );
+                                          const msgs = parsePromptToMessages(
+                                            e?.prompt
+                                          ); // ✅ uses your existing parser (full content)
+                                          return (
+                                            <div
+                                              key={`${e?.userId || "u"}_${idx}`}
+                                              className="rounded-xl border border-gray-200 bg-white shadow-sm p-3"
+                                            >
+                                              <div className="flex items-center justify-between gap-3">
+                                                <div className="min-w-0">
+                                                  <div className="text-sm font-medium text-gray-900 truncate">
+                                                    {display}
+                                                  </div>
+                                                  <div className="text-[11px] text-gray-500">
+                                                    {fmtDate(e?.createdAt)}
+                                                  </div>
+                                                </div>
+
+                                                {/* Clickable id as well (requested) */}
+                                                {e?.userId && (
+                                                  <button
+                                                    className="text-[11px] px-2 py-1 rounded-md border hover:bg-gray-50"
+                                                    onClick={() =>
+                                                      setSelectedUserId(
+                                                        e.userId
+                                                      )
+                                                    }
+                                                    title="Filter by this user"
+                                                  >
+                                                    {e.userId}
+                                                  </button>
+                                                )}
+                                              </div>
+
+                                              {/* Full chat (no cutting) */}
+                                              {msgs.length > 0 ? (
+                                                <div className="mt-3 space-y-2">
+                                                  {msgs.map((m, i) => (
+                                                    <div
+                                                      key={i}
+                                                      className={`rounded-md px-3 py-2 text-sm whitespace-pre-wrap ${
+                                                        m.role === "assistant"
+                                                          ? "bg-purple-50 text-purple-900 border border-purple-100"
+                                                          : "bg-gray-50 text-gray-900 border border-gray-200"
+                                                      }`}
+                                                    >
+                                                      <div className="text-[11px] uppercase tracking-wide mb-1 opacity-70">
+                                                        {m.role === "assistant"
+                                                          ? "Assistant"
+                                                          : "User"}
+                                                      </div>
+                                                      {m.content ||
+                                                        "(empty message)"}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              ) : (
+                                                <div className="mt-3 text-sm text-gray-600 break-words">
+                                                  {/* Fallback: show raw prompt if parser found nothing */}
+                                                  {(e?.prompt || "")
+                                                    .toString()
+                                                    .trim() || "(no content)"}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })
+                                      )}
+                                    </div>
+                                  </section>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* ✅ Delete / Inactive Confirmation (no "Archive") */}
                       {deleteConfirmId === a.id && (

@@ -37,32 +37,32 @@ const Header: React.FC<HeaderProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-   useEffect(() => {
-     sessionStorage.removeItem("primaryType");
-     sessionStorage.removeItem("fromAISTore");
-     sessionStorage.removeItem("redirectPath");
-   }, []);
-const handleLogin = () => {
-  try {
-    setLoading(true);
+  useEffect(() => {
+    sessionStorage.removeItem("primaryType");
+    sessionStorage.removeItem("fromAISTore");
+    sessionStorage.removeItem("redirectPath");
+  }, []);
+  const handleLogin = () => {
+    try {
+      setLoading(true);
 
-    const userId = localStorage.getItem("userId");
-    const redirectPath = "/main/createagent";
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/agentcreate";
 
-    if (userId) {
-      navigate(redirectPath);
-    } else {
-      sessionStorage.setItem("redirectPath", redirectPath);
-      sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
-      // Pass primaryType as query parameter
-      window.location.href = "/whatsappregister?primaryType=AGENT";
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
+        // Pass primaryType as query parameter
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Sign in error:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   const nav = [
     {
       label: "AI INITIATIVES",
@@ -72,27 +72,24 @@ const handleLogin = () => {
         aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
       },
     },
-  {
-    label: "RADHA'S AI LAB",
-    to: "/bharath-aistore/RadhaAgents",
-    sectionId: "radhas-ai-lab",
-    scrollTo: () => {
-      aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
+    {
+      label: "RADHA'S AI LAB",
+      to: "/bharath-aistore/RadhaAgents",
+      sectionId: "radhas-ai-lab",
+      scrollTo: () => {
+        aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
+      },
     },
-  },
     // inside the `nav` array
     {
       label: "AWARDS & REWARDS",
       to: "/awards-rewards",
       sectionId: "awards-rewards",
       scrollTo: () => {
-         aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
+        aiResourcesRef.current?.scrollIntoView({ behavior: "smooth" });
       },
     },
   ];
-
-
-
 
   // Observe sections to set active nav highlight
   useEffect(() => {
@@ -176,25 +173,24 @@ const handleLogin = () => {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-const isActive = (sectionId: string) => {
-  if (
-    location.pathname === "/bharath-aistore/ai-initiatives" &&
-    sectionId === "ai-initiatives"
-  )
-    return true;
-  if (
-    location.pathname === "/bharath-aistore/RadhaAgents" &&
-    sectionId === "radhas-ai-lab"
-  )
-    return true;
-  if (
-    location.pathname === "/awards-rewards" &&
-    sectionId === "awards-rewards"
-  )
-    return true;
-  return activeSection === sectionId;
-};
-
+  const isActive = (sectionId: string) => {
+    if (
+      location.pathname === "/bharath-aistore/ai-initiatives" &&
+      sectionId === "ai-initiatives"
+    )
+      return true;
+    if (
+      location.pathname === "/bharath-aistore/RadhaAgents" &&
+      sectionId === "radhas-ai-lab"
+    )
+      return true;
+    if (
+      location.pathname === "/awards-rewards" &&
+      sectionId === "awards-rewards"
+    )
+      return true;
+    return activeSection === sectionId;
+  };
 
   const stored =
     localStorage.getItem("display_name") ||
@@ -326,11 +322,7 @@ const isActive = (sectionId: string) => {
                   aria-label="Go to Home"
                   title="ASKOXY.AI"
                 >
-                  <img
-                    src={Logo1}
-                    alt="ASKOXY.AI"
-                    className="h-10 w-auto"
-                  />
+                  <img src={Logo1} alt="ASKOXY.AI" className="h-10 w-auto" />
                 </button>
               </div>
 

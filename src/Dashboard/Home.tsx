@@ -681,9 +681,9 @@ const Home: React.FC = () => {
       id: "Agent Create",
       src: O8,
       alt: "Agent Create",
-      path: "/main/bharat-expert",
+      path: "/main/agentcreate",
       onClick: () => {
-        navigate("/main/bharat-expert");
+        navigate("/main/agentcreate");
       },
     },
     {
@@ -1927,7 +1927,7 @@ const Home: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
               <h2 className="text-xl font-bold text-gray-800 flex items-center">
                 <Bot className="mr-2 text-purple-600" size={24} />
-              OXYGPT
+                OXYGPT
               </h2>
               <button
                 onClick={() => navigate("/genoxy")}

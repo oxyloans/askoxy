@@ -153,7 +153,7 @@ const AssistantDetails: React.FC = () => {
       id: "p1",
       src: "https://i.ibb.co/9kg8gwyh/i1.png",
       alt: "Launch Your AI Agent",
-      href: "/main/bharat-expert",
+      href: "/main/agentcreate",
     },
     {
       id: "p4",
@@ -855,11 +855,11 @@ const AssistantDetails: React.FC = () => {
     const cached = historyById[hid];
     if (cached?.length) {
       setMessages(cached);
-     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      if (isXs) setSidebarOpen(false);   // ✅ close drawer on mobile after select
-    }, 0);
-     
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (isXs) setSidebarOpen(false); // ✅ close drawer on mobile after select
+      }, 0);
+
       return;
     }
 
@@ -884,10 +884,10 @@ const AssistantDetails: React.FC = () => {
       setMessages([]);
     }
 
-   setTimeout(() => {
-     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-     if (isXs) setSidebarOpen(false); // ✅ close drawer on mobile after fetch path
-   }, 0);
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      if (isXs) setSidebarOpen(false); // ✅ close drawer on mobile after fetch path
+    }, 0);
   };
 
   // Keep optional override if you want to support edit-resend
@@ -1688,7 +1688,7 @@ const AssistantDetails: React.FC = () => {
               </button>
               {/* Create Agent */}
               <button
-                onClick={() => (window.location.href = "/main/bharat-expert")}
+                onClick={() => (window.location.href = "/main/agentcreate")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
                 }`}

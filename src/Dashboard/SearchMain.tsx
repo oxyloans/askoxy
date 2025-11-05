@@ -2,11 +2,9 @@ import React, { useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  ShoppingCart,
-  Minus,
-  Plus,
+  
   Loader2,
-  Trash2,
+  
   Home,
   ChevronRight,
 } from "lucide-react";

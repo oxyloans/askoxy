@@ -353,9 +353,8 @@ const App: React.FC = () => {
             />
             <Route path="/myblogs" element={<BlogsPage />} />
             <Route path="/wearehiring" element={<HiringPages />} />
-            <Route path="/myservices" element={<ServicesPage/>} />
-            <Route path="/celebshield" element={<CelebShieldPage/>} />
-            <Route path="/agentcreate" element={<QuickAgentCreate/>} />
+            <Route path="/myservices" element={<ServicesPage />} />
+            <Route path="/celebshield" element={<CelebShieldPage />} />
             <Route
               path="/termsandconditions"
               element={<TermsAndConditions />}
@@ -523,11 +522,11 @@ const App: React.FC = () => {
             {/* <Route path="/buyRice" element={<Ricebags />} /> */}
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/bmvpdf" element={<BMVPDF />} />
-             <Route path="/teststore" element={<TestStore />} />
+            <Route path="/teststore" element={<TestStore />} />
             <Route
               path="/teststore/assistant/:id/:agentId"
               element={<TestAgentDetails />}
-            />
+            />
             {/* {Dashboard Main routes} */}
             <Route
               path="/main"
@@ -658,7 +657,6 @@ const App: React.FC = () => {
                 path="services/we-are-hiring"
                 element={<HiringService />}
               />
-             
               <Route
                 path="wallet"
                 element={
@@ -673,7 +671,8 @@ const App: React.FC = () => {
               />
               <Route path="create-aiagent" element={<CreateAgentWizard />} />
               <Route path="bharat-expert" element={<CreateAgentMain />} />
-              <Route path="createagent" element={<AgentEntryPage />} />
+              {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
+              <Route path="agentcreate" element={<QuickAgentCreate />} />
               <Route path="chatbasedagent" element={<ChatBasedAgent />} />
               <Route
                 path="chatinterface/assistant/:id/:agentId"
@@ -816,7 +815,10 @@ const App: React.FC = () => {
               <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
               <Route path="advocates" element={<AdvocatesDataPage />} />
               <Route path="assignedData" element={<AssignedDataPage />} />
-               <Route path="kukatpallyassignedData" element={<KukatpallyAssignedDataPage />} />
+              <Route
+                path="kukatpallyassignedData"
+                element={<KukatpallyAssignedDataPage />}
+              />
               <Route path="addjobs" element={<AddJob />} />
               <Route
                 path="helpDeskUsers"

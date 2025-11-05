@@ -554,7 +554,7 @@ const BharatAgentsStore: React.FC = () => {
     "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
   ]);
 
-  const NEXT_PATH = "/main/bharat-expert";
+  const NEXT_PATH = "/main/agentcreate";
   // const handleCreateAgentClick = () => {
   //   try {
   //     setLoading(true);
@@ -582,7 +582,7 @@ const BharatAgentsStore: React.FC = () => {
       setLoading(true);
 
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/createagent";
+      const redirectPath = "/main/agentcreate";
 
       if (userId) {
         navigate(redirectPath);

@@ -151,9 +151,9 @@ const AgentEntryPage: React.FC = () => {
             {/* Steps-based */}
             <button
               className="agent-card"
-              onClick={() => navigate("/main/bharat-expert")}
+              onClick={() => navigate("/main/agentcreate")}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/main/bharat-expert"); }
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/main/agentcreate"); }
               }}
               aria-label="Build with Steps (4-Tab Modal)"
             >

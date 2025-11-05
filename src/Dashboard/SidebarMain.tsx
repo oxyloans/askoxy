@@ -61,23 +61,55 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const menuItems = [
-    { to: "/main/dashboard/home", icon: <LayoutDashboard size={18} />, label: "Dashboard" },
-    { to: "/main/myorders", icon: <ShoppingCart size={18} />, label: "My Orders" },
+    {
+      to: "/main/dashboard/home",
+      icon: <LayoutDashboard size={18} />,
+      label: "Dashboard",
+    },
+    {
+      to: "/main/myorders",
+      icon: <ShoppingCart size={18} />,
+      label: "My Orders",
+    },
     { to: "/main/profile", icon: <User size={18} />, label: "Profile" },
     { to: "/main/wallet", icon: <Wallet size={18} />, label: "My Wallet" },
-    { to: "/main/subscription", icon: <CreditCard size={18} />, label: "My Subscriptions" },
+    {
+      to: "/main/subscription",
+      icon: <CreditCard size={18} />,
+      label: "My Subscriptions",
+    },
     { to: "/main/referral", icon: <Users size={18} />, label: "Referral" },
-    { to: "/main/writetous", icon: <MessageSquare size={18} />, label: "Write to Us" },
+    {
+      to: "/main/writetous",
+      icon: <MessageSquare size={18} />,
+      label: "Write to Us",
+    },
     { to: "/main/crypto", icon: <Coins size={18} />, label: "My Crypto" },
     {
       to: "/bharath-aistore",
       icon: <RobotOutlined style={{ fontSize: "18px", color: "#722ed1" }} />,
       label: "Bharat AI Store",
     },
-    { to: "/main/createagent", icon: <PlusCircle size={18} />, label: "Create AI Agent" },
-    { to: "/main/bharath-aistore/agents", icon: <Bot size={18} />, label: "My AI Agents" },
-    { to: "/main/dashboard/myservices", icon: <Layers size={18} />, label: "My Services" },
-    { to: "/main/dashboard/myblogs", icon: <FileText size={18} />, label: "My Blogs" },
+    {
+      to: "/main/agentcreate",
+      icon: <PlusCircle size={18} />,
+      label: "Create AI Agent",
+    },
+    {
+      to: "/main/bharath-aistore/agents",
+      icon: <Bot size={18} />,
+      label: "My AI Agents",
+    },
+    {
+      to: "/main/dashboard/myservices",
+      icon: <Layers size={18} />,
+      label: "My Services",
+    },
+    {
+      to: "/main/dashboard/myblogs",
+      icon: <FileText size={18} />,
+      label: "My Blogs",
+    },
     { to: "/main/jobDetails", icon: <Briefcase size={18} />, label: "My Jobs" },
   ];
 
@@ -119,7 +151,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               to={item.to}
               onClick={() => onItemClick && onItemClick()}
               className={`group relative flex items-center rounded-lg transition-all duration-200 min-h-[44px]
-                ${isExpanded ? "px-3" : isMobile ? "px-3" : "px-0 justify-center"}
+                ${
+                  isExpanded
+                    ? "px-3"
+                    : isMobile
+                    ? "px-3"
+                    : "px-0 justify-center"
+                }
                 ${
                   isActive
                     ? "bg-purple-50 text-purple-700 shadow-sm"
@@ -127,13 +165,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }`}
             >
               {/* Active indicator */}
-              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-purple-600 rounded-r-full" />}
+              {isActive && (
+                <div className="absolute left-0 top-2 bottom-2 w-1 bg-purple-600 rounded-r-full" />
+              )}
 
               {/* Icon */}
               <div
                 className={`flex items-center justify-center flex-shrink-0 transition-all duration-200
                 ${isExpanded ? "mr-3" : isMobile ? "mr-3" : "mx-auto"}
-                ${isActive ? "text-purple-600" : "group-hover:text-purple-600"}`}
+                ${
+                  isActive ? "text-purple-600" : "group-hover:text-purple-600"
+                }`}
               >
                 {item.icon}
               </div>
@@ -148,13 +190,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                       ? "opacity-100 translate-x-0"
                       : "opacity-0 -translate-x-2 absolute"
                   }
-                  ${isActive ? "text-purple-700" : "group-hover:text-purple-600"}`}
+                  ${
+                    isActive ? "text-purple-700" : "group-hover:text-purple-600"
+                  }`}
               >
                 {item.label}
               </span>
 
               {/* Tooltip only when labels are hidden (desktop-collapsed) */}
-              {(!showLabels && isCollapsed && !isHovering) && (
+              {!showLabels && isCollapsed && !isHovering && (
                 <div
                   className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 
                   bg-gray-900 text-white text-xs rounded opacity-0 invisible
