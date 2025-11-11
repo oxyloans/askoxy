@@ -13,10 +13,26 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { isWithinRadius } from "./LocationCheck";
-import { Button, message, Modal, Input, Tag } from "antd";
+import {
+  Button,
+  message,
+  Modal,
+  Input,
+  Tag,
+  Switch,
+  Select,
+  Grid,
+  Row,
+  Col,
+  Space,
+  Divider,
+} from "antd";
+
+import { PlusOutlined } from "@ant-design/icons";
+
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
-import { LoadingOutlined } from "@ant-design/icons";
+
 import BASE_URL from "../Config";
 // import DeliveryFee from "./DeliveryFee";
 import { calculateDeliveryFee } from "./DeliveryFee";
@@ -1079,6 +1095,9 @@ const CartPage: React.FC = () => {
       setLoadingItems((prev) => ({ ...prev, [item.itemId]: false }));
     }
   };
+  const screens = Grid.useBreakpoint();
+  const isMobile = !!screens.xs;
+  const btnSize: "small" | "middle" = isMobile ? "small" : "middle";
 
   const removeCartItem = async (item: CartItem) => {
     try {
@@ -1794,7 +1813,7 @@ const CartPage: React.FC = () => {
       </style>
 
       <div className="flex-1 p-4 lg:p-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+        <Row gutter={[16, 16]}>
           <main className="flex-1">
             <div className="bg-white rounded-xl shadow-sm p-6">
               {isLoading ? (
@@ -1999,15 +2018,24 @@ const CartPage: React.FC = () => {
 
           <div className="w-full lg:w-1/4">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border broder-black-500">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">Delivery Address</h2>
-                <button
-                  onClick={() => setIsAddressModalOpen(true)}
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center gap-1"
-                >
-                  <span>+</span> Add
-                </button>
-              </div>
+              <Row align="middle" justify="space-between" gutter={[8, 8]} wrap>
+                <Col flex="auto">
+                  <h2 className="text-lg font-bold" style={{ margin: 0 }}>
+                    Delivery Address
+                  </h2>
+                </Col>
+                <Col>
+                  <Button
+                    style={{ backgroundColor: "#1ab394", color: "white" }}
+                    size={btnSize}
+                    icon={<PlusOutlined />}
+                    onClick={() => setIsAddressModalOpen(true)}
+                  >
+                    Add
+                  </Button>
+                </Col>
+              </Row>
+
               {selectedAddress === null ? (
                 <p>No addresses found.</p>
               ) : (
@@ -2020,51 +2048,79 @@ const CartPage: React.FC = () => {
                 <label className="block font-bold text-gray-700 mb-1">
                   Select Address
                 </label>
-                <select
-                  value={selectedAddress?.address || ""}
-                  onChange={(e) => {
+                <Select
+                  showSearch
+                  allowClear
+                  placeholder="Choose an Address"
+                  value={selectedAddress?.address || undefined}
+                  onChange={(val) => {
                     const selected = addresses.find(
-                      (addr) => addr.address === e.target.value
+                      (addr) => addr.address === val
                     );
-                    if (selected) {
-                      handleAddressChange(selected);
-                    }
+                    if (selected) handleAddressChange(selected);
                   }}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Choose an Address</option>
-                  {addresses.map((address, index) => (
-                    <option key={index} value={address.address}>
-                      {address.flatNo}, {address.address}, {address.landMark},{" "}
-                      {address.pincode}
-                    </option>
-                  ))}
-                </select>
+                  optionFilterProp="label"
+                  options={addresses.map((addr) => ({
+                    value: addr.address,
+                    label: `${addr.flatNo}, ${addr.address}, ${addr.landMark}, ${addr.pincode}`,
+                  }))}
+                  style={{ width: "100%" }}
+                  size={btnSize}
+                  popupMatchSelectWidth={false}
+                  dropdownStyle={{
+                    maxHeight: 250,
+                    overflowY: "auto",
+                    borderRadius: 8,
+                  }}
+                />
               </div>
+
               <div className="border-t border-gray-200 mt-4 pt-4">
-                <div className="border-t border-gray-200 mt-4 pt-4">
-                  <div className="mb-2">
-                    <button
-                      className="w-full flex justify-between items-center text-gray-700 font-semibold text-sm"
-                      onClick={() =>
-                        setIsItemTotalDropdownOpen((prev) => !prev)
-                      }
-                      aria-expanded={isItemTotalDropdownOpen}
-                    >
-                      <div className="flex items-center">
-                        <span className="border-b border-dashed border-gray-400 pb-1">
-                          Item Total & GST
-                        </span>
-                        <RiArrowDropDownLine
-                          className={`ml-2 h-5 w-5 transform transition-transform duration-200 ${
-                            isItemTotalDropdownOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-                      <span>
-                        ₹
-                        {(
-                          (cartData
+                <div className="mb-2">
+                  <button
+                    className="w-full flex justify-between items-center text-gray-700 font-semibold text-sm"
+                    onClick={() => setIsItemTotalDropdownOpen((prev) => !prev)}
+                    aria-expanded={isItemTotalDropdownOpen}
+                  >
+                    <div className="flex items-center">
+                      <span className="border-b border-dashed border-gray-400 pb-1">
+                        Item Total & GST
+                      </span>
+                      <RiArrowDropDownLine
+                        className={`ml-2 h-5 w-5 transform transition-transform duration-200 ${
+                          isItemTotalDropdownOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </div>
+                    <span>
+                      ₹
+                      {(
+                        (cartData
+                          ?.filter((item) => item.status !== "FREE")
+                          .reduce(
+                            (acc, item) =>
+                              acc +
+                              parseFloat(item.itemPrice) *
+                                (regularCartItems[item.itemId] || 0),
+                            0
+                          ) || 0) +
+                        totalGstAmount +
+                        (cartData.length > 0 ? handlingFee || 0 : 0)
+                      ) // Only include handlingFee if cart has items
+                        .toFixed(2)}
+                    </span>
+                  </button>
+                  {isItemTotalDropdownOpen && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Askoxy.ai has no role to play in the taxes and charges
+                        being levied by the government
+                      </p>
+                      <div className="flex justify-between text-gray-700 text-sm">
+                        <span>Item Cost</span>
+                        <span>
+                          ₹
+                          {cartData
                             ?.filter((item) => item.status !== "FREE")
                             .reduce(
                               (acc, item) =>
@@ -2072,48 +2128,23 @@ const CartPage: React.FC = () => {
                                 parseFloat(item.itemPrice) *
                                   (regularCartItems[item.itemId] || 0),
                               0
-                            ) || 0) +
-                          totalGstAmount +
-                          (cartData.length > 0 ? handlingFee || 0 : 0)
-                        ) // Only include handlingFee if cart has items
-                          .toFixed(2)}
-                      </span>
-                    </button>
-                    {isItemTotalDropdownOpen && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-600 mb-2">
-                          Askoxy.ai has no role to play in the taxes and charges
-                          being levied by the government
-                        </p>
-                        <div className="flex justify-between text-gray-700 text-sm">
-                          <span>Item Cost</span>
-                          <span>
-                            ₹
-                            {cartData
-                              ?.filter((item) => item.status !== "FREE")
-                              .reduce(
-                                (acc, item) =>
-                                  acc +
-                                  parseFloat(item.itemPrice) *
-                                    (regularCartItems[item.itemId] || 0),
-                                0
-                              )
-                              .toFixed(2) || "0.00"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-gray-700 text-sm mt-1">
-                          <span>Charges</span>
-                          <span>
-                            ₹
-                            {chargesWithoutGoldGst.toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                        </div>
-                        {totalGoldGst > 0 && (
-                          <div>
-                            {/* {totalGoldMakingCost > 0 && (
+                            )
+                            .toFixed(2) || "0.00"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-700 text-sm mt-1">
+                        <span>Charges</span>
+                        <span>
+                          ₹
+                          {chargesWithoutGoldGst.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                      {totalGoldGst > 0 && (
+                        <div>
+                          {/* {totalGoldMakingCost > 0 && (
                               <div className="text-gray-700 text-sm flex justify-between">
                                 <span>Gold Making Cost</span>
                                 <span>
@@ -2126,170 +2157,169 @@ const CartPage: React.FC = () => {
                               </div>
                             )} */}
 
-                            <div className="flex justify-between text-gray-700 text-sm mt-1">
-                              <span>GST</span>
-                              <span>
-                                ₹
-                                {totalGoldGst.toLocaleString("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {cartData.length > 0 && ( // Conditionally render handling fee
                           <div className="flex justify-between text-gray-700 text-sm mt-1">
-                            <span>Handling Fee</span>
-                            <span>₹{(handlingFee || 0).toFixed(2)}</span>
+                            <span>GST</span>
+                            <span>
+                              ₹
+                              {totalGoldGst.toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {cartData.length > 0 && (
-                    <div className="flex justify-between mb-2 text-gray-700">
-                      <span>Delivery Fee</span>
-                      <span className="font-semibold">
-                        {deliveryFee === null
-                          ? "N/A"
-                          : `₹${deliveryFee.toFixed(2)}`}
-                      </span>
+                        </div>
+                      )}
+
+                      {cartData.length > 0 && ( // Conditionally render handling fee
+                        <div className="flex justify-between text-gray-700 text-sm mt-1">
+                          <span>Handling Fee</span>
+                          <span>₹{(handlingFee || 0).toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
                   )}
-
-                  <div className="mb-4">
-                    <div className="flex justify-between text-gray-800 font-bold text-lg">
-                      <div className="flex flex-col">
-                        <span>To Pay</span>
-                        <span className="text-sm text-gray-600 font-medium">
-                          (incl. of all taxes and fees)
-                        </span>
-                      </div>
-                      <span>
-                        ₹
-                        {(() => {
-                          const itemTotal =
-                            cartData
-                              ?.filter((item) => item.status !== "FREE")
-                              .reduce(
-                                (acc, item) =>
-                                  acc +
-                                  parseFloat(item.itemPrice) *
-                                    (regularCartItems[item.itemId] || 0),
-                                0
-                              ) || 0;
-
-                          const deliveryFeeTotal =
-                            cartData?.length > 0 ? deliveryFee || 0 : 0;
-                          const handlingFeeTotal =
-                            cartData?.length > 0 ? handlingFee || 0 : 0; // Only include handlingFee if cart has items
-
-                          return (
-                            itemTotal +
-                            totalGstAmount +
-                            deliveryFeeTotal +
-                            handlingFeeTotal
-                          ).toFixed(2);
-                        })() || "0.00"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {cartData?.some((item) => item.quantity === 0) && (
-                    <div className="mb-3 p-3 bg-red-100 text-red-700 rounded">
-                      <p className="font-semibold">
-                        Some items in your cart are out of stock:
-                      </p>
-                      <ul className="ml-4 mt-1 list-disc">
-                        {cartData
-                          .filter((item) => item.quantity === 0)
-                          .map((item) => (
-                            <li key={item.itemId}>
-                              {item.itemName} is out of stock
-                            </li>
-                          ))}
-                      </ul>
-                      <p className="mt-2 text-sm">
-                        Please remove these items to proceed with checkout.
-                      </p>
-                      <button
-                        onClick={removeOutOfStockItems}
-                        className="mt-2 w-full bg-red-600 text-white text-sm py-1 px-3 rounded"
-                      >
-                        Remove all out-of-stock items
-                      </button>
-                    </div>
-                  )}
-                  {cartData?.some(
-                    (item) =>
-                      item.cartQuantity > item.quantity && item.quantity > 0
-                  ) && (
-                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                      <p className="font-semibold">
-                        Quantity adjustments needed:
-                      </p>
-                      <ul className="ml-4 mt-1 list-disc">
-                        {cartData
-                          .filter(
-                            (item) =>
-                              item.cartQuantity > item.quantity &&
-                              item.quantity > 0
-                          )
-                          .map((item) => (
-                            <li key={item.itemId}>
-                              {item.itemName} - Only {item.quantity} in stock
-                              (you have {item.cartQuantity})
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
-                  {cartData?.some(
-                    (item) =>
-                      item.cartQuantity > item.quantity && item.quantity > 0
-                  ) && (
-                    <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
-                      <p className="font-semibold">
-                        Quantity adjustments needed:
-                      </p>
-                      <ul className="ml-4 mt-1 list-disc">
-                        {cartData
-                          .filter(
-                            (item) =>
-                              item.cartQuantity > item.quantity &&
-                              item.quantity > 0
-                          )
-                          .map((item) => (
-                            <li key={item.itemId}>
-                              {item.itemName} - Only {item.quantity} in stock
-                              (you have {item.cartQuantity})
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
-                  <button
-                    className={`w-full py-3 px-6 rounded-lg transition ${
-                      isCheckoutDisabled() || deliveryFee === null
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
-                    }`}
-                    onClick={() => handleToProcess()}
-                    disabled={isCheckoutDisabled() || deliveryFee === null}
-                  >
-                    {isCheckoutDisabled()
-                      ? !selectedAddress
-                        ? "Select an Address to Proceed"
-                        : !cartData || cartData.length === 0
-                        ? "Cart is Empty"
-                        : "Cannot Checkout - Stock Issues"
-                      : deliveryFee === null
-                      ? "Delivery Not Available"
-                      : "Proceed to Checkout"}
-                  </button>
                 </div>
+                {cartData.length > 0 && (
+                  <div className="flex justify-between mb-2 text-gray-700">
+                    <span>Delivery Fee</span>
+                    <span className="font-semibold">
+                      {deliveryFee === null
+                        ? "N/A"
+                        : `₹${deliveryFee.toFixed(2)}`}
+                    </span>
+                  </div>
+                )}
+
+                <div className="mb-4">
+                  <div className="flex justify-between text-gray-800 font-bold text-lg">
+                    <div className="flex flex-col">
+                      <span>To Pay</span>
+                      <span className="text-sm text-gray-600 font-medium">
+                        (incl. of all taxes and fees)
+                      </span>
+                    </div>
+                    <span>
+                      ₹
+                      {(() => {
+                        const itemTotal =
+                          cartData
+                            ?.filter((item) => item.status !== "FREE")
+                            .reduce(
+                              (acc, item) =>
+                                acc +
+                                parseFloat(item.itemPrice) *
+                                  (regularCartItems[item.itemId] || 0),
+                              0
+                            ) || 0;
+
+                        const deliveryFeeTotal =
+                          cartData?.length > 0 ? deliveryFee || 0 : 0;
+                        const handlingFeeTotal =
+                          cartData?.length > 0 ? handlingFee || 0 : 0; // Only include handlingFee if cart has items
+
+                        return (
+                          itemTotal +
+                          totalGstAmount +
+                          deliveryFeeTotal +
+                          handlingFeeTotal
+                        ).toFixed(2);
+                      })() || "0.00"}
+                    </span>
+                  </div>
+                </div>
+
+                {cartData?.some((item) => item.quantity === 0) && (
+                  <div className="mb-3 p-3 bg-red-100 text-red-700 rounded">
+                    <p className="font-semibold">
+                      Some items in your cart are out of stock:
+                    </p>
+                    <ul className="ml-4 mt-1 list-disc">
+                      {cartData
+                        .filter((item) => item.quantity === 0)
+                        .map((item) => (
+                          <li key={item.itemId}>
+                            {item.itemName} is out of stock
+                          </li>
+                        ))}
+                    </ul>
+                    <p className="mt-2 text-sm">
+                      Please remove these items to proceed with checkout.
+                    </p>
+                    <button
+                      onClick={removeOutOfStockItems}
+                      className="mt-2 w-full bg-red-600 text-white text-sm py-1 px-3 rounded"
+                    >
+                      Remove all out-of-stock items
+                    </button>
+                  </div>
+                )}
+                {cartData?.some(
+                  (item) =>
+                    item.cartQuantity > item.quantity && item.quantity > 0
+                ) && (
+                  <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                    <p className="font-semibold">
+                      Quantity adjustments needed:
+                    </p>
+                    <ul className="ml-4 mt-1 list-disc">
+                      {cartData
+                        .filter(
+                          (item) =>
+                            item.cartQuantity > item.quantity &&
+                            item.quantity > 0
+                        )
+                        .map((item) => (
+                          <li key={item.itemId}>
+                            {item.itemName} - Only {item.quantity} in stock (you
+                            have {item.cartQuantity})
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+                {cartData?.some(
+                  (item) =>
+                    item.cartQuantity > item.quantity && item.quantity > 0
+                ) && (
+                  <div className="mb-3 p-3 bg-yellow-100 text-yellow-700 rounded">
+                    <p className="font-semibold">
+                      Quantity adjustments needed:
+                    </p>
+                    <ul className="ml-4 mt-1 list-disc">
+                      {cartData
+                        .filter(
+                          (item) =>
+                            item.cartQuantity > item.quantity &&
+                            item.quantity > 0
+                        )
+                        .map((item) => (
+                          <li key={item.itemId}>
+                            {item.itemName} - Only {item.quantity} in stock (you
+                            have {item.cartQuantity})
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+                <button
+                  className={`w-full py-3 px-6 rounded-lg transition ${
+                    isCheckoutDisabled() || deliveryFee === null
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : " bg-gradient-to-r from-purple-700 to-purple-500 hover:bg-purple-800 text-white"
+                  }`}
+                  onClick={() => handleToProcess()}
+                  disabled={isCheckoutDisabled() || deliveryFee === null}
+                >
+                  {isCheckoutDisabled()
+                    ? !selectedAddress
+                      ? "Select an Address to Proceed"
+                      : !cartData || cartData.length === 0
+                      ? "Cart is Empty"
+                      : "Cannot Checkout - Stock Issues"
+                    : deliveryFee === null
+                    ? "Delivery Not Available"
+                    : "Proceed to Checkout"}
+                </button>
               </div>
             </div>
           </div>
@@ -2621,7 +2651,7 @@ const CartPage: React.FC = () => {
               onFeeCalculated={(fee,handlingFee) =>handlingFeeCalculation(fee,handlingFee)}
             />
           ) : null} */}
-        </div>
+        </Row>
       </div>
       <Footer />
     </div>

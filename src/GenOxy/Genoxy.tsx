@@ -1,7 +1,7 @@
 // /src/Genoxy.tsx
 import React, { useRef, useState, useEffect, KeyboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { message as antdMessage } from "antd";
+import { message as antdMessage, message } from "antd";
 
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
@@ -649,7 +649,8 @@ const GenOxy: React.FC = () => {
         antdMessage.error("Assistant ID not set for selected insurance type.");
         return;
       }
-      const finalContent = `[Insurance Type: ${insuranceType}] ${trimmed}`;
+      // const finalContent = `[Insurance Type: ${insuranceType}] ${trimmed}`;
+      const finalContent = trimmed;
 
       setMessages((prev) => [
         ...prev,
@@ -689,6 +690,8 @@ const GenOxy: React.FC = () => {
   };
 
   const handleKeyPress = async (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    console.log("file length" + selectedFiles.length);
+
     if (e.key === "Enter" && !e.shiftKey && !loading) {
       e.preventDefault();
       const trimmedInput = input.trim();
@@ -701,6 +704,8 @@ const GenOxy: React.FC = () => {
       // ✅ Continue file thread if active and prompts remain
       if (threadId && remainingPrompts && Number(remainingPrompts) > 0) {
         await handleFileUpload(null, trimmedInput);
+        setSelectedFiles([]);
+
         setInput("");
         return;
       }
@@ -1197,7 +1202,9 @@ const GenOxy: React.FC = () => {
         antdMessage.error("Assistant ID not set for selected insurance type.");
         return;
       }
-      const content = `[Insurance Type: ${insuranceType}] ${text}`;
+      // const content = `[Insurance Type: ${insuranceType}] ${text}`;
+      const content = text;
+
       setMessages((prev) => [
         ...prev,
         {

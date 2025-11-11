@@ -130,22 +130,25 @@ const TestAgentDetails: React.FC = () => {
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const isStopped = useRef(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [messageFileIds, setMessageFileIds] = useState<
+    Record<number, string[]>
+  >({});
+  const isDarkMode = document.documentElement.classList.contains("dark");
   const [editingContent, setEditingContent] = useState("");
   const CHAT_KEY = (aid: string, hid: string) => `assistant_chat_${aid}_${hid}`;
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [showFileUploadModal, setShowFileUploadModal] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   // Add loading state for history
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [showMobileFiles, setShowMobileFiles] = useState(false);
+
   const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
   const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
     return saved ? JSON.parse(saved) : true;
   });
-  const [messageFileIds, setMessageFileIds] = useState<
-    Record<number, string[]>
-  >({});
+
   const [isShowingFinalText, setIsShowingFinalText] = useState(false);
   const [isToolRunning, setIsToolRunning] = useState(false);
   const [toolStream, setToolStream] = useState<string>("");
@@ -217,30 +220,6 @@ const TestAgentDetails: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [loading]);
 
-  const [threadSource, setThreadSource] = useState<"files" | "agent" | null>(
-    null
-  );
-  // ⬇️ place with other useState hooks
-  const [remainingPrompts, setRemainingPrompts] = useState<number | null>(null);
-
-  // ⬇️ small helpers used by chat-with-file response parsing
-  const extractImageUrl = (
-    raw: any
-  ): { isImage: boolean; url: string | null } => {
-    const s = String(raw ?? "");
-    const md = s.match(/!\[[^\]]*]\((https?:\/\/[^\s)]+)\)/i);
-    const direct = s.match(/https?:\/\/\S+\.(png|jpe?g|gif|webp)/i);
-    const url = md?.[1] || direct?.[0] || null;
-    return { isImage: !!url, url };
-  };
-
-  const cleanContent = (s: string): string => {
-    return String(s ?? "")
-      .replace(/^```(?:\w+)?\n?/, "")
-      .replace(/```$/, "")
-      .trim();
-  };
-  // ⬇️ NEW: local lock so refresh won't allow re-rating again
   const RATING_LOCK_KEY = (u: string, a: string) => `agent_rating_${u}_${a}`;
 
   const [historyById, setHistoryById] = useState<Record<string, ChatMessage[]>>(
@@ -250,11 +229,27 @@ const TestAgentDetails: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Whenever messages change, scroll down
+  const shouldAutoScroll = useRef(true);
+
   useEffect(() => {
-    scrollToBottom();
+    if (shouldAutoScroll.current) {
+      scrollToBottom();
+    }
   }, [messages]);
-  // prompts (starters)
+  useEffect(() => {
+    const chatContainer = messagesEndRef.current?.parentElement;
+    if (!chatContainer) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      shouldAutoScroll.current = isNearBottom;
+    };
+
+    chatContainer.addEventListener("scroll", handleScroll);
+    return () => chatContainer.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const [prompts, setPrompts] = useState<string[]>([]);
   const [isXs, setIsXs] = useState<boolean>(() =>
     typeof window !== "undefined"
@@ -1235,6 +1230,15 @@ const TestAgentDetails: React.FC = () => {
 
             setStreamType("text");
 
+            // ✅ ADD: Filter out [object Object] strings
+            const cleanText = String(text).trim();
+            if (
+              cleanText === "[object Object]" ||
+              cleanText === "Object Object"
+            ) {
+              return; // Skip this chunk
+            }
+
             buffer += text;
 
             if (bufferTimeout) clearTimeout(bufferTimeout);
@@ -1555,39 +1559,6 @@ const TestAgentDetails: React.FC = () => {
     }
   }, [loading]);
 
-  // Send a message over the SAME chat-with-files thread without re-uploading files
-  const chatWithFilesFollowup = async (userPrompt: string) => {
-    const url = `${BASE_URL}/student-service/user/chat-with-files`;
-
-    const formData = new FormData();
-    formData.append("prompt", userPrompt || "");
-    selectedFiles.forEach((f) => formData.append("files[]", f));
-    if (threadId) formData.append("threadId", threadId);
-
-    const headers = { ...getAuthHeaders() };
-    const { data } = await axios.post(url, formData, { headers });
-
-    const {
-      answer,
-      threadId: newThreadId,
-      remainingPrompts: updatedPrompts,
-    } = data ?? {};
-
-    if (newThreadId) setThreadId(newThreadId);
-    if (typeof updatedPrompts !== "undefined") {
-      setRemainingPrompts(updatedPrompts);
-      if (Number(updatedPrompts) === 0) {
-        // ⛔ stop continuity: surface an explicit error string to caller
-        message.error("File search limit reached. Please try again later.");
-        return "File search limit reached. Please try again later.";
-      }
-    }
-
-    setThreadSource("files");
-    return String(answer ?? "").trim();
-  };
-
-  // ⬇️ NEW: small utility to validate allowed types
   const isAllowedType = (type: string) =>
     [
       "image/jpeg",
@@ -1602,131 +1573,53 @@ const TestAgentDetails: React.FC = () => {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ].includes(type);
 
-  // accept multiple files and filter dupes by name+size
   const handleFilePicker = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files || []);
     if (!picked.length) return;
-    setSelectedFiles((prev) => {
-      const key = (f: File) => `${f.name}_${f.size}`;
-      const map = new Map(prev.map((f) => [key(f), f]));
-      picked.forEach((f) => map.set(key(f), f));
-      return Array.from(map.values());
-    });
-    // optional: clear the input so picking same file again re-triggers change
+
+    // Store pending files and show modal
+    setPendingFiles(picked);
+    setShowFileUploadModal(true);
+
+    // Clear the input
     e.currentTarget.value = "";
   };
 
-  const removeFileAt = (idx: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleFileUpload = async (
-    _file: File | null, // kept for signature compatibility; we now use `selectedFiles`
-    userPrompt: string
-  ): Promise<string | null> => {
-    if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
-      return await Promise.resolve(null);
+  const uploadFilesToAgentKnowledge = async (files: File[]) => {
+    if (!id) {
+      message.error("Assistant ID not found");
+      return false;
     }
 
     setLoading(true);
-
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: userPrompt,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    setInput("");
-
     try {
-      // ✅ branch: if there are files selected → multipart; else → JSON search
-      let answerData: any;
-
-      if (selectedFiles.length > 0) {
-        const formData = new FormData();
-        selectedFiles.forEach((f) => formData.append("files", f)); // keep "files"
-
-        formData.append("prompt", userPrompt || "");
-        if (threadId) formData.append("threadId", threadId);
-
-        // ⛔ no explicit headers; interceptor must NOT force Content-Type for FormData
-        answerData = (
-          await axios.post(
-            `${BASE_URL}/student-service/user/chat-with-files`,
-            formData
-          )
-        ).data;
-      } else {
-        const jsonPayload: any = { prompt: userPrompt };
-        if (threadId) jsonPayload.threadId = threadId;
-
-        answerData = (
-          await axios.post(
-            `${BASE_URL}/student-service/user/chat-with-files`,
-            jsonPayload
-          )
-        ).data;
-      }
-
-      const {
-        answer,
-        threadId: newThreadId,
-        remainingPrompts: updatedPrompts,
-      } = answerData ?? {};
-
-      // ✅ keep thread + source
-      if (newThreadId) {
-        setThreadId(newThreadId);
-        setThreadSource("files");
-      }
-
-      // ✅ persist remaining prompts
-      if (typeof updatedPrompts !== "undefined") {
-        setRemainingPrompts(updatedPrompts);
-        if (Number(updatedPrompts) === 0) {
-          // ⛔ hard stop: show user error and do NOT render normal assistant content
-          message.error(
-            "File search limit reached. Please try again tomorrow."
-          );
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content: "File search limit reached. Please try again tomorrow.",
-            },
-          ]);
-
-          // (optional) clear selected files to avoid accidental re-sends
-          setSelectedFiles([]);
-          return newThreadId || null;
-        }
-      }
-
-      // normal success → render content
-      const { isImage, url } = extractImageUrl(answer);
-      const content = isImage
-        ? url || String(answer).trim()
-        : cleanContent(String(answer));
-      setMessages((prev) => [...prev, { role: "assistant", content }]);
-
-      messagesEndRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append("file", file);
       });
 
-      // clear after success
-      setSelectedFiles([]);
-      return newThreadId || null;
+      await axios.post(
+        `${BASE_URL}/ai-service/agent/${id}/addfiles`,
+        formData,
+        {
+          headers: {
+            ...getAuthHeaders(),
+            // Don't set Content-Type - let browser set it with boundary
+          },
+        }
+      );
 
-      return newThreadId || null;
-    } catch (error) {
-      console.error("File upload/search failed:", error);
-      const errorMessage: ChatMessage = {
-        role: "assistant",
-        content: "⚠️ File upload failed. Please try again after a few seconds.",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-      return null;
+      message.success(
+        `${files.length} file(s) uploaded to agent knowledge successfully!`
+      );
+      return true;
+    } catch (error: any) {
+      console.error("Failed to upload files to agent:", error);
+      message.error(
+        error?.response?.data?.message ||
+          "Failed to upload files to agent knowledge"
+      );
+      return false;
     } finally {
       setLoading(false);
     }
@@ -1745,8 +1638,6 @@ const TestAgentDetails: React.FC = () => {
     setInput("");
     setCurrentChatId(null);
     setThreadId(null);
-    setThreadSource(null);
-    setSelectedFiles([]);
     setIsToolRunning(false);
     setToolStream("");
     setIsShowingFinalText(false);
@@ -1773,26 +1664,6 @@ const TestAgentDetails: React.FC = () => {
   const handlePromptClick = async (prompt: string) => {
     if (!prompt.trim() || loading || !id) return;
 
-    // 👇 Stick to files thread if that's how the thread started
-    if (threadSource === "files") {
-      const userMessage: ChatMessage = { role: "user", content: prompt };
-      setMessages((prev) => [...prev, userMessage]);
-      setLoading(true);
-      try {
-        const answer = await chatWithFilesFollowup(prompt);
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: cleanContent(answer) },
-        ]);
-      } catch {
-        message.error("Failed to contact file chat.");
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // Otherwise use your normal agent chat
     await sendMessage(prompt);
   };
 
@@ -1800,7 +1671,7 @@ const TestAgentDetails: React.FC = () => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
 
-      // ✅ Stop voice recording automatically when sending
+      // Stop voice recording automatically when sending
       if (isRecording) {
         try {
           recognitionRef.current?.stop();
@@ -1809,42 +1680,10 @@ const TestAgentDetails: React.FC = () => {
         }
         setIsRecording(false);
       }
-      if (selectedFiles.length > 0) {
-        await handleFileUpload(
-          null,
-          input || "please describe the file content properly"
-        );
-        setInput("");
-        setShowMobileFiles(false);
-        return;
-      }
 
+      // Just send the message normally - files are already in agent knowledge
       if (input.trim()) {
-        // 👇 NEW: stick to chat-with-files if the thread was created there
-        if (threadSource === "files") {
-          const userMessage: ChatMessage = { role: "user", content: input };
-          setMessages((prev) => [...prev, userMessage]);
-          setInput("");
-          setLoading(true);
-          try {
-            const answer = await chatWithFilesFollowup(userMessage.content);
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: cleanContent(answer) },
-            ]);
-          } catch (err) {
-            message.error("Failed to contact file chat.");
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: "Sorry, something went wrong." },
-            ]);
-          } finally {
-            setLoading(false);
-          }
-        } else {
-          // fallback to your existing agentChat flow
-          await sendMessage();
-        }
+        await sendMessage();
       }
     }
   };
@@ -2990,7 +2829,6 @@ const TestAgentDetails: React.FC = () => {
                         );
                       })}
 
-                      {/* Keep the loading indicator for when there's no tool execution */}
                       {loading && !isToolRunning && (
                         <div className="flex justify-start mb-3 sm:mb-4">
                           <div className="flex items-center gap-3 px-4 py-3 dark:bg-gray-800">
@@ -3091,63 +2929,6 @@ const TestAgentDetails: React.FC = () => {
                   zIndex: 29,
                 }}
               >
-                {/* MOBILE: Always visible files panel (simple layout with close button) */}
-                {selectedFiles.length > 0 && (
-                  <div className="sm:hidden w-full max-w-4xl mx-auto mb-2">
-                    <div className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl p-2 shadow-sm">
-                      {selectedFiles.map((f, i) => (
-                        <div
-                          key={`file_${f.name}_${i}`}
-                          className="flex items-center justify-between px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-600 mb-1 last:mb-0"
-                        >
-                          <span className="text-xs truncate flex-1 mr-2 text-gray-800 dark:text-gray-100">
-                            {f.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFileAt(i)}
-                            className="text-red-500 hover:text-red-700 text-lg leading-none"
-                            title="Remove file"
-                            aria-label={`Remove ${f.name}`}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ===== DESKTOP: Chips row above bar ===== */}
-                {selectedFiles.length > 0 && (
-                  <div className="hidden sm:block w-full max-w-4xl mx-auto mb-2">
-                    <div className="flex flex-wrap gap-2 p-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow">
-                      {selectedFiles.map((f, i) => (
-                        <div
-                          key={`${f.name}_${f.size}_${i}`}
-                          className="flex items-center gap-2 px-2 py-1 rounded-full border text-sm bg-gray-50 dark:bg-gray-600"
-                        >
-                          <span
-                            className="truncate max-w-[220px]"
-                            title={f.name}
-                          >
-                            {f.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFileAt(i)}
-                            className="rounded-full px-2 py-0.5 hover:bg-red-100 dark:hover:bg-red-800"
-                            title="Remove file"
-                            aria-label={`Remove ${f.name}`}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* ===== CHAT BAR (mobile-first, responsive grid) ===== */}
                 <div className="w-full max-w-4xl mx-auto rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500">
                   {/* Grid: [ + ] [ textarea ] [ mic/send ] on all sizes; spacing adapts */}
@@ -3260,24 +3041,13 @@ const TestAgentDetails: React.FC = () => {
                               }
                               setIsRecording(false);
                             }
-                            if (selectedFiles.length) {
-                              await handleFileUpload(
-                                null,
-                                input ||
-                                  "please describe the file content properly"
-                              );
-                              setInput("");
-                              setShowMobileFiles(false);
-                            } else {
-                              if (!input.trim()) return;
+
+                            // Just send message - files go to knowledge base separately
+                            if (input.trim()) {
                               await sendMessage();
                             }
                           }}
-                          disabled={
-                            (input.trim().length === 0 &&
-                              selectedFiles.length === 0) ||
-                            loading
-                          }
+                          disabled={input.trim().length === 0 || loading}
                           className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-700 dark:text-white hover:bg-gray-800 hover:text-white disabled:opacity-50 transition"
                           title="Send"
                           aria-label="Send"
@@ -3292,6 +3062,157 @@ const TestAgentDetails: React.FC = () => {
             </>
           )}
         </main>
+        <Modal
+          title={null}
+          open={showFileUploadModal}
+          onCancel={() => {
+            setShowFileUploadModal(false);
+          }}
+          closable={true}
+          width={500}
+          styles={{
+            content: {
+              backgroundColor: document.documentElement.classList.contains(
+                "dark"
+              )
+                ? "#1f2937"
+                : "#ffffff",
+              padding: 0,
+              borderRadius: "12px",
+              overflow: "hidden",
+            },
+            body: {
+              padding: 0,
+            },
+            mask: {
+              backdropFilter: "blur(8px)",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+            },
+          }}
+          footer={null}
+          closeIcon={
+            <span className="text-gray-400 hover:text-gray-200 transition-colors text-2xl">
+              ×
+            </span>
+          }
+        >
+          <div className="bg-white dark:bg-gray-800">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Upload Files to Agent Knowledge
+              </h3>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                The files you uploaded will be directly stored in the agent's
+                knowledge base. Whenever you ask questions, the agent will use
+                these files as a data source.
+              </p>
+
+              {/* Files List */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Ready to Upload
+                  </span>
+                  <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/20 px-2.5 py-1 rounded-full">
+                    {pendingFiles.length}{" "}
+                    {pendingFiles.length === 1 ? "File" : "Files"}
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {pendingFiles.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500 transition-colors"
+                    >
+                      {/* File Icon */}
+                      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* File Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center gap-3">
+                <button
+                  className="px-5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-colors"
+                  onClick={() => {
+                    setShowFileUploadModal(false);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                  onClick={async () => {
+                    const success = await uploadFilesToAgentKnowledge(
+                      pendingFiles
+                    );
+                    if (success) {
+                      setShowFileUploadModal(false);
+                    }
+                  }}
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Uploading...
+                    </span>
+                  ) : (
+                    "Yes, Upload"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
       </div>
     </>
   );

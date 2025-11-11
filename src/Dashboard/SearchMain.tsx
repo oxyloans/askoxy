@@ -1,77 +1,145 @@
-import React, { useContext } from "react";
+// SearchMain.tsx
+import React, { useContext, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
-  
-  Loader2,
-  
-  Home,
-  ChevronRight,
-} from "lucide-react";
+  Row,
+  Col,
+  Card,
+  Image,
+  Typography,
+  Spin,
+  Empty,
+  Badge,
+  Tag,
+  Button,
+  Space,
+  Divider,
+  Alert,
+} from "antd";
+import { ArrowLeft, Loader2, Home, ChevronRight } from "lucide-react";
 import BASE_URL from "../Config";
 import axios from "axios";
-import { message, Popconfirm } from "antd";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { message } from "antd";
+import { motion } from "framer-motion";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
-// Define the SearchItem interface (same as in your SearchBar component)
-interface SearchItem {
-  itemId: string;
+import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
+
+const { Title, Text, Paragraph } = Typography;
+
+// Interfaces
+interface Agent {
+  agentId: string;
+  assistantId: string;
+  name: string;
+  description: string;
+  instructions: string | null;
+  status: string;
+  profileImagePath: string;
+  imageUrl: string;
+  activeStatus: boolean;
+}
+
+interface Product {
   itemName: string;
   itemMrp: number;
-  units: string;
+  units: any;
   itemImage: string;
   weight: number;
   saveAmount: number;
+  itemId: string;
   itemDescription: string;
-  savePercentage: number;
+  savePercentage: number | null;
   itemPrice: number;
+  bmvCoins: number;
   quantity: number;
+  barcodeValue: any;
+}
+
+interface Category {
+  categoryLogo: string;
+  itemsResponseDtoList: Product[];
   categoryName: string;
 }
 
-// Define the CartItem interface to include status
+interface ApiResponse {
+  agents: Agent[];
+  items: Category[];
+  empty: boolean;
+}
+
 interface CartItem {
   itemId: string;
   cartId: string;
   cartQuantity: number;
-  status: string; // "ADD" or "FREE"
+  status: string;
 }
 
 const SearchMain: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const context = useContext(CartContext);
+
   if (!context) {
     throw new Error("CartDisplay must be used within a CartProvider");
   }
 
   const { setCount } = context;
-  // Extract searchResults from the location state, default to an empty array if not present
-  const searchResults: SearchItem[] =
-    (location.state as { searchResults?: SearchItem[] })?.searchResults || [];
+  const query = (location.state as { searchQuery?: string })?.searchQuery || "";
+  const [data, setData] = useState<ApiResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // State for cart items, loading, and cart data
-  const [cartItems, setCartItems] = React.useState<Record<string, number>>({});
-  const [cartData, setCartData] = React.useState<CartItem[]>([]);
-  const [loadingItems, setLoadingItems] = React.useState<{
+  const [cartItems, setCartItems] = useState<Record<string, number>>({});
+  const [cartData, setCartData] = useState<CartItem[]>([]);
+  const [loadingItems, setLoadingItems] = useState<{
     items: { [key: string]: boolean };
-    status: { [key: string]: string };
   }>({
     items: {},
-    status: {},
   });
-  const [deleteLoading, setDeleteLoading] = React.useState<
-    Record<string, boolean>
-  >({});
 
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
+  const MIN_SEARCH_LENGTH = 3;
 
-  // Fetch cart data to display quantities
-  React.useEffect(() => {
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+    if (trimmedQuery && trimmedQuery.length >= MIN_SEARCH_LENGTH) {
+      fetchSearchData(trimmedQuery);
+    } else {
+      setData(null);
+      setError("Search query too short (min 3 characters)");
+    }
+  }, [query]);
+
+  const fetchSearchData = async (q: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get<ApiResponse>(
+        `${BASE_URL}/product-service/dynamicSearch`,
+        {
+          params: { q },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setData(response.data);
+      if (response.data.items && response.data.items.length > 0) {
+        setSelectedCategory(response.data.items[0].categoryName);
+      }
+    } catch (err) {
+      console.error("Error fetching search data:", err);
+      setError("Failed to fetch search results. Please try again.");
+      setData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     const fetchCartData = async () => {
+      if (!customerId || !token) return;
       try {
         const response = await axios.get(
           `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
@@ -96,38 +164,35 @@ const SearchMain: React.FC = () => {
         }
       } catch (error) {
         console.error("Error fetching cart items:", error);
-        setCartItems({});
-        setCartData([]);
       }
     };
-
-    if (customerId && token) {
-      fetchCartData();
-    }
+    fetchCartData();
   }, [customerId, token]);
 
-  // Calculate discount percentage
   const calculateDiscount = (mrp: number, price: number) => {
+    if (mrp === 0) return 0;
     return Math.round(((mrp - price) / mrp) * 100);
   };
 
-  // Handle back navigation
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Handle Add to Cart
-  const handleAddToCart = async (item: SearchItem) => {
-    setLoadingItems((prev) => ({
-      ...prev,
-      items: { ...prev.items, [item.itemId]: true },
-    }));
+  const handleCategorySelect = (categoryName: string) => {
+    setSelectedCategory(categoryName);
+  };
 
+  const handleAddToCart = async (item: Product) => {
     if (!token || !customerId) {
       message.warning("Please login to add items to the cart.");
       setTimeout(() => navigate("/whatsapplogin"), 2000);
       return;
     }
+
+    setLoadingItems((prev) => ({
+      ...prev,
+      items: { ...prev.items, [item.itemId]: true },
+    }));
 
     try {
       await axios.post(
@@ -136,6 +201,7 @@ const SearchMain: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       message.success("Item added to cart successfully.");
+
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -158,13 +224,10 @@ const SearchMain: React.FC = () => {
           0
         )
       );
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId]: false },
-      }));
     } catch (error) {
       console.error("Error adding to cart:", error);
       message.error("Error adding to cart.");
+    } finally {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -172,12 +235,8 @@ const SearchMain: React.FC = () => {
     }
   };
 
-  // Handle quantity change (increment/decrement)
-  const handleQuantityChange = async (item: SearchItem, increment: boolean) => {
-    const endpoint = increment
-      ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
-      : `${BASE_URL}/cart-service/cart/minusCartItem`;
-
+  const handleQuantityChange = async (item: Product, increment: boolean) => {
+    if (!token || !customerId) return;
     if (cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");
       return;
@@ -189,23 +248,30 @@ const SearchMain: React.FC = () => {
     }));
 
     try {
+      const endpoint = increment
+        ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+        : `${BASE_URL}/cart-service/cart/minusCartItem`;
+      const method = increment ? "post" : "patch";
+
       if (!increment && cartItems[item.itemId] <= 1) {
         const targetCartId = cartData.find(
           (cart) => cart.itemId === item.itemId
         )?.cartId;
-        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
-          data: { id: targetCartId },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        message.success("Item removed from cart successfully.");
+        if (targetCartId) {
+          await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
+            data: { id: targetCartId },
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          message.success("Item removed from cart successfully.");
+        }
       } else {
-        const method = increment ? "post" : "patch";
         await axios[method](
           endpoint,
           { customerId, itemId: item.itemId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
+
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -228,13 +294,10 @@ const SearchMain: React.FC = () => {
           0
         )
       );
-      setLoadingItems((prev) => ({
-        ...prev,
-        items: { ...prev.items, [item.itemId]: false },
-      }));
     } catch (error) {
       console.error("Error updating quantity:", error);
       message.error("Error updating item quantity");
+    } finally {
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -242,298 +305,611 @@ const SearchMain: React.FC = () => {
     }
   };
 
-  // Handle item click to navigate to ItemDisplayPage
-  const handleItemClick = (item: SearchItem) => {
+  const handleItemClick = (item: Product) => {
     navigate(`/main/itemsdisplay/${item.itemId}`);
   };
 
-  // Handle remove item from cart
-  const handleDeleteFromCart = async (item: SearchItem) => {
-    const targetCartId = cartData.find(
-      (cart) => cart.itemId === item.itemId
-    )?.cartId;
-    if (targetCartId) {
-      setDeleteLoading((prev) => ({
-        ...prev,
-        [item.itemId]: true,
-      }));
-      try {
-        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
-          data: { id: targetCartId },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        message.success("Item removed from cart successfully.");
-        const response = await axios.get(
-          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const cartItemsMap = response.data.customerCartResponseList.reduce(
-          (acc: Record<string, number>, cartItem: CartItem) => {
-            if (cartItem.status !== "FREE") {
-              acc[cartItem.itemId] =
-                (acc[cartItem.itemId] || 0) + (cartItem.cartQuantity || 0);
-            }
-            return acc;
-          },
-          {}
-        );
-        setCartItems(cartItemsMap);
-        setCartData(response.data.customerCartResponseList);
-      } catch (error) {
-        console.error("Error removing item:", error);
-        message.error("Error removing item from cart");
-      } finally {
-        setDeleteLoading((prev) => ({
-          ...prev,
-          [item.itemId]: false,
-        }));
-      }
-    }
+  const handleAgentClick = (agent: Agent) => {
+    navigate(
+      `/bharath-aistore/assistant/${agent.assistantId}/${agent.agentId}`
+    );
   };
 
-  // Helper function to check if the item is explicitly added by the user
   const isItemUserAdded = (itemId: string): boolean => {
-    // Check if there is at least one cart entry for this item with status "ADD"
     return cartData.some(
       (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
     );
   };
 
+  const hasNoResults =
+    data?.empty || (!data?.agents.length && !data?.items.length);
+
+  // CRITICAL FILTER: Remove items with itemPrice <= 0 OR itemMrp <= 0 OR quantity <= 0
+  const filteredData = data
+    ? {
+        ...data,
+        items: selectedCategory
+          ? [
+              data.items
+                .find((cat) => cat.categoryName === selectedCategory)
+                ?.itemsResponseDtoList.filter(
+                  (prod) =>
+                    prod.itemPrice > 0 && prod.itemMrp > 0 && prod.quantity > 0
+                ) || [],
+            ].map((list) => ({
+              categoryName: selectedCategory,
+              itemsResponseDtoList: list,
+              categoryLogo:
+                data.items.find((cat) => cat.categoryName === selectedCategory)
+                  ?.categoryLogo || "",
+            }))
+          : data.items
+              .map((cat) => ({
+                ...cat,
+                itemsResponseDtoList: cat.itemsResponseDtoList.filter(
+                  (prod) =>
+                    prod.itemPrice > 0 && prod.itemMrp > 0 && prod.quantity > 0
+                ),
+              }))
+              .filter((cat) => cat.itemsResponseDtoList.length > 0),
+      }
+    : null;
+
+  const totalItems = filteredData
+    ? filteredData.items.reduce(
+        (acc, cat) => acc + cat.itemsResponseDtoList.length,
+        0
+      )
+    : 0;
+
+  if (!query || query.trim().length < MIN_SEARCH_LENGTH) {
+    return (
+      <div style={{ padding: "40px 24px", textAlign: "center" }}>
+        <Alert
+          message="Query too short or missing. Minimum 3 characters required."
+          type="warning"
+          showIcon
+          action={<Button onClick={handleBack}>Go Back</Button>}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center space-x-2 text-sm mb-6">
-          <button
-            onClick={() => navigate("/main/dashboard/products")}
-            className="flex items-center text-gray-600 hover:text-purple-600 transition-colors"
+    <div style={{ minHeight: "100vh", background: "#f7f7f7" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 16px" }}>
+        {/* Breadcrumb */}
+        <Space style={{ marginBottom: 16 }}>
+          <Home
+            size={18}
+            onClick={() => navigate("/main/dashboard/home")}
+            style={{ color: "#5c3391", cursor: "pointer" }}
+          />
+          <ChevronRight size={16} color="#999" />
+          <Text>Search: "{query}"</Text>
+        </Space>
+
+        {isLoading && (
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <Spin size="small" tip="Loading results..." />
+          </div>
+        )}
+
+        {error && !isLoading && (
+          <Alert
+            message={error}
+            type="error"
+            showIcon
+            action={
+              <Button onClick={() => fetchSearchData(query)}>Try Again</Button>
+            }
+          />
+        )}
+
+        {!isLoading && hasNoResults && (
+          <Empty
+            description="No results found. Try a different search term."
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
           >
-            <Home className="w-4 h-4 mr-1" />
-            Home
-          </button>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-purple-600 font-medium">Search Results</span>
-        </nav>
+            <Button type="primary" onClick={handleBack}>
+              New Search
+            </Button>
+          </Empty>
+        )}
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column - Search Results (Full Width) */}
-          <div className="lg:col-span-12 space-y-">
-            {/* Search Results Section */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-start mb-4">
-                <button
-                  onClick={handleBack}
-                  className="mr-2 text-gray-600 hover:text-gray-800 flex items-center"
-                  aria-label="Go back"
+        {!isLoading && !hasNoResults && filteredData && (
+          <>
+            {/* Products Section */}
+            {filteredData.items.length > 0 && (
+              <>
+                {/* Category Selection - REDUCED SIZE */}
+                <div
+                  style={{
+                    marginBottom: 12,
+                    overflowX: "auto",
+                    whiteSpace: "nowrap",
+                  }}
                 >
-                  <ArrowLeft className="w-6 h-6 mb-2" />
-                </button>
-                <h2 className="text-xl font-bold flex items-center mb-2">
-                  Search Results
-                </h2>
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="search-results"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-                >
-                  {searchResults.length > 0 ? (
-                    searchResults.map((item, index) => (
-                      <motion.div
-                        key={item.itemId}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+                  <Space size={8}>
+                    {data?.items.map((category) => (
+                      <Card
+                        key={category.categoryName}
+                        hoverable
+                        onClick={() =>
+                          handleCategorySelect(category.categoryName)
+                        }
+                        style={{
+                          display: "inline-block",
+                          textAlign: "center",
+                          width: 85,
+                          height: 100,
+                          border:
+                            selectedCategory === category.categoryName
+                              ? "2px solid #5c3391"
+                              : "1px solid #e8e8e8",
+                          borderRadius: 10,
+                          background: "#fff",
+                          transition: "all 0.3s ease",
+                          cursor: "pointer",
+                          boxShadow:
+                            selectedCategory === category.categoryName
+                              ? "0 3px 8px rgba(92, 51, 145, 0.2)"
+                              : "0 2px 4px rgba(0,0,0,0.05)",
+                        }}
+                        bodyStyle={{
+                          padding: "8px 6px",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
                       >
-                        {/* Discount Label with custom design */}
-                        {item.itemMrp &&
-                          item.itemPrice &&
-                          item.itemMrp > item.itemPrice && (
-                            <div className="absolute left-0 top-0 z-10 w-auto">
-                              <div
-                                className="bg-purple-600 text-white text-[10px] xs:text-xs sm:text-sm font-bold 
-                              px-1.5 xs:px-2 sm:px-3 lg:px-4 
-                              py-0.5 xs:py-0.5 sm:py-1 
-                              flex items-center"
-                              >
-                                {calculateDiscount(
-                                  item.itemMrp,
-                                  item.itemPrice
-                                )}
-                                %
-                                <span className="ml-0.5 xs:ml-1 text-[8px] xs:text-[10px] sm:text-xs">
-                                  Off
-                                </span>
-                              </div>
-                              {/* Custom shape for bottom edge */}
-                              <div
-                                className="absolute bottom-0 right-0 transform translate-y 
-                              border-t-4 border-r-4 
-                              xs:border-t-6 xs:border-r-6 
-                              sm:border-t-8 sm:border-r-8 
-                              border-t-purple-600 border-r-transparent"
-                              ></div>
-                            </div>
-                          )}
-
-                        {/* Stock Status Badge */}
-                        {item.quantity < 6 && item.quantity > 0 && (
+                        {/* Category Image */}
+                        {category.categoryLogo && (
                           <div
-                            className="absolute top-0.5 xs:top-1 sm:top-2 
-                            right-0.5 xs:right-1 sm:right-2 z-10"
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              width: "100%",
+                              marginBottom: 6,
+                            }}
                           >
-                            <span
-                              className="bg-yellow-500 text-white 
-                              text-[8px] xs:text-[10px] sm:text-xs 
-                              font-medium 
-                              px-1.5 xs:px-2 sm:px-3 
-                              py-0.5 xs:py-0.5 sm:py-1 
-                              rounded-full whitespace-nowrap"
-                            >
-                              Only {item.quantity} left
-                            </span>
+                            <Image
+                              src={category.categoryLogo}
+                              alt={category.categoryName}
+                              height={48}
+                              width={48}
+                              preview={false}
+                              style={{
+                                objectFit: "cover",
+                                borderRadius: "50%",
+                                border:
+                                  selectedCategory === category.categoryName
+                                    ? "2px solid #5c3391"
+                                    : "1px solid #ddd",
+                                padding: 3,
+                                background:
+                                  selectedCategory === category.categoryName
+                                    ? "#f5f0ff"
+                                    : "#fafafa",
+                                transition: "all 0.3s ease",
+                              }}
+                            />
                           </div>
                         )}
 
-                        <div
-                          className="p-4 cursor-pointer"
-                          onClick={() => handleItemClick(item)}
+                        {/* Category Name */}
+                        <Text
+                          strong
+                          style={{
+                            fontSize: 11,
+                            lineHeight: "14px",
+                            color:
+                              selectedCategory === category.categoryName
+                                ? "#5c3391"
+                                : "#333",
+                            textAlign: "center",
+                            marginTop: 2,
+                            whiteSpace: "normal",
+                          }}
                         >
-                          {/* Image Container */}
-                          <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative group">
-                            <img
-                              src={item.itemImage}
-                              alt={item.itemName}
-                              className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
-                            />
-                            {item.quantity === 0 && (
-                              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                                <span className="text-white font-semibold text-sm">
-                                  Currently Unavailable
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                          {category.categoryName}
+                        </Text>
+                      </Card>
+                    ))}
+                  </Space>
+                </div>
 
-                          {/* Product Details */}
-                          <div className="space-y-2">
-                            <h3 className="font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] text-sm">
-                              {item.itemName}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              Weight: {item.weight}
-                              {item.units}
-                            </p>
+                {/* Products Grid */}
+                {filteredData.items.map((category) => (
+                  <div key={category.categoryName} style={{ marginBottom: 24 }}>
+                    {/* Category Title */}
+                    <Title
+                      level={4}
+                      style={{
+                        marginBottom: 12,
+                        marginTop: 12,
+                        color: "#5c3391",
+                        fontWeight: 700,
+                        textAlign: "left",
+                      }}
+                    >
+                      {category.categoryName}
+                    </Title>
 
-                            {/* Price Section */}
-                            <div className="flex items-baseline space-x-2">
-                              <span className="text-lg font-semibold text-gray-900">
-                                ₹{item.itemPrice}
-                              </span>
-                              {item.itemMrp &&
-                                item.itemMrp > item.itemPrice && (
-                                  <span className="text-sm text-gray-500 line-through">
-                                    ₹{item.itemMrp}
-                                  </span>
-                                )}
+                    {/* Check if category has items */}
+                    {category.itemsResponseDtoList.length === 0 ? (
+                      <Alert
+                        message={`No items available in ${category.categoryName}`}
+                        type="info"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                      />
+                    ) : (
+                      <Row gutter={[12, 12]} justify="start">
+                        {category.itemsResponseDtoList.map((product) => {
+                          const discount = calculateDiscount(
+                            product.itemMrp,
+                            product.itemPrice
+                          );
+
+                          return (
+                            <Col
+                              xs={24}
+                              sm={12}
+                              md={8}
+                              lg={6}
+                              key={product.itemId}
+                              style={{
+                                display: "flex",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <Badge.Ribbon
+                                text={`${discount}% OFF`}
+                                color="red"
+                                style={{
+                                  display: discount > 0 ? "block" : "none",
+                                }}
+                              >
+                                <Card
+                                  hoverable
+                                  onClick={() => handleItemClick(product)}
+                                  style={{
+                                    width: 240,
+                                    height: 370,
+                                    borderRadius: 12,
+                                    overflow: "hidden",
+                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.08)",
+                                    transition:
+                                      "transform 0.25s ease, box-shadow 0.25s ease",
+                                  }}
+                                  bodyStyle={{
+                                    padding: 16,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "space-between",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.currentTarget.style.transform =
+                                      "translateY(-5px)")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.transform =
+                                      "translateY(0)")
+                                  }
+                                >
+                                  {/* Product Image */}
+                                  <div
+                                    style={{
+                                      width: "100%",
+                                      height: 160,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      background: "#fafafa",
+                                      borderRadius: 8,
+                                      marginBottom: 10,
+                                      overflow: "hidden",
+                                    }}
+                                  >
+                                    <Image
+                                      src={product.itemImage}
+                                      alt={product.itemName}
+                                      height={140}
+                                      preview={false}
+                                      style={{
+                                        objectFit: "contain",
+                                        maxWidth: "100%",
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Product Info */}
+                                  <div style={{ textAlign: "left" }}>
+                                    <Title
+                                      level={5}
+                                      ellipsis={{ rows: 2 }}
+                                      style={{
+                                        height: 42,
+                                        marginBottom: 6,
+                                        fontWeight: 600,
+                                        color: "#333",
+                                        fontSize: 14,
+                                      }}
+                                    >
+                                      {product.itemName}
+                                    </Title>
+
+                                    <Text
+                                      type="secondary"
+                                      style={{
+                                        fontSize: 11,
+                                        display: "block",
+                                        marginBottom: 6,
+                                      }}
+                                    >
+                                      {product.weight} kg
+                                    </Text>
+
+                                    <div style={{ marginBottom: 8 }}>
+                                      <Text
+                                        strong
+                                        style={{
+                                          fontSize: 16,
+                                          color: "#5c3391",
+                                        }}
+                                      >
+                                        ₹{product.itemPrice.toLocaleString()}
+                                      </Text>
+                                      <Text
+                                        delete
+                                        type="secondary"
+                                        style={{
+                                          marginLeft: 8,
+                                          fontSize: 12,
+                                          color: "#888",
+                                        }}
+                                      >
+                                        ₹{product.itemMrp.toLocaleString()}
+                                      </Text>
+                                    </div>
+
+                                    {product.bmvCoins > 0 && (
+                                      <Tag
+                                        color="gold"
+                                        style={{
+                                          fontWeight: 500,
+                                          fontSize: 11,
+                                          marginBottom: 8,
+                                        }}
+                                      >
+                                        Earn {product.bmvCoins} BMV Coins
+                                      </Tag>
+                                    )}
+                                  </div>
+
+                                  {/* Buttons */}
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    {isItemUserAdded(product.itemId) ? (
+                                      <Space.Compact style={{ width: "100%" }}>
+                                        <Button
+                                          icon={<MinusOutlined />}
+                                          onClick={() =>
+                                            handleQuantityChange(product, false)
+                                          }
+                                          loading={
+                                            loadingItems.items[product.itemId]
+                                          }
+                                          style={{
+                                            flex: 1,
+                                            backgroundColor: "#5c3391",
+                                            borderColor: "#5c3391",
+                                            color: "white",
+                                          }}
+                                        />
+                                        <Button
+                                          style={{
+                                            flex: 1,
+                                            backgroundColor: "white",
+                                            color: "#5c3391",
+                                            fontWeight: "bold",
+                                          }}
+                                        >
+                                          {cartItems[product.itemId] || 0}
+                                        </Button>
+                                        <Button
+                                          icon={<PlusOutlined />}
+                                          onClick={() =>
+                                            handleQuantityChange(product, true)
+                                          }
+                                          disabled={
+                                            cartItems[product.itemId] >=
+                                            product.quantity
+                                          }
+                                          loading={
+                                            loadingItems.items[product.itemId]
+                                          }
+                                          style={{
+                                            flex: 1,
+                                            backgroundColor: "#5c3391",
+                                            borderColor: "#5c3391",
+                                            color: "white",
+                                          }}
+                                        />
+                                      </Space.Compact>
+                                    ) : (
+                                      <Button
+                                        type="primary"
+                                        block
+                                        onClick={() => handleAddToCart(product)}
+                                        loading={
+                                          loadingItems.items[product.itemId]
+                                        }
+                                        style={{
+                                          background:
+                                            "linear-gradient(135deg, #5c3391 0%, #312c74 100%)",
+                                          border: "none",
+                                          fontWeight: 600,
+                                        }}
+                                      >
+                                        Add to Cart
+                                      </Button>
+                                    )}
+                                  </div>
+                                </Card>
+                              </Badge.Ribbon>
+                            </Col>
+                          );
+                        })}
+                      </Row>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Agents Section - REDUCED SIZE */}
+            {filteredData.agents.length > 0 && (
+              <div style={{ marginBottom: 32 }}>
+                <Title
+                  level={4}
+                  style={{
+                    marginBottom: 16,
+                    color: "#5c3391",
+                    fontWeight: 700,
+                  }}
+                >
+                  AI Assistants
+                </Title>
+
+                <Row gutter={[16, 16]}>
+                  {filteredData.agents.map((agent, index) => {
+                    // Generate initials from agent name
+                    const initials = agent.name
+                      ? agent.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase()
+                      : "AI";
+
+                    // Generate dynamic background colors
+                    const bgColors = [
+                      "#5c3391",
+                      "#312c74",
+                      "#8e44ad",
+                      "#9b59b6",
+                      "#6a1b9a",
+                      "#4a148c",
+                      "#7b1fa2",
+                    ];
+                    const color = bgColors[index % bgColors.length];
+
+                    return (
+                      <Col xs={24} sm={12} md={8} lg={6} key={agent.agentId}>
+                        <Badge.Ribbon
+                          text={agent.status}
+                          color={agent.activeStatus ? "green" : "red"}
+                        >
+                          <Card
+                            hoverable
+                            onClick={() => handleAgentClick(agent)}
+                            style={{
+                              height: 360,
+                              borderRadius: 12,
+                              boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                              transition: "all 0.3s ease",
+                            }}
+                            bodyStyle={{
+                              padding: 16,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            {/* Image or Initials */}
+                            <div
+                              style={{
+                                width: "100%",
+                                height: 180,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: 10,
+                                background: "#fafafa",
+                                overflow: "hidden",
+                                marginBottom: 12,
+                              }}
+                            >
+                              {agent.imageUrl || agent.profileImagePath ? (
+                                <Image
+                                  src={agent.imageUrl || agent.profileImagePath}
+                                  alt={agent.name}
+                                  height={180}
+                                  width="100%"
+                                  preview={false}
+                                  style={{
+                                    objectFit: "cover",
+                                    borderRadius: 10,
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    height: 90,
+                                    width: 90,
+
+                                    backgroundColor: color,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 30,
+                                    fontWeight: "bold",
+                                    color: "white",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  {initials}
+                                </div>
+                              )}
                             </div>
 
-                            {/* Add to Cart Button Section */}
-                            {item.quantity !== 0 ? (
-                              isItemUserAdded(item.itemId) ? (
-                                <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2">
-                                  <motion.button
-                                    whileTap={{ scale: 0.9 }}
-                                    className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleQuantityChange(item, false);
-                                    }}
-                                    disabled={loadingItems.items[item.itemId]}
-                                  >
-                                    -
-                                  </motion.button>
-                                  {loadingItems.items[item.itemId] ? (
-                                    <Loader2 className="animate-spin text-purple-600" />
-                                  ) : (
-                                    <span className="font-medium text-purple-700">
-                                      {cartItems[item.itemId]}
-                                    </span>
-                                  )}
-                                  <motion.button
-                                    whileTap={{ scale: 0.9 }}
-                                    className={`w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-purple-600 ${
-                                      cartItems[item.itemId] >= item.quantity
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : ""
-                                    }`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (
-                                        cartItems[item.itemId] < item.quantity
-                                      ) {
-                                        handleQuantityChange(item, true);
-                                      }
-                                    }}
-                                    disabled={
-                                      cartItems[item.itemId] >= item.quantity ||
-                                      loadingItems.items[item.itemId]
-                                    }
-                                  >
-                                    +
-                                  </motion.button>
-                                </div>
-                              ) : (
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className="w-full py-2 mt-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg transition-all duration-300 hover:shadow-md"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAddToCart(item);
-                                  }}
-                                  disabled={loadingItems.items[item.itemId]}
-                                >
-                                  {loadingItems.items[item.itemId] ? (
-                                    <Loader2 className="mr-2 animate-spin inline-block" />
-                                  ) : (
-                                    "Add to Cart"
-                                  )}
-                                </motion.button>
-                              )
-                            ) : (
-                              <button
-                                className="w-full py-2 mt-2 bg-gray-200 text-gray-600 rounded-lg cursor-not-allowed"
-                                disabled
+                            {/* Agent Info */}
+                            <div style={{ textAlign: "left" }}>
+                              <Title
+                                level={5}
+                                ellipsis
+                                style={{
+                                  marginBottom: 6,
+                                  color: "#333",
+                                  fontWeight: 600,
+                                }}
                               >
-                                Out of Stock
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-10">
-                      <p className="text-gray-500 text-lg">No results found.</p>
-                      <button
-                        onClick={handleBack}
-                        className="mt-4 text-purple-600 hover:text-purple-800 underline"
-                      >
-                        Go back to search
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
+                                {agent.name}
+                              </Title>
+
+                              <Paragraph
+                                type="secondary"
+                                ellipsis={{ rows: 3 }}
+                                style={{ fontSize: 13, color: "#555" }}
+                              >
+                                {agent.description ||
+                                  "No description available"}
+                              </Paragraph>
+                            </div>
+                          </Card>
+                        </Badge.Ribbon>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              </div>
+            )}
+          </>
+        )}
       </div>
       <Footer />
     </div>

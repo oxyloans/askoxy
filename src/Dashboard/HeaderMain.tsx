@@ -1,3 +1,4 @@
+// HeaderMain.tsx
 import React, { useEffect, useState, useContext } from "react";
 import { ShoppingCart, UserCircle, X } from "lucide-react";
 import { FaBars, FaSearch, FaTimes } from "react-icons/fa";
@@ -6,20 +7,17 @@ import ValidationPopup from "../kart/ValidationPopup";
 import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 import { CartContext } from "../until/CartContext";
 import axios from "axios";
-
-import BASE_URL from "../Config";
-
 import SearchBar from "../kart/SearchBar";
-
-interface HeaderProps {
-  cartCount: number;
-  IsMobile5: React.Dispatch<React.SetStateAction<boolean>>;
-}
+import BASE_URL from "../Config";
 
 interface SearchResult {
   id: string;
   productName: string;
-  // Add other fields as per your API response
+}
+
+interface HeaderProps {
+  cartCount: number;
+  IsMobile5: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -43,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({
   const [whatsappVerified, setWhatsappVerified] = useState(false);
   const [mobileVerified, setMobileVerified] = useState(false);
   const [isLoginWithWhatsapp, setIsLoginWithWhatsapp] = useState(false);
-  const [firstName, setFirstName] = useState(""); // Only required field
+  const [firstName, setFirstName] = useState("");
 
   const toggleSidebar = () => {
     IsMobile5((prev: boolean) => !prev);
@@ -67,7 +65,6 @@ const Header: React.FC<HeaderProps> = ({
 
   const { count, setCount } = context;
 
-  // Fetch cart items when component mounts
   useEffect(() => {
     if (token && customerId) {
       fetchCartData();
@@ -89,33 +86,49 @@ const Header: React.FC<HeaderProps> = ({
     return () => clearTimeout(timeout);
   }, [currentSearchIndex]);
 
-  // Debounced search API call
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchValue.trim().length >= 2) {
+      if (searchValue.trim().length >= 3) {
         searchProducts(searchValue);
       } else {
         setSearchResults([]);
       }
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchValue]);
 
   const searchProducts = async (query: string) => {
-    if (!query.trim()) return;
+    if (!query.trim() || query.trim().length < 3) {
+      setSearchResults([]);
+      return;
+    }
 
     setIsSearching(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/product/search?searchText=${encodeURIComponent(
+        `${BASE_URL}/product-service/dynamicSearch?q=${encodeURIComponent(
           query
         )}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setSearchResults(response.data || []);
+      const flattenedProducts = (response.data.items || []).flatMap(
+        (category: any) =>
+          category.itemsResponseDtoList
+            .filter(
+              (product: any) =>
+                product.itemPrice > 0 &&
+                product.itemMrp > 0 &&
+                product.quantity > 0
+            )
+            .map((product: any) => ({
+              id: product.itemId,
+              productName: product.itemName,
+            }))
+      );
+      setSearchResults(flattenedProducts.slice(0, 5));
     } catch (error) {
       console.error("Error searching products:", error);
       setSearchResults([]);
@@ -155,17 +168,14 @@ const Header: React.FC<HeaderProps> = ({
       if (response.status === 200) {
         const profileData = response.data;
 
-        // Update verification statuses
         setWhatsappVerified(profileData.whatsappVerified);
         setMobileVerified(profileData.mobileVerified);
         if (profileData.whatsappVerified) {
           setIsLoginWithWhatsapp(true);
         }
 
-        // Update only required fields
         setFirstName(profileData.firstName || "");
 
-        // Check profile completion
         return !!(profileData.firstName && profileData.firstName.trim() !== "");
       }
     } catch (error) {
@@ -196,34 +206,41 @@ const Header: React.FC<HeaderProps> = ({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (searchValue.trim()) {
-      navigate("/main", { state: { searchQuery: searchValue } });
+    const trimmedQuery = searchValue.trim();
+    if (trimmedQuery && trimmedQuery.length >= 3) {
+      navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
       setIsSearchVisible(false);
       setSearchValue("");
+      setSearchResults([]);
+    } else {
+      navigate("/main/dashboard/home");
+      setIsSearchVisible(false);
+      setSearchValue("");
+      setSearchResults([]);
     }
   };
 
   const handleSearchItemClick = (item: SearchResult) => {
-    navigate(`/main/product/${item.id}`, {
+    navigate(`/main/itemsdisplay/${item.id}`, {
       state: { productName: item.productName },
     });
     setIsSearchVisible(false);
     setSearchValue("");
     setIsFocused(false);
+    setSearchResults([]);
   };
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible);
     if (!isSearchVisible) {
-      // Reset search state when opening search overlay
       setSearchValue("");
       setSearchResults([]);
-
-      // Focus on the search input after the overlay is shown
       setTimeout(() => {
-        const searchInput = document.querySelector(".mobile-search-input");
+        const searchInput = document.querySelector(
+          ".mobile-search-input"
+        ) as HTMLInputElement;
         if (searchInput) {
-          (searchInput as HTMLInputElement).focus();
+          searchInput.focus();
         }
       }, 100);
     }
@@ -233,140 +250,98 @@ const Header: React.FC<HeaderProps> = ({
     setIsSearchVisible(false);
     setSearchValue("");
     setSearchResults([]);
+    navigate("/main/dashboard/home");
   };
 
-  // Handle body scroll when search overlay is active
   useEffect(() => {
     if (isSearchVisible) {
-      // Prevent body scrolling when search overlay is shown
       document.body.style.overflow = "hidden";
     } else {
-      // Re-enable body scrolling when search overlay is hidden
       document.body.style.overflow = "auto";
     }
 
     return () => {
-      // Make sure to clean up
       document.body.style.overflow = "auto";
     };
   }, [isSearchVisible]);
 
   const renderSearchResults = () => {
-    // Show predefined suggestions if no search or results
     if (
-      searchValue.length < 2 ||
+      searchValue.length < 3 ||
       (searchResults.length === 0 && !isSearching)
     ) {
       return (
-        <div className="bg-white py-2 px-4">
-          <p className="text-xs text-gray-500 mb-2">Suggested searches:</p>
+        <div className="bg-white py-3 px-4">
+          <p className="text-xs text-gray-500 mb-3 font-medium">
+            Suggested searches:
+          </p>
           {searchTexts.map((text, index) => (
             <button
               type="button"
               key={index}
-              className="w-full py-2 text-left flex items-center space-x-2 transition-colors duration-200 hover:text-purple-600 border-b border-gray-100"
+              className="w-full py-3 text-left flex items-center space-x-3 transition-colors duration-200 hover:bg-purple-50 rounded-lg px-2 mb-1"
               onClick={() => {
                 setSearchValue(text);
                 setIsFocused(false);
-                navigate("/main", { state: { searchQuery: text } });
+                if (text.length >= 3) {
+                  navigate("/main/search-main", {
+                    state: { searchQuery: text },
+                  });
+                }
                 setIsSearchVisible(false);
+                setSearchResults([]);
               }}
             >
-              <FaSearch className="text-gray-400 text-xs" />
-              <span className="text-sm ml-2">{text}</span>
+              <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
+              <span className="text-sm text-gray-700">{text}</span>
             </button>
           ))}
         </div>
       );
     }
 
-    // Loading state
     if (isSearching) {
       return (
-        <div className="bg-white py-4 px-4">
+        <div className="bg-white py-6 px-4">
           <div className="flex justify-center items-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
-            <span className="ml-2 text-sm text-gray-500">Searching...</span>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+            <span className="ml-3 text-sm text-gray-500">Searching...</span>
           </div>
         </div>
       );
     }
 
-    // Show API results
     return (
-      <div className="bg-#5c3391 py-2 px-4">
+      <div className="bg-white py-3 px-4">
         {searchResults.length > 0 ? (
           <>
-            <p className="text-xs text-gray-500 mb-2">Search results:</p>
+            <p className="text-xs text-gray-500 mb-3 font-medium">
+              Search results:
+            </p>
             {searchResults.map((item, index) => (
               <button
                 type="button"
                 key={index}
-                className="w-full py-2 text-left flex items-center space-x-2 transition-colors duration-200 hover:text-purple-600 border-b border-gray-100"
+                className="w-full py-3 text-left flex items-center space-x-3 transition-colors duration-200 hover:bg-purple-50 rounded-lg px-2 mb-1"
                 onClick={() => handleSearchItemClick(item)}
               >
-                <FaSearch className="text-gray-400 text-xs" />
-                <span className="text-sm ml-2">{item.productName}</span>
+                <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
+                <span className="text-sm text-gray-700 line-clamp-2">
+                  {item.productName}
+                </span>
               </button>
             ))}
           </>
         ) : (
-          <p className="text-sm text-gray-500">
-            No results found for "{searchValue}"
-          </p>
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-500">
+              No results found for "{searchValue}"
+            </p>
+          </div>
         )}
       </div>
     );
   };
-
-  const renderDesktopSearchBar = () => (
-    <form
-      id="search-container"
-      onSubmit={handleSearchSubmit}
-      className="relative w-full group"
-    >
-      <input
-        type="text"
-        value={searchValue}
-        onChange={handleSearch}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-        className="w-full pl-4 pr-12 py-2 border-2 border-gray-200 rounded-full 
-          text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500
-          outline-none transition-all duration-300 
-          hover:border-purple-400 hover:shadow-md 
-          group-focus-within:border-purple-500"
-        placeholder={searchPlaceholder}
-        aria-label="Search"
-      />
-      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center">
-        {searchValue && (
-          <button
-            type="button"
-            onClick={() => setSearchValue("")}
-            className="p-1 text-gray-400 hover:text-red-500 hover:scale-110 transition-all duration-200"
-            aria-label="Clear search"
-          >
-            <FaTimes className="text-base" />
-          </button>
-        )}
-        <button
-          type="submit"
-          className="ml-2 text-gray-400 hover:text-purple-500 hover:scale-110 transition-all duration-200"
-          aria-label="Submit search"
-        >
-          <FaSearch className="text-base" />
-        </button>
-      </div>
-
-      {/* Updated Search Results Dropdown */}
-      {isFocused && (
-        <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {renderSearchResults()}
-        </div>
-      )}
-    </form>
-  );
 
   return (
     <>
@@ -377,7 +352,6 @@ const Header: React.FC<HeaderProps> = ({
         }}
       >
         <div className="max-w-8xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Left: Logo & Menu */}
           <div className="flex items-center ml-[-20px]">
             <button
               onClick={toggleSidebar}
@@ -395,14 +369,11 @@ const Header: React.FC<HeaderProps> = ({
             />
           </div>
 
-          {/* Middle: Desktop Search */}
           <div className="hidden sm:flex flex-grow max-w-xl mx-6">
             <SearchBar />
           </div>
 
-          {/* Right: Profile, Search, Cart */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Mobile Search Icon */}
             <button
               onClick={toggleSearch}
               className="sm:hidden p-2 text-white hover:text-gray-200 transition"
@@ -411,7 +382,6 @@ const Header: React.FC<HeaderProps> = ({
               <FaSearch className="w-5 h-5" />
             </button>
 
-            {/* Profile */}
             <button
               onClick={() => handleNavigation("/main/profile")}
               onMouseDown={() => setActiveButton("profile")}
@@ -419,7 +389,7 @@ const Header: React.FC<HeaderProps> = ({
               onMouseLeave={() => setActiveButton(null)}
               className={`p-2 rounded-full transition flex items-center ${
                 location.pathname === "/main/profile"
-                  ? "bg-green-100 text-green-700"
+                  ? "bg-purple-100 text-purple-700"
                   : "text-white hover:bg-white/10"
               }`}
               aria-label="Profile"
@@ -428,9 +398,9 @@ const Header: React.FC<HeaderProps> = ({
                 size={20}
                 className={`transition ${
                   location.pathname === "/main/profile"
-                    ? "text-green-600"
+                    ? "text-purple-600"
                     : activeButton === "profile"
-                    ? "text-green-500"
+                    ? "text-purple-500"
                     : "text-white"
                 }`}
               />
@@ -439,7 +409,6 @@ const Header: React.FC<HeaderProps> = ({
               </span>
             </button>
 
-            {/* Cart */}
             <button
               onClick={handleCartClick}
               onMouseDown={() => setActiveButton("cart")}
@@ -464,30 +433,8 @@ const Header: React.FC<HeaderProps> = ({
               />
               <span className="hidden sm:inline text-sm">Cart</span>
 
-              {/* Badge */}
               {count > 0 && (
-                <span
-                  className="
-        absolute 
-        top-0 
-        right-0 
-        translate-x-1/2 
-        -translate-y-1/2
-        bg-red-500 
-        text-white 
-        text-[10px] 
-        sm:text-xs 
-        rounded-full 
-        w-5 
-        h-5 
-        sm:w-6 
-        sm:h-6 
-        flex 
-        items-center 
-        justify-center
-        pointer-events-none
-      "
-                >
+                <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 bg-purple-500 text-white text-[10px] sm:text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center pointer-events-none">
                   {count > 99 ? "99+" : count}
                 </span>
               )}
@@ -495,45 +442,48 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </header>
+
+      {/* Mobile Search Overlay - Fixed positioning and z-index */}
       {isSearchVisible && (
-        <div className="fixed inset-0 bg-gradient-to-b from-purple-600 to-purple-800 z-50 flex flex-col sm:hidden animate-fadeIn">
-          {/* Search bar header */}
-          <div className="border-b border-gray-200 px-4 py-3 flex items-center bg-white shadow-sm">
+        <div className="fixed inset-0 z-[1100] flex flex-col sm:hidden bg-white">
+          {/* Search Header */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm z-10">
             <form
-              className="flex-1 flex items-center relative rounded-full bg-gray-100 px-4 py-2"
+              className="flex-1 flex items-center relative rounded-full bg-gray-100 px-4 py-2.5"
               onSubmit={handleSearchSubmit}
             >
+              <FaSearch className="text-gray-400 text-sm flex-shrink-0" />
               <input
                 type="text"
                 value={searchValue}
                 onChange={handleSearch}
-                className="mobile-search-input flex-1 bg-transparent border-none outline-none text-gray-800 text-sm"
+                className="mobile-search-input flex-1 bg-transparent border-none outline-none text-gray-800 text-sm ml-2 placeholder:text-gray-400"
                 placeholder="Search for 'Kolam Rice'"
                 autoFocus
               />
               {searchValue && (
                 <button
                   type="button"
-                  onClick={() => setSearchValue("")}
-                  className="ml-1 text-gray-400"
+                  onClick={() => {
+                    setSearchValue("");
+                    setSearchResults([]);
+                  }}
+                  className="ml-2 text-gray-400 hover:text-red-500 flex-shrink-0"
                 >
                   <FaTimes size={16} />
                 </button>
               )}
-              <button type="submit" className="ml-2 text-gray-500">
-                <FaSearch size={16} />
-              </button>
             </form>
             <button
               onClick={closeSearch}
-              className="ml-3 p-1 text-white hover:text-gray-100"
+              className="p-2 text-gray-600 hover:text-gray-800 flex-shrink-0"
               aria-label="Close search"
             >
-              <X size={20} />
+              <X size={22} />
             </button>
           </div>
 
-          {/* Search results */}
+          {/* Search Results - Scrollable */}
           <div className="flex-1 overflow-y-auto bg-white">
             {renderSearchResults()}
           </div>

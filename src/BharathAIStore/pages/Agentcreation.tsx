@@ -19,6 +19,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../Config";
+import axios from "axios";
 
 /* =========================================================
  * Theme (WHITE + subtle 3D) & Limits
@@ -37,7 +38,10 @@ const GRADIENTS = [
 
 type ViewType = "Public" | "Private";
 
-type AddFileType = "STUDENT" | "EMPLOYEE" | "BUSINESS" | "OTHER";
+// Role string is dynamic (e.g., "WorkingProfessional") — no enum
+type AddFileType = string;
+
+type ProfileErrors = { name?: string; email?: string };
 
 interface Option {
   label: string;
@@ -109,9 +113,6 @@ const parseStartersFromText = (raw: string) => {
   return uniq.slice(0, 4);
 };
 
-/* =========================================================
- * Debounce hook (prevents multi-calls while typing "Other")
- * ======================================================= */
 function useDebounced<T>(value: T, delay = 600): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -121,9 +122,6 @@ function useDebounced<T>(value: T, delay = 600): T {
   return debounced;
 }
 
-/* =========================================================
- * CompactSelect — fixed interaction + 3D pop + anti-overlap
- * ======================================================= */
 const CompactSelect: React.FC<{
   value: string;
   onChange: (value: string) => void;
@@ -271,9 +269,6 @@ const CompactSelect: React.FC<{
   );
 };
 
-/* =========================================================
- * Options
- * ======================================================= */
 const ROLE_OPTS: Option[] = [
   { label: "Student", value: "Student", icon: <UserOutlined /> },
   { label: "Fresher", value: "Fresher", icon: <UserOutlined /> },
@@ -375,9 +370,6 @@ const mergedSentence = (
   return [base, tail && `— ${tail}.`].filter(Boolean).join(" ");
 };
 
-/* =========================================================
- * Block UI helpers (white theme + gradient headers)
- * ======================================================= */
 const card3D: React.CSSProperties = {
   background: "#FFFFFF",
   border: `1px solid ${BORDER}`,
@@ -412,9 +404,6 @@ const headingText = (i = 0): React.CSSProperties => ({
 
 const bodyPad: React.CSSProperties = { padding: 14 };
 
-/* =========================================================
- * Main Component
- * ======================================================= */
 const Agentcreation: React.FC = () => {
   const navigate = useNavigate();
 
@@ -468,10 +457,78 @@ const Agentcreation: React.FC = () => {
   const [startersLoading, setStartersLoading] = useState(false);
 
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadRole, setUploadRole] = useState<AddFileType | "">("");
+  const [uploadRole, setUploadRole] = useState<string>("");
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const uploadResolveRef = useRef<null | ((ok: boolean) => void)>(null);
-  const awaitingOnceRef = useRef(false);
+
+  // === Auto Blog (separate flow) ===
+  const BLOG_NAME_MAX = 80;
+  const BLOG_DESC_MAX = 350;
+  const BLOG_CAPTION_MAX = 50;
+
+  const [blogName, setBlogName] = useState("");
+  const [blogDesc, setBlogDesc] = useState("");
+  const [blogCaption, setBlogCaption] = useState("");
+
+  const [blogImageUrl, setBlogImageUrl] = useState<string | null>(null);
+  const [blogBusy, setBlogBusy] = useState(false);
+
+  // === Auto Blog visibility + preview modal ===
+  const [autoBlogVisible, setAutoBlogVisible] = useState<"Yes" | "No">("No");
+  const [blogPreviewOpen, setBlogPreviewOpen] = useState(false);
+
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isMandatoryGate, setIsMandatoryGate] = useState(false);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState(""); // optional (can hide UI if not needed)
+  const [email, setEmail] = useState("");
+
+  const [initialFirstName, setInitialFirstName] = useState("");
+  const [initialLastName, setInitialLastName] = useState("");
+  const [initialEmail, setInitialEmail] = useState("");
+
+  const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
+
+  // You already have these in your file in some form; keep one version only.
+  const getAuthHeaders = () =>
+    (getAuthHeader() as Record<string, string>) || {};
+  const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+  // small safe-pick across variant keys
+  function pick<T extends object>(obj: any, ...keys: string[]): string {
+    if (!obj || typeof obj !== "object") return "";
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return "";
+  }
+
+  // Get this from your app scope (where you read it). Example:
+  const customerId =
+    (typeof window !== "undefined" &&
+      (localStorage.getItem("customerId") ||
+        localStorage.getItem("userId") ||
+        sessionStorage.getItem("customerId") ||
+        sessionStorage.getItem("userId"))) ||
+    "";
+
+  // Derived: hide card until Agent Name & Description are ready
+  const showAutoBlogCard =
+    (agentName || "").trim().length >= 3 &&
+    (description || "").trim().length >= MIN_DESC;
+
+  const userIdLS =
+    (typeof window !== "undefined" && localStorage.getItem("userId")) || "";
+  const profileNameLS =
+    (typeof window !== "undefined" &&
+      (localStorage.getItem("profileName") ||
+        localStorage.getItem("name") ||
+        localStorage.getItem("username"))) ||
+    "User";
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -482,17 +539,300 @@ const Agentcreation: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(
     typeof window !== "undefined" ? window.innerWidth < 768 : true
   );
+
+  // Who added this blog? Prefer profile First + Last, then stored profileName, then "User"
+  const campaignTypeAddByName = React.useMemo(() => {
+    const fn = (firstName || "").trim();
+    const ln = (lastName || "").trim();
+    const full = [fn, ln].filter(Boolean).join(" ").trim();
+    return full || profileNameLS || "User";
+  }, [firstName, lastName, profileNameLS]);
+
+  const postAgentBlogbyToggleOn = useCallback(
+    async (opts: {
+      agentName: string;
+      creatorName: string;
+      description: string;
+      userId: string;
+      profileName?: string;
+      campaignTypeOverride?: string;
+      socialMediaCaption?: string;
+      images?: string[];
+    }) => {
+      const auth = getAuthHeader();
+      if (!(auth as any)?.Authorization) {
+        message.error("You’re not signed in. Please log in and try again.");
+        return;
+      }
+
+      const disclaimerText = `
+
+### ✅ **Blog Disclaimer**
+*This blog is AI-assisted and based on public data. We aim to inform, not infringe. Contact us for edits or collaborations: [support@askoxy.ai]`;
+
+      const finalCampaignDescription =
+        (opts.description || "") + disclaimerText;
+      const socialMediaCaption = (
+        opts.socialMediaCaption || "#ASKOXY.AI #BharatAIStore #CreateAIAgent"
+      ).trim();
+
+      const campaignType = (
+        opts.campaignTypeOverride ||
+        opts.agentName ||
+        "Blog"
+      ).trim();
+
+      const imagesArr = (opts.images || []).map((u) => ({
+        imageUrl: u,
+        status: true,
+      }));
+
+      const requestPayload = {
+        askOxyCampaignDto: [
+          {
+            campaignDescription: finalCampaignDescription,
+            campaignType,
+            socialMediaCaption,
+            campaignTypeAddBy: campaignTypeAddByName, // 👈 use First + Last
+            images: imagesArr,
+            campainInputType: "BLOG",
+          },
+        ],
+      };
+
+      await axios.patch(
+        `${BASE_URL}/marketing-service/campgin/addCampaignTypes`,
+        requestPayload,
+        {
+          headers: {
+            accept: "*/*",
+            "Content-Type": "application/json",
+            ...(auth as any),
+          },
+        }
+      );
+
+      message.success(
+        "Your blog was added successfully. Thank you for sharing your thoughts!"
+      );
+    },
+    [campaignTypeAddByName] // 👈 add dependency
+  );
+
+  // === BLOG IMAGE: generate image for blog preview ===
+  const generateAgentImage = useCallback(
+    async (params: {
+      agentName: string;
+      description: string;
+      userId: string;
+    }): Promise<string | null> => {
+      const auth = getAuthHeader();
+      if (!(auth as any)?.Authorization) {
+        message.error("You’re not signed in. Please log in and try again.");
+        return null;
+      }
+      try {
+        const res = await fetch(
+          `${BASE_URL}/ai-service/agent/generateProfilePic`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", ...(auth as any) },
+            body: JSON.stringify({
+              agentName: params.agentName || "AI Agent",
+              description: params.description || "",
+              userId: params.userId,
+            }),
+          }
+        );
+
+        const txt = await res.text().catch(() => "");
+        if (!res.ok) {
+          let msg = `Generate failed (${res.status})`;
+          if (txt) msg += `: ${txt}`;
+          throw new Error(msg);
+        }
+        const json = txt ? JSON.parse(txt) : {};
+        const url: string | null = json?.imageUrl || null;
+        if (!url) throw new Error("No imageUrl in response.");
+        return url as string;
+      } catch (e: any) {
+        message.error(e?.message || "Failed to generate profile image.");
+        return null;
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!showAutoBlogCard || autoBlogVisible !== "Yes") return;
+
+    const safeName = (agentName || "My AI Agent").trim();
+    const baseDesc = (
+      description ||
+      "This AI Agent helps you get work done faster with guidance, tools, and automation."
+    ).trim();
+
+    setBlogName(`${safeName}`);
+    setBlogDesc(baseDesc);
+    setBlogCaption("#ASKOXY.AI #BharatAIStore #CreateAIAgent");
+
+    // optional image generation for preview
+    (async () => {
+      setBlogBusy(true);
+      try {
+        const img = await generateAgentImage({
+          agentName: safeName,
+          description: baseDesc,
+          userId: userIdLS,
+        });
+        if (img) setBlogImageUrl(img);
+      } finally {
+        setBlogBusy(false);
+      }
+    })();
+  }, [
+    showAutoBlogCard,
+    autoBlogVisible,
+    agentName,
+    description,
+    userIdLS,
+    generateAgentImage,
+  ]);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!customerId) {
+        // No ID yet → force the mandatory gate so the user enters First Name + Email
+        setIsMandatoryGate(true);
+        setProfileModalOpen(true);
+        setConfirmOpen(false);
+        return;
+      }
+
+      try {
+        setProfileLoading(true);
+
+        // ✅ Fetch existing profile
+        const response = await axios.get(
+          `${BASE_URL}/user-service/customerProfileDetails`,
+          {
+            params: { customerId },
+            headers: { ...getAuthHeaders() },
+          }
+        );
+
+        const data = response?.data || {};
+
+        const profileData = {
+          userFirstName: pick(data, "firstName", "userFirstName"),
+          userLastName: pick(data, "lastName", "userLastName"),
+          customerEmail: pick(data, "email", "customerEmail"),
+          alterMobileNumber: pick(data, "alterMobileNumber"),
+          whatsappNumber: pick(data, "whatsappNumber"),
+          mobileNumber: pick(data, "mobileNumber"),
+          customerId: customerId || "",
+        };
+
+        // Fill UI state
+        setFirstName(profileData.userFirstName);
+        setLastName(profileData.userLastName);
+        setEmail(profileData.customerEmail);
+
+        setInitialFirstName(profileData.userFirstName);
+        setInitialLastName(profileData.userLastName);
+        setInitialEmail(profileData.customerEmail);
+
+        // Required: firstName + email
+        const missing =
+          !profileData.userFirstName || !profileData.customerEmail;
+
+        setIsMandatoryGate(missing);
+        setProfileModalOpen(missing); // open edit if missing
+        setConfirmOpen(!missing); // else confirm dialog
+      } catch (e: any) {
+        // If fetch fails, allow user to continue but let them edit
+        setIsMandatoryGate(true);
+        setProfileModalOpen(true);
+        setConfirmOpen(false);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerId]);
+
+  const isDirty =
+    firstName.trim() !== initialFirstName.trim() ||
+    lastName.trim() !== initialLastName.trim() ||
+    email.trim() !== initialEmail.trim();
+
+  const handleSaveOrUpdateProfile = async () => {
+    // validations
+    const nextErrors: ProfileErrors = {};
+    if (!firstName.trim()) nextErrors.name = "First name is required";
+    if (!email.trim()) nextErrors.email = "Email is required";
+    else if (!emailOk(email)) nextErrors.email = "Enter a valid email";
+    setProfileErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    try {
+      setProfileLoading(true);
+
+      const payload = {
+        userFirstName: firstName.trim(),
+        userLastName: (lastName || "").trim() || null,
+        customerEmail: email.trim(),
+        customerId,
+      };
+
+      // Only PATCH if mandatory or user changed something
+      if (isMandatoryGate || isDirty) {
+        await axios.patch(`${BASE_URL}/user-service/profileUpdate`, payload, {
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        });
+        message.success(
+          isMandatoryGate ? "Profile saved!" : "Profile updated!"
+        );
+        setInitialFirstName(payload.userFirstName);
+        setInitialLastName(payload.userLastName || "");
+        setInitialEmail(payload.customerEmail);
+      }
+
+      setIsMandatoryGate(false);
+      setProfileModalOpen(false);
+      setConfirmOpen(false);
+    } catch (e: any) {
+      message.error(
+        e?.response?.data?.message ||
+          e?.message ||
+          "Error updating profile. Please try again."
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleCancelProfile = () => {
+    if (isMandatoryGate) {
+      message.warning("Please enter First Name and Email to continue.");
+      return; // 🔒 block closing while mandatory
+    }
+    setProfileModalOpen(false);
+  };
+
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Replace old uploadMandatoryDocOnce
+  // was: addFileType: AddFileType,
   async function uploadMandatoryDocOnceMulti(
     assistanceId: string,
     files: File[],
-    addFileType: AddFileType,
+    addFileType: string, // ← now a plain string
     userId: string,
     auth: HeadersInit
   ) {
@@ -503,12 +843,12 @@ const Agentcreation: React.FC = () => {
       const url = `${BASE_URL}/ai-service/agent/${encodeURIComponent(
         assistanceId
       )}/addAgentFiles?addFileType=${encodeURIComponent(
-        addFileType
+        addFileType || ""
       )}&userId=${encodeURIComponent(userId)}`;
 
       const res = await fetch(url, {
         method: "POST",
-        headers: { ...auth }, // browser sets multipart boundary
+        headers: { ...auth },
         body: form,
       });
       if (!res.ok) {
@@ -525,22 +865,61 @@ const Agentcreation: React.FC = () => {
     assistanceId: string;
     userId: string;
     auth: HeadersInit;
+    roleForUpload?: string; // ← new
   } | null>(null);
+
+  // include roleForUpload
+  function promptUpload(
+    assistanceId: string,
+    userId: string,
+    auth: HeadersInit,
+    roleForUpload?: string
+  ) {
+    return new Promise<boolean>((resolve) => {
+      uploadResolveRef.current = resolve;
+      localStorage.setItem(
+        "awaitingUpload",
+        JSON.stringify({ assistanceId, userId })
+      );
+      setUploadFiles([]);
+      setUploadRole(roleForUpload || ""); // ← seed UI with non-editable role
+      pendingUploadRef.current = { assistanceId, userId, auth, roleForUpload };
+      setUploadOpen(true);
+    });
+  }
+
+  // Re-prompt on refresh should also remember the role if we saved it locally;
+  // if not available, it will just show blank read-only (that’s okay).
+  useEffect(() => {
+    const raw = localStorage.getItem("awaitingUpload");
+    if (!raw) return;
+    try {
+      const { assistanceId, userId } = JSON.parse(raw || "{}");
+      if (assistanceId && userId) {
+        const auth = getAuthHeader();
+        setUploadFiles([]);
+        // we may not have the role offline; still open the modal
+        setUploadRole(
+          (pendingUploadRef.current?.roleForUpload as string) || ""
+        );
+        pendingUploadRef.current = { assistanceId, userId, auth };
+        setUploadOpen(true);
+      }
+    } catch {}
+  }, []);
 
   async function handleUploadConfirm() {
     const ctx = pendingUploadRef.current;
     if (!ctx) return;
 
-    if (!uploadRole) {
-      message.error("Please choose the Role of user.");
-      return;
-    }
+    // no user choice anymore; role is read-only from API/publish flow
+    const finalRole = (uploadRole || "").trim(); // may be "", still allowed
+
     if (!uploadFiles.length) {
       message.error("Please attach at least one file.");
       return;
     }
 
-    // Validate once
     for (const f of uploadFiles) {
       const okType = /\.(pdf|jpe?g|png|docx?)$/i.test(f.name);
       const okSize = f.size <= 5 * 1024 * 1024;
@@ -552,14 +931,12 @@ const Agentcreation: React.FC = () => {
       await uploadMandatoryDocOnceMulti(
         ctx.assistanceId,
         uploadFiles,
-        uploadRole as AddFileType,
+        finalRole, // ← pass string
         ctx.userId,
         ctx.auth
       );
 
       localStorage.removeItem("awaitingUpload");
-
-      // close modal + resolve any awaiting promise
       setUploadOpen(false);
       uploadResolveRef.current?.(true);
       uploadResolveRef.current = null;
@@ -568,7 +945,7 @@ const Agentcreation: React.FC = () => {
         "Congratulations! File(s) uploaded. Your agent is queued for approval."
       );
 
-      // clear page form to avoid flicker of old data
+      // clear form, then navigate
       setAgentName("");
       setDescription("");
       setInstructions("");
@@ -581,7 +958,6 @@ const Agentcreation: React.FC = () => {
       setGoalOther("");
       setPurposeOther("");
 
-      // now navigate
       navigate("/main/bharath-aistore/agents");
     } catch (e: any) {
       message.error(e?.message || "Upload failed.");
@@ -598,24 +974,6 @@ const Agentcreation: React.FC = () => {
       if (list.length) setUploadFiles(list);
     };
     input.click();
-  }
-
-  function promptUpload(
-    assistanceId: string,
-    userId: string,
-    auth: HeadersInit
-  ) {
-    return new Promise<boolean>((resolve) => {
-      uploadResolveRef.current = resolve;
-      localStorage.setItem(
-        "awaitingUpload",
-        JSON.stringify({ assistanceId, userId })
-      );
-      setUploadRole("");
-      setUploadFiles([]);
-      pendingUploadRef.current = { assistanceId, userId, auth };
-      setUploadOpen(true);
-    });
   }
 
   // Re-prompt on refresh using the controlled modal only (no confirm modal)
@@ -945,9 +1303,6 @@ const Agentcreation: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleDeb, goalDeb, purposeDeb]); // use ONLY debounced deps
 
-  /* =========================================================
-   * API — Agent Description (unchanged behavior)
-   * ======================================================= */
   const parseSmart = async (res: Response) => {
     const ct = (res.headers.get("content-type") || "").toLowerCase();
     if (ct.includes("application/json")) {
@@ -1063,9 +1418,6 @@ const Agentcreation: React.FC = () => {
     }
   }, [roleResolved, goalResolved, purposeResolved]);
 
-  /* =========================================================
-   * PREVIEW + PUBLISH
-   * ======================================================= */
   const requestAndOpenEditor = useCallback(async () => {
     const baseErr = `Please enter a Description (${MIN_DESC}–${MAX_DESC} characters) to generate instructions.`;
     if (!description.trim() || description.trim().length < MIN_DESC) {
@@ -1326,16 +1678,12 @@ const Agentcreation: React.FC = () => {
     const body = {
       agentName: (agentName || "").trim(),
       description: previewDescription,
-
-      // If "Other" selected, enum key → "Other"; free text → optional*
       roleUser: roleSelect === "Other" ? "Other" : roleSelect,
       purpose: purposeSelect === "Other" ? "Other" : purposeSelect,
       goals: goalSelect === "Other" ? "Other" : goalSelect,
-
       optionalRole: roleSelect === "Other" ? roleOther.trim() : "",
       optionalPurpose: purposeSelect === "Other" ? purposeOther.trim() : "",
       optionalGoal: goalSelect === "Other" ? goalOther.trim() : "",
-
       instructions: (instructions || "").slice(0, 7000),
       userId,
       view,
@@ -1348,14 +1696,13 @@ const Agentcreation: React.FC = () => {
     setLoading(true);
     try {
       const res = await fetch(`${BASE_URL}/ai-service/agent/newAgentPublish`, {
-        method: "PATCH", // ← you asked to keep PATCH
+        method: "PATCH",
         headers: { "Content-Type": "application/json", ...auth },
         body: JSON.stringify(body),
       });
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
-        // Show clearer 500 info
         throw new Error(
           `Publish failed: ${res.status} ${res.statusText} ${
             txt ? "— " + txt : ""
@@ -1363,11 +1710,20 @@ const Agentcreation: React.FC = () => {
         );
       }
 
-      // Try to parse the response to get assistanceId
       const data = await res.json().catch(() => ({} as any));
       const assistanceId =
         data.assistanceId || data.assistantId || data.id || "";
-      // inside publishNow after successful PATCH + parsing assistanceId
+
+      // 🔹 derive role for upload UI (prefer API response)
+      const apiRoleUser = (data?.roleUser || "").trim();
+      const apiOptionalRole = (data?.optionalRole || "").trim();
+      const roleForUpload =
+        apiOptionalRole ||
+        apiRoleUser ||
+        body.optionalRole ||
+        body.roleUser ||
+        "";
+
       message.success("Congratulations! Your agent is published successfully.");
 
       if (assistanceId) {
@@ -1375,7 +1731,8 @@ const Agentcreation: React.FC = () => {
           "awaitingUpload",
           JSON.stringify({ assistanceId, userId })
         );
-        await promptUpload(assistanceId, userId, auth || {});
+        // pass role string into the prompt
+        await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
       }
 
       setPreviewOpen(false);
@@ -1443,9 +1800,6 @@ const Agentcreation: React.FC = () => {
             </Tag>
           </div>
           <div style={{ marginTop: 8 }}>{previewDescription}</div>
-          <div style={{ marginTop: 10, color: "#64748B", fontSize: 12 }}>
-            (Description must be {MIN_DESC}–{MAX_DESC} characters.)
-          </div>
         </div>
       ),
       okText: "Yes, Publish",
@@ -1537,9 +1891,6 @@ const Agentcreation: React.FC = () => {
     openPreviewAndAutogen();
   }, [canPreview, openPreviewAndAutogen]);
 
-  /* =========================================================
-   * RENDER
-   * ======================================================= */
   const gradientText = (text: string, i = 0) => (
     <span
       style={{
@@ -1643,8 +1994,7 @@ const Agentcreation: React.FC = () => {
                 width: 44,
                 height: 44,
                 borderRadius: 14,
-                background:
-                  "#FFFFFF",
+                background: "#FFFFFF",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1667,7 +2017,7 @@ const Agentcreation: React.FC = () => {
                   lineHeight: 1.3,
                 }}
               >
-                Role-based Agent
+                Role-based AI Agent
               </h2>
               <p
                 style={{
@@ -2174,7 +2524,7 @@ const Agentcreation: React.FC = () => {
                 paddingBottom: 4,
               }}
             >
-              Visibility:
+              Visibility
             </h3>
 
             <div
@@ -2331,9 +2681,6 @@ const Agentcreation: React.FC = () => {
           </button>
         </div>
 
-        {/* =========================
-         * PREVIEW DRAWER
-         * ======================= */}
         <Drawer
           placement={isMobile ? "bottom" : "right"}
           width={isMobile ? undefined : Math.min(560, window.innerWidth * 0.9)}
@@ -3150,183 +3497,221 @@ const Agentcreation: React.FC = () => {
 
         <Modal
           open={uploadOpen}
-          onCancel={() => {
-            message.warning("Upload is required to approve this Agent.");
-          }}
+          title="Upload supporting files"
+          // ⛔ prevent closing by X, mask, or Esc
           closable={false}
           maskClosable={false}
-          destroyOnClose={false}
-          title="Upload required to approve this Agent"
-          footer={null} // ✅ removes Cancel / OK buttons
+          keyboard={false}
+          // keep onCancel defensive (won’t be triggered with closable=false, but safe)
+          onCancel={() => {
+            message.warning("Please complete the upload to continue.");
+            setUploadOpen(true); // re-assert open
+          }}
+          // Only your action button in content — no default footer buttons
+          footer={null}
         >
-          <div
-            style={{
-              display: "grid",
-              gap: 14,
-              // prevent overlap by ensuring children can grow and wrap
-              gridAutoRows: "minmax(min-content, max-content)",
-            }}
-          >
-            {/* Role select row */}
-            <div style={{ display: "grid", gap: 6 }}>
-              <label style={{ fontWeight: 800 }}>Role of user</label>
-              <div style={{ position: "relative", zIndex: 2 }}>
-                <CompactSelect
-                  value={uploadRole}
-                  onChange={(v) => setUploadRole(v as AddFileType)}
-                  options={[
-                    { label: "STUDENT", value: "STUDENT" },
-                    { label: "EMPLOYEE", value: "EMPLOYEE" },
-                    { label: "BUSINESS", value: "BUSINESS" },
-                    { label: "OTHER", value: "OTHER" },
-                  ]}
-                  placeholder="Choose role…"
-                />
+          <div style={{ display: "grid", gap: 12 }}>
+            {/* Read-only role from publish response */}
+            <div>
+              <div style={{ fontSize: 12, color: "#64748B", marginBottom: 6 }}>
+                Role of user
+              </div>
+              <input
+                value={uploadRole || "—"}
+                disabled
+                style={{
+                  width: "100%",
+                  height: 40,
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  border: "1px solid #E7E6F3",
+                  background: "#F8FAFC",
+                  color: "#0F172A",
+                  fontWeight: 600,
+                  cursor: "not-allowed",
+                }}
+              />
+              <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 6 }}>
+                Sourced from publish response (<code>roleUser</code> or{" "}
+                <code>optionalRole</code>).
               </div>
             </div>
 
-            {/* Files row */}
-            <div style={{ display: "grid", gap: 6 }}>
-              <label style={{ fontWeight: 800 }}>Attachments (multiple)</label>
-
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={handleUploadFilesPick}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    border: "1px solid #E7E6F3",
-                    background: "#fff",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    flex: "0 0 auto",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {uploadFiles.length ? "Add / Change" : "Choose Files…"}
-                </button>
-
-                {!!uploadFiles.length && (
-                  <button
-                    type="button"
-                    onClick={() => setUploadFiles([])}
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: 10,
-                      border: "1px solid #FCA5A5",
-                      background: "#fff",
-                      color: "#B91C1C",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      flex: "0 0 auto",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Remove all
-                  </button>
-                )}
+            {/* File picker */}
+            <div>
+              <div style={{ fontSize: 12, color: "#64748B", marginBottom: 6 }}>
+                Attach files (PDF/JPG/PNG/DOC, up to 5MB each)
               </div>
-
+              <button
+                type="button"
+                onClick={handleUploadFilesPick}
+                style={{
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  fontWeight: 800,
+                  color: "#fff",
+                  background:
+                    "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+                }}
+              >
+                Choose files
+              </button>
               {!!uploadFiles.length && (
-                <div
-                  style={{
-                    display: "grid",
-                    gap: 8,
-                    border: "1px solid #E7E6F3",
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                    background: "#fff",
-                    maxHeight: 220,
-                    overflowY: "auto",
-                  }}
-                >
+                <div style={{ marginTop: 8, fontSize: 12, color: "#0F172A" }}>
                   {uploadFiles.map((f) => (
-                    <div
-                      key={f.name}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        border: "1px solid #E7E6F3",
-                        background: "#F8FAFC",
-                        fontSize: 12,
-                        maxWidth: "100%",
-                      }}
-                      title={f.name}
-                    >
-                      <span
-                        style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          maxWidth: 260,
-                          color: "#0F172A",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {f.name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setUploadFiles((prev) =>
-                            prev.filter((x) => x.name !== f.name)
-                          )
-                        }
-                        style={{
-                          border: "none",
-                          background: "transparent",
-                          cursor: "pointer",
-                          fontWeight: 900,
-                        }}
-                        aria-label={`Remove ${f.name}`}
-                        title="Remove"
-                      >
-                        ×
-                      </button>
+                    <div key={f.name} style={{ marginTop: 4 }}>
+                      • {f.name}
                     </div>
                   ))}
                 </div>
               )}
-
-              <div style={{ fontSize: 12, color: "#64748B" }}>
-                Allowed: PDF, JPG, PNG, DOC, DOCX — <b>Max 5 MB each</b>
-              </div>
             </div>
 
-            {/* Footer row (single line, never overlaps) */}
             <div
-              style={{
-                display: "flex",
-                gap: 8,
-                justifyContent: "flex-end",
-                flexWrap: "nowrap",
-                whiteSpace: "nowrap",
-                marginTop: 4,
-              }}
+              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
             >
               <button
                 type="button"
                 onClick={handleUploadConfirm}
                 style={{
-                  padding: "10px 18px",
+                  border: "none",
                   borderRadius: 999,
-                  border: "2px solid transparent",
+                  padding: "10px 18px",
+                  fontWeight: 900,
+                  color: "#fff",
                   background:
-                    "linear-gradient(white, white), linear-gradient(135deg, #6D28D9 0%, #A78BFA 60%, #F59E0B 120%)",
-                  backgroundOrigin: "border-box",
-                  backgroundClip: "padding-box, border-box",
-                  color: "#0F172A",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  boxShadow: "0 0 10px rgba(109,40,217,0.20)",
-                  flex: "0 0 auto",
+                    "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
                 }}
               >
-                Upload
+                Upload & Continue
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+      {/* ===== Profile Edit (Mandatory Gate) ===== */}
+<Modal
+  open={profileModalOpen}
+  onCancel={() => {
+    message.warning("Please complete your profile before continuing.");
+    setProfileModalOpen(true); // keep it open
+  }}
+  footer={null}
+  title="Complete Your Profile"
+  // 🔒 fully locked modal
+  closable={false}
+  maskClosable={false}
+  keyboard={false}
+  destroyOnClose={false}
+>
+
+          <div style={{ display: "grid", gap: 12 }}>
+            {/* First Name - REQUIRED */}
+            <div>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  marginBottom: 6,
+                  color: "#0F172A",
+                }}
+              >
+                First Name <span style={{ color: "#DC2626" }}>*</span>
+              </div>
+              <input
+                value={firstName}
+                onChange={(e) => {
+                  setFirstName(e.target.value);
+                  if (profileErrors.name)
+                    setProfileErrors((p) => ({ ...p, name: undefined }));
+                }}
+                placeholder="Enter your first name"
+                maxLength={80}
+                style={{
+                  width: "100%",
+                  height: 42,
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  border: `1px solid ${
+                    profileErrors.name ? "#DC2626" : BORDER
+                  }`,
+                  background: "#FFF",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  boxShadow: "inset 0 1px 0 rgba(2,8,23,0.04)",
+                }}
+              />
+              {profileErrors.name && (
+                <div style={{ color: "#DC2626", fontSize: 12, marginTop: 6 }}>
+                  {profileErrors.name}
+                </div>
+              )}
+            </div>
+
+            {/* Email - REQUIRED */}
+            <div>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  marginBottom: 6,
+                  color: "#0F172A",
+                }}
+              >
+                Email <span style={{ color: "#DC2626" }}>*</span>
+              </div>
+              <input
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (profileErrors.email)
+                    setProfileErrors((p) => ({ ...p, email: undefined }));
+                }}
+                placeholder="name@example.com"
+                maxLength={120}
+                style={{
+                  width: "100%",
+                  height: 42,
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  border: `1px solid ${
+                    profileErrors.email ? "#DC2626" : BORDER
+                  }`,
+                  background: "#FFF",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  boxShadow: "inset 0 1px 0 rgba(2,8,23,0.04)",
+                }}
+              />
+              {profileErrors.email && (
+                <div style={{ color: "#DC2626", fontSize: 12, marginTop: 6 }}>
+                  {profileErrors.email}
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
+            >
+              <button
+                type="button"
+                onClick={handleSaveOrUpdateProfile}
+                disabled={profileLoading}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: 999,
+                  border: "none",
+                  fontWeight: 900,
+                  color: "#fff",
+                  background:
+                    "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+                  cursor: profileLoading ? "not-allowed" : "pointer",
+                  opacity: profileLoading ? 0.7 : 1,
+                }}
+              >
+                {profileLoading ? "Saving…" : "Save & Continue"}
               </button>
             </div>
           </div>

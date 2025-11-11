@@ -2,7 +2,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
-import { message, Select } from "antd";
+
+import { Button, Modal, Tag, Select, Grid, Popconfirm, message } from "antd";
+import {
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  UploadOutlined,
+  DownloadOutlined,
+  PlayCircleOutlined,
+  HistoryOutlined,
+  FileTextOutlined,
+  PictureOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 
 /** -------- Auth helpers -------- */
 function getAccessToken(): string | null {
@@ -134,6 +147,10 @@ type Assistant = {
   approvedAt: string | null;
   converstionTone: string | null;
   contactDetails: string | null;
+  purpose: string | null;
+  goals: string | null;
+  roleUser: string | null;
+  view: string | null;
   screenStatus?: "STAGE1" | "STAGE2" | "STAGE3" | "STAGE4" | null;
 };
 type Conversation = {
@@ -216,6 +233,9 @@ const AllAgentsPage: React.FC = () => {
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [removingFileId, setRemovingFileId] = useState<string | null>(null);
   const showId = showEdit ?? "";
+  const PURPLE = "#6D28D9";
+  const PURPLE_DARK = "#5B21B6";
+  const LAVENDER_BG = "#F5F3FF";
 
   // 🔎 Selected user detail view for full history
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -327,25 +347,6 @@ const AllAgentsPage: React.FC = () => {
       }
     });
 
-    // Build recentConversations previews
-    const recentConversations = list.map((e: any, i: number) => {
-      const p = String(e?.prompt ?? "");
-      // strip outer [] if present and compress
-      const short = p
-        .replace(/^\s*\[\s*|\s*\]\s*$/g, "")
-        .replace(/\s+/g, " ")
-        .replace(/role=/g, "")
-        .replace(/content=/g, "")
-        .slice(0, 280);
-      return {
-        id: i + 1,
-        userId: e?.userId ?? null,
-        name: e?.name ?? null,
-        createdAt: e?.createdAt ?? null,
-        preview: short,
-      };
-    });
-
     const users = Object.values(byUser).sort((a, b) => b.chats - a.chats);
 
     return {
@@ -455,11 +456,12 @@ const AllAgentsPage: React.FC = () => {
     return { message: text || "OK" };
   }
 
-  /** Generate Profile Pic via PATCH /api/ai-service/agent/generateProfilePic
-   *  - payload: { agentName, description, userId }
-   *  - response: { imageUrl, prompt }  // we won't show the prompt
-   *  - then show a confirm modal asking to use it as profile now
-   */
+  const { xs } = Grid.useBreakpoint();
+  /** AntD Button size & layout become compact on phones, roomy on desktop */
+  const btnSize: "small" | "middle" | "large" = xs ? "middle" : "large";
+  /** On phones, buttons expand to full width; on larger screens they flow inline */
+  const btnBlock = !!xs;
+
   async function generateProfilePicForAssistant(a: Assistant) {
     if (!a) return;
     const uid = resolvedUserId;
@@ -1047,12 +1049,15 @@ const AllAgentsPage: React.FC = () => {
             placeholder="Filter by Status"
           />
         </div>
-        <button
+        <Button
+         style={{ backgroundColor:"#1ab394", color:"white", borderColor:"#1ab394"}}
+          icon={<PlayCircleOutlined />}
+          size={btnSize}
+          block={btnBlock}
           onClick={gotoStore}
-          className="w-full sm:w-auto h-10 rounded-lg px-5 font-semibold bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 shadow-md transition-all"
         >
           Bharath AI Store
-        </button>
+        </Button>
       </div>
 
       {/* Body */}
@@ -1068,12 +1073,13 @@ const AllAgentsPage: React.FC = () => {
         {error && (
           <div className="rounded-xl bg-red-100 border border-red-300 p-4 text-red-700 font-medium mb-6">
             Error: {error}
-            <button
+            <Button
+              danger
+              size={btnSize}
               onClick={() => window.location.reload()}
-              className="ml-4 px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
             >
               Retry
-            </button>
+            </Button>
           </div>
         )}
 
@@ -1088,12 +1094,15 @@ const AllAgentsPage: React.FC = () => {
                 <p className="text-purple-600 mb-6">
                   Get started by creating your first AI assistant
                 </p>
-                <button
+                <Button
+                  type="primary"
+                  icon={<PlayCircleOutlined />}
+                  size={btnSize}
+                  block={btnBlock}
                   onClick={gotoStore}
-                  className="rounded-lg px-6 py-3 font-semibold bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 shadow-md transition-all hover:shadow-lg"
                 >
                   Create Your First Agent
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1167,11 +1176,25 @@ const AllAgentsPage: React.FC = () => {
                                       curr === a.id ? null : a.id
                                     );
                                   }}
-                                  className="absolute -right-1 -bottom-1 h-6 w-6 rounded-full bg-white border border-purple-200 shadow flex items-center justify-center hover:scale-[1.05]"
+                                  className="
+    absolute 
+    right-1 bottom-1 
+    sm:right-1 sm:bottom-1 
+    md:-right-1 md:-bottom-1
+    h-7 w-7 sm:h-6 sm:w-6 md:h-8 md:w-8
+    rounded-full 
+    bg-white border border-purple-200 
+    shadow-md 
+    flex items-center justify-center 
+    hover:scale-105 hover:shadow-lg 
+    active:scale-95 
+    transition-all duration-200 ease-in-out
+  "
                                 >
                                   {isUploadingImg || genLoadingFor === a.id ? (
+                                    // 🔄 Loading spinner
                                     <svg
-                                      className="animate-spin h-4 w-4"
+                                      className="animate-spin h-4 w-4 sm:h-3.5 sm:w-3.5 text-purple-600"
                                       viewBox="0 0 24 24"
                                     >
                                       <circle
@@ -1181,16 +1204,19 @@ const AllAgentsPage: React.FC = () => {
                                         stroke="currentColor"
                                         strokeWidth="4"
                                         fill="none"
+                                        className="opacity-25"
                                       />
                                       <path
                                         d="M4 12a8 8 0 0 1 8-8"
                                         fill="currentColor"
+                                        className="opacity-75"
                                       />
                                     </svg>
                                   ) : (
+                                    // 📷 Camera icon
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
-                                      className="h-3.5 w-3.5"
+                                      className="h-4 w-4 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-purple-700"
                                       viewBox="0 0 24 24"
                                       fill="currentColor"
                                     >
@@ -1269,21 +1295,23 @@ const AllAgentsPage: React.FC = () => {
                       </div>
 
                       {/* Meta */}
-                      <div className="mb-4 text-sm text-purple-800 line-clamp-3 flex-grow">
+                      <div className="mb-4 text-sm text-purple-800 line-clamp-5 flex-grow">
                         {a.description || "No description provided."}
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs text-purple-700 mb-4">
                         <div className="line-clamp-3">
-                          <span className="font-medium">Domain:</span>{" "}
-                          {a.domain}
+                          <span className="font-medium">Role User:</span>{" "}
+                          {a.roleUser}
                         </div>
                         <div>
-                          <span className="font-medium">Subdomain:</span>{" "}
-                          {a.subDomain}
+                          <span className="font-medium">Goals:</span> {a.goals}
                         </div>
                         <div className="line-clamp-3">
-                          <span className="font-medium">Target:</span>{" "}
-                          {a.targetUser}
+                          <span className="font-medium">Purpose:</span>{" "}
+                          {a.purpose}
+                        </div>
+                        <div className="line-clamp-3">
+                          <span className="font-medium">View:</span> {a.view}
                         </div>
                       </div>
 
@@ -1334,19 +1362,17 @@ const AllAgentsPage: React.FC = () => {
                           />
                         </label>
 
-                        <button
+                        <Button
+                          size="small"
                           onClick={() =>
                             a.assistantId
                               ? fetchUploadedFiles(a.assistantId)
                               : message.error("Missing assistantId.")
                           }
-                          className="rounded-md px-3 py-2 text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
-                          disabled={loadingFiles[a.assistantId || ""]}
+                          loading={!!loadingFiles[a.assistantId || ""]}
                         >
-                          {loadingFiles[a.assistantId || ""]
-                            ? "Loading…"
-                            : "View Files"}
-                        </button>
+                          View Files
+                        </Button>
 
                         {/* ✅ Action Buttons: Edit | View | Delete */}
                         <div className="flex gap-2 ml-auto flex-wrap justify-end w-full sm:w-auto">
@@ -1356,110 +1382,127 @@ const AllAgentsPage: React.FC = () => {
                               setHistoryOpenFor(a.id);
                               fetchCreatorAgentDetails(a.id, resolvedUserId);
                             }}
-                            className="rounded-md px-3 py-2 text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
                             title="View public chat history (creator view)"
+                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-md 
+    text-xs font-semibold border border-purple-200 
+    bg-gradient-to-r from-purple-50 to-purple-100 
+    text-purple-700 hover:from-purple-100 hover:to-purple-200 
+    transition-all shadow-sm w-full sm:w-auto"
                           >
-                            User History
+                            {/* 🕓 Icon for better UI clarity */}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-4 h-4 text-purple-700"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            <span>User History</span>
                           </button>
 
                           {/* ✏️ Edit Button */}
-                          <button
-                            onClick={() => openUpdateWizard(a)}
-                            title="Edit"
-                            className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
-               bg-gradient-to-r from-purple-600 to-purple-700 text-white 
-               hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-4 h-4"
+                          <div className="flex flex-wrap gap-2 w-full justify-center sm:justify-end">
+                            {/* ✏️ Edit Button */}
+                            {/* <button
+                              onClick={() => openUpdateWizard(a)}
+                              title="Edit"
+                              className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
+      bg-gradient-to-r from-purple-600 to-purple-700 text-white 
+      hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm 
+      flex-1 sm:flex-none justify-center"
                             >
-                              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.84 1.84 3.75 3.75 1.84-1.84Z" />
-                            </svg>
-                            <span className="hidden sm:inline">Edit</span>
-                          </button>
-
-                          {/* 👁️ View Button */}
-                          <button
-                            onClick={() =>
-                              navigate(
-                                `/bharath-aistore/assistant/${a.assistantId}/${a.id}`
-                              )
-                            }
-                            title="View"
-                            className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
-               bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 
-               text-white hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 
-               transition-all shadow-sm"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path d="M12 5c-5.5 0-9.6 5.1-10 6 .4.9 4.5 6 10 6s9.6-5.1 10-6c-.4-.9-4.5-6-10-6Zm0 9.5A3.5 3.5 0 1 1 12 7a3.5 3.5 0 0 1 0 7.5Z" />
-                            </svg>
-                            <span className="hidden sm:inline">View</span>
-                          </button>
-
-                          {/* 🗑️ Delete Button (with icon always visible) */}
-                          <button
-                            onClick={() => setDeleteConfirmId(a.id)}
-                            title="Delete Agent"
-                            disabled={deleting === a.id}
-                            className="shrink-0 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-semibold
-             bg-red-600 text-white hover:bg-red-700 transition-all shadow-sm
-             disabled:opacity-60 disabled:cursor-not-allowed"
-                          >
-                            {deleting === a.id ? (
-                              // Spinner during delete
-                              <svg
-                                className="animate-spin h-4 w-4"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  d="M4 12a8 8 0 018-8"
-                                  fill="currentColor"
-                                ></path>
-                              </svg>
-                            ) : (
-                              // Trash icon (Lucide style)
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-4 w-4"
+                                fill="currentColor"
+                                className="w-4 h-4"
                               >
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                <path d="M10 11v6" />
-                                <path d="M14 11v6" />
-                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.84 1.84 3.75 3.75 1.84-1.84Z" />
                               </svg>
-                            )}
+                              <span>Edit</span>
+                            </button> */}
 
-                            {/* Label (hidden on mobile, shown from sm and up) */}
-                            <span className="hidden sm:inline">
-                              {deleting === a.id ? "Deleting…" : "Delete"}
-                            </span>
-                          </button>
+                            {/* 👁️ View Button */}
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/bharath-aistore/assistant/${a.assistantId}/${a.id}`
+                                )
+                              }
+                              title="View"
+                              className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
+     bg-[#008cba] text-white
+      transition-all shadow-sm flex-1 sm:flex-none justify-center"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className="w-4 h-4"
+                              >
+                                <path d="M12 5c-5.5 0-9.6 5.1-10 6 .4.9 4.5 6 10 6s9.6-5.1 10-6c-.4-.9-4.5-6-10-6Zm0 9.5A3.5 3.5 0 1 1 12 7a3.5 3.5 0 0 1 0 7.5Z" />
+                              </svg>
+                              <span>View</span>
+                            </button>
+
+                            {/* 🗑️ Delete Button */}
+                            <button
+                              onClick={() => setDeleteConfirmId(a.id)}
+                              title="Delete Agent"
+                              disabled={deleting === a.id}
+                              className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-semibold
+      bg-red-600 text-white hover:bg-red-700 transition-all shadow-sm
+      disabled:opacity-60 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                            >
+                              {deleting === a.id ? (
+                                <svg
+                                  className="animate-spin h-4 w-4"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    d="M4 12a8 8 0 018-8"
+                                    fill="currentColor"
+                                  ></path>
+                                </svg>
+                              ) : (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.8"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="h-4 w-4"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                  <path d="M10 11v6" />
+                                  <path d="M14 11v6" />
+                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                              )}
+                              <span>
+                                {deleting === a.id ? "Deleting…" : "Delete"}
+                              </span>
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -1490,611 +1533,430 @@ const AllAgentsPage: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Files Modal */}
-                      {fileModalOpen && (
-                        <div
-                          className="fixed inset-0 z-50 bg-black/10 flex items-center justify-center px-4 sm:px-6 lg:px-8"
-                          onMouseDown={(e) => {
-                            if (e.target === e.currentTarget)
-                              setFileModalOpen(null);
-                          }}
-                          role="dialog"
-                          aria-modal="true"
-                        >
-                          <div className="w-full max-w-3xl max-h-[82vh] overflow-hidden rounded-2xl bg-white text-gray-900 shadow border border-gray-200">
-                            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-                              <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-white">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-4 w-4"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                  >
-                                    <path d="M14.59 2.59A2 2 0 0 0 13.17 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.83a2 2 0 0 0-.59-1.41l-4.82-4.83Z" />
-                                  </svg>
-                                </div>
-                                <h3 className="text-lg font-semibold">
-                                  Uploaded Files
-                                </h3>
-                              </div>
-                              <button
-                                onClick={() => setFileModalOpen(null)}
-                                className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                                aria-label="Close"
-                              >
-                                ✕
-                              </button>
+                      {/* Files Modal (AntD) */}
+                      <Modal
+                        open={!!fileModalOpen}
+                        onCancel={() => setFileModalOpen(null)}
+                        footer={null}
+                        centered
+                        width={880}
+                        destroyOnClose
+                        maskClosable
+                        bodyStyle={{
+                          maxHeight: "72vh",
+                          overflowY: "auto",
+                          padding: 20,
+                          background: "#fff",
+                        }}
+                        title={
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: 32,
+                                width: 32,
+                                borderRadius: 8,
+                                background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
+                                display: "grid",
+                                placeItems: "center",
+                                color: "#fff",
+                                fontWeight: 700,
+                              }}
+                            >
+                              ⬆
                             </div>
-
-                            <div className="p-5 overflow-y-auto max-h-[calc(82vh-4rem)]">
-                              {loadingFiles[fileModalOpen] ? (
-                                <div className="flex items-center gap-3 text-sm text-gray-600">
-                                  <svg
-                                    className="animate-spin h-5 w-5 text-gray-500"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-20"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                    />
-                                    <path
-                                      className="opacity-80"
-                                      fill="currentColor"
-                                      d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z"
-                                    />
-                                  </svg>
-                                  Loading files…
-                                </div>
-                              ) : (filesMap[fileModalOpen] || []).length ===
-                                0 ? (
-                                <div className="text-sm text-gray-500 italic">
-                                  No files found.
-                                </div>
-                              ) : (
-                                <ul
-                                  className="grid gap-3"
-                                  style={{
-                                    gridTemplateColumns:
-                                      "repeat(auto-fill, minmax(240px, 1fr))",
-                                  }}
-                                >
-                                  {(filesMap[fileModalOpen] || []).map((f) => {
-                                    const key =
-                                      f.fileId ||
-                                      f.id ||
-                                      f.fileName ||
-                                      Math.random().toString(36);
-                                    const displayName =
-                                      f.fileName ||
-                                      f.filename ||
-                                      f.fileId ||
-                                      f.id ||
-                                      "Unnamed file";
-                                    const idToRemove = (
-                                      f.fileId ||
-                                      f.id ||
-                                      ""
-                                    ).toString();
-                                    return (
-                                      <li
-                                        key={key}
-                                        className="group rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors p-3"
-                                      >
-                                        <div className="flex items-start gap-3">
-                                          <div className="mt-0.5 h-9 w-9 flex-shrink-0 rounded-lg bg-gray-200 flex items-center justify-center">
-                                            <svg
-                                              xmlns="http://www.w3.org/2000/svg"
-                                              className="h-5 w-5 text-gray-600"
-                                              viewBox="0 0 24 24"
-                                              fill="currentColor"
-                                            >
-                                              <path d="M14.59 2.59A2 2 0 0 0 13.17 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.83a2 2 0 0 0-.59-1.41l-4.82-4.83Z" />
-                                            </svg>
-                                          </div>
-                                          <div className="min-w-0 flex-1">
-                                            <div
-                                              className="text-sm font-medium text-gray-900 truncate"
-                                              title={displayName}
-                                            >
-                                              {displayName}
-                                            </div>
-                                            <div className="mt-3 flex flex-wrap gap-2">
-                                              {f.url && (
-                                                <a
-                                                  href={f.url}
-                                                  target="_blank"
-                                                  rel="noreferrer"
-                                                  className="text-xs px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-200"
-                                                >
-                                                  Open
-                                                </a>
-                                              )}
-                                              {idToRemove && (
-                                                <button
-                                                  onClick={() =>
-                                                    removeUploadedFile(
-                                                      fileModalOpen!,
-                                                      idToRemove
-                                                    )
-                                                  }
-                                                  className="text-xs px-2 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white"
-                                                  disabled={
-                                                    removingFileId ===
-                                                    idToRemove
-                                                  }
-                                                >
-                                                  {removingFileId === idToRemove
-                                                    ? "Removing…"
-                                                    : "Remove"}
-                                                </button>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
-                              )}
-                            </div>
+                            <span style={{ color: "#1f1f1f", fontWeight: 700 }}>
+                              Uploaded Files
+                            </span>
                           </div>
-                        </div>
-                      )}
+                        }
+                      >
+                        {loadingFiles[fileModalOpen || ""] ? (
+                          <div className="flex items-center gap-3 text-sm text-gray-600">
+                            <svg
+                              className="animate-spin h-5 w-5 text-gray-500"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-20"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              />
+                              <path
+                                className="opacity-80"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z"
+                              />
+                            </svg>
+                            Loading files…
+                          </div>
+                        ) : (filesMap[fileModalOpen || ""] || []).length ===
+                          0 ? (
+                          <div className="text-sm text-gray-500 italic">
+                            No files found.
+                          </div>
+                        ) : (
+                          <ul
+                            className="grid gap-3"
+                            style={{
+                              gridTemplateColumns:
+                                "repeat(auto-fill, minmax(240px, 1fr))",
+                            }}
+                          >
+                            {(filesMap[fileModalOpen || ""] || []).map((f) => {
+                              const key =
+                                f.fileId ||
+                                f.id ||
+                                f.fileName ||
+                                Math.random().toString(36);
+                              const displayName =
+                                f.fileName ||
+                                f.filename ||
+                                f.fileId ||
+                                f.id ||
+                                "Unnamed file";
+                              const idToRemove = (
+                                f.fileId ||
+                                f.id ||
+                                ""
+                              ).toString();
+                              return (
+                                <li
+                                  key={key}
+                                  className="group rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors p-3"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div
+                                      className="mt-0.5 h-9 w-9 flex-shrink-0 rounded-lg"
+                                      style={{
+                                        background: LAVENDER_BG,
+                                        display: "grid",
+                                        placeItems: "center",
+                                      }}
+                                    >
+                                      📄
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <div
+                                        className="text-sm font-medium text-gray-900 truncate"
+                                        title={displayName}
+                                      >
+                                        {displayName}
+                                      </div>
+                                      <div className="mt-3 flex flex-wrap gap-8">
+                                        {f.url && (
+                                          <a
+                                            href={f.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-xs px-0 py-0 underline"
+                                            style={{ color: PURPLE }}
+                                          >
+                                            Open
+                                          </a>
+                                        )}
+                                        {idToRemove && (
+                                          <Button
+                                            danger
+                                            size="small"
+                                            onClick={() =>
+                                              removeUploadedFile(
+                                                fileModalOpen!,
+                                                idToRemove
+                                              )
+                                            }
+                                            loading={
+                                              removingFileId === idToRemove
+                                            }
+                                          >
+                                            {removingFileId === idToRemove
+                                              ? "Removing…"
+                                              : "Remove"}
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </Modal>
 
-                      {/* ✅ Confirm Generated Image Modal */}
-                      {genPreviewUrl && genPreviewAssistantId && (
-                        <div
-                          className="fixed inset-0 z-[70] bg-black/55 backdrop-blur-[2px] flex items-center justify-center px-4"
-                          onMouseDown={(e) => {
-                            if (e.target === e.currentTarget) {
+                      {/* Confirm Generated Image (AntD) */}
+                      <Modal
+                        open={!!(genPreviewUrl && genPreviewAssistantId)}
+                        onCancel={() => {
+                          setGenPreviewUrl(null);
+                          setGenPreviewAssistantId(null);
+                        }}
+                        footer={null}
+                        centered
+                        width={720}
+                        destroyOnClose
+                        maskClosable
+                        bodyStyle={{ padding: 20, background: "#fff" }}
+                        title={
+                          <span style={{ color: "#1f1f1f", fontWeight: 700 }}>
+                            Use this as profile?
+                          </span>
+                        }
+                      >
+                        <div className="w-full rounded-xl overflow-hidden bg-gray-50 border">
+                          {genPreviewUrl && (
+                            <img
+                              src={genPreviewUrl}
+                              alt="Generated profile"
+                              className="w-full h-[280px] object-contain bg-white"
+                            />
+                          )}
+                        </div>
+                        <p className="mt-3 text-xs text-gray-500">
+                          We won’t show any “prompt” details — only the image is
+                          used.
+                        </p>
+
+                        <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                          <Button
+                            type="primary"
+                            size="middle"
+                            style={{ background: PURPLE, borderColor: PURPLE }}
+                            onClick={() => {
+                              const agent = (data?.assistants || []).find(
+                                (x) => x.assistantId === genPreviewAssistantId
+                              );
+                              const uid = resolvedUserId;
                               setGenPreviewUrl(null);
                               setGenPreviewAssistantId(null);
-                            }
-                          }}
-                          role="dialog"
-                          aria-modal="true"
-                        >
-                          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-purple-200 overflow-hidden">
-                            <div className="px-5 py-4 border-b border-purple-100 flex items-center justify-between">
-                              <h3 className="text-lg font-semibold text-purple-900">
-                                Use this as profile?
-                              </h3>
-                              <button
-                                onClick={() => {
-                                  setGenPreviewUrl(null);
-                                  setGenPreviewAssistantId(null);
-                                }}
-                                className="p-2 rounded-full hover:bg-gray-100"
-                                aria-label="Close"
-                              >
-                                ✕
-                              </button>
-                            </div>
+                              if (!agent?.id || !uid)
+                                return message.error(
+                                  "Missing agentId or userId."
+                                );
+                              setPendingSave({
+                                agentId: agent.id,
+                                imageUrl: genPreviewUrl!,
+                                userId: uid,
+                              });
+                            }}
+                          >
+                            Use as Profile
+                          </Button>
 
+                          <Button
+                            onClick={() => {
+                              const asst = (data?.assistants || []).find(
+                                (x) => x.assistantId === genPreviewAssistantId
+                              );
+                              setGenPreviewUrl(null);
+                              setGenPreviewAssistantId(null);
+                              if (asst) generateProfilePicForAssistant(asst);
+                            }}
+                          >
+                            Generate again
+                          </Button>
+
+                          <Button
+                            onClick={() => {
+                              const agent = (data?.assistants || []).find(
+                                (x) => x.assistantId === genPreviewAssistantId
+                              );
+                              const picker = document.getElementById(
+                                `img_${agent?.id || ""}`
+                              ) as HTMLInputElement | null;
+                              if (picker) picker.click();
+                              setGenPreviewUrl(null);
+                              setGenPreviewAssistantId(null);
+                            }}
+                          >
+                            Upload Profile…
+                          </Button>
+                        </div>
+                      </Modal>
+
+                      {/* Image Preview (AntD) */}
+                      <Modal
+                        open={!!previewSrc}
+                        onCancel={() => setPreviewSrc(null)}
+                        footer={null}
+                        centered
+                        width="min(92vw, 980px)"
+                        destroyOnClose
+                        maskClosable
+                        bodyStyle={{ padding: 0, background: "#000" }}
+                      >
+                        {previewSrc && (
+                          <img
+                            src={previewSrc}
+                            alt="Profile preview"
+                            style={{
+                              maxHeight: "86vh",
+                              width: "100%",
+                              objectFit: "contain",
+                            }}
+                          />
+                        )}
+                      </Modal>
+
+                      {/* Users Chat History (AntD) */}
+                      <Modal
+                        open={!!historyOpenFor}
+                        onCancel={() => setHistoryOpenFor(null)}
+                        footer={null}
+                        centered
+                        width="min(96vw, 1120px)"
+                        destroyOnClose
+                        maskClosable
+                        bodyStyle={{
+                          padding: 0,
+                          background: "#fff",
+                          maxHeight: "80vh",
+                          overflow: "hidden",
+                        }}
+                        title={
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: 32,
+                                width: 32,
+                                borderRadius: 8,
+                                background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
+                                display: "grid",
+                                placeItems: "center",
+                                color: "#fff",
+                              }}
+                            >
+                              🗂
+                            </div>
+                            <span style={{ color: "#1f1f1f", fontWeight: 700 }}>
+                              Users Chat History
+                            </span>
+                          </div>
+                        }
+                      >
+                        <div
+                          className="p-0"
+                          style={{ maxHeight: "80vh", overflow: "auto" }}
+                        >
+                          {historyLoading ? (
+                            <div className="flex items-center gap-3 text-sm text-gray-600 px-5 py-4">
+                              <svg
+                                className="animate-spin h-5 w-5 text-gray-500"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-20"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-80"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z"
+                                />
+                              </svg>
+                              Loading user history…
+                            </div>
+                          ) : historyError ? (
+                            <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm m-5">
+                              {historyError}
+                            </div>
+                          ) : !historyData ? (
+                            <div className="text-sm text-gray-500 italic px-5 py-4">
+                              No data.
+                            </div>
+                          ) : (
                             <div className="p-5">
-                              <div className="w-full rounded-xl overflow-hidden bg-gray-50 border">
-                                <img
-                                  src={genPreviewUrl}
-                                  alt="Generated profile"
-                                  className="w-full h-[280px] object-contain bg-white"
+                              {/* ---- Header stats ---- */}
+                              <div className="flex flex-wrap items-center gap-2 mb-4">
+                                <Tag color="purple">
+                                  Agent: {historyData.agentName || "Unknown"}
+                                </Tag>
+                                <Tag color="blue">
+                                  Total Chats: {historyData.totalChats}
+                                </Tag>
+                                <Tag color="geekblue">
+                                  Total Users: {historyData.totalUsers}
+                                </Tag>
+                              </div>
+
+                              {/* ---- User filter ---- */}
+                              <div className="mb-4">
+                                <Select
+                                  allowClear
+                                  value={selectedUserId || undefined}
+                                  onChange={(v) => setSelectedUserId(v || null)}
+                                  placeholder="Filter by user"
+                                  className="w-full sm:w-[320px]"
+                                  options={(historyData.users || []).map(
+                                    (u: any) => ({
+                                      value: u.userId,
+                                      label: `${u.name || u.userId} — ${
+                                        u.chats
+                                      } chats`,
+                                    })
+                                  )}
                                 />
                               </div>
 
-                              <p className="mt-3 text-xs text-gray-500">
-                                We won’t show any “prompt” details — only the
-                                image is used.
-                              </p>
+                              {/* ---- Conversations list (preview) ---- */}
+                              <div className="grid gap-3">
+                                {filterHistoryByUser(
+                                  historyData.rawList || [],
+                                  selectedUserId
+                                ).map((e: any, i: number) => {
+                                  const name =
+                                    resolveUserDisplayName(
+                                      e?.userId,
+                                      historyData.userNameMap
+                                    ) || "Unknown User";
+                                  const createdAt = fmtDate(e?.createdAt);
+                                  const preview = String(e?.prompt || "")
+                                    .replace(/^\s*\[\s*|\s*\]\s*$/g, "")
+                                    .replace(/\s+/g, " ")
+                                    .slice(0, 280);
 
-                              <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                                {/* ✅ USE AS PROFILE: upload, then GET & show the image */}
-                                <button
-                                  onClick={async () => {
-                                    // Close the modal right away
-                                    const agent = (data?.assistants || []).find(
-                                      (x) =>
-                                        x.assistantId === genPreviewAssistantId
-                                    );
-                                    const uid = resolvedUserId;
-
-                                    setGenPreviewUrl(null);
-                                    setGenPreviewAssistantId(null);
-
-                                    if (!agent?.id || !uid) {
-                                      return message.error(
-                                        "Missing agentId or userId."
-                                      );
-                                    }
-
-                                    // Kick off the effect: POST save-image-url, then GET and show
-                                    setPendingSave({
-                                      agentId: agent.id,
-                                      imageUrl: genPreviewUrl!, // from generation response
-                                      userId: uid,
-                                    });
-                                  }}
-                                  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold"
-                                >
-                                  Use as Profile
-                                </button>
-
-                                {/* 🔄 GENERATE AGAIN: close modal, show loader while generating */}
-                                <button
-                                  onClick={() => {
-                                    // Close modal & clear preview
-                                    const asst = (data?.assistants || []).find(
-                                      (x) =>
-                                        x.assistantId === genPreviewAssistantId
-                                    );
-                                    setGenPreviewUrl(null);
-                                    setGenPreviewAssistantId(null);
-                                    if (asst) {
-                                      // generateProfilePicForAssistant will set genLoadingFor (spinner on camera)
-                                      generateProfilePicForAssistant(asst);
-                                    }
-                                  }}
-                                  className="px-4 py-2 rounded-lg bg-white border hover:bg-gray-50 font-semibold text-gray-800"
-                                >
-                                  Generate again
-                                </button>
-
-                                {/* ⬆️ UPLOAD PROFILE: opens your upload image API (file picker) */}
-                                <button
-                                  onClick={() => {
-                                    // Find the agent card DOM input by AGENT id (not assistantId)
-                                    const agent = (data?.assistants || []).find(
-                                      (x) =>
-                                        x.assistantId === genPreviewAssistantId
-                                    );
-                                    const picker = document.getElementById(
-                                      `img_${agent?.id || ""}`
-                                    ) as HTMLInputElement | null;
-                                    if (picker) picker.click();
-
-                                    // Optional: close the modal to avoid confusion
-                                    setGenPreviewUrl(null);
-                                    setGenPreviewAssistantId(null);
-                                  }}
-                                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-semibold text-gray-800"
-                                >
-                                  Upload Profile…
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {previewSrc && (
-                        <div
-                          className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center px-4"
-                          onMouseDown={(e) => {
-                            if (e.target === e.currentTarget)
-                              setPreviewSrc(null);
-                          }}
-                          role="dialog"
-                          aria-modal="true"
-                        >
-                          <div className="relative max-w-[92vw] max-h-[86vh]">
-                            <img
-                              src={previewSrc}
-                              alt="Profile preview"
-                              className="rounded-2xl shadow-2xl max-h-[86vh] max-w-[92vw] object-contain"
-                            />
-
-                            {/* 🔹 Top-right corner buttons */}
-                            <div className="absolute top-3 right-3 flex gap-2">
-                              {/* 🟢 Update Profile Button */}
-                              {/* <label
-          htmlFor="updateProfileImage"
-          className="px-3 py-1.5 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700 shadow cursor-pointer"
-        >
-          Update Profile
-        </label>
-        <input
-          id="updateProfileImage"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.currentTarget.files?.[0];
-            if (f && data?.assistants?.[0]?.assistantId)
-              uploadImage(data.assistants[0].assistantId, f);
-            e.currentTarget.value = "";
-          }}
-        /> */}
-
-                              {/* ❌ Close Icon */}
-                              <button
-                                onClick={() => setPreviewSrc(null)}
-                                className="p-2 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-black shadow"
-                                aria-label="Close preview"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="w-4 h-4"
-                                >
-                                  <line x1="18" y1="6" x2="6" y2="18" />
-                                  <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {historyOpenFor && (
-                        <div
-                          className="fixed inset-0 z-[75] bg-black/40 flex items-center justify-center px-4"
-                          onMouseDown={(e) => {
-                            if (e.target === e.currentTarget)
-                              setHistoryOpenFor(null);
-                          }}
-                          role="dialog"
-                          aria-modal="true"
-                        >
-                          <div className="w-full max-w-6xl rounded-2xl bg-white border border-purple-200 shadow-2xl overflow-hidden">
-                            {/* Header */}
-                            <div className="px-5 py-4 border-b border-purple-100 flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 text-white flex items-center justify-center">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-4 w-4"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                  >
-                                    <path d="M4 4h16v2H4V4Zm0 6h16v2H4v-2Zm0 6h10v2H4v-2Z" />
-                                  </svg>
-                                </div>
-                                <h3 className="text-lg font-semibold text-purple-900">
-                                  Users Chat History
-                                </h3>
-                              </div>
-                              <button
-                                onClick={() => setHistoryOpenFor(null)}
-                                className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                                aria-label="Close"
-                              >
-                                ✕
-                              </button>
-                            </div>
-
-                            {/* Body */}
-                            <div className="p-0 max-h-[80vh]">
-                              {historyLoading ? (
-                                <div className="flex items-center gap-3 text-sm text-gray-600 px-5 py-4">
-                                  <svg
-                                    className="animate-spin h-5 w-5 text-gray-500"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-20"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                    />
-                                    <path
-                                      className="opacity-80"
-                                      fill="currentColor"
-                                      d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z"
-                                    />
-                                  </svg>
-                                  Loading user history…
-                                </div>
-                              ) : historyError ? (
-                                <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm m-5">
-                                  {historyError}
-                                </div>
-                              ) : !historyData ? (
-                                <div className="text-sm text-gray-500 italic px-5 py-4">
-                                  No data.
-                                </div>
-                              ) : (
-                                <div className="grid grid-cols-12 gap-0">
-                                  {/* LEFT: Users list */}
-                                  <aside className="col-span-12 md:col-span-4 border-r border-purple-100 max-h-[80vh] overflow-y-auto">
-                                    <div className="p-4 flex items-center justify-between">
-                                      <div className="flex items-center gap-2">
-                                        {"totalUsers" in historyData && (
-                                          <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                                            Users:{" "}
-                                            <b>{historyData.totalUsers}</b>
-                                          </span>
-                                        )}
-                                        {"totalChats" in historyData && (
-                                          <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                                            Chats:{" "}
-                                            <b>{historyData.totalChats}</b>
-                                          </span>
-                                        )}
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="rounded-xl border border-purple-100 bg-white shadow-sm p-3"
+                                    >
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div className="font-semibold text-purple-900">
+                                          {name}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                          {createdAt}
+                                        </div>
+                                      </div>
+                                      <div className="mt-2 text-sm text-gray-700">
+                                        {preview || "—"}
                                       </div>
                                     </div>
-
-                                    <ul className="px-3 pb-3 space-y-2">
-                                      {(historyData.users || []).map(
-                                        (u: any) => {
-                                          const display =
-                                            resolveUserDisplayName(
-                                              u.userId,
-                                              historyData.userNameMap
-                                            );
-                                          const active =
-                                            selectedUserId === u.userId;
-                                          return (
-                                            <li key={u.userId}>
-                                              <button
-                                                onClick={() =>
-                                                  setSelectedUserId(u.userId)
-                                                }
-                                                className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
-                                                  active
-                                                    ? "bg-purple-600 text-white border-purple-600"
-                                                    : "bg-white text-gray-800 border-gray-200 hover:bg-purple-50"
-                                                }`}
-                                                title={display}
-                                              >
-                                                <div className="text-sm font-medium truncate">
-                                                  {display}
-                                                </div>
-                                                <div
-                                                  className={`text-[11px] mt-0.5 ${
-                                                    active
-                                                      ? "text-purple-100"
-                                                      : "text-gray-500"
-                                                  }`}
-                                                >
-                                                  {u.chats ?? 0} chats
-                                                  {u.lastChatAt
-                                                    ? ` · last: ${fmtDate(
-                                                        u.lastChatAt
-                                                      )}`
-                                                    : ""}
-                                                </div>
-                                              </button>
-                                            </li>
-                                          );
-                                        }
-                                      )}
-                                    </ul>
-                                  </aside>
-
-                                  {/* RIGHT: Full history for selected user (or all) */}
-                                  <section className="col-span-12 md:col-span-8 max-h-[80vh] overflow-y-auto">
-                                    <div className="p-4 border-b border-purple-100">
-                                      <div className="flex items-center justify-between flex-wrap gap-2">
-                                        <div className="min-w-0">
-                                          <div className="text-sm font-semibold text-purple-900 truncate">
-                                            {selectedUserId
-                                              ? resolveUserDisplayName(
-                                                  selectedUserId,
-                                                  historyData.userNameMap
-                                                )
-                                              : "All Users"}
-                                          </div>
-                                        </div>
-                                        {selectedUserId && (
-                                          <button
-                                            onClick={() => {
-                                              navigator.clipboard?.writeText(
-                                                selectedUserId
-                                              );
-                                            }}
-                                            className="text-xs px-2 py-1 rounded-md border bg-white hover:bg-gray-50"
-                                            title="Copy user id"
-                                          >
-                                            Copy User ID
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <div className="p-4 space-y-3">
-                                      {filterHistoryByUser(
-                                        historyData.rawList || [],
-                                        selectedUserId
-                                      ).length === 0 ? (
-                                        <div className="text-sm text-gray-500 italic">
-                                          No chats found for this selection.
-                                        </div>
-                                      ) : (
-                                        filterHistoryByUser(
-                                          historyData.rawList || [],
-                                          selectedUserId
-                                        ).map((e: any, idx: number) => {
-                                          const display =
-                                            resolveUserDisplayName(
-                                              e?.userId,
-                                              historyData.userNameMap
-                                            );
-                                          const msgs = parsePromptToMessages(
-                                            e?.prompt
-                                          ); // ✅ uses your existing parser (full content)
-                                          return (
-                                            <div
-                                              key={`${e?.userId || "u"}_${idx}`}
-                                              className="rounded-xl border border-gray-200 bg-white shadow-sm p-3"
-                                            >
-                                              <div className="flex items-center justify-between gap-3">
-                                                <div className="min-w-0">
-                                                  <div className="text-sm font-medium text-gray-900 truncate">
-                                                    {display}
-                                                  </div>
-                                                  <div className="text-[11px] text-gray-500">
-                                                    {fmtDate(e?.createdAt)}
-                                                  </div>
-                                                </div>
-
-                                                {/* Clickable id as well (requested) */}
-                                                {e?.userId && (
-                                                  <button
-                                                    className="text-[11px] px-2 py-1 rounded-md border hover:bg-gray-50"
-                                                    onClick={() =>
-                                                      setSelectedUserId(
-                                                        e.userId
-                                                      )
-                                                    }
-                                                    title="Filter by this user"
-                                                  >
-                                                    {e.userId}
-                                                  </button>
-                                                )}
-                                              </div>
-
-                                              {/* Full chat (no cutting) */}
-                                              {msgs.length > 0 ? (
-                                                <div className="mt-3 space-y-2">
-                                                  {msgs.map((m, i) => (
-                                                    <div
-                                                      key={i}
-                                                      className={`rounded-md px-3 py-2 text-sm whitespace-pre-wrap ${
-                                                        m.role === "assistant"
-                                                          ? "bg-purple-50 text-purple-900 border border-purple-100"
-                                                          : "bg-gray-50 text-gray-900 border border-gray-200"
-                                                      }`}
-                                                    >
-                                                      <div className="text-[11px] uppercase tracking-wide mb-1 opacity-70">
-                                                        {m.role === "assistant"
-                                                          ? "Assistant"
-                                                          : "User"}
-                                                      </div>
-                                                      {m.content ||
-                                                        "(empty message)"}
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              ) : (
-                                                <div className="mt-3 text-sm text-gray-600 break-words">
-                                                  {/* Fallback: show raw prompt if parser found nothing */}
-                                                  {(e?.prompt || "")
-                                                    .toString()
-                                                    .trim() || "(no content)"}
-                                                </div>
-                                              )}
-                                            </div>
-                                          );
-                                        })
-                                      )}
-                                    </div>
-                                  </section>
-                                </div>
-                              )}
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
-                      )}
+                      </Modal>
 
                       {/* ✅ Delete / Inactive Confirmation (no "Archive") */}
                       {deleteConfirmId === a.id && (

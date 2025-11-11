@@ -171,6 +171,7 @@ const InputBar: React.FC<InputBarProps> = ({
     if (files.length === 0) return;
 
     setUploadedFiles((prev) => [...prev, ...files]);
+    setUploadedFile((prev) => [...prev, ...files]);
     setIsLocallyUploaded(true);
 
     // Generate previews for images
@@ -190,50 +191,52 @@ const InputBar: React.FC<InputBarProps> = ({
   // Remove uploaded file
   const removeFile = (index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadedFile((prev) => prev.filter((_, i) => i !== index));
     setFilePreviews((prev) => prev.filter((_, i) => i !== index));
     if (uploadedFiles.length === 1) {
       setIsLocallyUploaded(false);
     }
   };
 
-const handleSubmit = async () => {
-  if (isLimitReached) {
-    setShowModal(true);
-    message.error("You've reached the 4-prompt limit. Please sign in.");
-    return;
-  }
-
-  const trimmedInput = input.trim();
-  const defaultPrompt = "Summarize what these files contain in simple terms.";
-
-  if (!trimmedInput && uploadedFiles.length === 0) {
-    message.error("Please enter a message or upload files.");
-    return;
-  }
-
-  if (uploadedFiles.length > 0) {
-    const hasPromptsLeft = Number(remainingPrompts) > 0;
-
-    if (remainingPrompts !== null) {
-      if (hasPromptsLeft) {
-        handleFileUpload(uploadedFiles, trimmedInput || defaultPrompt);
-      } else if (trimmedInput) {
-        await handleSend(trimmedInput);
-      } else {
-        return;
-      }
-    } else {
-      handleFileUpload(uploadedFiles, trimmedInput || defaultPrompt);
+  const handleSubmit = async () => {
+    if (isLimitReached) {
+      setShowModal(true);
+      message.error("You've reached the 4-prompt limit. Please sign in.");
+      return;
     }
 
-    setInput("");
-    setUploadedFiles([]);
-    setFilePreviews([]);
-    return;
-  }
+    const trimmedInput = input.trim();
+    const defaultPrompt = "Summarize what these files contain in simple terms.";
 
-  await handleSend();
-};
+    if (!trimmedInput && uploadedFiles.length === 0) {
+      message.error("Please enter a message or upload files.");
+      return;
+    }
+
+    if (uploadedFiles.length > 0) {
+      const hasPromptsLeft = Number(remainingPrompts) > 0;
+
+      if (remainingPrompts !== null) {
+        if (hasPromptsLeft) {
+          handleFileUpload(uploadedFiles, trimmedInput || defaultPrompt);
+        } else if (trimmedInput) {
+          await handleSend(trimmedInput);
+        } else {
+          return;
+        }
+      } else {
+        handleFileUpload(uploadedFiles, trimmedInput || defaultPrompt);
+      }
+
+      setInput("");
+      setUploadedFiles([]);
+      setUploadedFile([]);
+      setFilePreviews([]);
+      return;
+    }
+
+    await handleSend();
+  };
 
   // Get appropriate icon for uploaded file
   const getFileIcon = (file: File) => {
@@ -252,6 +255,14 @@ const handleSubmit = async () => {
     if (isLimitReached) {
       setShowModal(true); // Show modal when user tries to type after limit
       message.error("You've reached the 4-prompt limit. Please sign in.");
+    }
+  };
+
+  const handleEnter = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && input.trim().length > 0) {
+      handleKeyPress(e);
+      setUploadedFile([]);
+      setUploadedFiles([]);
     }
   };
 
@@ -337,7 +348,7 @@ const handleSubmit = async () => {
                       onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                         setInput(e.target.value)
                       }
-                      onKeyDown={handleKeyPress}
+                      onKeyDown={handleEnter}
                       onFocus={handleInputFocus} // Added: Trigger modal on focus if limit reached
                       placeholder={
                         isLimitReached
