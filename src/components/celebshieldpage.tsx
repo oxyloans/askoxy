@@ -12,6 +12,11 @@ const PDF_GVIEW = `https://docs.google.com/gview?embedded=1&url=${encodeURICompo
   PDF_DIRECT
 )}`; // fallback viewer
 
+// ===== Nyaya GPT Drive video =====
+const DRIVE_VIDEO_ID = "13_l0ceABbNM9sQMNp96EfUJdFotyONkn";
+const DRIVE_VIDEO_IFRAME = `https://drive.google.com/file/d/${DRIVE_VIDEO_ID}/preview`;
+const DRIVE_VIDEO_DIRECT = `https://drive.google.com/uc?export=download&id=${DRIVE_VIDEO_ID}`;
+
 const protectionFeatures = [
   {
     label: "Fake Videos",
@@ -584,6 +589,42 @@ export default function CelebShieldPage() {
               >
                 open it in a new tab
               </a>
+            </p>
+          </div>
+        </section>
+
+        {/* ===== NEW: NYAYA GPT — LET'S EXPLORE (Drive Video) ===== */}
+        <section className="mx-auto mb-12 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-br from-purple-900/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-purple-500/30 shadow-2xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 bg-clip-text text-transparent">
+                  Let’s Explore - Nyaya GPT
+                </h2>
+              </div>
+            </div>
+
+            <div className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-[0_25px_40px_rgba(168,85,247,0.4)] ring-2 ring-purple-500/50">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/10 via-fuchsia-500/10 to-transparent blur-xl"></div>
+              <iframe
+                src={DRIVE_VIDEO_IFRAME}
+                title="Nyaya GPT — Let's Explore"
+                allow="autoplay; encrypted-media"
+                className="relative w-full h-full rounded-2xl z-10 bg-black"
+              />
+            </div>
+
+            <p className="mt-4 text-center text-purple-300 text-xs">
+              If the player doesn’t load, click{" "}
+              <a
+                href={DRIVE_VIDEO_DIRECT}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-400 underline font-semibold hover:text-amber-300"
+              >
+                Open on Drive
+              </a>
+              .
             </p>
           </div>
         </section>

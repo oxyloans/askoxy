@@ -1081,14 +1081,14 @@ const WhatsappRegister = () => {
               </p>
             </div>
           )}
-          {showGoogleButton && primaryType === "CUSTOMER" && (
+          {/* {showGoogleButton && primaryType === "CUSTOMER" && (
             <div className="flex items-center my-6">
               <div className="flex-1 border-t border-gray-300"></div>
              
               <div className="flex-1 border-t border-gray-300"></div>
             </div>
-          )} 
-          {!showOtp && (
+          )}  */}
+          {/* {!showOtp && (
             <div className="mb-6">
               {showGoogleButton && primaryType === "CUSTOMER" && (
                 <button
@@ -1135,7 +1135,7 @@ const WhatsappRegister = () => {
                 </button>
               )}
             </div>
-          )}
+          )}  */}
         </div>
       
 

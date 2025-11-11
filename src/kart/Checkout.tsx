@@ -310,97 +310,106 @@ const CheckoutPage: React.FC = () => {
     openTimeSlotModal();
   };
 
-  const renderDeliveryTimelineModal = () => {
-    return (
-      <Modal
-        title="Delivery Information"
-        open={isDeliveryTimelineModalVisible}
-        onCancel={() => setIsDeliveryTimelineModalVisible(false)}
-        footer={null}
-        centered
-        width={500}
-        closeIcon={<X className="w-5 h-5" />}
-      >
-        <div className="text-center">
-          <div className="mb-4 flex justify-center">
-            <button
-              onClick={() => setLanguage("english")}
-              className={`px-4 py-2 rounded-l-md transition-colors ${
-                language === "english"
-                  ? "bg-purple-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-            >
-              English
-            </button>
-            <button
-              onClick={() => setLanguage("telugu")}
-              className={`px-4 py-2 rounded-r-md transition-colors ${
-                language === "telugu"
-                  ? "bg-purple-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-            >
-              తెలుగు
-            </button>
+// ✅ DELIVERY TIMELINE MODAL (updated)
+const renderDeliveryTimelineModal = () => {
+  return (
+    <Modal
+      open={isDeliveryTimelineModalVisible}
+      onCancel={() => setIsDeliveryTimelineModalVisible(false)}
+      footer={null}
+      centered
+      destroyOnClose
+      maskClosable
+      width="90%"
+      style={{ maxWidth: 600 }}
+      bodyStyle={{
+        maxHeight: "75vh",
+        overflowY: "auto",
+        padding: 24,
+        background: "#fafafa",
+      }}
+      title={
+        <div className="flex items-center justify-between">
+          <div className="text-lg font-semibold text-purple-700 flex items-center">
+            <Truck className="w-5 h-5 mr-2 text-purple-500" />
+            Delivery Information
           </div>
-
-          <div>
-            <Truck className="w-16 h-16 mx-auto text-purple-500 mb-4" />
-            <h3 className="text-xl font-bold mb-4">
-              {language === "english"
-                ? "Delivery Information"
-                : "డెలివరీ సమాచారం"}
-            </h3>
-            <div className="mb-4 text-left bg-purple-50 p-4 rounded-lg">
-              {language === "english" ? (
-                <>
-                  <p className="mb-3">
-                    📦 <strong>Delivery Timeline:</strong> Your order will be
-                    delivered within 4 hours to 4 days, depending on the volume
-                    of orders and location. We're doing our best to group nearby
-                    orders together so we can deliver more efficiently and
-                    sustainably. 🚚
-                  </p>
-                  <p className="mb-3">
-                    With your support, we'll be able to grow and serve you even
-                    better. 🙏
-                  </p>
-                  <p>
-                    Please support us by spreading the word to friends and
-                    family nearby! More orders = faster and more efficient
-                    deliveries for everyone! Thank you again!
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="mb-3">
-                    📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్‌ను 4 గంటల నుండి
-                    4 రోజుల్లోపు డెలివరీ చేయడానికి ప్రయత్నిస్తున్నాం. మీ
-                    ప్రాంతంలో వచ్చే ఆర్డర్ల ఆధారంగా, వాటిని గ్రూప్ చేసి
-                    సమర్థవంతంగా డెలివరీ చేస్తున్నాం. 🚚
-                  </p>
-                  <p className="mb-3">
-                    మీతో శాశ్వతమైన మంచి సంబంధం ఏర్పడాలని మేము ఆశిస్తున్నాం. మీరు
-                    మమ్మల్ని మీ స్నేహితులు, బంధువులతో షేర్ చేస్తే, మేము మరింత
-                    మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
-                  </p>
-                  <p>మీ సహకారం మాకు చాలా విలువైనది. ముందుగానే ధన్యవాదాలు!</p>
-                </>
-              )}
-            </div>
-          </div>
-
-          <button
-            onClick={() => setIsDeliveryTimelineModalVisible(false)}
-            className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
-          >
-            {language === "english" ? "Close" : "మూసివేయి"}
-          </button>
+         
         </div>
-      </Modal>
-    );
-  };
+      }
+    >
+      <div className="text-center">
+        <div className="mb-5 flex justify-center">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1554/1554574.png"
+            alt="delivery"
+            className="w-20 h-20 opacity-90"
+          />
+        </div>
+
+        <div className="flex justify-center mb-4">
+          <Button
+            type={language === "english" ? "primary" : "default"}
+            onClick={() => setLanguage("english")}
+            className="rounded-l-md"
+          >
+            English
+          </Button>
+          <Button
+            type={language === "telugu" ? "primary" : "default"}
+            onClick={() => setLanguage("telugu")}
+            className="rounded-r-md"
+          >
+            తెలుగు
+          </Button>
+        </div>
+
+        <div className="text-left bg-white shadow-sm border border-gray-100 p-5 rounded-lg">
+          {language === "english" ? (
+            <>
+              <p className="mb-3 leading-relaxed">
+                📦 <strong>Delivery Timeline:</strong> Your order will be
+                delivered within <b>4 hours to 4 days</b> depending on order
+                volume and location. We optimize routes to ensure faster,
+                eco-friendly deliveries. 🚚
+              </p>
+              <p className="mb-3">
+                We appreciate your patience and continued support. 🙏
+              </p>
+              <p>
+                Spread the word! More nearby orders = faster and more efficient
+                service for everyone. 💜
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mb-3">
+                📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్ 4 గంటల నుండి 4
+                రోజుల్లోపు డెలివరీ అవుతుంది. మీ ప్రాంతంలోని ఆర్డర్ల ఆధారంగా
+                సమర్థవంతంగా డెలివరీ జరుగుతుంది. 🚚
+              </p>
+              <p className="mb-3">
+                మీ సహకారం మాకు చాలా ముఖ్యమైనది. మీరు మమ్మల్ని షేర్ చేస్తే, మేము
+                మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
+              </p>
+              <p>మా పై మీ విశ్వాసానికి ధన్యవాదాలు! 💜</p>
+            </>
+          )}
+        </div>
+
+        <Button
+          onClick={() => setIsDeliveryTimelineModalVisible(false)}
+          type="primary"
+          size="large"
+          className="mt-5 bg-purple-600 hover:bg-purple-700"
+        >
+          {language === "english" ? "Close" : "మూసివేయి"}
+        </Button>
+      </div>
+    </Modal>
+  );
+};
+
 
   const getAvailableDays = (
     maxDays: number = 14,
@@ -1506,323 +1515,197 @@ const CheckoutPage: React.FC = () => {
     }
     setLoading(false);
   };
-
-  const renderTimeSlotModal = (): JSX.Element => {
-    return (
-      <Modal
-        title={
-          <div className="flex items-center justify-between">
-            <div className="text-lg font-semibold text-purple-700 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-purple-500" />
-              Select Delivery Time
-            </div>
-            <X
-              className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
-              onClick={() => setShowTimeSlotModal(false)}
-            />
+const renderTimeSlotModal = (): JSX.Element => {
+  return (
+    <Modal
+      open={showTimeSlotModal}
+      onCancel={() => setShowTimeSlotModal(false)}
+      centered
+      destroyOnClose
+      maskClosable
+      width="90%"
+      style={{ maxWidth: 650 }}
+      bodyStyle={{
+        maxHeight: "75vh",
+        overflowY: "auto",
+        background: "#fafafa",
+        padding: 20,
+      }}
+      title={
+        <div className="flex items-center justify-between">
+          <div className="text-lg font-semibold text-purple-700 flex items-center">
+            <Clock className="w-5 h-5 mr-2 text-purple-500" />
+            Choose Delivery Time
           </div>
-        }
-        open={showTimeSlotModal}
-        onCancel={() => setShowTimeSlotModal(false)}
-        footer={[
-          <button
-            key="delivery-info"
-            onClick={() => {
-              setShowTimeSlotModal(false);
-              setTimeout(() => {
-                setIsDeliveryTimelineModalVisible(true);
-              }, 100);
-            }}
-            className="mr-2 px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 flex items-center transition-colors"
-          >
-            <Truck className="w-5 h-5 mr-2" /> Delivery Info
-          </button>,
-          <button
-            key="close"
-            onClick={() => setShowTimeSlotModal(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-          >
-            Close
-          </button>,
-        ]}
-        centered
-        width={600}
-        closeIcon={null}
-        className="time-slot-modal"
-      >
-        <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
-          {timeSlots.length === 0 ? (
-            <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
-              <Clock className="w-16 h-16 text-purple-200 mb-4" />
-              <p className="text-lg font-medium mb-2">
-                No available delivery slots
-              </p>
-              <p className="text-sm text-gray-400">Please try again later</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {timeSlots.map((slot: TimeSlot, index: number) => {
-                const displayDay =
-                  (slot as ExtendedTimeSlot).formattedDay ||
-                  slot.dayOfWeek.charAt(0) +
-                    slot.dayOfWeek.slice(1).toLowerCase();
-
-                const uniqueTimeSlots = new Set(
-                  [
-                    slot.timeSlot1,
-                    slot.timeSlot2,
-                    slot.timeSlot3,
-                    slot.timeSlot4,
-                  ].filter(Boolean)
-                );
-                const allSameTimings = uniqueTimeSlots.size === 1;
-
-                const timeSlotObjects = [
-                  {
-                    key: "slot1",
-                    value: slot.timeSlot1,
-                    status: (slot as any).slot1Status === true,
-                  },
-                  {
-                    key: "slot2",
-                    value: slot.timeSlot2,
-                    status: (slot as any).slot2Status === true,
-                  },
-                  {
-                    key: "slot3",
-                    value: slot.timeSlot3,
-                    status: (slot as any).slot3Status === true,
-                  },
-                  {
-                    key: "slot4",
-                    value: slot.timeSlot4,
-                    status: (slot as any).slot4Status === true,
-                  },
-                ];
-
-                const filteredTimeSlots = allSameTimings
-                  ? [
-                      timeSlotObjects.find(
-                        (slot) => slot.value && !slot.status
-                      ) || timeSlotObjects[0],
-                    ]
-                  : timeSlotObjects.filter(
-                      (slot) => slot.value && !slot.status
-                    );
-
-                return (
-                  <div
-                    key={slot.id || index}
-                    className={`rounded-lg ${
-                      index < timeSlots.length - 1 ? "border-b pb-6" : ""
-                    }`}
-                  >
-                    <div className="flex items-center mb-4">
-                      <div
-                        className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3 shadow-sm"
-                        aria-hidden="true"
-                      >
-                        <span className="font-semibold">{index + 1}</span>
-                      </div>
-                      <div>
-                        <div className="text-lg font-semibold text-gray-800">
-                          {displayDay}
-                        </div>
-                        <div className="text-sm text-gray-500">{slot.date}</div>
-                      </div>
-                    </div>
-
-                    {filteredTimeSlots.length === 0 ? (
-                      <div className="px-4 py-3 bg-gray-50 rounded-lg text-center text-gray-500">
-                        No time slots available for this day
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4 pl-6 border-l-2 border-purple-100">
-                        {filteredTimeSlots.map(
-                          (timeSlotObj) =>
-                            timeSlotObj.value && (
-                              <div
-                                key={`${slot.id}-${timeSlotObj.key}`}
-                                onClick={() =>
-                                  timeSlotObj.value &&
-                                  handleSelectTimeSlot(
-                                    slot.date,
-                                    timeSlotObj.value,
-                                    slot.dayOfWeek
-                                  )
-                                }
-                                className={`relative p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                                  selectedTimeSlot === timeSlotObj.value &&
-                                  selectedDate === slot.date
-                                    ? "bg-green-50 border border-green-500 shadow-md"
-                                    : "bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50"
-                                }`}
-                                role="button"
-                                aria-selected={
-                                  selectedTimeSlot === timeSlotObj.value &&
-                                  selectedDate === slot.date
-                                }
-                                aria-label={`Select time slot ${timeSlotObj.value} on ${displayDay}`}
-                                tabIndex={0}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <Clock
-                                      className={`w-4 h-4 mr-2 flex-shrink-0 ${
-                                        selectedTimeSlot ===
-                                          timeSlotObj.value &&
-                                        selectedDate === slot.date
-                                          ? "text-green-600"
-                                          : "text-purple-500"
-                                      }`}
-                                    />
-                                    <span
-                                      className={`font-medium ${
-                                        selectedTimeSlot ===
-                                          timeSlotObj.value &&
-                                        selectedDate === slot.date
-                                          ? "text-green-800"
-                                          : "text-gray-700"
-                                      }`}
-                                    >
-                                      {timeSlotObj.value}
-                                    </span>
-                                  </div>
-                                  {selectedTimeSlot === timeSlotObj.value &&
-                                  selectedDate === slot.date ? (
-                                    <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
-                                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          className="h-4 w-4 text-white"
-                                          viewBox="0 0 20 20"
-                                          fill="currentColor"
-                                        >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"
-                                          />
-                                        </svg>
-                                      </div>
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">
-                                      Available
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+         
         </div>
-      </Modal>
-    );
-  };
+      }
+      footer={[
+        <Button
+          key="info"
+          type="default"
+          icon={<Truck className="w-4 h-4" />}
+          onClick={() => {
+            setShowTimeSlotModal(false);
+            setTimeout(() => setIsDeliveryTimelineModalVisible(true), 200);
+          }}
+        >
+          Delivery Info
+        </Button>,
+        <Button key="close" onClick={() => setShowTimeSlotModal(false)}>
+          Close
+        </Button>,
+      ]}
+      className="responsive-modal"
+    >
+      {timeSlots.length === 0 ? (
+        <div className="flex flex-col items-center justify-center text-center py-10">
+          <Clock className="w-14 h-14 text-gray-300 mb-4" />
+          <h3 className="text-gray-600 text-lg mb-2">
+            No available delivery slots
+          </h3>
+          <p className="text-gray-500 text-sm">Please check back later</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {timeSlots.map((slot: TimeSlot, index: number) => {
+            const formattedDay =
+              (slot as any).formattedDay || slot.dayOfWeek.toLowerCase();
+            const availableSlots = [
+              slot.timeSlot1,
+              slot.timeSlot2,
+              slot.timeSlot3,
+              slot.timeSlot4,
+            ].filter(Boolean);
 
-  const renderCouponsModal = (): JSX.Element => {
-    console.log("Rendering Coupons Modal, availableCoupons:", availableCoupons);
-    return (
-      <Modal
-        title={
-          <div className="flex items-center justify-between">
-            <div className="text-lg font-semibold text-purple-700 flex items-center">
-              <Tag className="w-5 h-5 mr-2 text-purple-500" />
-              Available Coupons
-            </div>
-            <X
-              className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer"
-              onClick={() => setShowCouponsModal(false)}
-            />
-          </div>
-        }
-        open={showCouponsModal}
-        onCancel={() => setShowCouponsModal(false)}
-        footer={[
-          <button
-            key="close"
-            onClick={() => setShowCouponsModal(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-          >
-            Close
-          </button>,
-        ]}
-        centered
-        width={600}
-        closeIcon={null}
-        className="coupons-modal"
-      >
-        <div className="max-h-[70vh] overflow-y-auto px-1 py-2">
-          {couponsLoading ? (
-            <div className="text-center p-8">
-              <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
-              <p className="text-gray-500 mt-2">Loading coupons...</p>
-            </div>
-          ) : availableCoupons.length === 0 ? (
-            <div className="text-center text-gray-500 p-8 flex flex-col items-center justify-center">
-              <Tag className="w-16 h-16 text-purple-200 mb-4" />
-              <p className="text-lg font-medium mb-2">No available coupons</p>
-              <p className="text-sm text-gray-400">
-                Check back later for offers
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {availableCoupons.map((coupon: Coupon) => (
-                <div
-                  key={coupon.couponCode}
-                  className="p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-semibold text-purple-700">
-                        {coupon.couponCode}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Discount: ₹
-                        {coupon.couponValue !== undefined
-                          ? coupon.couponValue.toFixed(2)
-                          : "0.00"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Min. Order: ₹
-                        {coupon.minOrder !== undefined
-                          ? coupon.minOrder.toFixed(2)
-                          : "0.00"}
-                      </p>
-                      {coupon.couponDesc && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          {coupon.couponDesc}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      className="px-3 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
-                      onClick={() => handleSelectCoupon(coupon)}
-                      disabled={coupenLoading}
-                    >
-                      {coupenLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                      ) : (
-                        "Apply"
-                      )}
-                    </button>
+            return (
+              <div key={slot.id || index} className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-base font-semibold text-purple-700">
+                      {formattedDay}
+                    </h4>
+                    <p className="text-gray-500 text-sm">{slot.date}</p>
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {availableSlots.length} slots
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {availableSlots.map((slotTime, i) => (
+                    <Button
+                      key={i}
+                      block
+                      type={
+                        selectedTimeSlot === slotTime && selectedDate === slot.date
+                          ? "primary"
+                          : "default"
+                      }
+                      className={`rounded-md ${
+                        selectedTimeSlot === slotTime
+                          ? "bg-green-600 border-none text-white"
+                          : "bg-white hover:bg-purple-50 border-gray-200"
+                      }`}
+                      onClick={() =>
+                        handleSelectTimeSlot(slot.date, slotTime!, slot.dayOfWeek)
+                      }
+                    >
+                      {slotTime}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </Modal>
-    );
-  };
+      )}
+    </Modal>
+  );
+};
+
+const renderCouponsModal = (): JSX.Element => {
+  return (
+    <Modal
+      open={showCouponsModal}
+      onCancel={() => setShowCouponsModal(false)}
+      centered
+      destroyOnClose
+      maskClosable
+      width="90%"
+      style={{ maxWidth: 600 }}
+      bodyStyle={{
+        maxHeight: "75vh",
+        overflowY: "auto",
+        background: "#fafafa",
+        padding: 20,
+      }}
+      title={
+        <div className="flex items-center justify-between">
+          <div className="text-lg font-semibold text-purple-700 flex items-center">
+            <Tag className="w-5 h-5 mr-2 text-purple-500" />
+            Available Coupons
+          </div>
+         
+        </div>
+      }
+      footer={[
+        <Button key="close" onClick={() => setShowCouponsModal(false)}>
+          Close
+        </Button>,
+      ]}
+      className="responsive-modal"
+    >
+      {couponsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
+          <p className="text-gray-500 mt-2">Loading coupons...</p>
+        </div>
+      ) : availableCoupons.length === 0 ? (
+        <div className="flex flex-col items-center text-center py-2">
+          <Tag className="w-12 h-12 text-gray-300 mb-3" />
+          <h3 className="text-gray-600 font-medium mb-1">
+            No available coupons
+          </h3>
+          <p className="text-sm text-gray-500">Check back later for offers</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {availableCoupons.map((coupon: Coupon) => (
+            <div
+              key={coupon.couponCode}
+              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-purple-300 transition-all"
+            >
+              <h4 className="font-semibold text-purple-700 text-sm mb-1">
+                {coupon.couponCode}
+              </h4>
+              <p className="text-sm text-gray-600 mb-1">
+                Save ₹{coupon.couponValue?.toFixed(2) || "0.00"}
+              </p>
+              <p className="text-xs text-gray-500 mb-2">
+                Min. Order ₹{coupon.minOrder?.toFixed(2) || "0.00"}
+              </p>
+              {coupon.couponDesc && (
+                <p className="text-xs text-gray-400 mb-3">
+                  {coupon.couponDesc}
+                </p>
+              )}
+              <Button
+                type="primary"
+                block
+                size="small"
+                loading={coupenLoading}
+                onClick={() => handleSelectCoupon(coupon)}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                Apply Coupon
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+};
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -2224,52 +2107,58 @@ const CheckoutPage: React.FC = () => {
       </div>
       {isEligibleToday && (
         <Modal
-          title={null}
-          visible={isModalVisible}
-          onOk={handleOk}
+          open={isModalVisible}
           onCancel={handleCancel}
           footer={null}
           centered
-          width={500}
-          className="unique-delivery-modal"
+          destroyOnClose
+          maskClosable
+          width="90%"
+          style={{ maxWidth: 500 }}
+          className="instant-delivery-modal"
           maskStyle={{
             backgroundColor: "rgba(0, 0, 0, 0.6)",
             backdropFilter: "blur(8px)",
           }}
-          bodyStyle={{ padding: 0 }}
+          bodyStyle={{
+            padding: 0,
+            borderRadius: 20,
+            overflow: "hidden",
+            background: "transparent",
+          }}
           closeIcon={null}
         >
-          <div className="relative bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-2xl overflow-hidden">
-            {/* Animated background pattern */}
+          <div className="relative bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-2xl overflow-hidden shadow-2xl">
+            {/* Animated gradient background */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full blur-xl animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full blur-xl animate-pulse delay-1000"></div>
+              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full blur-2xl animate-pulse"></div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full blur-2xl animate-pulse delay-1000"></div>
             </div>
 
-            {/* Close button */}
+            {/* Close Button */}
             <button
               onClick={handleCancel}
               className="absolute top-4 right-4 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg z-10"
             >
-              <CloseCircleOutlined className="text-gray-600" />
+              <CloseCircleOutlined className="text-gray-600 text-lg" />
             </button>
 
-            <div className="relative p-8">
-              {/* Icon and title section */}
+            <div className="relative p-8 sm:p-10">
+              {/* Icon and Title Section */}
               <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full shadow-lg mb-4 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-ping opacity-20"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-ping opacity-25"></div>
                   <CheckCircleOutlined className="text-3xl text-white relative z-10" />
                 </div>
 
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
                   🚀 Instant Delivery
                 </h2>
                 <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto"></div>
               </div>
 
-              {/* Content */}
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/30">
+              {/* Content Box */}
+              <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/40 shadow-sm transition-all hover:shadow-md">
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mt-1">
                     <CheckCircleOutlined className="text-sm text-white" />
@@ -2287,32 +2176,36 @@ const CheckoutPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex space-x-3">
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={handleCancel}
-                  className="flex-1 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl border border-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
+                  block
+                  size="large"
+                  icon={<CloseCircleOutlined />}
+                  className="h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl border border-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
                 >
-                  <CloseCircleOutlined className="mr-2" />
                   Maybe Later
                 </Button>
 
                 <Button
                   type="primary"
                   onClick={handleOk}
-                  className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-medium rounded-xl border-none shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
+                  block
+                  size="large"
+                  icon={<CheckCircleOutlined />}
+                  className="h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-medium rounded-xl border-none shadow-md hover:shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-[0.98] active:scale-95"
                 >
-                  <CheckCircleOutlined className="mr-2" />
                   Confirm Delivery
                 </Button>
               </div>
 
-              {/* Delivery time indicator */}
-              <div className="mt-4 text-center">
-                <div className="inline-flex items-center space-x-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-sm border border-amber-200">
+              {/* Delivery Time Indicator */}
+              <div className="mt-5 text-center">
+                <div className="inline-flex items-center space-x-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-sm border border-amber-200 shadow-sm">
                   <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
                   <span className="font-medium">
-                    Order Will be delivered today
+                    Order will be delivered today
                   </span>
                 </div>
               </div>

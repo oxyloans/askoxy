@@ -376,7 +376,7 @@ const SearchMain: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f7f7" }}>
+    <div style={{ minHeight: "100vh", background: "white" }}>
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 16px" }}>
         {/* Breadcrumb */}
         <Space style={{ marginBottom: 16 }}>
@@ -426,7 +426,7 @@ const SearchMain: React.FC = () => {
                 <div
                   style={{
                     marginBottom: 12,
-                    overflowX: "auto",
+
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -538,7 +538,6 @@ const SearchMain: React.FC = () => {
                       {category.categoryName}
                     </Title>
 
-                    {/* Check if category has items */}
                     {category.itemsResponseDtoList.length === 0 ? (
                       <Alert
                         message={`No items available in ${category.categoryName}`}
@@ -547,7 +546,7 @@ const SearchMain: React.FC = () => {
                         style={{ marginBottom: 16 }}
                       />
                     ) : (
-                      <Row gutter={[12, 12]} justify="start">
+                      <Row gutter={[16, 16]} justify="start">
                         {category.itemsResponseDtoList.map((product) => {
                           const discount = calculateDiscount(
                             product.itemMrp,
@@ -561,202 +560,251 @@ const SearchMain: React.FC = () => {
                               md={8}
                               lg={6}
                               key={product.itemId}
-                              style={{
-                                display: "flex",
-                                justifyContent: "center",
-                              }}
                             >
                               <Badge.Ribbon
-                                text={`${discount}% OFF`}
-                                color="red"
+                                text={`${discount}% Off`}
+                                color="#8b3eea"
                                 style={{
                                   display: discount > 0 ? "block" : "none",
+                                  fontSize: 13,
+                                  fontWeight: 600,
                                 }}
                               >
                                 <Card
                                   hoverable
                                   onClick={() => handleItemClick(product)}
                                   style={{
-                                    width: 240,
-                                    height: 370,
+                                    height: 420, // ✅ fixed card height
                                     borderRadius: 12,
-                                    overflow: "hidden",
-                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.08)",
-                                    transition:
-                                      "transform 0.25s ease, box-shadow 0.25s ease",
-                                  }}
-                                  bodyStyle={{
-                                    padding: 16,
+                                    boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                                    transition: "all 0.3s ease",
                                     display: "flex",
                                     flexDirection: "column",
                                     justifyContent: "space-between",
                                   }}
-                                  onMouseEnter={(e) =>
-                                    (e.currentTarget.style.transform =
-                                      "translateY(-5px)")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.currentTarget.style.transform =
-                                      "translateY(0)")
-                                  }
+                                  bodyStyle={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    padding: 16,
+                                    height: "100%",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform =
+                                      "translateY(-4px)";
+                                    e.currentTarget.style.boxShadow =
+                                      "0 8px 16px rgba(92, 51, 145, 0.15)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform =
+                                      "translateY(0)";
+                                    e.currentTarget.style.boxShadow =
+                                      "0 2px 8px rgba(0, 0, 0, 0.08)";
+                                  }}
                                 >
-                                  {/* Product Image */}
+                                  {/* Image Section */}
                                   <div
                                     style={{
                                       width: "100%",
-                                      height: 160,
+                                      height: 180, // ✅ fixed image area
+                                      borderRadius: 10,
+                                      background: "#f9f9f9",
+                                      overflow: "hidden",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
-                                      background: "#fafafa",
-                                      borderRadius: 8,
-                                      marginBottom: 10,
-                                      overflow: "hidden",
+                                      marginBottom: 12,
                                     }}
                                   >
                                     <Image
                                       src={product.itemImage}
                                       alt={product.itemName}
-                                      height={140}
+                                      height={180}
+                                      width="100%"
                                       preview={false}
                                       style={{
-                                        objectFit: "contain",
-                                        maxWidth: "100%",
+                                        objectFit: "contain", // ✅ ensures full image visible without crop
+                                        borderRadius: 10,
                                       }}
+                                      fallback="https://via.placeholder.com/180?text=No+Image" // ✅ fallback image
                                     />
                                   </div>
 
                                   {/* Product Info */}
-                                  <div style={{ textAlign: "left" }}>
-                                    <Title
-                                      level={5}
-                                      ellipsis={{ rows: 2 }}
-                                      style={{
-                                        height: 42,
-                                        marginBottom: 6,
-                                        fontWeight: 600,
-                                        color: "#333",
-                                        fontSize: 14,
-                                      }}
-                                    >
-                                      {product.itemName}
-                                    </Title>
-
-                                    <Text
-                                      type="secondary"
-                                      style={{
-                                        fontSize: 11,
-                                        display: "block",
-                                        marginBottom: 6,
-                                      }}
-                                    >
-                                      {product.weight} kg
-                                    </Text>
-
-                                    <div style={{ marginBottom: 8 }}>
-                                      <Text
-                                        strong
+                                  <div
+                                    style={{
+                                      flexGrow: 1,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      justifyContent: "space-between",
+                                    }}
+                                  >
+                                    <div>
+                                      <Title
+                                        level={5}
+                                        ellipsis={{ rows: 2 }}
                                         style={{
-                                          fontSize: 16,
-                                          color: "#5c3391",
+                                          marginBottom: 8,
+                                          fontWeight: 600,
+                                          color: "#1a1a1a",
+                                          fontSize: 15,
+                                          lineHeight: 1.4,
+                                          minHeight: 42,
                                         }}
                                       >
-                                        ₹{product.itemPrice.toLocaleString()}
-                                      </Text>
+                                        {product.itemName}
+                                      </Title>
+
                                       <Text
-                                        delete
                                         type="secondary"
                                         style={{
-                                          marginLeft: 8,
-                                          fontSize: 12,
-                                          color: "#888",
+                                          fontSize: 13,
+                                          display: "block",
+                                          marginBottom: 10,
+                                          color: "#666",
                                         }}
                                       >
-                                        ₹{product.itemMrp.toLocaleString()}
+                                        Weight: {product.weight} kg
                                       </Text>
-                                    </div>
 
-                                    {product.bmvCoins > 0 && (
-                                      <Tag
-                                        color="gold"
-                                        style={{
-                                          fontWeight: 500,
-                                          fontSize: 11,
-                                          marginBottom: 8,
-                                        }}
-                                      >
-                                        Earn {product.bmvCoins} BMV Coins
-                                      </Tag>
-                                    )}
-                                  </div>
-
-                                  {/* Buttons */}
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    {isItemUserAdded(product.itemId) ? (
-                                      <Space.Compact style={{ width: "100%" }}>
-                                        <Button
-                                          icon={<MinusOutlined />}
-                                          onClick={() =>
-                                            handleQuantityChange(product, false)
-                                          }
-                                          loading={
-                                            loadingItems.items[product.itemId]
-                                          }
+                                      {product.bmvCoins > 0 && (
+                                        <Tag
                                           style={{
-                                            flex: 1,
-                                            backgroundColor: "#5c3391",
-                                            borderColor: "#5c3391",
-                                            color: "white",
-                                          }}
-                                        />
-                                        <Button
-                                          style={{
-                                            flex: 1,
-                                            backgroundColor: "white",
-                                            color: "#5c3391",
-                                            fontWeight: "bold",
+                                            background:
+                                              "linear-gradient(135deg, #fff4e6 0%, #ffe7ba 100%)",
+                                            color: "#d46b08",
+                                            border: "1px solid #ffd591",
+                                            fontWeight: 600,
+                                            fontSize: 11,
+                                            padding: "2px 8px",
+                                            marginBottom: 10,
+                                            display: "inline-block",
                                           }}
                                         >
-                                          {cartItems[product.itemId] || 0}
-                                        </Button>
+                                          Earn {product.bmvCoins} BMVCOINS
+                                        </Tag>
+                                      )}
+
+                                      {/* Price Section */}
+                                      <div
+                                        style={{
+                                          marginBottom: 12,
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 8,
+                                        }}
+                                      >
+                                        <Text
+                                          strong
+                                          style={{
+                                            fontSize: 22,
+                                            color: "#1a1a1a",
+                                            fontWeight: 700,
+                                          }}
+                                        >
+                                          ₹{product.itemPrice.toLocaleString()}
+                                        </Text>
+                                        <Text
+                                          delete
+                                          type="secondary"
+                                          style={{
+                                            fontSize: 14,
+                                            color: "#999",
+                                          }}
+                                        >
+                                          ₹{product.itemMrp.toLocaleString()}
+                                        </Text>
+                                      </div>
+                                    </div>
+
+                                    {/* Add / Quantity Buttons */}
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      {isItemUserAdded(product.itemId) ? (
+                                        <Space.Compact
+                                          style={{ width: "100%" }}
+                                        >
+                                          <Button
+                                            icon={<MinusOutlined />}
+                                            onClick={() =>
+                                              handleQuantityChange(
+                                                product,
+                                                false
+                                              )
+                                            }
+                                            loading={
+                                              loadingItems.items[product.itemId]
+                                            }
+                                            style={{
+                                              flex: 1,
+                                              height: 44,
+                                              backgroundColor: "#5c3391",
+                                              borderColor: "#5c3391",
+                                              color: "white",
+                                              fontWeight: 600,
+                                            }}
+                                          />
+                                          <Button
+                                            style={{
+                                              flex: 1,
+                                              height: 44,
+                                              backgroundColor: "white",
+                                              color: "#5c3391",
+                                              fontWeight: "bold",
+                                              fontSize: 16,
+                                              border: "1px solid #5c3391",
+                                            }}
+                                          >
+                                            {cartItems[product.itemId] || 0}
+                                          </Button>
+                                          <Button
+                                            icon={<PlusOutlined />}
+                                            onClick={() =>
+                                              handleQuantityChange(
+                                                product,
+                                                true
+                                              )
+                                            }
+                                            disabled={
+                                              cartItems[product.itemId] >=
+                                              product.quantity
+                                            }
+                                            loading={
+                                              loadingItems.items[product.itemId]
+                                            }
+                                            style={{
+                                              flex: 1,
+                                              height: 44,
+                                              backgroundColor: "#5c3391",
+                                              borderColor: "#5c3391",
+                                              color: "white",
+                                              fontWeight: 600,
+                                            }}
+                                          />
+                                        </Space.Compact>
+                                      ) : (
                                         <Button
-                                          icon={<PlusOutlined />}
+                                          type="primary"
+                                          block
                                           onClick={() =>
-                                            handleQuantityChange(product, true)
-                                          }
-                                          disabled={
-                                            cartItems[product.itemId] >=
-                                            product.quantity
+                                            handleAddToCart(product)
                                           }
                                           loading={
                                             loadingItems.items[product.itemId]
                                           }
                                           style={{
-                                            flex: 1,
-                                            backgroundColor: "#5c3391",
-                                            borderColor: "#5c3391",
-                                            color: "white",
+                                            height: 44,
+                                            background:
+                                              "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
+                                            border: "none",
+                                            fontWeight: 700,
+                                            fontSize: 15,
+                                            borderRadius: 8,
+                                            marginTop: "auto",
                                           }}
-                                        />
-                                      </Space.Compact>
-                                    ) : (
-                                      <Button
-                                        type="primary"
-                                        block
-                                        onClick={() => handleAddToCart(product)}
-                                        loading={
-                                          loadingItems.items[product.itemId]
-                                        }
-                                        style={{
-                                          background:
-                                            "linear-gradient(135deg, #5c3391 0%, #312c74 100%)",
-                                          border: "none",
-                                          fontWeight: 600,
-                                        }}
-                                      >
-                                        Add to Cart
-                                      </Button>
-                                    )}
+                                        >
+                                          🛒 Add to Cart
+                                        </Button>
+                                      )}
+                                    </div>
                                   </div>
                                 </Card>
                               </Badge.Ribbon>
@@ -786,7 +834,6 @@ const SearchMain: React.FC = () => {
 
                 <Row gutter={[16, 16]}>
                   {filteredData.agents.map((agent, index) => {
-                    // Generate initials from agent name
                     const initials = agent.name
                       ? agent.name
                           .split(" ")
@@ -796,7 +843,6 @@ const SearchMain: React.FC = () => {
                           .toUpperCase()
                       : "AI";
 
-                    // Generate dynamic background colors
                     const bgColors = [
                       "#5c3391",
                       "#312c74",
@@ -818,7 +864,7 @@ const SearchMain: React.FC = () => {
                             hoverable
                             onClick={() => handleAgentClick(agent)}
                             style={{
-                              height: 360,
+                              height: 380,
                               borderRadius: 12,
                               boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
                               transition: "all 0.3s ease",
@@ -861,7 +907,6 @@ const SearchMain: React.FC = () => {
                                   style={{
                                     height: 90,
                                     width: 90,
-
                                     backgroundColor: color,
                                     display: "flex",
                                     alignItems: "center",
@@ -899,6 +944,25 @@ const SearchMain: React.FC = () => {
                                 {agent.description ||
                                   "No description available"}
                               </Paragraph>
+
+                              {/* View Button */}
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation(); // prevent triggering card click
+                                  handleAgentClick(agent);
+                                }}
+                                style={{
+                                  backgroundColor: "#008cba",
+                                  color: "white",
+                                  border: "none",
+                                  width: "100%",
+                                  marginTop: 10,
+                                  borderRadius: 8,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                View
+                              </Button>
                             </div>
                           </Card>
                         </Badge.Ribbon>

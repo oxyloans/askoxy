@@ -50,11 +50,11 @@ interface SearchItem {
 }
 
 const defaultSuggestions = [
-  "HMT",
+  "Low GI",
   "Sonamasoori",
   "Brown Rice",
   "Kolam Rice",
-  "Low GI",
+  "HMT",
 ];
 
 const SearchBar = () => {
@@ -246,7 +246,7 @@ const SearchBar = () => {
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
           className="w-full pl-4 pr-12 py-2.5 border-2 border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 hover:border-purple-400 hover:shadow-md"
-          placeholder="Search by name, category, or weight... (min 3 chars)"
+          placeholder="Search by items or agents... (min 3 chars)"
           aria-label="Search"
         />
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-1">

@@ -116,7 +116,7 @@ const LOGIN_URL = "/whatsapplogin";
   };
 
   return (
-    <footer className="bg-gradient-to-br from-cyan-50 via-purple-50 to-green-50 border-t border-gray-100">
+    <footer className="bg-gradient-to-br from-white- via-white to-white border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -141,6 +141,7 @@ const LOGIN_URL = "/whatsapplogin";
                   style={{
                     display: "inline-block",
                     animation: "pulseColor 5s infinite ease-in-out",
+                    color:"#6b21a8",
                   }}
                 >
                   {social.icon}
@@ -161,7 +162,7 @@ const LOGIN_URL = "/whatsapplogin";
                   <Link
                     key={service.name}
                     to={service.path}
-                    className="block text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                    className="block text-xs sm:text-sm text-gray-900 hover:text-purple-600 transition-colors duration-200"
                   >
                     {service.name}
                   </Link>
@@ -172,7 +173,7 @@ const LOGIN_URL = "/whatsapplogin";
                     onClick={() =>
                       handleProtectedNavigation(service.redirectPath!)
                     }
-                    className="block text-left text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200 w-full"
+                    className="block text-left text-xs sm:text-sm text-gray-900 hover:text-purple-600 transition-colors duration-200 w-full"
                     disabled={isLoading}
                   >
                     {service.name}

@@ -55,8 +55,8 @@ interface CountriesSectionProps {
   onViewAllClick?: () => void;
 }
 
-const CountriesSection: React.FC<CountriesSectionProps> = ({ 
-  onViewAllClick
+const CountriesSection: React.FC<CountriesSectionProps> = ({
+  onViewAllClick,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,6 +70,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const countryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const flagsRowRef = useRef<HTMLDivElement | null>(null);
+  const detailsRef = useRef<HTMLDivElement | null>(null);
 
   // Parse query parameter to auto-select country
   useEffect(() => {
@@ -106,7 +108,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify(requestBody),
           }
@@ -127,7 +129,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
           setUniversities([]);
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load universities";
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load universities";
         setError(errorMessage);
         console.error("Error fetching universities:", err);
         setUniversities([]);
@@ -159,14 +162,16 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify(requestBody),
           }
         );
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch universities: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch universities: ${response.status} ${response.statusText}`
+          );
         }
 
         const data: ApiResponse = await response.json();
@@ -177,7 +182,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
           throw new Error("Invalid response format");
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load universities";
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load universities";
         setError(errorMessage);
         console.error("Error fetching universities:", err);
       } finally {
@@ -191,7 +197,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
   const countries: Country[] = [
     {
       name: "USA",
-      description: "Home to Ivy League schools and cutting-edge research institutions",
+      description:
+        "Home to Ivy League schools and cutting-edge research institutions",
       details: {
         visaInfo: "F-1 Student Visa required",
         langRequirements: "TOEFL 80–100+ or IELTS 6.5–7.5+",
@@ -227,7 +234,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
       description: "Renowned for engineering, tuition-free public universities",
       details: {
         visaInfo: "German Student Visa required",
-        langRequirements: "German proficiency or English for international programs",
+        langRequirements:
+          "German proficiency or English for international programs",
         avgTuition: "€0 – €3,000 per year",
         popularPrograms: ["Engineering", "Physics", "Medicine"],
         scholarships: ["DAAD Scholarships", "Erasmus+"],
@@ -235,18 +243,24 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     },
     {
       name: "Italy",
-      description: "Rich cultural heritage and prestigious ancient universities",
+      description:
+        "Rich cultural heritage and prestigious ancient universities",
       details: {
         visaInfo: "Student Visa type D required for non-EU students",
-        langRequirements: "Italian proficiency or English for international programs",
+        langRequirements:
+          "Italian proficiency or English for international programs",
         avgTuition: "€1,000 – €5,000 per year",
         popularPrograms: ["Arts", "Architecture", "Fashion Design"],
-        scholarships: ["Italian Government Scholarships", "Regional Scholarships"],
+        scholarships: [
+          "Italian Government Scholarships",
+          "Regional Scholarships",
+        ],
       },
     },
     {
       name: "Ireland",
-      description: "Friendly atmosphere with high academic standards and rich culture",
+      description:
+        "Friendly atmosphere with high academic standards and rich culture",
       details: {
         visaInfo: "Irish Study Visa required for non-EU students",
         langRequirements: "IELTS 6.0+ typically required",
@@ -257,7 +271,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     },
     {
       name: "Australia",
-      description: "Top-ranked universities with excellent post-study work options",
+      description:
+        "Top-ranked universities with excellent post-study work options",
       details: {
         visaInfo: "Student Visa (subclass 500) required",
         langRequirements: "IELTS 6.0+ typically required",
@@ -279,7 +294,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     },
     {
       name: "France",
-      description: "World-class education in arts, sciences, and culinary studies",
+      description:
+        "World-class education in arts, sciences, and culinary studies",
       details: {
         visaInfo: "VLS-TS Student Visa required",
         langRequirements: "French or English depending on program",
@@ -303,37 +319,70 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
 
   const countryFlags = {
     USA: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${USAFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${USAFlag})` }}
+      />
     ),
     UK: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${UKFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${UKFlag})` }}
+      />
     ),
     Canada: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${CanadaFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${CanadaFlag})` }}
+      />
     ),
     CAN: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${CanadaFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${CanadaFlag})` }}
+      />
     ),
     Germany: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${GermanyFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${GermanyFlag})` }}
+      />
     ),
     Italy: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${ItalyFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${ItalyFlag})` }}
+      />
     ),
     Ireland: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${IrelandFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${IrelandFlag})` }}
+      />
     ),
     Australia: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${AustraliaFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${AustraliaFlag})` }}
+      />
     ),
     "New Zealand": (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${NewZealandFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${NewZealandFlag})` }}
+      />
     ),
     France: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${FranceFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${FranceFlag})` }}
+      />
     ),
     Netherlands: (
-      <div className="w-full h-full bg-cover bg-center bg-no-repeat scale-110" style={{ backgroundImage: `url(${NetherlandsFlag})` }} />
+      <div
+        className="w-full h-full bg-cover bg-center bg-no-repeat scale-110"
+        style={{ backgroundImage: `url(${NetherlandsFlag})` }}
+      />
     ),
   };
 
@@ -345,7 +394,10 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     };
 
     const countryName = flagMap[countryCode] || countryCode;
-    return countryFlags[countryName as keyof typeof countryFlags] || countryFlags["USA"];
+    return (
+      countryFlags[countryName as keyof typeof countryFlags] ||
+      countryFlags["USA"]
+    );
   };
 
   const handleViewAllClick = () => {
@@ -367,12 +419,20 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     const ref = countryRefs.current[country.name];
     if (ref) {
       const rect = ref.getBoundingClientRect();
-      const containerRect = ref.parentElement?.getBoundingClientRect();
-      if (containerRect) {
+      const container = flagsRowRef.current ?? ref.parentElement;
+      const containerRect = container?.getBoundingClientRect();
+
+      if (container && containerRect) {
+        // Position the arrow (unchanged logic)
         setArrowPosition({
           left: rect.left - containerRect.left + rect.width / 2,
           top: rect.bottom - containerRect.top + 10,
         });
+
+        // Smoothly center the selected flag in the horizontal row
+        const offset =
+          ref.offsetLeft - container.clientWidth / 2 + ref.clientWidth / 2;
+        container.scrollTo({ left: Math.max(0, offset), behavior: "smooth" });
       }
     }
 
@@ -380,6 +440,14 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     setTimeout(() => {
       setIsAnimating(false);
       setShowDetails(true);
+
+      // After details appear, smooth-scroll the page to the details card
+      requestAnimationFrame(() => {
+        detailsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     }, 300);
   };
 
@@ -404,7 +472,15 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
           </div>
 
           {/* Country flags row with dynamic arrow */}
-          <div className="flex flex-wrap justify-center gap-8 mt-6 mb-16 relative">
+          <div
+            ref={flagsRowRef}
+            className="
+    relative mt-6 mb-16
+    flex gap-6 overflow-x-auto
+    snap-x snap-mandatory
+    sm:flex-wrap sm:justify-center sm:overflow-visible
+  "
+          >
             {selectedCountry && (
               <div
                 className="absolute w-0 h-0 transition-all duration-300 ease-in-out"
@@ -417,27 +493,27 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                   transform: "translateX(-12px)",
                   zIndex: 20,
                 }}
-              ></div>
+              />
             )}
 
             {countries.map((country) => (
               <div
                 key={country.name}
                 ref={(el) => (countryRefs.current[country.name] = el)}
-                className={`flex flex-col items-center cursor-pointer transition-all duration-300 ${
-                  selectedCountry === country.name
-                    ? "scale-110"
-                    : "hover:scale-105"
-                }`}
+                className={`
+        snap-center flex-none
+        flex flex-col items-center cursor-pointer transition-all duration-300
+        ${selectedCountry === country.name ? "scale-110" : "hover:scale-105"}
+      `}
                 onClick={() => handleCountrySelect(country)}
+                style={{ width: 112 /* ~w-28 for consistent centering */ }}
               >
                 <div
-                  className={`relative w-24 h-24 flag-container ${
+                  className={`relative w-24 h-24 ${
                     selectedCountry === country.name
                       ? "ring-4 ring-yellow-500 rounded-full"
                       : "rounded-full"
                   } shadow-md overflow-hidden`}
-                  style={{ padding: 0 }}
                 >
                   {countryFlags[country.name as keyof typeof countryFlags]}
                 </div>
@@ -454,9 +530,9 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
             ))}
           </div>
 
-          {/* Country Details */}
           {(showDetails || isAnimating) && activeCountry && (
             <div
+              ref={detailsRef}
               className={`transition-all duration-300 ${
                 showDetails
                   ? "opacity-100 translate-y-0"
@@ -576,7 +652,9 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
             {loading ? (
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-                <span className="ml-2 text-gray-600">Loading universities...</span>
+                <span className="ml-2 text-gray-600">
+                  Loading universities...
+                </span>
               </div>
             ) : error ? (
               <div className="text-center py-8">
@@ -604,7 +682,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                         className="w-full h-48 object-contain bg-gray-50 transition-transform duration-500 group-hover:scale-105"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = "https://via.placeholder.com/300x200?text=University+Logo";
+                          target.src =
+                            "https://via.placeholder.com/300x200?text=University+Logo";
                         }}
                       />
                       <div className="absolute top-3 right-3">

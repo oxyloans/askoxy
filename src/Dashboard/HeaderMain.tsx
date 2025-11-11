@@ -458,7 +458,7 @@ const Header: React.FC<HeaderProps> = ({
                 value={searchValue}
                 onChange={handleSearch}
                 className="mobile-search-input flex-1 bg-transparent border-none outline-none text-gray-800 text-sm ml-2 placeholder:text-gray-400"
-                placeholder="Search for 'Kolam Rice'"
+                placeholder="Search for products or agents"
                 autoFocus
               />
               {searchValue && (
