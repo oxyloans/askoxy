@@ -499,8 +499,8 @@ const PlanOfTheDay: React.FC = () => {
             message: "Please enter your plan for the day!",
           },
           {
-            min: 120,
-            message: "Your plan should be at least 120 characters",
+            min: 30,
+            message: "Your plan should be at least 30 characters",
           },
         ]}
       >

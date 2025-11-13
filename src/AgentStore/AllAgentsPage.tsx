@@ -1,20 +1,25 @@
 // src/AgentStore/AllAgentsPage.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
-
-import { Button, Modal, Tag, Select, Grid, Popconfirm, message } from "antd";
 import {
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  UploadOutlined,
-  DownloadOutlined,
+  Button,
+  Modal,
+  Tag,
+  Select,
+  Grid,
+  Popconfirm,
+  message,
+  Input,
+  Empty,
+  Spin,
+} from "antd";
+import {
   PlayCircleOutlined,
-  HistoryOutlined,
-  FileTextOutlined,
-  PictureOutlined,
-  ReloadOutlined,
+  CloseOutlined,
+  ClearOutlined,
+  MessageOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 
 /** -------- Auth helpers -------- */
@@ -30,19 +35,17 @@ function getAccessToken(): string | null {
 
 // Safely resolve a display name from historyData (fallback to userId)
 function resolveUserDisplayName(
-  userId: string | null | undefined,
+  userId: string | number | null | undefined,
   map?: Record<string, string | null>
 ) {
-  if (!userId) return "Unknown User";
-  const n = map?.[userId];
-  return (n && n.trim()) || userId; // ✅ fallback to id when name missing
-}
+  if (userId == null) return "Unknown User";
+  const key = String(userId);
+  const n = map?.[key];
+  if (n && n.trim()) return n.trim();
 
-// Filter history list by selected user (or return all)
-function filterHistoryByUser(rawList: any[], selected?: string | null) {
-  if (!Array.isArray(rawList)) return [];
-  if (!selected) return rawList;
-  return rawList.filter((e) => e?.userId === selected);
+  // Fallback: pretty userId like “User 1234…abcd”
+  const short = key.length > 10 ? `${key.slice(0, 4)}…${key.slice(-4)}` : key;
+  return `User ${short}`;
 }
 
 // ✅ Helper: formats date/time safely
@@ -152,6 +155,7 @@ type Assistant = {
   roleUser: string | null;
   view: string | null;
   screenStatus?: "STAGE1" | "STAGE2" | "STAGE3" | "STAGE4" | null;
+  certificateUrl?: string | null; // ✅ add this
 };
 type Conversation = {
   id: string;
@@ -232,10 +236,179 @@ const AllAgentsPage: React.FC = () => {
   const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [removingFileId, setRemovingFileId] = useState<string | null>(null);
+
+  const [namePromptOpen, setNamePromptOpen] = useState(false);
+  const [tempRecipient, setTempRecipient] = useState("");
+  const [pendingAgentForCert, setPendingAgentForCert] =
+    useState<Assistant | null>(null);
   const showId = showEdit ?? "";
   const PURPLE = "#6D28D9";
   const PURPLE_DARK = "#5B21B6";
   const LAVENDER_BG = "#F5F3FF";
+
+  // 🔎 Optional search/filter inside the history modal
+  const [historyUserQuery, setHistoryUserQuery] = useState<string>("");
+  const filteredUsersInModal = React.useMemo(() => {
+    const users: any[] = Array.isArray(historyData?.users)
+      ? historyData!.users
+      : [];
+    if (!historyUserQuery.trim()) return users;
+    const q = historyUserQuery.trim().toLowerCase();
+    return users.filter((u) => {
+      const nm = resolveUserDisplayName(
+        u.userId,
+        historyData?.userNameMap
+      ).toLowerCase();
+      const uid = String(u.userId || "").toLowerCase();
+      return nm.includes(q) || uid.includes(q);
+    });
+  }, [historyUserQuery, historyData]);
+
+  const [recipientName, setRecipientName] = useState<string>("");
+  const resolvedUserIdRef = React.useRef<string>("");
+
+  if (!resolvedUserIdRef.current) {
+    const id = getUserId();
+    resolvedUserIdRef.current =
+      id && id !== "null" && id !== "undefined" ? id : "";
+  }
+
+  // 👉 Use this everywhere
+  const resolvedUserId = resolvedUserIdRef.current;
+
+  async function resolveRecipientName(): Promise<string> {
+    const idCandidates = [
+      resolvedUserId,
+      data?.userId || "",
+      localStorage.getItem("customerId") || "",
+      localStorage.getItem("userId") || "",
+    ].filter(Boolean);
+
+    for (const candidate of idCandidates) {
+      try {
+        const url = new URL(
+          "/api/user-service/customerProfileDetails",
+          BASE_URL
+        );
+        url.searchParams.set("customerId", candidate);
+        const res = await authFetch(url.toString(), { method: "GET" });
+        const txt = await res.text().catch(() => "");
+        if (!res.ok) continue;
+
+        const json = txt ? JSON.parse(txt) : {};
+        const first =
+          (typeof json?.firstName === "string" && json.firstName.trim()) ||
+          (typeof json?.userFirstName === "string" &&
+            json.userFirstName.trim()) ||
+          "";
+        const last =
+          (typeof json?.lastName === "string" && json.lastName.trim()) ||
+          (typeof json?.userLastName === "string" &&
+            json.userLastName.trim()) ||
+          "";
+
+        const full = [first, last].filter(Boolean).join(" ").trim();
+        if (full) return full;
+      } catch {
+        // continue to next candidate
+      }
+    }
+    return "";
+  }
+
+  // Put near other helpers
+  const normalizeId = (v: any) =>
+    v === null || v === undefined ? "" : String(v).trim();
+
+  function filterHistoryByUser(rawList: any[], selected?: string | null) {
+    if (!Array.isArray(rawList)) return [];
+    const sel = normalizeId(selected);
+    if (!sel) return [];
+    return rawList.filter((row) => {
+      const a = normalizeId(row?.userId);
+      const b = normalizeId((row as any)?.user_id);
+      const c = normalizeId((row as any)?.uid);
+      return a === sel || b === sel || c === sel;
+    });
+  }
+
+  const [certLoadingFor, setCertLoadingFor] = useState<string | null>(null);
+
+  async function generateCertificate(agent: Assistant) {
+    if (!agent?.id || !agent?.agentName) {
+      return message.error("Missing agentId or agentName.");
+    }
+    try {
+      setCertLoadingFor(agent.id);
+
+      // Always fetch fresh name if not in state
+      let nameToUse = (recipientName || "").trim();
+      if (!nameToUse) {
+        const fresh = await resolveRecipientName();
+        if (fresh) {
+          setRecipientName(fresh);
+          nameToUse = fresh;
+        }
+      }
+
+      if (!nameToUse) {
+        // If your profile modal is available on this page, open it here:
+        // setIsMandatoryGate(true); setProfileModalOpen(true);
+        setCertLoadingFor(null);
+        return message.warning(
+          "Please enter your first name to generate the certificate."
+        );
+      }
+
+      const url = new URL(
+        "/api/ai-service/agent/downloadAiCertificate",
+        BASE_URL
+      );
+      url.searchParams.set("agentId", agent.id);
+      url.searchParams.set(
+        "agentName",
+        agent.agentName || agent.name || "AI Agent"
+      );
+      url.searchParams.set("recipientName", nameToUse);
+
+      const res = await authFetch(url.toString(), { method: "POST" });
+      const txt = await res.text().catch(() => "");
+      if (!res.ok) {
+        throw new Error(
+          `Certificate generation failed (${res.status})${
+            txt ? `: ${txt}` : ""
+          }`
+        );
+      }
+
+      let json: any = {};
+      try {
+        json = txt ? JSON.parse(txt) : {};
+      } catch {}
+      const urlFromApi: string | null =
+        json?.certificateUrl || json?.url || json?.downloadUrl || null;
+
+      if (urlFromApi) {
+        window.open(urlFromApi, "_blank", "noopener,noreferrer");
+      } else {
+        message.success("Certificate generated successfully.");
+      }
+
+      await refreshData();
+    } catch (e: any) {
+      message.error(e?.message || "Failed to generate certificate.");
+    } finally {
+      setCertLoadingFor(null);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      const name = await resolveRecipientName();
+      if (name) setRecipientName(name);
+    })();
+    // only on mount or when user changes
+  }, [resolvedUserId, data?.userId]);
 
   // 🔎 Selected user detail view for full history
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -264,10 +437,6 @@ const AllAgentsPage: React.FC = () => {
     return out;
   }
 
-  const resolvedUserId = useMemo(() => {
-    const id = getUserId();
-    return id && id !== "null" && id !== "undefined" ? id : "";
-  }, []);
   const gotoStore = () => navigate("/main/agentcreate");
 
   const refreshData = async () => {
@@ -327,17 +496,18 @@ const AllAgentsPage: React.FC = () => {
         lastChatAt?: string | null;
       }
     > = {};
+    // inside normalizeCreatorAgentDetails(raw)
     list.forEach((e: any) => {
-      const uid = e?.userId || "unknown";
-      if (!byUser[uid])
+      const uid = String(e?.userId ?? "unknown"); // ✅ force string
+      if (!byUser[uid]) {
         byUser[uid] = {
           userId: uid,
           name: e?.name,
           chats: 0,
           lastChatAt: e?.createdAt ?? null,
         };
+      }
       byUser[uid].chats += 1;
-      // If a timestamp exists, keep the latest
       if (
         e?.createdAt &&
         (!byUser[uid].lastChatAt ||
@@ -458,10 +628,10 @@ const AllAgentsPage: React.FC = () => {
 
   const { xs } = Grid.useBreakpoint();
   /** AntD Button size & layout become compact on phones, roomy on desktop */
-  const btnSize: "small" | "middle" | "large" = xs ? "middle" : "large";
+  const btnSize: "small" | "middle" | "large" = xs ? "small" : "middle";
   /** On phones, buttons expand to full width; on larger screens they flow inline */
   const btnBlock = !!xs;
-
+  const safeSelectedUserId = normalizeId(selectedUserId);
   async function generateProfilePicForAssistant(a: Assistant) {
     if (!a) return;
     const uid = resolvedUserId;
@@ -618,6 +788,25 @@ const AllAgentsPage: React.FC = () => {
 
   // 🔹 Cache to avoid duplicate profile fetches across renders
   const requestedProfileIdsRef = React.useRef<Set<string>>(new Set());
+
+  const usersPaneRef = useRef<HTMLDivElement | null>(null);
+  const chatPaneRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // Only on small screens: scroll right/chat pane into view after selection
+    if (selectedUserId) {
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      if (isMobile && chatPaneRef.current) {
+        // wait for DOM to paint messages
+        requestAnimationFrame(() => {
+          chatPaneRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+      }
+    }
+  }, [selectedUserId]);
 
   // 🔹 Skip API — placeholder-safe effect (no repeated triggers)
   useEffect(() => {
@@ -1050,7 +1239,11 @@ const AllAgentsPage: React.FC = () => {
           />
         </div>
         <Button
-         style={{ backgroundColor:"#1ab394", color:"white", borderColor:"#1ab394"}}
+          style={{
+            backgroundColor: "#1ab394",
+            color: "white",
+            borderColor: "#1ab394",
+          }}
           icon={<PlayCircleOutlined />}
           size={btnSize}
           block={btnBlock}
@@ -1376,35 +1569,134 @@ const AllAgentsPage: React.FC = () => {
 
                         {/* ✅ Action Buttons: Edit | View | Delete */}
                         <div className="flex gap-2 ml-auto flex-wrap justify-end w-full sm:w-auto">
-                          <button
-                            onClick={() => {
-                              setSelectedUserId(null); // ✅ reset selection
-                              setHistoryOpenFor(a.id);
-                              fetchCreatorAgentDetails(a.id, resolvedUserId);
+                          {/* Responsive action row — User History + Certificate */}
+                          <div
+                            className={`mt-3 w-full flex flex-wrap items-center gap-2 sm:gap-2.5
+    ${
+      a.status === "APPROVED" && a.assistantId ? "justify-start" : "justify-end"
+    }`}
+                            style={{
+                              paddingRight:
+                                a.status !== "APPROVED" ? "4px" : "0px",
                             }}
-                            title="View public chat history (creator view)"
-                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-md 
-    text-xs font-semibold border border-purple-200 
-    bg-gradient-to-r from-purple-50 to-purple-100 
-    text-purple-700 hover:from-purple-100 hover:to-purple-200 
-    transition-all shadow-sm w-full sm:w-auto"
                           >
-                            {/* 🕓 Icon for better UI clarity */}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="w-4 h-4 text-purple-700"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <polyline points="12 6 12 12 16 14" />
-                            </svg>
-                            <span>User History</span>
-                          </button>
+                            {/* A single source of truth for equal button sizing */}
+                            {/*
+    w-[148px] on mobile; w-[168px] on sm+.
+    h-9 keeps heights identical.
+  */}
+                            {(() => {
+                              const baseBtn =
+                                "inline-flex items-center justify-center gap-1.5 h-9 w-[148px] sm:w-[168px] " +
+                                "rounded-md text-[11px] sm:text-xs font-semibold transition-all shadow-sm " +
+                                "disabled:opacity-60 disabled:cursor-not-allowed truncate";
+
+                              return (
+                                <>
+                                  {/* User History Button (always visible) */}
+                                  <button
+                                    onClick={() => {
+                                      setSelectedUserId(null);
+                                      setHistoryOpenFor(a.id);
+                                      fetchCreatorAgentDetails(
+                                        a.id,
+                                        resolvedUserId
+                                      );
+                                    }}
+                                    title="View public chat history (creator view)"
+                                    className={`${baseBtn} border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 hover:from-purple-100 hover:to-purple-200`}
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-4 h-4 flex-none"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="1.8"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="12" cy="12" r="10" />
+                                      <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    <span className="truncate">
+                                      User History
+                                    </span>
+                                  </button>
+
+                                  {/* Certificate actions — only for Approved + assistantId */}
+                                  {a.assistantId &&
+                                    a.status === "APPROVED" &&
+                                    (a.certificateUrl ? (
+                                      <a
+                                        href={a.certificateUrl}
+                                        target="_blank"
+                                        rel="noreferrer noopener"
+                                        title="Download AI Agent Certificate"
+                                        aria-label="Download Certificate"
+                                        className={`${baseBtn} border border-green-200 bg-green-50 text-green-700 hover:bg-green-100`}
+                                      >
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="w-3.5 h-3.5 flex-none"
+                                          viewBox="0 0 24 24"
+                                          fill="currentColor"
+                                        >
+                                          <path d="M12 5c-5.5 0-9.6 5.1-10 6 .4.9 4.5 6 10 6s9.6-5.1 10-6c-.4-.9-4.5-6-10-6Zm0 9.5A3.5 3.5 0 1 1 12 7a3.5 3.5 0 0 1 0 7.5Z" />
+                                        </svg>
+                                        <span className="truncate">
+                                          Download Certificate
+                                        </span>
+                                      </a>
+                                    ) : (
+                                      <button
+                                        disabled={certLoadingFor === a.id}
+                                        onClick={() => generateCertificate(a)}
+                                        title="Generate AI Agent Certificate"
+                                        aria-label="Generate Certificate"
+                                        className={`${baseBtn} border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100`}
+                                      >
+                                        {certLoadingFor === a.id ? (
+                                          <svg
+                                            className="animate-spin h-3.5 w-3.5 flex-none"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                          >
+                                            <circle
+                                              className="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              strokeWidth="4"
+                                            />
+                                            <path
+                                              className="opacity-75"
+                                              d="M4 12a8 8 0 018-8"
+                                              fill="currentColor"
+                                            />
+                                          </svg>
+                                        ) : (
+                                          <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-3.5 w-3.5 flex-none"
+                                            viewBox="0 0 24 24"
+                                            fill="currentColor"
+                                          >
+                                            <path d="M6 2a1 1 0 00-1 1v16.382l3.447-1.724a2 2 0 011.106-.15L12 18l2.447-.492a2 2 0 011.106.15L19 19.382V3a1 1 0 10-2 0v12.618l-1.553-.776a4 4 0 00-2.212-.3L12 15.764l-1.235-.222a4 4 0 00-2.212.3L7 15.618V3a1 1 0 00-1-1z" />
+                                          </svg>
+                                        )}
+                                        <span className="truncate">
+                                          {certLoadingFor === a.id
+                                            ? "Generating Certificate…"
+                                            : "Generate Certificate"}
+                                        </span>
+                                      </button>
+                                    ))}
+                                </>
+                              );
+                            })()}
+                          </div>
 
                           {/* ✏️ Edit Button */}
                           <div className="flex flex-wrap gap-2 w-full justify-center sm:justify-end">
@@ -1806,156 +2098,397 @@ const AllAgentsPage: React.FC = () => {
                         )}
                       </Modal>
 
-                      {/* Users Chat History (AntD) */}
                       <Modal
                         open={!!historyOpenFor}
-                        onCancel={() => setHistoryOpenFor(null)}
+                        onCancel={() => {
+                          setHistoryOpenFor(null);
+                          setSelectedUserId(null);
+                          setHistoryUserQuery("");
+                        }}
                         footer={null}
                         centered
-                        width="min(96vw, 1120px)"
+                        // Fixed but responsive max width
+                        width="min(94vw, 960px)"
                         destroyOnClose
                         maskClosable
+                        closeIcon={null}
+                        // Keep the body lean; let inner panes scroll
                         bodyStyle={{
                           padding: 0,
                           background: "#fff",
-                          maxHeight: "80vh",
+                          maxHeight: "82vh",
                           overflow: "hidden",
                         }}
                         title={
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 10,
-                            }}
-                          >
-                            <div
-                              style={{
-                                height: 32,
-                                width: 32,
-                                borderRadius: 8,
-                                background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE_DARK})`,
-                                display: "grid",
-                                placeItems: "center",
-                                color: "#fff",
-                              }}
-                            >
-                              🗂
+                          <div className="flex items-center justify-between gap-2">
+                            {/* Left: Title + meta */}
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="h-7 w-7 rounded-md bg-gradient-to-br from-violet-600 to-purple-700 text-white grid place-items-center">
+                                <MessageOutlined />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[14px] font-semibold text-purple-900 truncate">
+                                  Users Chat History
+                                </div>
+                                {historyData?.agentName && (
+                                  <div className="text-[11px] text-gray-500 truncate">
+                                    Agent: {historyData.agentName} • Users:{" "}
+                                    {historyData?.totalUsers ?? 0} • Chats:{" "}
+                                    {historyData?.totalChats ?? 0}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <span style={{ color: "#1f1f1f", fontWeight: 700 }}>
-                              Users Chat History
-                            </span>
+
+                            {/* Right: Clear + Close */}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="small"
+                                icon={<ClearOutlined />}
+                                onClick={() => {
+                                  setSelectedUserId(null);
+                                  setHistoryUserQuery("");
+                                }}
+                              >
+                                Clear
+                              </Button>
+                              <Button
+                                size="small"
+                                type="primary"
+                                danger
+                                icon={<CloseOutlined />}
+                                onClick={() => {
+                                  setHistoryOpenFor(null);
+                                  setSelectedUserId(null);
+                                  setHistoryUserQuery("");
+                                }}
+                              >
+                                Close
+                              </Button>
+                            </div>
                           </div>
                         }
                       >
-                        <div
-                          className="p-0"
-                          style={{ maxHeight: "80vh", overflow: "auto" }}
-                        >
-                          {historyLoading ? (
-                            <div className="flex items-center gap-3 text-sm text-gray-600 px-5 py-4">
-                              <svg
-                                className="animate-spin h-5 w-5 text-gray-500"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-20"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                />
-                                <path
-                                  className="opacity-80"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V2C5.373 2 0 7.373 0 14h4z"
-                                />
-                              </svg>
-                              Loading user history…
+                        {/* Two-pane layout that scrolls correctly on mobile */}
+                        <div className="flex flex-col md:flex-row h-[74vh]">
+                          {/* LEFT: Users */}
+                          <aside className="w-full md:w-[300px] border-b md:border-b-0 md:border-r border-gray-100 flex flex-col min-h-0">
+                            {/* Search (compact) */}
+                            <div className="p-2.5 md:p-3 sticky top-0 bg-white z-10 border-b border-gray-100">
+                              <Input
+                                allowClear
+                                size="small"
+                                prefix={
+                                  <UserOutlined style={{ color: "#8b5cf6" }} />
+                                }
+                                placeholder="Search name or User ID…"
+                                value={historyUserQuery}
+                                onChange={(e) =>
+                                  setHistoryUserQuery(e.target.value)
+                                }
+                                className="text-[13px]"
+                              />
                             </div>
-                          ) : historyError ? (
-                            <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm m-5">
-                              {historyError}
-                            </div>
-                          ) : !historyData ? (
-                            <div className="text-sm text-gray-500 italic px-5 py-4">
-                              No data.
-                            </div>
-                          ) : (
-                            <div className="p-5">
-                              {/* ---- Header stats ---- */}
-                              <div className="flex flex-wrap items-center gap-2 mb-4">
-                                <Tag color="purple">
-                                  Agent: {historyData.agentName || "Unknown"}
-                                </Tag>
-                                <Tag color="blue">
-                                  Total Chats: {historyData.totalChats}
-                                </Tag>
-                                <Tag color="geekblue">
-                                  Total Users: {historyData.totalUsers}
-                                </Tag>
-                              </div>
 
-                              {/* ---- User filter ---- */}
-                              <div className="mb-4">
-                                <Select
-                                  allowClear
-                                  value={selectedUserId || undefined}
-                                  onChange={(v) => setSelectedUserId(v || null)}
-                                  placeholder="Filter by user"
-                                  className="w-full sm:w-[320px]"
-                                  options={(historyData.users || []).map(
-                                    (u: any) => ({
-                                      value: u.userId,
-                                      label: `${u.name || u.userId} — ${
-                                        u.chats
-                                      } chats`,
-                                    })
+                            {/* Scroll area */}
+                            <div className="flex-1 min-h-0 overflow-y-auto">
+                              {historyLoading && (
+                                <div className="flex items-center justify-center p-8">
+                                  <Spin tip="Loading chat users…" />
+                                </div>
+                              )}
+
+                              {!historyLoading && historyError && (
+                                <div className="p-4 text-center">
+                                  <p className="text-sm text-red-600 font-medium mb-2">
+                                    Failed to load history
+                                  </p>
+                                  <p className="text-xs text-gray-500 mb-3">
+                                    {historyError}
+                                  </p>
+                                  <Button
+                                    size="small"
+                                    onClick={() =>
+                                      fetchCreatorAgentDetails(
+                                        historyOpenFor!,
+                                        resolvedUserId
+                                      )
+                                    }
+                                  >
+                                    Retry
+                                  </Button>
+                                </div>
+                              )}
+
+                              {!historyLoading && !historyError && (
+                                <ul className="divide-y divide-gray-100">
+                                  {(filteredUsersInModal || []).map(
+                                    (u: any) => {
+                                      const isActive =
+                                        String(selectedUserId || "") ===
+                                        String(u.userId || "");
+                                      const label = resolveUserDisplayName(
+                                        u.userId,
+                                        historyData?.userNameMap
+                                      );
+
+                                      return (
+                                        <li
+                                          key={normalizeId(u.userId)}
+                                          role="button"
+                                          tabIndex={0}
+                                          onClick={() => {
+                                            const id = normalizeId(u.userId);
+                                            setSelectedUserId(id);
+
+                                            // On phones, bring the chat pane into view right away
+                                            if (
+                                              window.matchMedia(
+                                                "(max-width: 767px)"
+                                              ).matches
+                                            ) {
+                                              requestAnimationFrame(() => {
+                                                document
+                                                  .getElementById("chat-pane")
+                                                  ?.scrollIntoView({
+                                                    behavior: "smooth",
+                                                    block: "start",
+                                                  });
+                                              });
+                                            }
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (
+                                              e.key === "Enter" ||
+                                              e.key === " "
+                                            )
+                                              setSelectedUserId(
+                                                normalizeId(u.userId)
+                                              );
+                                          }}
+                                          className={`p-2.5 md:p-3 cursor-pointer transition ${
+                                            normalizeId(selectedUserId) ===
+                                            normalizeId(u.userId)
+                                              ? "bg-purple-50/80"
+                                              : "hover:bg-gray-50"
+                                          }`}
+                                        >
+                                          <div className="flex items-center justify-between gap-2">
+                                            <div className="min-w-0">
+                                              <div className="text-[13px] font-semibold text-gray-900 truncate">
+                                                {label}
+                                              </div>
+                                              {!!u.lastChatAt && (
+                                                <div className="text-[11px] text-gray-500 truncate">
+                                                  Last chat:{" "}
+                                                  {fmtDate(u.lastChatAt)}
+                                                </div>
+                                              )}
+                                            </div>
+                                            <Tag
+                                              color="purple"
+                                              style={{
+                                                fontSize: 11,
+                                                lineHeight: "18px",
+                                                paddingInline: 6,
+                                              }}
+                                            >
+                                              {u.chats} chats
+                                            </Tag>
+                                          </div>
+                                        </li>
+                                      );
+                                    }
                                   )}
-                                />
-                              </div>
 
-                              {/* ---- Conversations list (preview) ---- */}
-                              <div className="grid gap-3">
-                                {filterHistoryByUser(
-                                  historyData.rawList || [],
-                                  selectedUserId
-                                ).map((e: any, i: number) => {
-                                  const name =
-                                    resolveUserDisplayName(
-                                      e?.userId,
-                                      historyData.userNameMap
-                                    ) || "Unknown User";
-                                  const createdAt = fmtDate(e?.createdAt);
-                                  const preview = String(e?.prompt || "")
-                                    .replace(/^\s*\[\s*|\s*\]\s*$/g, "")
-                                    .replace(/\s+/g, " ")
-                                    .slice(0, 280);
-
-                                  return (
-                                    <div
-                                      key={i}
-                                      className="rounded-xl border border-purple-100 bg-white shadow-sm p-3"
-                                    >
-                                      <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div className="font-semibold text-purple-900">
-                                          {name}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                          {createdAt}
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 text-sm text-gray-700">
-                                        {preview || "—"}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                  {/* Empty users */}
+                                  {(!filteredUsersInModal ||
+                                    filteredUsersInModal.length === 0) &&
+                                    !historyLoading &&
+                                    !historyError && (
+                                      <li className="p-6">
+                                        <Empty
+                                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                          description={
+                                            <div className="text-sm">
+                                              <div className="font-semibold text-gray-800">
+                                                No chat users yet
+                                              </div>
+                                              <div className="text-gray-500">
+                                                They’ll appear here after the
+                                                first chat.
+                                              </div>
+                                            </div>
+                                          }
+                                        />
+                                      </li>
+                                    )}
+                                </ul>
+                              )}
                             </div>
-                          )}
+                          </aside>
+
+                          <section
+                            id="chat-pane"
+                            ref={chatPaneRef}
+                            className="flex-1 min-w-0 flex flex-col min-h-0"
+                          >
+                            <div className="flex-1 min-h-0 overflow-y-auto p-3 md:p-5">
+                              {historyLoading && (
+                                <div className="h-full grid place-items-center">
+                                  <Spin tip="Loading chats…" />
+                                </div>
+                              )}
+
+                              {!historyLoading && !historyError && (
+                                <>
+                                  {/* No chats overall */}
+                                  {(!historyData?.rawList ||
+                                    historyData.rawList.length === 0) && (
+                                    <div className="h-full grid place-items-center">
+                                      <Empty
+                                        description={
+                                          <div className="text-sm">
+                                            <div className="font-semibold text-gray-800">
+                                              No chats found
+                                            </div>
+                                            <div className="text-gray-500">
+                                              This agent has not received any
+                                              public chats yet.
+                                            </div>
+                                          </div>
+                                        }
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* Chats exist but no user selected */}
+                                  {historyData?.rawList?.length > 0 &&
+                                    !selectedUserId && (
+                                      <div className="h-full grid place-items-center text-center px-6">
+                                        <div>
+                                          <div className="text-sm font-semibold text-gray-900 mb-1">
+                                            Select a user to view chat
+                                          </div>
+                                          <p className="text-[13px] text-gray-500">
+                                            Choose a user from the left panel.
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                  {/* Selected user's chat */}
+                                  {historyData?.rawList?.length > 0 &&
+                                    selectedUserId && (
+                                      <div className="space-y-3">
+                                        <div className="space-y-2.5">
+                                          {filterHistoryByUser(
+                                            historyData.rawList,
+                                            selectedUserId
+                                          ).map((row: any, idx: number) => {
+                                            const messages =
+                                              parsePromptToMessages(
+                                                row?.prompt || ""
+                                              );
+                                            const ts = row?.createdAt
+                                              ? fmtDate(row.createdAt)
+                                              : "";
+                                            return (
+                                              <div
+                                                key={`${row?.id || idx}`}
+                                                className="rounded-lg border border-gray-100 p-2.5 md:p-3 bg-white shadow-sm"
+                                              >
+                                                <div className="mb-1.5 flex items-center justify-between">
+                                                  <Tag
+                                                    style={{
+                                                      fontSize: 11,
+                                                      lineHeight: "18px",
+                                                    }}
+                                                  >
+                                                    {row?.conversationId
+                                                      ? `Conv: ${row.conversationId}`
+                                                      : "Conversation"}
+                                                  </Tag>
+                                                  <span className="text-[11px] text-gray-500">
+                                                    {ts}
+                                                  </span>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                  {messages.length === 0 && (
+                                                    <div className="text-[12px] text-gray-500">
+                                                      No message payload
+                                                      available.
+                                                    </div>
+                                                  )}
+
+                                                  {messages.map((m, i) => (
+                                                    <div
+                                                      key={i}
+                                                      className={`rounded-md p-2 md:p-2.5 text-[13px] leading-6 ${
+                                                        m.role === "user"
+                                                          ? "bg-purple-50 text-gray-900"
+                                                          : "bg-gray-50 text-gray-800"
+                                                      }`}
+                                                    >
+                                                      <div className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 mb-1">
+                                                        {m.role === "user"
+                                                          ? "User"
+                                                          : "Assistant"}
+                                                      </div>
+                                                      <div className="whitespace-pre-wrap break-words">
+                                                        {m.content}
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+                                </>
+                              )}
+                            </div>
+                          </section>
                         </div>
+                      </Modal>
+
+                      <Modal
+                        open={namePromptOpen}
+                        onCancel={() => {
+                          setNamePromptOpen(false);
+                          setPendingAgentForCert(null);
+                        }}
+                        onOk={() => {
+                          const v = (tempRecipient || "").trim();
+                          if (!v) {
+                            message.warning("Please enter your first name");
+                            return;
+                          }
+                          setRecipientName(v);
+                          setNamePromptOpen(false);
+                          if (pendingAgentForCert) {
+                            // proceed after capturing the name
+                            generateCertificate(pendingAgentForCert);
+                            setPendingAgentForCert(null);
+                          }
+                        }}
+                        title="Enter your name for the certificate"
+                        okText="Save"
+                      >
+                        <input
+                          autoFocus
+                          className="w-full border rounded px-3 py-2"
+                          placeholder="Your first name"
+                          value={tempRecipient}
+                          onChange={(e) => setTempRecipient(e.target.value)}
+                        />
+                        <p className="mt-2 text-xs text-gray-500">
+                          This will appear as the recipient name on your AI
+                          Agent Certificate.
+                        </p>
                       </Modal>
 
                       {/* ✅ Delete / Inactive Confirmation (no "Archive") */}

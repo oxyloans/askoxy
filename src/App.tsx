@@ -237,6 +237,7 @@ import CelebShieldPage from "./components/celebshieldpage";
 import QuickAgentCreate from "./BharathAIStore/pages/Agentcreation";
 import TestStore from "./BharathAIStore/pages/TestStore";
 import TestAgentDetails from "./BharathAIStore/pages/TestAgentDetails";
+import PaymentCashfree from "./AgentStore/PaymentCashfree";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -285,6 +286,7 @@ const App: React.FC = () => {
             <Route path="/carnival-list" element={<CarnivalListPage />} />
             <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
             <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
+            <Route path="/paymentcashfree" element={<PaymentCashfree />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}

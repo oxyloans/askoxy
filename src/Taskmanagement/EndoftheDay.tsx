@@ -790,9 +790,9 @@ const canUpdateTask = (task: Task): boolean => {
                             message: "End of day note is required.",
                           },
                           {
-                            min: 120,
+                            min: 50,
                             message:
-                              "End of day note must be at least 120 characters long.",
+                              "End of day note must be at least 50 characters long.",
                           },
                         ]}
                       >

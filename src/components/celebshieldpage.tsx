@@ -593,41 +593,36 @@ export default function CelebShieldPage() {
           </div>
         </section>
 
-        {/* ===== NEW: NYAYA GPT — LET'S EXPLORE (Drive Video) ===== */}
-        <section className="mx-auto mb-12 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-br from-purple-900/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-purple-500/30 shadow-2xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 bg-clip-text text-transparent">
-                  Let’s Explore - Nyaya GPT
-                </h2>
-              </div>
-            </div>
+      {/* ===== NYAYA GPT — LET'S EXPLORE (Simplified & Compact) ===== */}
+<section className="mx-auto mb-12 w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+  <div className="bg-gradient-to-br from-slate-900/70 to-purple-900/60 rounded-2xl p-5 sm:p-6 border border-purple-500/30 shadow-lg text-center">
+    <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 bg-clip-text text-transparent mb-4">
+      Let’s Explore – Nyaya GPT
+    </h2>
 
-            <div className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-[0_25px_40px_rgba(168,85,247,0.4)] ring-2 ring-purple-500/50">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/10 via-fuchsia-500/10 to-transparent blur-xl"></div>
-              <iframe
-                src={DRIVE_VIDEO_IFRAME}
-                title="Nyaya GPT — Let's Explore"
-                allow="autoplay; encrypted-media"
-                className="relative w-full h-full rounded-2xl z-10 bg-black"
-              />
-            </div>
+    <div className="relative w-full md:w-[80%] mx-auto aspect-video overflow-hidden rounded-xl shadow-[0_10px_25px_rgba(168,85,247,0.3)] ring-1 ring-purple-500/40">
+     <iframe
+  src={DRIVE_VIDEO_IFRAME}
+  title="Nyaya GPT — Let's Explore"
+  allow="autoplay; encrypted-media"
+  className="relative w-full h-full rounded-2xl z-10 bg-black"
+/>
+    </div>
 
-            <p className="mt-4 text-center text-purple-300 text-xs">
-              If the player doesn’t load, click{" "}
-              <a
-                href={DRIVE_VIDEO_DIRECT}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-amber-400 underline font-semibold hover:text-amber-300"
-              >
-                Open on Drive
-              </a>
-              .
-            </p>
-          </div>
-        </section>
+    <p className="mt-3 text-purple-300 text-xs sm:text-sm">
+      If the video doesn’t load,&nbsp;
+      <a
+        href={DRIVE_VIDEO_DIRECT}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-amber-400 underline font-semibold hover:text-amber-300"
+      >
+        open it on Drive
+      </a>
+      .
+    </p>
+  </div>
+</section>
 
         {/* ===== FOOTER WITH CONTACT ===== */}
         <footer className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
