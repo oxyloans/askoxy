@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Footer from "../components/Footer";
 import { FaBars, FaTimes, FaArrowLeft, FaFilter, FaFile, FaComments, FaBan, FaPen } from "react-icons/fa";
-import { Modal, Spin } from "antd";
+import { Modal, Spin,Select } from "antd";
 import { Menu, X, Plus, ArrowUpRight, ArrowDownRight, CreditCard, Wallet, ChevronRight } from 'lucide-react';
 import  BASE_URL  from "../Config";
 
 type TicketStatus = "PENDING" | "COMPLETED" | "CANCELLED";
-
+const { Option } = Select;
 interface Ticket {
   id: string;
   createdAt: string;
@@ -64,26 +64,30 @@ const TicketHistoryPage: React.FC = () => {
   const [reason, setReason] = useState<string>("");
   const [cancelLoader, setCancelLoader] = useState<boolean>(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (storedProfileData) {
-      try {
-        setProfileData(JSON.parse(storedProfileData));
-      } catch (error) {
-        console.error("Error parsing profile data:", error);
-      }
+ const [askOxyOffersFilter, setAskOxyOffersFilter] =
+    useState<string>("FREESAMPLE");
+useEffect(() => {
+  if (storedProfileData) {
+    try {
+      setProfileData(JSON.parse(storedProfileData));
+    } catch (error) {
+      console.error("Error parsing profile data:", error);
     }
-    setCartCount(parseInt(localStorage.getItem('cartCount') || '0'));
-    fetchTickets();
-  }, [selectedStatus, storedProfileData]);
+  }
+  setCartCount(parseInt(localStorage.getItem("cartCount") || "0"));
+  fetchTickets();
+}, [selectedStatus, askOxyOffersFilter, storedProfileData]);
+
 
   const fetchTickets = async () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        BASE_URL+"/user-service/write/getAllQueries",
+        BASE_URL + "/user-service/write/getAllQueries",
         {
-          askOxyOfers: "FREESAMPLE",
+          askOxyOfers:
+            askOxyOffersFilter ||
+            "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,STUDYABROAD,FREESAMPLE",
           userId: storedUserId,
           projectType: "ASKOXY",
           queryStatus: selectedStatus,
@@ -174,13 +178,8 @@ const TicketHistoryPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-
-    
-
       <div className="flex-1 p-4 lg:p-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          
-
           <main className="flex-1">
             <div className="bg-white rounded-xl shadow-sm p-6">
               {/* Header Section */}
@@ -194,8 +193,12 @@ const TicketHistoryPage: React.FC = () => {
                       <FaArrowLeft className="text-gray-600" />
                     </button>
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900">Ticket History</h1>
-                      <p className="text-sm text-gray-500">Track and manage your support tickets</p>
+                      <h1 className="text-2xl font-bold text-gray-900">
+                        Ticket History
+                      </h1>
+                      <p className="text-sm text-gray-500">
+                        Track and manage your support tickets
+                      </p>
                     </div>
                   </div>
                   <button
@@ -209,19 +212,44 @@ const TicketHistoryPage: React.FC = () => {
               </div>
 
               {/* Filters Section */}
+              {/* Filters Section */}
               <div className="p-4 bg-gray-50 border-b border-gray-200">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value as TicketStatus)}
-                      className="pl-10 pr-4 py-2 bg-white rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none cursor-pointer"
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                    {/* Status Dropdown */}
+                    <div className="relative w-60">
+                      <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <select
+                        value={selectedStatus}
+                        onChange={(e) =>
+                          setSelectedStatus(e.target.value as TicketStatus)
+                        }
+                        className="w-full pl-10 pr-4 py-2 bg-white rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none cursor-pointer"
+                      >
+                        <option value="PENDING">Pending Tickets</option>
+                        <option value="COMPLETED">Resolved Tickets</option>
+                        <option value="CANCELLED">Cancelled Tickets</option>
+                      </select>
+                    </div>
+
+                    {/* Ask Oxy Offers Dropdown */}
+                    <Select
+                      placeholder="Filter by ASK OXY Offers"
+                      value={askOxyOffersFilter}
+                      onChange={(value) => setAskOxyOffersFilter(value)}
+                      className="w-60"
+                      allowClear
+                      dropdownStyle={{ borderRadius: "8px" }}
+                      style={{ borderRadius: "8px", height: "40px" }}
                     >
-                      <option value="PENDING">Pending Tickets</option>
-                      <option value="COMPLETED">Resolved Tickets</option>
-                      <option value="CANCELLED">Cancelled Tickets</option>
-                    </select>
-                    <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Option value="FREESAMPLE">FREE RICE SAMPLE</Option>
+                      <Option value="STUDYABROAD">STUDY ABROAD</Option>
+                      <Option value="FREERUDRAKSHA">FREE RUDRAKSHA</Option>
+                      <Option value="FREEAI">FREE AI</Option>
+                      <Option value="ROTARIAN">ROTARIAN</Option>
+                      <Option value="WEAREHIRING">WE ARE HIRING</Option>
+                      <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -238,7 +266,9 @@ const TicketHistoryPage: React.FC = () => {
                   </div>
                 ) : tickets.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">No tickets found for the selected status.</p>
+                    <p className="text-gray-500">
+                      No tickets found for the selected status.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -249,19 +279,29 @@ const TicketHistoryPage: React.FC = () => {
                       >
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                           <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-500">Ticket ID</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Ticket ID
+                            </p>
                             <p className="font-semibold flex items-center gap-2">
                               {ticket.randomTicketId}
-                              <span className="text-sm text-gray-500">({ticket.createdAt})</span>
+                              <span className="text-sm text-gray-500">
+                                ({ticket.createdAt})
+                              </span>
                             </p>
                           </div>
-                          
+
                           <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-500">Query</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Query
+                            </p>
                             <p className="font-medium">{ticket.query}</p>
                             {ticket.userQueryDocumentStatus?.fileName && (
                               <button
-                                onClick={() => handleFileOpen(ticket.userQueryDocumentStatus.filePath)}
+                                onClick={() =>
+                                  handleFileOpen(
+                                    ticket.userQueryDocumentStatus.filePath
+                                  )
+                                }
                                 className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm mt-1"
                               >
                                 <FaFile className="text-xs" />
@@ -273,10 +313,14 @@ const TicketHistoryPage: React.FC = () => {
                           {selectedStatus !== "PENDING" && (
                             <div className="space-y-1">
                               <p className="text-sm font-medium text-gray-500">
-                                {selectedStatus === "CANCELLED" ? "Cancellation Reason" : "Admin Comments"}
+                                {selectedStatus === "CANCELLED"
+                                  ? "Cancellation Reason"
+                                  : "Admin Comments"}
                               </p>
                               <p className="font-medium">{ticket.comments}</p>
-                              <p className="text-sm text-gray-500">{ticket.date}</p>
+                              <p className="text-sm text-gray-500">
+                                {ticket.date}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -288,7 +332,9 @@ const TicketHistoryPage: React.FC = () => {
 
                           <div className="flex flex-wrap gap-2">
                             <button
-                              onClick={() => fetchComments(ticket.userPendingQueries)}
+                              onClick={() =>
+                                fetchComments(ticket.userPendingQueries)
+                              }
                               className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
                             >
                               <FaComments className="text-xs" />
@@ -298,7 +344,15 @@ const TicketHistoryPage: React.FC = () => {
                             {selectedStatus === "PENDING" && (
                               <>
                                 <button
-                                  onClick={() => navigate(`/main/writetous/${ticket.id}?userQuery=${encodeURIComponent(ticket.query)}`)}
+                                  onClick={() =>
+                                    navigate(
+                                      `/main/writetous/${
+                                        ticket.id
+                                      }?userQuery=${encodeURIComponent(
+                                        ticket.query
+                                      )}`
+                                    )
+                                  }
                                   className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
                                 >
                                   <FaPen className="text-xs" />
@@ -344,24 +398,36 @@ const TicketHistoryPage: React.FC = () => {
               <table className="w-full border-collapse">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Resolved By</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Comments</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                      Resolved By
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                      Comments
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {comments.map((comment, index) => (
                     <tr key={index} className="hover:bg-gray-50">
-                     <td className="px-4 py-3 text-sm text-gray-900">{comment.resolvedBy}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        {comment.resolvedOn ? new Date(comment.resolvedOn).toLocaleDateString() : "-"}
+                        {comment.resolvedBy}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {comment.resolvedOn
+                          ? new Date(comment.resolvedOn).toLocaleDateString()
+                          : "-"}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="flex flex-col gap-2">
                           <p>{comment.pendingComments}</p>
                           {comment.adminFileName && (
                             <button
-                              onClick={() => handleFileOpen(comment.adminFilePath)}
+                              onClick={() =>
+                                handleFileOpen(comment.adminFilePath)
+                              }
                               className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
                             >
                               <FaFile className="text-xs" />
@@ -376,7 +442,9 @@ const TicketHistoryPage: React.FC = () => {
               </table>
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-4">No comments found for this ticket.</p>
+            <p className="text-center text-gray-500 py-4">
+              No comments found for this ticket.
+            </p>
           )}
         </div>
       </Modal>
@@ -397,7 +465,10 @@ const TicketHistoryPage: React.FC = () => {
         }}
       >
         <div className="mt-4">
-          <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="reason"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Please provide a reason for cancellation
           </label>
           <textarea
