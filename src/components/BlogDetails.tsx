@@ -53,7 +53,10 @@ const BlogDetails: React.FC = () => {
   const [comment, setComment] = useState("");
   const [activeReplyCommentId, setActiveReplyCommentId] = useState<
     string | null
-  >(null);
+    >(null);
+    const [commentsError, setCommentsError] = useState<string | undefined>(
+      undefined
+    );
   const [isSpeaking, setIsSpeaking] = useState<{ [key: string]: boolean }>({});
   const [isLiked, setIsLiked] = useState<{ [key: string]: boolean }>({});
   const [isDisliked, setIsDisliked] = useState<{ [key: string]: boolean }>({});
@@ -416,7 +419,7 @@ const BlogDetails: React.FC = () => {
       email,
       finalMobileNumber,
       query,
-      "FREEAI",
+      "BLOGS",
       userId
     );
 
@@ -638,6 +641,18 @@ const BlogDetails: React.FC = () => {
         .catch(() => message.error("Failed to copy link"));
     }
   };
+  /* ---------- Small helpers ---------- */
+  const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({
+    label,
+    children,
+  }) => (
+    <div className="mb-4">
+      <label className="block text-sm text-gray-700 font-semibold mb-1">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
 
   const showCommentsModal = async (campaignId: string) => {
     setIsCommentsModalOpen((prev) => ({ ...prev, [campaignId]: true }));
@@ -838,80 +853,82 @@ const BlogDetails: React.FC = () => {
                   </div>
                 </>
               )}
-              {isOpen && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
-                  <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-                    <i
-                      className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-600"
-                      onClick={() => setIsOpen(false)}
-                      aria-label="Close"
-                    />
-                    <h2 className="text-xl font-semibold mb-4 text-blue-800">
-                      Write To Us
-                    </h2>
-                    <div className="mb-4">
-                      <label
-                        className="block text-sm text-gray-700 font-semibold mb-1"
-                        htmlFor="phone"
-                      >
-                        Mobile Number
-                      </label>
-                      <input
-                        type="text"
-                        id="phone"
-                        disabled={true}
-                        value={finalMobileNumber || ""}
-                        className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                        placeholder="Enter your mobile number"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label
-                        className="block text-sm text-gray-700 font-semibold mb-1"
-                        htmlFor="email"
-                      >
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        value={email || ""}
-                        disabled={true}
-                        className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                        placeholder="Enter your email"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label
-                        className="block text-sm text-gray-700 font-semibold mb-1"
-                        htmlFor="query"
-                      >
-                        Query
-                      </label>
-                      <textarea
-                        id="query"
-                        rows={3}
-                        className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                        placeholder="Enter your query"
-                        onChange={(e) => setQuery(e.target.value)}
-                      />
-                      {queryError && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {queryError}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex justify-center">
-                      <button
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300"
-                        onClick={handleWriteToUsSubmitButton}
-                      >
-                        Submit Query
-                      </button>
-                    </div>
-                  </div>
-                </div>
+             {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
+          onClick={() => setIsOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="relative bg-white rounded-xl shadow-md p-6 w-[92%] max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-3 right-3 text-xl leading-none text-gray-500 hover:text-gray-700"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-800">
+              Write To Us
+            </h2>
+
+            <LabeledField label="Mobile Number">
+              <input
+                type="text"
+                disabled
+                value={finalMobileNumber || ""}
+                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                placeholder="Your mobile number"
+              />
+            </LabeledField>
+
+            <LabeledField label="Email">
+              <input
+                type="email"
+                value={email || ""}
+                disabled
+                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                placeholder="Your email"
+              />
+            </LabeledField>
+
+            <LabeledField label="Comments">
+              <textarea
+                rows={4}
+                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                placeholder="Type your comments here…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (queryError) setQueryError("");
+                }}
+              />
+              {queryError && (
+                <p className="text-red-500 text-sm mt-1">{queryError}</p>
               )}
+            </LabeledField>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                onClick={() => setIsOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all"
+                onClick={handleWriteToUsSubmitButton}
+              >
+                Submit Comments
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
               {isprofileOpen && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                   <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
@@ -1145,23 +1162,36 @@ const BlogDetails: React.FC = () => {
             !userId ? "mt-8" : ""
           }`}
         >
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div className="text-center sm:text-left">
-              <h4 className="text-lg md:text-xl font-bold text-purple-800 tracking-tight">
-                Write Your Blog & Earn Rewards!
-              </h4>
-              <p className="text-sm text-purple-600 mt-0.5">
-                Share your thoughts with the world — Start earning BMVcoins! 🚀
-              </p>
-            </div>
+          <div className="max-w-8xl mx-auto px-3 sm:px-4">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 via-white to-purple-50 shadow-sm px-4 sm:px-6 py-4">
+              {/* Left text */}
+              <div className="w-full sm:w-auto text-center sm:text-left">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-purple-500 font-semibold mb-1">
+                  Creator Rewards
+                </p>
+                <h4 className="text-lg md:text-xl font-bold text-slate-900 leading-snug">
+                  Write your blog & earn rewards
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                  Share your thoughts with the world and start earning{" "}
+                  <span className="font-semibold text-purple-600">
+                    BMVcoins
+                  </span>{" "}
+                  🚀
+                </p>
+              </div>
 
-            <button
-              onClick={handleAddblog}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 hover:scale-105 whitespace-nowrap"
-            >
-              <PlusIcon className="w-4 h-4" />
-              Add Blog Post
-            </button>
+              {/* Right button */}
+              <div className="w-full sm:w-auto flex justify-center sm:justify-end">
+                <button
+                  onClick={handleAddblog}
+                  className="inline-flex items-center justify-center gap-2 rounded-full px-4 sm:px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 whitespace-nowrap"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span>Add Blog Post</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

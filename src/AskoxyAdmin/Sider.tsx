@@ -264,12 +264,12 @@ const Sidebar: React.FC = () => {
           link: "/admn/allqueries",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
-        {
-          title: "User Feedback",
-          icon: <FaComments className="text-green-400" />,
-          link: "/admn/feedback",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
+        // {
+        //   title: "User Feedback",
+        //   icon: <FaComments className="text-green-400" />,
+        //   link: "/admn/feedback",
+        //   roles: ["HELPDESKSUPERADMIN"],
+        // },
       ],
     },
     {

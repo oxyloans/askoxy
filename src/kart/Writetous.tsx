@@ -22,7 +22,12 @@ interface LocationState {
   orderId?: string;
   orderNewId?: string;
   fromOrdersPage?: boolean;
+
+  // 👇 NEW
+  fromTicketHistory?: boolean;
+  askOxyOffer?: string;
 }
+
 
 const CustomAlert: React.FC<{
   isOpen: boolean;
@@ -74,6 +79,9 @@ const WriteToUs: React.FC = () => {
   const [showOrderInfo, setShowOrderInfo] = useState(false);
   const [orderInfo, setOrderInfo] = useState({ orderId: "", orderNewId: "" });
   const [isLoading, setIsLoading] = useState(false);
+  // Which offer this query belongs to (default FREESAMPLE)
+const [askOxyOffer, setAskOxyOffer] = useState<string>("FREESAMPLE");
+
   const [profileComplete, setProfileComplete] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -137,7 +145,15 @@ const WriteToUs: React.FC = () => {
   const handleLocationState = () => {
     const locationState = (location.state as LocationState) || {};
     const fromOrdersPage = locationState.fromOrdersPage === true;
+    const fromTicketHistory = locationState.fromTicketHistory === true;
 
+if (fromTicketHistory && locationState.askOxyOffer) {
+  // Coming from TicketHistory with a selected offer (FREEAI, etc.)
+  setAskOxyOffer(locationState.askOxyOffer);
+} else {
+  // Default when user opens WriteToUs directly
+  setAskOxyOffer("FREESAMPLE");
+}
     if (!fromOrdersPage) {
       localStorage.removeItem("selectedOrderId");
       localStorage.removeItem("selectedOrderNewId");
@@ -322,7 +338,8 @@ const WriteToUs: React.FC = () => {
 
     const data = {
       adminDocumentId: "",
-      askOxyOfers: "FREESAMPLE",
+      askOxyOfers: askOxyOffer || "FREESAMPLE",
+
       comments: finalQuery,
       email: formData.userEmail,
       id: id || "",
@@ -404,14 +421,16 @@ const WriteToUs: React.FC = () => {
                 <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-400">
                   Write to us
                 </h2>
-                <div className="flex items-center text-gray-600 text-sm gap-1">
-                  <FiClock className="w-5 h-5 mb-4" />
-                  <p>We'll respond within 24 hours</p>
+                <div className="text-gray-600 text-sm">
+                  <p>
+                    <strong>Note:</strong> Our support team will get back to you
+                    within 24 hours.
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => navigate("/main/tickethistory")}
-                className="group flex items-center gap-2 bg-purple-50 text-purple-700 px-6 py-3 rounded-full hover:bg-purple-100 transition-all duration-300 shadow-md hover:shadow-lg"
+                className="group flex items-center gap-2 bg-purple-50 text-purple-700 px-6 py-3 rounded-half hover:bg-purple-100 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <FiMessageSquare className="w-5 h-5" />
                 <span>View Ticket History</span>
@@ -448,10 +467,11 @@ const WriteToUs: React.FC = () => {
                     value={formData.userFirstName}
                     onChange={handleInputChange}
                     placeholder="Enter your first name"
-                    className={`w-full px-4 py-3 rounded-lg border ${!formData.userFirstName
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      !formData.userFirstName
                         ? "border-red-500"
                         : "border-gray-200"
-                      } ${profileComplete ? "bg-gray-100" : "bg-gray-50"}`}
+                    } ${profileComplete ? "bg-gray-100" : "bg-gray-50"}`}
                     readOnly={profileComplete}
                   />
                   {!formData.userFirstName && (
@@ -482,8 +502,9 @@ const WriteToUs: React.FC = () => {
                     value={formData.userEmail}
                     onChange={handleInputChange}
                     placeholder="Enter your email address"
-                    className={`w-full px-4 py-3 rounded-lg border ${!formData.userEmail ? "border-red-500" : "border-gray-200"
-                      } bg-gray-50`}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      !formData.userEmail ? "border-red-500" : "border-gray-200"
+                    } bg-gray-50`}
                   />
                   {!formData.userEmail && (
                     <p className="text-sm text-red-500">Email is required</p>
@@ -556,8 +577,9 @@ const WriteToUs: React.FC = () => {
                   name="query"
                   value={formData.query}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none ${errors.query ? "border-red-500" : "border-gray-200"
-                    }`}
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none ${
+                    errors.query ? "border-red-500" : "border-gray-200"
+                  }`}
                   placeholder="Please describe your query in detail..."
                 />
 
@@ -582,7 +604,11 @@ const WriteToUs: React.FC = () => {
                     transition-all duration-300
                     shadow-md hover:shadow-lg
                     transform hover:-translate-y-1
-                    ${(isSubmitting || !profileComplete) ? "opacity-75 cursor-not-allowed" : ""}
+                    ${
+                      isSubmitting || !profileComplete
+                        ? "opacity-75 cursor-not-allowed"
+                        : ""
+                    }
                   `}
               >
                 {isSubmitting ? (

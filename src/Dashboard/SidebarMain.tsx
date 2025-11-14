@@ -79,12 +79,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: "My Subscriptions",
     },
     { to: "/main/referral", icon: <Users size={18} />, label: "Referral" },
+
+    { to: "/main/crypto", icon: <Coins size={18} />, label: "My Crypto" },
+
     {
       to: "/main/writetous",
       icon: <MessageSquare size={18} />,
       label: "Write to Us",
     },
-    { to: "/main/crypto", icon: <Coins size={18} />, label: "My Crypto" },
+    {
+      to: "/main/tickethistory",
+      icon: <FileText size={18} />,
+      label: "Ticket History",
+    },
     {
       to: "/bharath-aistore",
       icon: <RobotOutlined style={{ fontSize: "18px", color: "#722ed1" }} />,

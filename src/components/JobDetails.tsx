@@ -449,7 +449,7 @@ const handleClick = async (
       email,
       finalMobileNumber,
       query,
-      "FREESAMPLE",
+      "WEAREHIRING",
       userId
     );
 

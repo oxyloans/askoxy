@@ -76,21 +76,33 @@ const BlogsPage: React.FC = () => {
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-4">
-          <div className="w-full rounded-lg bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-gray-200 px-3 md:px-6 py-1.5">
-            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="w-full rounded-xl bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-purple-100 shadow-sm py-3 px-4 md:px-6">
+            <div className="max-w-8xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+              {/* Text Section */}
               <div className="text-center sm:text-left">
-                <h4 className="text-lg md:text-xl font-bold text-purple-800 tracking-tight">
+                <h4 className="text-lg md:text-xl font-extrabold text-purple-800 tracking-tight drop-shadow-sm">
                   Write Your Blog & Earn Rewards!
                 </h4>
-                <p className="text-sm text-purple-600 mt-0.5">
-                  Share your thoughts with the world — Start earning BMVcoins!
-                  🚀
+                <p className="text-sm md:text-base text-purple-600 mt-0.5">
+                  Share your thoughts with the world — Start earning
+                  <span className="font-semibold text-purple-700">
+                    {" "}
+                    BMVcoins
+                  </span>
+                  ! 🚀
                 </p>
               </div>
 
+              {/* Button */}
               <button
                 onClick={handleAddblog}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 hover:scale-105 whitespace-nowrap"
+                className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 
+        hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 
+        text-white px-5 py-2.5 rounded-full 
+        text-sm font-semibold transition-all duration-300 
+        flex items-center gap-2 
+        hover:scale-[1.05] active:scale-[0.97]
+        shadow-md hover:shadow-lg whitespace-nowrap"
               >
                 <PlusIcon className="w-4 h-4" />
                 Add Blog Post

@@ -205,7 +205,7 @@ const CampaignDetails: React.FC = () => {
       email,
       finalMobileNumber,
       comments,
-      "FREEAI",
+      "SERVICES",
       userId
     );
     if (success) {
