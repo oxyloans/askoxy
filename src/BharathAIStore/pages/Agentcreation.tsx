@@ -17,7 +17,7 @@ import {
   GlobalOutlined,
   LockOutlined,
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import BASE_URL from "../../Config";
 import axios from "axios";
 
@@ -28,13 +28,18 @@ const BORDER = "#E7E6F3";
 const TEXT_MUTED = "#64748B";
 const SOFT_PLACEHOLDER = "#94A3B8";
 
-/** Gradients for headings — rotates per section */
+// Brighter, high-contrast gradients
 const GRADIENTS = [
-  "linear-gradient(135deg, #6D28D9 0%, #A78BFA 60%, #F59E0B 120%)",
-  "linear-gradient(135deg, #2563EB 0%, #22D3EE 60%, #22C55E 120%)",
-  "linear-gradient(135deg, #06bd67 0%, #A78bf6 60%, #8B5CF6 120%)",
-  "linear-gradient(135deg, #06B6D4 0%, #10B981 60%, #6366F1 120%)",
+  "linear-gradient(135deg, #7C3AED 0%, #FF1CF7 55%, #FFA800 120%)",   // purple → neon pink → amber
+  "linear-gradient(135deg, #2563EB 0%, #341539 55%, #FF1CF7 120%)",   // blue → cyan → green
+  "linear-gradient(135deg, #FF1F6D 0%, #8B5CF6 55%, #22D3EE 120%)",   // hot pink → violet → cyan
+  "linear-gradient(135deg, #06B6D4 0%, #FF1CF7 55%, #6366F1 120%)",   // teal → green → indigo
 ];
+ 
+// Optional: vivid border glow for components
+const BRIGHT_BORDER_GRAD =
+  "linear-gradient(180deg, #FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, #7C3AED, #FF1CF7, #00E5FF) border-box";
+
 
 type ViewType = "Public" | "Private";
 
@@ -156,30 +161,36 @@ const CompactSelect: React.FC<{
         zIndex: isOpen ? 5000 : "auto",
       }}
     >
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((v) => !v)}
-        style={{
-          width: "100%",
-          padding: "10px 14px",
-          borderRadius: 12,
-          border: "1px solid transparent",
-          backgroundImage: `linear-gradient(white, white), linear-gradient(135deg, #6D28D9 0%, #A78BFA 60%, #ff00ff 120%)`,
-          backgroundOrigin: "border-box",
-          backgroundClip: "padding-box, border-box",
-          textAlign: "left",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontSize: 15,
-          color: value ? "#111827" : SOFT_PLACEHOLDER,
-          boxShadow: "0 6px 18px rgba(2,8,23,0.06)",
-          transition: "transform .12s ease",
-        }}
-      >
+     <button
+  type="button"
+  aria-haspopup="listbox"
+  aria-expanded={isOpen}
+  onClick={() => setIsOpen(v => !v)}
+  style={{
+    width: "100%",
+    padding: "12px 16px",
+    borderRadius: 14,
+    border: "1.5px solid transparent",
+    backgroundImage: `linear-gradient(#fff, #fff), linear-gradient(135deg, #7C3AED, #FF1CF7, #00E5FF)`,
+    backgroundOrigin: "border-box",
+    backgroundClip: "padding-box, border-box",
+    textAlign: "left",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    fontSize: 15,
+    color: value ? "#0F172A" : SOFT_PLACEHOLDER,
+   boxShadow:
+  "0 6px 16px rgba(124,58,237,0.18), 0 2px 8px rgba(2,8,23,0.06), inset 0 1px 0 rgba(255,255,255,0.5)",
+    transition: "transform .08s ease, box-shadow .2s ease",
+    willChange: "transform",
+  }}
+  onMouseDown={e => (e.currentTarget.style.transform = "translateY(1px) scale(0.995)")}
+  onMouseUp={e => (e.currentTarget.style.transform = "translateY(0) scale(1)")}
+  onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0) scale(1)")}
+>
+
         <div
           style={{
             display: "flex",
@@ -221,7 +232,7 @@ const CompactSelect: React.FC<{
             background: "#fff",
             border: `1px solid ${BORDER}`,
             borderRadius: 12,
-            boxShadow: "0 16px 36px rgba(2,8,23,0.12)",
+            boxShadow: "0 6px 14px rgba(2,8,23,0.08)", // softer and smaller shadow
             maxHeight: 260,
             overflowY: "auto",
             zIndex: 5001,
@@ -372,10 +383,11 @@ const mergedSentence = (
 
 const card3D: React.CSSProperties = {
   background: "#FFFFFF",
-  border: `1px solid ${BORDER}`,
+  border: "1.5px solid transparent",
   borderRadius: 16,
-  boxShadow: "0 14px 40px rgba(2,8,23,0.08)",
+  boxShadow: "0 14px 40px rgba(2,8,23,0.10)",
   overflow: "visible",
+  backgroundImage: BRIGHT_BORDER_GRAD, // ← adds neon ring
 };
 
 const sectionHeader = (i = 0): React.CSSProperties => ({
@@ -406,11 +418,31 @@ const bodyPad: React.CSSProperties = { padding: 14 };
 
 const Agentcreation: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Core form (selects)
   const [roleSelect, setRoleSelect] = useState<string>("");
   const [goalSelect, setGoalSelect] = useState<string>("");
   const [purposeSelect, setPurposeSelect] = useState<string>("");
+
+const scrollRef = useRef<HTMLDivElement | null>(null);
+const scrolledOnceRef = useRef(false);
+
+useEffect(() => {
+  const allPicked = !!roleSelect && !!goalSelect && !!purposeSelect;
+
+  // scroll exactly once when the trio becomes complete
+  if (allPicked && !scrolledOnceRef.current) {
+    scrolledOnceRef.current = true;
+    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // if user clears any select, allow future auto-scroll again
+  if (!allPicked && scrolledOnceRef.current) {
+    scrolledOnceRef.current = false;
+  }
+}, [roleSelect, goalSelect, purposeSelect]);
+
 
   // "Other" custom inputs
   const [roleOther, setRoleOther] = useState("");
@@ -460,6 +492,20 @@ const Agentcreation: React.FC = () => {
   const [uploadRole, setUploadRole] = useState<string>("");
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const uploadResolveRef = useRef<null | ((ok: boolean) => void)>(null);
+
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+const [mobileNumber, setMobileNumber] = useState("");
+const [countryCode, setCountryCode] = useState("+91");
+
+const [showWhatsappVerificationModal, setShowWhatsappVerificationModal] = useState(false);
+const [isWhatsappVerified, setIsWhatsappVerified] = useState(false);
+
+const [whatsappVerificationCode, setWhatsappVerificationCode] = useState("");
+const [whatsappOtpSession, setWhatsappOtpSession] = useState("");
+const [salt, setSalt] = useState("");
+
+const token = readToken() || "";
+const [errorMsg, setErrorMsg] = useState("");
 
   // === Auto Blog (separate flow) ===
   const BLOG_NAME_MAX = 80;
@@ -741,7 +787,23 @@ const Agentcreation: React.FC = () => {
         setInitialFirstName(profileData.userFirstName);
         setInitialLastName(profileData.userLastName);
         setInitialEmail(profileData.customerEmail);
+        // ✅ pull numbers from server
+setWhatsappNumber(profileData.whatsappNumber || "");
+setMobileNumber(profileData.mobileNumber || "");
 
+// ✅ only prompt if WhatsApp missing; otherwise mark verified and don't ask
+if (!profileData.whatsappNumber) {
+  // optional nudge to add WhatsApp, but do NOT block
+  Modal.confirm({
+    title: "Add your WhatsApp number?",
+    content: "We’ll use it to send OTP and verify.",
+    okText: "Add",
+    cancelText: "Later",
+    onOk: () => setShowWhatsappVerificationModal(true),
+  });
+} else {
+  setIsWhatsappVerified(true);
+}
         // Required: firstName + email
         const missing =
           !profileData.userFirstName || !profileData.customerEmail;
@@ -767,6 +829,58 @@ const Agentcreation: React.FC = () => {
     firstName.trim() !== initialFirstName.trim() ||
     lastName.trim() !== initialLastName.trim() ||
     email.trim() !== initialEmail.trim();
+
+    // ✅ WhatsApp Verification (sends OTP + verifies, updates profile if needed)
+const handleWhatsappVerification = async () => {
+  try {
+    setLoading(true); // use existing loading flag
+
+    // prefer explicit WhatsApp; fallback to mobile (minus country code)
+    const chatId = (
+      (whatsappNumber || mobileNumber || "")
+        .replace(countryCode, "")
+        .replace(/^\+/, "")
+        .trim()
+    );
+
+    if (!chatId) {
+      setErrorMsg("Please enter your WhatsApp number to continue.");
+      setLoading(false);
+      return;
+    }
+
+    const response = await axios.post(
+      `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
+      {
+        chatId,
+        countryCode,
+        id: customerId,
+        whatsappOtp: whatsappVerificationCode,
+        whatsappOtpSession,
+        salt,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (response.data) {
+      setIsWhatsappVerified(true);
+      setShowWhatsappVerificationModal(false);
+      message.success("WhatsApp number verified successfully!");
+
+      // if WhatsApp was empty, persist it now
+      if (!whatsappNumber && mobileNumber && mobileNumber !== whatsappNumber) {
+        // you’re already validating firstName/email in handleSaveOrUpdateProfile
+        await handleSaveOrUpdateProfile();
+      }
+    } else {
+      setErrorMsg("Invalid verification code");
+    }
+  } catch {
+    setErrorMsg("Failed to verify WhatsApp number");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSaveOrUpdateProfile = async () => {
     // validations
@@ -1003,13 +1117,15 @@ const Agentcreation: React.FC = () => {
     setStartersEdit(true);
   };
   const saveStarters = () => {
-    const s1 = (cs1Draft || "").slice(0, 150);
-    const s2 = (cs2Draft || "").slice(0, 150);
-    setConStarter1(s1);
-    setConStarter2(s2);
-    setStartersEdit(false);
-    message.success("Starters saved (max 150 chars each).");
-  };
+  const s1 = (cs1Draft || "").substring(0, 150);  // allow special chars fully
+  const s2 = (cs2Draft || "").substring(0, 150);
+
+  setConStarter1(s1);
+  setConStarter2(s2);
+
+  setStartersEdit(false);
+  message.success("Conversation starters saved!");
+};
   const closeStarters = () => {
     // discard changes
     setStartersEdit(false);
@@ -1671,93 +1787,166 @@ const Agentcreation: React.FC = () => {
     };
   }, [previewOpen, description, instructions, requestAndOpenEditor]);
 
-  const publishNow = useCallback(async () => {
-    const userId = localStorage.getItem("userId") || "";
-    const auth = getAuthHeader();
+const publishNow = useCallback(async () => {
+  const userId = localStorage.getItem("userId") || "";
+  const auth = getAuthHeader();
 
-    const body = {
-      agentName: (agentName || "").trim(),
-      description: previewDescription,
-      roleUser: roleSelect === "Other" ? "Other" : roleSelect,
-      purpose: purposeSelect === "Other" ? "Other" : purposeSelect,
-      goals: goalSelect === "Other" ? "Other" : goalSelect,
-      optionalRole: roleSelect === "Other" ? roleOther.trim() : "",
-      optionalPurpose: purposeSelect === "Other" ? purposeOther.trim() : "",
-      optionalGoal: goalSelect === "Other" ? goalOther.trim() : "",
-      instructions: (instructions || "").slice(0, 7000),
-      userId,
-      view,
-      conStarter1: (conStarter1 || "").trim(),
-      conStarter2: (conStarter2 || "").trim(),
-      conStarter3: "",
-      conStarter4: "",
-    };
-
-    setLoading(true);
-    try {
-      const res = await fetch(`${BASE_URL}/ai-service/agent/newAgentPublish`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", ...auth },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(
-          `Publish failed: ${res.status} ${res.statusText} ${
-            txt ? "— " + txt : ""
-          }`.trim()
-        );
-      }
-
-      const data = await res.json().catch(() => ({} as any));
-      const assistanceId =
-        data.assistanceId || data.assistantId || data.id || "";
-
-      // 🔹 derive role for upload UI (prefer API response)
-      const apiRoleUser = (data?.roleUser || "").trim();
-      const apiOptionalRole = (data?.optionalRole || "").trim();
-      const roleForUpload =
-        apiOptionalRole ||
-        apiRoleUser ||
-        body.optionalRole ||
-        body.roleUser ||
-        "";
-
-      message.success("Congratulations! Your agent is published successfully.");
-
-      if (assistanceId) {
-        localStorage.setItem(
-          "awaitingUpload",
-          JSON.stringify({ assistanceId, userId })
-        );
-        // pass role string into the prompt
-        await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
-      }
-
-      setPreviewOpen(false);
-      message.success("All set! Files uploaded and agent queued for approval.");
-      navigate("/main/bharath-aistore/agents");
-    } catch (e: any) {
-      message.error(e?.message || "Publish failed");
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    agentName,
-    previewDescription,
-    instructions,
-    roleSelect,
-    purposeSelect,
-    goalSelect,
-    roleOther,
-    purposeOther,
-    goalOther,
+  const body = {
+    agentName: (agentName || "").trim(),
+    description: previewDescription,
+    roleUser: roleSelect === "Other" ? "Other" : roleSelect,
+    purpose: purposeSelect === "Other" ? "Other" : purposeSelect,
+    goals: goalSelect === "Other" ? "Other" : goalSelect,
+    optionalRole: roleSelect === "Other" ? roleOther.trim() : "",
+    optionalPurpose: purposeSelect === "Other" ? purposeOther.trim() : "",
+    optionalGoal: goalSelect === "Other" ? goalOther.trim() : "",
+    instructions: (instructions || "").slice(0, 7000),
+    userId,
     view,
-    conStarter1,
-    conStarter2,
-    navigate,
-  ]);
+    conStarter1: (conStarter1 || "").trim(),
+    conStarter2: (conStarter2 || "").trim(),
+    conStarter3: "",
+    conStarter4: "",
+  };
+
+  setLoading(true);
+  try {
+    const res = await fetch(`${BASE_URL}/ai-service/agent/newAgentPublish`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(
+        `Publish failed: ${res.status} ${res.statusText} ${
+          txt ? "— " + txt : ""
+        }`.trim()
+      );
+    }
+
+    const data = await res.json().catch(() => ({} as any));
+    const assistanceId =
+      data.assistanceId || data.assistantId || data.id || "";
+
+    // 🔹 derive role for upload UI (prefer API response)
+    const apiRoleUser = (data?.roleUser || "").trim();
+    const apiOptionalRole = (data?.optionalRole || "").trim();
+    const roleForUpload =
+      apiOptionalRole ||
+      apiRoleUser ||
+      body.optionalRole ||
+      body.roleUser ||
+      "";
+message.success("Congratulations! Your agent is published successfully.");
+
+if (assistanceId) {
+  localStorage.setItem(
+    "awaitingUpload",
+    JSON.stringify({ assistanceId, userId })
+  );
+  // pass role string into the prompt
+  await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
+}
+
+// ✅ Mark that this user now HAS an AI Agent
+try {
+  localStorage.setItem("hasAiAgent", "true");
+} catch {
+  // ignore storage errors
+}
+
+setPreviewOpen(false);
+message.success("All set! Files uploaded and agent queued for approval.");
+
+    // 🔹 Check if we have a pending JobDetails context in localStorage
+    let jobContext: {
+      fromJobId: string;
+      jobDesignation?: string;
+      companyName?: string;
+    } | null = null;
+
+    try {
+      const rawCtx = localStorage.getItem("agentJobContext");
+      if (rawCtx) {
+        jobContext = JSON.parse(rawCtx);
+      }
+    } catch {
+      jobContext = null;
+    }
+
+    if (jobContext?.fromJobId) {
+    // ✅ Mark that this user now HAS an AI Agent
+try {
+  localStorage.setItem("hasAiAgent", "true");
+} catch {
+  // ignore storage errors
+}
+
+// 🔹 Check if we have a pending JobDetails context in localStorage
+let jobContext: {
+  fromJobId: string;
+  jobDesignation?: string;
+  companyName?: string;
+} | null = null;
+
+try {
+  const rawCtx = localStorage.getItem("agentJobContext");
+  if (rawCtx) {
+    jobContext = JSON.parse(rawCtx);
+  }
+} catch {
+  jobContext = null;
+}
+
+if (jobContext?.fromJobId) {
+  try {
+    // 🔥 HERE we finally mark JobAgent = Created for this jobId
+    localStorage.setItem(
+      `hasAiAgentForJob:${jobContext.fromJobId}`,
+      "true"
+    );
+
+    // Clear context so normal agent creation doesn’t reuse it
+    localStorage.removeItem("agentJobContext");
+  } catch {}
+
+  // Go back to JobDetails and auto-open apply modal ONCE
+  navigate("/main/jobdetails", {
+    state: {
+      id: jobContext.fromJobId,
+      openApplyModal: true,
+    },
+  });
+  return;
+}
+    }
+
+    // Default navigation (no job context)
+    navigate("/main/bharath-aistore/agents");
+
+  } catch (e: any) {
+    message.error(e?.message || "Publish failed");
+  } finally {
+    setLoading(false);
+  }
+}, [
+  agentName,
+  previewDescription,
+  instructions,
+  roleSelect,
+  purposeSelect,
+  goalSelect,
+  roleOther,
+  purposeOther,
+  goalOther,
+  view,
+  conStarter1,
+  conStarter2,
+  navigate,
+  location, // 👈 added
+]);
 
   const confirmPublish = useCallback(() => {
     if (description.trim().length < MIN_DESC) {
@@ -2380,6 +2569,8 @@ const Agentcreation: React.FC = () => {
             />
           </div>
         </div>
+
+        <div ref={scrollRef}></div>
 
         {/* ======= Agent Description (gradient header) ======= */}
         <div style={{ marginTop: 14, ...card3D }}>
@@ -3494,6 +3685,60 @@ const Agentcreation: React.FC = () => {
             />
           </div>
         </Modal>
+
+        <Modal
+  open={showWhatsappVerificationModal}
+  onCancel={() => setShowWhatsappVerificationModal(false)}
+  footer={null}
+  centered
+  title="Verify your WhatsApp"
+>
+  <div style={{ display: "grid", gap: 10 }}>
+    {!!errorMsg && (
+      <div style={{ color: "#b91c1c", fontSize: 12 }}>{errorMsg}</div>
+    )}
+
+    <label style={{ fontSize: 12, color: "#475569" }}>Country Code</label>
+    <input
+      value={countryCode}
+      onChange={(e) => setCountryCode(e.target.value)}
+      style={{ height: 38, border: "1px solid #E7E6F3", borderRadius: 10, padding: "0 10px" }}
+    />
+
+    <label style={{ fontSize: 12, color: "#475569" }}>WhatsApp Number</label>
+    <input
+      value={whatsappNumber || mobileNumber}
+      onChange={(e) => setWhatsappNumber(e.target.value)}
+      placeholder="Enter WhatsApp number"
+      style={{ height: 38, border: "1px solid #E7E6F3", borderRadius: 10, padding: "0 10px" }}
+    />
+
+    <label style={{ fontSize: 12, color: "#475569" }}>OTP Code</label>
+    <input
+      value={whatsappVerificationCode}
+      onChange={(e) => setWhatsappVerificationCode(e.target.value)}
+      placeholder="Enter OTP"
+      style={{ height: 38, border: "1px solid #E7E6F3", borderRadius: 10, padding: "0 10px" }}
+    />
+
+    <button
+      onClick={handleWhatsappVerification}
+      disabled={loading}
+      style={{
+        height: 40,
+        borderRadius: 999,
+        border: "none",
+        fontWeight: 900,
+        color: "#fff",
+        background: "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+        boxShadow: "0 6px 16px rgba(124,58,237,0.18), 0 2px 8px rgba(2,8,23,0.06)",
+        cursor: "pointer",
+      }}
+    >
+      {loading ? "Verifying..." : "Verify & Save"}
+    </button>
+  </div>
+</Modal>
 
         <Modal
           open={uploadOpen}

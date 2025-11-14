@@ -26,6 +26,7 @@ import {
 import MarkdownRenderer from "../../GenOxy/components/MarkdownRenderer";
 import { message, Modal } from "antd";
 import BASE_URL from "../../Config";
+import SubscriptionModal from "../components/SubscriptionModal"
 
 /** ---------------- Types ---------------- */
 interface Assistant {
@@ -87,6 +88,9 @@ const RIGHT_SIDEBAR_STATE_KEY = "chat_right_sidebar_open";
 
 const AssistantDetails: React.FC = () => {
   const { id, agentId } = useParams<{ id: string; agentId: string }>();
+  // console.log({id,agentId});
+  const currentURL = window.location.href;
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -274,6 +278,9 @@ const AssistantDetails: React.FC = () => {
   // once true, we never allow re-rating
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
   /** ---------------- Helper: extract last user message ---------------- */
   function getLastUserMessage(prompt: string) {
@@ -716,6 +723,22 @@ const AssistantDetails: React.FC = () => {
     return data;
   };
 
+  const fetchSubscriptionPlans = async () => {
+    try {
+      setLoadingPlans(true);
+      const { data } = await axios.get(
+        `${BASE_URL}/ai-service/agent/getAllPlans`,
+        { headers: { ...getAuthHeaders() } }
+      );
+      const activePlans = data.filter((plan: any) => plan.status === true);
+      setSubscriptionPlans(activePlans);
+    } catch (error) {
+      console.error('Failed to fetch subscription plans:', error);
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
   /** ---------------- Load assistant + starters + ratings ---------------- */
   useEffect(() => {
     const run = async () => {
@@ -985,6 +1008,20 @@ const AssistantDetails: React.FC = () => {
 
       isStopped.current = false;
       setLoading(true);
+
+       const userMessages = messages.filter(m => m.role === "user");
+
+      //  if(userMessages.length >=5){
+      //   setMessages((prevMessages) => [
+      //       ...prevMessages,
+      //       { role: "assistant", content: "You've reached your message limit. Please upgrade your plan to continue chatting." },
+      //     ]);
+      //   setShowSubscriptionModal(true);
+      //   fetchSubscriptionPlans();
+      //   setLoading(false);
+      //   return;
+      // }
+     
       // Stop voice if active before sending
 
       try {
@@ -2229,6 +2266,16 @@ const AssistantDetails: React.FC = () => {
               </div>
             </div>
           </Modal>
+
+          {/* Subscription Modal */}
+          <SubscriptionModal
+            open={showSubscriptionModal}
+            onCancel={() => setShowSubscriptionModal(false)}
+            subscriptionPlans={subscriptionPlans}
+            loadingPlans={loadingPlans}
+            agentId={agentId || ''}
+            userId={userId || ''}
+          />
 
           {/* Content area */}
           {isFetchingAssistant ? (

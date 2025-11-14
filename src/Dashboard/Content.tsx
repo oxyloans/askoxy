@@ -241,13 +241,13 @@ const Content1: React.FC = () => {
         title={isAiChatOpen ? "Close ASKOXY.AI" : "Open ASKOXY.AI"}
       >
         <svg
-          className={`${isMobile ? "w-7 h-7" : "w-4 h-4"} ${
-            !isMobile && isAiChatOpen ? "rotate-180" : ""
-          } transition-transform`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+  className={`${isMobile ? "w-7 h-7" : "w-4 h-4"} ${
+    !isMobile && !isAiChatOpen ? "rotate-180" : ""
+  } transition-transform`}
+  fill="none"
+  stroke="currentColor"
+  viewBox="0 0 24 24"
+>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

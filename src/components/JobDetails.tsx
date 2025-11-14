@@ -72,10 +72,93 @@ const JobDetails: React.FC = () => {
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState<string | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showNoAgentPopup, setShowNoAgentPopup] = useState(false);
   const [applyselectedJob, setApplySelectedJob] = useState<{
     jobDesignation: string;
     companyName: string;
   } | null>(null);
+
+  // 🔐 Read auth token (same format as other pages)
+  const readAuth = () => {
+    try {
+      const raw = localStorage.getItem("auth");
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+
+  const buildAuthHeaders = (): HeadersInit => {
+    const auth = readAuth();
+    if (!auth?.accessToken) return {};
+    return {
+      Authorization: `Bearer ${auth.accessToken}`,
+    };
+  };
+
+  // ✅ Check from AgentDataList API if user has at least one AI Agent
+  const checkUserHasAgent = async (): Promise<boolean> => {
+    if (!userId) return false;
+
+    // 🔹 Fast path: if we already know an agent was created, trust this
+    const localFlag =
+      typeof window !== "undefined" &&
+      localStorage.getItem("hasAiAgent") === "true";
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/ai-service/agent/allAgentDataList?userId=${encodeURIComponent(
+          userId
+        )}`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...buildAuthHeaders(),
+          },
+        }
+      );
+
+      const text = await res.text().catch(() => "");
+
+      // If server sends non-200 OR nothing, fall back to local flag
+      if (!res.ok || !text) {
+        return localFlag;
+      }
+
+      let raw: any = {};
+      try {
+        raw = JSON.parse(text);
+      } catch {
+        // Bad JSON – fall back to local flag
+        return localFlag;
+      }
+
+      const assistantsCount = Array.isArray(raw?.assistants)
+        ? raw.assistants.length
+        : 0;
+      const conversationsCount = Array.isArray(raw?.conversations)
+        ? raw.conversations.length
+        : 0;
+
+      const hasAgent = assistantsCount > 0 || conversationsCount > 0;
+
+      if (hasAgent) {
+        // Store for future clicks
+        try {
+          localStorage.setItem("hasAiAgent", "true");
+        } catch {}
+      }
+
+      return hasAgent || localFlag;
+    } catch (err) {
+      console.error("Error checking AgentDataList:", err);
+      // On error, use whatever we know locally
+      return localFlag;
+    }
+  };
 
   useEffect(() => {
     console.log("this is the id from state" + id);
@@ -87,14 +170,14 @@ const JobDetails: React.FC = () => {
   }, [id, jobs]);
 
   useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchJobsApplied = async () => {
       const appliedJobs = await fetchAppliedJobsByUserId(userId);
-      const jobIdSet = new Set(appliedJobs.map((job) => job.jobId));
+      const jobIdSet = new Set(appliedJobs.map((job: any) => job.jobId));
       setAppliedJobIds(jobIdSet);
     };
 
     if (!isModalOpen) {
-      fetchJobs();
+      fetchJobsApplied();
     }
   }, [userId, isModalOpen]);
 
@@ -140,6 +223,27 @@ const JobDetails: React.FC = () => {
   useEffect(() => {
     fetchJobs();
   }, []);
+
+useEffect(() => {
+  if (location.state?.openApplyModal && selectedJob) {
+    // ✅ Open JobApplicationModal ONCE
+    setApplySelectedJob({
+      jobDesignation: selectedJob.jobDesignation,
+      companyName: selectedJob.companyName,
+    });
+    setIsModalOpen(true);
+
+    // 🧹 Remove the flag from this history entry
+    const { openApplyModal, ...restState } =
+      (location.state as any) || {};
+
+    navigate(location.pathname, {
+      replace: true,
+      state: restState, // ⬅ same state, but without openApplyModal
+    });
+  }
+}, [location.key, location.state, selectedJob, navigate]);
+
 
   useEffect(() => {
     filterJobs();
@@ -254,16 +358,65 @@ const JobDetails: React.FC = () => {
     return Array.from(valueMap.values());
   };
 
-  const handleClick = (jobDesignation: string, companyName: string) => {
-    if (!userId) {
-      message.warning("Please login to submit your interest.");
-      navigate("/whatsapplogin");
-      sessionStorage.setItem("redirectPath", "/main/jobdetails");
-    } else {
-      setApplySelectedJob({ jobDesignation, companyName });
-      setIsModalOpen(true);
-    }
-  };
+const handleClick = async (
+  jobId: string,
+  jobDesignation: string,
+  companyName: string
+) => {
+  // 1) If not logged in → send to WhatsApp login
+  if (!userId) {
+    message.warning("Please login to submit your interest.");
+    navigate("/whatsapplogin");
+    sessionStorage.setItem("redirectPath", "/main/jobdetails");
+    return;
+  }
+
+  // 2) DUMMY PARAM in localStorage for this JOB
+  //    null / missing → JobAgent not created yet
+  //    "true"         → JobAgent Created for this jobId
+  const jobKey = `hasAiAgentForJob:${jobId}`;
+  const hasJobFlag =
+    typeof window !== "undefined" && localStorage.getItem(jobKey) === "true";
+
+  // 3) Check if user already has ANY AI Agent (API + local flag)
+  const hasAgent = hasJobFlag || (await checkUserHasAgent());
+
+  // 4) ❌ No Agent yet → show popup + go to Agent Creation
+  if (!hasAgent) {
+    setShowNoAgentPopup(true); // 🎉 Congratulations popup
+
+    // Small delay so user can see the popup
+    setTimeout(() => {
+      setShowNoAgentPopup(false);
+
+      // 🔹 Store JOB CONTEXT so Agentcreation can update dummy param AFTER publish
+      //     agentJobContext = { fromJobId, jobDesignation, companyName }
+      try {
+        localStorage.setItem(
+          "agentJobContext",
+          JSON.stringify({ fromJobId: jobId, jobDesignation, companyName })
+        );
+      } catch (e) {
+        console.warn("Could not set agentJobContext in localStorage", e);
+      }
+
+      // Go to Agent Creation page
+      navigate("/main/agentcreate", {
+        state: { fromJobId: jobId, jobDesignation, companyName },
+      });
+    }, 800);
+
+    // IMPORTANT: do NOT open JobApplicationModal here
+    return;
+  }
+
+  // 5) ✅ User already has at least one AI Agent → open Job Application Modal
+  setApplySelectedJob({ jobDesignation, companyName });
+  setIsModalOpen(true);
+  setShowNoAgentPopup(false);
+};
+
+
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -539,14 +692,14 @@ const JobDetails: React.FC = () => {
               )}
             </div>
             <button
-              className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow ${
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
                 appliedJobIds.has(job.id)
-                  ? "bg-green-100 text-green-700 cursor-not-allowed"
-                  : "bg-white text-blue-600 hover:bg-blue-50"
+                  ? "border-green-500 bg-green-50 text-green-700 cursor-not-allowed"
+                  : "border-yellow-500 bg-white text-blue-600 font-bold hover:bg-blue-50"
               }`}
               onClick={() => {
                 if (!appliedJobIds.has(job.id)) {
-                  handleClick(job.jobDesignation, job.companyName);
+                  handleClick(job.id, job.jobDesignation, job.companyName);
                 }
               }}
               disabled={appliedJobIds.has(job.id)}
@@ -774,7 +927,7 @@ const JobDetails: React.FC = () => {
             }`}
             onClick={() => {
               if (!appliedJobIds.has(job.id)) {
-                handleClick(job.jobDesignation, job.companyName);
+                handleClick(job.id, job.jobDesignation, job.companyName);
               }
             }}
             disabled={appliedJobIds.has(job.id)}
@@ -1150,6 +1303,37 @@ const JobDetails: React.FC = () => {
           userId={userId || ""}
         />
       )}
+
+   {showNoAgentPopup && (
+  <div
+    className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/40"
+    onClick={() => setShowNoAgentPopup(false)}
+  >
+    <div
+      className="bg-white rounded-2xl w-[85%] max-w-sm px-6 py-5 shadow-2xl border border-black/10"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="font-extrabold text-xl mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-amber-400 bg-clip-text text-transparent text-center">
+        🎉 Congratulations!
+      </div>
+
+      <div className="text-sm leading-relaxed text-gray-800 text-center font-medium mb-4">
+        You’ll be launching your AI Agent with your profile.
+        <br />
+        Upload once — and your AI Agent will apply for all relevant positions!
+      </div>
+
+      <div className="flex justify-center mt-2">
+        <button
+          className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold shadow-md"
+          onClick={() => setShowNoAgentPopup(false)}
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

@@ -48,6 +48,8 @@ function resolveUserDisplayName(
   return `User ${short}`;
 }
 
+
+
 // ✅ Helper: formats date/time safely
 function fmtDate(dateString?: string) {
   if (!dateString) return "";
@@ -334,73 +336,115 @@ const AllAgentsPage: React.FC = () => {
 
   const [certLoadingFor, setCertLoadingFor] = useState<string | null>(null);
 
-  async function generateCertificate(agent: Assistant) {
-    if (!agent?.id || !agent?.agentName) {
-      return message.error("Missing agentId or agentName.");
-    }
-    try {
-      setCertLoadingFor(agent.id);
-
-      // Always fetch fresh name if not in state
-      let nameToUse = (recipientName || "").trim();
-      if (!nameToUse) {
-        const fresh = await resolveRecipientName();
-        if (fresh) {
-          setRecipientName(fresh);
-          nameToUse = fresh;
-        }
-      }
-
-      if (!nameToUse) {
-        // If your profile modal is available on this page, open it here:
-        // setIsMandatoryGate(true); setProfileModalOpen(true);
-        setCertLoadingFor(null);
-        return message.warning(
-          "Please enter your first name to generate the certificate."
-        );
-      }
-
-      const url = new URL(
-        "/api/ai-service/agent/downloadAiCertificate",
-        BASE_URL
-      );
-      url.searchParams.set("agentId", agent.id);
-      url.searchParams.set(
-        "agentName",
-        agent.agentName || agent.name || "AI Agent"
-      );
-      url.searchParams.set("recipientName", nameToUse);
-
-      const res = await authFetch(url.toString(), { method: "POST" });
-      const txt = await res.text().catch(() => "");
-      if (!res.ok) {
-        throw new Error(
-          `Certificate generation failed (${res.status})${
-            txt ? `: ${txt}` : ""
-          }`
-        );
-      }
-
-      let json: any = {};
-      try {
-        json = txt ? JSON.parse(txt) : {};
-      } catch {}
-      const urlFromApi: string | null =
-        json?.certificateUrl || json?.url || json?.downloadUrl || null;
-
-      if (urlFromApi) {
-        window.open(urlFromApi, "_blank", "noopener,noreferrer");
-      } else {
-        message.success("Certificate generated successfully.");
-      }
-
-      await refreshData();
-    } catch (e: any) {
-      message.error(e?.message || "Failed to generate certificate.");
-    } finally {
-      setCertLoadingFor(null);
-    }
+async function generateCertificate(agent: Assistant) {
+  if (!agent?.id || !agent?.agentName) {
+    return message.error("Missing agentId or agentName.");
   }
+
+  try {
+    setCertLoadingFor(agent.id);
+
+    // ============================
+    // 1️⃣ Get Recipient Name
+    // ============================
+    let nameToUse = (recipientName || "").trim();
+    if (!nameToUse) {
+      const fresh = await resolveRecipientName();
+      if (fresh) {
+        setRecipientName(fresh);
+        nameToUse = fresh;
+      }
+    }
+
+    if (!nameToUse) {
+      setCertLoadingFor(null);
+      return message.warning("Please enter your first name to generate the certificate.");
+    }
+
+    // ============================
+    // 2️⃣ Get Profile Details API
+    // ============================
+    const profileUrl = new URL(
+      "/api/user-service/customerProfileDetails",
+      BASE_URL
+    );
+    profileUrl.searchParams.set("customerId", resolvedUserId);
+
+    const profileRes = await authFetch(profileUrl.toString(), { method: "GET" });
+    const profileText = await profileRes.text().catch(() => "");
+
+    if (!profileRes.ok) {
+      throw new Error("Failed to load user profile details.");
+    }
+
+    const profile = profileText ? JSON.parse(profileText) : {};
+
+    // ============================
+    // 3️⃣ Extract Email + Contact Number
+    // ============================
+    const email =
+      profile?.email ||
+      profile?.userEmail ||
+      "";
+
+    const contactNumber =
+      profile?.whatsappNumber ||
+      profile?.mobileNumber ||
+      "";
+
+    if (!email) {
+      return message.error("Email is missing in your profile.");
+    }
+
+    if (!contactNumber) {
+      return message.error("Contact Number is missing in your profile.");
+    }
+
+    // ============================
+    // 4️⃣ Build Certificate API URL
+    // ============================
+    const url = new URL(
+      "/api/ai-service/agent/downloadAiCertificate",
+      BASE_URL
+    );
+
+    url.searchParams.set("agentId", agent.id);
+    url.searchParams.set("agentName", agent.agentName || agent.name || "AI Agent");
+    url.searchParams.set("recipientName", nameToUse);
+
+    // ✔ Correct backend fields
+    url.searchParams.set("contactNumber", contactNumber);
+    url.searchParams.set("email", email);
+
+    // ============================
+    // 5️⃣ Call API
+    // ============================
+    const res = await authFetch(url.toString(), { method: "POST" });
+    const txt = await res.text().catch(() => "");
+
+    if (!res.ok) {
+      throw new Error(
+        `Certificate generation failed (${res.status})${txt ? `: ${txt}` : ""}`
+      );
+    }
+
+    const json = txt ? JSON.parse(txt) : {};
+    const urlFromApi =
+      json?.certificateUrl || json?.url || json?.downloadUrl || null;
+
+    if (urlFromApi) {
+      window.open(urlFromApi, "_blank", "noopener,noreferrer");
+    } else {
+      message.success("Certificate generated successfully.");
+    }
+
+    await refreshData();
+  } catch (err: any) {
+    message.error(err?.message || "Failed to generate certificate.");
+  } finally {
+    setCertLoadingFor(null);
+  }
+}
 
   useEffect(() => {
     (async () => {
