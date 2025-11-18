@@ -3,6 +3,7 @@ import { Modal } from 'antd';
 import { Loader2 } from 'lucide-react';
 import axios from 'axios';
 import BASE_URL from '../../Config';
+import PaymentSuccessModal from './PaymentSuccessModal';
 import { load } from "@cashfreepayments/cashfree-js";
 
 const SubscriptionModal = ({
@@ -15,6 +16,8 @@ const SubscriptionModal = ({
 }) => {
 
   const [paymentSessionId, setPaymentSessionId] = React.useState(null);
+  const [paymentSuccessModalOpen, setPaymentSuccessModalOpen] = React.useState(false);
+
 
   let cashfree;
    var initializeSDK = async function () {
@@ -22,24 +25,28 @@ const SubscriptionModal = ({
         mode: "sandbox",
       });
     };
+
+    useEffect(() => {
     initializeSDK();
+    }, [paymentSessionId]);
   
     useEffect(() => {
       const urlParams = new URLSearchParams(window.location.search);
       const paymentSessionId = urlParams.get("order_id");
       setPaymentSessionId(paymentSessionId);
       if (paymentSessionId) {
-          axios.get(`${BASE_URL}/ai-service/cashFreePaymetStatus?orderId=${paymentSessionId}`, {
-            paymentSessionId: paymentSessionId,
-          },{
+          axios.get(`${BASE_URL}/ai-service/cashFreePaymetStatus?orderId=${paymentSessionId}`,{
             "headers": {
              'Content-Type': 'application/json',
-             'Authorization': `Bearer ${localStorage.getItem('token')}`
+             'Authorization': `Bearer ${localStorage.getItem('accessToken')|| ""}`
            }
           })
             .then((response) => {
-              console.log("Payment successful:", response.data);
-              alert("Payment successful!");
+              console.log("Payment successful:", response.data.payment_status);
+              // alert("Payment successful!");
+              if(response.data.payment_status === "SUCCESS"){
+              setPaymentSuccessModalOpen(true);
+              }
             })
             .catch((error) => {
               console.error("Error processing payment:", error);
@@ -74,6 +81,7 @@ const SubscriptionModal = ({
   }
 
   return (
+    <>
     <Modal
       open={open}
        closable={{ closeIcon: <span className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-bold cursor-pointer">&times;</span> }}
@@ -242,6 +250,11 @@ const SubscriptionModal = ({
         </div>
       </div>
     </Modal>
+    <PaymentSuccessModal
+      open={paymentSuccessModalOpen}
+      onClose={() => setPaymentSuccessModalOpen(false)}
+    />
+    </>
   );
 };
 

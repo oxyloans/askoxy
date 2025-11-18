@@ -1,6 +1,6 @@
 // /src/AgentStore/BharatAgentsStore.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Bot, Shield, Loader2, Star, X, Flame } from "lucide-react";
+import { Bot, Shield, Loader2, Star, X, Flame, Share2 } from "lucide-react";
 import BASE_URL from "../../Config";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -262,9 +262,10 @@ function makeInitialsSVG(name: string) {
 const AssistantCard: React.FC<{
   assistant: Assistant;
   onOpen: () => void;
+  onShare?: () => void;
   index: number;
   q: string;
-}> = ({ assistant, onOpen, index, q }) => {
+}> = ({ assistant, onOpen, onShare, index, q }) => {
   const seed = assistant.name || `A${index}`;
   const badge =
     (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
@@ -336,6 +337,20 @@ const AssistantCard: React.FC<{
             >
               Open
             </button>
+
+            {onShare && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent card Open click
+                  onShare();
+                }}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-2.5 py-2 text-gray-600 hover:bg-gray-50"
+                aria-label={`Share ${assistant.name}`}
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -576,6 +591,55 @@ const BharatAgentsStore: React.FC = () => {
     sessionStorage.removeItem("fromAISTore");
     sessionStorage.removeItem("redirectPath");
   }, []);
+
+const handleShare = (a: Assistant) => {
+  const assistantId = (a.assistantId || a.id || a.agentId || "")
+    .toString()
+    .trim();
+  const agentId = (a.agentId || a.assistantId || a.id || "")
+    .toString()
+    .trim();
+
+  if (!assistantId || !agentId) return;
+
+  const shareUrl = `https://www.askoxy.ai/bharath-aistore/assistant/${encodeURIComponent(
+    assistantId
+  )}/${encodeURIComponent(agentId)}`;
+
+  // 🌟 Static share content
+  const staticMessage = `
+🌟 Check out this amazing AI Agent on Bharat AI Store!
+
+🤖 Agent Name: ${a.name || "AI Agent"}
+
+This AI Agent is created on ASKOXY.AI — a platform where anyone can build AI Agents, learn skills, and earn money!
+
+🔗 Access the AI Agent here:
+${shareUrl}
+
+Create your own AI Agent today on ASKOXY.AI! 🚀
+  `.trim();
+
+  // 📱 Native share sheet (mobile + supported browsers)
+  if (typeof navigator !== "undefined" && (navigator as any).share) {
+    (navigator as any)
+      .share({
+        title: a.name || "AI Agent - Bharat AI Store",
+        // IMPORTANT: put everything (including link) inside text
+        text: staticMessage,
+      })
+      .catch(() => {});
+    return;
+  }
+
+  // 💬 WhatsApp fallback (desktop & mobile)
+  const whatsappUrl =
+    "https://api.whatsapp.com/send?text=" +
+    encodeURIComponent(staticMessage);
+
+  window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+};
+
 
   const handleLogin = () => {
     try {
@@ -1120,6 +1184,7 @@ const BharatAgentsStore: React.FC = () => {
                     index={index}
                     q={q || ""}
                     onOpen={() => handleOpen(assistant)}
+                    onShare={() => handleShare(assistant)}
                   />
                 </div>
               ))}

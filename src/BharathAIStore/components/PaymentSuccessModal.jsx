@@ -2,6 +2,13 @@ import React from 'react';
 import { Modal } from 'antd';
 
 const PaymentSuccessModal = ({ open, onClose }) => {
+
+  const handleRemoveQuery = () => {
+  const baseUrl = window.location.origin + window.location.pathname;
+  window.history.replaceState({}, "", baseUrl);
+  window.location.reload();
+};
+
   return (
     <Modal
       open={open}
@@ -20,7 +27,10 @@ const PaymentSuccessModal = ({ open, onClose }) => {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h2>
         <p className="text-gray-600 mb-6">Your subscription has been activated successfully.</p>
         <button
-          onClick={onClose}
+         onClick={() => {
+              handleRemoveQuery();
+              onClose();
+            }}
           className="w-full py-3 px-6 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
         >
           Continue

@@ -27,6 +27,7 @@ import MarkdownRenderer from "../../GenOxy/components/MarkdownRenderer";
 import { message, Modal } from "antd";
 import BASE_URL from "../../Config";
 import SubscriptionModal from "../components/SubscriptionModal"
+import { set } from "lodash";
 
 /** ---------------- Types ---------------- */
 interface Assistant {
@@ -279,6 +280,7 @@ const AssistantDetails: React.FC = () => {
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+  const [subscriptionValid, setSubscriptionValid] = useState<boolean>(false);
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
@@ -812,6 +814,8 @@ const AssistantDetails: React.FC = () => {
       }
     };
 
+    validateDate();
+
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId, id, navigate]);
@@ -1010,8 +1014,8 @@ const AssistantDetails: React.FC = () => {
       setLoading(true);
 
        const userMessages = messages.filter(m => m.role === "user");
-
-      //  if(userMessages.length >=5){
+      
+      //  if(!subscriptionValid && userMessages.length >=5){
       //   setMessages((prevMessages) => [
       //       ...prevMessages,
       //       { role: "assistant", content: "You've reached your message limit. Please upgrade your plan to continue chatting." },
@@ -1063,6 +1067,39 @@ const AssistantDetails: React.FC = () => {
     },
     [input, loading, messages, id, agentId, userId, threadId]
   );
+
+  const validateDate = async () => {
+    try {
+     const resp = await axios.get(`${BASE_URL}/ai-service/agent/planValidateDate?agentId=${agentId}&userId=${userId}`)
+     if(resp?.data?.validateDate === 0 || resp?.data?.validateDate === "0" || resp?.data?.validateDate === "" || resp?.data?.validateDate === null || resp?.data?.validateDate === undefined){
+          console.log("No subscription found");
+          setSubscriptionValid(false);
+        } else{
+      if (isExpired(resp?.data?.validateDate || "")) {
+          console.log("Expired");
+          setSubscriptionValid(false);
+        } else {
+          console.log("Valid");
+          setSubscriptionValid(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error validating date:', error);
+    }
+  };
+
+  function isExpired(dateStr: string) {
+  const [day, month, year] = dateStr.split("/").map(Number);
+
+  // Convert to valid JS date (YYYY, MM-1, DD)
+  const givenDate = new Date(year, month - 1, day);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);   // remove time
+  givenDate.setHours(0, 0, 0, 0);
+
+  return givenDate < today; // true means expired
+}
 
   const handleStop = () => {
     isStopped.current = true;

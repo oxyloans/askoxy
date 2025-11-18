@@ -17,7 +17,7 @@ import {
   GlobalOutlined,
   LockOutlined,
 } from "@ant-design/icons";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import BASE_URL from "../../Config";
 import axios from "axios";
 
@@ -30,16 +30,15 @@ const SOFT_PLACEHOLDER = "#94A3B8";
 
 // Brighter, high-contrast gradients
 const GRADIENTS = [
-  "linear-gradient(135deg, #7C3AED 0%, #FF1CF7 55%, #FFA800 120%)",   // purple → neon pink → amber
-  "linear-gradient(135deg, #2563EB 0%, #341539 55%, #FF1CF7 120%)",   // blue → cyan → green
-  "linear-gradient(135deg, #FF1F6D 0%, #8B5CF6 55%, #22D3EE 120%)",   // hot pink → violet → cyan
-  "linear-gradient(135deg, #06B6D4 0%, #FF1CF7 55%, #6366F1 120%)",   // teal → green → indigo
+  "linear-gradient(135deg, #7C3AED 0%, #FF1CF7 55%, #FFA800 120%)", // purple → neon pink → amber
+  "linear-gradient(135deg, #2563EB 0%, #341539 55%, #FF1CF7 120%)", // blue → cyan → green
+  "linear-gradient(135deg, #FF1F6D 0%, #8B5CF6 55%, #22D3EE 120%)", // hot pink → violet → cyan
+  "linear-gradient(135deg, #06B6D4 0%, #FF1CF7 55%, #6366F1 120%)", // teal → green → indigo
 ];
- 
+
 // Optional: vivid border glow for components
 const BRIGHT_BORDER_GRAD =
   "linear-gradient(180deg, #FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, #7C3AED, #FF1CF7, #00E5FF) border-box";
-
 
 type ViewType = "Public" | "Private";
 
@@ -161,36 +160,41 @@ const CompactSelect: React.FC<{
         zIndex: isOpen ? 5000 : "auto",
       }}
     >
-     <button
-  type="button"
-  aria-haspopup="listbox"
-  aria-expanded={isOpen}
-  onClick={() => setIsOpen(v => !v)}
-  style={{
-    width: "100%",
-    padding: "12px 16px",
-    borderRadius: 14,
-    border: "1.5px solid transparent",
-    backgroundImage: `linear-gradient(#fff, #fff), linear-gradient(135deg, #7C3AED, #FF1CF7, #00E5FF)`,
-    backgroundOrigin: "border-box",
-    backgroundClip: "padding-box, border-box",
-    textAlign: "left",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    fontSize: 15,
-    color: value ? "#0F172A" : SOFT_PLACEHOLDER,
-   boxShadow:
-  "0 6px 16px rgba(124,58,237,0.18), 0 2px 8px rgba(2,8,23,0.06), inset 0 1px 0 rgba(255,255,255,0.5)",
-    transition: "transform .08s ease, box-shadow .2s ease",
-    willChange: "transform",
-  }}
-  onMouseDown={e => (e.currentTarget.style.transform = "translateY(1px) scale(0.995)")}
-  onMouseUp={e => (e.currentTarget.style.transform = "translateY(0) scale(1)")}
-  onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0) scale(1)")}
->
-
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((v) => !v)}
+        style={{
+          width: "100%",
+          padding: "12px 16px",
+          borderRadius: 14,
+          border: "1.5px solid transparent",
+          backgroundImage: `linear-gradient(#fff, #fff), linear-gradient(135deg, #7C3AED, #FF1CF7, #00E5FF)`,
+          backgroundOrigin: "border-box",
+          backgroundClip: "padding-box, border-box",
+          textAlign: "left",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontSize: 15,
+          color: value ? "#0F172A" : SOFT_PLACEHOLDER,
+          boxShadow:
+            "0 6px 16px rgba(124,58,237,0.18), 0 2px 8px rgba(2,8,23,0.06), inset 0 1px 0 rgba(255,255,255,0.5)",
+          transition: "transform .08s ease, box-shadow .2s ease",
+          willChange: "transform",
+        }}
+        onMouseDown={(e) =>
+          (e.currentTarget.style.transform = "translateY(1px) scale(0.995)")
+        }
+        onMouseUp={(e) =>
+          (e.currentTarget.style.transform = "translateY(0) scale(1)")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.transform = "translateY(0) scale(1)")
+        }
+      >
         <div
           style={{
             display: "flex",
@@ -318,51 +322,6 @@ const ROLE_OPTS: Option[] = [
   { label: "Customer", value: "Customer", icon: <UserOutlined /> },
   { label: "Other", value: "Other", icon: <UserOutlined /> },
 ];
-const GOAL_OPTS: Option[] = [
-  { label: "Job / Internship", value: "JobInternship", icon: <AimOutlined /> },
-  { label: "Upskilling", value: "Upskilling", icon: <AimOutlined /> },
-  { label: "Clients", value: "Clients", icon: <AimOutlined /> },
-  { label: "Leads", value: "Leads", icon: <AimOutlined /> },
-  { label: "Investors", value: "Investors", icon: <AimOutlined /> },
-  { label: "Funding", value: "Funding", icon: <AimOutlined /> },
-  { label: "Recruiting", value: "Recruiting", icon: <AimOutlined /> },
-  { label: "Hiring", value: "Hiring", icon: <AimOutlined /> },
-  { label: "Sales", value: "Sales", icon: <AimOutlined /> },
-  { label: "Revenue", value: "Revenue", icon: <AimOutlined /> },
-  {
-    label: "Brand Visibility",
-    value: "BrandVisibility",
-    icon: <AimOutlined />,
-  },
-  { label: "Growth", value: "Growth", icon: <AimOutlined /> },
-  {
-    label: "Community Network",
-    value: "CommunityNetwork",
-    icon: <AimOutlined />,
-  },
-  { label: "Automation", value: "Automation", icon: <AimOutlined /> },
-  { label: "AI Tools", value: "AITools", icon: <AimOutlined /> },
-  { label: "Projects", value: "Projects", icon: <AimOutlined /> },
-  { label: "Collaboration", value: "Collaboration", icon: <AimOutlined /> },
-  { label: "Support", value: "Support", icon: <AimOutlined /> },
-  { label: "Helpdesk", value: "Helpdesk", icon: <AimOutlined /> },
-  { label: "Other", value: "Other", icon: <AimOutlined /> },
-];
-const PURPOSE_OPTS: Option[] = [
-  { label: "Learn", value: "Learn", icon: <RocketOutlined /> },
-  { label: "Build", value: "Build", icon: <RocketOutlined /> },
-  { label: "Offer", value: "Offer", icon: <RocketOutlined /> },
-  { label: "Earn", value: "Earn", icon: <RocketOutlined /> },
-  { label: "Hire", value: "Hire", icon: <RocketOutlined /> },
-  { label: "Automate", value: "Automate", icon: <RocketOutlined /> },
-  { label: "Market", value: "Market", icon: <RocketOutlined /> },
-  { label: "Support", value: "Support", icon: <RocketOutlined /> },
-  { label: "Legal Help", value: "LegalHelp", icon: <RocketOutlined /> },
-  { label: "Medical Help", value: "MedicalHelp", icon: <RocketOutlined /> },
-  { label: "Company Setup", value: "CompanySetup", icon: <RocketOutlined /> },
-  { label: "Company Audit", value: "CompanyAudit", icon: <RocketOutlined /> },
-  { label: "Other", value: "Other", icon: <RocketOutlined /> },
-];
 
 const mergedSentence = (
   desc: string,
@@ -421,39 +380,235 @@ const Agentcreation: React.FC = () => {
   const location = useLocation();
 
   // Core form (selects)
-  const [roleSelect, setRoleSelect] = useState<string>("");
-  const [goalSelect, setGoalSelect] = useState<string>("");
-  const [purposeSelect, setPurposeSelect] = useState<string>("");
+// Core form (selects)
+const [roleSelect, setRoleSelect] = useState<string>("");
+const [goalSelect, setGoalSelect] = useState<string>("");
+const [purposeSelect, setPurposeSelect] = useState<string>("");
 
-const scrollRef = useRef<HTMLDivElement | null>(null);
-const scrolledOnceRef = useRef(false);
+// Dynamic options from backend
+const [goalOptions, setGoalOptions] = useState<Option[]>([]);
+const [purposeOptions, setPurposeOptions] = useState<Option[]>([]);
 
-useEffect(() => {
-  const allPicked = !!roleSelect && !!goalSelect && !!purposeSelect;
+const [goalLoading, setGoalLoading] = useState(false);
+const [purposeLoading, setPurposeLoading] = useState(false);
 
-  // scroll exactly once when the trio becomes complete
-  if (allPicked && !scrolledOnceRef.current) {
-    scrolledOnceRef.current = true;
-    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+// "Other" custom inputs
+const [roleOther, setRoleOther] = useState("");
+const [goalOther, setGoalOther] = useState("");
+const [purposeOther, setPurposeOther] = useState("");
 
-  // if user clears any select, allow future auto-scroll again
-  if (!allPicked && scrolledOnceRef.current) {
-    scrolledOnceRef.current = false;
-  }
-}, [roleSelect, goalSelect, purposeSelect]);
-
-
-  // "Other" custom inputs
-  const [roleOther, setRoleOther] = useState("");
-  const [goalOther, setGoalOther] = useState("");
-  const [purposeOther, setPurposeOther] = useState("");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrolledOnceRef = useRef(false);
 
   // Resolved values (if "Other", use custom text)
   const roleResolved = roleSelect === "Other" ? roleOther.trim() : roleSelect;
   const goalResolved = goalSelect === "Other" ? goalOther.trim() : goalSelect;
   const purposeResolved =
     purposeSelect === "Other" ? purposeOther.trim() : purposeSelect;
+
+// 🔹 When Role changes → load GOALS for that Role (dynamic)
+useEffect(() => {
+  const effectiveRole = (roleSelect === "Other" ? roleOther : roleSelect).trim();
+
+  if (!effectiveRole) {
+    setGoalOptions([]);
+    setGoalSelect("");
+    setPurposeSelect("");
+    setPurposeOptions([]);
+    setGoalLoading(false);
+    return;
+  }
+
+  let cancelled = false;
+
+  const fetchGoals = async () => {
+    try {
+      setGoalLoading(true);
+      setGoalSelect("");
+      setPurposeSelect("");
+      setPurposeOptions([]);
+
+      const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
+
+      const res = await axios.post(
+        `${BASE_URL}/ai-service/agent/getGoalsByRole`,
+        {},
+        {
+          params: { role: effectiveRole },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...authHeaderObj,
+          },
+        }
+      );
+
+      if (cancelled) return;
+
+            const data = res.data;
+      console.log("getGoalsByRole raw response:", data);
+
+      let raw: string[] = [];
+
+      if (Array.isArray(data)) {
+        // Case 1: ["Learn","Study",...,"Other"]
+        raw = data.filter((v) => typeof v === "string");
+      } else if (typeof data === "string") {
+        // Case 2: "Learn\nStudy\nRead\n... \nOther" OR "Learn,Study,Read,...,Other"
+        raw = data
+          .split(/[\n,]+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      } else if (data && typeof data === "object") {
+        // Case 3: { data: ["Learn", ...] } or { goals: ["Learn", ...] } or similar
+        const arr = Object.values(data).find((v) => Array.isArray(v)) as
+          | any[]
+          | undefined;
+        if (Array.isArray(arr)) {
+          raw = arr.filter((v) => typeof v === "string");
+        }
+      }
+
+      const mapped: Option[] = raw.map((g) => ({
+        label: g,
+        value: g,
+        icon: <AimOutlined />,
+      }));
+
+      if (!mapped.length) {
+        setGoalOptions([]);
+        return;
+      }
+
+      const hasOther = mapped.some(
+        (opt) => opt.value.trim().toLowerCase() === "other"
+      );
+      const optionsWithOther = hasOther
+        ? mapped
+        : [
+            ...mapped,
+            { label: "Other", value: "Other", icon: <AimOutlined /> },
+          ];
+
+      setGoalOptions(optionsWithOther);
+    } catch (e) {
+      if (!cancelled) {
+        console.error(e);
+        message.error("Unable to load goals for this role. Please try again.");
+        setGoalOptions([]);
+      }
+    } finally {
+      if (!cancelled) setGoalLoading(false);
+    }
+  };
+
+  fetchGoals();
+
+  return () => {
+    cancelled = true;
+  };
+}, [roleSelect, roleOther]);
+
+// 🔹 When Role + Goal selected → load PURPOSE list (dynamic)
+useEffect(() => {
+  const effectiveRole = (roleSelect === "Other" ? roleOther : roleSelect).trim();
+  const effectiveGoal = (goalSelect === "Other" ? goalOther : goalSelect).trim();
+
+  if (!effectiveRole || !effectiveGoal) {
+    setPurposeOptions([]);
+    setPurposeSelect("");
+    setPurposeLoading(false);
+    return;
+  }
+
+  let cancelled = false;
+
+  const fetchPurposes = async () => {
+    try {
+      setPurposeLoading(true);
+
+      const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
+
+      const res = await axios.post(
+        `${BASE_URL}/ai-service/agent/getPurposeByRoleAndGoals`,
+        {},
+        {
+          params: { role: effectiveRole, goal: effectiveGoal },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...authHeaderObj,
+          },
+        }
+      );
+
+      if (cancelled) return;
+
+          const data = res.data;
+      console.log("getPurposeByRoleAndGoals raw response:", data);
+
+      let raw: string[] = [];
+
+      if (Array.isArray(data)) {
+        // Case 1: ["Learn","Study",...,"Other"]
+        raw = data.filter((v) => typeof v === "string");
+      } else if (typeof data === "string") {
+        // Case 2: "Learn\nStudy\nRead\n... \nOther" OR "Learn,Study,Read,...,Other"
+        raw = data
+          .split(/[\n,]+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      } else if (data && typeof data === "object") {
+        // Case 3: { data: ["Learn", ...] } or { purposes: ["Learn", ...] } etc.
+        const arr = Object.values(data).find((v) => Array.isArray(v)) as
+          | any[]
+          | undefined;
+        if (Array.isArray(arr)) {
+          raw = arr.filter((v) => typeof v === "string");
+        }
+      }
+
+      const mapped: Option[] = raw.map((p) => ({
+        label: p,
+        value: p,
+        icon: <RocketOutlined />,
+      }));
+
+      if (!mapped.length) {
+        setPurposeOptions([]);
+        return;
+      }
+
+      const hasOther = mapped.some(
+        (opt) => opt.value.trim().toLowerCase() === "other"
+      );
+      const optionsWithOther = hasOther
+        ? mapped
+        : [
+            ...mapped,
+            { label: "Other", value: "Other", icon: <RocketOutlined /> },
+          ];
+
+      setPurposeOptions(optionsWithOther);
+    } catch (e) {
+      if (!cancelled) {
+        console.error(e);
+        message.error(
+          "Unable to load purposes for this Role & Goal. Please try again."
+        );
+        setPurposeOptions([]);
+      }
+    } finally {
+      if (!cancelled) setPurposeLoading(false);
+    }
+  };
+
+  fetchPurposes();
+
+  return () => {
+    cancelled = true;
+  };
+}, [roleSelect, roleOther, goalSelect, goalOther]);
 
   // Debounced resolved values (prevents multi API calls while typing)
   const roleDeb = useDebounced(roleResolved, 700);
@@ -491,21 +646,23 @@ useEffect(() => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadRole, setUploadRole] = useState<string>("");
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false); // 🔹 NEW
   const uploadResolveRef = useRef<null | ((ok: boolean) => void)>(null);
 
   const [whatsappNumber, setWhatsappNumber] = useState("");
-const [mobileNumber, setMobileNumber] = useState("");
-const [countryCode, setCountryCode] = useState("+91");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
 
-const [showWhatsappVerificationModal, setShowWhatsappVerificationModal] = useState(false);
-const [isWhatsappVerified, setIsWhatsappVerified] = useState(false);
+  const [showWhatsappVerificationModal, setShowWhatsappVerificationModal] =
+    useState(false);
+  const [isWhatsappVerified, setIsWhatsappVerified] = useState(false);
 
-const [whatsappVerificationCode, setWhatsappVerificationCode] = useState("");
-const [whatsappOtpSession, setWhatsappOtpSession] = useState("");
-const [salt, setSalt] = useState("");
+  const [whatsappVerificationCode, setWhatsappVerificationCode] = useState("");
+  const [whatsappOtpSession, setWhatsappOtpSession] = useState("");
+  const [salt, setSalt] = useState("");
 
-const token = readToken() || "";
-const [errorMsg, setErrorMsg] = useState("");
+  const token = readToken() || "";
+  const [errorMsg, setErrorMsg] = useState("");
 
   // === Auto Blog (separate flow) ===
   const BLOG_NAME_MAX = 80;
@@ -788,22 +945,22 @@ const [errorMsg, setErrorMsg] = useState("");
         setInitialLastName(profileData.userLastName);
         setInitialEmail(profileData.customerEmail);
         // ✅ pull numbers from server
-setWhatsappNumber(profileData.whatsappNumber || "");
-setMobileNumber(profileData.mobileNumber || "");
+        setWhatsappNumber(profileData.whatsappNumber || "");
+        setMobileNumber(profileData.mobileNumber || "");
 
-// ✅ only prompt if WhatsApp missing; otherwise mark verified and don't ask
-if (!profileData.whatsappNumber) {
-  // optional nudge to add WhatsApp, but do NOT block
-  Modal.confirm({
-    title: "Add your WhatsApp number?",
-    content: "We’ll use it to send OTP and verify.",
-    okText: "Add",
-    cancelText: "Later",
-    onOk: () => setShowWhatsappVerificationModal(true),
-  });
-} else {
-  setIsWhatsappVerified(true);
-}
+        // ✅ only prompt if WhatsApp missing; otherwise mark verified and don't ask
+        if (!profileData.whatsappNumber) {
+          // optional nudge to add WhatsApp, but do NOT block
+          Modal.confirm({
+            title: "Add your WhatsApp number?",
+            content: "We’ll use it to send OTP and verify.",
+            okText: "Add",
+            cancelText: "Later",
+            onOk: () => setShowWhatsappVerificationModal(true),
+          });
+        } else {
+          setIsWhatsappVerified(true);
+        }
         // Required: firstName + email
         const missing =
           !profileData.userFirstName || !profileData.customerEmail;
@@ -830,57 +987,59 @@ if (!profileData.whatsappNumber) {
     lastName.trim() !== initialLastName.trim() ||
     email.trim() !== initialEmail.trim();
 
-    // ✅ WhatsApp Verification (sends OTP + verifies, updates profile if needed)
-const handleWhatsappVerification = async () => {
-  try {
-    setLoading(true); // use existing loading flag
+  // ✅ WhatsApp Verification (sends OTP + verifies, updates profile if needed)
+  const handleWhatsappVerification = async () => {
+    try {
+      setLoading(true); // use existing loading flag
 
-    // prefer explicit WhatsApp; fallback to mobile (minus country code)
-    const chatId = (
-      (whatsappNumber || mobileNumber || "")
+      // prefer explicit WhatsApp; fallback to mobile (minus country code)
+      const chatId = (whatsappNumber || mobileNumber || "")
         .replace(countryCode, "")
         .replace(/^\+/, "")
-        .trim()
-    );
+        .trim();
 
-    if (!chatId) {
-      setErrorMsg("Please enter your WhatsApp number to continue.");
-      setLoading(false);
-      return;
-    }
-
-    const response = await axios.post(
-      `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
-      {
-        chatId,
-        countryCode,
-        id: customerId,
-        whatsappOtp: whatsappVerificationCode,
-        whatsappOtpSession,
-        salt,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (response.data) {
-      setIsWhatsappVerified(true);
-      setShowWhatsappVerificationModal(false);
-      message.success("WhatsApp number verified successfully!");
-
-      // if WhatsApp was empty, persist it now
-      if (!whatsappNumber && mobileNumber && mobileNumber !== whatsappNumber) {
-        // you’re already validating firstName/email in handleSaveOrUpdateProfile
-        await handleSaveOrUpdateProfile();
+      if (!chatId) {
+        setErrorMsg("Please enter your WhatsApp number to continue.");
+        setLoading(false);
+        return;
       }
-    } else {
-      setErrorMsg("Invalid verification code");
+
+      const response = await axios.post(
+        `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
+        {
+          chatId,
+          countryCode,
+          id: customerId,
+          whatsappOtp: whatsappVerificationCode,
+          whatsappOtpSession,
+          salt,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data) {
+        setIsWhatsappVerified(true);
+        setShowWhatsappVerificationModal(false);
+        message.success("WhatsApp number verified successfully!");
+
+        // if WhatsApp was empty, persist it now
+        if (
+          !whatsappNumber &&
+          mobileNumber &&
+          mobileNumber !== whatsappNumber
+        ) {
+          // you’re already validating firstName/email in handleSaveOrUpdateProfile
+          await handleSaveOrUpdateProfile();
+        }
+      } else {
+        setErrorMsg("Invalid verification code");
+      }
+    } catch {
+      setErrorMsg("Failed to verify WhatsApp number");
+    } finally {
+      setLoading(false);
     }
-  } catch {
-    setErrorMsg("Failed to verify WhatsApp number");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleSaveOrUpdateProfile = async () => {
     // validations
@@ -1024,7 +1183,7 @@ const handleWhatsappVerification = async () => {
 
   async function handleUploadConfirm() {
     const ctx = pendingUploadRef.current;
-    if (!ctx) return;
+    if (!ctx || uploading) return; // 🔒 prevent double-clicks
 
     // no user choice anymore; role is read-only from API/publish flow
     const finalRole = (uploadRole || "").trim(); // may be "", still allowed
@@ -1042,6 +1201,8 @@ const handleWhatsappVerification = async () => {
     }
 
     try {
+      setUploading(true); // 🔹 start loader
+
       await uploadMandatoryDocOnceMulti(
         ctx.assistanceId,
         uploadFiles,
@@ -1059,7 +1220,7 @@ const handleWhatsappVerification = async () => {
         "Congratulations! File(s) uploaded. Your agent is queued for approval."
       );
 
-      // clear form, then navigate
+      // clear form (optional, as you had before)
       setAgentName("");
       setDescription("");
       setInstructions("");
@@ -1072,9 +1233,16 @@ const handleWhatsappVerification = async () => {
       setGoalOther("");
       setPurposeOther("");
 
-      navigate("/main/bharath-aistore/agents");
+      // ⚠️ IMPORTANT:
+      // Do NOT navigate here.
+      // publishNow() will resume after this Promise resolves
+      // and will handle:
+      //  - jobContext → /main/jobdetails + openApplyModal
+      //  - default → /main/bharath-aistore/agents
     } catch (e: any) {
       message.error(e?.message || "Upload failed.");
+    } finally {
+      setUploading(false); // 🔹 stop loader
     }
   }
 
@@ -1117,15 +1285,15 @@ const handleWhatsappVerification = async () => {
     setStartersEdit(true);
   };
   const saveStarters = () => {
-  const s1 = (cs1Draft || "").substring(0, 150);  // allow special chars fully
-  const s2 = (cs2Draft || "").substring(0, 150);
+    const s1 = (cs1Draft || "").substring(0, 150); // allow special chars fully
+    const s2 = (cs2Draft || "").substring(0, 150);
 
-  setConStarter1(s1);
-  setConStarter2(s2);
+    setConStarter1(s1);
+    setConStarter2(s2);
 
-  setStartersEdit(false);
-  message.success("Conversation starters saved!");
-};
+    setStartersEdit(false);
+    message.success("Conversation starters saved!");
+  };
   const closeStarters = () => {
     // discard changes
     setStartersEdit(false);
@@ -1787,166 +1955,157 @@ const handleWhatsappVerification = async () => {
     };
   }, [previewOpen, description, instructions, requestAndOpenEditor]);
 
-const publishNow = useCallback(async () => {
-  const userId = localStorage.getItem("userId") || "";
-  const auth = getAuthHeader();
+  const publishNow = useCallback(async () => {
+    const userId = localStorage.getItem("userId") || "";
+    const auth = getAuthHeader();
 
-  const body = {
-    agentName: (agentName || "").trim(),
-    description: previewDescription,
-    roleUser: roleSelect === "Other" ? "Other" : roleSelect,
-    purpose: purposeSelect === "Other" ? "Other" : purposeSelect,
-    goals: goalSelect === "Other" ? "Other" : goalSelect,
-    optionalRole: roleSelect === "Other" ? roleOther.trim() : "",
-    optionalPurpose: purposeSelect === "Other" ? purposeOther.trim() : "",
-    optionalGoal: goalSelect === "Other" ? goalOther.trim() : "",
-    instructions: (instructions || "").slice(0, 7000),
-    userId,
-    view,
-    conStarter1: (conStarter1 || "").trim(),
-    conStarter2: (conStarter2 || "").trim(),
-    conStarter3: "",
-    conStarter4: "",
-  };
-
-  setLoading(true);
-  try {
-    const res = await fetch(`${BASE_URL}/ai-service/agent/newAgentPublish`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...auth },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(
-        `Publish failed: ${res.status} ${res.statusText} ${
-          txt ? "— " + txt : ""
-        }`.trim()
-      );
-    }
-
-    const data = await res.json().catch(() => ({} as any));
-    const assistanceId =
-      data.assistanceId || data.assistantId || data.id || "";
-
-    // 🔹 derive role for upload UI (prefer API response)
-    const apiRoleUser = (data?.roleUser || "").trim();
-    const apiOptionalRole = (data?.optionalRole || "").trim();
-    const roleForUpload =
-      apiOptionalRole ||
-      apiRoleUser ||
-      body.optionalRole ||
-      body.roleUser ||
-      "";
-message.success("Congratulations! Your agent is published successfully.");
-
-if (assistanceId) {
-  localStorage.setItem(
-    "awaitingUpload",
-    JSON.stringify({ assistanceId, userId })
-  );
-  // pass role string into the prompt
-  await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
-}
-
-// ✅ Mark that this user now HAS an AI Agent
-try {
-  localStorage.setItem("hasAiAgent", "true");
-} catch {
-  // ignore storage errors
-}
-
-setPreviewOpen(false);
-message.success("All set! Files uploaded and agent queued for approval.");
-
-    // 🔹 Check if we have a pending JobDetails context in localStorage
-    let jobContext: {
-      fromJobId: string;
-      jobDesignation?: string;
-      companyName?: string;
-    } | null = null;
-
+    // 🔹 Decide jobStatus based on JobDetails → Agentcreation flow
+    // If agentJobContext exists (coming from a Job), send "JOBAPPLYING"
+    // If not from job, send null
+    let jobStatus: string | null = null;
     try {
       const rawCtx = localStorage.getItem("agentJobContext");
       if (rawCtx) {
-        jobContext = JSON.parse(rawCtx);
+        const ctx = JSON.parse(rawCtx || "{}");
+        if (ctx && ctx.fromJobId) {
+          jobStatus = "JOBAPPLYING";
+        }
       }
     } catch {
-      jobContext = null;
+      jobStatus = null;
     }
 
-    if (jobContext?.fromJobId) {
-    // ✅ Mark that this user now HAS an AI Agent
-try {
-  localStorage.setItem("hasAiAgent", "true");
-} catch {
-  // ignore storage errors
-}
+    const body = {
+      agentName: (agentName || "").trim(),
+      description: previewDescription,
+      roleUser: roleSelect === "Other" ? "Other" : roleSelect,
+      purpose: purposeSelect === "Other" ? "Other" : purposeSelect,
+      goals: goalSelect === "Other" ? "Other" : goalSelect,
+      optionalRole: roleSelect === "Other" ? roleOther.trim() : "",
+      optionalPurpose: purposeSelect === "Other" ? purposeOther.trim() : "",
+      optionalGoal: goalSelect === "Other" ? goalOther.trim() : "",
+      instructions: (instructions || "").slice(0, 7000),
 
-// 🔹 Check if we have a pending JobDetails context in localStorage
-let jobContext: {
-  fromJobId: string;
-  jobDesignation?: string;
-  companyName?: string;
-} | null = null;
+      userId,
+      view,
+      conStarter1: (conStarter1 || "").trim(),
+      conStarter2: (conStarter2 || "").trim(),
+      conStarter3: "",
+      conStarter4: "",
 
-try {
-  const rawCtx = localStorage.getItem("agentJobContext");
-  if (rawCtx) {
-    jobContext = JSON.parse(rawCtx);
-  }
-} catch {
-  jobContext = null;
-}
+      // ✅ New field for backend:
+      jobStatus, // "JOBAPPLYING" if from Job, otherwise null
+    };
 
-if (jobContext?.fromJobId) {
-  try {
-    // 🔥 HERE we finally mark JobAgent = Created for this jobId
-    localStorage.setItem(
-      `hasAiAgentForJob:${jobContext.fromJobId}`,
-      "true"
-    );
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/ai-service/agent/newAgentPublish`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...auth },
+        body: JSON.stringify(body),
+      });
 
-    // Clear context so normal agent creation doesn’t reuse it
-    localStorage.removeItem("agentJobContext");
-  } catch {}
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          `Publish failed: ${res.status} ${res.statusText} ${
+            txt ? "— " + txt : ""
+          }`.trim()
+        );
+      }
 
-  // Go back to JobDetails and auto-open apply modal ONCE
-  navigate("/main/jobdetails", {
-    state: {
-      id: jobContext.fromJobId,
-      openApplyModal: true,
-    },
-  });
-  return;
-}
+      const data = await res.json().catch(() => ({} as any));
+      const assistanceId =
+        data.assistanceId || data.assistantId || data.id || "";
+
+      const apiRoleUser = (data?.roleUser || "").trim();
+      const apiOptionalRole = (data?.optionalRole || "").trim();
+      const roleForUpload =
+        apiOptionalRole ||
+        apiRoleUser ||
+        body.optionalRole ||
+        body.roleUser ||
+        "";
+
+      message.success("Congratulations! Your agent is published successfully.");
+
+      if (assistanceId) {
+        localStorage.setItem(
+          "awaitingUpload",
+          JSON.stringify({ assistanceId, userId })
+        );
+        await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
+      }
+
+      // Generic “has any Agent” flag (doesn't affect JOB flow logic now)
+      try {
+        localStorage.setItem("hasAiAgent", "true");
+      } catch {
+        // ignore
+      }
+
+      setPreviewOpen(false);
+      message.success("All set! Files uploaded and agent queued for approval.");
+
+      // 🔹 Check if we have a pending JobDetails context in localStorage
+      let jobContext: {
+        fromJobId: string;
+        jobDesignation?: string;
+        companyName?: string;
+      } | null = null;
+
+      try {
+        const rawCtx = localStorage.getItem("agentJobContext");
+        if (rawCtx) {
+          jobContext = JSON.parse(rawCtx);
+        }
+      } catch {
+        jobContext = null;
+      }
+
+      if (jobContext?.fromJobId) {
+        // ✅ Clear context so next time is normal Agent flow
+        try {
+          localStorage.removeItem("agentJobContext");
+        } catch {
+          // ignore
+        }
+
+        // ⬅️ Go back to JobDetails and auto-open apply modal ONCE
+        navigate("/main/jobdetails", {
+          state: {
+            id: jobContext.fromJobId,
+            openApplyModal: true,
+            jobDesignation: jobContext.jobDesignation,
+            companyName: jobContext.companyName,
+          },
+        });
+        return;
+      }
+
+      // 🧭 Default navigation (no job context → normal agent creation flow)
+      navigate("/main/bharath-aistore/agents");
+    } catch (e: any) {
+      console.error(e);
+      message.error(e?.message || "Failed to publish agent. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    // Default navigation (no job context)
-    navigate("/main/bharath-aistore/agents");
-
-  } catch (e: any) {
-    message.error(e?.message || "Publish failed");
-  } finally {
-    setLoading(false);
-  }
-}, [
-  agentName,
-  previewDescription,
-  instructions,
-  roleSelect,
-  purposeSelect,
-  goalSelect,
-  roleOther,
-  purposeOther,
-  goalOther,
-  view,
-  conStarter1,
-  conStarter2,
-  navigate,
-  location, // 👈 added
-]);
+  }, [
+    agentName,
+    previewDescription,
+    roleSelect,
+    purposeSelect,
+    goalSelect,
+    roleOther,
+    purposeOther,
+    goalOther,
+    instructions,
+    view,
+    conStarter1,
+    conStarter2,
+    navigate,
+  ]);
 
   const confirmPublish = useCallback(() => {
     if (description.trim().length < MIN_DESC) {
@@ -2352,13 +2511,15 @@ if (jobContext?.fromJobId) {
             >
               <div style={labelColStyle}>{gradientText("Looking for", 1)}</div>
               <div style={{ flex: 1 }}>
-                <CompactSelect
-                  value={goalSelect}
-                  onChange={setGoalSelect}
-                  options={GOAL_OPTS}
-                  placeholder="Select your goal"
-                  loading={nameLoading}
-                />
+                {/* Goal dropdown */}
+<CompactSelect
+  value={goalSelect}
+  onChange={setGoalSelect}
+  options={goalOptions}
+  placeholder="Select your goal"
+  loading={goalLoading || nameLoading}
+/>
+
                 {goalSelect === "Other" &&
                   otherInput(goalOther, setGoalOther, "Type your goal…")}
               </div>
@@ -2417,13 +2578,15 @@ if (jobContext?.fromJobId) {
             >
               <div style={labelColStyle}>{gradientText("To", 2)}</div>
               <div style={{ flex: 1 }}>
-                <CompactSelect
-                  value={purposeSelect}
-                  onChange={setPurposeSelect}
-                  options={PURPOSE_OPTS}
-                  placeholder="Select purpose"
-                  loading={nameLoading}
-                />
+                {/* Purpose dropdown */}
+<CompactSelect
+  value={purposeSelect}
+  onChange={setPurposeSelect}
+  options={purposeOptions}
+  placeholder="Select purpose"
+  loading={purposeLoading || nameLoading}
+/>
+
                 {purposeSelect === "Other" &&
                   otherInput(
                     purposeOther,
@@ -3687,58 +3850,79 @@ if (jobContext?.fromJobId) {
         </Modal>
 
         <Modal
-  open={showWhatsappVerificationModal}
-  onCancel={() => setShowWhatsappVerificationModal(false)}
-  footer={null}
-  centered
-  title="Verify your WhatsApp"
->
-  <div style={{ display: "grid", gap: 10 }}>
-    {!!errorMsg && (
-      <div style={{ color: "#b91c1c", fontSize: 12 }}>{errorMsg}</div>
-    )}
+          open={showWhatsappVerificationModal}
+          onCancel={() => setShowWhatsappVerificationModal(false)}
+          footer={null}
+          centered
+          title="Verify your WhatsApp"
+        >
+          <div style={{ display: "grid", gap: 10 }}>
+            {!!errorMsg && (
+              <div style={{ color: "#b91c1c", fontSize: 12 }}>{errorMsg}</div>
+            )}
 
-    <label style={{ fontSize: 12, color: "#475569" }}>Country Code</label>
-    <input
-      value={countryCode}
-      onChange={(e) => setCountryCode(e.target.value)}
-      style={{ height: 38, border: "1px solid #E7E6F3", borderRadius: 10, padding: "0 10px" }}
-    />
+            <label style={{ fontSize: 12, color: "#475569" }}>
+              Country Code
+            </label>
+            <input
+              value={countryCode}
+              onChange={(e) => setCountryCode(e.target.value)}
+              style={{
+                height: 38,
+                border: "1px solid #E7E6F3",
+                borderRadius: 10,
+                padding: "0 10px",
+              }}
+            />
 
-    <label style={{ fontSize: 12, color: "#475569" }}>WhatsApp Number</label>
-    <input
-      value={whatsappNumber || mobileNumber}
-      onChange={(e) => setWhatsappNumber(e.target.value)}
-      placeholder="Enter WhatsApp number"
-      style={{ height: 38, border: "1px solid #E7E6F3", borderRadius: 10, padding: "0 10px" }}
-    />
+            <label style={{ fontSize: 12, color: "#475569" }}>
+              WhatsApp Number
+            </label>
+            <input
+              value={whatsappNumber || mobileNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              placeholder="Enter WhatsApp number"
+              style={{
+                height: 38,
+                border: "1px solid #E7E6F3",
+                borderRadius: 10,
+                padding: "0 10px",
+              }}
+            />
 
-    <label style={{ fontSize: 12, color: "#475569" }}>OTP Code</label>
-    <input
-      value={whatsappVerificationCode}
-      onChange={(e) => setWhatsappVerificationCode(e.target.value)}
-      placeholder="Enter OTP"
-      style={{ height: 38, border: "1px solid #E7E6F3", borderRadius: 10, padding: "0 10px" }}
-    />
+            <label style={{ fontSize: 12, color: "#475569" }}>OTP Code</label>
+            <input
+              value={whatsappVerificationCode}
+              onChange={(e) => setWhatsappVerificationCode(e.target.value)}
+              placeholder="Enter OTP"
+              style={{
+                height: 38,
+                border: "1px solid #E7E6F3",
+                borderRadius: 10,
+                padding: "0 10px",
+              }}
+            />
 
-    <button
-      onClick={handleWhatsappVerification}
-      disabled={loading}
-      style={{
-        height: 40,
-        borderRadius: 999,
-        border: "none",
-        fontWeight: 900,
-        color: "#fff",
-        background: "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
-        boxShadow: "0 6px 16px rgba(124,58,237,0.18), 0 2px 8px rgba(2,8,23,0.06)",
-        cursor: "pointer",
-      }}
-    >
-      {loading ? "Verifying..." : "Verify & Save"}
-    </button>
-  </div>
-</Modal>
+            <button
+              onClick={handleWhatsappVerification}
+              disabled={loading}
+              style={{
+                height: 40,
+                borderRadius: 999,
+                border: "none",
+                fontWeight: 900,
+                color: "#fff",
+                background:
+                  "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+                boxShadow:
+                  "0 6px 16px rgba(124,58,237,0.18), 0 2px 8px rgba(2,8,23,0.06)",
+                cursor: "pointer",
+              }}
+            >
+              {loading ? "Verifying..." : "Verify & Save"}
+            </button>
+          </div>
+        </Modal>
 
         <Modal
           open={uploadOpen}
@@ -3819,6 +4003,7 @@ if (jobContext?.fromJobId) {
               <button
                 type="button"
                 onClick={handleUploadConfirm}
+                disabled={uploading}
                 style={{
                   border: "none",
                   borderRadius: 999,
@@ -3827,30 +4012,41 @@ if (jobContext?.fromJobId) {
                   color: "#fff",
                   background:
                     "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+                  opacity: uploading ? 0.7 : 1,
+                  cursor: uploading ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                Upload & Continue
+                {uploading ? (
+                  <>
+                    <Spin size="small" /> {/* from antd, already imported */}
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload & Continue"
+                )}
               </button>
             </div>
           </div>
         </Modal>
 
-      {/* ===== Profile Edit (Mandatory Gate) ===== */}
-<Modal
-  open={profileModalOpen}
-  onCancel={() => {
-    message.warning("Please complete your profile before continuing.");
-    setProfileModalOpen(true); // keep it open
-  }}
-  footer={null}
-  title="Complete Your Profile"
-  // 🔒 fully locked modal
-  closable={false}
-  maskClosable={false}
-  keyboard={false}
-  destroyOnClose={false}
->
-
+        {/* ===== Profile Edit (Mandatory Gate) ===== */}
+        <Modal
+          open={profileModalOpen}
+          onCancel={() => {
+            message.warning("Please complete your profile before continuing.");
+            setProfileModalOpen(true); // keep it open
+          }}
+          footer={null}
+          title="Complete Your Profile"
+          // 🔒 fully locked modal
+          closable={false}
+          maskClosable={false}
+          keyboard={false}
+          destroyOnClose={false}
+        >
           <div style={{ display: "grid", gap: 12 }}>
             {/* First Name - REQUIRED */}
             <div>
