@@ -72,7 +72,7 @@ let cashfree;
 // }
 
     let checkoutOptions = {
-      paymentSessionId: "session_AbP-Is5zzQjOGV369cxfwO6tlIpkYQNiR3YRyWS-b5D2yipOOGyHW0fOp7xwxtl7C5gF7IinJpnSxkz9M351ZY38bnQwVNdmuqMOhjfjPFv-WvIrlcEnBq4-dHMpayment",
+      paymentSessionId: "session_2K4NKh5DpczwUWQ-7YywJR2yo--zV2m4_25PDoh_KLESQlzyaBUhoUEbkuIFLVt-H2rabBYjDWScnMH5Gw2Ay9NeOvmuABeFvBC-5WZ9FzrVA57bSvcXzNG_fuFMPApaymentpayment",
       redirectTarget: "_self",
     };
     cashfree.checkout(checkoutOptions);
@@ -81,6 +81,7 @@ let cashfree;
   return (
     <div className="row">
       <p>Click below to open the checkout page in current tab</p>
+      <input type="text" id="paymentSessionId" value={paymentSessionId || ""} onChange={(e) => setPaymentSessionId(e.target.value)} />
       <button type="submit" className="btn btn-primary" id="renderBtn" onClick={doPayment}>
         Pay Now
       </button>

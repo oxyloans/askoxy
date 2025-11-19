@@ -8,7 +8,6 @@ import {
   Tag,
   Select,
   Grid,
-  Popconfirm,
   message,
   Input,
   Empty,
@@ -47,8 +46,6 @@ function resolveUserDisplayName(
   const short = key.length > 10 ? `${key.slice(0, 4)}…${key.slice(-4)}` : key;
   return `User ${short}`;
 }
-
-
 
 // ✅ Helper: formats date/time safely
 function fmtDate(dateString?: string) {
@@ -115,6 +112,48 @@ function getUserId(): string {
   );
 }
 
+// --- Small text helpers (reuse from Agentcreation) ---
+const cleanForTransport = (s: string) =>
+  (s || "")
+    .trim()
+    .replace(/\u2014|\u2013/g, "-")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/\s+/g, " ")
+    .replace(/^"+|"+$|^'+|'+$/g, "")
+    .slice(0, 7000);
+
+const cleanInstructionText = (txt: string) =>
+  (txt || "")
+    .replace(/^\uFEFF/, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/^#{1,6}\s?/gm, "")
+    .replace(/\*+/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+const parseStartersFromText = (raw: string): string[] => {
+  const txt = (raw || "").replace(/\r/g, "").trim();
+  if (!txt) return [];
+
+  const lines = txt
+    .split(/\n+/)
+    .map((l) => l.replace(/^\s*[-*•\d.]+\s*/, "").trim())
+    .filter(Boolean);
+
+  const uniq: string[] = [];
+  for (const line of lines) {
+    if (!line) continue;
+    if (uniq.some((x) => x.toLowerCase() === line.toLowerCase())) continue;
+    uniq.push(line);
+    if (uniq.length >= 4) break; // we only need 4
+  }
+  return uniq;
+};
+
 /** -------- Types -------- */
 type Assistant = {
   id: string;
@@ -158,6 +197,10 @@ type Assistant = {
   view: string | null;
   screenStatus?: "STAGE1" | "STAGE2" | "STAGE3" | "STAGE4" | null;
   certificateUrl?: string | null; // ✅ add this
+  conStarter1?: string | null;
+  conStarter2?: string | null;
+  conStarter3?: string | null;
+  conStarter4?: string | null;
 };
 type Conversation = {
   id: string;
@@ -186,23 +229,6 @@ type UploadedFile = {
   createdAt?: any;
   sizeBytes?: number;
 };
-type EditDraft = Partial<
-  Pick<
-    Assistant,
-    | "agentName"
-    | "description"
-    | "status"
-    | "agentStatus"
-    | "activeStatus"
-    | "voiceStatus"
-    | "domain"
-    | "subDomain"
-    | "targetUser"
-    | "usageModel"
-    | "responseFormat"
-    | "converstionTone"
-  >
->;
 
 /** -------- Main Page -------- */
 const AllAgentsPage: React.FC = () => {
@@ -230,7 +256,6 @@ const AllAgentsPage: React.FC = () => {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyData, setHistoryData] = useState<any | null>(null);
 
-  const [editMap, setEditMap] = useState<Record<string, EditDraft>>({});
   const [fileModalOpen, setFileModalOpen] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("All");
@@ -238,9 +263,26 @@ const AllAgentsPage: React.FC = () => {
   const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [removingFileId, setRemovingFileId] = useState<string | null>(null);
+  const [editAgent, setEditAgent] = useState<Assistant | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+
+  // separate loaders for each button
+  const [editInstrLoading, setEditInstrLoading] = useState(false);
+  const [editStarterLoading, setEditStarterLoading] = useState(false);
 
   const [namePromptOpen, setNamePromptOpen] = useState(false);
   const [tempRecipient, setTempRecipient] = useState("");
+  // Edit only Instructions + ConStarters
+  const [editScriptAgent, setEditScriptAgent] = useState<Assistant | null>(
+    null
+  );
+  const [editInstr, setEditInstr] = useState("");
+  const [editCS1, setEditCS1] = useState("");
+  const [editCS2, setEditCS2] = useState("");
+
+  const MAX_INSTRUCTIONS_CHARS = 7000;
+  const MAX_CONVERSATION_STARTER_CHARS = 150;
+
   const [pendingAgentForCert, setPendingAgentForCert] =
     useState<Assistant | null>(null);
   const showId = showEdit ?? "";
@@ -336,115 +378,119 @@ const AllAgentsPage: React.FC = () => {
 
   const [certLoadingFor, setCertLoadingFor] = useState<string | null>(null);
 
-async function generateCertificate(agent: Assistant) {
-  if (!agent?.id || !agent?.agentName) {
-    return message.error("Missing agentId or agentName.");
-  }
+  async function generateCertificate(agent: Assistant) {
+    if (!agent?.id || !agent?.agentName) {
+      return message.error("Missing agentId or agentName.");
+    }
 
-  try {
-    setCertLoadingFor(agent.id);
+    try {
+      setCertLoadingFor(agent.id);
 
-    // ============================
-    // 1️⃣ Get Recipient Name
-    // ============================
-    let nameToUse = (recipientName || "").trim();
-    if (!nameToUse) {
-      const fresh = await resolveRecipientName();
-      if (fresh) {
-        setRecipientName(fresh);
-        nameToUse = fresh;
+      // ============================
+      // 1️⃣ Get Recipient Name
+      // ============================
+      let nameToUse = (recipientName || "").trim();
+      if (!nameToUse) {
+        const fresh = await resolveRecipientName();
+        if (fresh) {
+          setRecipientName(fresh);
+          nameToUse = fresh;
+        }
       }
-    }
 
-    if (!nameToUse) {
-      setCertLoadingFor(null);
-      return message.warning("Please enter your first name to generate the certificate.");
-    }
+      if (!nameToUse) {
+        setCertLoadingFor(null);
+        return message.warning(
+          "Please enter your first name to generate the certificate."
+        );
+      }
 
-    // ============================
-    // 2️⃣ Get Profile Details API
-    // ============================
-    const profileUrl = new URL(
-      "/api/user-service/customerProfileDetails",
-      BASE_URL
-    );
-    profileUrl.searchParams.set("customerId", resolvedUserId);
-
-    const profileRes = await authFetch(profileUrl.toString(), { method: "GET" });
-    const profileText = await profileRes.text().catch(() => "");
-
-    if (!profileRes.ok) {
-      throw new Error("Failed to load user profile details.");
-    }
-
-    const profile = profileText ? JSON.parse(profileText) : {};
-
-    // ============================
-    // 3️⃣ Extract Email + Contact Number
-    // ============================
-    const email =
-      profile?.email ||
-      profile?.userEmail ||
-      "";
-
-    const contactNumber =
-      profile?.whatsappNumber ||
-      profile?.mobileNumber ||
-      "";
-
-    if (!email) {
-      return message.error("Email is missing in your profile.");
-    }
-
-    if (!contactNumber) {
-      return message.error("Contact Number is missing in your profile.");
-    }
-
-    // ============================
-    // 4️⃣ Build Certificate API URL
-    // ============================
-    const url = new URL(
-      "/api/ai-service/agent/downloadAiCertificate",
-      BASE_URL
-    );
-
-    url.searchParams.set("agentId", agent.id);
-    url.searchParams.set("agentName", agent.agentName || agent.name || "AI Agent");
-    url.searchParams.set("recipientName", nameToUse);
-
-    // ✔ Correct backend fields
-    url.searchParams.set("contactNumber", contactNumber);
-    url.searchParams.set("email", email);
-
-    // ============================
-    // 5️⃣ Call API
-    // ============================
-    const res = await authFetch(url.toString(), { method: "POST" });
-    const txt = await res.text().catch(() => "");
-
-    if (!res.ok) {
-      throw new Error(
-        `Certificate generation failed (${res.status})${txt ? `: ${txt}` : ""}`
+      // ============================
+      // 2️⃣ Get Profile Details API
+      // ============================
+      const profileUrl = new URL(
+        "/api/user-service/customerProfileDetails",
+        BASE_URL
       );
+      profileUrl.searchParams.set("customerId", resolvedUserId);
+
+      const profileRes = await authFetch(profileUrl.toString(), {
+        method: "GET",
+      });
+      const profileText = await profileRes.text().catch(() => "");
+
+      if (!profileRes.ok) {
+        throw new Error("Failed to load user profile details.");
+      }
+
+      const profile = profileText ? JSON.parse(profileText) : {};
+
+      // ============================
+      // 3️⃣ Extract Email + Contact Number
+      // ============================
+      const email = profile?.email || profile?.userEmail || "";
+
+      const contactNumber =
+        profile?.whatsappNumber || profile?.mobileNumber || "";
+
+      if (!email) {
+        return message.error("Email is missing in your profile.");
+      }
+
+      if (!contactNumber) {
+        return message.error("Contact Number is missing in your profile.");
+      }
+
+      // ============================
+      // 4️⃣ Build Certificate API URL
+      // ============================
+      const url = new URL(
+        "/api/ai-service/agent/downloadAiCertificate",
+        BASE_URL
+      );
+
+      url.searchParams.set("agentId", agent.id);
+      url.searchParams.set(
+        "agentName",
+        agent.agentName || agent.name || "AI Agent"
+      );
+      url.searchParams.set("recipientName", nameToUse);
+
+      // ✔ Correct backend fields
+      url.searchParams.set("contactNumber", contactNumber);
+      url.searchParams.set("email", email);
+
+      // ============================
+      // 5️⃣ Call API
+      // ============================
+      const res = await authFetch(url.toString(), { method: "POST" });
+      const txt = await res.text().catch(() => "");
+
+      if (!res.ok) {
+        throw new Error(
+          `Certificate generation failed (${res.status})${
+            txt ? `: ${txt}` : ""
+          }`
+        );
+      }
+
+      const json = txt ? JSON.parse(txt) : {};
+      const urlFromApi =
+        json?.certificateUrl || json?.url || json?.downloadUrl || null;
+
+      if (urlFromApi) {
+        window.open(urlFromApi, "_blank", "noopener,noreferrer");
+      } else {
+        message.success("Certificate generated successfully.");
+      }
+
+      await refreshData();
+    } catch (err: any) {
+      message.error(err?.message || "Failed to generate certificate.");
+    } finally {
+      setCertLoadingFor(null);
     }
-
-    const json = txt ? JSON.parse(txt) : {};
-    const urlFromApi =
-      json?.certificateUrl || json?.url || json?.downloadUrl || null;
-
-    if (urlFromApi) {
-      window.open(urlFromApi, "_blank", "noopener,noreferrer");
-    } else {
-      message.success("Certificate generated successfully.");
-    }
-
-    await refreshData();
-  } catch (err: any) {
-    message.error(err?.message || "Failed to generate certificate.");
-  } finally {
-    setCertLoadingFor(null);
   }
-}
 
   useEffect(() => {
     (async () => {
@@ -927,42 +973,239 @@ async function generateCertificate(agent: Assistant) {
     return map;
   }, [data]);
 
-  const openUpdateWizard = (a: Assistant) => {
-    sessionStorage.setItem("edit_agentId", a.id);
-    sessionStorage.setItem("edit_assistantId", a.assistantId || "");
-    const stepFromScreen =
-      a?.screenStatus === "STAGE2"
-        ? 1
-        : a?.screenStatus === "STAGE3"
-        ? 2
-        : a?.screenStatus === "STAGE4"
-        ? 3
-        : 0;
-    sessionStorage.setItem("edit_jumpStep", String(stepFromScreen));
+  const openEditAgent = (a: Assistant) => {
+    // pick latest conversations for this agent if available
     const convList = conversationsByAgent[a.id] || [];
     const latest = [...convList].sort(
       (x, y) =>
-        new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime()
+        new Date(y.createdAt || "").getTime() -
+        new Date(x.createdAt || "").getTime()
     )[0];
-    const seed = latest
-      ? {
-          ...a,
-          conStarter1: latest.conStarter1,
-          conStarter2: latest.conStarter2,
-          conStarter3: latest.conStarter3,
-          conStarter4: latest.conStarter4,
-          rateThisPlatform: latest.rateThisPlatform,
-          shareYourFeedback: latest.shareYourFeedback,
-        }
-      : a;
-    const qs = new URLSearchParams({
-      agentId: a.id,
-      assistantId: a.assistantId || "",
-      mode: "edit",
-    }).toString();
-    navigate(`/main/create-aiagent?${qs}`, {
-      state: { mode: "edit", seed, jumpToStep: stepFromScreen },
+
+    setEditAgent({
+      ...a,
+      // keep only 2 conversation starters
+      conStarter1:
+        latest?.conStarter1 || a.conStarter1 || (a as any).conStarter1 || "",
+      conStarter2:
+        latest?.conStarter2 || a.conStarter2 || (a as any).conStarter2 || "",
+      conStarter3: null,
+      conStarter4: null,
+      // keep existing instructions
+      instructions: (a.instructions || "").trim(),
     });
+  };
+
+  const regenerateInstructionsForEdit = async () => {
+    if (!editAgent) return;
+
+    const desc = (editAgent.description || "").trim();
+    if (!desc) {
+      message.error("Please enter Description before generating instructions.");
+      return;
+    }
+
+    setEditInstrLoading(true);
+    try {
+      const url = `${BASE_URL}/ai-service/agent/classifyInstruct?description=${encodeURIComponent(
+        cleanForTransport(desc)
+      )}`;
+
+      const res = await authFetch(url, { method: "POST" });
+      const text = await res.text().catch(() => "");
+
+      if (!res.ok) {
+        throw new Error(
+          `Generate instructions failed (${res.status})${
+            text ? `: ${text}` : ""
+          }`
+        );
+      }
+
+      let instr = text;
+      try {
+        const maybe = JSON.parse(text);
+        if (typeof maybe === "string") instr = maybe;
+        else if (maybe && typeof maybe === "object") {
+          instr =
+            (maybe as any).instructions ||
+            (maybe as any).result ||
+            (maybe as any).message ||
+            text;
+        }
+      } catch {
+        // keep as text
+      }
+
+      let cleaned = cleanInstructionText(instr);
+
+      if (cleaned.length > MAX_INSTRUCTIONS_CHARS) {
+        cleaned = cleaned.slice(0, MAX_INSTRUCTIONS_CHARS);
+        message.error(
+          `Instructions cannot exceed ${MAX_INSTRUCTIONS_CHARS} characters. Extra text was trimmed.`
+        );
+      }
+
+      if (!cleaned) {
+        message.warning("No instructions returned. Please try again.");
+        return;
+      }
+
+      setEditAgent((prev) =>
+        prev ? { ...prev, instructions: cleaned } : prev
+      );
+      message.success("Instructions generated.");
+    } catch (e: any) {
+      message.error(e?.message || "Failed to generate instructions.");
+    } finally {
+      setEditInstrLoading(false);
+    }
+  };
+
+  const regenerateStartersForEdit = async () => {
+    if (!editAgent) return;
+
+    const desc = (editAgent.description || "").trim();
+    if (!desc) {
+      message.error(
+        "Please enter Description before generating conversation starters."
+      );
+      return;
+    }
+
+    setEditStarterLoading(true);
+    try {
+      const url = `${BASE_URL}/ai-service/agent/classifyStartConversation?description=${encodeURIComponent(
+        cleanForTransport(desc)
+      )}`;
+
+      const res = await authFetch(url, { method: "POST" });
+      const text = await res.text().catch(() => "");
+
+      if (!res.ok) {
+        throw new Error(
+          `Generate conversation starters failed (${res.status})${
+            text ? `: ${text}` : ""
+          }`
+        );
+      }
+
+      const prompts = parseStartersFromText(text);
+      if (!prompts.length) {
+        message.warning(
+          "No conversation starters returned. Please tweak your Description and try again."
+        );
+        return;
+      }
+
+      setEditAgent((prev) =>
+        prev
+          ? {
+              ...prev,
+              conStarter1: (prompts[0] || prev.conStarter1 || "").slice(
+                0,
+                MAX_CONVERSATION_STARTER_CHARS
+              ),
+              conStarter2: (prompts[1] || prev.conStarter2 || "").slice(
+                0,
+                MAX_CONVERSATION_STARTER_CHARS
+              ),
+              conStarter3: null,
+              conStarter4: null,
+            }
+          : prev
+      );
+
+      if (prompts[0] && prompts[0].length > MAX_CONVERSATION_STARTER_CHARS) {
+        message.error(
+          `Conversation Starter 1 was trimmed to ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+        );
+      }
+      if (prompts[1] && prompts[1].length > MAX_CONVERSATION_STARTER_CHARS) {
+        message.error(
+          `Conversation Starter 2 was trimmed to ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+        );
+      }
+      message.success(
+        `Updated ${Math.min(2, prompts.length)} conversation starters.`
+      );
+    } catch (e: any) {
+      message.error(e?.message || "Failed to generate conversation starters.");
+    } finally {
+      setEditStarterLoading(false);
+    }
+  };
+
+  const saveEditAgent = async () => {
+    if (!editAgent) return;
+
+    try {
+      setEditLoading(true);
+
+      const payload = {
+        // 🔹 Identity
+        agentId: editAgent.id,
+        assistantId: editAgent.assistantId,
+        userId: resolvedUserId,
+
+        // 🔹 Core fields (same as create)
+        agentName: editAgent.agentName,
+        description: editAgent.description,
+        roleUser: editAgent.roleUser,
+        goals: editAgent.goals,
+        purpose: editAgent.purpose,
+        view: editAgent.view,
+
+        // 🔹 Extra profile/business fields – send as-is (even if unchanged)
+        status: editAgent.status,
+        agentStatus: editAgent.agentStatus,
+        userRole: editAgent.userRole,
+        userExperience: editAgent.userExperience,
+        userExperienceSummary: editAgent.userExperienceSummary,
+        domain: editAgent.domain,
+        subDomain: editAgent.subDomain,
+        targetUser: editAgent.targetUser,
+        mainProblemSolved: editAgent.mainProblemSolved,
+        acheivements: editAgent.acheivements,
+        uniqueSolution: editAgent.uniqueSolution,
+        usageModel: editAgent.usageModel,
+        language: editAgent.language,
+        business: editAgent.business,
+        responseFormat: editAgent.responseFormat,
+        freeTrial: editAgent.freeTrial,
+        tool: editAgent.tool,
+        ageLimit: editAgent.ageLimit,
+        gender: editAgent.gender,
+        converstionTone: editAgent.converstionTone,
+        contactDetails: editAgent.contactDetails,
+
+        // 🔹 Instructions + conversation starters (updated)
+        instructions: editAgent.instructions || "",
+        conStarter1: editAgent.conStarter1 || "",
+        conStarter2: editAgent.conStarter2 || "",
+        conStarter3: null,
+        conStarter4: null,
+      };
+
+      const res = await authFetch(
+        `${BASE_URL}/ai-service/agent/newAgentPublish`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const txt = await res.text();
+      if (!res.ok) throw new Error(txt || "Update failed");
+
+      message.success("Agent updated successfully!");
+      setEditAgent(null);
+      refreshData();
+    } catch (err: any) {
+      message.error(err.message || "Failed to update agent");
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   // VIEW files
@@ -1035,70 +1278,6 @@ async function generateCertificate(agent: Assistant) {
       return list.filter((a) => a.status !== "DELETED");
     return list.filter((a) => a.status === filterStatus);
   }, [data, filterStatus]);
-
-  const onChangeDraft = (id: string, patch: EditDraft) => {
-    setEditMap((m) => ({ ...m, [id]: { ...(m[id] || {}), ...patch } }));
-  };
-
-  const saveEdit = async (id: string) => {
-    const draft = editMap[id] || {};
-    const current = data?.assistants.find((x) => x.id === id);
-    const payload = {
-      agentId: id,
-      assistantId: current?.assistantId || "",
-      ...draft,
-    };
-    setSaving(id);
-    try {
-      const res = await authFetch(
-        `${BASE_URL}/api/ai-service/agent/agentCreation`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(
-          `Update failed: ${res.status} ${res.statusText}. ${txt || ""}`
-        );
-      }
-      await refreshData();
-      setShowEdit(null);
-      message.success("Agent updated.");
-    } catch (e: any) {
-      message.error(e?.message || "Failed to update agent.");
-    } finally {
-      setSaving(null);
-    }
-  };
-
-  /** Soft archive (recommended): set inactive and optionally mark status */
-  const archiveAgent = async (agent: Assistant) => {
-    try {
-      const payload = {
-        agentId: agent.id,
-        assistantId: agent.assistantId || "",
-        activeStatus: false,
-        status: "DELETED", // shows as Inactive/Archived in UI filter
-      };
-      const res = await authFetch(
-        `${BASE_URL}/api/ai-service/agent/agentCreation`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Archive failed: ${res.status} ${txt || ""}`);
-      }
-      await refreshData();
-      message.success("Agent archived (inactive).");
-    } catch (e: any) {
-      message.error(e?.message || "Failed to archive agent.");
-    }
-  };
 
   const deleteAssistant = async (
     assistantId: string | null,
@@ -1742,28 +1921,8 @@ async function generateCertificate(agent: Assistant) {
                             })()}
                           </div>
 
-                          {/* ✏️ Edit Button */}
-                          <div className="flex flex-wrap gap-2 w-full justify-center sm:justify-end">
-                            {/* ✏️ Edit Button */}
-                            {/* <button
-                              onClick={() => openUpdateWizard(a)}
-                              title="Edit"
-                              className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
-      bg-gradient-to-r from-purple-600 to-purple-700 text-white 
-      hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm 
-      flex-1 sm:flex-none justify-center"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                className="w-4 h-4"
-                              >
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.84 1.84 3.75 3.75 1.84-1.84Z" />
-                              </svg>
-                              <span>Edit</span>
-                            </button> */}
-
+                          {/* 👁️ View / ✏️ Edit / 🗑️ Delete row */}
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2">
                             {/* 👁️ View Button */}
                             <button
                               onClick={() =>
@@ -1771,10 +1930,11 @@ async function generateCertificate(agent: Assistant) {
                                   `/bharath-aistore/assistant/${a.assistantId}/${a.id}`
                                 )
                               }
-                              title="View"
+                              title="View Agent in a new tab"
                               className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
-     bg-[#008cba] text-white
-      transition-all shadow-sm flex-1 sm:flex-none justify-center"
+      bg-[#008cba] text-white
+      hover:bg-[#0073a0] transition-all shadow-sm
+      flex-1 sm:flex-none justify-center"
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -1787,6 +1947,26 @@ async function generateCertificate(agent: Assistant) {
                               <span>View</span>
                             </button>
 
+                            {/* ✏️ Edit Button (same row) */}
+                            <button
+                              onClick={() => openEditAgent(a)}
+                              title="Edit AI Agent"
+                              className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
+      bg-gradient-to-r from-purple-600 to-purple-700 text-white
+      hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm
+      flex-1 sm:flex-none justify-center"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className="w-4 h-4"
+                              >
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.84 1.84 3.75 3.75 1.84-1.84Z" />
+                              </svg>
+                              <span>Edit</span>
+                            </button>
+
                             {/* 🗑️ Delete Button */}
                             <button
                               onClick={() => setDeleteConfirmId(a.id)}
@@ -1797,46 +1977,42 @@ async function generateCertificate(agent: Assistant) {
       disabled:opacity-60 disabled:cursor-not-allowed flex-1 sm:flex-none"
                             >
                               {deleting === a.id ? (
-                                <svg
-                                  className="animate-spin h-4 w-4"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    d="M4 12a8 8 0 018-8"
-                                    fill="currentColor"
-                                  ></path>
-                                </svg>
+                                <>
+                                  <svg
+                                    className="animate-spin h-4 w-4"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                                    ></path>
+                                  </svg>
+                                  <span>Deleting…</span>
+                                </>
                               ) : (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="1.8"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="h-4 w-4"
-                                >
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                  <path d="M10 11v6" />
-                                  <path d="M14 11v6" />
-                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                </svg>
+                                <>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-4 h-4"
+                                  >
+                                    <path d="M9 3a1 1 0 0 0-.894.553L7.382 5H4a1 1 0 0 0 0 2h.293l.853 12.18A2 2 0 0 0 7.14 21h9.72a2 2 0 0 0 1.994-1.82L19.707 7H20a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 15 3H9Z" />
+                                  </svg>
+                                  <span>Delete</span>
+                                </>
                               )}
-                              <span>
-                                {deleting === a.id ? "Deleting…" : "Delete"}
-                              </span>
                             </button>
                           </div>
                         </div>
@@ -2598,64 +2774,154 @@ async function generateCertificate(agent: Assistant) {
           </>
         )}
       </main>
+      <Modal
+        open={!!editAgent}
+        onCancel={() => !editLoading && setEditAgent(null)}
+        onOk={saveEditAgent}
+        okText={editLoading ? "Saving..." : "Save"}
+        confirmLoading={editLoading}
+        title="Edit AI Agent"
+        centered
+      >
+        {editLoading ? (
+          <div style={{ textAlign: "center", padding: 30 }}>
+            <Spin />
+          </div>
+        ) : editAgent ? (
+          <>
+            {/* Gradient / glowing Generate buttons */}
+            <div className="mt-4 flex flex-wrap gap-3">
+              {/* Generate Instructions */}
+              <button
+                type="button"
+                onClick={regenerateInstructionsForEdit}
+                disabled={editInstrLoading}
+                className={
+                  "relative flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white shadow-md transition-all " +
+                  "bg-gradient-to-r from-purple-600 via-pink-500 to-indigo-500 " +
+                  (editInstrLoading
+                    ? "animate-pulse ring-2 ring-purple-300 ring-offset-2"
+                    : "hover:shadow-lg hover:brightness-110")
+                }
+              >
+                {editInstrLoading && (
+                  <span className="inline-flex h-3 w-3 rounded-full bg-white/80 animate-ping" />
+                )}
+                <span className="flex items-center gap-1">
+                  <span>
+                    {editInstrLoading
+                      ? "Generating Instructions…"
+                      : "Generate Instructions"}
+                  </span>
+                </span>
+              </button>
+
+              {/* Generate Conversations */}
+              <button
+                type="button"
+                onClick={regenerateStartersForEdit}
+                disabled={editStarterLoading}
+                className={
+                  "relative flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold shadow-sm transition-all " +
+                  (editStarterLoading
+                    ? "bg-gradient-to-r from-sky-400 via-purple-500 to-emerald-400 text-white animate-pulse ring-2 ring-emerald-300 ring-offset-2"
+                    : "bg-slate-50 text-slate-900 border border-slate-200 hover:bg-white hover:shadow-md")
+                }
+              >
+                {editStarterLoading && (
+                  <span className="inline-flex h-3 w-3 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 animate-pulse" />
+                )}
+                <span className="flex items-center gap-1">
+                  <span>
+                    {editStarterLoading
+                      ? "Generating Conversations…"
+                      : "Generate Conversations"}
+                  </span>
+                </span>
+              </button>
+            </div>
+
+            {/* Instructions */}
+            <p className="mt-4">
+              <b>Instructions</b>
+            </p>
+            <textarea
+              className="w-full border p-2 rounded"
+              rows={6}
+              value={editAgent?.instructions || ""}
+              onChange={(e) => {
+                const v = e.target.value || "";
+                if (v.length > MAX_INSTRUCTIONS_CHARS) {
+                  message.error(
+                    `Instructions cannot exceed ${MAX_INSTRUCTIONS_CHARS} characters.`
+                  );
+                }
+                const trimmed = v.slice(0, MAX_INSTRUCTIONS_CHARS);
+                setEditAgent((prev) =>
+                  prev ? { ...prev, instructions: trimmed } : prev
+                );
+              }}
+            />
+
+            {/* Only 2 Conversation Starters */}
+            <p className="mt-3">
+              <b>Conversation Starter 1</b>
+            </p>
+            <Input
+              className="mb-2"
+              value={editAgent?.conStarter1 ?? ""}
+              onChange={(e) => {
+                const v = e.target.value || "";
+                if (v.length > MAX_CONVERSATION_STARTER_CHARS) {
+                  message.error(
+                    `Conversation Starter 1 cannot exceed ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+                  );
+                }
+                const trimmed = v.slice(0, MAX_CONVERSATION_STARTER_CHARS);
+                setEditAgent((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        conStarter1: trimmed,
+                        conStarter3: null,
+                        conStarter4: null,
+                      }
+                    : prev
+                );
+              }}
+            />
+
+            <p className="mt-2">
+              <b>Conversation Starter 2</b>
+            </p>
+            <Input
+              className="mb-2"
+              value={editAgent?.conStarter2 ?? ""}
+              onChange={(e) => {
+                const v = e.target.value || "";
+                if (v.length > MAX_CONVERSATION_STARTER_CHARS) {
+                  message.error(
+                    `Conversation Starter 2 cannot exceed ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+                  );
+                }
+                const trimmed = v.slice(0, MAX_CONVERSATION_STARTER_CHARS);
+                setEditAgent((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        conStarter2: trimmed,
+                        conStarter3: null,
+                        conStarter4: null,
+                      }
+                    : prev
+                );
+              }}
+            />
+          </>
+        ) : null}
+      </Modal>
     </div>
   );
 };
-
-/** -------- Small UI helpers -------- */
-const TextField: React.FC<{
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}> = ({ label, value, onChange, placeholder }) => (
-  <label className="block text-sm">
-    <span className="text-purple-700 font-medium">{label}</span>
-    <input
-      className="mt-1 w-full rounded-lg border border-purple-200 px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-    />
-  </label>
-);
-
-const TextArea: React.FC<{
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  rows?: number;
-  placeholder?: string;
-}> = ({ label, value, onChange, rows = 3, placeholder }) => (
-  <label className="block text-sm">
-    <span className="text-purple-700 font-medium">{label}</span>
-    <textarea
-      className="mt-1 w-full rounded-lg border border-purple-200 px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      rows={rows}
-      placeholder={placeholder}
-    />
-  </label>
-);
-
-const ToggleField: React.FC<{
-  label: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-}> = ({ label, value, onChange }) => (
-  <label className="flex items-center gap-2 text-sm mt-1">
-    <div className="relative inline-flex items-center cursor-pointer">
-      <input
-        type="checkbox"
-        className="sr-only peer"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-    </div>
-    <span className="text-purple-700 font-medium">{label}</span>
-  </label>
-);
 
 export default AllAgentsPage;

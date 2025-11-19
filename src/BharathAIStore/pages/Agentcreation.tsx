@@ -2511,15 +2511,21 @@ useEffect(() => {
             >
               <div style={labelColStyle}>{gradientText("Looking for", 1)}</div>
               <div style={{ flex: 1 }}>
-                {/* Goal dropdown */}
-<CompactSelect
-  value={goalSelect}
-  onChange={setGoalSelect}
-  options={goalOptions}
-  placeholder="Select your goal"
-  loading={goalLoading || nameLoading}
-/>
-
+<div
+  onClick={() => {
+    if (!roleSelect.trim()) {
+      message.error("Please select Role first.");
+    }
+  }}
+>
+  <CompactSelect
+    value={goalSelect}
+    onChange={setGoalSelect}
+    options={goalOptions}
+    placeholder="Select Goal"
+    loading={goalLoading}
+  />
+</div>
                 {goalSelect === "Other" &&
                   otherInput(goalOther, setGoalOther, "Type your goal…")}
               </div>
@@ -2578,14 +2584,24 @@ useEffect(() => {
             >
               <div style={labelColStyle}>{gradientText("To", 2)}</div>
               <div style={{ flex: 1 }}>
-                {/* Purpose dropdown */}
-<CompactSelect
-  value={purposeSelect}
-  onChange={setPurposeSelect}
-  options={purposeOptions}
-  placeholder="Select purpose"
-  loading={purposeLoading || nameLoading}
-/>
+<div
+  onClick={() => {
+    if (!roleSelect.trim()) {
+      message.error("Please select Role first.");
+    } else if (!goalSelect.trim()) {
+      message.error("Please select Goal first.");
+    }
+  }}
+>
+  <CompactSelect
+    value={purposeSelect}
+    onChange={setPurposeSelect}
+    options={purposeOptions}
+    placeholder="Select Purpose"
+    loading={purposeLoading}
+  />
+</div>
+
 
                 {purposeSelect === "Other" &&
                   otherInput(

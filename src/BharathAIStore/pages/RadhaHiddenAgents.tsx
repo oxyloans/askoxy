@@ -13,6 +13,7 @@ export interface Assistant {
   name?: string;
   description?: string;
   imageUrl?: string;
+  hideAgent?: boolean; // ✅ from API: true means this agent should be shown here
 }
 
 export interface AssistantsResponse {
@@ -22,16 +23,6 @@ export interface AssistantsResponse {
   firstId?: string;
   lastId?: string;
 }
-
-// ------------------ Hidden list ------------------
-const HIDE_AGENT_IDS = new Set<string>([
-  "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0", // blocklisted agent
-]);
-
-const isHiddenAgent = (a: Assistant): boolean => {
-  const id = (a.agentId || a.assistantId || a.id || "").toString().trim();
-  return !!id && HIDE_AGENT_IDS.has(id);
-};
 
 // ------------------ Initials fallback (same logic as Store) ------------------
 const PLAY_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"] as const;
@@ -118,6 +109,7 @@ async function getAssistants(
       agentId: assistant.agentId || assistant.id,
       imageUrl:
         assistant.imageUrl || assistant.image || assistant.thumbUrl || "",
+      hideAgent: !!assistant.hideAgent, // ✅ normalize to boolean
     })
   );
 
@@ -182,7 +174,7 @@ const HiddenAssistantCard: React.FC<{
             </p>
           </div>
 
-          {/* No Open for hidden; keep alignment */}
+          {/* Open button */}
           <div className="mt-auto pt-5 flex items-center gap-2">
             <button
               onClick={onOpen}
@@ -228,8 +220,10 @@ const RadhaHiddenAgents: React.FC = () => {
           after = resp.lastId || undefined;
         }
 
-        const onlyHidden = all.filter(isHiddenAgent);
-        if (!cancelled) setHiddenAgents(onlyHidden);
+// ✅ Filter correctly based on hideAgent flag
+const onlyHidden = all.filter((a) => a.hideAgent === true);
+
+if (!cancelled) setHiddenAgents(onlyHidden);
       } catch (e: any) {
         if (!cancelled) {
           const msg =
@@ -280,13 +274,9 @@ const RadhaHiddenAgents: React.FC = () => {
             ? `/${baseTmp}/assistant/${encodeURIComponent(assistantIdTmp)}`
             : `/${baseTmp}/assistant/by-name/${encodeURIComponent(nameSlug)}`;
 
-        // ✅ FIXED: Ensure redirectPath is set to the FULL intended path (including any query params if needed)
-        // This preserves the exact assistant URL for return after auth success in both register/login
         sessionStorage.setItem("redirectPath", intended);
-        // ✅ FIXED: Also set a flag to indicate coming from AI Store for better primaryType detection
         sessionStorage.setItem("fromAISTore", "true");
       } catch {}
-      // ✅ FIXED: Use window.location.href to force full page reload, ensuring sessionStorage persists across redirects
       window.location.href = "/whatsappregister?primaryType=AGENT";
       return;
     }

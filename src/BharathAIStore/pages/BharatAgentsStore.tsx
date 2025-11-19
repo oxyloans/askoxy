@@ -39,6 +39,7 @@ interface Assistant {
   agentStatus?: string;
   imageUrl?: string; // ✅ new
   activeStatus?: boolean; // ✅ NEW: Add activeStatus field
+  hideAgent?: boolean;
 }
 
 interface AssistantsResponse {
@@ -66,17 +67,9 @@ type AssistantBase = {
   id?: string | number;
 } & Record<string, any>;
 
-const HIDE_AGENT_IDS = new Set<string>([
-  "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0", // blocklisted agent
-]);
-
-export const isHiddenAgent = (a: AssistantBase): boolean => {
-  const ids = [a?.agentId, a?.assistantId, a?.id]
-    .filter((v): v is string | number => v != null)
-    .map((v) => String(v).toLowerCase());
-  return ids.some((id) => HIDE_AGENT_IDS.has(id));
+export const isHiddenAgent = (a: any): boolean => {
+  return a?.hideAgent === true; // true → hide
 };
-// =============================================================================
 
 async function getAssistants(
   limit: number,
@@ -102,6 +95,7 @@ async function getAssistants(
       ...assistant,
       assistantId: assistant.assistantId || assistant.id,
       agentId: assistant.agentId || assistant.id,
+      hideAgent: assistant.hideAgent, // ⭐ added
       imageUrl:
         assistant.profileImagePath?.trim() ||
         assistant.imageUrl?.trim() ||
@@ -150,13 +144,14 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     return {
       assistantId: a?.assistantId || a?.id || a?.agentId || "",
       agentId: a?.agentId || a?.assistantId || a?.id || "",
+      hideAgent: a?.hideAgent, // ⭐ added
       name: a?.name ?? `Agent ${idx + 1}`,
       description: a?.description ?? a?.desc ?? "",
       imageUrl: finalImage,
     };
   });
 
-  const visible: Assistant[] = mapped.filter((a) => !isHiddenAgent(a));
+  const visible: Assistant[] = mapped.filter((a) => a.hideAgent === false);
 
   // 🔁 Only exclude agents that are explicitly inactive; allow "undefined"
   const filtered: Assistant[] = visible.filter((a) => a.activeStatus !== false);
@@ -592,22 +587,22 @@ const BharatAgentsStore: React.FC = () => {
     sessionStorage.removeItem("redirectPath");
   }, []);
 
-const handleShare = (a: Assistant) => {
-  const assistantId = (a.assistantId || a.id || a.agentId || "")
-    .toString()
-    .trim();
-  const agentId = (a.agentId || a.assistantId || a.id || "")
-    .toString()
-    .trim();
+  const handleShare = (a: Assistant) => {
+    const assistantId = (a.assistantId || a.id || a.agentId || "")
+      .toString()
+      .trim();
+    const agentId = (a.agentId || a.assistantId || a.id || "")
+      .toString()
+      .trim();
 
-  if (!assistantId || !agentId) return;
+    if (!assistantId || !agentId) return;
 
-  const shareUrl = `https://www.askoxy.ai/bharath-aistore/assistant/${encodeURIComponent(
-    assistantId
-  )}/${encodeURIComponent(agentId)}`;
+    const shareUrl = `https://www.askoxy.ai/bharath-aistore/assistant/${encodeURIComponent(
+      assistantId
+    )}/${encodeURIComponent(agentId)}`;
 
-  // 🌟 Static share content
-  const staticMessage = `
+    // 🌟 Static share content
+    const staticMessage = `
 🌟 Check out this amazing AI Agent on Bharat AI Store!
 
 🤖 Agent Name: ${a.name || "AI Agent"}
@@ -620,26 +615,24 @@ ${shareUrl}
 Create your own AI Agent today on ASKOXY.AI! 🚀
   `.trim();
 
-  // 📱 Native share sheet (mobile + supported browsers)
-  if (typeof navigator !== "undefined" && (navigator as any).share) {
-    (navigator as any)
-      .share({
-        title: a.name || "AI Agent - Bharat AI Store",
-        // IMPORTANT: put everything (including link) inside text
-        text: staticMessage,
-      })
-      .catch(() => {});
-    return;
-  }
+    // 📱 Native share sheet (mobile + supported browsers)
+    if (typeof navigator !== "undefined" && (navigator as any).share) {
+      (navigator as any)
+        .share({
+          title: a.name || "AI Agent - Bharat AI Store",
+          // IMPORTANT: put everything (including link) inside text
+          text: staticMessage,
+        })
+        .catch(() => {});
+      return;
+    }
 
-  // 💬 WhatsApp fallback (desktop & mobile)
-  const whatsappUrl =
-    "https://api.whatsapp.com/send?text=" +
-    encodeURIComponent(staticMessage);
+    // 💬 WhatsApp fallback (desktop & mobile)
+    const whatsappUrl =
+      "https://api.whatsapp.com/send?text=" + encodeURIComponent(staticMessage);
 
-  window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-};
-
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  };
 
   const handleLogin = () => {
     try {
@@ -772,13 +765,13 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
 
   const approvedAssistants = useMemo(() => {
     return assistants.filter((a) => {
+      if (a.hideAgent === true) return false; // ❌ hide
       const s = (a.status || a.agentStatus || "").toString().toUpperCase();
       const name = (a.name || "").trim().toLowerCase();
       const isApproved = s === "APPROVED";
       const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
         (n) => n.toLowerCase() === name
       );
-      // ✅ Hide only if explicitly false
       const isActive = a.activeStatus !== false;
       return (isApproved || isWhitelisted) && isActive;
     });
