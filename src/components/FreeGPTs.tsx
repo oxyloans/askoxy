@@ -63,17 +63,17 @@ const Genoxy: React.FC = () => {
   return (
     <section
       className="relative py-10 px-4 sm:px-6 md:px-8 lg:px-12  flex items-center justify-center overflow-hidden
-        bg-gradient-to-tr from-emerald-50 via-gray-50 to-white"
+        bg-white"
     >
       {/* Animated background orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className={`absolute rounded-full bg-purple-200/30 blur-3xl animate-[pulse_6s_ease-in-out_infinite] -top-20 -left-20 ${
+          className={`absolute rounded-full blur-3xl animate-[pulse_6s_ease-in-out_infinite] -top-20 -left-20 ${
             isMobile ? "w-60 h-60" : "w-80 h-80 md:w-96 md:h-96"
           }`}
         ></div>
         <div
-          className={`absolute rounded-full bg-cyan-200/30 blur-3xl animate-[bounce_5s_ease-in-out_infinite] bottom-0 right-0 ${
+          className={`absolute rounded-full  blur-3xl animate-[bounce_5s_ease-in-out_infinite] bottom-0 right-0 ${
             isMobile ? "w-60 h-60" : "w-80 h-80 md:w-96 md:h-96"
           }`}
         ></div>

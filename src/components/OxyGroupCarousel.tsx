@@ -4,9 +4,8 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import oxyloansLogo from "../assets/img/image1.png";
 import oxybricksLogo from "../assets/img/image2.png";
-import bmvcoinLogo from "../assets/img/image3.png";
-import oxyfoundationLogo from "../assets/img/image4.png";
-import xperthomes from "../assets/img/image5.png";
+
+
 
 // Custom Arrows - Hidden on mobile using Tailwind
 function CustomPrevArrow(props: any) {
@@ -48,17 +47,8 @@ const OxyGroupCarousel = () => {
       name: "OXY Bricks",
       link: "https://oxybricks.world/",
     },
-    { logo: bmvcoinLogo, name: "BMV Money", link: "https://bmv.money/" },
-    {
-      logo: oxyfoundationLogo,
-      name: "OXY Foundation",
-      link: "https://bmv.money/",
-    },
-    {
-      logo: xperthomes,
-      name: "XpertHomes",
-      link: "https://www.xperthomez.com/",
-    },
+   
+   
   ];
 
   const settings = {
@@ -82,7 +72,7 @@ const OxyGroupCarousel = () => {
   };
 
   return (
-    <section className="py-10 px-6 bg-gradient-to-b from-white via-white to-white text-center">
+    <section className="py-10 px-6 bg-white text-center">
       <h3 className="text-2xl font-extrabold mb-10">
         <span className="text-blue-800">OXY</span>{" "}
         <span className="text-green-600">GROUP</span>{" "}

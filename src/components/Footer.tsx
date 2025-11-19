@@ -116,7 +116,7 @@ const LOGIN_URL = "/whatsapplogin";
   };
 
   return (
-    <footer className="bg-gradient-to-br from-white- via-white to-white border-t border-gray-100">
+    <footer className="bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}

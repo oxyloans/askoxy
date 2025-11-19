@@ -39,7 +39,7 @@ const BMVCoinPromo: React.FC = () => {
   return (
     <section
       className={`relative 
-      bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 
+     bg-white
       overflow-hidden transition-all duration-700 ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
       }`}

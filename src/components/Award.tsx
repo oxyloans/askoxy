@@ -27,7 +27,7 @@ const AwardPage = () => {
   };
 
   return (
-    <div className="  min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-100 px-4 sm:px-6 lg:px-12 py-10">
+    <div className="  min-h-screen bg-gradient-to-br bg-white px-4 sm:px-6 lg:px-12 py-10">
       <div className="max-w-7xl mx-auto">
         {/* Title */}
         <header className="text-center mb-10">

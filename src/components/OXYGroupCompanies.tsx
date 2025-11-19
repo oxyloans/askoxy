@@ -6,8 +6,7 @@ import "slick-carousel/slick/slick-theme.css";
 // Importing the logos
 import oxyloansLogo from "../assets/img/image1.png";
 import oxybricksLogo from "../assets/img/image2.png";
-import bmvcoinLogo from "../assets/img/image4.png";
-import oxyfoundationLogo from "../assets/img/image5.png";
+import AskoxyLogo from "../assets/img/askoxy_logo_1200x600 (1).png"
 
 // CustomPrevArrow
 const CustomPrevArrow = (props: any) => {
@@ -48,11 +47,10 @@ const OXYGroupCompanies = () => {
       name: "OXY Bricks",
       link: "https://oxybricks.world/",
     },
-    { logo: bmvcoinLogo, name: "BMV Money", link: "https://bmv.money/" },
     {
-      logo: oxyfoundationLogo,
-      name: "OXY Foundation",
-      link: "https://www.xperthomez.com/",
+      logo: AskoxyLogo,
+      name: "ASKOXY.AI",
+      link: "https://www.askoxy.ai/",
     },
   ];
 
@@ -88,7 +86,7 @@ const OXYGroupCompanies = () => {
   };
 
   return (
-    <section className="py-10 px-6 bg-gradient-to-br from-cyan-50 via-white to-purple-50 text-center">
+    <section className="py-10 px-6 bg-white text-center">
       {/* Gradient Colored Heading */}
       <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-10">
         <span className="text-blue-800">OXY</span>
@@ -96,7 +94,7 @@ const OXYGroupCompanies = () => {
         <span className="text-gray-800">COMPANIES</span>
       </h2>
 
-      <div className="max-w-6xl mx-auto relative">
+      <div className="max-w-7xl mx-auto relative">
         <Slider {...settings}>
           {companies.map((company, index) => (
             <div key={index} className="flex flex-col items-center px-4">

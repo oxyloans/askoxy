@@ -17,7 +17,7 @@ const PdfPages = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6 py-12">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h1 className="text-2xl font-extrabold text-[rgba(91,5,200,0.85)] mb-4">
