@@ -287,12 +287,21 @@ const CompactSelect: React.FC<{
 const ROLE_OPTS: Option[] = [
   { label: "Student", value: "Student", icon: <UserOutlined /> },
   { label: "Fresher", value: "Fresher", icon: <UserOutlined /> },
+  { label: "Recruiter", value: "Recruiter", icon: <UserOutlined /> },
   { label: "Job Seeker", value: "JobSeeker", icon: <UserOutlined /> },
   {
     label: "Working Professional",
     value: "WorkingProfessional",
     icon: <UserOutlined />,
   },
+  { label: "HR Recruiter", value: "HR Recruiter", icon: <UserOutlined /> },
+{ label: "Hiring Manager", value: "Hiring Manager", icon: <UserOutlined /> },
+{ label: "Experienced Person", value: "Experienced Person", icon: <UserOutlined /> },
+{ label: "Job Consultant", value: "Job Consultant", icon: <UserOutlined /> },
+{ label: "Team Leader", value: "Team Leader", icon: <UserOutlined /> },
+{ label: "Project Manager", value: "Project Manager", icon: <UserOutlined /> },
+{ label: "Career Coach", value: "Career Coach", icon: <UserOutlined /> },
+{ label: "Intern", value: "Intern", icon: <UserOutlined /> },
   {
     label: "Founder / Startup",
     value: "FounderStartup",

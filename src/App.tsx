@@ -238,6 +238,10 @@ import QuickAgentCreate from "./BharathAIStore/pages/Agentcreation";
 import TestStore from "./BharathAIStore/pages/TestStore";
 import TestAgentDetails from "./BharathAIStore/pages/TestAgentDetails";
 import PaymentCashfree from "./AgentStore/PaymentCashfree";
+import AllAIStores from "./AgentStore/AllAIStores";
+import AllAIStore from "./AgentStore/AllAIStore";
+import TalwarDataPage from "./AskoxyAdmin/TalwarData";
+import TalwarAssignedDataPage from "./AskoxyAdmin/TalwarAssignedDataPage";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -334,6 +338,8 @@ const App: React.FC = () => {
                 path="/bharath-aistore/RadhaAgents"
                 element={<AdminMyAgentsPage />}
               />
+                <Route path="/all-ai-stores" element={<AllAIStores />} />
+                <Route path="/ai-store/:storeSlug/:type" element={<AllAIStore />} />
               <Route
                 path="/bharath-aistore/hiddenagents"
                 element={<RadhaHiddenAgents />}
@@ -472,6 +478,7 @@ const App: React.FC = () => {
               path="/student-dashboard"
               element={<StudentMainDashboard />}
             />
+
             <Route path="/student-home" element={<UserSelectionPage />} />
             {/* <Route path="/universities" element={<UniversityDetailsPage />} /> */}
             <Route
@@ -583,6 +590,7 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
+
               <Route
                 path="/main/dashboard/placements-gpt"
                 element={<PlacementsGpt />}
@@ -675,6 +683,7 @@ const App: React.FC = () => {
               <Route path="bharat-expert" element={<CreateAgentMain />} />
               {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
               <Route path="agentcreate" element={<QuickAgentCreate />} />
+           
               <Route path="chatbasedagent" element={<ChatBasedAgent />} />
               <Route
                 path="chatinterface/assistant/:id/:agentId"
@@ -816,6 +825,8 @@ const App: React.FC = () => {
               <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
               <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
               <Route path="advocates" element={<AdvocatesDataPage />} />
+               <Route path="talwardata" element={<TalwarDataPage />} />
+                <Route path="assignedtalwarData" element={<TalwarAssignedDataPage />} />
               <Route path="assignedData" element={<AssignedDataPage />} />
               <Route
                 path="kukatpallyassignedData"

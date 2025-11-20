@@ -33,12 +33,12 @@ import {
   RiAdminLine,
   RiBriefcaseLine,
   RiListUnordered,
-  RiMapPin2Line,
+  RiMapPin2Line,RiFileCheckLine ,
 } from "react-icons/ri";
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
-  SolutionOutlined,BookOutlined ,
+  SolutionOutlined,BookOutlined ,SafetyCertificateOutlined,
   UserOutlined,
   HomeOutlined,EnvironmentOutlined ,
 } from "@ant-design/icons";
@@ -157,6 +157,18 @@ const Sidebar: React.FC = () => {
           link: "/admn/advocates",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
+        {
+  title: "All Talwar Data",
+  icon: <SafetyCertificateOutlined className="text-red-500" />, 
+  link: "/admn/talwardata",
+  roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+},
+{
+  title: "Assigned Talwar Data",
+  icon: <RiFileCheckLine  className="text-red-500" />,
+  link: "/admn/assignedtalwarData",
+  roles: ["HELPDESKADMIN"],
+},
         {
           title: "ASKOXY Assigned Data",
           icon: <FaClipboardList className="text-yellow-400" />,
