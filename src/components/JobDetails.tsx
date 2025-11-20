@@ -20,7 +20,7 @@ interface Job {
   description: string;
   benefits: string;
   jobStatus: boolean;
-  skills: string;
+  skills: string | null;
   salaryMin: number;
   salaryMax: number;
   qualifications: number;
@@ -89,6 +89,18 @@ const JobDetails: React.FC = () => {
     }
   };
 
+  const safeSplit = (value: any): string[] => {
+    if (!value || typeof value !== "string") return [];
+
+    return value
+      .split(",")
+      .map((v) => v.trim())
+      .filter(
+        (v) =>
+          v && v.toLowerCase() !== "null" && v.toLowerCase() !== "undefined"
+      );
+  };
+
   // 🔐 Read accessToken directly (same as other pages)
   const buildAuthHeaders = (): HeadersInit => {
     if (typeof window === "undefined") return {};
@@ -101,55 +113,53 @@ const JobDetails: React.FC = () => {
     };
   };
 
-// ✅ Check from new API if user already created an Agent for Job flow
-const checkUserHasAgent = async (): Promise<boolean> => {
-  if (!userId) return false;
+  // ✅ Check from new API if user already created an Agent for Job flow
+  const checkUserHasAgent = async (): Promise<boolean> => {
+    if (!userId) return false;
 
-  try {
-    const res = await fetch(
-      `${BASE_URL}/ai-service/agent/user-created-agent-for-job?userId=${encodeURIComponent(
-        userId
-      )}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          ...buildAuthHeaders(), // 🔐 Authorization: Bearer <accessToken>
-        },
-      }
-    );
-
-    const text = await res.text().catch(() => "");
-    if (!res.ok || !text) {
-      // API failed / empty → treat as "no agent"
-      return false;
-    }
-
-    let raw: any = {};
     try {
-      raw = JSON.parse(text);
-    } catch {
-      // Not valid JSON → treat as "no agent"
+      const res = await fetch(
+        `${BASE_URL}/ai-service/agent/user-created-agent-for-job?userId=${encodeURIComponent(
+          userId
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...buildAuthHeaders(), // 🔐 Authorization: Bearer <accessToken>
+          },
+        }
+      );
+
+      const text = await res.text().catch(() => "");
+      if (!res.ok || !text) {
+        // API failed / empty → treat as "no agent"
+        return false;
+      }
+
+      let raw: any = {};
+      try {
+        raw = JSON.parse(text);
+      } catch {
+        // Not valid JSON → treat as "no agent"
+        return false;
+      }
+
+      // 🔹 Backend response: { "hasAgentCreated": false/true }
+      const hasAgent = !!raw.hasAgentCreated;
+
+      // (Optional) you can log to verify once in console
+      console.log("user-created-agent-for-job →", raw, "hasAgent =", hasAgent);
+
+      // ✅ We now trust ONLY backend value
+      return hasAgent;
+    } catch (err) {
+      console.error("Error checking user-created-agent-for-job:", err);
+      // On error → consider as "no agent"
       return false;
     }
-
-    // 🔹 Backend response: { "hasAgentCreated": false/true }
-    const hasAgent = !!raw.hasAgentCreated;
-
-    // (Optional) you can log to verify once in console
-    console.log("user-created-agent-for-job →", raw, "hasAgent =", hasAgent);
-
-    // ✅ We now trust ONLY backend value
-    return hasAgent;
-  } catch (err) {
-    console.error("Error checking user-created-agent-for-job:", err);
-    // On error → consider as "no agent"
-    return false;
-  }
-};
-
-
+  };
 
   useEffect(() => {
     console.log("this is the id from state" + id);
@@ -183,13 +193,8 @@ const checkUserHasAgent = async (): Promise<boolean> => {
   };
 
   const getUniqueSkills = (): string[] => {
-    const allSkills = jobs.flatMap((job) =>
-      job.skills.split(",").map((skill) => skill.trim())
-    );
-    const uniqueSkills = Array.from(new Set(allSkills));
-    return uniqueSkills.filter(
-      (skill) => skill && skill !== "undefined" && skill !== "null"
-    );
+    const allSkills = jobs.flatMap((job) => safeSplit(job.skills));
+    return Array.from(new Set(allSkills));
   };
 
   const getSalaryRanges = () => [
@@ -265,7 +270,7 @@ const checkUserHasAgent = async (): Promise<boolean> => {
         (job) =>
           job.jobTitle?.toLowerCase().includes(lowerSearch) ||
           job.companyName?.toLowerCase().includes(lowerSearch) ||
-          job.skills?.toLowerCase().includes(lowerSearch) ||
+          safeSplit(job.skills).join(" ").toLowerCase().includes(lowerSearch) ||
           job.industry?.toLowerCase().includes(lowerSearch) ||
           job.jobLocations?.toLowerCase().includes(lowerSearch)
       );
@@ -311,7 +316,10 @@ const checkUserHasAgent = async (): Promise<boolean> => {
 
     if (filters.skills) {
       filtered = filtered.filter((job) =>
-        job.skills?.toLowerCase().includes(filters.skills.toLowerCase())
+        safeSplit(job.skills)
+          .join(" ")
+          .toLowerCase()
+          .includes(filters.skills.toLowerCase())
       );
     }
 
@@ -325,15 +333,7 @@ const checkUserHasAgent = async (): Promise<boolean> => {
       const rawValue = job[key];
       if (!rawValue) return;
 
-      const items = String(rawValue)
-        .split(",") // Split by comma
-        .map((item) => item.trim()) // Trim spaces
-        .filter(
-          (item) =>
-            item &&
-            item.toLowerCase() !== "undefined" &&
-            item.toLowerCase() !== "null"
-        );
+      const items = safeSplit(rawValue);
 
       items.forEach((item) => {
         const normalized = item.toLowerCase();
@@ -347,52 +347,51 @@ const checkUserHasAgent = async (): Promise<boolean> => {
     return Array.from(valueMap.values());
   };
 
-const handleClick = async (
-  jobId: string,
-  jobDesignation: string,
-  companyName: string
-) => {
-  if (!userId) {
-    message.warning("Please login to submit your interest.");
-    navigate("/whatsapplogin");
-    sessionStorage.setItem("redirectPath", "/main/jobdetails");
-    return;
-  }
+  const handleClick = async (
+    jobId: string,
+    jobDesignation: string,
+    companyName: string
+  ) => {
+    if (!userId) {
+      message.warning("Please login to submit your interest.");
+      navigate("/whatsapplogin");
+      sessionStorage.setItem("redirectPath", "/main/jobdetails");
+      return;
+    }
 
-  // ✅ Only use real API
-  const hasAgent = await checkUserHasAgent();
+    // ✅ Only use real API
+    const hasAgent = await checkUserHasAgent();
 
-  // ❌ hasAgentCreated = false → ask for Agent creation
-  if (!hasAgent) {
-    setShowNoAgentPopup(true);
+    // ❌ hasAgentCreated = false → ask for Agent creation
+    if (!hasAgent) {
+      setShowNoAgentPopup(true);
 
-    setTimeout(() => {
-      setShowNoAgentPopup(false);
+      setTimeout(() => {
+        setShowNoAgentPopup(false);
 
-      // store job context for Agentcreation
-      try {
-        localStorage.setItem(
-          "agentJobContext",
-          JSON.stringify({ fromJobId: jobId, jobDesignation, companyName })
-        );
-      } catch (e) {
-        console.warn("Could not set agentJobContext in localStorage", e);
-      }
+        // store job context for Agentcreation
+        try {
+          localStorage.setItem(
+            "agentJobContext",
+            JSON.stringify({ fromJobId: jobId, jobDesignation, companyName })
+          );
+        } catch (e) {
+          console.warn("Could not set agentJobContext in localStorage", e);
+        }
 
-      navigate("/main/agentcreate", {
-        state: { fromJobId: jobId, jobDesignation, companyName },
-      });
-    }, 3500);
+        navigate("/main/agentcreate", {
+          state: { fromJobId: jobId, jobDesignation, companyName },
+        });
+      }, 3500);
 
-    return;
-  }
+      return;
+    }
 
-  // ✅ hasAgentCreated = true → open Apply modal directly
-  setApplySelectedJob({ jobDesignation, companyName });
-  setIsModalOpen(true);
-  setShowNoAgentPopup(false);
-};
-
+    // ✅ hasAgentCreated = true → open Apply modal directly
+    setApplySelectedJob({ jobDesignation, companyName });
+    setIsModalOpen(true);
+    setShowNoAgentPopup(false);
+  };
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -612,14 +611,10 @@ const handleClick = async (
       );
     };
 
-    // Helper function to check if array-like string has content
-    const hasArrayContent = (value: any): boolean => {
-      if (isEmpty(value)) return false;
-      const items = value
-        .split(",")
-        .filter((item: string) => item.trim() !== "");
-      return items.length > 0;
-    };
+const hasArrayContent = (value: any): boolean => {
+  return safeSplit(value).length > 0;
+};
+
 
     // Helper function to check if salary values are valid
     const hasValidSalary = (min: any, max: any): boolean => {
@@ -824,13 +819,12 @@ const handleClick = async (
               Required Skills
             </h3>
             <div className="flex flex-wrap gap-2">
-              {job.skills
-                .split(",")
+              {(job.skills ? safeSplit(job.skills) : [])
                 .filter((skill) => skill.trim() !== "")
                 .map((skill, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition"
+                    className="px-2 py-1 text-xs bg-gray-200 text-gray-800 rounded"
                   >
                     {skill.trim()}
                   </span>
@@ -847,18 +841,15 @@ const handleClick = async (
               Benefits & Perks
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {job.benefits
-                .split(",")
-                .filter((benefit) => benefit.trim() !== "")
-                .map((benefit, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center text-sm text-gray-700"
-                  >
-                    <span className="text-green-500 mr-2 text-base">✓</span>
-                    {benefit.trim()}
-                  </div>
-                ))}
+              {safeSplit(job.benefits).map((benefit, index) => (
+                <div
+                  key={index}
+                  className="flex items-center text-sm text-gray-700"
+                >
+                  <span className="text-green-500 mr-2 text-base">✓</span>
+                  {benefit}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -1171,70 +1162,67 @@ const handleClick = async (
         )}
       </div>
       {isOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-            <i
-              className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-600"
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
+          <div className="relative bg-white rounded-2xl shadow-2xl p-7 w-[90%] max-w-md border border-gray-200 transition-all scale-100">
+            {/* CLOSE BUTTON */}
+            <button
               onClick={() => setIsOpen(false)}
-              aria-label="Close"
-            />
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-600 transition text-2xl leading-none"
+            >
+              ×
+            </button>
+
+            <h2 className="text-2xl font-bold text-blue-700 mb-5 text-center">
               Write To Us
             </h2>
+
+            {/* MOBILE NUMBER */}
             <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="phone"
-              >
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Mobile Number
               </label>
               <input
                 type="text"
-                id="phone"
-                disabled={true}
+                disabled
                 value={finalMobileNumber || ""}
-                className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Enter your mobile number"
+                className="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
+
+            {/* EMAIL */}
             <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="email"
-              >
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Email
               </label>
               <input
-                type="email"
-                id="email"
+                type="text"
+                disabled
                 value={email || ""}
-                disabled={true}
-                className="block w-full text-gray-700 px-4 py-2 border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Enter your email"
+                className="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
+
+            {/* QUERY */}
             <div className="mb-4">
-              <label
-                className="block text-sm text-gray-700 font-semibold mb-1"
-                htmlFor="query"
-              >
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Query
               </label>
               <textarea
-                id="query"
-                rows={3}
-                className="block w-full text-gray-700 px-4 py-2 border-gray-900 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Enter your query"
+                rows={4}
                 onChange={(e) => setQuery(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Type your query..."
               />
               {queryError && (
-                <p className="text-red-500 text-sm mt-1">{queryError}</p>
+                <p className="text-red-500 text-xs mt-1">{queryError}</p>
               )}
             </div>
-            <div className="flex justify-center">
+
+            {/* SUBMIT BUTTON */}
+            <div className="flex justify-center mt-4">
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300"
                 onClick={handleWriteToUsSubmitButton}
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow hover:shadow-lg hover:scale-105 transition-all"
               >
                 Submit Query
               </button>
