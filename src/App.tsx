@@ -238,8 +238,8 @@ import QuickAgentCreate from "./BharathAIStore/pages/Agentcreation";
 import TestStore from "./BharathAIStore/pages/TestStore";
 import TestAgentDetails from "./BharathAIStore/pages/TestAgentDetails";
 import PaymentCashfree from "./AgentStore/PaymentCashfree";
-import AllAIStores from "./AgentStore/AllAIStores";
-import AllAIStore from "./AgentStore/AllAIStore";
+import AllAIStore from "./AIStores/AllAistore";
+import AllAIStores from "./AIStores/AllAistores";
 import TalwarDataPage from "./AskoxyAdmin/TalwarData";
 import TalwarAssignedDataPage from "./AskoxyAdmin/TalwarAssignedDataPage";
 const App: React.FC = () => {
@@ -330,6 +330,12 @@ const App: React.FC = () => {
             {/* <Route path="/glmshome" element={<UseCases />} /> */}
             <Route element={<Layout />}>
               <Route path="/bharath-aistore" element={<BharatAgentsStore />} />
+              <Route path="/all-ai-stores" element={<AllAIStores />} />
+              <Route
+               
+                path="/ai-store/:storeSlug"
+                element={<AllAIStore />}
+              />
               <Route
                 path="/bharath-aistore/insurance"
                 element={<InsuranceAgentsPage />}

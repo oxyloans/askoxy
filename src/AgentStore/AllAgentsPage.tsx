@@ -1921,7 +1921,7 @@ const AllAgentsPage: React.FC = () => {
                             })()}
                           </div>
 
-                          {/* 👁️ View / ✏️ Edit / 🗑️ Delete row */}
+                      
                           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2">
                             {/* 👁️ View Button */}
                             <button

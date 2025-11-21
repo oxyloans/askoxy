@@ -92,7 +92,7 @@ const OurPeople: React.FC = () => {
             </svg>
             <span className="relative">Meet</span>
           </span>{" "} */}
-          our leadership team
+          Our Leadership Team
         </h2>
         <p className="text-base text-gray-700 md:text-lg">
           Passionate innovators driving AI-powered transformation with
