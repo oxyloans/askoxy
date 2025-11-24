@@ -22,6 +22,7 @@ interface AiStore {
   storeCreatedBy: string;
   storeId: string;
   status: string | null;
+  storeImageUrl?: string | null; // ← ADD THIS
   agentDetailsOnAdUser?: StoreAgent[];
 }
 
@@ -349,7 +350,10 @@ const StoreCard: React.FC<{
       className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-100 active:scale-[0.98] sm:rounded-3xl"
     >
       {/* Banner */}
-      <DynamicBanner storeName={store.storeName} />
+      <DynamicBanner
+        storeName={store.storeName}
+        storeImageUrl={store.storeImageUrl}
+      />
 
       {/* Content */}
       <div className="flex flex-1 flex-col px-4 py-4 sm:px-6">
@@ -434,59 +438,85 @@ const StoreCard: React.FC<{
   );
 });
 
-StoreCard.displayName = "StoreCard";
+const DynamicBanner: React.FC<{
+  storeName: string;
+  storeImageUrl?: string | null;
+}> = React.memo(({ storeName, storeImageUrl }) => {
+  const [imgError, setImgError] = useState(false);
 
-// Dynamic gradient banner with initials
-const DynamicBanner: React.FC<{ storeName: string }> = React.memo(
-  ({ storeName }) => {
-    const initials = storeName
-      .split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-
-    const hue = useMemo(() => {
-      let hash = 0;
-      for (let i = 0; i < storeName.length; i++) {
-        hash = storeName.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      return Math.abs(hash % 360);
-    }, [storeName]);
-
+  const initials = useMemo(() => {
     return (
+      storeName
+        .trim()
+        .split(/\s+/)
+        .map((w) => w[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join("")
+        .toUpperCase() || "AI"
+    );
+  }, [storeName]);
+
+  const hue = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < storeName.length; i++) {
+      hash = storeName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash % 360);
+  }, [storeName]);
+
+  const gradient = `linear-gradient(135deg, hsl(${hue}, 75%, 55%) 0%, hsl(${hue}, 75%, 45%) 100%)`;
+
+  const isValidImage =
+    storeImageUrl &&
+    typeof storeImageUrl === "string" &&
+    storeImageUrl.trim() !== "" &&
+    !storeImageUrl.includes("placehold.co") &&
+    !storeImageUrl.includes("placeholder") &&
+    storeImageUrl.trim().toLowerCase() !== "null";
+
+  const showImage = isValidImage && !imgError;
+
+  return (
+    <div className="relative h-48 overflow-hidden rounded-t-3xl bg-gray-200">
+      {/* Real Image */}
+      {showImage && (
+        <img
+          src={storeImageUrl}
+          alt={storeName}
+          className="h-full w-full object-cover transition-opacity duration-700"
+          onError={() => setImgError(true)}
+        />
+      )}
+
+      {/* Fallback Gradient + Initials */}
       <div
-        className="relative flex h-32 w-full items-center justify-center overflow-hidden text-white sm:h-40 lg:h-44"
-        style={{
-          backgroundImage: `linear-gradient(135deg, hsl(${hue}, 70%, 55%) 0%, hsl(${hue}, 70%, 48%) 50%, hsl(${hue}, 65%, 42%) 100%)`,
-        }}
+        className={`absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${
+          showImage ? "opacity-0" : "opacity-100"
+        }`}
+        style={{ background: gradient }}
       >
-        {/* Grid Pattern */}
         <div
-          className="absolute inset-0 opacity-10"
+          className="absolute inset-0 opacity-20"
           style={{
-            backgroundImage: `
-            linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.3) 25%, rgba(255, 255, 255, 0.3) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.3) 75%, rgba(255, 255, 255, 0.3) 76%, transparent 77%, transparent),
-            linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.3) 25%, rgba(255, 255, 255, 0.3) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.3) 75%, rgba(255, 255, 255, 0.3) 76%, transparent 77%, transparent)
-          `,
-            backgroundSize: "50px 50px",
+            backgroundImage: `linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%)`,
+            backgroundSize: "40px 40px",
           }}
         />
-
-        {/* Initials */}
-        <div className="relative text-4xl font-black opacity-20 sm:text-5xl lg:text-6xl">
+        <span className="text-7xl font-black text-white drop-shadow-2xl tracking-wider">
           {initials}
-        </div>
-
-        {/* Badge */}
-        <span className="absolute right-2 top-2 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold backdrop-blur-md sm:right-3 sm:top-3 sm:px-3 sm:text-sm">
-          Featured
         </span>
       </div>
-    );
-  }
-);
+
+      {/* Featured Badge */}
+      <div className="absolute right-4 top-4 rounded-full bg-white/25 px-4 py-1.5 backdrop-blur-sm">
+        <span className="text-sm font-bold text-white">Featured</span>
+      </div>
+    </div>
+  );
+});
 
 DynamicBanner.displayName = "DynamicBanner";
+StoreCard.displayName = "StoreCard";
 
 export default AllAIStores;

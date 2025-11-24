@@ -242,6 +242,7 @@ import AllAIStore from "./AIStores/AllAistore";
 import AllAIStores from "./AIStores/AllAistores";
 import TalwarDataPage from "./AskoxyAdmin/TalwarData";
 import TalwarAssignedDataPage from "./AskoxyAdmin/TalwarAssignedDataPage";
+import ApiDocs from "./components/ApiDocs";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -527,6 +528,7 @@ const App: React.FC = () => {
             {/* Landing Page (First Page) */}
             <Route path="/future" element={<Landingpage />} />
             <Route path="/" element={<CurrentLandingPage />} />
+            <Route path="/apidocs" element ={<ApiDocs/>}/>
             {/* WhatsApp Login (Before Clicking Sign-in) */}
             {/* <Route path="/communities/srilakshmi" element={<RiceSalePage />} /> */}
             <Route path="/womensday" element={<WomensDay />} />

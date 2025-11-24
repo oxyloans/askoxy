@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BASE_URL from "../Config";
 
 interface StoreAgent {
@@ -28,18 +28,71 @@ interface StoreLocationState {
 }
 
 const AllAIStore: React.FC = () => {
+  const { storeSlug } = useParams<{ storeSlug: string }>(); // Get slug from URL
   const location = useLocation();
   const storeIdFromState =
     (location.state as StoreLocationState)?.storeId || "";
   const navigate = useNavigate();
-  const effectiveStoreId = storeIdFromState;
 
+const [effectiveStoreId, setEffectiveStoreId] = useState<string>("");
   const [store, setStore] = useState<StoreDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const accessToken = localStorage.getItem("accessToken") || "";
+  const resolveStoreIdFromSlug = async (slug: string) => {
+    try {
+      const res = await fetch(
+        `${BASE_URL}/ai-service/agent/getAiStoreAllAgents`,
+        {
+          headers: {
+            Authorization: accessToken ? `Bearer ${accessToken}` : "",
+          },
+        }
+      );
 
+      if (!res.ok) throw new Error("Failed to fetch stores");
+
+      const result = await res.json();
+      const stores = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.data)
+        ? result.data
+        : [];
+
+      // Find store where slugified name matches
+      const normalizedSlug = slug.toLowerCase().replace(/-/g, " ");
+      const foundStore = stores.find((s: any) => {
+        const name = s.storeName?.toLowerCase() || "";
+        const slugified = name.replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+        return slugified === slug || name.replace(/\s+/g, "-") === slug;
+      });
+
+      if (foundStore?.storeId) {
+        setEffectiveStoreId(foundStore.storeId);
+        return foundStore.storeId;
+      } else {
+        throw new Error("Store not found");
+      }
+    } catch (err) {
+      setError("Store not found or unavailable");
+      setLoading(false);
+    }
+  };
+
+  // Main effect: Determine storeId
+  useEffect(() => {
+    if (storeIdFromState) {
+      // Fast path: we have storeId from navigation state
+      setEffectiveStoreId(storeIdFromState);
+    } else if (storeSlug) {
+      // Fallback: resolve from slug (shared link / refresh)
+      resolveStoreIdFromSlug(storeSlug);
+    } else {
+      setError("No store specified");
+      setLoading(false);
+    }
+  }, [storeIdFromState, storeSlug]);
   // Get 2-letter initials (first word first letter + second word first letter)
   const getInitials = useCallback((name: string): string => {
     if (!name?.trim()) return "AI";
@@ -153,6 +206,7 @@ const AllAIStore: React.FC = () => {
     );
   });
 
+  // Fetch store details once we have effectiveStoreId
   const fetchStoreDetails = async (id: string) => {
     setLoading(true);
     setError(null);
@@ -160,7 +214,6 @@ const AllAIStore: React.FC = () => {
       const res = await fetch(
         `${BASE_URL}/ai-service/agent/getAllStoreDataByStoreId/${id}`,
         {
-          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: accessToken ? `Bearer ${accessToken}` : "",
@@ -176,17 +229,19 @@ const AllAIStore: React.FC = () => {
         detail = Array.isArray(json.data) ? json.data[0] : json.data;
       else detail = json;
 
-      if (!detail?.storeId) throw new Error("Invalid data");
+      if (!detail?.storeId) throw new Error("Invalid store data");
       setStore(detail);
     } catch (err: any) {
-      setError(err.message || "Failed to load store");
+      setError(err.message || "Failed to load store details");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (effectiveStoreId) fetchStoreDetails(effectiveStoreId);
+    if (effectiveStoreId) {
+      fetchStoreDetails(effectiveStoreId);
+    }
   }, [effectiveStoreId]);
 
   const visibleAgents = useMemo(() => {

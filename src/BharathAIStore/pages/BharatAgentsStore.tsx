@@ -441,7 +441,7 @@ const BharatAgentsStore: React.FC = () => {
 
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 100,
+    pageSize: 20,
     hasMore: true,
     total: 0,
   });

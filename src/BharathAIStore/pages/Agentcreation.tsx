@@ -1111,36 +1111,63 @@ useEffect(() => {
   }, []);
 
   // was: addFileType: AddFileType,
-  async function uploadMandatoryDocOnceMulti(
-    assistanceId: string,
-    files: File[],
-    addFileType: string, // ← now a plain string
-    userId: string,
-    auth: HeadersInit
-  ) {
-    for (const file of files) {
-      const form = new FormData();
-      form.append("file", file);
+ async function uploadMandatoryDocOnceMulti(
+   assistanceId: string,
+   files: File[],
+   addFileType: string,
+   userId: string,
+   auth: HeadersInit
+ ) {
+   for (const file of files) {
+     // STEP 1: Upload to META upload-service
+     const uploadForm = new FormData();
+     uploadForm.append("file", file);
 
-      const url = `${BASE_URL}/ai-service/agent/${encodeURIComponent(
-        assistanceId
-      )}/addAgentFiles?addFileType=${encodeURIComponent(
-        addFileType || ""
-      )}&userId=${encodeURIComponent(userId)}`;
+     const uploadUrl =
+       "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar";
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { ...auth },
-        body: form,
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(
-          `Upload failed: ${res.status} ${txt || res.statusText}`
-        );
-      }
-    }
-  }
+     const uploadRes = await fetch(uploadUrl, {
+       method: "POST",
+       headers: { ...auth },
+       body: uploadForm,
+     });
+
+     const uploadData = await uploadRes.json();
+     const documentPath = uploadData?.documentPath;
+
+     if (!documentPath) {
+       throw new Error("No documentPath returned from upload-service");
+     }
+
+     // STEP 2: Upload same file + documentPath to addAgentFiles API
+     const agentForm = new FormData();
+     agentForm.append("file", file); // The SAME file goes again
+
+     const finalUrl = `${BASE_URL}/ai-service/agent/${encodeURIComponent(
+       assistanceId
+     )}/addAgentFiles?addFileType=${encodeURIComponent(
+       addFileType
+     )}&userId=${encodeURIComponent(userId)}&url=${encodeURIComponent(
+       documentPath
+     )}`;
+
+     const agentRes = await fetch(finalUrl, {
+       method: "POST",
+       headers: { ...auth },
+       body: agentForm,
+     });
+
+     if (!agentRes.ok) {
+       const txt = await agentRes.text().catch(() => "");
+       throw new Error(
+         `addAgentFiles failed → ${agentRes.status} ${
+           txt || agentRes.statusText
+         }`
+       );
+     }
+   }
+ }
+
 
   // keep the context we need while the modal is open
   const pendingUploadRef = useRef<{
