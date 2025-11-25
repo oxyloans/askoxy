@@ -311,7 +311,7 @@ const SearchMain: React.FC = () => {
 
   const handleAgentClick = (agent: Agent) => {
     navigate(
-      `/bharath-aistore/assistant/${agent.assistantId}/${agent.agentId}`
+      `/${agent.assistantId}/${agent.agentId}/${agent.name}`
     );
   };
 

@@ -3979,7 +3979,7 @@ useEffect(() => {
           open={uploadOpen}
           title="Upload supporting files"
           // ⛔ prevent closing by X, mask, or Esc
-          closable={true}
+          closable={false}
           maskClosable={false}
           keyboard={false}
           // keep onCancel defensive (won’t be triggered with closable=false, but safe)

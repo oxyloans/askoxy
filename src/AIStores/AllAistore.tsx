@@ -330,7 +330,7 @@ const [effectiveStoreId, setEffectiveStoreId] = useState<string>("");
                     tabIndex={0}
                     onClick={() =>
                       navigate(
-                        `/bharath-aistore/assistant/${agent.assistantId}/${agent.agentId}`
+                        `/${agent.assistantId}/${agent.agentId}/${agent.agentName}`
                       )
                     }
                     className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 border border-gray-100"

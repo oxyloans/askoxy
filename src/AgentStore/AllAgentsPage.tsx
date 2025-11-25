@@ -556,16 +556,28 @@ const AllAgentsPage: React.FC = () => {
         return;
       }
 
-      setData((prev) => ({
-        userId: raw?.userId ?? prev?.userId ?? resolvedUserId,
-        // Only replace arrays when the server actually sends them
-        assistants: Array.isArray(raw?.assistants)
-          ? raw.assistants
-          : prev?.assistants ?? [],
-        conversations: Array.isArray(raw?.conversations)
-          ? raw.conversations
-          : prev?.conversations ?? [],
-      }));
+   setData((prev) => {
+     // sort helper
+     const sortByDate = (arr: any[]) =>
+       arr.sort((a, b) => {
+         const da = new Date(a.createdAt).getTime();
+         const db = new Date(b.createdAt).getTime();
+         return db - da; // newest first
+       });
+
+     return {
+       userId: raw?.userId ?? prev?.userId ?? resolvedUserId,
+
+       assistants: Array.isArray(raw?.assistants)
+         ? sortByDate(raw.assistants)
+         : prev?.assistants ?? [],
+
+       conversations: Array.isArray(raw?.conversations)
+         ? sortByDate(raw.conversations)
+         : prev?.conversations ?? [],
+     };
+   });
+
     } catch {
       // ignore transient refresh errors
     }

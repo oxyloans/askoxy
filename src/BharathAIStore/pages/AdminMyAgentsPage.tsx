@@ -211,22 +211,27 @@ const MyAgentsTab: React.FC = () => {
 
   const handleOpen = (a: Assistant) => {
     const loggedIn = !!localStorage.getItem("userId");
-    const assistantId = (a.assistantId || a.id || "").toString().trim();
-    const agentId = (a.agentId || "").toString().trim();
-    const base = window.location.pathname.includes("bharath-aistore")
-      ? "bharath-aistore"
-      : "bharat-aistore";
-    const nameSlug = (a.name || "agent")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+       const slugify = (s: string) =>
+         (s || "agent")
+           .toLowerCase()
+           .replace(/[^a-z0-9]+/g, "-")
+           .replace(/^-+|-+$/g, "");
+    // Extract FULL IDs from API data
+    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+      .toString()
+      .trim();
+    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+      .toString()
+      .trim();
+  const nameSlug = slugify(a.name || "agent");
+  
 
     const intended =
-      assistantId && agentId
-        ? `/${base}/assistant/${assistantId}/${agentId}`
-        : assistantId
-        ? `/${base}/assistant/${assistantId}`
-        : `/${base}/assistant/by-name/${nameSlug}`;
+      fullAssistantId && fullAgentId
+        ? `/${fullAssistantId}/${fullAgentId}/${nameSlug}`
+        : fullAssistantId
+        ? `/${fullAssistantId}`
+        : `/${nameSlug}`;
 
     if (!loggedIn) {
       try {
