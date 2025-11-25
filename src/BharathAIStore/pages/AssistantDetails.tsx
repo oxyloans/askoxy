@@ -10,7 +10,7 @@ import {
 import { GiElephantHead } from "react-icons/gi";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import { GiLion } from "react-icons/gi";
-import { Loader2, Mic, Plus } from "lucide-react";
+import { Loader2, ExternalLink ,Mic, Plus } from "lucide-react";
 
 import {
   Send,
@@ -21,14 +21,15 @@ import {
   Share,
   RefreshCcw,
   LogOut,
+  
   Star as StarIcon,
 } from "lucide-react";
 import MarkdownRenderer from "../../GenOxy/components/MarkdownRenderer";
 import { message, Modal } from "antd";
 import BASE_URL from "../../Config";
-import SubscriptionModal from "../components/SubscriptionModal"
+import SubscriptionModal from "../components/SubscriptionModal";
 import { set } from "lodash";
-
+import { Button } from "antd";
 /** ---------------- Types ---------------- */
 interface Assistant {
   id: string;
@@ -91,7 +92,7 @@ const AssistantDetails: React.FC = () => {
   const { id, agentId } = useParams<{ id: string; agentId: string }>();
   // console.log({id,agentId});
   const currentURL = window.location.href;
-  
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -126,8 +127,12 @@ const AssistantDetails: React.FC = () => {
   const CHAT_KEY = (aid: string, hid: string) => `assistant_chat_${aid}_${hid}`;
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [showAgentShareModal, setShowAgentShareModal] = useState(false);
+  const [agentShareText, setAgentShareText] = useState("");
+
   // Add loading state for history
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [showNoChatModal, setShowNoChatModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showMobileFiles, setShowMobileFiles] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
@@ -279,7 +284,8 @@ const AssistantDetails: React.FC = () => {
   // once true, we never allow re-rating
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] =
+    useState<boolean>(false);
   const [subscriptionValid, setSubscriptionValid] = useState<boolean>(false);
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -735,7 +741,7 @@ const AssistantDetails: React.FC = () => {
       const activePlans = data.filter((plan: any) => plan.status === true);
       setSubscriptionPlans(activePlans);
     } catch (error) {
-      console.error('Failed to fetch subscription plans:', error);
+      console.error("Failed to fetch subscription plans:", error);
     } finally {
       setLoadingPlans(false);
     }
@@ -1013,8 +1019,8 @@ const AssistantDetails: React.FC = () => {
       isStopped.current = false;
       setLoading(true);
 
-       const userMessages = messages.filter(m => m.role === "user");
-      
+      const userMessages = messages.filter((m) => m.role === "user");
+
       //  if(!subscriptionValid && userMessages.length >=5){
       //   setMessages((prevMessages) => [
       //       ...prevMessages,
@@ -1025,7 +1031,7 @@ const AssistantDetails: React.FC = () => {
       //   setLoading(false);
       //   return;
       // }
-     
+
       // Stop voice if active before sending
 
       try {
@@ -1070,12 +1076,20 @@ const AssistantDetails: React.FC = () => {
 
   const validateDate = async () => {
     try {
-     const resp = await axios.get(`${BASE_URL}/ai-service/agent/planValidateDate?agentId=${agentId}&userId=${userId}`)
-     if(resp?.data?.validateDate === 0 || resp?.data?.validateDate === "0" || resp?.data?.validateDate === "" || resp?.data?.validateDate === null || resp?.data?.validateDate === undefined){
-          console.log("No subscription found");
-          setSubscriptionValid(false);
-        } else{
-      if (isExpired(resp?.data?.validateDate || "")) {
+      const resp = await axios.get(
+        `${BASE_URL}/ai-service/agent/planValidateDate?agentId=${agentId}&userId=${userId}`
+      );
+      if (
+        resp?.data?.validateDate === 0 ||
+        resp?.data?.validateDate === "0" ||
+        resp?.data?.validateDate === "" ||
+        resp?.data?.validateDate === null ||
+        resp?.data?.validateDate === undefined
+      ) {
+        console.log("No subscription found");
+        setSubscriptionValid(false);
+      } else {
+        if (isExpired(resp?.data?.validateDate || "")) {
           console.log("Expired");
           setSubscriptionValid(false);
         } else {
@@ -1084,22 +1098,22 @@ const AssistantDetails: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Error validating date:', error);
+      console.error("Error validating date:", error);
     }
   };
 
   function isExpired(dateStr: string) {
-  const [day, month, year] = dateStr.split("/").map(Number);
+    const [day, month, year] = dateStr.split("/").map(Number);
 
-  // Convert to valid JS date (YYYY, MM-1, DD)
-  const givenDate = new Date(year, month - 1, day);
+    // Convert to valid JS date (YYYY, MM-1, DD)
+    const givenDate = new Date(year, month - 1, day);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);   // remove time
-  givenDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // remove time
+    givenDate.setHours(0, 0, 0, 0);
 
-  return givenDate < today; // true means expired
-}
+    return givenDate < today; // true means expired
+  }
 
   const handleStop = () => {
     isStopped.current = true;
@@ -1521,19 +1535,96 @@ const AssistantDetails: React.FC = () => {
       }
     }
   };
+  const [showShareQuestion, setShowShareQuestion] = useState(false);
+  const [shareText, setShareText] = useState<string>("");
 
+  // Common share helper
   const shareContent = async (text: string) => {
-    if (!navigator.share) {
-      alert("Sharing is not supported on this browser.");
+    if (!text.trim()) {
+      return message.info("Nothing to share.");
+    }
+
+    // If Web Share API exists
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Shared from Bharat AI Store",
+          text,
+        });
+      } catch (error: any) {
+        if (error?.name !== "AbortError") {
+          message.error(error?.message || "Sharing failed.");
+        }
+      }
       return;
     }
+
+    // Fallback: copy to clipboard
     try {
-      await navigator.share({ title: "Shared from MyApp", text });
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
-        alert("Sharing failed: " + error.message);
-      }
+      await navigator.clipboard.writeText(text);
+      message.success("Content copied to clipboard!");
+    } catch {
+      message.error("Unable to copy to clipboard.");
     }
+  };
+
+  const handleChatShareClick = () => {
+    // 👉 If no messages, open modal instead of message.info
+    if (messages.length === 0) {
+      setShowNoChatModal(true);
+      return;
+    }
+
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant");
+
+    // 👉 If no Q or no A, also show same modal
+    if (!lastUser || !lastAssistant) {
+      setShowNoChatModal(true);
+      return;
+    }
+
+    const text = `🤖 ${assistant?.name || "AI Agent"} — Chat Snippet
+
+Q: ${lastUser.content}
+
+A: ${lastAssistant.content}
+
+🔗 Bharat AI Store`;
+
+    setShareText(text);
+    setShowShareQuestion(true); // open confirm modal
+  };
+
+  // 🟡 Agent Share = Show modal -> Share on WhatsApp
+  const handleAgentShareClick = () => {
+    const url = window.location.href;
+
+    // Static message (same as your ASKOXY.AI share template)
+    const staticMessage = `
+🌟 Check out this amazing AI Agent on Bharat AI Store!
+
+🤖 Agent Name: ${assistant?.name || "AI Agent"}
+
+This AI Agent is created on ASKOXY.AI — a platform where anyone can build AI Agents, learn skills, and earn money!
+
+🔗 Access the AI Agent here:
+${url}`.trim();
+
+    setAgentShareText(staticMessage);
+    setShowAgentShareModal(true); // open modal
+  };
+
+  // Confirm / cancel from modal
+  const confirmShareNow = () => {
+    shareContent(shareText);
+    setShowShareQuestion(false);
+  };
+
+  const cancelShare = () => {
+    setShowShareQuestion(false);
   };
 
   const filteredHistory = useMemo(() => {
@@ -1669,23 +1760,203 @@ const AssistantDetails: React.FC = () => {
           </div>
 
           {/* Right: Share */}
-          <div className="ml-auto">
+          {/* Right: Share */}
+          <div className="ml-auto flex gap-2">
+            {/* Chat Share – Q & A */}
             <button
-              onClick={() => {
-                if (messages.length > 0) {
-                  shareContent(messages[messages.length - 1].content);
-                } else {
-                  message.info("No message to share.");
-                }
-              }}
+              onClick={handleChatShareClick}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              title="Share"
+              title="Share last Q&A"
             >
               <Share className="w-5 h-5 text-purple-700 dark:text-white" />
-              <span className="hidden sm:inline">Share</span>
+              <span className="hidden sm:inline">Chat Share</span>
+            </button>
+            <Modal
+              open={showAgentShareModal}
+              footer={null}
+              centered
+              onCancel={() => setShowAgentShareModal(false)}
+            >
+              <div className="text-center px-4 py-2">
+                {/* Title */}
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: 600,
+                    marginBottom: "12px",
+                  }}
+                >
+                  Share This AI Agent
+                </h3>
+
+                {/* Description */}
+                <p
+                  style={{
+                    fontSize: "15px",
+                    lineHeight: "1.6",
+                    marginBottom: "20px",
+                    textAlign: "center",
+                  }}
+                >
+                  Share this AI Agent with your friends on WhatsApp.
+                </p>
+
+                {/* Buttons */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: "12px",
+                    marginTop: "10px",
+                  }}
+                >
+                  {/* Close */}
+                  <Button
+                    onClick={() => setShowAgentShareModal(false)}
+                    style={{
+                      background: "#e0e0e0",
+                      border: "none",
+                      color: "#000",
+                      padding: "6px 20px",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Close
+                  </Button>
+
+                  {/* WhatsApp */}
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      const whatsappUrl =
+                        "https://api.whatsapp.com/send?text=" +
+                        encodeURIComponent(agentShareText);
+
+                      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+
+                      setShowAgentShareModal(false);
+                    }}
+                    style={{
+                      background: "#25D366", // WhatsApp green
+                      borderColor: "#25D366",
+                      padding: "6px 20px",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      color: "#fff",
+                    }}
+                  >
+                    Share on WhatsApp
+                  </Button>
+                </div>
+              </div>
+            </Modal>
+
+            <Modal
+              open={showNoChatModal}
+              onCancel={() => setShowNoChatModal(false)}
+              footer={null} // we will custom-design our own footer so no overlap
+              centered // centers modal vertically
+            >
+              <div className="text-center px-4 py-2">
+                {/* Message Text */}
+                <p
+                  style={{
+                    fontSize: "16px",
+                    lineHeight: "1.6",
+                    marginBottom: "20px",
+                    textAlign: "center",
+                    fontWeight: 500,
+                  }}
+                >
+                  You have not started any chat conversation yet.
+                  <br />
+                  Please start the conversation and then try sharing the chat.
+                </p>
+
+                {/* Buttons Row */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: "12px",
+                    marginTop: "10px",
+                  }}
+                >
+                  {/* Close Button */}
+                  <Button
+                    onClick={() => setShowNoChatModal(false)}
+                    style={{
+                      background: "#e0e0e0",
+                      border: "none",
+                      color: "#000",
+                      padding: "6px 20px",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Close
+                  </Button>
+
+                  {/* Start Chat Button */}
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      setShowNoChatModal(false);
+                      const input = document.getElementById("chat-input");
+                      if (input) input.focus();
+                    }}
+                    style={{
+                      background: "#008CBA", // your color
+                      borderColor: "#008CBA",
+                      padding: "6px 20px",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Start Chat
+                  </Button>
+                </div>
+              </div>
+            </Modal>
+
+            {/* Agent Share – only URL */}
+            <button
+              onClick={handleAgentShareClick}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              title="Share this AI Agent"
+            >
+              <ExternalLink className="w-5 h-5 text-purple-700 dark:text-white" />
+              <span className="hidden sm:inline">Agent Share</span>
             </button>
           </div>
         </header>
+
+        {showShareQuestion && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg w-80">
+              <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
+                Do you want to share this content?
+              </h2>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={cancelShare}
+                  className="px-4 py-2 bg-gray-300 rounded-md dark:bg-gray-700"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmShareNow}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md"
+                >
+                  Yes, Share
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Sidebar */}
         <aside
@@ -2310,8 +2581,8 @@ const AssistantDetails: React.FC = () => {
             onCancel={() => setShowSubscriptionModal(false)}
             subscriptionPlans={subscriptionPlans}
             loadingPlans={loadingPlans}
-            agentId={agentId || ''}
-            userId={userId || ''}
+            agentId={agentId || ""}
+            userId={userId || ""}
           />
 
           {/* Content area */}

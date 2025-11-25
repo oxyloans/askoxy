@@ -2547,21 +2547,21 @@ useEffect(() => {
             >
               <div style={labelColStyle}>{gradientText("Looking for", 1)}</div>
               <div style={{ flex: 1 }}>
-<div
-  onClick={() => {
-    if (!roleSelect.trim()) {
-      message.error("Please select Role first.");
-    }
-  }}
->
-  <CompactSelect
-    value={goalSelect}
-    onChange={setGoalSelect}
-    options={goalOptions}
-    placeholder="Select Goal"
-    loading={goalLoading}
-  />
-</div>
+                <div
+                  onClick={() => {
+                    if (!roleSelect.trim()) {
+                      message.error("Please select Role first.");
+                    }
+                  }}
+                >
+                  <CompactSelect
+                    value={goalSelect}
+                    onChange={setGoalSelect}
+                    options={goalOptions}
+                    placeholder="Select Goal"
+                    loading={goalLoading}
+                  />
+                </div>
                 {goalSelect === "Other" &&
                   otherInput(goalOther, setGoalOther, "Type your goal…")}
               </div>
@@ -2620,24 +2620,23 @@ useEffect(() => {
             >
               <div style={labelColStyle}>{gradientText("To", 2)}</div>
               <div style={{ flex: 1 }}>
-<div
-  onClick={() => {
-    if (!roleSelect.trim()) {
-      message.error("Please select Role first.");
-    } else if (!goalSelect.trim()) {
-      message.error("Please select Goal first.");
-    }
-  }}
->
-  <CompactSelect
-    value={purposeSelect}
-    onChange={setPurposeSelect}
-    options={purposeOptions}
-    placeholder="Select Purpose"
-    loading={purposeLoading}
-  />
-</div>
-
+                <div
+                  onClick={() => {
+                    if (!roleSelect.trim()) {
+                      message.error("Please select Role first.");
+                    } else if (!goalSelect.trim()) {
+                      message.error("Please select Goal first.");
+                    }
+                  }}
+                >
+                  <CompactSelect
+                    value={purposeSelect}
+                    onChange={setPurposeSelect}
+                    options={purposeOptions}
+                    placeholder="Select Purpose"
+                    loading={purposeLoading}
+                  />
+                </div>
 
                 {purposeSelect === "Other" &&
                   otherInput(
@@ -3980,7 +3979,7 @@ useEffect(() => {
           open={uploadOpen}
           title="Upload supporting files"
           // ⛔ prevent closing by X, mask, or Esc
-          closable={false}
+          closable={true}
           maskClosable={false}
           keyboard={false}
           // keep onCancel defensive (won’t be triggered with closable=false, but safe)
@@ -4050,8 +4049,28 @@ useEffect(() => {
             </div>
 
             <div
-              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 16,
+              }}
             >
+              <button
+                type="button"
+                onClick={() => setUploadOpen(false)}
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: 999,
+                  fontWeight: 700,
+                  background: "#E2E8F0",
+                  color: "#0F172A",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Close
+              </button>
               <button
                 type="button"
                 onClick={handleUploadConfirm}

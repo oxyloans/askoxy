@@ -1,6 +1,15 @@
 // /src/AgentStore/BharatAgentsStore.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Bot, Shield, Loader2, Star, X, Flame, Share2 } from "lucide-react";
+import {
+  Bot,
+  Shield,
+  Loader2,
+  Star,
+  X,
+  Copy,
+  Flame,
+  Share2,
+} from "lucide-react";
 import BASE_URL from "../../Config";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -258,9 +267,10 @@ const AssistantCard: React.FC<{
   assistant: Assistant;
   onOpen: () => void;
   onShare?: () => void;
+  onCopy?: () => void; // NEW: Optional onCopy prop
   index: number;
   q: string;
-}> = ({ assistant, onOpen, onShare, index, q }) => {
+}> = ({ assistant, onOpen, onShare,onCopy, index, q }) => {
   const seed = assistant.name || `A${index}`;
   const badge =
     (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
@@ -344,6 +354,22 @@ const AssistantCard: React.FC<{
                 aria-label={`Share ${assistant.name}`}
               >
                 <Share2 className="h-4 w-4" />
+              </button>
+            )}
+            {/* NEW: Copy Button (shows if onCopy provided) */}
+            {onCopy && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent card Open click
+                  onCopy();
+                }}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-2.5 py-2 text-gray-600 hover:bg-gray-50"
+                aria-label={`Copy URL for ${assistant.name}`}
+                title="Copy URL"
+              >
+                <Copy className="h-4 w-4" />{" "}
+                {/* Import Copy from lucide-react */}
               </button>
             )}
           </div>
@@ -484,22 +510,86 @@ const BharatAgentsStore: React.FC = () => {
     sessionStorage.removeItem("fromAISTore");
     sessionStorage.removeItem("redirectPath");
   }, []);
+  // NEW: Add handleCopy function in BharatAgentsStore.tsx (similar to handleShare, but copies URL)
+  // Place this near handleShare (around line 400)
+  const handleCopy = (a: Assistant) => {
+    const slugify = (s: string) =>
+      (s || "agent")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 
+    // Extract FULL IDs from API data
+    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+      .toString()
+      .trim();
+    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+      .toString()
+      .trim();
+    const nameSlug = slugify(a.name || "agent");
+
+    if (!fullAssistantId || !fullAgentId) return;
+
+    // Shorten IDs to last 4 chars ONLY for URL (as per previous requirement)
+   const shortAssistantId = fullAssistantId;
+   const shortAgentId = fullAgentId;
+
+
+    // Generate root-level URL (as per latest route: /:id/:agentId/:agentname)
+    const copyUrl = `${window.location.origin}/${encodeURIComponent(
+      shortAssistantId
+    )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+
+    // Copy to clipboard
+    navigator.clipboard
+      .writeText(copyUrl)
+      .then(() => {
+        // Success message (use your preferred toast/alert - here simple alert, replace with antd message if available)
+        alert(`Copied URL: ${copyUrl}`); // Or: message.success("URL copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("Failed to copy URL:", err);
+        alert("Failed to copy URL - please try manually.");
+      });
+  };
+  // Updated handleShare function (replace the entire function in BharatAgentsStore.tsx)
+  // REMOVED: "/bharath-aistore/assistant" prefix - now root-level "/:id/:agentId/:agentname"
   const handleShare = (a: Assistant) => {
-    const assistantId = (a.assistantId || a.id || a.agentId || "")
+    // slugify defined here if not global (or import it)
+    const slugify = (s: string) =>
+      (s || "agent")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+    // Extract FULL IDs from API data
+    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
       .toString()
       .trim();
-    const agentId = (a.agentId || a.assistantId || a.id || "")
+    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
       .toString()
       .trim();
+    const nameSlug = slugify(a.name || "agent");
 
-    if (!assistantId || !agentId) return;
+    if (!fullAssistantId || !fullAgentId) return;
 
-    const shareUrl = `https://www.askoxy.ai/bharath-aistore/assistant/${encodeURIComponent(
-      assistantId
-    )}/${encodeURIComponent(agentId)}`;
+    // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept internally)
+  const shortAssistantId = fullAssistantId;
+  const shortAgentId = fullAgentId;
 
-    // 🌟 Static share content
+    // Debug log: Full vs short
+    console.log("FULL IDs (for APIs/state):", { fullAssistantId, fullAgentId });
+    console.log("SHORT IDs (for share URL only):", {
+      shortAssistantId,
+      shortAgentId,
+    });
+
+    // UPDATED: Root-level URL without "/bharath-aistore/assistant" prefix
+    const shareUrl = `${window.location.origin}/${encodeURIComponent(
+      shortAssistantId
+    )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+
+    // 🌟 Static share content (uses full name, short root-level URL)
     const staticMessage = `
 🌟 Check out this amazing AI Agent on Bharat AI Store!
 
@@ -806,79 +896,86 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
+  // Updated handleOpen function (replace the entire function in BharatAgentsStore.tsx)
+  // REMOVED: "/bharath-aistore/assistant" prefix - now root-level "/:id/:agentId/:agentname"
   const handleOpen = (a: Assistant) => {
     if (isHiddenAgent(a)) return;
-    // 1) Block guests → hard redirect to WhatsApp login
+
+    // Extract FULL IDs from API data (no truncation)
+    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+      .toString()
+      .trim();
+    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+      .toString()
+      .trim();
+    const nameSlug = slugify(a.name || "agent");
+
+    // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
+   const shortAssistantId = fullAssistantId;
+const shortAgentId = fullAgentId;
+
+
+    // Debug log: Check full vs short values in console
+    console.log("FULL IDs (for APIs/state):", {
+      fullAssistantId,
+      fullAgentId,
+      nameSlug,
+    });
+    console.log("SHORT IDs (for URL only):", {
+      shortAssistantId,
+      shortAgentId,
+    });
+
+    // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
     const userId =
       typeof window !== "undefined" ? localStorage.getItem("userId") : null;
     if (!userId) {
-      // optional: remember where they were trying to go
-      try {
-        const nameSlug = ((a?.name as string) || "agent")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "");
-        const assistantIdTmp = (a?.assistantId || a?.id || a?.agentId || "")
-          .toString()
-          .trim();
-        const agentIdTmp = (a?.agentId || a?.assistantId || a?.id || "")
-          .toString()
-          .trim();
-        const baseTmp = location.pathname.includes("bharath-aistore")
-          ? "bharath-aistore"
-          : "bharat-aistore";
-
-        // Build the intended target so you can optionally restore after login
-        const intended =
-          assistantIdTmp && agentIdTmp
-            ? `/${baseTmp}/assistant/${encodeURIComponent(
-                assistantIdTmp
-              )}/${encodeURIComponent(agentIdTmp)}`
-            : assistantIdTmp
-            ? `/${baseTmp}/assistant/${encodeURIComponent(assistantIdTmp)}`
-            : `/${baseTmp}/assistant/by-name/${encodeURIComponent(nameSlug)}`;
-
-        // ✅ FIXED: Ensure redirectPath is set to the FULL intended path (including any query params if needed)
-        // This preserves the exact assistant URL for return after auth success in both register/login
-        sessionStorage.setItem("redirectPath", intended);
-        // ✅ FIXED: Also set a flag to indicate coming from AI Store for better primaryType detection
-        sessionStorage.setItem("fromAISTore", "true");
-      } catch {}
-      // ✅ FIXED: Use window.location.href to force full page reload, ensuring sessionStorage persists across redirects
+      let intended = "";
+      if (fullAssistantId && fullAgentId && nameSlug) {
+        intended = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+        // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        sessionStorage.setItem("fullAgentId", fullAgentId);
+      } else if (fullAssistantId && fullAgentId) {
+        intended = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        sessionStorage.setItem("fullAgentId", fullAgentId);
+      } else if (fullAssistantId) {
+        intended = `/${encodeURIComponent(shortAssistantId)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+      } else {
+        intended = `/by-name/${encodeURIComponent(nameSlug)}`;
+      }
+      sessionStorage.setItem("redirectPath", intended);
+      sessionStorage.setItem("fromAISTore", "true");
       window.location.href = "/whatsappregister?primaryType=AGENT";
       return;
     }
 
-    // 2) Logged-in users → follow existing routing
-    const assistantId = (a.assistantId || a.id || a.agentId || "")
-      .toString()
-      .trim();
-    const agentId = (a.agentId || a.assistantId || a.id || "")
-      .toString()
-      .trim();
-    const nameSlug = (a.name || "agent")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-    const base = location.pathname.includes("bharath-aistore")
-      ? "bharath-aistore"
-      : "bharat-aistore";
+    // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
+    let targetPath = "";
+    if (fullAssistantId && fullAgentId && nameSlug) {
+      targetPath = `/${encodeURIComponent(
+        shortAssistantId
+      )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+    } else if (fullAssistantId && fullAgentId) {
+      targetPath = `/${encodeURIComponent(
+        shortAssistantId
+      )}/${encodeURIComponent(shortAgentId)}`;
+    } else if (fullAssistantId) {
+      targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+    } else {
+      targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+    }
 
-    if (assistantId && agentId) {
-      navigate(
-        `/${base}/assistant/${encodeURIComponent(
-          assistantId
-        )}/${encodeURIComponent(agentId)}`
-      );
-      return;
-    }
-    if (assistantId) {
-      navigate(`/${base}/assistant/${encodeURIComponent(assistantId)}`);
-      return;
-    }
-    navigate(`/${base}/assistant/by-name/${encodeURIComponent(nameSlug)}`);
+    // Final log: Generated URL (short IDs only, root-level)
+    console.log("Short URL target (4 chars only, no prefix):", targetPath);
+    navigate(targetPath);
   };
-
   const isSearching = !!(q || "").trim();
   const openOG = () => navigate("/ThefanofOG");
 
@@ -1076,6 +1173,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
                     q={q || ""}
                     onOpen={() => handleOpen(assistant)}
                     onShare={() => handleShare(assistant)}
+                    onCopy={() => handleCopy(assistant)} // NEW: Pass onCopy
                   />
                 </div>
               ))}

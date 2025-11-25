@@ -332,11 +332,7 @@ const App: React.FC = () => {
             <Route element={<Layout />}>
               <Route path="/bharath-aistore" element={<BharatAgentsStore />} />
               <Route path="/all-ai-stores" element={<AllAIStores />} />
-              <Route
-               
-                path="/ai-store/:storeSlug"
-                element={<AllAIStore />}
-              />
+              <Route path="/ai-store/:storeSlug" element={<AllAIStore />} />
               <Route
                 path="/bharath-aistore/insurance"
                 element={<InsuranceAgentsPage />}
@@ -345,8 +341,11 @@ const App: React.FC = () => {
                 path="/bharath-aistore/RadhaAgents"
                 element={<AdminMyAgentsPage />}
               />
-                <Route path="/all-ai-stores" element={<AllAIStores />} />
-                <Route path="/ai-store/:storeSlug/:type" element={<AllAIStore />} />
+              <Route path="/all-ai-stores" element={<AllAIStores />} />
+              <Route
+                path="/ai-store/:storeSlug/:type"
+                element={<AllAIStore />}
+              />
               <Route
                 path="/bharath-aistore/hiddenagents"
                 element={<RadhaHiddenAgents />}
@@ -363,7 +362,7 @@ const App: React.FC = () => {
             </Route>
             <Route path="/jobstreet" element={<JobStreet />} />
             <Route
-              path="/bharath-aistore/assistant/:id/:agentId"
+              path="/:id/:agentId/:agentname"
               element={<AssistantDetails />}
             />
             <Route path="/myblogs" element={<BlogsPage />} />
@@ -485,7 +484,6 @@ const App: React.FC = () => {
               path="/student-dashboard"
               element={<StudentMainDashboard />}
             />
-
             <Route path="/student-home" element={<UserSelectionPage />} />
             {/* <Route path="/universities" element={<UniversityDetailsPage />} /> */}
             <Route
@@ -528,7 +526,7 @@ const App: React.FC = () => {
             {/* Landing Page (First Page) */}
             <Route path="/future" element={<Landingpage />} />
             <Route path="/" element={<CurrentLandingPage />} />
-            <Route path="/apidocs" element ={<ApiDocs/>}/>
+            <Route path="/apidocs" element={<ApiDocs />} />
             {/* WhatsApp Login (Before Clicking Sign-in) */}
             {/* <Route path="/communities/srilakshmi" element={<RiceSalePage />} /> */}
             <Route path="/womensday" element={<WomensDay />} />
@@ -598,7 +596,6 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
-
               <Route
                 path="/main/dashboard/placements-gpt"
                 element={<PlacementsGpt />}
@@ -691,7 +688,6 @@ const App: React.FC = () => {
               <Route path="bharat-expert" element={<CreateAgentMain />} />
               {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
               <Route path="agentcreate" element={<QuickAgentCreate />} />
-           
               <Route path="chatbasedagent" element={<ChatBasedAgent />} />
               <Route
                 path="chatinterface/assistant/:id/:agentId"
@@ -833,8 +829,11 @@ const App: React.FC = () => {
               <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
               <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
               <Route path="advocates" element={<AdvocatesDataPage />} />
-               <Route path="talwardata" element={<TalwarDataPage />} />
-                <Route path="assignedtalwarData" element={<TalwarAssignedDataPage />} />
+              <Route path="talwardata" element={<TalwarDataPage />} />
+              <Route
+                path="assignedtalwarData"
+                element={<TalwarAssignedDataPage />}
+              />
               <Route path="assignedData" element={<AssignedDataPage />} />
               <Route
                 path="kukatpallyassignedData"

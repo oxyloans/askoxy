@@ -1921,13 +1921,12 @@ const AllAgentsPage: React.FC = () => {
                             })()}
                           </div>
 
-                      
                           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2">
                             {/* 👁️ View Button */}
                             <button
                               onClick={() =>
                                 navigate(
-                                  `/bharath-aistore/assistant/${a.assistantId}/${a.id}`
+                                  `/${a.assistantId}/${a.id}/${a.agentName}`
                                 )
                               }
                               title="View Agent in a new tab"
