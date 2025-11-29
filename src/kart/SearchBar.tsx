@@ -76,20 +76,24 @@ const SearchBar = () => {
     }
   }, [location.state]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(searchValue);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchValue]);
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedValue(searchValue);
+  }, 300);
+  return () => clearTimeout(timer);
+}, [searchValue]);
 
-  useEffect(() => {
-    if (debouncedValue.trim().length >= MIN_SEARCH_LENGTH) {
-      performSearch(debouncedValue);
-    } else {
-      setSearchResults([]);
-    }
-  }, [debouncedValue]);
+// ⭐ AUTO-NAVIGATE TO SEARCH-MAIN WHEN USER TYPES 3+ LETTERS
+useEffect(() => {
+  if (debouncedValue.trim().length >= MIN_SEARCH_LENGTH) {
+    setIsFocused(false); // ⭐ closes dropdown when auto search happens
+    setSearchResults([]); // ⭐ avoid blank dropdown area
+    navigate("/main/search-main", {
+      state: { searchQuery: debouncedValue.trim() },
+    });
+  }
+}, [debouncedValue]);
+
 
   useEffect(() => {
     if (isFocused && searchValue.trim() === "") {

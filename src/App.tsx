@@ -243,6 +243,8 @@ import AllAIStores from "./AIStores/AllAistores";
 import TalwarDataPage from "./AskoxyAdmin/TalwarData";
 import TalwarAssignedDataPage from "./AskoxyAdmin/TalwarAssignedDataPage";
 import ApiDocs from "./components/ApiDocs";
+import InterviewPage from "./AIMockInterview/interview";
+import BulkInvite from "./kart/BulkInvite";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -270,6 +272,7 @@ const App: React.FC = () => {
       "/FreeAIBook",
       "/genoxyai-services",
       "/bharath-aistore",
+      "/interview",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -292,6 +295,7 @@ const App: React.FC = () => {
             <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
             <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
             <Route path="/paymentcashfree" element={<PaymentCashfree />} />
+            <Route path="/interview" element={<InterviewPage />} />
             {/* ----------------------------- */}
             <Route path="dashboard/:tab" element={<DashboardMain />} />
             {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}
@@ -718,6 +722,7 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
+              <Route path ="bulkinvite" element={<RequireAuth><BulkInvite /></RequireAuth>} />
               <Route
                 path="itemsdisplay/:itemId"
                 element={<ItemDisplayPage />}

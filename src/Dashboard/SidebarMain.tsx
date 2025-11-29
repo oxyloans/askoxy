@@ -79,6 +79,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: "My Subscriptions",
     },
     { to: "/main/referral", icon: <Users size={18} />, label: "Referral" },
+    {
+      to: "/main/bulkinvite",
+      icon: <Users size={18} />,
+      label: "Bulk Invite",
+    },
 
     { to: "/main/crypto", icon: <Coins size={18} />, label: "My Crypto" },
 

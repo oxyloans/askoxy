@@ -229,6 +229,14 @@ type UploadedFile = {
   createdAt?: any;
   sizeBytes?: number;
 };
+// === Sort helper (newest first) ===
+const sortByDate = (arr: any[]) =>
+  arr.sort((a, b) => {
+    const da = new Date(a.created_at || a.updatedAt).getTime();
+    const db = new Date(b.created_at || b.updatedAt).getTime();
+    return db - da; // newest first
+  });
+
 
 /** -------- Main Page -------- */
 const AllAgentsPage: React.FC = () => {
@@ -560,7 +568,7 @@ const AllAgentsPage: React.FC = () => {
      // sort helper
      const sortByDate = (arr: any[]) =>
        arr.sort((a, b) => {
-         const da = new Date(a.createdAt).getTime();
+         const da = new Date(a.created_at).getTime();
          const db = new Date(b.createdAt).getTime();
          return db - da; // newest first
        });
@@ -833,13 +841,16 @@ const AllAgentsPage: React.FC = () => {
         }
 
         const raw = text ? JSON.parse(text) : {};
-        setData({
-          userId: raw?.userId ?? uid ?? "",
-          assistants: Array.isArray(raw?.assistants) ? raw.assistants : [],
-          conversations: Array.isArray(raw?.conversations)
-            ? raw.conversations
-            : [],
-        });
+       setData({
+         userId: raw?.userId ?? uid ?? "",
+         assistants: Array.isArray(raw?.assistants)
+           ? sortByDate(raw.assistants)
+           : [],
+         conversations: Array.isArray(raw?.conversations)
+           ? sortByDate(raw.conversations)
+           : [],
+       });
+
       } catch (e: any) {
         setError(e?.message || "Failed to load agents.");
       } finally {

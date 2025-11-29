@@ -203,22 +203,23 @@ const Header: React.FC<HeaderProps> = ({
     setSearchValue(e.target.value);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleSearchSubmit = (e: React.FormEvent) => {
+   e.preventDefault();
+   const trimmedQuery = searchValue.trim();
 
-    const trimmedQuery = searchValue.trim();
-    if (trimmedQuery && trimmedQuery.length >= 3) {
-      navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
-      setIsSearchVisible(false);
-      setSearchValue("");
-      setSearchResults([]);
-    } else {
-      navigate("/main/dashboard/home");
-      setIsSearchVisible(false);
-      setSearchValue("");
-      setSearchResults([]);
-    }
-  };
+   if (trimmedQuery && trimmedQuery.length >= 3) {
+     navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
+     setIsSearchVisible(false);
+     setSearchValue("");
+     setSearchResults([]);
+   } else {
+     setIsSearchVisible(false);
+     setSearchValue("");
+     setSearchResults([]);
+     return; // ← FIXED
+   }
+ };
+
 
   const handleSearchItemClick = (item: SearchResult) => {
     navigate(`/main/itemsdisplay/${item.id}`, {
