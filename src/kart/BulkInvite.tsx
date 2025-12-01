@@ -6,6 +6,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import { Modal } from "antd";
 import BASE_URL from "../Config";
 
 const API_URL = `${BASE_URL}/user-service/excelInvite`;
@@ -18,7 +19,7 @@ interface FormValues {
   mailSubject: string;
   mailDispalyName: string;
   sampleEmail: string;
-  userType: string;
+  userId: string;
 }
 
 const BulkInvite: FC = () => {
@@ -34,13 +35,11 @@ They’ve also introduced new AI-driven features that make the platform even mor
     mailSubject: "ASKOXY.AI – Invitation to Join Our AI-Powered Platform",
     mailDispalyName: "",
     sampleEmail: "",
-    userType: "CUSTOMER",
+    userId: localStorage.getItem("userId") || "",
   });
 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const handleChange = (
     e: ChangeEvent<
@@ -82,11 +81,13 @@ They’ve also introduced new AI-driven features that make the platform even mor
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (!file) {
-      setError("Please upload an Excel file.");
+      Modal.error({
+        title: 'Error',
+        content: 'Please upload an Excel file.',
+        centered: true,
+      });
       return;
     }
 
@@ -108,7 +109,12 @@ They’ve also introduced new AI-driven features that make the platform even mor
       });
 
       console.log("API response:", response.data);
-      setSuccess("Bulk invite sent successfully.");
+      Modal.success({
+        title: 'Success',
+        content: 'Bulk invite sent successfully.',
+        centered: true,
+      });
+      
     } catch (err: any) {
       console.error("Bulk invite error:", err);
 
@@ -116,9 +122,17 @@ They’ve also introduced new AI-driven features that make the platform even mor
         const msg =
           err.response.data?.message ||
           `Request failed with status ${err.response.status}`;
-        setError(msg);
+        Modal.error({
+          title: 'Error',
+          content: msg,
+          centered: true,
+        });
       } else {
-        setError("Server error. Please check backend logs.");
+        Modal.error({
+          title: 'Error',
+          content: 'Request failed. Please try again.',
+          centered: true,
+        });
       }
     } finally {
       setLoading(false);
@@ -278,18 +292,6 @@ They’ve also introduced new AI-driven features that make the platform even mor
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
                 />
-              </div>
-            )}
-
-            {/* Status Messages */}
-            {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-300">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="rounded-md bg-green-50 p-3 text-sm text-green-700 border border-green-300">
-                {success}
               </div>
             )}
 

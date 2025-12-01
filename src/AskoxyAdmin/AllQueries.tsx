@@ -38,7 +38,7 @@ interface Query {
 const AllQueries: React.FC = () => {
   const [queryStatus, setQueryStatus] = useState<string>("PENDING");
   const [askOxyOffersFilter, setAskOxyOffersFilter] =
-    useState<string>("FREESAMPLE");
+    useState<string>("ALL");
   const [queries, setQueries] = useState<Query[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -56,15 +56,15 @@ const AllQueries: React.FC = () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
 
-      const requestPayload = {
-        askOxyOfers:
-          askOxyOffersFilter ||
-          "FREERUDRAKSHA,FREEAI,ROTARIAN,WEAREHIRING,LEGALSERVICES,STUDYABROAD,FREESAMPLE",
-        projectType: "ASKOXY",
-        queryStatus,
-        // userId,
-      };
+    const requestPayload: any = {
+      projectType: "ASKOXY",
+      queryStatus,
+      // userId,
+    };
 
+    if (askOxyOffersFilter !== "ALL") {
+      requestPayload.askOxyOfers = askOxyOffersFilter;
+    }
       const response = await axios.post(
         `${BASE_URL}/user-service/write/getAllQueries`,
         requestPayload
@@ -373,13 +373,17 @@ const AllQueries: React.FC = () => {
               dropdownStyle={{ borderRadius: "8px" }}
               style={{ borderRadius: "8px" }}
             >
-              <Option value="FREESAMPLE">FREE RICE SAMPLE</Option>
-              <Option value="STUDYABROAD">STUDY ABROAD</Option>
+              <Option value="ALL">ALL</Option>
+              <Option value="FREESAMPLE">RICE QUERIES</Option>
+              <Option value="BLOGS">BLOG QUERIES</Option>
+              <Option value="SERVICES">SERVICES QUERIES</Option>
+              {/* <Option value="LAUNCHAGENTS">AGENT QUERIES</Option> */}
+
+              {/* <Option value="STUDYABROAD">STUDY ABROAD</Option>
               <Option value="FREERUDRAKSHA">FREE RUDRAKSHA</Option>
               <Option value="FREEAI">FREE AI</Option>
-              <Option value="ROTARIAN">ROTARIAN</Option>
-              <Option value="WEAREHIRING">WE ARE HIRING</Option>
-              <Option value="LEGALSERVICES">LEGAL SERVICES</Option>
+              <Option value="ROTARIAN">ROTARIAN</Option> */}
+              <Option value="WEAREHIRING">JOB QUERIES</Option>
             </Select>
           </div>
         </div>

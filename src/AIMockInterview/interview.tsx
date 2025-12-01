@@ -2,7 +2,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { api } from "./lib/api";
-import logo from "../assets/img/askoxylogostatic.png"
 
 export default function InterviewPage() {
   function cryptoRandom() {
@@ -21,18 +20,8 @@ export default function InterviewPage() {
   const [status, setStatus] = useState<string>("");
   const [timeLeft, setTimeLeft] = useState(30);
   const [timePerQuestion, setTimePerQuestion] = useState(30);
-  const [roundType, setRoundType] = useState<string>("");
-  const [roundDescription, setRoundDescription] = useState<string>("");
-  const [selectedOption, setSelectedOption] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const answerRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
-  const [lastFeedback, setLastFeedback] = useState<{ score: number; feedback: string } | null>(null);
-  const questionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
+    useEffect(() => {
     const stored = localStorage.getItem("user");
     if (!stored) {
      handleLogin()
@@ -85,6 +74,49 @@ export default function InterviewPage() {
     }
   };
 
+  // Get time limit based on round
+  const getTimeLimit = (roundNumber: number) => {
+    switch (roundNumber) {
+      case 1: return 30;   // MCQ - 30 seconds
+      case 2: return 120;  // Scenarios - 120 seconds  
+      case 3: return 300;  // Technical - 300 seconds
+      default: return 30;
+    }
+  };
+
+  // Get correct question count per round
+  const getQuestionCount = (roundNumber: number) => {
+    switch (roundNumber) {
+      case 1: return 12;  // MCQ - 12 questions
+      case 2: return 5;   // Scenarios - 5 questions
+      case 3: return 3;   // Technical - 3 questions
+      default: return 5;
+    }
+  };
+  const [roundType, setRoundType] = useState<string>("");
+  const [roundDescription, setRoundDescription] = useState<string>("");
+  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const answerRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [lastFeedback, setLastFeedback] = useState<{ score: number; feedback: string } | null>(null);
+  const questionRef = useRef<HTMLDivElement>(null);
+  const [askedQuestions, setAskedQuestions] = useState<string[]>([]);
+  const [codeOutput, setCodeOutput] = useState<string>("");
+  const [codeError, setCodeError] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("python");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (!stored) {
+      window.location.href = "/login";
+    } else {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
+
   useEffect(() => {
     if (question && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
@@ -114,20 +146,8 @@ export default function InterviewPage() {
           
           // Handle the response same as manual submit
           if (data.advancedTo) {
-            alert(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nYou are now eligible to proceed to Round ${data.advancedTo}.`);
-            
-            if (data.nextQuestion) {
-              setRound(data.advancedTo);
-              setQNo(1);
-              setTotalQ(data.total_questions);
-              setQuestion(data.nextQuestion);
-              setRoundType(data.roundType || "");
-              setRoundDescription(data.roundDescription || "");
-              setTimePerQuestion(data.timePerQuestion || 90);
-              setTimeLeft(data.timePerQuestion || 90);
-              setSelectedOption("");
-              if (answerRef.current) answerRef.current.value = "";
-            }
+            setQuestion(""); // Clear question first
+            alert(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nRefresh the page to start Round ${data.advancedTo}.`);
           } else if (data.finished) {
             if (data.doneRound === 3) {
               alert(`🎉 Assessment Completed!\n\nFinal Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations!`);
@@ -203,7 +223,7 @@ export default function InterviewPage() {
   async function startInterview() {
     if (!user) {
       alert("Please log in to start the interview");
-      window.location.href = "/whatsapplogin";
+      window.location.href = "/login";
       return;
     }
 
@@ -219,6 +239,7 @@ export default function InterviewPage() {
 
     setLoading(true);
     setStatus("Generating questions...");
+    setAskedQuestions([]);
 
     try {
       const data = await api.startInterview({
@@ -226,6 +247,7 @@ export default function InterviewPage() {
         sessionId,
         skills: parsed?.skills || [],
         domain: parsed?.domains?.[0] || "General",
+        askedQuestions: askedQuestions,
       });
 
       setLoading(false);
@@ -245,9 +267,24 @@ export default function InterviewPage() {
         if (contData.question) {
           setRound(contData.round);
           setQNo(contData.question_no);
-          setTotalQ(contData.total_questions);
+          setTotalQ(contData.total_questions || getQuestionCount(contData.round));
           setQuestion(contData.question);
-          setTimeLeft(90);
+          setAskedQuestions(prev => [...prev, contData.question]);
+          
+          // Set correct round info
+          const roundTypes = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Round" };
+          const roundDescriptions = {
+            1: "Multiple choice questions based on your technical skills (Need 8/12 correct to qualify)",
+            2: "Real-world scenarios related to your experience (Need 60% to qualify)",
+            3: "Coding problems with input/output format and constraints"
+          };
+          
+          setRoundType(roundTypes[contData.round as keyof typeof roundTypes] || "");
+          setRoundDescription(roundDescriptions[contData.round as keyof typeof roundDescriptions] || "");
+          
+          const timeLimit = contData.timeLimit || getTimeLimit(contData.round);
+          setTimePerQuestion(timeLimit);
+          setTimeLeft(timeLimit);
           setStatus("");
         } else {
           setStatus("warning:Could not fetch question");
@@ -257,12 +294,28 @@ export default function InterviewPage() {
 
       setRound(data.round);
       setQNo(data.question_no);
-      setTotalQ(data.total_questions);
+      setTotalQ(data.total_questions || getQuestionCount(data.round));
       setQuestion(data.question);
-      setRoundType(data.roundType || "");
-      setRoundDescription(data.roundDescription || "");
-      setTimePerQuestion(data.timePerQuestion || 90);
-      setTimeLeft(data.timePerQuestion || 90);
+      setAskedQuestions([data.question]); // Reset for new round
+      
+      // Set correct round type and description
+      const roundTypes = {
+        1: "MCQ Skills",
+        2: "Scenario Based", 
+        3: "Technical Round"
+      };
+      const roundDescriptions = {
+        1: "Multiple choice questions based on your technical skills (Need 8/12 correct to qualify)",
+        2: "Real-world scenarios related to your experience (Need 60% to qualify)",
+        3: "Coding problems with input/output format and constraints"
+      };
+      
+      setRoundType(roundTypes[data.round as keyof typeof roundTypes] || "");
+      setRoundDescription(roundDescriptions[data.round as keyof typeof roundDescriptions] || "");
+      
+      const timeLimit = data.timeLimit || getTimeLimit(data.round);
+      setTimePerQuestion(timeLimit);
+      setTimeLeft(timeLimit);
       setStatus("");
 
       setTimeout(() => {
@@ -275,16 +328,182 @@ export default function InterviewPage() {
     }
   }
 
+  function getTestInput(lang: string) {
+    // Extract function name from question to create proper test
+    const functionMatch = question.match(/`([^`]+)\(/); 
+    const functionName = functionMatch ? functionMatch[1] : 'testFunction';
+    
+    switch (lang) {
+      case 'python': 
+        return `# Test with problem example data
+if '${functionName}' in globals():
+    func = globals()['${functionName}']
+    
+    # Test with actual problem examples
+    try:
+        if 'two_sum' in '${functionName}':
+            print("Testing two_sum with [2, 7, 11, 15], target=9")
+            result = func([2, 7, 11, 15], 9)
+            print(f"OUTPUT: {result}")
+        elif 'max_non_adjacent' in '${functionName}':
+            print("Testing max_non_adjacent_sum with [3, 2, 7, 10]")
+            result = func([3, 2, 7, 10])
+            print(f"OUTPUT: {result}")
+        elif 'calculate_total' in '${functionName}':
+            print("Testing calculate_total with cart data")
+            result = func([('Laptop', 1200.0), ('Mouse', 25.5)])
+            print(f"OUTPUT: {result}")
+        elif 'max_subarray' in '${functionName}':
+            print("Testing max_subarray_sum with [-2,1,-3,4,-1,2,1,-5,4]")
+            result = func([-2, 1, -3, 4, -1, 2, 1, -5, 4])
+            print(f"OUTPUT: {result}")
+        else:
+            # Generic test for other functions - handle different function signatures
+            print("Testing function with sample data")
+            if any(name in '${functionName}' for name in ['two_sum', 'twoSum', 'find_pairs', 'findPairs']):
+                # Functions that need array and target
+                result = func([1, 2, 3, 4, 5], 6)
+            else:
+                # Other functions just need array
+                result = func([1, 2, 3, 4, 5])
+            print(f"OUTPUT: {result}")
+            
+        print("SUCCESS: Function executed correctly!")
+        
+    except Exception as e:
+        print(f"ERROR: {str(e)}")
+        print("HINT: Check your function implementation")
+else:
+    print(f"ERROR: Function '${functionName}' not found")`;
+      case 'php':
+        // Create appropriate PHP test call based on question
+        let phpTestCall = '';
+        if (question.includes('manageUsers')) {
+          phpTestCall = `${functionName}('add', ['id' => 1, 'name' => 'Test User', 'email' => 'test@example.com'])`;
+        } else {
+          phpTestCall = `${functionName}()`;
+        }
+        
+        return `// Test the function
+if (function_exists('${functionName}')) {
+    try {
+        $result = ${phpTestCall};
+        print_r($result);
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+    }
+} else {
+    echo "Function not found. Make sure to define the function.";
+}`;
+      case 'javascript':
+        return `// Test the function
+if (typeof ${functionName} === 'function') {
+    try {
+        const result = ${functionName}([['Laptop', 1200], ['Mouse', 25.5]]);
+        console.log('Result:', result);
+    } catch (e) {
+        console.log('Error calling function:', e.message);
+    }
+} else {
+    console.log('Function not found. Make sure to define the function.');
+}`;
+      case 'java':
+        return `public class Main {
+    public static void main(String[] args) {
+        try {
+            if ("${functionName}".contains("max_subarray") || "${functionName}".contains("maxSubarray")) {
+                System.out.println("Testing max_subarray_sum with [-2,1,-3,4,-1,2,1,-5,4]");
+                int[] testArray = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
+                int result = maxSubarraySum(testArray);
+                System.out.println("OUTPUT: " + result);
+            } else {
+                System.out.println("Testing function with sample data");
+                int[] testArray = {1, 2, 3, 4, 5};
+                int result = maxSubarraySum(testArray);
+                System.out.println("OUTPUT: " + result);
+            }
+            System.out.println("SUCCESS: Function executed correctly!");
+        } catch (Exception e) {
+            System.out.println("ERROR: " + e.getMessage());
+            System.out.println("HINT: Check your function implementation");
+        }
+    }
+}`;
+      default: return 'print("Testing function...")';
+    }
+  }
+
+  function getPlaceholder(lang: string) {
+    switch (lang) {
+      case 'python': return 'def calculate_total(cart):\n    # Write your code here\n    pass';
+      case 'php': return 'function manageUsers($action, $data = null) {\n    // Write your code here\n}';
+      case 'javascript': return 'function calculateTotal(cart) {\n    // Write your code here\n}';
+      case 'java': return 'public static int maxSubarraySum(int[] arr) {\n    // Write your code here using Kadane\'s algorithm\n    return 0;\n}';
+      default: return 'def function_name():\n    # Write your code here\n    pass';
+    }
+  }
+
+  async function runCode() {
+    if (!answerRef.current?.value.trim()) return;
+    
+    setLoading(true);
+    setCodeOutput("");
+    setCodeError("");
+    
+    try {
+      const response = await fetch('/api/code-runner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: answerRef.current.value,
+          language: selectedLanguage,
+          testInput: getTestInput(selectedLanguage)
+        })
+      });
+      
+      const result = await response.json();
+      
+      console.log('API Response:', result); // Debug log
+      
+      if (result.success) {
+        setCodeOutput(String(result.output || "Code executed successfully"));
+      } else {
+        // Handle object errors properly
+        let errorMsg = "Execution failed";
+        if (typeof result.error === 'string') {
+          errorMsg = result.error;
+        } else if (typeof result.stderr === 'string') {
+          errorMsg = result.stderr;
+        } else if (result.error && typeof result.error === 'object') {
+          errorMsg = JSON.stringify(result.error);
+        }
+        setCodeError(errorMsg);
+      }
+    } catch (error) {
+      setCodeError("Failed to run code. Please check your syntax.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Show language change notification
+  useEffect(() => {
+    if (round === 3 && selectedLanguage) {
+      const message = `Code will be executed in ${selectedLanguage.toUpperCase()}. Make sure your syntax matches the selected language.`;
+      console.log(message);
+    }
+  }, [selectedLanguage, round]);
+
   async function submitAnswer() {
     if (!user || !question) return;
 
     let ans = "";
     if (round === 1) {
-      if (!selectedOption) return alert("Please select an option");
+      if (!selectedOption) return window.alert("Please select an option");
       ans = selectedOption;
     } else {
       ans = answerRef.current?.value?.trim() || "";
-      if (!ans) return alert("Please enter an answer");
+      if (!ans) return window.alert("Please enter an answer");
     }
 
     setLoading(true);
@@ -297,11 +516,23 @@ export default function InterviewPage() {
         domain: parsed?.domains?.[0] || "General",
         question,
         answer: ans,
+        askedQuestions: askedQuestions,
+        currentRound: round,
+        currentQuestionNo: qNo,
+        totalQuestions: totalQ,
       });
 
       setLoading(false);
 
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        if (data.error === "Interview not started") {
+          window.alert("Interview session expired. Please start a new interview.");
+          setQuestion("");
+          setRound(null);
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       if (data.last)
         setLastFeedback({
@@ -315,30 +546,61 @@ export default function InterviewPage() {
       }
 
       if (data.advancedTo) {
-        // Show round completion popup
-        alert(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nYou are now eligible to proceed to Round ${data.advancedTo}.`);
-        
         setStatus("success:Passed Round " + data.doneRound);
-        await new Promise((r) => setTimeout(r, 1000));
-
-        if (data.nextQuestion) {
-          setRound(data.advancedTo);
-          setQNo(1);
-          setTotalQ(data.total_questions);
-          setQuestion(data.nextQuestion);
-          setRoundType(data.roundType || "");
-          setRoundDescription(data.roundDescription || "");
-          setTimeLeft(90);
-          setSelectedOption("");
-          if (answerRef.current) answerRef.current.value = "";
-          setStatus("");
+        setQuestion(""); // Clear current question
+        
+        // Show completion popup with option to continue
+        const proceed = window.confirm(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nClick OK to start Round ${data.advancedTo}`);
+        
+        if (proceed) {
+          setLoading(true);
+          setStatus(`Starting Round ${data.advancedTo}...`);
           
-          // Auto-scroll to new round
-          setTimeout(() => {
-            questionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 500);
-        } else {
-          await startInterview();
+          try {
+            const nextRoundData = await api.startInterview({
+              userId: user.id,
+              sessionId,
+              skills: parsed?.skills || [],
+              domain: parsed?.domains?.[0] || "General",
+              askedQuestions: []
+            });
+            
+            // Use the nextQuestion from the API response directly
+            if (data.nextQuestion) {
+              setRound(data.advancedTo);
+              setQNo(1);
+              setTotalQ(data.total_questions || getQuestionCount(data.advancedTo));
+              setQuestion(data.nextQuestion);
+              setAskedQuestions([data.nextQuestion]);
+              
+              // Set correct round type and description
+              const roundTypes = {
+                1: "MCQ Skills",
+                2: "Scenario Based", 
+                3: "Technical Round"
+              };
+              const roundDescriptions = {
+                1: "Multiple choice questions based on your technical skills (Need 8/12 correct to qualify)",
+                2: "Real-world scenarios related to your experience (Need 60% to qualify)",
+                3: "Coding problems with input/output format and constraints"
+              };
+              
+              setRoundType(roundTypes[data.advancedTo as keyof typeof roundTypes] || "");
+              setRoundDescription(roundDescriptions[data.advancedTo as keyof typeof roundDescriptions] || "");
+              
+              const timeLimit = data.timeLimit || getTimeLimit(data.advancedTo);
+              setTimePerQuestion(timeLimit);
+              setTimeLeft(timeLimit);
+              setSelectedOption("");
+              if (answerRef.current) answerRef.current.value = "";
+              setStatus("");
+            }
+          } catch (err) {
+            console.error("Error starting next round:", err);
+            setStatus("error:Failed to start next round");
+          } finally {
+            setLoading(false);
+          }
         }
         return;
       }
@@ -346,7 +608,7 @@ export default function InterviewPage() {
       if (data.finished) {
         // Show final completion popup
         if (data.doneRound === 3) {
-          alert(`🎉 Assessment Completed!\n\nFinal Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations! You have successfully completed the technical assessment.`);
+          window.alert(`🎉 Assessment Completed!\n\nFinal Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations! You have successfully completed the technical assessment.`);
         }
         setStatus("success:" + data.message);
         setQuestion("");
@@ -355,20 +617,42 @@ export default function InterviewPage() {
 
       if (data.doneRound && data.passed === false) {
         // Show failure popup
-        alert(`❌ Round ${data.doneRound} Failed\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria\n\nThank you for participating in the assessment.`);
+        window.alert(`❌ Round ${data.doneRound} Failed\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria\n\nThank you for participating in the assessment.`);
         setStatus("error:" + (data.message || "Failed Round " + data.doneRound));
         setQuestion("");
         return;
       }
 
       if (data.question) {
+        const expectedCount = getQuestionCount(data.round);
+        
+        // Only validate if we're staying in the same round
+        if (data.round === round && data.question_no > expectedCount) {
+          console.log(`Backend sent question ${data.question_no} but round ${data.round} should only have ${expectedCount} questions. Forcing round completion.`);
+          
+          // Simulate round completion and advance to next round
+          if (data.round < 3) {
+            setQuestion("");
+            window.alert(`🎉 Round ${data.round} Completed!\n\nAll ${expectedCount} questions answered.\n\nRefresh the page to start Round ${data.round + 1}.`);
+          } else {
+            setQuestion("");
+            window.alert(`🎉 Assessment Completed!\n\nAll rounds finished successfully!`);
+          }
+          return;
+        }
+        
         setRound(data.round);
         setQNo(data.question_no);
-        setTotalQ(data.total_questions);
+        setTotalQ(data.total_questions || expectedCount);
         setQuestion(data.question);
-        setTimeLeft(90);
+        setAskedQuestions(prev => [...prev, data.question]);
+        const timeLimit = data.timeLimit || getTimeLimit(data.round);
+        setTimePerQuestion(timeLimit);
+        setTimeLeft(timeLimit);
         setSelectedOption("");
         if (answerRef.current) answerRef.current.value = "";
+        setCodeOutput("");
+        setCodeError("");
         setStatus("");
       }
     } catch (err: any) {
@@ -388,12 +672,12 @@ export default function InterviewPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img 
-                src={logo}
+                src="/assets/logo.png" 
                 alt="AskOxy Logo" 
-                className="w-20 h-20 object-contain"
+                className="w-10 h-10 object-contain"
               />
               <div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white">ASKOXY Hiring</h1>
+                <h1 className="text-lg font-bold text-slate-900 dark:text-white">AskOxy Hiring</h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400">AI Technical Assessment</p>
               </div>
             </div>
@@ -610,9 +894,9 @@ export default function InterviewPage() {
                         <div className="flex-1">
                           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">MCQ Skills</h3>
                           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                            Multiple choice questions based on your technical skills
+                            Multiple choice questions with 4 options based on your technical skills
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">12 questions • 30 seconds each</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">12 questions • 30 seconds each • Need 8/12 correct</p>
                         </div>
                       </div>
                     </div>
@@ -628,7 +912,7 @@ export default function InterviewPage() {
                           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                             Real-world scenarios related to your experience
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">8 questions • 90 seconds each</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">5 questions • 120 seconds each • Need 60% to qualify</p>
                         </div>
                       </div>
                     </div>
@@ -644,7 +928,7 @@ export default function InterviewPage() {
                           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                             Technical questions based on your skills and experience
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">5 questions • 90 seconds each</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">3 questions • 300 seconds each</p>
                         </div>
                       </div>
                     </div>
@@ -739,9 +1023,17 @@ export default function InterviewPage() {
               <div className="p-4 space-y-3">
                 {/* Question */}
                 <div>
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-white leading-relaxed">
-                    {question.split(/[ABCD]\)/)[0].replace('Question:', '').trim()}
-                  </h3>
+                  {round === 3 ? (
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                      <pre className="text-sm text-slate-900 dark:text-white whitespace-pre-wrap font-mono leading-relaxed">
+                        {question}
+                      </pre>
+                    </div>
+                  ) : (
+                    <h3 className="text-sm font-medium text-slate-900 dark:text-white leading-relaxed">
+                      {question.split(/[ABCD]\)/)[0].replace('Question:', '').trim()}
+                    </h3>
+                  )}
                 </div>
 
                 {/* MCQ Options */}
@@ -799,15 +1091,68 @@ export default function InterviewPage() {
                 {round !== 1 && (
                   <div>
                     <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                      Your Answer
+                      {round === 3 ? "Your Code Solution" : "Your Answer"}
                     </label>
-                    <textarea
-                      ref={answerRef}
-                      disabled={timeLeft <= 0}
-                      className="w-full px-4 py-3 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder={timeLeft <= 0 ? "Time expired - answer submitted automatically" : "Enter your detailed answer here..."}
-                      rows={8}
-                    />
+                    <div className="relative">
+                      <textarea
+                        ref={answerRef}
+                        disabled={timeLeft <= 0}
+                        className={`w-full px-4 py-3 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed ${round === 3 ? 'font-mono pl-12' : ''}`}
+                        placeholder={timeLeft <= 0 ? "Time expired - answer submitted automatically" : round === 3 ? getPlaceholder(selectedLanguage) : "Enter your detailed answer here..."}
+                        rows={round === 3 ? 20 : 8}
+                        style={round === 3 ? { lineHeight: '1.5' } : {}}
+                      />
+                      {round === 3 && (
+                        <div className="absolute left-2 top-3 text-xs text-slate-400 dark:text-slate-500 font-mono pointer-events-none select-none">
+                          {Array.from({ length: 20 }, (_, i) => (
+                            <div key={i} style={{ lineHeight: '1.5', height: '21px' }}>
+                              {String(i + 1).padStart(2, ' ')}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Code Runner for Round 3 */}
+                    {round === 3 && (
+                      <div className="mt-3 space-y-3">
+                        <div className="flex gap-2 items-center flex-wrap">
+                          <select
+                            value={selectedLanguage}
+                            onChange={(e) => setSelectedLanguage(e.target.value)}
+                            className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                          >
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                          </select>
+                          <button
+                            onClick={runCode}
+                            disabled={loading || !answerRef.current?.value.trim()}
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {loading ? "Running..." : "▶ Run Code"}
+                          </button>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            💡 Backend languages only - Python/Java with line numbers
+                          </p>
+                        </div>
+                        
+                        {/* Output Display */}
+                        {codeOutput && (
+                          <div className="bg-slate-900 text-green-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border">
+                            <div className="text-slate-400 mb-1">Output:</div>
+                            {typeof codeOutput === 'string' ? codeOutput : JSON.stringify(codeOutput, null, 2)}
+                          </div>
+                        )}
+                        
+                        {codeError && (
+                          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border border-red-200 dark:border-red-800">
+                            <div className="font-semibold mb-1">Error:</div>
+                            {typeof codeError === 'string' ? codeError : JSON.stringify(codeError, null, 2)}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -863,4 +1208,5 @@ export default function InterviewPage() {
     </div>
   );
 }
+
   

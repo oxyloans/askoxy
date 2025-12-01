@@ -1,7 +1,4 @@
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-// const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
-let user = "test";
+let user = "local";
 let API_BASE_URL = "";
 if (user==="production") {
   API_BASE_URL = "https://ai-mock-interview-6tm9.onrender.com";
