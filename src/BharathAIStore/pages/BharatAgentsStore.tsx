@@ -439,7 +439,7 @@ const BharatAgentsStore: React.FC = () => {
   const [loadingMine, setLoadingMine] = useState(false);
 
   // 🔽 put these near other React hooks in BharatAgentsStore component:
-  const [tab, setTab] = useState<"EXPLORE" | "MINE">("EXPLORE");
+  const [tab, setTab] = useState<"EXPLORE" | "MINE" | "AISTORES" | "AGENTCREATE">("EXPLORE");
 
   // read once; if not logged in, this will be null and we'll hide the "My Agents" tab
   const loggedInUserId =
@@ -623,6 +623,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
   };
 
   const handleLogin = () => {
+        setTab("AGENTCREATE");
     try {
       setLoading(true);
 
@@ -977,15 +978,14 @@ const shortAgentId = fullAgentId;
     navigate(targetPath);
   };
   const isSearching = !!(q || "").trim();
-  const openOG = () => navigate("/ThefanofOG");
+ const handleAistoresClick = () => {
+    setTab("AISTORES");
+    navigate("/all-ai-stores");
+  };
+
 
   return (
     <div className="min-h-screen bg-white">
-      {/* <button
-        onClick={toggleHero}
-        className="fixed top-50 right-8 z-50 w-2 h-2 rounded-full bg-purple-600 shadow-lg hover:bg-purple-700 transition"
-        aria-label="Toggle Hero Section"
-      /> */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* ==== HERO ==== */}
         {showHero && (
@@ -1055,7 +1055,7 @@ const shortAgentId = fullAgentId;
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
             {/* Tabs capsule */}
-            <div className="inline-flex w-full sm:w-auto rounded-lg border border-gray-200 bg-white p-1 sticky top-0 sm:static z-10">
+            <div className="inline-flex w-full sm:w-auto rounded-lg bg-white p-1 sticky top-0 sm:static z-10">
               <button
                 onClick={() => setTab("EXPLORE")}
                 className={[
@@ -1083,16 +1083,32 @@ const shortAgentId = fullAgentId;
                   My AI Agents
                 </button>
               )}
-            </div>
+              <button
+                onClick={handleAistoresClick} // 4. Use the combined handler
+                className={[
+                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
+                  tab === "AISTORES"
+                    ? "bg-purple-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100",
+                ].join(" ")}
+                aria-pressed={tab === "AISTORES"}
+              >
+                Explore AI Stores
+              </button>
 
-            {/* Create button — hide on mobile */}
-            <button
-              onClick={handleLogin}
-              className="hidden sm:inline-flex px-3 py-2 text-sm font-semibold rounded-md border border-purple-600 text-black bg-white hover:bg-purple-600 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              aria-label="Create AI Agent"
-            >
-              + Create AI Agent
-            </button>
+              <button
+                onClick={handleLogin} // 4. Use the combined handler
+                className={[
+                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
+                  tab === "AGENTCREATE"
+                    ? "bg-purple-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100",
+                ].join(" ")}
+                aria-pressed={tab === "AGENTCREATE"}
+              >
+                Create Ai Agent
+              </button>
+            </div>
           </div>
         </div>
 

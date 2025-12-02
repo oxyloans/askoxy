@@ -118,7 +118,7 @@ const AllQueries: React.FC = () => {
     if (action === "PENDING") {
       data = {
         adminDocumentId: "",
-        askOxyOfers: askOxyOffersFilter,
+        askOxyOfers: selectedQuery?.askOxyOfers || "",
         comments: comments,
         email: selectedQuery?.email,
         id: selectedQuery?.id,
@@ -136,7 +136,7 @@ const AllQueries: React.FC = () => {
     if (action === "COMPLETED") {
       data = {
         adminDocumentId: "",
-        askOxyOfers: askOxyOffersFilter,
+        askOxyOfers: selectedQuery?.askOxyOfers || "",
         comments: comments,
         email: selectedQuery?.email,
         id: selectedQuery?.id,

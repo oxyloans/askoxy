@@ -245,6 +245,8 @@ import TalwarAssignedDataPage from "./AskoxyAdmin/TalwarAssignedDataPage";
 import ApiDocs from "./components/ApiDocs";
 import InterviewPage from "./AIMockInterview/interview";
 import BulkInvite from "./kart/BulkInvite";
+import MumbaiDataPage from "./AskoxyAdmin/MumbaiDataPage";
+import AgenticAi from "./components/AgenticAi";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -500,6 +502,7 @@ const App: React.FC = () => {
               element={<RiceSalePage />}
             /> */}
             <Route path="/qrcode" element={<QR />} />
+            <Route path="/agenticai" element={<AgenticAi />} />
             {/* <Route path="/verify-agent" element={<VerifyIdentity />} /> */}
             {/* <Route path="/bharat-agent" element={<CreateAgentStep1 />} /> */}
             <Route
@@ -722,7 +725,14 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
-              <Route path ="bulkinvite" element={<RequireAuth><BulkInvite /></RequireAuth>} />
+              <Route
+                path="bulkinvite"
+                element={
+                  <RequireAuth>
+                    <BulkInvite />
+                  </RequireAuth>
+                }
+              />
               <Route
                 path="itemsdisplay/:itemId"
                 element={<ItemDisplayPage />}
@@ -835,6 +845,7 @@ const App: React.FC = () => {
               <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
               <Route path="advocates" element={<AdvocatesDataPage />} />
               <Route path="talwardata" element={<TalwarDataPage />} />
+              <Route path="mumbaidata" element={<MumbaiDataPage />} />
               <Route
                 path="assignedtalwarData"
                 element={<TalwarAssignedDataPage />}

@@ -450,7 +450,7 @@ const TicketHistoryPage: React.FC = () => {
                                 showComments(ticket.userPendingQueries)
                               }
                             >
-                              Comments
+                             View Comments
                             </Button>
 
                             {/* Reply */}

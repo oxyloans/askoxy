@@ -441,10 +441,6 @@ const AssistantDetails: React.FC = () => {
     return () => axios.interceptors.request.eject(id);
   }, []);
 
-  /** ---------------- sidebar persistence ---------------- */
-  const saveSidebarState = (open: boolean) => {
-    localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(open));
-  };
   /** ---------------- APIs ---------------- */
   const getConversationStarters = async (agentIdParam: string) => {
     const response = await axios.get(
@@ -3051,7 +3047,7 @@ ${url}`.trim();
                         className="w-full bg-transparent text-[16px] focus:outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-32 overflow-y-auto p-1 resize-none"
                         placeholder={
                           loading
-                            ? "AI is responding... you can type your next question"
+                            ? "AI is responding..."
                             : "Ask anything..."
                         }
                         value={input}

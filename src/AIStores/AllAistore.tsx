@@ -377,7 +377,7 @@ const [effectiveStoreId, setEffectiveStoreId] = useState<string>("");
                     </div>
 
                     <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
                         {agent.agentName}
                       </h3>
                       <p className="text-sm text-gray-600 mb-6 line-clamp-3">
