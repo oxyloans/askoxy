@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Footer from "../components/Footer";
+import { ColumnsType } from "antd/es/table";
 import {
   FaArrowLeft,
   FaFilter,
@@ -23,6 +24,8 @@ import {
   message,
 } from "antd";
 import BASE_URL from "../Config";
+import { Table } from "antd";
+
 
 const { Option } = Select;
 
@@ -59,6 +62,14 @@ interface ProfileData {
   email: string;
   whatsappNumber: string;
 }
+type TicketRow = {
+  key: string;
+  sno: number;
+  ticketId: Ticket;
+  query: Ticket;
+  actions: Ticket;
+  comments: string;
+};
 
 const TicketHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -214,11 +225,164 @@ const TicketHistoryPage: React.FC = () => {
         return <Tag>Unknown</Tag>;
     }
   };
-
+const getHelpText = () => {
+  return selectedStatus === "PENDING"
+    ? "Need more help? Reply or add a comment."
+    : "View conversation history.";
+};
   const openFile = (filePath: string | null) => {
     if (filePath) window.open(filePath, "_blank");
   };
+const formatDate = (date: string | Date) => {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
+  key: ticket.id,
+  sno: index + 1,
+  ticketId: ticket,
+  query: ticket,
+  actions: ticket,
+  comments: ticket.comments,
+}));
 
+
+ const columns: ColumnsType<TicketRow> = [
+   {
+     title: "SNO",
+     dataIndex: "sno",
+     key: "sno",
+     width: 80,
+     align: "center" as const,
+   },
+   {
+     title: "Ticket Id",
+     dataIndex: "ticketId",
+     key: "ticketId",
+     width: 260,
+     render: (ticket: Ticket) => (
+       <div>
+         <div className="font-semibold text-gray-800">
+           {ticket.randomTicketId}
+         </div>
+
+         <div className="text-xs text-gray-500">
+           Received On: {formatDate(ticket.createdAt)}
+         </div>
+
+         <div className="mt-1">{getStatusTag(ticket.status)}</div>
+
+         {ticket.resolvedOn && (
+           <div className="text-xs text-gray-500 mt-1">
+             Resolved On: {formatDate(ticket.resolvedOn)}
+           </div>
+         )}
+       </div>
+     ),
+   },
+   {
+     title: "Query",
+     dataIndex: "query",
+     key: "query",
+
+     render: (_: any, record: TicketRow) => {
+       const ticket = record.ticketId;
+
+       return (
+         <div className="text-gray-800 text-sm font-medium">
+           {/* User Query */}
+           <p>{ticket.query}</p>
+
+           {/* User Attachment */}
+           {ticket.userQueryDocumentStatus?.fileName && (
+             <Button
+               type="link"
+               onClick={() => openFile(ticket.userQueryDocumentStatus.filePath)}
+               className="flex items-center gap-1 text-xs p-0 mt-1"
+             >
+               <FaFile /> {ticket.userQueryDocumentStatus.fileName}
+             </Button>
+           )}
+
+           {/* Admin Comments (only comment text, no box) */}
+           {ticket.comments && selectedStatus !== "PENDING" && (
+             <p className="text-xs text-gray-700 mt-2">
+               Admin Comments: {ticket.comments}
+             </p>
+           )}
+         </div>
+       );
+     },
+   },
+
+   {
+     title: "Actions",
+     dataIndex: "actions",
+     key: "actions",
+     align: "center" as const,
+     render: (ticket: Ticket) => (
+       <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
+         <Button
+          
+           icon={<FaComments />}
+           onClick={() => showComments(ticket.userPendingQueries)}
+           style={{
+             backgroundColor: "#008cba",
+             borderColor: "#a5b4fc",
+             color: "#ffffff",
+           }}
+         >
+           View Comments
+         </Button>
+
+         {selectedStatus === "PENDING" && (
+           <Button
+            
+             icon={<FaPen />}
+             className="border-green-500 text-green-600"
+             style={{
+               backgroundColor: "#1ab394",
+               borderColor: "#a5b4fc",
+               color: "#ffffff",
+             }}
+             onClick={() =>
+               navigate(
+                 `/main/writetous/${ticket.id}?userQuery=${encodeURIComponent(
+                   ticket.query
+                 )}`,
+                 {
+                   state: {
+                     fromTicketHistory: true,
+                     askOxyOffer: askOxyOffersFilter || "FREESAMPLE",
+                   },
+                 }
+               )
+             }
+           >
+             Reply
+           </Button>
+         )}
+
+         {selectedStatus === "PENDING" && (
+           <Button
+            
+             danger
+             icon={<FaBan />}
+             onClick={() => {
+               setReasonModal(true);
+               setSelectedTicketId(ticket.id);
+             }}
+           >
+             Cancel
+           </Button>
+         )}
+       </div>
+     ),
+   },
+ ];
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <div className="flex-1 px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
@@ -289,7 +453,7 @@ const TicketHistoryPage: React.FC = () => {
                     onChange={(e) =>
                       setSelectedStatus(e.target.value as TicketStatus)
                     }
-                    className="w-full mt-1  rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full mt-1 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   >
                     <option value="PENDING">PENDING</option>
                     <option value="COMPLETED">RESOLVED</option>
@@ -313,14 +477,7 @@ const TicketHistoryPage: React.FC = () => {
                     <Option value="FREESAMPLE">RICE QUERIES</Option>
                     <Option value="BLOGS">BLOG QUERIES</Option>
                     <Option value="SERVICES">SERVICES QUERIES</Option>
-                    {/* <Option value="LAUNCHAGENTS">AGENT QUERIES</Option> */}
-
-                    {/* <Option value="STUDYABROAD">STUDY ABROAD</Option>
-                    <Option value="FREERUDRAKSHA">FREE RUDRAKSHA</Option>
-                    <Option value="FREEAI">FREE AI</Option>
-                    <Option value="ROTARIAN">ROTARIAN</Option> */}
                     <Option value="WEAREHIRING">JOB QUERIES</Option>
-                    {/* <Option value="LEGALSERVICES">LEGAL SERVICES</Option> */}
                   </Select>
                 </Col>
 
@@ -358,243 +515,125 @@ const TicketHistoryPage: React.FC = () => {
                   />
                 </div>
               ) : (
-                <div className="space-y-4 sm:space-y-5">
-                  {tickets.map((ticket) => (
-                    <Card
-                      key={ticket.id}
-                      className="border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
-                      bodyStyle={{ padding: 16 }}
-                    >
-                      <div className="flex flex-col gap-3">
-                        {/* Top row: ID + Status */}
-                        <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3">
-                          <div>
-                            <p className="text-xs font-medium uppercase text-slate-400">
-                              Ticket ID
-                            </p>
-                            <p className="text-sm sm:text-base font-semibold text-slate-900">
-                              {ticket.randomTicketId}
-                              <span className="ml-2 text-xs text-slate-500 font-normal">
-                                • Created on {ticket.createdAt}
-                              </span>
-                            </p>
-                            {ticket.name && (
-                              <p className="text-xs text-slate-500 mt-0.5">
-                                {ticket.name}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="flex flex-col items-start sm:items-end gap-1">
-                            {getStatusTag(ticket.status)}
-                            {ticket.date && (
-                              <p className="text-xs text-slate-500">
-                                Last updated: {ticket.date}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Query + attachment */}
-                        <div className="mt-1">
-                          <p className="text-xs font-medium uppercase text-slate-400 mb-1">
-                            Query
-                          </p>
-                          <p className="text-sm text-slate-800 leading-relaxed">
-                            {ticket.query}
-                          </p>
-
-                          {ticket.userQueryDocumentStatus?.fileName && (
-                            <button
-                              onClick={() =>
-                                openFile(
-                                  ticket.userQueryDocumentStatus.filePath
-                                )
-                              }
-                              className="mt-2 inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700"
-                            >
-                              <FaFile className="text-xs" />
-                              {ticket.userQueryDocumentStatus.fileName}
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Admin / Cancel comments */}
-                        {selectedStatus !== "PENDING" && (
-                          <div className="mt-2 bg-slate-50 rounded-lg px-3 py-2">
-                            <p className="text-xs font-medium uppercase text-slate-400 mb-1">
-                              {selectedStatus === "CANCELLED"
-                                ? "Cancellation Reason"
-                                : "Admin Comments"}
-                            </p>
-                            <p className="text-sm text-slate-800">
-                              {ticket.comments || "-"}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Footer actions */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-slate-100 mt-2">
-                          <div>
-                            <span className="text-xs text-slate-500">
-                              Need more help? Reply or add a comment.
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            {/* View Comments */}
-                            <Button
-                              size="large"
-                              icon={<FaComments />}
-                              onClick={() =>
-                                showComments(ticket.userPendingQueries)
-                              }
-                            >
-                             View Comments
-                            </Button>
-
-                            {/* Reply */}
-                            {selectedStatus === "PENDING" && (
-                              <Button
-                                size="large"
-                                type="default"
-                                icon={<FaPen />}
-                                className="border-green-500 text-green-600 hover:text-green-700"
-                                onClick={() =>
-                                  navigate(
-                                    `/main/writetous/${
-                                      ticket.id
-                                    }?userQuery=${encodeURIComponent(
-                                      ticket.query
-                                    )}`,
-                                    {
-                                      state: {
-                                        fromTicketHistory: true,
-                                        askOxyOffer: askOxyOffersFilter, // 👈 current selected offer (FREEAI, FREESAMPLE, etc.)
-                                      },
-                                    }
-                                  )
-                                }
-                              >
-                                Reply
-                              </Button>
-                            )}
-
-                            {/* Cancel */}
-                            {selectedStatus === "PENDING" && (
-                              <Button
-                                size="large"
-                                danger
-                                icon={<FaBan />}
-                                onClick={() => {
-                                  setReasonModal(true);
-                                  setSelectedTicketId(ticket.id);
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                <Table<TicketRow>
+                  dataSource={dataSource}
+                  columns={columns}
+                  bordered
+                  pagination={false}
+                  className="text-sm"
+                  scroll={{ x: "true" }}
+                />
               )}
             </div>
           </Card>
         </div>
+        <Footer />
+        {/* ---------- COMMENTS MODAL ---------- */}
+        <Modal
+  title="Ticket Comments History"
+  open={isCommentsModalOpen}
+  onCancel={() => setIsCommentsModalOpen(false)}
+  footer={null}
+  width={800}
+>
+  {comments.length > 0 ? (
+    <Table
+      dataSource={comments.map((c, i) => ({
+        key: i,
+        sno: i + 1,
+        resolvedBy: c.resolvedBy,
+        resolvedOn: c.resolvedOn,
+        pendingComments: c.pendingComments,
+        adminFileName: c.adminFileName,
+        adminFilePath: c.adminFilePath,
+      }))}
+      pagination={false}
+      bordered
+      size="small"
+      columns={[
+        {
+          title: "S.No",
+          dataIndex: "sno",
+          key: "sno",
+          width: 70,
+          align: "center",
+        },
+        {
+          title: "Resolved By",
+          dataIndex: "resolvedBy",
+          key: "resolvedBy",
+          align: "center",
+          render: (value) => value || "-",
+        },
+        {
+          title: "Date",
+          dataIndex: "resolvedOn",
+          key: "resolvedOn",
+          align: "center",
+          render: (value) =>
+            value
+              ? new Date(value).toLocaleDateString()
+              : "-",
+        },
+        {
+          title: "Comments / Attachments",
+          dataIndex: "pendingComments",
+          key: "pendingComments",
+          render: (_, record) => (
+            <div style={{ textAlign: "center" }}>
+              <div>{record.pendingComments || "-"}</div>
+
+              {record.adminFileName && (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => openFile(record.adminFilePath)}
+                  icon={<FaFile />}
+                >
+                  {record.adminFileName}
+                </Button>
+              )}
+            </div>
+          ),
+        },
+      ]}
+    />
+  ) : (
+    <p className="text-center py-4 text-slate-500 text-sm">
+      No comments found for this ticket.
+    </p>
+  )}
+</Modal>
+
+
+        {/* ---------- CANCEL MODAL ---------- */}
+        <Modal
+          title="Cancel Ticket"
+          open={reasonModal}
+          onCancel={() => {
+            setReasonModal(false);
+            setReason("");
+          }}
+          onOk={cancelQuery}
+          okButtonProps={{ className: "bg-red-600" }}
+          confirmLoading={cancelLoader}
+          okText="Submit"
+        >
+          <label className="block font-medium text-sm mt-2 mb-1 text-slate-700">
+            Reason for cancellation
+          </label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={4}
+            className="w-full p-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Please share why you want to cancel this ticket..."
+          />
+        </Modal>
       </div>
-
-      <Footer />
-
-      {/* ---------- COMMENTS MODAL ---------- */}
-      <Modal
-        title="Ticket Comments History"
-        open={isCommentsModalOpen}
-        onCancel={() => setIsCommentsModalOpen(false)}
-        footer={null}
-        width={800}
-      >
-        {comments.length > 0 ? (
-          <div className="overflow-x-auto mt-3">
-            <table className="w-full border-collapse">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-2 text-center text-xs sm:text-sm font-medium text-slate-600">
-                    Resolved By
-                  </th>
-                  <th className="px-4 py-2 text-center text-xs sm:text-sm font-medium text-slate-600">
-                    Date
-                  </th>
-                  <th className="px-4 py-2 text-center text-xs sm:text-sm font-medium text-slate-600">
-                    Comments / Attachments
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {comments.map((com, i) => (
-                  <tr key={i} className="border-b">
-                    <td className="px-4 py-2 text-xs text-center sm:text-sm text-slate-800">
-                      {com.resolvedBy || "-"}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-center sm:text-sm text-slate-800">
-                      {com.resolvedOn
-                        ? new Date(com.resolvedOn).toLocaleDateString()
-                        : "-"}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-center sm:text-sm text-slate-800">
-                      <div className="flex flex-col gap-1">
-                        <span>{com.pendingComments || "-"}</span>
-                        {com.adminFileName && (
-                          <button
-                            onClick={() => openFile(com.adminFilePath)}
-                            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-xs sm:text-sm mt-1"
-                          >
-                            <FaFile className="text-xs" />
-                            {com.adminFileName}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-center py-4 text-slate-500 text-sm">
-            No comments found for this ticket.
-          </p>
-        )}
-      </Modal>
-
-      {/* ---------- CANCEL MODAL ---------- */}
-      <Modal
-        title="Cancel Ticket"
-        open={reasonModal}
-        onCancel={() => {
-          setReasonModal(false);
-          setReason("");
-        }}
-        onOk={cancelQuery}
-        okButtonProps={{ className: "bg-red-600" }}
-        confirmLoading={cancelLoader}
-        okText="Submit"
-      >
-        <label className="block font-medium text-sm mt-2 mb-1 text-slate-700">
-          Reason for cancellation
-        </label>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          rows={4}
-          className="w-full p-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder="Please share why you want to cancel this ticket..."
-        />
-      </Modal>
     </div>
   );
+
 };
 
 export default TicketHistoryPage;

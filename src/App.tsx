@@ -247,6 +247,7 @@ import InterviewPage from "./AIMockInterview/interview";
 import BulkInvite from "./kart/BulkInvite";
 import MumbaiDataPage from "./AskoxyAdmin/MumbaiDataPage";
 import AgenticAi from "./components/AgenticAi";
+import AgentStoreManager from "./components/AistoreCreation";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -326,6 +327,7 @@ const App: React.FC = () => {
             <Route path="/whatsapplogin" element={<WhatsappLogin />} />
             <Route path="/whatsappregister" element={<WhatsappRegister />} />
             <Route path="/freerice" element={<FreeRiceBlog />} />
+            <Route path="/usercreateaistore" element={<AgentStoreManager />} />
             <Route path="/userFeedback" element={<Feedback />} />
             <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
             <Route path="/aiassistant" element={<ChatInterface />} />
@@ -695,6 +697,7 @@ const App: React.FC = () => {
               <Route path="bharat-expert" element={<CreateAgentMain />} />
               {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
               <Route path="agentcreate" element={<QuickAgentCreate />} />
+              <Route path="usercreateaistore" element={<AgentStoreManager />} />
               <Route path="chatbasedagent" element={<ChatBasedAgent />} />
               <Route
                 path="chatinterface/assistant/:id/:agentId"

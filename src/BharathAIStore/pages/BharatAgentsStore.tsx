@@ -439,7 +439,7 @@ const BharatAgentsStore: React.FC = () => {
   const [loadingMine, setLoadingMine] = useState(false);
 
   // 🔽 put these near other React hooks in BharatAgentsStore component:
-  const [tab, setTab] = useState<"EXPLORE" | "MINE" | "AISTORES" | "AGENTCREATE">("EXPLORE");
+  const [tab, setTab] = useState<"EXPLORE" | "MINE" | "AISTORES" | "AGENTCREATE"| "AISTORECREATE">("EXPLORE");
 
   // read once; if not logged in, this will be null and we'll hide the "My Agents" tab
   const loggedInUserId =
@@ -621,7 +621,28 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
 
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
+   const handleLogin1 = () => {
+     setTab("AISTORECREATE");
+     try {
+       setLoading(true);
 
+       const userId = localStorage.getItem("userId");
+       const redirectPath = "/main/usercreateaistore";
+
+       if (userId) {
+         navigate(redirectPath);
+       } else {
+         sessionStorage.setItem("redirectPath", redirectPath);
+         sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
+         // Pass primaryType as query parameter
+         window.location.href = "/whatsappregister?primaryType=AGENT";
+       }
+     } catch (error) {
+       console.error("Sign in error:", error);
+     } finally {
+       setLoading(false);
+     }
+   };
   const handleLogin = () => {
         setTab("AGENTCREATE");
     try {
@@ -644,6 +665,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
       setLoading(false);
     }
   };
+ 
   const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
       setLoading(true);
@@ -1106,7 +1128,19 @@ const shortAgentId = fullAgentId;
                 ].join(" ")}
                 aria-pressed={tab === "AGENTCREATE"}
               >
-                Create Ai Agent
+                Create AI Agent
+              </button>
+              <button
+                onClick={handleLogin1} // 4. Use the combined handler
+                className={[
+                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
+                  tab === "AGENTCREATE"
+                    ? "bg-purple-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100",
+                ].join(" ")}
+                aria-pressed={tab === "AISTORECREATE"}
+              >
+                Create AI Store
               </button>
             </div>
           </div>

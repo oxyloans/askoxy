@@ -17,6 +17,7 @@ import {
   Briefcase,
   PlusCircle,
   Bot,
+  Sparkles, 
 } from "lucide-react";
 import { RobotOutlined } from "@ant-design/icons";
 
@@ -101,6 +102,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       to: "/bharath-aistore",
       icon: <RobotOutlined style={{ fontSize: "18px", color: "#722ed1" }} />,
       label: "Bharat AI Store",
+    },
+    {
+      to: "/main/usercreateaistore",
+      icon: <Sparkles size={18} />,
+      label: "Create AI Store",
     },
     {
       to: "/main/agentcreate",
