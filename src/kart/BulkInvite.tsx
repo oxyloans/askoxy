@@ -23,7 +23,13 @@ interface FormValues {
 }
 
 const BulkInvite: FC = () => {
-  const [formValues, setFormValues] = useState<FormValues>({
+const profileRaw = localStorage.getItem("profileData");
+const profile = profileRaw ? JSON.parse(profileRaw) : null;
+
+const name = profile
+  ? `${profile.userFirstName} ${profile.userLastName}`
+  : "";
+    const [formValues, setFormValues] = useState<FormValues>({
     inviteType: "",
     message:
       `I’m already using ASKOXY.AI, and I’m really impressed with the platform — smooth user experience, intelligent insights, and powerful tools that help simplify decisions.
@@ -33,7 +39,7 @@ They’ve also introduced new AI-driven features that make the platform even mor
 \nJoin using my referral link: https://www.askoxy.ai/whatsappregister?referralCode=${localStorage.getItem("userId") || ""}
 \nFeel free to reach out once you join!`,
     mailSubject: "ASKOXY.AI – Invitation to Join Our AI-Powered Platform",
-    mailDispalyName: "",
+    mailDispalyName: name || "ASKOXY.AI User",
     sampleEmail: "",
     userId: localStorage.getItem("userId") || "",
   });
@@ -56,6 +62,21 @@ They’ve also introduced new AI-driven features that make the platform even mor
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] ?? null;
+    
+    if (selectedFile) {
+      const fileExtension = selectedFile.name.toLowerCase().split('.').pop();
+      if (fileExtension !== 'xlsx') {
+        Modal.error({
+          title: 'Invalid File Format',
+          content: 'Please upload only .xlsx files. Other Excel formats (.xls) are not supported.',
+          centered: true,
+        });
+        e.target.value = ''; // Clear the input
+        setFile(null);
+        return;
+      }
+    }
+    
     setFile(selectedFile);
   };
 
@@ -207,11 +228,11 @@ They’ve also introduced new AI-driven features that make the platform even mor
             {/* File */}
             <div>
               <label className="block text-sm font-medium text-gray-600">
-                Excel File (multiPart)
+                Excel File 
               </label>
               <input
                 type="file"
-                accept=".xls,.xlsx"
+                accept=".xlsx"
                 onChange={handleFileChange}
                 className="mt-1 block w-full rounded-md border px-3 py-2 text-sm text-gray-700"
               />

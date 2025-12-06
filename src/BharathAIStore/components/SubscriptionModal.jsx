@@ -65,7 +65,7 @@ const SubscriptionModal = ({
       "url": currentURL+"?order_id={orderId}",
       "userId": userId
     }
-    axios.post(`${BASE_URL}/ai-service/customersPromptSubscription`, requestBody)
+    axios.post(`${BASE_URL}/ai-service/customersPromptSubscription1`, requestBody)
       .then(response => {
         const { url } = response.data;
         setPaymentSessionId(response.data.order_token);

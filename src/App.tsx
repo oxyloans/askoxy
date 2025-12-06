@@ -248,6 +248,7 @@ import BulkInvite from "./kart/BulkInvite";
 import MumbaiDataPage from "./AskoxyAdmin/MumbaiDataPage";
 import AgenticAi from "./components/AgenticAi";
 import AgentStoreManager from "./components/AistoreCreation";
+import GmailContactsScreen from "./kart/GoogleContact";
 const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
@@ -733,6 +734,14 @@ const App: React.FC = () => {
                 element={
                   <RequireAuth>
                     <BulkInvite />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="google"
+                element={
+                  <RequireAuth>
+                    <GmailContactsScreen />
                   </RequireAuth>
                 }
               />

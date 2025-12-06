@@ -19,7 +19,7 @@ import {
   Bot,
   Sparkles, 
 } from "lucide-react";
-import { RobotOutlined } from "@ant-design/icons";
+import { RobotOutlined,GoogleOutlined } from "@ant-design/icons";
 
 interface SidebarProps {
   onCollapse: (collapsed: boolean) => void;
@@ -84,6 +84,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       to: "/main/bulkinvite",
       icon: <Users size={18} />,
       label: "Bulk Invite",
+    },
+    {
+      to: "/main/google",
+      icon: <GoogleOutlined size={18} />,
+      label: "Google Contacts",
     },
 
     { to: "/main/crypto", icon: <Coins size={18} />, label: "My Crypto" },
