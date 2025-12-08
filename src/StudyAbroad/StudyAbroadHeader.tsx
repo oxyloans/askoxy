@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 import SALOGO from "../assets/img/sa.png";
 import { MessageCircle } from "lucide-react";
 import { Sparkles } from "lucide-react";
+
 interface StudyAbroadHeaderProps {
   onNavClick: (
-    id: "home" | "universities" | "countries" | "testimonials"
+    id: "home" | "workabroad" | "universities" | "countries" | "testimonials"
   ) => void;
   activeLink: string;
   isMainPage?: boolean; // Add prop to determine which logo to show
@@ -67,24 +68,24 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
     console.log("Navigating to /student-home");
   };
 
-  // Stable reference to the nav click handler
-  const handleNavClick = useCallback(
-    (id: "home" | "universities" | "countries" | "testimonials"): void => {
-      // Use a function reference to ensure we're working with the latest state
-      requestAnimationFrame(() => {
-        onNavClick(id);
-        setIsMenuOpen(false);
-      });
-    },
-    [onNavClick]
-  );
+const handleNavClick = useCallback(
+  (
+    id: "home" | "workabroad" | "universities" | "countries" | "testimonials"
+  ): void => {
+    requestAnimationFrame(() => {
+      onNavClick(id);      // parent handles scroll + activeLink
+      setIsMenuOpen(false);
+    });
+  },
+  [onNavClick]
+);
+
 
   // Simplified click outside handler to prevent re-renders
   useEffect(() => {
     if (!isMenuOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      // Prevent the event from bubbling to avoid multiple handlers
       e.stopPropagation();
 
       if (
@@ -114,11 +115,12 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
     }
   }, [isMenuOpen]);
 
-  // Memoize navLinks to prevent recreation on re-render
+  // ✅ navLinks includes Work Abroad Pathways right after Home
   const navLinks = React.useMemo(
     () =>
       [
         { id: "home", label: "Home" },
+        { id: "workabroad", label: "Work Abroad Pathways" }, // new
         { id: "universities", label: "Universities" },
         { id: "countries", label: "Countries" },
         { id: "testimonials", label: "Success Stories" },
@@ -126,7 +128,6 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
     []
   );
 
-  // Use useCallback for event handlers to maintain stable references
   const toggleMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -135,7 +136,6 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
     });
   }, []);
 
-  // Use CSS-in-JS approach with fixed classNames to prevent className recalculation
   const headerClasses = {
     base: "sticky top-0 z-50 w-full",
     scrolled: "bg-white shadow-lg",
@@ -163,7 +163,7 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
       }`}
       style={{ transition: "background-color 0.3s, box-shadow 0.3s" }}
     >
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Left: Logo only - no text */}
           <Link to="/" className="flex items-center cursor-pointer">
@@ -180,14 +180,15 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
             </div>
           </Link>
 
-          {/* Center: Navigation with distinctive styling */}
           <nav className="hidden md:flex flex-1 justify-center mt-4">
             <ul className="flex space-x-1 lg:space-x-2 bg-gradient-to-r from-purple-50 to-white rounded-full px-2 py-1 shadow-inner">
               {navLinks.map((link) => {
                 const isActive = activeLink === link.id;
+
                 return (
                   <li key={link.id}>
                     <button
+                      type="button"
                       onClick={() => handleNavClick(link.id)}
                       className={`${navButtonClasses.base} ${
                         isActive
@@ -205,19 +206,6 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
 
           {/* Right: Action buttons with enhanced design */}
           <div className="hidden md:flex items-center gap-3">
-            {/* <button 
-              className="bg-white text-purple-700 font-medium py-2 px-4 rounded-full border border-purple-200 hover:border-purple-300 hover:shadow-md group"
-              style={{ transition: 'border-color 0.2s, box-shadow 0.2s' }}
-            >
-              <span className="flex items-center">
-                Explore
-                <ChevronDown 
-                  size={16} 
-                  className="ml-1 group-hover:rotate-180" 
-                  style={{ transition: 'transform 0.2s' }}
-                />
-              </span>
-            </button> */}
             <button
               className="relative overflow-hidden bg-gradient-to-r from-purple-700 to-purple-500 text-white font-medium py-2 px-5 rounded-full hover:shadow-lg hover:shadow-purple-200 group"
               style={{ transition: "box-shadow 0.2s" }}
@@ -270,14 +258,15 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
             <ul className="flex flex-col px-2">
               {navLinks.map((link) => {
                 const isActive = activeLink === link.id;
+
                 return (
                   <li key={link.id} className="my-1">
                     <button
                       onClick={() => handleNavClick(link.id)}
-                      className={`${mobileNavButtonClasses.base} ${
+                      className={`${navButtonClasses.base} ${
                         isActive
-                          ? mobileNavButtonClasses.active
-                          : mobileNavButtonClasses.inactive
+                          ? navButtonClasses.active
+                          : navButtonClasses.inactive
                       }`}
                     >
                       {link.label}

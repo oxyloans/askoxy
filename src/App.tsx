@@ -235,6 +235,7 @@ const StudentMainDashboard = lazy(
   () => import("./StudyAbroad/StudentMainDashboard")
 );
 const BlogDetails = lazy(() => import("./components/BlogDetails"));
+const GlobalProgramsPage = lazy(() => import("./StudyAbroad/GlobalProgramsPage"));
 
 const GenOxy = lazy(() => import("./GenOxy/Genoxy"));
 const RealtimePage = lazy(

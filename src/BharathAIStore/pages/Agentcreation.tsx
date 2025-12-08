@@ -295,13 +295,21 @@ const ROLE_OPTS: Option[] = [
     icon: <UserOutlined />,
   },
   { label: "HR Recruiter", value: "HR Recruiter", icon: <UserOutlined /> },
-{ label: "Hiring Manager", value: "Hiring Manager", icon: <UserOutlined /> },
-{ label: "Experienced Person", value: "Experienced Person", icon: <UserOutlined /> },
-{ label: "Job Consultant", value: "Job Consultant", icon: <UserOutlined /> },
-{ label: "Team Leader", value: "Team Leader", icon: <UserOutlined /> },
-{ label: "Project Manager", value: "Project Manager", icon: <UserOutlined /> },
-{ label: "Career Coach", value: "Career Coach", icon: <UserOutlined /> },
-{ label: "Intern", value: "Intern", icon: <UserOutlined /> },
+  { label: "Hiring Manager", value: "Hiring Manager", icon: <UserOutlined /> },
+  {
+    label: "Experienced Person",
+    value: "Experienced Person",
+    icon: <UserOutlined />,
+  },
+  { label: "Job Consultant", value: "Job Consultant", icon: <UserOutlined /> },
+  { label: "Team Leader", value: "Team Leader", icon: <UserOutlined /> },
+  {
+    label: "Project Manager",
+    value: "Project Manager",
+    icon: <UserOutlined />,
+  },
+  { label: "Career Coach", value: "Career Coach", icon: <UserOutlined /> },
+  { label: "Intern", value: "Intern", icon: <UserOutlined /> },
   {
     label: "Founder / Startup",
     value: "FounderStartup",
@@ -389,22 +397,22 @@ const Agentcreation: React.FC = () => {
   const location = useLocation();
 
   // Core form (selects)
-// Core form (selects)
-const [roleSelect, setRoleSelect] = useState<string>("");
-const [goalSelect, setGoalSelect] = useState<string>("");
-const [purposeSelect, setPurposeSelect] = useState<string>("");
+  // Core form (selects)
+  const [roleSelect, setRoleSelect] = useState<string>("");
+  const [goalSelect, setGoalSelect] = useState<string>("");
+  const [purposeSelect, setPurposeSelect] = useState<string>("");
 
-// Dynamic options from backend
-const [goalOptions, setGoalOptions] = useState<Option[]>([]);
-const [purposeOptions, setPurposeOptions] = useState<Option[]>([]);
+  // Dynamic options from backend
+  const [goalOptions, setGoalOptions] = useState<Option[]>([]);
+  const [purposeOptions, setPurposeOptions] = useState<Option[]>([]);
 
-const [goalLoading, setGoalLoading] = useState(false);
-const [purposeLoading, setPurposeLoading] = useState(false);
+  const [goalLoading, setGoalLoading] = useState(false);
+  const [purposeLoading, setPurposeLoading] = useState(false);
 
-// "Other" custom inputs
-const [roleOther, setRoleOther] = useState("");
-const [goalOther, setGoalOther] = useState("");
-const [purposeOther, setPurposeOther] = useState("");
+  // "Other" custom inputs
+  const [roleOther, setRoleOther] = useState("");
+  const [goalOther, setGoalOther] = useState("");
+  const [purposeOther, setPurposeOther] = useState("");
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrolledOnceRef = useRef(false);
@@ -415,209 +423,217 @@ const [purposeOther, setPurposeOther] = useState("");
   const purposeResolved =
     purposeSelect === "Other" ? purposeOther.trim() : purposeSelect;
 
-// 🔹 When Role changes → load GOALS for that Role (dynamic)
-useEffect(() => {
-  const effectiveRole = (roleSelect === "Other" ? roleOther : roleSelect).trim();
+  // 🔹 When Role changes → load GOALS for that Role (dynamic)
+  useEffect(() => {
+    const effectiveRole = (
+      roleSelect === "Other" ? roleOther : roleSelect
+    ).trim();
 
-  if (!effectiveRole) {
-    setGoalOptions([]);
-    setGoalSelect("");
-    setPurposeSelect("");
-    setPurposeOptions([]);
-    setGoalLoading(false);
-    return;
-  }
-
-  let cancelled = false;
-
-  const fetchGoals = async () => {
-    try {
-      setGoalLoading(true);
+    if (!effectiveRole) {
+      setGoalOptions([]);
       setGoalSelect("");
       setPurposeSelect("");
       setPurposeOptions([]);
-
-      const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
-
-      const res = await axios.post(
-        `${BASE_URL}/ai-service/agent/getGoalsByRole`,
-        {},
-        {
-          params: { role: effectiveRole },
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            ...authHeaderObj,
-          },
-        }
-      );
-
-      if (cancelled) return;
-
-            const data = res.data;
-      console.log("getGoalsByRole raw response:", data);
-
-      let raw: string[] = [];
-
-      if (Array.isArray(data)) {
-        // Case 1: ["Learn","Study",...,"Other"]
-        raw = data.filter((v) => typeof v === "string");
-      } else if (typeof data === "string") {
-        // Case 2: "Learn\nStudy\nRead\n... \nOther" OR "Learn,Study,Read,...,Other"
-        raw = data
-          .split(/[\n,]+/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-      } else if (data && typeof data === "object") {
-        // Case 3: { data: ["Learn", ...] } or { goals: ["Learn", ...] } or similar
-        const arr = Object.values(data).find((v) => Array.isArray(v)) as
-          | any[]
-          | undefined;
-        if (Array.isArray(arr)) {
-          raw = arr.filter((v) => typeof v === "string");
-        }
-      }
-
-      const mapped: Option[] = raw.map((g) => ({
-        label: g,
-        value: g,
-        icon: <AimOutlined />,
-      }));
-
-      if (!mapped.length) {
-        setGoalOptions([]);
-        return;
-      }
-
-      const hasOther = mapped.some(
-        (opt) => opt.value.trim().toLowerCase() === "other"
-      );
-      const optionsWithOther = hasOther
-        ? mapped
-        : [
-            ...mapped,
-            { label: "Other", value: "Other", icon: <AimOutlined /> },
-          ];
-
-      setGoalOptions(optionsWithOther);
-    } catch (e) {
-      if (!cancelled) {
-        console.error(e);
-        message.error("Unable to load goals for this role. Please try again.");
-        setGoalOptions([]);
-      }
-    } finally {
-      if (!cancelled) setGoalLoading(false);
+      setGoalLoading(false);
+      return;
     }
-  };
 
-  fetchGoals();
+    let cancelled = false;
 
-  return () => {
-    cancelled = true;
-  };
-}, [roleSelect, roleOther]);
-
-// 🔹 When Role + Goal selected → load PURPOSE list (dynamic)
-useEffect(() => {
-  const effectiveRole = (roleSelect === "Other" ? roleOther : roleSelect).trim();
-  const effectiveGoal = (goalSelect === "Other" ? goalOther : goalSelect).trim();
-
-  if (!effectiveRole || !effectiveGoal) {
-    setPurposeOptions([]);
-    setPurposeSelect("");
-    setPurposeLoading(false);
-    return;
-  }
-
-  let cancelled = false;
-
-  const fetchPurposes = async () => {
-    try {
-      setPurposeLoading(true);
-
-      const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
-
-      const res = await axios.post(
-        `${BASE_URL}/ai-service/agent/getPurposeByRoleAndGoals`,
-        {},
-        {
-          params: { role: effectiveRole, goal: effectiveGoal },
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            ...authHeaderObj,
-          },
-        }
-      );
-
-      if (cancelled) return;
-
-          const data = res.data;
-      console.log("getPurposeByRoleAndGoals raw response:", data);
-
-      let raw: string[] = [];
-
-      if (Array.isArray(data)) {
-        // Case 1: ["Learn","Study",...,"Other"]
-        raw = data.filter((v) => typeof v === "string");
-      } else if (typeof data === "string") {
-        // Case 2: "Learn\nStudy\nRead\n... \nOther" OR "Learn,Study,Read,...,Other"
-        raw = data
-          .split(/[\n,]+/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-      } else if (data && typeof data === "object") {
-        // Case 3: { data: ["Learn", ...] } or { purposes: ["Learn", ...] } etc.
-        const arr = Object.values(data).find((v) => Array.isArray(v)) as
-          | any[]
-          | undefined;
-        if (Array.isArray(arr)) {
-          raw = arr.filter((v) => typeof v === "string");
-        }
-      }
-
-      const mapped: Option[] = raw.map((p) => ({
-        label: p,
-        value: p,
-        icon: <RocketOutlined />,
-      }));
-
-      if (!mapped.length) {
+    const fetchGoals = async () => {
+      try {
+        setGoalLoading(true);
+        setGoalSelect("");
+        setPurposeSelect("");
         setPurposeOptions([]);
-        return;
-      }
 
-      const hasOther = mapped.some(
-        (opt) => opt.value.trim().toLowerCase() === "other"
-      );
-      const optionsWithOther = hasOther
-        ? mapped
-        : [
-            ...mapped,
-            { label: "Other", value: "Other", icon: <RocketOutlined /> },
-          ];
+        const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
 
-      setPurposeOptions(optionsWithOther);
-    } catch (e) {
-      if (!cancelled) {
-        console.error(e);
-        message.error(
-          "Unable to load purposes for this Role & Goal. Please try again."
+        const res = await axios.post(
+          `${BASE_URL}/ai-service/agent/getGoalsByRole`,
+          {},
+          {
+            params: { role: effectiveRole },
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              ...authHeaderObj,
+            },
+          }
         );
-        setPurposeOptions([]);
+
+        if (cancelled) return;
+
+        const data = res.data;
+        console.log("getGoalsByRole raw response:", data);
+
+        let raw: string[] = [];
+
+        if (Array.isArray(data)) {
+          // Case 1: ["Learn","Study",...,"Other"]
+          raw = data.filter((v) => typeof v === "string");
+        } else if (typeof data === "string") {
+          // Case 2: "Learn\nStudy\nRead\n... \nOther" OR "Learn,Study,Read,...,Other"
+          raw = data
+            .split(/[\n,]+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+        } else if (data && typeof data === "object") {
+          // Case 3: { data: ["Learn", ...] } or { goals: ["Learn", ...] } or similar
+          const arr = Object.values(data).find((v) => Array.isArray(v)) as
+            | any[]
+            | undefined;
+          if (Array.isArray(arr)) {
+            raw = arr.filter((v) => typeof v === "string");
+          }
+        }
+
+        const mapped: Option[] = raw.map((g) => ({
+          label: g,
+          value: g,
+          icon: <AimOutlined />,
+        }));
+
+        if (!mapped.length) {
+          setGoalOptions([]);
+          return;
+        }
+
+        const hasOther = mapped.some(
+          (opt) => opt.value.trim().toLowerCase() === "other"
+        );
+        const optionsWithOther = hasOther
+          ? mapped
+          : [
+              ...mapped,
+              { label: "Other", value: "Other", icon: <AimOutlined /> },
+            ];
+
+        setGoalOptions(optionsWithOther);
+      } catch (e) {
+        if (!cancelled) {
+          console.error(e);
+          message.error(
+            "Unable to load goals for this role. Please try again."
+          );
+          setGoalOptions([]);
+        }
+      } finally {
+        if (!cancelled) setGoalLoading(false);
       }
-    } finally {
-      if (!cancelled) setPurposeLoading(false);
+    };
+
+    fetchGoals();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roleSelect, roleOther]);
+
+  // 🔹 When Role + Goal selected → load PURPOSE list (dynamic)
+  useEffect(() => {
+    const effectiveRole = (
+      roleSelect === "Other" ? roleOther : roleSelect
+    ).trim();
+    const effectiveGoal = (
+      goalSelect === "Other" ? goalOther : goalSelect
+    ).trim();
+
+    if (!effectiveRole || !effectiveGoal) {
+      setPurposeOptions([]);
+      setPurposeSelect("");
+      setPurposeLoading(false);
+      return;
     }
-  };
 
-  fetchPurposes();
+    let cancelled = false;
 
-  return () => {
-    cancelled = true;
-  };
-}, [roleSelect, roleOther, goalSelect, goalOther]);
+    const fetchPurposes = async () => {
+      try {
+        setPurposeLoading(true);
+
+        const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
+
+        const res = await axios.post(
+          `${BASE_URL}/ai-service/agent/getPurposeByRoleAndGoals`,
+          {},
+          {
+            params: { role: effectiveRole, goal: effectiveGoal },
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              ...authHeaderObj,
+            },
+          }
+        );
+
+        if (cancelled) return;
+
+        const data = res.data;
+        console.log("getPurposeByRoleAndGoals raw response:", data);
+
+        let raw: string[] = [];
+
+        if (Array.isArray(data)) {
+          // Case 1: ["Learn","Study",...,"Other"]
+          raw = data.filter((v) => typeof v === "string");
+        } else if (typeof data === "string") {
+          // Case 2: "Learn\nStudy\nRead\n... \nOther" OR "Learn,Study,Read,...,Other"
+          raw = data
+            .split(/[\n,]+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+        } else if (data && typeof data === "object") {
+          // Case 3: { data: ["Learn", ...] } or { purposes: ["Learn", ...] } etc.
+          const arr = Object.values(data).find((v) => Array.isArray(v)) as
+            | any[]
+            | undefined;
+          if (Array.isArray(arr)) {
+            raw = arr.filter((v) => typeof v === "string");
+          }
+        }
+
+        const mapped: Option[] = raw.map((p) => ({
+          label: p,
+          value: p,
+          icon: <RocketOutlined />,
+        }));
+
+        if (!mapped.length) {
+          setPurposeOptions([]);
+          return;
+        }
+
+        const hasOther = mapped.some(
+          (opt) => opt.value.trim().toLowerCase() === "other"
+        );
+        const optionsWithOther = hasOther
+          ? mapped
+          : [
+              ...mapped,
+              { label: "Other", value: "Other", icon: <RocketOutlined /> },
+            ];
+
+        setPurposeOptions(optionsWithOther);
+      } catch (e) {
+        if (!cancelled) {
+          console.error(e);
+          message.error(
+            "Unable to load purposes for this Role & Goal. Please try again."
+          );
+          setPurposeOptions([]);
+        }
+      } finally {
+        if (!cancelled) setPurposeLoading(false);
+      }
+    };
+
+    fetchPurposes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roleSelect, roleOther, goalSelect, goalOther]);
 
   // Debounced resolved values (prevents multi API calls while typing)
   const roleDeb = useDebounced(roleResolved, 700);
@@ -664,6 +680,7 @@ useEffect(() => {
 
   const [showWhatsappVerificationModal, setShowWhatsappVerificationModal] =
     useState(false);
+  const [agentUserName, setAgentUserName] = useState("");
   const [isWhatsappVerified, setIsWhatsappVerified] = useState(false);
 
   const [whatsappVerificationCode, setWhatsappVerificationCode] = useState("");
@@ -703,6 +720,57 @@ useEffect(() => {
   const [initialEmail, setInitialEmail] = useState("");
 
   const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
+
+  // 👇 Add with other imports at top if not already present
+  // import React, { useState, useEffect, useRef, useCallback } from "react";
+
+  // 👇 Inside component (with other hooks)
+  const creatorNameRef = useRef<HTMLInputElement | null>(null);
+  const [creatorNameNudge, setCreatorNameNudge] = useState(false);
+
+  // When 3 are selected but Creator Name empty → highlight + focus + message
+  useEffect(() => {
+    if (!roleResolved || !goalResolved || !purposeResolved) return;
+    if (agentUserName.trim()) return;
+    if (creatorNameNudge) return; // already nudged recently
+
+    setCreatorNameNudge(true);
+
+    Modal.info({
+      title: "Creator Name Needed",
+      content: (
+        <div style={{ fontSize: 15, textAlign: "center", padding: "10px 0" }}>
+          Now add your <b>Creator Name</b> (max 25 characters)
+          <br />
+          so we can personalize your AI Agent Name.
+        </div>
+      ),
+      centered: true,
+      okText: "Okay",
+    });
+
+    // Scroll + focus the Creator Name input
+    if (creatorNameRef.current) {
+      try {
+        creatorNameRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } catch {
+        // ignore scroll errors
+      }
+      creatorNameRef.current.focus();
+    }
+
+    const timer = setTimeout(() => setCreatorNameNudge(false), 60000); // allow nudge again after 60s
+    return () => clearTimeout(timer);
+  }, [
+    roleResolved,
+    goalResolved,
+    purposeResolved,
+    agentUserName,
+    creatorNameNudge,
+  ]);
 
   // You already have these in your file in some form; keep one version only.
   const getAuthHeaders = () =>
@@ -945,9 +1013,11 @@ useEffect(() => {
           customerId: customerId || "",
         };
 
-        // Fill UI state
-        setFirstName(profileData.userFirstName);
-        setLastName(profileData.userLastName);
+        setAgentUserName(
+          `${profileData.userFirstName || ""} ${
+            profileData.userLastName || ""
+          }`.trim()
+        );
         setEmail(profileData.customerEmail);
 
         setInitialFirstName(profileData.userFirstName);
@@ -1080,6 +1150,23 @@ useEffect(() => {
         setInitialFirstName(payload.userFirstName);
         setInitialLastName(payload.userLastName || "");
         setInitialEmail(payload.customerEmail);
+
+        // 🔄 Update Creator Name from profile
+        setAgentUserName(
+          `${payload.userFirstName || ""} ${payload.userLastName || ""}`.trim()
+        );
+
+        // (Optional) keep in localStorage for future
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              "profileName",
+              `${payload.userFirstName || ""} ${
+                payload.userLastName || ""
+              }`.trim()
+            );
+          }
+        } catch {}
       }
 
       setIsMandatoryGate(false);
@@ -1111,63 +1198,62 @@ useEffect(() => {
   }, []);
 
   // was: addFileType: AddFileType,
- async function uploadMandatoryDocOnceMulti(
-   assistanceId: string,
-   files: File[],
-   addFileType: string,
-   userId: string,
-   auth: HeadersInit
- ) {
-   for (const file of files) {
-     // STEP 1: Upload to META upload-service
-     const uploadForm = new FormData();
-     uploadForm.append("file", file);
+  async function uploadMandatoryDocOnceMulti(
+    assistanceId: string,
+    files: File[],
+    addFileType: string,
+    userId: string,
+    auth: HeadersInit
+  ) {
+    for (const file of files) {
+      // STEP 1: Upload to META upload-service
+      const uploadForm = new FormData();
+      uploadForm.append("file", file);
 
-     const uploadUrl =
-       "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar";
+      const uploadUrl =
+        "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar";
 
-     const uploadRes = await fetch(uploadUrl, {
-       method: "POST",
-       headers: { ...auth },
-       body: uploadForm,
-     });
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { ...auth },
+        body: uploadForm,
+      });
 
-     const uploadData = await uploadRes.json();
-     const documentPath = uploadData?.documentPath;
+      const uploadData = await uploadRes.json();
+      const documentPath = uploadData?.documentPath;
 
-     if (!documentPath) {
-       throw new Error("No documentPath returned from upload-service");
-     }
+      if (!documentPath) {
+        throw new Error("No documentPath returned from upload-service");
+      }
 
-     // STEP 2: Upload same file + documentPath to addAgentFiles API
-     const agentForm = new FormData();
-     agentForm.append("file", file); // The SAME file goes again
+      // STEP 2: Upload same file + documentPath to addAgentFiles API
+      const agentForm = new FormData();
+      agentForm.append("file", file); // The SAME file goes again
 
-     const finalUrl = `${BASE_URL}/ai-service/agent/${encodeURIComponent(
-       assistanceId
-     )}/addAgentFiles?addFileType=${encodeURIComponent(
-       addFileType
-     )}&userId=${encodeURIComponent(userId)}&url=${encodeURIComponent(
-       documentPath
-     )}`;
+      const finalUrl = `${BASE_URL}/ai-service/agent/${encodeURIComponent(
+        assistanceId
+      )}/addAgentFiles?addFileType=${encodeURIComponent(
+        addFileType
+      )}&userId=${encodeURIComponent(userId)}&url=${encodeURIComponent(
+        documentPath
+      )}`;
 
-     const agentRes = await fetch(finalUrl, {
-       method: "POST",
-       headers: { ...auth },
-       body: agentForm,
-     });
+      const agentRes = await fetch(finalUrl, {
+        method: "POST",
+        headers: { ...auth },
+        body: agentForm,
+      });
 
-     if (!agentRes.ok) {
-       const txt = await agentRes.text().catch(() => "");
-       throw new Error(
-         `addAgentFiles failed → ${agentRes.status} ${
-           txt || agentRes.statusText
-         }`
-       );
-     }
-   }
- }
-
+      if (!agentRes.ok) {
+        const txt = await agentRes.text().catch(() => "");
+        throw new Error(
+          `addAgentFiles failed → ${agentRes.status} ${
+            txt || agentRes.statusText
+          }`
+        );
+      }
+    }
+  }
 
   // keep the context we need while the modal is open
   const pendingUploadRef = useRef<{
@@ -1388,11 +1474,25 @@ useEffect(() => {
   }, [descCount]);
 
   const suggestAgentName = useCallback(async () => {
+    // 🔒 1) Block if Creator Name is empty
+    if (!agentUserName?.trim()) {
+      message.error(
+        "Please enter your Creator Name and save it in your profile before generating an Agent Name."
+      );
+
+      // Open profile modal & mark as mandatory
+      setIsMandatoryGate(true);
+      setProfileModalOpen(true);
+
+      return; // ⛔ stop here → do NOT hit API
+    }
+
     const auth = getAuthHeader() as Record<string, string>;
     if (!auth || !auth.Authorization) {
       message.error("You're not signed in. Please log in and try again.");
       return;
     }
+
     // Use resolved values here
     if (!roleResolved || !goalResolved || !purposeResolved) {
       message.warning("Pick Role, Goal, and Purpose first.");
@@ -1401,6 +1501,9 @@ useEffect(() => {
 
     const baseUrl = `${BASE_URL}/ai-service/agent/getAgentName`;
     const qs = (o: Record<string, string>) => new URLSearchParams(o).toString();
+
+    // 🔹 Always send trimmed Creator Name
+    const displayName = (agentUserName || "").trim() || "User";
 
     const ctrl = new AbortController();
     const timeoutId = setTimeout(() => ctrl.abort(), 15000);
@@ -1455,48 +1558,40 @@ useEffect(() => {
     try {
       let res: Response | undefined;
 
-      // Preferred: POST with query params (no content-type)
+      // Common query params object
+      const queryParams = {
+        role: roleResolved,
+        goal: goalResolved,
+        purpose: purposeResolved,
+        name: displayName,
+      };
+
+      // ✅ Preferred: POST with query params (no body, like your curl)
       try {
-        res = await fetch(
-          `${baseUrl}?${qs({
-            role: roleResolved,
-            goal: goalResolved,
-            purpose: purposeResolved,
-          })}`,
-          {
-            method: "POST",
-            headers: { ...auth },
-            mode: "cors",
-            signal: ctrl.signal,
-          }
-        );
+        res = await fetch(`${baseUrl}?${qs(queryParams)}`, {
+          method: "POST",
+          headers: { ...auth },
+          mode: "cors",
+          signal: ctrl.signal,
+        });
       } catch {
         res = undefined;
       }
+
+      // Retry 5xx with SAME params (including name)
       res = await okOrRetry5xx(res, () =>
-        fetch(
-          `${baseUrl}?${qs({
-            role: roleResolved,
-            goal: goalResolved,
-            purpose: purposeResolved,
-          })}`,
-          {
-            method: "POST",
-            headers: { ...auth },
-            mode: "cors",
-            signal: ctrl.signal,
-          }
-        )
+        fetch(`${baseUrl}?${qs(queryParams)}`, {
+          method: "POST",
+          headers: { ...auth },
+          mode: "cors",
+          signal: ctrl.signal,
+        })
       );
 
-      // Fallback: POST x-www-form-urlencoded
+      // ✅ Fallback: POST x-www-form-urlencoded with name
       if (!res || !res.ok) {
         try {
-          const form = new URLSearchParams({
-            role: roleResolved,
-            goal: goalResolved,
-            purpose: purposeResolved,
-          });
+          const form = new URLSearchParams(queryParams);
           res = await fetch(baseUrl, {
             method: "POST",
             headers: {
@@ -1555,10 +1650,10 @@ useEffect(() => {
         styles: {
           footer: {
             display: "flex",
-            flexWrap: "nowrap", // 🔒 single row
+            flexWrap: "nowrap",
             gap: 8,
             justifyContent: "flex-end",
-            overflowX: "auto", // allow scroll if tiny width
+            overflowX: "auto",
             paddingBottom: 4,
             whiteSpace: "nowrap",
           },
@@ -1598,14 +1693,23 @@ useEffect(() => {
       clearTimeout(timeoutId);
       setNameLoading(false);
     }
-  }, [agentName, roleResolved, goalResolved, purposeResolved]);
+  }, [
+    agentName,
+    agentUserName,
+    roleResolved,
+    goalResolved,
+    purposeResolved,
+    setIsMandatoryGate,
+    setProfileModalOpen,
+  ]);
 
   // One-per-combo guard + DEBOUNCED trigger (fixes multi-calls while typing "Other")
   const lastComboRef = useRef<string>("");
   const nameSuggestInFlightRef = useRef(false);
+
   useEffect(() => {
-    // Only run when all debounced resolved values exist
     if (!roleDeb || !goalDeb || !purposeDeb) return;
+    if (!agentUserName.trim()) return; //  ⛔ no auto hit if Creator Name empty
 
     const combo = `${roleDeb}__${goalDeb}__${purposeDeb}`;
     if (combo === lastComboRef.current) return; // same combo → ignore
@@ -2014,6 +2118,7 @@ useEffect(() => {
     const body = {
       agentName: (agentName || "").trim(),
       description: previewDescription,
+      creatorName: agentUserName,
       roleUser: roleSelect === "Other" ? "Other" : roleSelect,
       purpose: purposeSelect === "Other" ? "Other" : purposeSelect,
       goals: goalSelect === "Other" ? "Other" : goalSelect,
@@ -2691,6 +2796,73 @@ useEffect(() => {
           </div>
         </div>
 
+        {/* ======= Creator Name (same style as Agent Name) ======= */}
+        <div style={{ marginTop: 14, ...card3D }}>
+          <div style={sectionHeader(0)}>
+            <h3 style={headingText(0)}>Creator Name</h3>
+            <div
+              style={{
+                fontSize: 12,
+                color: TEXT_MUTED,
+                marginTop: 4,
+              }}
+            >
+              Max <b>25 characters</b>.
+            </div>
+          </div>
+
+          <div style={bodyPad}>
+            <input
+              ref={creatorNameRef}
+              type="text"
+              value={agentUserName}
+              onChange={(e) => {
+                let v = e.target.value;
+
+                // ❌ Remove special characters (letters + spaces only)
+                v = v.replace(/[^A-Za-z ]+/g, "");
+
+                // ❌ Limit to 25 chars
+                v = v.slice(0, 25);
+
+                setAgentUserName(v);
+              }}
+              placeholder="Enter your full name (Creator Name)"
+              maxLength={25}
+              style={{
+                width: "100%",
+                height: 42,
+                padding: "10px 12px",
+                borderRadius: 12,
+                border: `1px solid ${
+                  !agentUserName.trim() && creatorNameNudge ? "#F97316" : BORDER
+                }`,
+                background: "#FFF",
+                fontSize: 14,
+                fontWeight: 600,
+                boxShadow:
+                  !agentUserName.trim() && creatorNameNudge
+                    ? "0 0 0 1px rgba(249,115,22,0.35)"
+                    : "inset 0 1px 0 rgba(2,8,23,0.04)",
+                transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+              }}
+            />
+
+            <div
+              style={{
+                marginTop: 6,
+                fontSize: 11,
+                color: TEXT_MUTED,
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <span>Creator Name will be used in AI suggested Agent Name.</span>
+              <span>{agentUserName.length}/25</span>
+            </div>
+          </div>
+        </div>
+
         {/* ======= Agent Name (gradient header) ======= */}
         <div style={{ marginTop: 14, ...card3D }}>
           <div style={sectionHeader(0)}>
@@ -2704,7 +2876,8 @@ useEffect(() => {
                 nameLoading ||
                 !roleResolved ||
                 !goalResolved ||
-                !purposeResolved
+                !purposeResolved ||
+                !agentUserName.trim()
               }
               style={{
                 width: 140,
@@ -2735,7 +2908,9 @@ useEffect(() => {
                 whiteSpace: "nowrap",
               }}
               title={
-                !roleResolved || !goalResolved || !purposeResolved
+                !agentUserName.trim()
+                  ? "Add your Creator Name and save profile first"
+                  : !roleResolved || !goalResolved || !purposeResolved
                   ? "Pick Role, Goal & Purpose first"
                   : undefined
               }

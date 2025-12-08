@@ -501,9 +501,6 @@
 //   );
 // }
 
-
-
-
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Send, X } from "lucide-react";
 import StudyAbroadHeader from "./StudyAbroadHeader";
@@ -512,6 +509,7 @@ import CountriesSection from "./CountriesSection";
 import UniversitiesSection from "./UniversitiesSection";
 import TestimonialsSection from "./TestimonialsSection";
 import StudyAbroadFooter from "./StudyAbroadFooter";
+import GlobalProgramsPage from "./GlobalProgramsPage";
 import CallToActionSection from "./CallToActionSection";
 import BASE_URL from "../Config";
 import ReactMarkdown from "react-markdown";
@@ -624,8 +622,8 @@ export default function StudyAbroadLandingPage() {
     setShowQuestions(false); // Hide questions after selection
   };
 
-  // section refs & scrolling logic (unchanged)
   const homeRef = useRef<HTMLDivElement>(null);
+  const workAbroadRef = useRef<HTMLDivElement>(null); // 👈 NEW
   const countriesRef = useRef<HTMLDivElement>(null);
   const universitiesRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
@@ -647,6 +645,7 @@ export default function StudyAbroadLandingPage() {
     }
     const refs: Record<string, React.RefObject<HTMLDivElement>> = {
       home: homeRef,
+      workabroad: workAbroadRef, // 👈 NEW
       countries: countriesRef,
       universities: universitiesRef,
       testimonials: testimonialsRef,
@@ -668,6 +667,7 @@ export default function StudyAbroadLandingPage() {
     const observeScroll = () => {
       const sections = [
         { id: "home", ref: homeRef },
+        { id: "workabroad", ref: workAbroadRef }, // 👈 NEW
         { id: "countries", ref: countriesRef },
         { id: "universities", ref: universitiesRef },
         { id: "testimonials", ref: testimonialsRef },
@@ -849,6 +849,9 @@ export default function StudyAbroadLandingPage() {
       <main className="flex-grow">
         <div ref={homeRef} id="home">
           <StudyAbroadHeroSection />
+        </div>
+        <div ref={workAbroadRef} id="workabroad">
+          <GlobalProgramsPage />
         </div>
         <div ref={universitiesRef} id="universities">
           <UniversitiesSection />
