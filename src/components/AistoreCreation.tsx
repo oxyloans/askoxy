@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaShoppingCart } from "react-icons/fa";
 import {
   Table,
   Button,
@@ -34,6 +36,7 @@ interface Agent {
   imageUrl: string | null;
   agentStatus: "ACTIVE" | "INACTIVE";
   agentCreatorName: string | null;
+  // inactiveType: string;
 }
 
 interface Store {
@@ -42,11 +45,14 @@ interface Store {
   description: string;
   storeCreatedBy: string;
   storeImageUrl: string;
+  aiStoreStatus: string;
   agentDetailsOnAdUser: Agent[];
+  inactiveType: string;
 }
 
 const AgentStoreManager: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
   const [storeData, setStoreData] = useState<Store[]>([]);
   const [assistants, setAssistants] = useState<Agent[]>([]);
   const [lastId, setLastId] = useState<string | null>(null);
@@ -253,12 +259,14 @@ const AgentStoreManager: React.FC = () => {
 
       const payload: {
         agentId: string;
-        storeId: string;
+        // storeId: string;
+        inactiveType: string;
         agentStatus: "ACTIVE" | "INACTIVE";
       } = {
         agentId: agent.agentId,
-        storeId,
+        // storeId,
         agentStatus: newStatus,
+        inactiveType: "STOREAGENT",
       };
 
       const res: Response = await fetch(
@@ -387,42 +395,65 @@ const AgentStoreManager: React.FC = () => {
       message.error(err.message || "Failed to save agents");
     }
   };
-  /** Delete Store */
-  const handleDeleteStore = (record: Store): void => {
-    Modal.confirm({
-      title: "Confirm Delete",
-      content: `Are you sure you want to delete store "${record.storeName}"? This action cannot be undone.`,
-      okText: "Yes, Delete",
-      cancelText: "Cancel",
-      okButtonProps: {
-        style: { background: "#ff4444", borderColor: "#ff4444" },
+const toggleStoreStatus = (storeId:any, currentStatus:any, storeName:any) => {
+  const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+  Modal.confirm({
+    title: "Confirm Status Change",
+    content: (
+      <span>
+        Are you sure you want to mark the store{" "}
+        <strong style={{ color: "#008cba" }}>{storeName}</strong> as{" "}
+        <strong
+          style={{ color: newStatus === "ACTIVE" ? "#22C55E" : "#EF4444" }}
+        >
+          {newStatus}
+        </strong>
+        ?
+      </span>
+    ),
+    okText: "Yes, Change",
+    cancelText: "No",
+    okButtonProps: {
+      style: {
+        background: newStatus === "ACTIVE" ? "#22C55E" : "#EF4444",
+        borderColor: newStatus === "ACTIVE" ? "#22C55E" : "#EF4444",
       },
-      onOk: () => deleteStore(record.storeId),
-    });
-  };
+    },
 
-  const deleteStore = async (storeId: string): Promise<void> => {
-    try {
-      const res: Response = await fetch(
-        `${BASE_URL}/ai-service/agent/deleteStore`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ storeId }),
-        }
-      );
+    onOk: async () => {
+      try {
+        const payload = {
+          storeId,
+          aiStoreStatus: newStatus,
+          inactiveType: "STORE",
+        };
 
-      if (!res.ok) throw new Error("Delete failed");
+        const res = await fetch(
+          `${BASE_URL}/ai-service/agent/activeInactiveStoreAgents`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
 
-      message.success("Store deleted successfully");
-      fetchStores();
-    } catch (err: any) {
-      message.error(err.message || "Failed to delete store");
-    }
-  };
+        if (!res.ok) throw new Error("Status update failed");
+
+        message.success(
+          `Store "${storeName}" successfully marked as ${newStatus}`
+        );
+
+        fetchStores();
+      } catch (err:any) {
+        message.error(err.message || "Failed to update store status");
+      }
+    },
+  });
+};
   /** TABLE COLUMNS */
   const columns: any[] = [
     {
@@ -576,16 +607,22 @@ const AgentStoreManager: React.FC = () => {
             Add Agents
           </Button>
           <Button
-            icon={<DeleteOutlined />}
+            onClick={() =>
+              toggleStoreStatus(
+                record.storeId,
+                record.aiStoreStatus,
+                record.storeName
+              )
+            }
             style={{
-              background: "#ff4444",
+              background:
+                record.aiStoreStatus === "ACTIVE" ? "#EF4444" : "#009999",
               color: "#fff",
-              border: "none",
-              width: "100%",
             }}
-            onClick={() => handleDeleteStore(record)}
           >
-            Delete Store
+            {record.aiStoreStatus === "ACTIVE"
+              ? "Make Inactive"
+              : "Make Active"}
           </Button>
         </Space>
       ),
@@ -601,10 +638,9 @@ const AgentStoreManager: React.FC = () => {
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "20px",
-          flexWrap: "wrap",
-          gap: "12px",
         }}
       >
+        {/* LEFT — Heading */}
         <h1
           style={{
             fontSize: "24px",
@@ -616,23 +652,42 @@ const AgentStoreManager: React.FC = () => {
           Agent AI Store Manager
         </h1>
 
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          style={{
-            background: "#008cba",
-            borderColor: "#008cba",
-            height: "40px",
-            fontWeight: "500",
-          }}
-          onClick={() => {
-            setIsEditMode(false);
-            form.resetFields();
-            setIsStoreModal(true);
-          }}
-        >
-          Add AI Store
-        </Button>
+        {/* RIGHT — Button Group */}
+        <div style={{ display: "flex", gap: "12px" }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            style={{
+              background: "#008cba",
+              borderColor: "#008cba",
+              height: "40px",
+              fontWeight: "500",
+            }}
+            onClick={() => {
+              setIsEditMode(false);
+              form.resetFields();
+              setIsStoreModal(true);
+            }}
+          >
+            Add AI Store
+          </Button>
+
+          <Button
+            type="primary"
+            icon={<FaShoppingCart />}
+            style={{
+              background: "#1ab394",
+              borderColor: "#1ab394",
+              height: "40px",
+              fontWeight: "500",
+            }}
+            onClick={() => {
+              navigate("/all-ai-stores");
+            }}
+          >
+            Explore AI Stores
+          </Button>
+        </div>
       </div>
 
       <Table<Store>

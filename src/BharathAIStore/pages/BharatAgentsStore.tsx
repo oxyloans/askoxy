@@ -461,13 +461,11 @@ const BharatAgentsStore: React.FC = () => {
   const isApproved = (a: any) =>
     ((a.status || a.agentStatus || "") + "").toUpperCase() === "APPROVED";
 
-  const toggleHero = () => {
-    setShowHero((prev) => !prev);
-  };
+ 
 
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 20,
+    pageSize:100,
     hasMore: true,
     total: 0,
   });
@@ -1134,7 +1132,7 @@ const shortAgentId = fullAgentId;
                 onClick={handleLogin1} // 4. Use the combined handler
                 className={[
                   "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-                  tab === "AGENTCREATE"
+                  tab === "AISTORECREATE"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 hover:bg-gray-100",
                 ].join(" ")}
@@ -1172,7 +1170,7 @@ const shortAgentId = fullAgentId;
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={`mine-skel-${i}`}
-                className="animate-pulse bg-gray-200 dark:bg-gray-700 h-52 rounded-xl"
+                className="animate-pulse bg-gray-50 dark:bg-gray-100 h-52 rounded-xl"
                 style={{
                   animationDelay: `${i * 0.15}s`,
                   animationDuration: "1.2s",

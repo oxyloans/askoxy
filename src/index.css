@@ -24,3 +24,7 @@ code {
   /* Ensure enough width for the content to slide */
   width: calc(200%); /* 2x of the container width */
 }
+ @keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+ }

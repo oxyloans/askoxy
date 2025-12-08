@@ -63,44 +63,50 @@ const AllAIStores: React.FC = () => {
 
   const accessToken = localStorage.getItem("accessToken");
 
-  const fetchStores = async () => {
-    setLoading(true);
-    setError(null);
+const fetchStores = async () => {
+  setLoading(true);
+  setError(null);
 
-    try {
-      const res = await fetch(
-        `${BASE_URL}/ai-service/agent/getAiStoreAllAgents`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: accessToken ? `Bearer ${accessToken}` : "",
-          },
-        }
-      );
+  try {
+    const res = await fetch(
+      `${BASE_URL}/ai-service/agent/getAiStoreAllAgents`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: accessToken ? `Bearer ${accessToken}` : "",
+        },
+      }
+    );
 
-      if (!res.ok) throw new Error("Failed to fetch AI Stores");
+    if (!res.ok) throw new Error("Failed to fetch AI Stores");
 
-      const result = await res.json();
+    const result = await res.json();
 
-      const data = Array.isArray(result.reverse())
-        ? result
-        : Array.isArray(result?.data)
-        ? result.data
-        : result
-        ? [result]
-        : [];
+    // Filter ONLY ACTIVE stores (your requirement)
+    const filtered = result.filter(
+      (aiStoreStatus: any) => aiStoreStatus.aiStoreStatus === "ACTIVE"
+    );
 
-      const validStores = data.filter((s: any) => s && s.storeId);
+    const data = Array.isArray(filtered.reverse())
+      ? filtered // ✅ FIX: use filtered instead of result
+      : Array.isArray(result?.data)
+      ? result.data
+      : result
+      ? [result]
+      : [];
 
-      setStores(validStores);
-      setFilteredStores(validStores);
-    } catch (err) {
-      setError("Unable to load AI Stores. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const validStores = data.filter((s: any) => s && s.storeId);
+
+    setStores(validStores);
+    setFilteredStores(validStores);
+  } catch (err) {
+    setError("Unable to load AI Stores. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchStores();

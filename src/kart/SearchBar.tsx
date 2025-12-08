@@ -76,24 +76,38 @@ const SearchBar = () => {
     }
   }, [location.state]);
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setDebouncedValue(searchValue);
-  }, 300);
-  return () => clearTimeout(timer);
-}, [searchValue]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(searchValue);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchValue]);
 
-// ⭐ AUTO-NAVIGATE TO SEARCH-MAIN WHEN USER TYPES 3+ LETTERS
-useEffect(() => {
-  if (debouncedValue.trim().length >= MIN_SEARCH_LENGTH) {
-    setIsFocused(false); // ⭐ closes dropdown when auto search happens
-    setSearchResults([]); // ⭐ avoid blank dropdown area
-    navigate("/main/search-main", {
-      state: { searchQuery: debouncedValue.trim() },
-    });
-  }
-}, [debouncedValue]);
+  // ⭐ AUTO-NAVIGATE TO SEARCH-MAIN WHEN USER TYPES 3+ LETTERS
+  useEffect(() => {
+    if (debouncedValue.trim().length >= MIN_SEARCH_LENGTH) {
+      setIsFocused(false); // ⭐ closes dropdown when auto search happens
+      setSearchResults([]); // ⭐ avoid blank dropdown area
+      navigate("/main/search-main", {
+        state: { searchQuery: debouncedValue.trim() },
+      });
+    }
+  }, [debouncedValue]);
 
+  // ⭐ NEW: AUTO-NAVIGATE BACK TO HOME WHEN SEARCH CLEARS (BACKSPACE/DELETE) ON SEARCH PAGE
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (
+        searchValue.trim() === "" &&
+        location.pathname === "/main/search-main"
+      ) {
+        setIsFocused(false);
+        setSearchResults([]);
+        navigate("/main/dashboard/home", { state: null }); // Clear state to prevent pre-fill loops
+      }
+    }, 500); // Slight debounce to avoid mid-typing triggers
+    return () => clearTimeout(timer);
+  }, [searchValue, location.pathname]);
 
   useEffect(() => {
     if (isFocused && searchValue.trim() === "") {
@@ -198,7 +212,7 @@ useEffect(() => {
       setIsFocused(false);
       setSearchResults([]);
     } else {
-      navigate("/main/dashboard/home");
+      navigate("/main/dashboard/home", { state: null });
       setIsFocused(false);
       setSearchResults([]);
     }
@@ -207,7 +221,7 @@ useEffect(() => {
   const handleClearSearch = () => {
     setSearchValue("");
     setSearchResults([]);
-    navigate("/main/dashboard/home");
+    navigate("/main/dashboard/home", { state: null }); // Clear state
   };
 
   const handleItemClick = (item: SearchItem) => {
