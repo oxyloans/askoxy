@@ -111,9 +111,9 @@ const LOGIN_URL = "/whatsapplogin";
     },
   ];
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  // const scrollToTop = () => {
+  //   window.scrollTo({ top: 0, behavior: "smooth" });
+  // };
 
   return (
     <footer className="bg-white">
@@ -287,14 +287,14 @@ const LOGIN_URL = "/whatsapplogin";
               Contact Us
             </Link>
           </div>
-          <button
+          {/* <button
             onClick={scrollToTop}
             className="flex items-center hover:text-purple-600 transition-colors mt-2 sm:mt-0 group"
             aria-label="Scroll to top"
           >
             <span className="mr-2">Back to top</span>
             <ArrowUp className="w-4 h-4 transform group-hover:-translate-y-1 transition-transform" />
-          </button>
+          </button> */}
         </div>
       </div>
     </footer>

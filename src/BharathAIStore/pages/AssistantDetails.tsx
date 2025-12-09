@@ -11,7 +11,7 @@ import { GiElephantHead } from "react-icons/gi";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import { GiLion } from "react-icons/gi";
 import { Loader2, ExternalLink ,Mic, Plus } from "lucide-react";
-
+import {HiSparkles} from "react-icons/hi2";
 import {
   Send,
   Copy,
@@ -2087,14 +2087,14 @@ ${url}`.trim();
                 {(!isCollapsed || isXs) && <span>ASKOXY.AI</span>}
               </button>{" "}
               <button
-                onClick={() => (window.location.href = "/bharath-aistore")}
+                onClick={() => (window.location.href = "/usercreateaistore")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
                 }`}
-                title="Bharat AI Store"
+                title="Create AI Store"
               >
-                <GiElephantHead className="h-5 w-5" />
-                {(!isCollapsed || isXs) && <span>Bharat AI Store</span>}
+                <HiSparkles className="h-5 w-5" />
+                {(!isCollapsed || isXs) && <span>Create AI Store</span>}
                   
               </button>
               {/* Search */}

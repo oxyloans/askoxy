@@ -1,7 +1,7 @@
 // HeaderMain.tsx
 import React, { useEffect, useState, useContext } from "react";
-import { ShoppingCart, UserCircle, X } from "lucide-react";
-import { FaBars, FaSearch, FaTimes } from "react-icons/fa";
+import { X } from "lucide-react";
+import { FaBars, FaSearch,FaUserCircle, FaTimes, FaShoppingCart } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
 import AskOxyLogo from "../assets/img/askoxylogoblack.png";
@@ -395,7 +395,7 @@ const Header: React.FC<HeaderProps> = ({
               }`}
               aria-label="Profile"
             >
-              <UserCircle
+              <FaUserCircle
                 size={20}
                 className={`transition ${
                   location.pathname === "/main/profile"
@@ -422,7 +422,7 @@ const Header: React.FC<HeaderProps> = ({
               }`}
               aria-label="Cart"
             >
-              <ShoppingCart
+              <FaShoppingCart
                 size={16}
                 className={`sm:w-6 sm:h-6 transition ${
                   location.pathname === "/main/mycart"

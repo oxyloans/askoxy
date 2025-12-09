@@ -235,7 +235,9 @@ const StudentMainDashboard = lazy(
   () => import("./StudyAbroad/StudentMainDashboard")
 );
 const BlogDetails = lazy(() => import("./components/BlogDetails"));
-const GlobalProgramsPage = lazy(() => import("./StudyAbroad/GlobalProgramsPage"));
+const GlobalProgramsPage = lazy(
+  () => import("./StudyAbroad/GlobalProgramsPage")
+);
 
 const GenOxy = lazy(() => import("./GenOxy/Genoxy"));
 const RealtimePage = lazy(
@@ -273,75 +275,111 @@ const LLMFAQPage = lazy(() => import("./GenOxy/FaqLLM"));
 const AiVideosGenerated = lazy(() => import("./FREEAIBOOK/AiVideosGenerated"));
 
 const AllAgentsPage = lazy(() => import("./AgentStore/AllAgentsPage"));
-const AssistantDetails = lazy(() => import("./BharathAIStore/pages/AssistantDetails"));
-const ChatInterface1 = lazy(() => import("./BharathAIStore/pages/ChatInterface"));
+const AssistantDetails = lazy(
+  () => import("./BharathAIStore/pages/AssistantDetails")
+);
+const ChatInterface1 = lazy(
+  () => import("./BharathAIStore/pages/ChatInterface")
+);
 const AiResources = lazy(() => import("./BharathAIStore/pages/AIResources"));
 const AppRoutes = lazy(() => import("./BharathAIStore/routes/Landingpage"));
 const Layout = lazy(() => import("./BharathAIStore/routes/Landingpage"));
-const BharatAgentsStore = lazy(() => import("./BharathAIStore/pages/BharatAgentsStore"));
-const BananaImageGenerate = lazy(() => import("./AgentStore/BananaImageGenerate"));
-const InsuranceAgentsPage = lazy(() => import("./BharathAIStore/pages/InsuranceAgentsPage"));
-const AwardsRewardsVideo = lazy(() => import("./BharathAIStore/pages/AwardsRewardsVideo"));
+const BharatAgentsStore = lazy(
+  () => import("./BharathAIStore/pages/BharatAgentsStore")
+);
+const BananaImageGenerate = lazy(
+  () => import("./AgentStore/BananaImageGenerate")
+);
+const InsuranceAgentsPage = lazy(
+  () => import("./BharathAIStore/pages/InsuranceAgentsPage")
+);
+const AwardsRewardsVideo = lazy(
+  () => import("./BharathAIStore/pages/AwardsRewardsVideo")
+);
 const CartCaCsService = lazy(() => import("./components/CartCaCsService"));
 const ServiceCAList = lazy(() => import("./components/ServiceCAList"));
 const ServiceDashboard = lazy(() => import("./components/ServiceDashboard"));
-const EmployeeInteractions = lazy(() => import("./Taskmanagement/EmployeeInstructions"));
-const EmployeeViewChat = lazy(() => import("./Taskmanagement/EmployeeChatView"));
-const HealthcareAgentsPage = lazy(() => import("./BharathAIStore/pages/Healthcareagents"));
+const EmployeeInteractions = lazy(
+  () => import("./Taskmanagement/EmployeeInstructions")
+);
+const EmployeeViewChat = lazy(
+  () => import("./Taskmanagement/EmployeeChatView")
+);
+const HealthcareAgentsPage = lazy(
+  () => import("./BharathAIStore/pages/Healthcareagents")
+);
 const RemoveTrailingSlash = lazy(() => import("./auth/RemoveTrailingSlash"));
-const AdminMyAgentsPage = lazy(() => import("./BharathAIStore/pages/AdminMyAgentsPage"));
-const RadhaHiddenAgents = lazy(() => import("./BharathAIStore/pages/RadhaHiddenAgents"));
+const AdminMyAgentsPage = lazy(
+  () => import("./BharathAIStore/pages/AdminMyAgentsPage")
+);
+const RadhaHiddenAgents = lazy(
+  () => import("./BharathAIStore/pages/RadhaHiddenAgents")
+);
 const AdminTasks = lazy(() => import("./Taskmanagement/AdminTasks"));
-const AllKukatpallyDataPage = lazy(() => import("./AskoxyAdmin/kukatapallyData"));
-const ChatBasedAgent = lazy(() => import("./BharathAIStore/pages/chatbasedAgent"));
-const AgentEntryPage = lazy(() => import("./BharathAIStore/pages/AgentEntryPage"));
+const AllKukatpallyDataPage = lazy(
+  () => import("./AskoxyAdmin/kukatapallyData")
+);
+const ChatBasedAgent = lazy(
+  () => import("./BharathAIStore/pages/chatbasedAgent")
+);
+const AgentEntryPage = lazy(
+  () => import("./BharathAIStore/pages/AgentEntryPage")
+);
 const WeAreHiringAdd = lazy(() => import("./AskoxyAdmin/WeAreHiringAdd"));
 const AdvocatesDataPage = lazy(() => import("./AskoxyAdmin/Advoatedata"));
 const HiringPages = lazy(() => import("./Dashboard/hiringpages"));
-const KukatpallyAssignedDataPage = lazy(() => import("./AskoxyAdmin/KukatapallyAssignedData"));
+const KukatpallyAssignedDataPage = lazy(
+  () => import("./AskoxyAdmin/KukatapallyAssignedData")
+);
 const CelebShieldPage = lazy(() => import("./components/celebshieldpage"));
-const QuickAgentCreate = lazy(() => import("./BharathAIStore/pages/Agentcreation"));
+const QuickAgentCreate = lazy(
+  () => import("./BharathAIStore/pages/Agentcreation")
+);
 const TestStore = lazy(() => import("./BharathAIStore/pages/TestStore"));
-const TestAgentDetails = lazy(() => import("./BharathAIStore/pages/TestAgentDetails"));
+const TestAgentDetails = lazy(
+  () => import("./BharathAIStore/pages/TestAgentDetails")
+);
 const PaymentCashfree = lazy(() => import("./AgentStore/PaymentCashfree"));
 const AllAIStore = lazy(() => import("./AIStores/AllAistore"));
 const AllAIStores = lazy(() => import("./AIStores/AllAistores"));
 const TalwarDataPage = lazy(() => import("./AskoxyAdmin/TalwarData"));
-const TalwarAssignedDataPage = lazy(() => import("./AskoxyAdmin/TalwarAssignedDataPage"));
+const TalwarAssignedDataPage = lazy(
+  () => import("./AskoxyAdmin/TalwarAssignedDataPage")
+);
 const ApiDocs = lazy(() => import("./components/ApiDocs"));
 const InterviewPage = lazy(() => import("./AIMockInterview/interview"));
 const BulkInvite = lazy(() => import("./kart/BulkInvite"));
 const MumbaiDataPage = lazy(() => import("./AskoxyAdmin/MumbaiDataPage"));
 const AgenticAi = lazy(() => import("./components/AgenticAi"));
 const AgentStoreManager = lazy(() => import("./components/AistoreCreation"));
-const GmailContactsScreen = lazy (()=> import("./kart/GoogleContact"))
+const GmailContactsScreen = lazy(() => import("./kart/GoogleContact"));
 // Simple centered loader component
-const LoadingSpinner = () => (
+const LoadingSpinner =React.memo( () => (
   <div
     style={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      backgroundColor: '#f8f9fa', // Light background for better visibility
-      fontFamily: 'Arial, sans-serif',
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "100vh",
+      backgroundColor: "#f8f9fa", // Light background for better visibility
+      fontFamily: "Arial, sans-serif",
     }}
   >
     <div
       style={{
-        border: '4px solid #f3f3f3',
-        borderTop: '4px solid #3498db',
-        borderRadius: '50%',
-        width: '40px',
-        height: '40px',
-        animation: 'spin 1s linear infinite',
-        marginBottom: '16px',
+        border: "4px solid #f3f3f3",
+        borderTop: "4px solid #3498db",
+        borderRadius: "50%",
+        width: "40px",
+        height: "40px",
+        animation: "spin 1s linear infinite",
+        marginBottom: "16px",
       }}
     />
-    <div style={{ fontSize: '18px', color: '#333' }}>Loading...</div>
+    <div style={{ fontSize: "18px", color: "#333" }}>Loading...</div>
   </div>
-);
+));
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -377,13 +415,15 @@ const App: React.FC = () => {
       localStorage.setItem("entryPoint", location.pathname);
     }
   }, [location.pathname]);
+  const ScrollToTopMemo = React.memo(ScrollToTop);
   return (
     <CartProvider>
       <SearchProvider>
         <RemoveTrailingSlash />
-        <ScrollToTop />
+        <ScrollToTopMemo />
+        <Suspense fallback ={<LoadingSpinner/>}>
         <div className="App">
-          <Suspense fallback={<LoadingSpinner />}>
+         
             <Routes>
               <Route path="/shopretail" element={<HomePage />} />
               <Route path="/shop-form" element={<ShopFormPage />} />
@@ -786,160 +826,172 @@ const App: React.FC = () => {
                 path="services/campaign/:type"
                 element={<CampaignDetails />}
               /> */}
-              <Route path="services/:id/:type" element={<CampaignDetails />} />
-              <Route path="blog/:id/:type" element={<BlogDetails />} />
-              <Route path="addblogs" element={<AddBlog />} />
-              {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
-              <Route
-                path="services/Freechatgpt"
-                element={<FreeChatGPTmain />}
-              />
-              <Route path="services/myrotary" element={<MyRotaryServices />} />
-              <Route path="services/bmvcoin" element={<BMVCOINmain />} />
-              <Route
-                path="services/freesample-steelcontainer"
-                element={<FreeSample />}
-              />
-              <Route
-                path="services/machines-manufacturing"
-                element={<MachinesManufacturingServices />}
-              />
-              <Route path="service/oxyloans-service" element={<OxyLoans />} />
-              <Route path="services/legalservice" element={<LegalService />} />
-              <Route
-                path="services/we-are-hiring"
-                element={<HiringService />}
-              />
-              <Route
-                path="wallet"
-                element={
-                  <RequireAuth>
-                    <MyWalletPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="bharath-aistore/agents"
-                element={<AllAgentsPage />}
-              />
-              <Route path="create-aiagent" element={<CreateAgentWizard />} />
-              <Route path="bharat-expert" element={<CreateAgentMain />} />
-              {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
-              <Route path="agentcreate" element={<QuickAgentCreate />} />
-              <Route path="usercreateaistore" element={<AgentStoreManager />} />
-              <Route path="chatbasedagent" element={<ChatBasedAgent />} />
-              <Route
-                path="chatinterface/assistant/:id/:agentId"
-                element={<ChatInterface1 />}
-              />
-              <Route path="mycart" element={<CartPage />} />
-              <Route
-                path="myorders"
-                element={
-                  <RequireAuth>
-                    <MyOrders />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="profile"
-                element={
-                  <RequireAuth>
-                    <ProfilePage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="referral"
-                element={
-                  <RequireAuth>
-                    <ReferralPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="bulkinvite"
-                element={
-                  <RequireAuth>
-                    <BulkInvite />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="google"
-                element={
-                  <RequireAuth>
-                    <GmailContactsScreen />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="itemsdisplay/:itemId"
-                element={<ItemDisplayPage />}
-              />
-              <Route
-                path="subscription"
-                element={
-                  <RequireAuth>
-                    <SubscriptionPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="writetous/:id"
-                element={
-                  <RequireAuth>
-                    <WriteToUs />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="writetous"
-                element={
-                  <RequireAuth>
-                    <WriteToUs />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="crypto"
-                element={
-                  <RequireAuth>
-                    <MyCrypto />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="tickethistory"
-                element={
-                  <RequireAuth>
-                    <TicketHistoryPage />
-                  </RequireAuth>
-                }
-              />
-              <Route path="search-main" element={<SearchMain />} />
-              <Route
-                path="checkout"
-                element={
-                  <RequireAuth>
-                    <CheckoutPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="manageaddresses"
-                element={
-                  <RequireAuth>
-                    <ManageAddressesPage />
-                  </RequireAuth>
-                }
-              />
-            </Route>
-            {/* Partner start */}
-            <Route path="/partnerLogin" element={<PartnerLogin />} />
-            <Route path="/home" element={<PartnerHome />}>
-              <Route index element={<MainPage />} />{" "}
-              {/* <Route path="newOrders" element={<NewOrders />} />
+                <Route
+                  path="services/:id/:type"
+                  element={<CampaignDetails />}
+                />
+                <Route path="blog/:id/:type" element={<BlogDetails />} />
+                <Route path="addblogs" element={<AddBlog />} />
+                {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
+                <Route
+                  path="services/Freechatgpt"
+                  element={<FreeChatGPTmain />}
+                />
+                <Route
+                  path="services/myrotary"
+                  element={<MyRotaryServices />}
+                />
+                <Route path="services/bmvcoin" element={<BMVCOINmain />} />
+                <Route
+                  path="services/freesample-steelcontainer"
+                  element={<FreeSample />}
+                />
+                <Route
+                  path="services/machines-manufacturing"
+                  element={<MachinesManufacturingServices />}
+                />
+                <Route path="service/oxyloans-service" element={<OxyLoans />} />
+                <Route
+                  path="services/legalservice"
+                  element={<LegalService />}
+                />
+                <Route
+                  path="services/we-are-hiring"
+                  element={<HiringService />}
+                />
+                <Route
+                  path="wallet"
+                  element={
+                    <RequireAuth>
+                      <MyWalletPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="bharath-aistore/agents"
+                  element={<AllAgentsPage />}
+                />
+                <Route path="create-aiagent" element={<CreateAgentWizard />} />
+                <Route path="bharat-expert" element={<CreateAgentMain />} />
+                {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
+                <Route path="agentcreate" element={<QuickAgentCreate />} />
+                <Route
+                  path="usercreateaistore"
+                  element={<AgentStoreManager />}
+                />
+                <Route path="chatbasedagent" element={<ChatBasedAgent />} />
+                <Route
+                  path="chatinterface/assistant/:id/:agentId"
+                  element={<ChatInterface1 />}
+                />
+                <Route path="mycart" element={<CartPage />} />
+                <Route
+                  path="myorders"
+                  element={
+                    <RequireAuth>
+                      <MyOrders />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="profile"
+                  element={
+                    <RequireAuth>
+                      <ProfilePage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="referral"
+                  element={
+                    <RequireAuth>
+                      <ReferralPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="bulkinvite"
+                  element={
+                    <RequireAuth>
+                      <BulkInvite />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="google"
+                  element={
+                    <RequireAuth>
+                      <GmailContactsScreen />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="itemsdisplay/:itemId"
+                  element={<ItemDisplayPage />}
+                />
+                <Route
+                  path="subscription"
+                  element={
+                    <RequireAuth>
+                      <SubscriptionPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="writetous/:id"
+                  element={
+                    <RequireAuth>
+                      <WriteToUs />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="writetous"
+                  element={
+                    <RequireAuth>
+                      <WriteToUs />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="crypto"
+                  element={
+                    <RequireAuth>
+                      <MyCrypto />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="tickethistory"
+                  element={
+                    <RequireAuth>
+                      <TicketHistoryPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route path="search-main" element={<SearchMain />} />
+                <Route
+                  path="checkout"
+                  element={
+                    <RequireAuth>
+                      <CheckoutPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="manageaddresses"
+                  element={
+                    <RequireAuth>
+                      <ManageAddressesPage />
+                    </RequireAuth>
+                  }
+                />
+              </Route>
+              {/* Partner start */}
+              <Route path="/partnerLogin" element={<PartnerLogin />} />
+              <Route path="/home" element={<PartnerHome />}>
+                <Route index element={<MainPage />} />{" "}
+                {/* <Route path="newOrders" element={<NewOrders />} />
               <Route path="acceptedOrders" element={<AcceptedOrders />} />
               <Route path="assignedOrders" element={<AssignedOrders />} /> */}
                 <Route path="newOrders/:status" element={<NewOrders />} />
@@ -1026,8 +1078,9 @@ const App: React.FC = () => {
               </Route>
               {/* ----------Admin Routes end---------- */}
             </Routes>
-          </Suspense>
+        
         </div>
+        </Suspense>
       </SearchProvider>
     </CartProvider>
   );

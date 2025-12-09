@@ -104,7 +104,7 @@ export default function SuperOurApp() {
       id: "s11",
       src: s2,
       onClick: () => navigate("/bharath-aistore"),
-      title: "Bharat AI \nStore&More",
+      title: "Bharat AI \nStore & More",
     },
     {
       id: "s12",
