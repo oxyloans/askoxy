@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import { Alert, Modal } from "antd";
 import { api } from "./lib/api";
+import logo from "../assets/img/askoxylogoblack.png";
 
 export default function InterviewPage() {
   function cryptoRandom() {
@@ -21,7 +23,7 @@ export default function InterviewPage() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [timePerQuestion, setTimePerQuestion] = useState(30);
 
-    useEffect(() => {
+   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (!stored) {
      handleLogin()
@@ -42,13 +44,13 @@ export default function InterviewPage() {
         console.log("Name:", name);
      
     if (!phone) {
-        alert("Please login to continue.");
+        Modal.warning({ title: "Login Required", content: "Please login to continue." });
        window.location.href = "/whatsapplogin";
       return;
     }
 
     if (!name) {
-        alert("Name not found in profile data, please fill profile details.");
+        Modal.warning({ title: "Profile Incomplete", content: "Name not found in profile data, please fill profile details." });
       return;
     }
 
@@ -59,20 +61,21 @@ export default function InterviewPage() {
 
       if (data.user && data.user.id) {
         localStorage.setItem("user", JSON.stringify(data.user));
-        alert(`Welcome, ${data.user.name}!`);
+        Modal.success({ title: "Welcome", content: `Welcome, ${data.user.name}!` });
        window.location.href = "/interview";
       } else if (data.error) {
-        alert(`Login failed: ${data.error}`);
+        Modal.error({ title: "Login Failed", content: data.error });
       } else {
-        alert("Login failed. Please try again.");
+        Modal.error({ title: "Login Failed", content: "Please try again." });
       }
     } catch (err) {
       console.error("Login error:", err);
-      alert("An error occurred. Please try again.");
+      Modal.error({ title: "Error", content: "An error occurred. Please try again." });
     } finally {
       setLoading(false);
     }
   };
+
 
   // Get time limit based on round
   const getTimeLimit = (roundNumber: number) => {
@@ -108,14 +111,6 @@ export default function InterviewPage() {
   const [codeError, setCodeError] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("python");
 
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (!stored) {
-      window.location.href = "/login";
-    } else {
-      setUser(JSON.parse(stored));
-    }
-  }, []);
 
   useEffect(() => {
     if (question && timeLeft > 0) {
@@ -147,14 +142,14 @@ export default function InterviewPage() {
           // Handle the response same as manual submit
           if (data.advancedTo) {
             setQuestion(""); // Clear question first
-            alert(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nRefresh the page to start Round ${data.advancedTo}.`);
+            Modal.success({ title: "🎉 Round Completed", content: `Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nRefresh the page to start Round ${data.advancedTo}.` });
           } else if (data.finished) {
             if (data.doneRound === 3) {
-              alert(`🎉 Assessment Completed!\n\nFinal Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations!`);
+              Modal.success({ title: "🎉 Assessment Completed", content: `Final Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations!` });
             }
             setQuestion("");
           } else if (data.doneRound && data.passed === false) {
-            alert(`❌ Round ${data.doneRound} Failed\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria`);
+            Modal.error({ title: "❌ Round Failed", content: `Round ${data.doneRound}\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria` });
             setQuestion("");
           } else if (data.question) {
             // Move to next question in same round
@@ -222,18 +217,18 @@ export default function InterviewPage() {
 
   async function startInterview() {
     if (!user) {
-      alert("Please log in to start the interview");
+      Modal.warning({ title: "Login Required", content: "Please log in to start the interview" });
       window.location.href = "/login";
       return;
     }
 
     if (!parsed) {
-      alert("Please upload and parse your resume first");
+      Modal.warning({ title: "Resume Required", content: "Please upload and parse your resume first" });
       return;
     }
 
     if (round === 3) {
-      alert("You have already completed all 3 rounds");
+      Modal.info({ title: "All Rounds Completed", content: "You have already completed all 3 rounds" });
       return;
     }
 
@@ -499,11 +494,11 @@ if (typeof ${functionName} === 'function') {
 
     let ans = "";
     if (round === 1) {
-      if (!selectedOption) return window.alert("Please select an option");
+      if (!selectedOption) return alert("Please select an option");
       ans = selectedOption;
     } else {
       ans = answerRef.current?.value?.trim() || "";
-      if (!ans) return window.alert("Please enter an answer");
+      if (!ans) return alert("Please enter an answer");
     }
 
     setLoading(true);
@@ -526,7 +521,7 @@ if (typeof ${functionName} === 'function') {
 
       if (data.error) {
         if (data.error === "Interview not started") {
-          window.alert("Interview session expired. Please start a new interview.");
+          alert("Interview session expired. Please start a new interview.");
           setQuestion("");
           setRound(null);
           return;
@@ -608,7 +603,7 @@ if (typeof ${functionName} === 'function') {
       if (data.finished) {
         // Show final completion popup
         if (data.doneRound === 3) {
-          window.alert(`🎉 Assessment Completed!\n\nFinal Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations! You have successfully completed the technical assessment.`);
+          alert(`🎉 Assessment Completed!\n\nFinal Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations! You have successfully completed the technical assessment.`);
         }
         setStatus("success:" + data.message);
         setQuestion("");
@@ -617,7 +612,7 @@ if (typeof ${functionName} === 'function') {
 
       if (data.doneRound && data.passed === false) {
         // Show failure popup
-        window.alert(`❌ Round ${data.doneRound} Failed\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria\n\nThank you for participating in the assessment.`);
+        alert(`❌ Round ${data.doneRound} Failed\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria\n\nThank you for participating in the assessment.`);
         setStatus("error:" + (data.message || "Failed Round " + data.doneRound));
         setQuestion("");
         return;
@@ -633,10 +628,10 @@ if (typeof ${functionName} === 'function') {
           // Simulate round completion and advance to next round
           if (data.round < 3) {
             setQuestion("");
-            window.alert(`🎉 Round ${data.round} Completed!\n\nAll ${expectedCount} questions answered.\n\nRefresh the page to start Round ${data.round + 1}.`);
+            alert(`🎉 Round ${data.round} Completed!\n\nAll ${expectedCount} questions answered.\n\nRefresh the page to start Round ${data.round + 1}.`);
           } else {
             setQuestion("");
-            window.alert(`🎉 Assessment Completed!\n\nAll rounds finished successfully!`);
+            alert(`🎉 Assessment Completed!\n\nAll rounds finished successfully!`);
           }
           return;
         }
@@ -672,9 +667,9 @@ if (typeof ${functionName} === 'function') {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img 
-                src="/assets/logo.png" 
+                src={logo}
                 alt="AskOxy Logo" 
-                className="w-10 h-10 object-contain"
+                className="w-30 h-10 object-contain"
               />
               <div>
                 <h1 className="text-lg font-bold text-slate-900 dark:text-white">AskOxy Hiring</h1>

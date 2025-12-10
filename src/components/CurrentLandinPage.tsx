@@ -12,6 +12,7 @@ import PdfPages from "./Presentation";
 import UnicornGrid from "./SuperOurApp";
 import AwardPage from "./Award";
 import FreeAiBook from "./FreeAiBook";
+import ScrollToTop from "./ScrollToTop";
 
 // Import the background (still exported from SuperOurApp.tsx)
 // import { AnimatedDiwaliBackground } from "./SuperOurApp";
@@ -32,7 +33,7 @@ const CurrentLandingPage: React.FC = () => {
 
   return (
     <>
-
+        <ScrollToTop />
       {/* Everything else sits above the fixed background */}
       <div style={{ position: "relative", zIndex: 1 }}>
         <section><Header /></section>

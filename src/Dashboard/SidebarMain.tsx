@@ -139,32 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: "My Crypto",
     },
 
-    // Referral & Invites dropdown
-    {
-      type: "dropdown",
-      key: "referral",
-      icon: <ImUsers size={18} />,
-      label: "Referral & Invites",
-      items: [
-        {
-          to: "/main/referral",
-          label: "My Referrals",
-          icon: <FaUserFriends size={16} />,
-        },
-        {
-          to: "/main/bulkinvite",
-          label: "Bulk Invite",
-          icon: <FaUsers size={16} />,
-        },
-        {
-          to: "/main/google",
-          label: "Google Contacts",
-          icon: <FaGoogle style={{ fontSize: 16 }} />,
-        },
-      ],
-    },
-
-    // Bharat AI Store dropdown
+     // Bharat AI Store dropdown
     {
       type: "dropdown",
       key: "ai-store",
@@ -194,6 +169,31 @@ const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
 
+    // Referral & Invites dropdown
+    {
+      type: "dropdown",
+      key: "referral",
+      icon: <ImUsers size={18} />,
+      label: "Referral & Invites",
+      items: [
+        {
+          to: "/main/referral",
+          label: "My Referrals",
+          icon: <FaUserFriends size={16} />,
+        },
+        {
+          to: "/main/bulkinvite",
+          label: "Bulk Invite",
+          icon: <FaUsers size={16} />,
+        },
+        {
+          to: "/main/google",
+          label: "Google Contacts",
+          icon: <FaGoogle style={{ fontSize: 16 }} />,
+        },
+      ],
+    },
+    
     // My Creations dropdown
     {
       type: "dropdown",

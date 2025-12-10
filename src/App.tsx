@@ -420,7 +420,7 @@ const App: React.FC = () => {
     <CartProvider>
       <SearchProvider>
         <RemoveTrailingSlash />
-        <ScrollToTopMemo />
+        
         <Suspense fallback ={<LoadingSpinner/>}>
         <div className="App">
          

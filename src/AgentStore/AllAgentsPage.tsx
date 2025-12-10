@@ -19,7 +19,9 @@ import {
   ClearOutlined,
   MessageOutlined,
   UserOutlined,
+  EditOutlined
 } from "@ant-design/icons";
+import VendorCreationModal from "../BharathAIStore/components/VendorCreationModal";
 
 /** -------- Auth helpers -------- */
 function getAccessToken(): string | null {
@@ -249,6 +251,7 @@ const AllAgentsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AllAgentDataResponse | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
   // ⬇️ place with the other React.useState hooks (top of component)
   const [avatarMenuFor, setAvatarMenuFor] = useState<string | null>(null);
@@ -1484,6 +1487,32 @@ const AllAgentsPage: React.FC = () => {
             placeholder="Filter by Status"
           />
         </div>
+        <div>
+         <Button
+          style={{
+            backgroundColor: "#1ab394",
+            color: "white",
+            borderColor: "#1ab394",
+            marginRight:10
+          }}
+          icon={<EditOutlined />}
+          size={btnSize}
+          block={btnBlock}
+          // onClick={gotoStore}
+            onClick={() => {
+                  const userId = localStorage.getItem("userId");
+                  if (userId) {
+                    setVendorModalOpen(true);
+                  } else {
+                    // sessionStorage.setItem("redirectPath", "/main/bharath-aistore/agents");
+                    // sessionStorage.setItem("primaryType", "AGENT");
+                    // window.location.href = "/whatsappregister?primaryType=AGENT";
+                  }
+                }
+              }
+        >
+          Vendor Creation
+        </Button>
         <Button
           style={{
             backgroundColor: "#1ab394",
@@ -1497,6 +1526,7 @@ const AllAgentsPage: React.FC = () => {
         >
           Bharath AI Store
         </Button>
+        </div>
       </div>
 
       {/* Body */}
@@ -2796,6 +2826,12 @@ const AllAgentsPage: React.FC = () => {
           </>
         )}
       </main>
+
+       <VendorCreationModal
+              isOpen={vendorModalOpen}
+              onClose={() => setVendorModalOpen(false)}
+            />
+
       <Modal
         open={!!editAgent}
         onCancel={() => !editLoading && setEditAgent(null)}

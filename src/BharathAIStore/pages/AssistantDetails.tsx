@@ -12,6 +12,7 @@ import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import { GiLion } from "react-icons/gi";
 import { Loader2, ExternalLink ,Mic, Plus } from "lucide-react";
 import {HiSparkles} from "react-icons/hi2";
+import { AiFillAppstore } from "react-icons/ai";
 import {
   Send,
   Copy,
@@ -2076,18 +2077,18 @@ ${url}`.trim();
                 </svg>
                 {(!isCollapsed || isXs) && <span>Explore Agents</span>}
               </button>
-              <button
-                onClick={() => (window.location.href = "/main/dashboard/home")}
+             <button
+                onClick={() => (window.location.href = "/all-ai-stores")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
                 }`}
-                title="ASKOXY.AI"
+                title="Explore AI Stores"
               >
-                <GiLion className="h-5 w-5" />
-                {(!isCollapsed || isXs) && <span>ASKOXY.AI</span>}
+                <AiFillAppstore className="h-5 w-5" />
+                {(!isCollapsed || isXs) && <span>Explore AI Stores</span>}
               </button>{" "}
               <button
-                onClick={() => (window.location.href = "/usercreateaistore")}
+                onClick={() => (window.location.href = "/main/usercreateaistore")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
                 }`}
