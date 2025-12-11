@@ -29,6 +29,11 @@ import {
 } from "lucide-react";
 import BASE_URL from "../Config";
 import BMVICON from "../assets/img/bmvlogo.png";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+
 
 interface Transfer {
   txMobileNumber: string;
@@ -36,7 +41,11 @@ interface Transfer {
   txChainAddress: string;
   rxChainAddress: string;
   amountTransfer: number;
+  transferAt?: string;   // 👈 add this
+  type?: string;
+  status?: string | null;
 }
+
 
 const MyCrypto: React.FC = () => {
   // Basic state variables
@@ -86,7 +95,17 @@ const MyCrypto: React.FC = () => {
     recipientMobile: "",
     amount: "",
   });
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
+const formatIST = (dateString?: string) => {
+  if (!dateString) return "—";
+
+  return dayjs
+    .utc(dateString) // treat API time as UTC
+    .tz("Asia/Kolkata") // convert to IST
+    .format("DD MMM YYYY • hh:mm A");
+};
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -790,81 +809,92 @@ const MyCrypto: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredTransfers.map((transfer, index) => {
-                const isSent = transfer.txMobileNumber === userMobileNumber;
-                const isExpanded = expandedTxId === index;
+              {filteredTransfers
+                .sort((a, b) => {
+                  const dateA = new Date(a.transferAt ?? "").getTime();
+                  const dateB = new Date(b.transferAt ?? "").getTime();
+                  return dateB - dateA; // 🟢 Newest date first
+                })
+                .map((transfer, index) => {
+                  const isSent = transfer.txMobileNumber === userMobileNumber;
+                  const isExpanded = expandedTxId === index;
 
-                return (
-                  <div
-                    key={index}
-                    className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow"
-                  >
+                  return (
                     <div
-                      className="flex items-center justify-between cursor-pointer"
-                      onClick={() => toggleExpand(index)}
+                      key={index}
+                      className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2 rounded-full ${
-                            isSent ? "bg-red-100" : "bg-green-100"
-                          }`}
-                        >
-                          {isSent ? (
-                            <Minus className="h-6 w-6 text-red-600" />
+                      <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => toggleExpand(index)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`p-2 rounded-full ${
+                              isSent ? "bg-red-100" : "bg-green-100"
+                            }`}
+                          >
+                            {isSent ? (
+                              <Minus className="h-6 w-6 text-red-600" />
+                            ) : (
+                              <Plus className="h-6 w-6 text-green-600" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {isSent ? "Sent to" : "Received from"}{" "}
+                              {isSent
+                                ? transfer.rxMobileNumber
+                                : transfer.txMobileNumber}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {transfer.amountTransfer} BMVCOINS
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {formatIST(transfer.transferAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xl font-bold ${
+                              isSent ? "text-red-600" : "text-green-600"
+                            }`}
+                          >
+                            {isSent ? "-" : "+"}
+                            {transfer.amountTransfer}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp className="h-5 w-5 text-gray-400" />
                           ) : (
-                            <Plus className="h-6 w-6 text-green-600" />
+                            <ChevronDown className="h-5 w-5 text-gray-400" />
                           )}
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            {isSent ? "Sent to" : "Received from"}{" "}
-                            {isSent
-                              ? transfer.rxMobileNumber
-                              : transfer.txMobileNumber}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {transfer.amountTransfer} BMVCOINS
-                          </p>
-                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xl font-bold ${
-                            isSent ? "text-red-600" : "text-green-600"
-                          }`}
-                        >
-                          {isSent ? "-" : "+"}
-                          {transfer.amountTransfer}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp className="h-5 w-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
 
-                    {isExpanded && (
-                      <div className="mt-5 pt-5 border-t border-gray-100">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
-                          <div>
-                            <p className="text-gray-500 mb-1">From Address:</p>
-                            <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
-                              {transfer.txChainAddress}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 mb-1">To Address:</p>
-                            <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
-                              {transfer.rxChainAddress}
-                            </p>
+                      {isExpanded && (
+                        <div className="mt-5 pt-5 border-t border-gray-100">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
+                            <div>
+                              <p className="text-gray-500 mb-1">
+                                From Address:
+                              </p>
+                              <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
+                                {transfer.txChainAddress}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-500 mb-1">To Address:</p>
+                              <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
+                                {transfer.rxChainAddress}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

@@ -146,7 +146,7 @@ const VendorCreationModal: React.FC<VendorCreationModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Vendor Creation</h2>
+          <h2 className="text-xl font-bold text-gray-900">KYC Verification</h2>
           <button
             onClick={onClose}
             className="p-1 rounded-md hover:bg-gray-100"

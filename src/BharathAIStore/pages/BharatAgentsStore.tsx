@@ -1160,7 +1160,7 @@ const shortAgentId = fullAgentId;
                   "text-gray-700 hover:bg-gray-100",
                 ].join(" ")}
               >
-                Vendor Creation
+                KYC Verification
               </button>
             </div>
           </div>

@@ -1511,7 +1511,7 @@ const AllAgentsPage: React.FC = () => {
                 }
               }
         >
-          Vendor Creation
+          KYC Verification
         </Button>
         <Button
           style={{

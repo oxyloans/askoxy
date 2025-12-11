@@ -1,3 +1,4 @@
+import { AiFillAppstore } from "react-icons/ai";
 import type React from "react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios, { AxiosHeaders } from "axios";
@@ -9,10 +10,9 @@ import {
 } from "react-router-dom";
 import { GiElephantHead } from "react-icons/gi";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
-import { GiLion } from "react-icons/gi";
+
 import { Loader2, ExternalLink ,Mic, Plus } from "lucide-react";
 import {HiSparkles} from "react-icons/hi2";
-import { AiFillAppstore } from "react-icons/ai";
 import {
   Send,
   Copy,
@@ -31,6 +31,7 @@ import BASE_URL from "../../Config";
 import SubscriptionModal from "../components/SubscriptionModal";
 import { set } from "lodash";
 import { Button } from "antd";
+import { log } from "node:console";
 /** ---------------- Types ---------------- */
 interface Assistant {
   id: string;
@@ -77,7 +78,6 @@ const getAuthHeaders = () => {
   return { Authorization: value };
 };
 
-/** ---------------- constants ---------------- */
 
 // ---------------- constants ----------------
 const DESKTOP_SIDEBAR_WIDTH_OPEN = 240; // px (open on desktop)
@@ -130,6 +130,9 @@ const AssistantDetails: React.FC = () => {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [showAgentShareModal, setShowAgentShareModal] = useState(false);
   const [agentShareText, setAgentShareText] = useState("");
+
+  // Track threadIds for each chat separately (since backend doesn't store them)
+  const [threadIdMap, setThreadIdMap] = useState<Record<string, string>>({});
 
   // Add loading state for history
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -226,12 +229,38 @@ const AssistantDetails: React.FC = () => {
     return { isImage: !!url, url };
   };
 
-  const cleanContent = (s: string): string => {
-    return String(s ?? "")
-      .replace(/^```(?:\w+)?\n?/, "")
-      .replace(/```$/, "")
-      .trim();
-  };
+ const cleanContent = (s: string): string => {
+   return (
+     String(s ?? "")
+       // remove leading/trailing ``` code fences
+       .replace(/^```(?:\w+)?\n?/, "")
+       .replace(/```$/, "")
+ .replace(/\((?:source|ref|reference|citation|cite|doc[^\)]*)\)/gi, "")
+
+    // remove <<...>> or <...>
+    .replace(/<<[^>]*>>/g, "")
+    .replace(/<[^>]*>/g, "")
+
+    // remove {citation}, {ref}, {doc}
+    .replace(/\{[^}]*citation[^}]*\}/gi, "")
+    .replace(/\{[^}]*ref[^}]*\}/gi, "")
+    .replace(/\{[^}]*doc[^}]*\}/gi, "")
+
+    // remove patterns like [ref], [doc], [file], [xyz-123]
+    .replace(/\[(?:ref|doc|file|src|source|attach)[^\]]*\]/gi, "")
+       // 🔹 remove internal-style citations like:
+       .replace(/【[^】]*】/g, "")
+
+       // 🔹 remove trailing [8:5†source] style markers
+       .replace(/\[\d+:\d+†source\]/g, "")
+
+       // 🔹 collapse multiple spaces
+       .replace(/\s{2,}/g, " ")
+
+       .trim()
+   );
+ };
+
   // ⬇️ NEW: local lock so refresh won't allow re-rating again
   const RATING_LOCK_KEY = (u: string, a: string) => `agent_rating_${u}_${a}`;
 
@@ -310,6 +339,8 @@ const AssistantDetails: React.FC = () => {
   }
 
   useEffect(() => {
+      // console.log("into the useEffect");
+      
     const loadHistoryFromApi = async () => {
       setHistoryLoading(true);
       if (!id || !agentId || !userId) return;
@@ -330,31 +361,18 @@ const AssistantDetails: React.FC = () => {
         for (let idx = 0; idx < historyData.length; idx++) {
           const h = historyData[idx];
 
-          // Prefer stable id fields; fallback keeps list usable
-          const hid = String(h?.id ?? h?.historyId ?? `${Date.now()}_${idx}`);
+          // Use threadId as the unique identifier since that's what we have
+          const hid = h?.threadId || h?.id || h?.historyId || `${Date.now()}_${idx}`;
 
-          // messages can be under messages/messageHistory/history or embedded in prompt (legacy)
-          const msgsApi = normalizeMessages(
-            h?.messages ?? h?.messageHistory ?? h?.history
-          );
-          const msgs =
-            msgsApi && msgsApi.length > 0
-              ? msgsApi
-              : typeof h?.prompt === "string"
-              ? parseLegacyPrompt(h.prompt)
-              : [];
+          // Don't cache messages during initial load - let openHistoryChat handle fetching
+          tmpMap[hid] = [];
 
-          tmpMap[hid] = msgs;
-
-          // title strategy: last user content if possible; else derive from raw prompt
-          let title =
-            msgs.find((m) => m.role === "user")?.content ||
-            (typeof h?.prompt === "string"
-              ? getLastUserMessage(h.prompt)
-              : "") ||
-            "Untitled";
-
-          title = normalizeTitle(title);
+          // Generate title from prompt for display
+          let title = "New Chat";
+          if (typeof h?.prompt === "string") {
+            title = getLastUserMessage(h.prompt);
+          }
+          title = generateChatTitle(title);
 
           const created = safeDateMs(h?.createdAt) - idx; // tiny offset keeps stability
 
@@ -721,10 +739,14 @@ const AssistantDetails: React.FC = () => {
     userIdParam: string,
     agentIdParam: string
   ) => {
+    console.log("into the fetch user history",{userIdParam,agentIdParam});
+    
     const { data } = await axios.get(
       `${BASE_URL}/ai-service/agent/getUserHistory/${userIdParam}/${agentIdParam}`,
       { headers: { ...getAuthHeaders() } }
     );
+    console.log("fetched user history",data);
+  
     return data;
   };
 
@@ -879,77 +901,177 @@ const AssistantDetails: React.FC = () => {
   };
 
   const openHistoryChat = async (hid: string) => {
+    console.log("[openHistoryChat] Opening chat:", hid);
+    
     if (!id) return;
+
     setCurrentChatId(hid);
+    const cachedThreadId = threadIdMap[hid];
 
+    // Fast path: use cached messages
     const cached = historyById[hid];
-    if (cached?.length) {
+    if (cached?.length > 0) {
+      console.log("[openHistoryChat] Using cached messages:", cached.length);
       setMessages(cached);
-      setTimeout(() => {
+      setThreadId(cachedThreadId || null);
+      requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        if (isXs) setSidebarOpen(false); // ✅ close drawer on mobile after select
-      }, 0);
+        if (isXs) setSidebarOpen(false);
+      });
+      return;
+    }
 
+    // Slow path: fetch from API
+    const finalUserId = userId || localStorage.getItem("userId");
+    if (!finalUserId || !agentId) {
+      console.error("[openHistoryChat] Missing credentials");
+      setMessages([]);
+      setThreadId(null);
       return;
     }
 
     try {
-      if (!userId || !agentId) return;
-      const historyData = await fetchUserHistory(userId, agentId);
-      if (Array.isArray(historyData)) {
-        const map: Record<string, ChatMessage[]> = {};
-        for (let i = 0; i < historyData.length; i++) {
-          const h = historyData[i];
-          const _hid = String(h?.id ?? h?.historyId ?? `${Date.now()}_${i}`);
-          map[_hid] = normalizeMessages(
-            h?.messages ?? h?.messageHistory ?? h?.history
-          );
-        }
-        setHistoryById(map);
-        setMessages(map[hid] ?? []);
-      } else {
+      const historyData = await fetchUserHistory(finalUserId, agentId);
+      if (!Array.isArray(historyData)) {
         setMessages([]);
+        return;
       }
-    } catch {
+
+      const historyItem = historyData.find(
+        (h: any) => (h?.threadId || h?.id || h?.historyId) === hid
+      );
+      
+      if (!historyItem) {
+        console.warn("[openHistoryChat] History item not found:", hid);
+        setMessages([]);
+        return;
+      }
+
+      // Extract threadId - prioritize cached, then various API fields
+      console.log("[openHistoryChat] DEBUG - historyItem keys:", Object.keys(historyItem));
+      console.log("[openHistoryChat] DEBUG - cachedThreadId:", cachedThreadId);
+      console.log("[openHistoryChat] DEBUG - historyItem.threadId:", historyItem?.threadId);
+      console.log("[openHistoryChat] DEBUG - historyItem.thread_id:", historyItem?.thread_id);
+      console.log("[openHistoryChat] DEBUG - historyItem.conversationId:", historyItem?.conversationId);
+      
+      const extractedThreadId = cachedThreadId || 
+                              historyItem?.threadId || 
+                              historyItem?.thread_id || 
+                              historyItem?.conversationId ||
+                              historyItem?.data?.threadId;
+
+      console.log("[openHistoryChat] Final ThreadId:", extractedThreadId);
+      console.log("[openHistoryChat] ThreadId type:", typeof extractedThreadId);
+      console.log("[openHistoryChat] ThreadId valid check:", !!(extractedThreadId && String(extractedThreadId).trim() && String(extractedThreadId) !== "null"));
+      
+      let messages: ChatMessage[] = [];
+
+      // Try to fetch from thread API if threadId exists
+      if (extractedThreadId && String(extractedThreadId).trim() && String(extractedThreadId) !== "null") {
+        console.log("[openHistoryChat] ✓ CALLING fetchThreadHistory with:", extractedThreadId);
+        setThreadId(extractedThreadId);
+        
+        try {
+          const threadMessages = await fetchThreadHistory(extractedThreadId);
+          console.log("[openHistoryChat] fetchThreadHistory returned:", threadMessages);
+          if (Array.isArray(threadMessages) && threadMessages.length > 0) {
+            messages = extractQAFromHistory(threadMessages);
+            console.log("[openHistoryChat] Loaded from thread:", messages.length);
+          }
+        } catch (err) {
+          console.error("[openHistoryChat] Thread fetch failed:", err);
+        }
+      } else {
+        console.log("[openHistoryChat] ✗ NOT calling fetchThreadHistory - no valid threadId");
+        setThreadId(null);
+      }
+
+      // Fallback to local messages if thread fetch failed
+      if (messages.length === 0) {
+        messages = normalizeMessages(
+          historyItem?.messages ?? historyItem?.messageHistory ?? historyItem?.history
+        );
+        console.log("[openHistoryChat] Using local messages:", messages.length);
+      }
+
+      // Cache and display
+      setHistoryById(prev => ({ ...prev, [hid]: messages }));
+      setMessages(messages);
+      
+    } catch (err) {
+      console.error("[openHistoryChat] Error:", err);
       setMessages([]);
+      setThreadId(null);
     }
 
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      if (isXs) setSidebarOpen(false); // ✅ close drawer on mobile after fetch path
-    }, 0);
+      if (isXs) setSidebarOpen(false);
+    });
   };
 
   // Keep optional override if you want to support edit-resend
+  // const buildMessageHistory = (
+  //   msgs: ChatMessage[],
+  //   overrideContent?: string
+  // ): APIMessage[] => {
+  //   // start from chat messages, ignore system
+  //   const safe: APIMessage[] = (Array.isArray(msgs) ? msgs : [])
+  //     .filter((m) => m.role === "user" || m.role === "assistant")
+  //     .map((m) => ({
+  //       role: m.role === "assistant" ? "assistant" : ("user" as APIRole),
+  //       content: m.content,
+  //     }));
+
+  //   // For edit, override the last user content
+  //   if (overrideContent) {
+  //     const lastUserIdx = [...safe]
+  //       .reverse()
+  //       .findIndex((m) => m.role === "user");
+  //     if (lastUserIdx >= 0) {
+  //       const realIdx = safe.length - 1 - lastUserIdx;
+  //       safe[realIdx] = { ...safe[realIdx], content: overrideContent };
+  //     } else {
+  //       safe.push({ role: "user", content: overrideContent });
+  //     }
+  //   }
+
+  //   return safe;
+  // };
+
   const buildMessageHistory = (
     msgs: ChatMessage[],
     overrideContent?: string
   ): APIMessage[] => {
-    // start from chat messages, ignore system
-    const safe: APIMessage[] = (Array.isArray(msgs) ? msgs : [])
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({
-        role: m.role === "assistant" ? "assistant" : ("user" as APIRole),
-        content: m.content,
-      }));
+    // We only want to send the LATEST user question to agentChat1.
+    // Conversation context will be handled by `threadId` on the backend.
 
-    // For edit, override the last user content
-    if (overrideContent) {
-      const lastUserIdx = [...safe]
+    let content = overrideContent?.trim();
+
+    // If no override given, pick the last user message from msgs
+    if (!content) {
+      const lastUser = [...(msgs || [])]
         .reverse()
-        .findIndex((m) => m.role === "user");
-      if (lastUserIdx >= 0) {
-        const realIdx = safe.length - 1 - lastUserIdx;
-        safe[realIdx] = { ...safe[realIdx], content: overrideContent };
-      } else {
-        safe.push({ role: "user", content: overrideContent });
-      }
+        .find((m) => m.role === "user");
+
+      content = lastUser?.content?.trim() || "";
     }
 
-    return safe;
+    // If still nothing, send empty history
+    if (!content) {
+      return [];
+    }
+
+    return [
+      {
+        role: "user" as APIRole,
+        content,
+      },
+    ];
   };
 
-  // ✅ agentChat NEVER receives threadId
+
+  // ✅ agentChat1: Pass threadId only for subsequent messages (not on first message)
   const postAgentChat = async (
     agentIdParam: string,
     userIdParam: string | null,
@@ -961,18 +1083,121 @@ const AssistantDetails: React.FC = () => {
     const auth = getAuthHeaders();
     if (auth.Authorization) headers.set("Authorization", auth.Authorization);
 
-    const payload = {
+    const payload: any = {
       agentId: agentIdParam,
       userId: userIdParam,
       messageHistory,
     };
 
+    // Only include threadId if it exists (not on first message)
+    if (threadId) {
+      payload.threadId = threadId;
+    }
+
     const { data } = await axios.post(
-      `${BASE_URL}/ai-service/agent/agentChat`,
+      `${BASE_URL}/ai-service/agent/agentChat1`,
       payload,
       { headers }
     );
     return data;
+  };
+
+  // ✅ Fetch conversation history from thread
+  const fetchThreadHistory = async (threadIdParam: string) => {
+    // console.log("[fetchThreadHistory] ▶ STARTING with threadId:", threadIdParam);
+    
+    // Validate threadId
+    if (!threadIdParam || threadIdParam.trim() === "" || String(threadIdParam).toLowerCase() === "null") {
+      // console.error("[fetchThreadHistory] ✗ Invalid/null threadId provided:", threadIdParam);
+      return null;
+    }
+    
+    try {
+      const headers = new AxiosHeaders();
+      headers.set("Accept", "application/json");
+      headers.set("Content-Type", "application/json");
+      const auth = getAuthHeaders();
+      if (auth.Authorization) {
+        console.log("[fetchThreadHistory] ✓ Authorization header set");
+        headers.set("Authorization", auth.Authorization);
+      } else {
+        console.warn("[fetchThreadHistory] ⚠ No authorization header available");
+      }
+      
+      const url = `${BASE_URL}/ai-service/agent/getconversations/${threadIdParam}/messages`;
+      console.log("[fetchThreadHistory] 🌐 GET:", url);
+      console.log("[fetchThreadHistory] Headers set:", { Accept: "application/json", ContentType: "application/json", hasAuth: !!auth.Authorization });
+      
+      const response = await axios.get(url, { headers });
+      console.log("[fetchThreadHistory] ✓ Response status:", response.status);
+      console.log("[fetchThreadHistory] Response data type:", typeof response.data);
+      console.log("[fetchThreadHistory] Response data:", response.data);
+      
+      const data = response.data;
+    
+      // Handle different response shapes
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        if (Array.isArray(data.messages)) {
+          console.log("[fetchThreadHistory] ✓ Found data.messages array:", data.messages.length, "items");
+          return data.messages;
+        }
+        if (Array.isArray(data.data)) {
+          console.log("[fetchThreadHistory] ✓ Found data.data array:", data.data.length, "items");
+          return data.data;
+        }
+        if (Array.isArray(data.history)) {
+          console.log("[fetchThreadHistory] ✓ Found data.history array:", data.history.length, "items");
+          return data.history;
+        }
+      }
+      
+      // If response is already an array
+      if (Array.isArray(data)) {
+        console.log("[fetchThreadHistory] ✓ Response is array:", data.length, "items");
+        return data;
+      }
+      
+      console.warn("[fetchThreadHistory] ⚠ Unexpected response shape. Object keys:", Object.keys(data || {}));
+      return null;
+    } catch (error: any) {
+      console.error("[fetchThreadHistory] ✗ API call failed");
+      if (error.response) {
+        console.error("[fetchThreadHistory] Status:", error.response.status);
+        console.error("[fetchThreadHistory] Data:", error.response.data);
+      } else if (error.request) {
+        console.error("[fetchThreadHistory] No response received");
+      } else {
+        console.error("[fetchThreadHistory] Error message:", error.message);
+      }
+      return null;
+    }
+  };
+
+  // ✅ Extract user questions and assistant answers from OpenAI format history
+  const extractQAFromHistory = (history: any[]): ChatMessage[] => {
+    if (!Array.isArray(history)) return [];
+    return history
+      .filter((msg: any) => msg?.role === "user" || msg?.role === "assistant")
+      .map((msg: any) => {
+        let content = "";
+        
+        // Handle OpenAI thread message format
+        if (Array.isArray(msg.content)) {
+          // Extract text from content array
+          const textContent = msg.content.find((c: any) => c.type === "text");
+          content = textContent?.text?.value || "";
+        } else {
+          // Handle simple string content
+          content = String(msg.content || msg.text || "");
+        }
+        
+        return {
+          role: msg.role as "user" | "assistant",
+          content: content.trim(),
+        };
+      })
+      .filter((msg) => msg.content.length > 0)
+      .reverse(); // Reverse to show chronological order (oldest first)
   };
 
   const sendMessage = useCallback(
@@ -1003,15 +1228,7 @@ const AssistantDetails: React.FC = () => {
         if (!prompt) setInput("");
       }
 
-      if (currentChatId) {
-        setHistory((prev) =>
-          prev.map((h) =>
-            h.id === currentChatId
-              ? { ...h, title: generateChatTitle(messageContent) }
-              : h
-          )
-        );
-      }
+      // Don't update title for existing chats - keep original title from first message
 
       isStopped.current = false;
       setLoading(true);
@@ -1036,31 +1253,88 @@ const AssistantDetails: React.FC = () => {
         const apiHistory = buildMessageHistory(historyMsgs);
 
         const resp = await postAgentChat(agentId!, userId, apiHistory);
+        
+        let answer = "";
+        let newThreadId: string | undefined;
+        if (typeof resp === "string") {
+          answer = resp;
+        } else if (resp && typeof resp === "object") {
+          answer = resp.assistant_reply ?? resp.answer ?? resp.content ?? resp.text ?? "";
+          newThreadId = resp.thread_id ?? resp.threadId ?? resp.data?.threadId;
+        }
+        
+        // Create new chat if this is the first message
         if (!currentChatId) {
-          const newId = `${Date.now()}`;
+          const newId = newThreadId || `${Date.now()}`; // Use threadId as ID if available
           const newTitle = generateChatTitle(messageContent);
           setHistory((prev) => [
             { id: newId, title: newTitle, createdAt: Date.now() },
             ...prev,
           ]);
           setCurrentChatId(newId);
-          if (!isXs) setSidebarOpen(true); // <-- guard
+          if (!isXs) setSidebarOpen(true);
+          
+          // Store threadId for new chat
+          if (newThreadId) {
+            setThreadIdMap((prev) => ({
+              ...prev,
+              [newId]: newThreadId as string,
+            }));
+          }
+        } else if (newThreadId) {
+          // Update threadId for existing chat
+          setThreadIdMap((prev) => ({
+            ...prev,
+            [currentChatId]: newThreadId as string,
+          }));
         }
-
-        let answer = "";
-        if (typeof resp === "string") {
-          answer = resp;
-        } else if (resp && typeof resp === "object") {
-          answer = resp.answer ?? resp.content ?? resp.text ?? "";
+        
+        // Refresh history to ensure new chats appear in sidebar
+        if (newThreadId && userId && agentId) {
+          setTimeout(async () => {
+            try {
+              const historyData = await fetchUserHistory(userId, agentId);
+              if (Array.isArray(historyData)) {
+                const rows = historyData.map((h: any, idx: number) => {
+                  const hid = h?.threadId || h?.id || h?.historyId || `${Date.now()}_${idx}`;
+                  let title = "New Chat";
+                  if (typeof h?.prompt === "string") {
+                    title = getLastUserMessage(h.prompt);
+                  }
+                  title = generateChatTitle(title);
+                  return { id: hid, title, createdAt: safeDateMs(h?.createdAt) - idx };
+                }).sort((a, b) => b.createdAt - a.createdAt);
+                setHistory(rows);
+              }
+            } catch (err) {
+              console.error("Failed to refresh history:", err);
+            }
+          }, 1000); // Small delay to ensure backend has processed the message
+        }
+        
+        // Update threadId state
+        if (newThreadId) {
+          console.log("[sendMessage] Setting threadId:", newThreadId);
+          setThreadId(newThreadId);
         }
         if (!isStopped.current) {
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: answer },
-          ]);
+          const updatedMessages = [
+            ...historyMsgs,
+            { role: "assistant" as const, content: answer },
+          ];
+          setMessages(updatedMessages);
+          
+          // ✅ Save current messages to historyById for this chat
+          if (currentChatId) {
+            console.log("[sendMessage] Saving to historyById for chat:", currentChatId);
+            setHistoryById((prev) => ({
+              ...prev,
+              [currentChatId]: updatedMessages,
+            }));
+          }
         }
         if (!isXs && !sidebarOpen && history.length > 0) {
-          setSidebarOpen(true); // <-- guard
+          setSidebarOpen(true);
         }
       } catch (e: any) {
         message.error(e?.message || "Failed to contact assistant.");
@@ -1145,16 +1419,27 @@ const AssistantDetails: React.FC = () => {
       if (typeof resp === "string") {
         answer = resp;
       } else if (resp && typeof resp === "object") {
-        answer = resp.answer ?? resp.content ?? resp.text ?? "";
-        newThreadId = resp.threadId ?? resp.data?.threadId;
+        // Handle new API response format with assistant_reply and thread_id
+        answer = resp.assistant_reply ?? resp.answer ?? resp.content ?? resp.text ?? "";
+        // Extract threadId from response - try multiple possible field names
+        newThreadId = resp.thread_id ?? resp.threadId ?? resp.thread_id ?? resp.data?.threadId ?? resp.data?.thread_id;
       }
       if (newThreadId) setThreadId(newThreadId);
 
       if (!isStopped.current) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: answer },
-        ]);
+        const updatedMessages = [
+          ...newMsgs,
+          { role: "assistant" as const, content: answer },
+        ];
+        setMessages(updatedMessages);
+        
+        // ✅ Save updated messages to historyById for this chat
+        if (currentChatId) {
+          setHistoryById((prev) => ({
+            ...prev,
+            [currentChatId]: updatedMessages,
+          }));
+        }
       }
       // FIXED: Auto-open left sidebar after successful prompt
       // After:
@@ -1221,11 +1506,9 @@ const AssistantDetails: React.FC = () => {
     );
   };
 
-  /** ---------------- Voice ---------------- */
 
   const keepListeningRef = useRef(false);
 
-  /** ---------------- Voice ---------------- */
   // const handleToggleVoice = () => {
   const handleToggleVoice = (): void => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1438,21 +1721,33 @@ const AssistantDetails: React.FC = () => {
   }, []);
 
   const handleNewChat = () => {
-    const newId = `${Date.now()}`;
+    // Clear current chat state
     setMessages([]);
     setInput("");
-    setCurrentChatId(newId);
-
-    // 👇 reset files routing so next prompt goes to agentChat
+    setCurrentChatId(null);
     setThreadId(null);
     setThreadSource(null);
     setSelectedFiles([]);
-    if (isXs) setSidebarOpen(false); // ✅ close on mobile
+    
+    console.log("[handleNewChat] Started new chat");
+    if (isXs) setSidebarOpen(false);
   };
 
   const generateChatTitle = (text: string) => {
-    if (!text) return `New Chat`;
-    return text.length > 40 ? text.slice(0, 40) + "…" : text;
+    if (!text || !text.trim()) return "New Chat";
+    
+    // Clean the text
+    let title = text.trim();
+    
+    // Capitalize first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+    
+    // Truncate if too long but preserve the beginning
+    if (title.length > 60) {
+      title = title.slice(0, 57) + "...";
+    }
+    
+    return title || "New Chat";
   };
   const handlePromptClick = async (prompt: string) => {
     if (!prompt.trim() || loading || !id) return;
@@ -1558,7 +1853,7 @@ const AssistantDetails: React.FC = () => {
 
     // Fallback: copy to clipboard
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(cleanContent(text));
       message.success("Content copied to clipboard!");
     } catch {
       message.error("Unable to copy to clipboard.");
@@ -1611,7 +1906,7 @@ This AI Agent is created on ASKOXY.AI — a platform where anyone can build AI A
 ${url}`.trim();
 
     setAgentShareText(staticMessage);
-    setShowAgentShareModal(true); // open modal
+    setShowAgentShareModal(true); 
   };
 
   // Confirm / cancel from modal
@@ -1625,6 +1920,7 @@ ${url}`.trim();
   };
 
   const filteredHistory = useMemo(() => {
+    
     if (!historySearch.trim()) return history;
     const searchLower = historySearch.toLowerCase();
     return history.filter((h) => h.title.toLowerCase().includes(searchLower));
@@ -2077,7 +2373,7 @@ ${url}`.trim();
                 </svg>
                 {(!isCollapsed || isXs) && <span>Explore Agents</span>}
               </button>
-             <button
+              <button
                 onClick={() => (window.location.href = "/all-ai-stores")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
@@ -2088,7 +2384,7 @@ ${url}`.trim();
                 {(!isCollapsed || isXs) && <span>Explore AI Stores</span>}
               </button>{" "}
               <button
-                onClick={() => (window.location.href = "/main/usercreateaistore")}
+                onClick={() => (window.location.href = "/usercreateaistore")}
                 className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   isCollapsed && !isXs ? "justify-center" : "justify-start"
                 }`}
@@ -2652,7 +2948,10 @@ ${url}`.trim();
                             ) : (
                               <>
                                 <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative group">
-                                  <MarkdownRenderer content={msg.content} />
+                                  <MarkdownRenderer
+                                    content={cleanContent(msg.content)}
+                                  />
+
                                   <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                     <button
                                       onClick={() => {
@@ -2766,12 +3065,16 @@ ${url}`.trim();
                             </div>
                             <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
                               <div className="items-start gap-2 flex-1">
-                                <MarkdownRenderer content={msg.content} />
+                                <MarkdownRenderer
+                                  content={cleanContent(msg.content)}
+                                />
                               </div>
                               <div className="flex justify-end gap-2 mt-2">
                                 <button
                                   onClick={() => {
-                                    navigator.clipboard.writeText(msg.content);
+                                    navigator.clipboard.writeText(
+                                      cleanContent(msg.content)
+                                    );
                                     message.success("Copied to clipboard");
                                   }}
                                   className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
@@ -2811,7 +3114,10 @@ ${url}`.trim();
 
                                 <button
                                   onClick={() =>
-                                    handleReadAloud(msg.content, idx)
+                                    handleReadAloud(
+                                      cleanContent(msg.content),
+                                      idx
+                                    )
                                   }
                                   className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
                                   title={
@@ -3047,9 +3353,7 @@ ${url}`.trim();
                         rows={1}
                         className="w-full bg-transparent text-[16px] focus:outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-32 overflow-y-auto p-1 resize-none"
                         placeholder={
-                          loading
-                            ? "AI is responding..."
-                            : "Ask anything..."
+                          loading ? "AI is responding..." : "Ask anything..."
                         }
                         value={input}
                         onChange={(e) => !loading && setInput(e.target.value)}

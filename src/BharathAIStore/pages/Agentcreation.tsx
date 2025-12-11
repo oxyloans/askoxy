@@ -824,6 +824,14 @@ const Agentcreation: React.FC = () => {
   const creatorNameRef = useRef<HTMLInputElement | null>(null);
   const [creatorNameNudge, setCreatorNameNudge] = useState(false);
 
+  // Update Creator Name from profile data
+  useEffect(() => {
+    const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+    if (fullName) {
+      setAgentUserName(fullName);
+    }
+  }, [firstName, lastName]);
+
   // When 3 are selected but Creator Name empty → highlight + focus + message
   useEffect(() => {
     if (!roleResolved || !goalResolved || !purposeResolved) return;
@@ -908,6 +916,10 @@ const Agentcreation: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [genLoading, setGenLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Responsive (page width locked to mobile feel)
   const [isMobile, setIsMobile] = useState<boolean>(
@@ -1107,6 +1119,8 @@ const Agentcreation: React.FC = () => {
           customerId: customerId || "",
         };
 
+        setFirstName(profileData.userFirstName);
+        setLastName(profileData.userLastName);
         setAgentUserName(
           `${profileData.userFirstName || ""} ${
             profileData.userLastName || ""
@@ -1244,11 +1258,6 @@ const Agentcreation: React.FC = () => {
         setInitialFirstName(payload.userFirstName);
         setInitialLastName(payload.userLastName || "");
         setInitialEmail(payload.customerEmail);
-
-        // 🔄 Update Creator Name from profile
-        setAgentUserName(
-          `${payload.userFirstName || ""} ${payload.userLastName || ""}`.trim()
-        );
 
         // (Optional) keep in localStorage for future
         try {
@@ -1585,12 +1594,15 @@ const Agentcreation: React.FC = () => {
       notification.success({
         message: "Card Data Updated",
         description:
-          "Your business card details have been updated successfully.",
+          "Success! Your business card details have been updated successfully."
+
       });
 
-      setCardData(cardDataForm);
+      // Populate form fields with the saved/edited data
+      setAgentUserName(data.fullName || cardDataForm.fullName || "");
       setIsEditingCardData(false);
       setCardDataModalOpen(false);
+      suggestAgentName()
 
       // Reset file & preview after successful update
       // setBusinessCardFile(null);
@@ -2104,6 +2116,7 @@ const Agentcreation: React.FC = () => {
           },
         },
         onOk: () => setAgentName(suggestion),
+        onCancel: () => setAgentName(""),
       });
     } catch (e: any) {
       message.error(
@@ -2132,6 +2145,7 @@ const Agentcreation: React.FC = () => {
   useEffect(() => {
     if (!roleDeb || !goalDeb || !purposeDeb) return;
     if (!agentUserName.trim()) return; //  ⛔ no auto hit if Creator Name empty
+    if (creationMode === "CardBased") return; // ⛔ no auto suggestion for card based mode
 
     const combo = `${roleDeb}__${goalDeb}__${purposeDeb}`;
     if (combo === lastComboRef.current) return; // same combo → ignore
@@ -2147,7 +2161,7 @@ const Agentcreation: React.FC = () => {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roleDeb, goalDeb, purposeDeb, isBusinessCardUsed]); // use ONLY debounced deps
+  }, [roleDeb, goalDeb, purposeDeb, isBusinessCardUsed, creationMode]); // use ONLY debounced deps
 
   const parseSmart = async (res: Response) => {
     const ct = (res.headers.get("content-type") || "").toLowerCase();
@@ -2653,11 +2667,11 @@ const Agentcreation: React.FC = () => {
 
       // 🧭 Default navigation (no job context → normal agent creation flow)
       navigate("/main/bharath-aistore/agents");
+      
+      // Don't throw error here, let the success modal handle the flow
     } catch (e: any) {
       console.error(e);
-      message.error(e?.message || "Failed to publish agent. Please try again.");
-    } finally {
-      setLoading(false);
+      throw e; // Re-throw to be caught by handlePublishConfirm
     }
   }, [
     agentName,
@@ -2700,43 +2714,58 @@ const Agentcreation: React.FC = () => {
       return;
     }
 
-    Modal.confirm({
-      title: "Publish this Agent?",
-      content: (
-        <div>
-          <div style={{ marginBottom: 8 }}>
-            <b>{agentName || "Untitled Agent"}</b>
-          </div>
-          <div>
-            <Tag color="blue">{roleResolved || "—"}</Tag>
-            <Tag color="purple">{goalResolved || "—"}</Tag>
-            <Tag color="green">{purposeResolved || "—"}</Tag>
-            <Tag color={view === "Public" ? "geekblue" : "default"}>
-              {view === "Public" ? "Public use" : "Personal use"}
-            </Tag>
-          </div>
-          <div style={{ marginTop: 8 }}>{previewDescription}</div>
-        </div>
-      ),
-      okText: "Yes, Publish",
-      cancelText: "No",
-      onOk: async () => {
-        Modal.destroyAll(); // close the "Publish this Agent?" modal immediately
-        await publishNow(); // then run the publish + upload flow
-      },
-    });
+    setPublishModalOpen(true);
   }, [
     description,
-    canPreview,
     instructions,
-    agentName,
-    roleResolved,
-    goalResolved,
-    purposeResolved,
-    view,
-    previewDescription,
-    publishNow,
   ]);
+
+  const handlePublishConfirm = async () => {
+    setPublishModalOpen(false);
+    setLoading(true);
+    
+    try {
+      await publishNow();
+      setLoading(false)
+      setSuccessModalOpen(true);
+    } catch (error: any) {
+      setErrorMessage(error?.message || "Failed to publish agent. Please try again.");
+      setErrorModalOpen(true);
+      setLoading(false)
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePublishCancel = () => {
+    setPublishModalOpen(false);
+    setLoading(false);
+  };
+
+  const handleSuccessOk = () => {
+    setSuccessModalOpen(false);
+    // Clear all fields
+    setAgentName("");
+    setDescription("");
+    setInstructions("");
+    setConStarter1("");
+    setConStarter2("");
+    setRoleSelect("");
+    setGoalSelect("");
+    setPurposeSelect("");
+    setRoleOther("");
+    setGoalOther("");
+    setPurposeOther("");
+    setView("Private");
+    setDescTouched(false);
+    // Reload window
+    window.location.reload();
+  };
+
+  const handleErrorOk = () => {
+    setErrorModalOpen(false);
+    setErrorMessage("");
+  };
 
   const handleInstrCancel = () => {
     setEditModalOpen(false);
@@ -3880,9 +3909,9 @@ const Agentcreation: React.FC = () => {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>
+                      {/* <span>
                         Creator Name will be used in AI suggested Agent Name.
-                      </span>
+                      </span> */}
                       <span>{agentUserName.length}/25</span>
                     </div>
                   </div>
@@ -5815,6 +5844,167 @@ const Agentcreation: React.FC = () => {
               )}
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Publish Confirmation Modal */}
+      <Modal
+        open={publishModalOpen}
+        onCancel={handlePublishCancel}
+        footer={null}
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 20 }}>🚀</span>
+            <span style={{ fontWeight: 800 }}>Publish this Agent</span>
+          </div>
+        }
+        centered
+        closable={false}
+        maskClosable={false}
+      >
+        <div style={{ padding: "10px 0" }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 8, fontSize: 16, fontWeight: 600 }}>
+              <b>{agentName || "Untitled Agent"}</b>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+              <Tag color="blue">{roleResolved || "—"}</Tag>
+              <Tag color="purple">{goalResolved || "—"}</Tag>
+              <Tag color="green">{purposeResolved || "—"}</Tag>
+              <Tag color={view === "Public" ? "geekblue" : "default"}>
+                {view === "Public" ? "Public use" : "Personal use"}
+              </Tag>
+            </div>
+            <div style={{ color: "#64748B", lineHeight: 1.5 }}>{previewDescription}</div>
+          </div>
+          
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <p style={{ margin: 0, fontSize: 15, color: "#374151" }}>
+              Are you sure you want to publish this agent?
+            </p>
+          </div>
+
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <button
+              onClick={handlePublishCancel}
+              style={{
+                padding: "10px 24px",
+                borderRadius: 999,
+                border: `1px solid ${BORDER}`,
+                background: "#FFFFFF",
+                color: "#475569",
+                fontWeight: 800,
+                fontSize: 15,
+                cursor: "pointer",
+                minWidth: 100,
+              }}
+            >
+              No
+            </button>
+            <button
+              onClick={handlePublishConfirm}
+              disabled={loading}
+              style={{
+                padding: "10px 24px",
+                borderRadius: 999,
+                border: "none",
+                background: "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+                color: "#FFFFFF",
+                fontWeight: 900,
+                fontSize: 15,
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.85 : 1,
+                minWidth: 100,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              {loading ? (
+                <>
+                  <Spin size="small" />
+                  Publishing…
+                </>
+              ) : (
+                "Yes, Publish"
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        open={successModalOpen}
+        onCancel={handleSuccessOk}
+        footer={null}
+        title={null}
+        centered
+        closable={false}
+        maskClosable={false}
+      >
+        <div style={{ textAlign: "center", padding: "20px 10px" }}>
+          <div style={{ fontSize: 60, marginBottom: 16 }}>✅</div>
+          <h3 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 800, color: "#059669" }}>
+            Agent Created Successfully!
+          </h3>
+          <p style={{ margin: "0 0 24px 0", color: "#64748B", lineHeight: 1.5 }}>
+            Your AI agent has been published and is ready to use.
+          </p>
+          <button
+            onClick={handleSuccessOk}
+            style={{
+              padding: "12px 32px",
+              borderRadius: 999,
+              border: "none",
+              background: "linear-gradient(90deg, #059669 0%, #10B981 100%)",
+              color: "#FFFFFF",
+              fontWeight: 900,
+              fontSize: 16,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(5,150,105,0.3)",
+            }}
+          >
+            OK
+          </button>
+        </div>
+      </Modal>
+
+      {/* Error Modal */}
+      <Modal
+        open={errorModalOpen}
+        onCancel={handleErrorOk}
+        footer={null}
+        title={null}
+        centered
+        closable={false}
+        maskClosable={false}
+      >
+        <div style={{ textAlign: "center", padding: "20px 10px" }}>
+          <div style={{ fontSize: 60, marginBottom: 16 }}>❌</div>
+          <h3 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 800, color: "#DC2626" }}>
+            Publishing Failed
+          </h3>
+          <p style={{ margin: "0 0 24px 0", color: "#64748B", lineHeight: 1.5 }}>
+            {errorMessage || "Something went wrong while publishing your agent. Please try again."}
+          </p>
+          <button
+            onClick={handleErrorOk}
+            style={{
+              padding: "12px 32px",
+              borderRadius: 999,
+              border: "none",
+              background: "linear-gradient(90deg, #DC2626 0%, #EF4444 100%)",
+              color: "#FFFFFF",
+              fontWeight: 900,
+              fontSize: 16,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(220,38,38,0.3)",
+            }}
+          >
+            OK
+          </button>
         </div>
       </Modal>
 
