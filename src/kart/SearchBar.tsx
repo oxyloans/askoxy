@@ -50,11 +50,11 @@ interface SearchItem {
 }
 
 const defaultSuggestions = [
-  "Low GI",
-  "Sonamasoori",
+  "Sonamasoori Rice",
+  "HMT Rice",
   "Brown Rice",
-  "Kolam Rice",
-  "HMT",
+  "P2P Lending Agent",
+  "Gold Agents",
 ];
 
 const SearchBar = () => {
@@ -94,20 +94,23 @@ const SearchBar = () => {
     }
   }, [debouncedValue]);
 
-  // ⭐ NEW: AUTO-NAVIGATE BACK TO HOME WHEN SEARCH CLEARS (BACKSPACE/DELETE) ON SEARCH PAGE
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (
-        searchValue.trim() === "" &&
-        location.pathname === "/main/search-main"
-      ) {
-        setIsFocused(false);
-        setSearchResults([]);
-        navigate("/main/dashboard/home", { state: null }); // Clear state to prevent pre-fill loops
-      }
-    }, 500); // Slight debounce to avoid mid-typing triggers
-    return () => clearTimeout(timer);
-  }, [searchValue, location.pathname]);
+ useEffect(() => {
+   // Only run this auto-back logic when the SearchBar itself is active
+   if (!isFocused) return;
+
+   const timer = setTimeout(() => {
+     if (
+       searchValue.trim() === "" &&
+       location.pathname === "/main/search-main"
+     ) {
+       setIsFocused(false);
+       setSearchResults([]);
+       navigate("/main/dashboard/home", { state: null });
+     }
+   }, 500);
+
+   return () => clearTimeout(timer);
+ }, [searchValue, location.pathname, isFocused]);
 
   useEffect(() => {
     if (isFocused && searchValue.trim() === "") {

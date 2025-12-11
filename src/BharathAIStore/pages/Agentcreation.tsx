@@ -3054,145 +3054,174 @@ const Agentcreation: React.FC = () => {
       )}
 
       {/* Two Card Selection */}
-      {!creationMode && (
-        <div
-          style={{
-            width: "calc(100% - 40px)",
-            maxWidth: 700,
-            margin: "0 auto",
-            padding: "0 20px 40px",
-          }}
-        >
-          <p
+      <>
+       
+        <style>
+          {`
+    
+      .two-card-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+
+      
+      @media (min-width: 640px) {
+        .two-card-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    `}
+    </style>
+
+        {/* Two Card Selection */}
+        {!creationMode && (
+          <div
             style={{
-              fontSize: 16,
-              color: "#475569",
-              marginBottom: 24,
-              textAlign: "center",
+              width: "calc(100% - 40px)",
+              maxWidth: 700,
+              margin: "0 auto",
+              padding: "0 20px 40px",
             }}
           >
-            Choose how to create your agent:
-          </p>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 30 }}
-          >
-            <div
-              onClick={() => setCreationMode("Professional")}
+            <p
               style={{
-                padding: "32px 24px",
-                borderRadius: 16,
-                border: "2px solid #E7E6F3",
-                background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow =
-                  "0 8px 24px rgba(109,40,217,0.15)";
-                e.currentTarget.style.borderColor = "#6D28D9";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)";
-                e.currentTarget.style.borderColor = "#E7E6F3";
+                fontSize: 16,
+                color: "#475569",
+                marginBottom: 24,
+                textAlign: "center",
               }}
             >
-              <img
-                src={SRJImage}
-                alt="Role Based"
+              Choose how to create your agent:
+            </p>
+
+          
+            <div className="two-card-grid">
+              {/* ROLE BASED CARD */}
+              <div
+                onClick={() => setCreationMode("Professional")}
                 style={{
-                  width: "100%",
-                  height: 120,
-                  objectFit: "cover",
-                  borderRadius: 12,
-                  marginBottom: 16,
+                  padding: "32px 24px",
+                  borderRadius: 16,
+                  border: "2px solid #E7E6F3",
+                  background:
+                    "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                 }}
-              />
-              <h3
-                style={{
-                  margin: "0 0 8px 0",
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "#0F172A",
-                  textAlign: "center",
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 24px rgba(109,40,217,0.15)";
+                  e.currentTarget.style.borderColor = "#6D28D9";
                 }}
-              >
-                Role Based
-              </h3>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 14,
-                  color: "#64748B",
-                  textAlign: "center",
-                  lineHeight: 1.5,
-                }}
-              >
-                Select your role and create a customized AI agent
-              </p>
-            </div>
-            <div
-              onClick={() => setCreationMode("CardBased")}
-              style={{
-                padding: "32px 24px",
-                borderRadius: 16,
-                border: "2px solid #E7E6F3",
-                background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow =
-                  "0 8px 24px rgba(109,40,217,0.15)";
-                e.currentTarget.style.borderColor = "#6D28D9";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)";
-                e.currentTarget.style.borderColor = "#E7E6F3";
-              }}
-            >
-              <img
-                src={CardBased}
-                alt="Card Based"
-                style={{
-                  width: "100%",
-                  height: 120,
-                  objectFit: "cover",
-                  borderRadius: 12,
-                  marginBottom: 16,
-                }}
-              />
-              <h3
-                style={{
-                  margin: "0 0 8px 0",
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "#0F172A",
-                  textAlign: "center",
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(0,0,0,0.05)";
+                  e.currentTarget.style.borderColor = "#E7E6F3";
                 }}
               >
-                Card Based
-              </h3>
-              <p
+                <img
+                  src={SRJImage}
+                  alt="Role Based"
+                  style={{
+                    width: "100%",
+                    height: 120,
+                    objectFit: "cover",
+                    borderRadius: 12,
+                    marginBottom: 16,
+                  }}
+                />
+                <h3
+                  style={{
+                    margin: "0 0 8px 0",
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: "#0F172A",
+                    textAlign: "center",
+                  }}
+                >
+                  Role Based
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 14,
+                    color: "#64748B",
+                    textAlign: "center",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Select your role and create a customized AI agent
+                </p>
+              </div>
+
+              {/* CARD BASED */}
+              <div
+                onClick={() => setCreationMode("CardBased")}
                 style={{
-                  margin: 0,
-                  fontSize: 14,
-                  color: "#64748B",
-                  textAlign: "center",
-                  lineHeight: 1.5,
+                  padding: "32px 24px",
+                  borderRadius: 16,
+                  border: "2px solid #E7E6F3",
+                  background:
+                    "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 24px rgba(109,40,217,0.15)";
+                  e.currentTarget.style.borderColor = "#6D28D9";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(0,0,0,0.05)";
+                  e.currentTarget.style.borderColor = "#E7E6F3";
                 }}
               >
-                Upload your business card and let AI do the work
-              </p>
+                <img
+                  src={CardBased}
+                  alt="Card Based"
+                  style={{
+                    width: "100%",
+                    height: 120,
+                    objectFit: "cover",
+                    borderRadius: 12,
+                    marginBottom: 16,
+                  }}
+                />
+                <h3
+                  style={{
+                    margin: "0 0 8px 0",
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: "#0F172A",
+                    textAlign: "center",
+                  }}
+                >
+                  Card Based
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 14,
+                    color: "#64748B",
+                    textAlign: "center",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Upload your business card and let AI do the work
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </>
 
       {/* Form sections */}
       {(creationMode === "Professional" || creationMode === "CardBased") && (
@@ -5867,7 +5896,14 @@ const Agentcreation: React.FC = () => {
             <div style={{ marginBottom: 8, fontSize: 16, fontWeight: 600 }}>
               <b>{agentName || "Untitled Agent"}</b>
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 6,
+                flexWrap: "wrap",
+                marginBottom: 12,
+              }}
+            >
               <Tag color="blue">{roleResolved || "—"}</Tag>
               <Tag color="purple">{goalResolved || "—"}</Tag>
               <Tag color="green">{purposeResolved || "—"}</Tag>
@@ -5875,9 +5911,11 @@ const Agentcreation: React.FC = () => {
                 {view === "Public" ? "Public use" : "Personal use"}
               </Tag>
             </div>
-            <div style={{ color: "#64748B", lineHeight: 1.5 }}>{previewDescription}</div>
+            <div style={{ color: "#64748B", lineHeight: 1.5 }}>
+              {previewDescription}
+            </div>
           </div>
-          
+
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <p style={{ margin: 0, fontSize: 15, color: "#374151" }}>
               Are you sure you want to publish this agent?
@@ -5908,7 +5946,8 @@ const Agentcreation: React.FC = () => {
                 padding: "10px 24px",
                 borderRadius: 999,
                 border: "none",
-                background: "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+                background:
+                  "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
                 color: "#FFFFFF",
                 fontWeight: 900,
                 fontSize: 15,
@@ -5946,10 +5985,19 @@ const Agentcreation: React.FC = () => {
       >
         <div style={{ textAlign: "center", padding: "20px 10px" }}>
           <div style={{ fontSize: 60, marginBottom: 16 }}>✅</div>
-          <h3 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 800, color: "#059669" }}>
+          <h3
+            style={{
+              margin: "0 0 12px 0",
+              fontSize: 20,
+              fontWeight: 800,
+              color: "#059669",
+            }}
+          >
             Agent Created Successfully!
           </h3>
-          <p style={{ margin: "0 0 24px 0", color: "#64748B", lineHeight: 1.5 }}>
+          <p
+            style={{ margin: "0 0 24px 0", color: "#64748B", lineHeight: 1.5 }}
+          >
             Your AI agent has been published and is ready to use.
           </p>
           <button
@@ -5983,11 +6031,21 @@ const Agentcreation: React.FC = () => {
       >
         <div style={{ textAlign: "center", padding: "20px 10px" }}>
           <div style={{ fontSize: 60, marginBottom: 16 }}>❌</div>
-          <h3 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 800, color: "#DC2626" }}>
+          <h3
+            style={{
+              margin: "0 0 12px 0",
+              fontSize: 20,
+              fontWeight: 800,
+              color: "#DC2626",
+            }}
+          >
             Publishing Failed
           </h3>
-          <p style={{ margin: "0 0 24px 0", color: "#64748B", lineHeight: 1.5 }}>
-            {errorMessage || "Something went wrong while publishing your agent. Please try again."}
+          <p
+            style={{ margin: "0 0 24px 0", color: "#64748B", lineHeight: 1.5 }}
+          >
+            {errorMessage ||
+              "Something went wrong while publishing your agent. Please try again."}
           </p>
           <button
             onClick={handleErrorOk}

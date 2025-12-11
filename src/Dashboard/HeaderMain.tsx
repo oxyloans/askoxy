@@ -1,7 +1,13 @@
 // HeaderMain.tsx
 import React, { useEffect, useState, useContext } from "react";
 import { X } from "lucide-react";
-import { FaBars, FaSearch,FaUserCircle, FaTimes, FaShoppingCart } from "react-icons/fa";
+import {
+  FaBars,
+  FaSearch,
+  FaUserCircle,
+  FaTimes,
+  FaShoppingCart,
+} from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
 import AskOxyLogo from "../assets/img/askoxylogoblack.png";
@@ -53,8 +59,9 @@ const Header: React.FC<HeaderProps> = ({
   const searchTexts = [
     "Sonamasuri Rice",
     "Kolam Rice",
-    "Brown Rice",
     "HMT Rice",
+    "Gold Agents",
+    "P2P Lending Agents",
   ];
 
   const context = useContext(CartContext);
@@ -203,23 +210,22 @@ const Header: React.FC<HeaderProps> = ({
     setSearchValue(e.target.value);
   };
 
- const handleSearchSubmit = (e: React.FormEvent) => {
-   e.preventDefault();
-   const trimmedQuery = searchValue.trim();
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedQuery = searchValue.trim();
 
-   if (trimmedQuery && trimmedQuery.length >= 3) {
-     navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
-     setIsSearchVisible(false);
-     setSearchValue("");
-     setSearchResults([]);
-   } else {
-     setIsSearchVisible(false);
-     setSearchValue("");
-     setSearchResults([]);
-     return; // ← FIXED
-   }
- };
-
+    if (trimmedQuery && trimmedQuery.length >= 3) {
+      navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
+      setIsSearchVisible(false);
+      setSearchValue("");
+      setSearchResults([]);
+    } else {
+      setIsSearchVisible(false);
+      setSearchValue("");
+      setSearchResults([]);
+      return; // ← FIXED
+    }
+  };
 
   const handleSearchItemClick = (item: SearchResult) => {
     navigate(`/main/itemsdisplay/${item.id}`, {

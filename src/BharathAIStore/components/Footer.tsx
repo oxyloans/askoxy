@@ -129,7 +129,23 @@ const Footer: React.FC = () => {
                   to="/bharath-aistore/ai-initiatives"
                   className="text-gray-600 hover:text-gray-900"
                 >
-                  AI Resources
+                  AI Initiatives
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/bharath-aistore/RadhaAgents"
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Radha's AI Lab
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/awards-rewards"
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Awards & Rewards
                 </Link>
               </li>
             </ul>
@@ -213,12 +229,12 @@ const Footer: React.FC = () => {
           {/* 👇 Copyright + Secret Dot */}
           <div className="text-sm text-gray-600 flex items-center gap-2">
             <span>© {year} ASKOXY.AI. All rights reserved.</span>
-              <Link
-                to="/bharath-aistore/hiddenagents"
-                aria-label="Hidden Agents"
-                title="Hidden Agents"
-                className="inline-block h-2 w-2 rounded-full bg-gray-700 hover:bg-purple-600 transition"
-              />
+            <Link
+              to="/bharath-aistore/hiddenagents"
+              aria-label="Hidden Agents"
+              title="Hidden Agents"
+              className="inline-block h-2 w-2 rounded-full bg-gray-700 hover:bg-purple-600 transition"
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">

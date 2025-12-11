@@ -11,8 +11,8 @@ import {
 import { GiElephantHead } from "react-icons/gi";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 
-import { Loader2, ExternalLink ,Mic, Plus } from "lucide-react";
-import {HiSparkles} from "react-icons/hi2";
+import { Loader2, ExternalLink, Mic, Plus } from "lucide-react";
+import { HiSparkles } from "react-icons/hi2";
 import {
   Send,
   Copy,
@@ -22,7 +22,7 @@ import {
   Share,
   RefreshCcw,
   LogOut,
-  
+  MoreHorizontal,
   Star as StarIcon,
 } from "lucide-react";
 import MarkdownRenderer from "../../GenOxy/components/MarkdownRenderer";
@@ -77,7 +77,6 @@ const getAuthHeaders = () => {
   const value = t.toLowerCase().startsWith("bearer ") ? t : `Bearer ${t}`;
   return { Authorization: value };
 };
-
 
 // ---------------- constants ----------------
 const DESKTOP_SIDEBAR_WIDTH_OPEN = 240; // px (open on desktop)
@@ -229,37 +228,36 @@ const AssistantDetails: React.FC = () => {
     return { isImage: !!url, url };
   };
 
- const cleanContent = (s: string): string => {
-   return (
-     String(s ?? "")
-       // remove leading/trailing ``` code fences
-       .replace(/^```(?:\w+)?\n?/, "")
-       .replace(/```$/, "")
- .replace(/\((?:source|ref|reference|citation|cite|doc[^\)]*)\)/gi, "")
+  const cleanContent = (s: string): string => {
+    return (
+      String(s ?? "")
+        // remove leading/trailing ``` code fences
+        .replace(/^```(?:\w+)?\n?/, "")
+        .replace(/```$/, "")
+        .replace(/\((?:source|ref|reference|citation|cite|doc[^\)]*)\)/gi, "")
 
-    // remove <<...>> or <...>
-    .replace(/<<[^>]*>>/g, "")
-    .replace(/<[^>]*>/g, "")
+        // remove <<...>> or <...>
+        .replace(/<<[^>]*>>/g, "")
+        .replace(/<[^>]*>/g, "")
 
-    // remove {citation}, {ref}, {doc}
-    .replace(/\{[^}]*citation[^}]*\}/gi, "")
-    .replace(/\{[^}]*ref[^}]*\}/gi, "")
-    .replace(/\{[^}]*doc[^}]*\}/gi, "")
+        // remove {citation}, {ref}, {doc}
+        .replace(/\{[^}]*citation[^}]*\}/gi, "")
+        .replace(/\{[^}]*ref[^}]*\}/gi, "")
+        .replace(/\{[^}]*doc[^}]*\}/gi, "")
 
-    // remove patterns like [ref], [doc], [file], [xyz-123]
-    .replace(/\[(?:ref|doc|file|src|source|attach)[^\]]*\]/gi, "")
-       // 🔹 remove internal-style citations like:
-       .replace(/【[^】]*】/g, "")
+        // remove patterns like [ref], [doc], [file], [xyz-123]
+        .replace(/\[(?:ref|doc|file|src|source|attach)[^\]]*\]/gi, "")
+        // remove internal-style citations like:
+        .replace(/【[^】]*】/g, "")
+        // remove trailing [8:5†source] style markers
+        .replace(/\[\d+:\d+†source\]/g, "")
 
-       // 🔹 remove trailing [8:5†source] style markers
-       .replace(/\[\d+:\d+†source\]/g, "")
+        // 🔹 collapse only extra spaces / tabs, keep \n intact
+        .replace(/[ \t]{2,}/g, " ")
 
-       // 🔹 collapse multiple spaces
-       .replace(/\s{2,}/g, " ")
-
-       .trim()
-   );
- };
+        .trim()
+    );
+  };
 
   // ⬇️ NEW: local lock so refresh won't allow re-rating again
   const RATING_LOCK_KEY = (u: string, a: string) => `agent_rating_${u}_${a}`;
@@ -339,15 +337,17 @@ const AssistantDetails: React.FC = () => {
   }
 
   useEffect(() => {
-      // console.log("into the useEffect");
-      
+    // console.log("into the useEffect");
+
     const loadHistoryFromApi = async () => {
       setHistoryLoading(true);
       if (!id || !agentId || !userId) return;
       try {
         const historyData = await fetchUserHistory(userId, agentId);
-
-        if (!Array.isArray(historyData) || historyData.length === 0) {
+        const cleanedHistory = (historyData || []).filter(
+          (h: any) => h.threadId && h.threadId !== "null"
+        );
+        if (!Array.isArray(cleanedHistory) || cleanedHistory.length === 0) {
           setHistoryById({});
           setHistory([]);
           return;
@@ -362,7 +362,8 @@ const AssistantDetails: React.FC = () => {
           const h = historyData[idx];
 
           // Use threadId as the unique identifier since that's what we have
-          const hid = h?.threadId || h?.id || h?.historyId || `${Date.now()}_${idx}`;
+          const hid =
+            h?.threadId || h?.id || h?.historyId || `${Date.now()}_${idx}`;
 
           // Don't cache messages during initial load - let openHistoryChat handle fetching
           tmpMap[hid] = [];
@@ -739,14 +740,14 @@ const AssistantDetails: React.FC = () => {
     userIdParam: string,
     agentIdParam: string
   ) => {
-    console.log("into the fetch user history",{userIdParam,agentIdParam});
-    
+    console.log("into the fetch user history", { userIdParam, agentIdParam });
+
     const { data } = await axios.get(
       `${BASE_URL}/ai-service/agent/getUserHistory/${userIdParam}/${agentIdParam}`,
       { headers: { ...getAuthHeaders() } }
     );
-    console.log("fetched user history",data);
-  
+    console.log("fetched user history", data);
+
     return data;
   };
 
@@ -902,7 +903,7 @@ const AssistantDetails: React.FC = () => {
 
   const openHistoryChat = async (hid: string) => {
     console.log("[openHistoryChat] Opening chat:", hid);
-    
+
     if (!id) return;
 
     setCurrentChatId(hid);
@@ -940,7 +941,7 @@ const AssistantDetails: React.FC = () => {
       const historyItem = historyData.find(
         (h: any) => (h?.threadId || h?.id || h?.historyId) === hid
       );
-      
+
       if (!historyItem) {
         console.warn("[openHistoryChat] History item not found:", hid);
         setMessages([]);
@@ -948,56 +949,92 @@ const AssistantDetails: React.FC = () => {
       }
 
       // Extract threadId - prioritize cached, then various API fields
-      console.log("[openHistoryChat] DEBUG - historyItem keys:", Object.keys(historyItem));
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem keys:",
+        Object.keys(historyItem)
+      );
       console.log("[openHistoryChat] DEBUG - cachedThreadId:", cachedThreadId);
-      console.log("[openHistoryChat] DEBUG - historyItem.threadId:", historyItem?.threadId);
-      console.log("[openHistoryChat] DEBUG - historyItem.thread_id:", historyItem?.thread_id);
-      console.log("[openHistoryChat] DEBUG - historyItem.conversationId:", historyItem?.conversationId);
-      
-      const extractedThreadId = cachedThreadId || 
-                              historyItem?.threadId || 
-                              historyItem?.thread_id || 
-                              historyItem?.conversationId ||
-                              historyItem?.data?.threadId;
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem.threadId:",
+        historyItem?.threadId
+      );
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem.thread_id:",
+        historyItem?.thread_id
+      );
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem.conversationId:",
+        historyItem?.conversationId
+      );
+
+      const extractedThreadId =
+        cachedThreadId ||
+        historyItem?.threadId ||
+        historyItem?.thread_id ||
+        historyItem?.conversationId ||
+        historyItem?.data?.threadId;
 
       console.log("[openHistoryChat] Final ThreadId:", extractedThreadId);
       console.log("[openHistoryChat] ThreadId type:", typeof extractedThreadId);
-      console.log("[openHistoryChat] ThreadId valid check:", !!(extractedThreadId && String(extractedThreadId).trim() && String(extractedThreadId) !== "null"));
-      
+      console.log(
+        "[openHistoryChat] ThreadId valid check:",
+        !!(
+          extractedThreadId &&
+          String(extractedThreadId).trim() &&
+          String(extractedThreadId) !== "null"
+        )
+      );
+
       let messages: ChatMessage[] = [];
 
       // Try to fetch from thread API if threadId exists
-      if (extractedThreadId && String(extractedThreadId).trim() && String(extractedThreadId) !== "null") {
-        console.log("[openHistoryChat] ✓ CALLING fetchThreadHistory with:", extractedThreadId);
+      if (
+        extractedThreadId &&
+        String(extractedThreadId).trim() &&
+        String(extractedThreadId) !== "null"
+      ) {
+        console.log(
+          "[openHistoryChat] ✓ CALLING fetchThreadHistory with:",
+          extractedThreadId
+        );
         setThreadId(extractedThreadId);
-        
+
         try {
           const threadMessages = await fetchThreadHistory(extractedThreadId);
-          console.log("[openHistoryChat] fetchThreadHistory returned:", threadMessages);
+          console.log(
+            "[openHistoryChat] fetchThreadHistory returned:",
+            threadMessages
+          );
           if (Array.isArray(threadMessages) && threadMessages.length > 0) {
             messages = extractQAFromHistory(threadMessages);
-            console.log("[openHistoryChat] Loaded from thread:", messages.length);
+            console.log(
+              "[openHistoryChat] Loaded from thread:",
+              messages.length
+            );
           }
         } catch (err) {
           console.error("[openHistoryChat] Thread fetch failed:", err);
         }
       } else {
-        console.log("[openHistoryChat] ✗ NOT calling fetchThreadHistory - no valid threadId");
+        console.log(
+          "[openHistoryChat] ✗ NOT calling fetchThreadHistory - no valid threadId"
+        );
         setThreadId(null);
       }
 
       // Fallback to local messages if thread fetch failed
       if (messages.length === 0) {
         messages = normalizeMessages(
-          historyItem?.messages ?? historyItem?.messageHistory ?? historyItem?.history
+          historyItem?.messages ??
+            historyItem?.messageHistory ??
+            historyItem?.history
         );
         console.log("[openHistoryChat] Using local messages:", messages.length);
       }
 
       // Cache and display
-      setHistoryById(prev => ({ ...prev, [hid]: messages }));
+      setHistoryById((prev) => ({ ...prev, [hid]: messages }));
       setMessages(messages);
-      
     } catch (err) {
       console.error("[openHistoryChat] Error:", err);
       setMessages([]);
@@ -1070,7 +1107,6 @@ const AssistantDetails: React.FC = () => {
     ];
   };
 
-
   // ✅ agentChat1: Pass threadId only for subsequent messages (not on first message)
   const postAgentChat = async (
     agentIdParam: string,
@@ -1105,13 +1141,17 @@ const AssistantDetails: React.FC = () => {
   // ✅ Fetch conversation history from thread
   const fetchThreadHistory = async (threadIdParam: string) => {
     // console.log("[fetchThreadHistory] ▶ STARTING with threadId:", threadIdParam);
-    
+
     // Validate threadId
-    if (!threadIdParam || threadIdParam.trim() === "" || String(threadIdParam).toLowerCase() === "null") {
+    if (
+      !threadIdParam ||
+      threadIdParam.trim() === "" ||
+      String(threadIdParam).toLowerCase() === "null"
+    ) {
       // console.error("[fetchThreadHistory] ✗ Invalid/null threadId provided:", threadIdParam);
       return null;
     }
-    
+
     try {
       const headers = new AxiosHeaders();
       headers.set("Accept", "application/json");
@@ -1121,43 +1161,71 @@ const AssistantDetails: React.FC = () => {
         console.log("[fetchThreadHistory] ✓ Authorization header set");
         headers.set("Authorization", auth.Authorization);
       } else {
-        console.warn("[fetchThreadHistory] ⚠ No authorization header available");
+        console.warn(
+          "[fetchThreadHistory] ⚠ No authorization header available"
+        );
       }
-      
+
       const url = `${BASE_URL}/ai-service/agent/getconversations/${threadIdParam}/messages`;
       console.log("[fetchThreadHistory] 🌐 GET:", url);
-      console.log("[fetchThreadHistory] Headers set:", { Accept: "application/json", ContentType: "application/json", hasAuth: !!auth.Authorization });
-      
+      console.log("[fetchThreadHistory] Headers set:", {
+        Accept: "application/json",
+        ContentType: "application/json",
+        hasAuth: !!auth.Authorization,
+      });
+
       const response = await axios.get(url, { headers });
       console.log("[fetchThreadHistory] ✓ Response status:", response.status);
-      console.log("[fetchThreadHistory] Response data type:", typeof response.data);
+      console.log(
+        "[fetchThreadHistory] Response data type:",
+        typeof response.data
+      );
       console.log("[fetchThreadHistory] Response data:", response.data);
-      
+
       const data = response.data;
-    
+
       // Handle different response shapes
       if (data && typeof data === "object" && !Array.isArray(data)) {
         if (Array.isArray(data.messages)) {
-          console.log("[fetchThreadHistory] ✓ Found data.messages array:", data.messages.length, "items");
+          console.log(
+            "[fetchThreadHistory] ✓ Found data.messages array:",
+            data.messages.length,
+            "items"
+          );
           return data.messages;
         }
         if (Array.isArray(data.data)) {
-          console.log("[fetchThreadHistory] ✓ Found data.data array:", data.data.length, "items");
+          console.log(
+            "[fetchThreadHistory] ✓ Found data.data array:",
+            data.data.length,
+            "items"
+          );
           return data.data;
         }
         if (Array.isArray(data.history)) {
-          console.log("[fetchThreadHistory] ✓ Found data.history array:", data.history.length, "items");
+          console.log(
+            "[fetchThreadHistory] ✓ Found data.history array:",
+            data.history.length,
+            "items"
+          );
           return data.history;
         }
       }
-      
+
       // If response is already an array
       if (Array.isArray(data)) {
-        console.log("[fetchThreadHistory] ✓ Response is array:", data.length, "items");
+        console.log(
+          "[fetchThreadHistory] ✓ Response is array:",
+          data.length,
+          "items"
+        );
         return data;
       }
-      
-      console.warn("[fetchThreadHistory] ⚠ Unexpected response shape. Object keys:", Object.keys(data || {}));
+
+      console.warn(
+        "[fetchThreadHistory] ⚠ Unexpected response shape. Object keys:",
+        Object.keys(data || {})
+      );
       return null;
     } catch (error: any) {
       console.error("[fetchThreadHistory] ✗ API call failed");
@@ -1180,7 +1248,7 @@ const AssistantDetails: React.FC = () => {
       .filter((msg: any) => msg?.role === "user" || msg?.role === "assistant")
       .map((msg: any) => {
         let content = "";
-        
+
         // Handle OpenAI thread message format
         if (Array.isArray(msg.content)) {
           // Extract text from content array
@@ -1190,7 +1258,7 @@ const AssistantDetails: React.FC = () => {
           // Handle simple string content
           content = String(msg.content || msg.text || "");
         }
-        
+
         return {
           role: msg.role as "user" | "assistant",
           content: content.trim(),
@@ -1253,16 +1321,21 @@ const AssistantDetails: React.FC = () => {
         const apiHistory = buildMessageHistory(historyMsgs);
 
         const resp = await postAgentChat(agentId!, userId, apiHistory);
-        
+
         let answer = "";
         let newThreadId: string | undefined;
         if (typeof resp === "string") {
           answer = resp;
         } else if (resp && typeof resp === "object") {
-          answer = resp.assistant_reply ?? resp.answer ?? resp.content ?? resp.text ?? "";
+          answer =
+            resp.assistant_reply ??
+            resp.answer ??
+            resp.content ??
+            resp.text ??
+            "";
           newThreadId = resp.thread_id ?? resp.threadId ?? resp.data?.threadId;
         }
-        
+
         // Create new chat if this is the first message
         if (!currentChatId) {
           const newId = newThreadId || `${Date.now()}`; // Use threadId as ID if available
@@ -1273,7 +1346,7 @@ const AssistantDetails: React.FC = () => {
           ]);
           setCurrentChatId(newId);
           if (!isXs) setSidebarOpen(true);
-          
+
           // Store threadId for new chat
           if (newThreadId) {
             setThreadIdMap((prev) => ({
@@ -1288,22 +1361,32 @@ const AssistantDetails: React.FC = () => {
             [currentChatId]: newThreadId as string,
           }));
         }
-        
+
         // Refresh history to ensure new chats appear in sidebar
         if (newThreadId && userId && agentId) {
           setTimeout(async () => {
             try {
               const historyData = await fetchUserHistory(userId, agentId);
               if (Array.isArray(historyData)) {
-                const rows = historyData.map((h: any, idx: number) => {
-                  const hid = h?.threadId || h?.id || h?.historyId || `${Date.now()}_${idx}`;
-                  let title = "New Chat";
-                  if (typeof h?.prompt === "string") {
-                    title = getLastUserMessage(h.prompt);
-                  }
-                  title = generateChatTitle(title);
-                  return { id: hid, title, createdAt: safeDateMs(h?.createdAt) - idx };
-                }).sort((a, b) => b.createdAt - a.createdAt);
+                const rows = historyData
+                  .map((h: any, idx: number) => {
+                    const hid =
+                      h?.threadId ||
+                      h?.id ||
+                      h?.historyId ||
+                      `${Date.now()}_${idx}`;
+                    let title = "New Chat";
+                    if (typeof h?.prompt === "string") {
+                      title = getLastUserMessage(h.prompt);
+                    }
+                    title = generateChatTitle(title);
+                    return {
+                      id: hid,
+                      title,
+                      createdAt: safeDateMs(h?.createdAt) - idx,
+                    };
+                  })
+                  .sort((a, b) => b.createdAt - a.createdAt);
                 setHistory(rows);
               }
             } catch (err) {
@@ -1311,7 +1394,7 @@ const AssistantDetails: React.FC = () => {
             }
           }, 1000); // Small delay to ensure backend has processed the message
         }
-        
+
         // Update threadId state
         if (newThreadId) {
           console.log("[sendMessage] Setting threadId:", newThreadId);
@@ -1323,10 +1406,13 @@ const AssistantDetails: React.FC = () => {
             { role: "assistant" as const, content: answer },
           ];
           setMessages(updatedMessages);
-          
+
           // ✅ Save current messages to historyById for this chat
           if (currentChatId) {
-            console.log("[sendMessage] Saving to historyById for chat:", currentChatId);
+            console.log(
+              "[sendMessage] Saving to historyById for chat:",
+              currentChatId
+            );
             setHistoryById((prev) => ({
               ...prev,
               [currentChatId]: updatedMessages,
@@ -1420,9 +1506,19 @@ const AssistantDetails: React.FC = () => {
         answer = resp;
       } else if (resp && typeof resp === "object") {
         // Handle new API response format with assistant_reply and thread_id
-        answer = resp.assistant_reply ?? resp.answer ?? resp.content ?? resp.text ?? "";
+        answer =
+          resp.assistant_reply ??
+          resp.answer ??
+          resp.content ??
+          resp.text ??
+          "";
         // Extract threadId from response - try multiple possible field names
-        newThreadId = resp.thread_id ?? resp.threadId ?? resp.thread_id ?? resp.data?.threadId ?? resp.data?.thread_id;
+        newThreadId =
+          resp.thread_id ??
+          resp.threadId ??
+          resp.thread_id ??
+          resp.data?.threadId ??
+          resp.data?.thread_id;
       }
       if (newThreadId) setThreadId(newThreadId);
 
@@ -1432,7 +1528,7 @@ const AssistantDetails: React.FC = () => {
           { role: "assistant" as const, content: answer },
         ];
         setMessages(updatedMessages);
-        
+
         // ✅ Save updated messages to historyById for this chat
         if (currentChatId) {
           setHistoryById((prev) => ({
@@ -1505,7 +1601,6 @@ const AssistantDetails: React.FC = () => {
       </div>
     );
   };
-
 
   const keepListeningRef = useRef(false);
 
@@ -1728,25 +1823,25 @@ const AssistantDetails: React.FC = () => {
     setThreadId(null);
     setThreadSource(null);
     setSelectedFiles([]);
-    
+
     console.log("[handleNewChat] Started new chat");
     if (isXs) setSidebarOpen(false);
   };
 
   const generateChatTitle = (text: string) => {
     if (!text || !text.trim()) return "New Chat";
-    
+
     // Clean the text
     let title = text.trim();
-    
+
     // Capitalize first letter
     title = title.charAt(0).toUpperCase() + title.slice(1);
-    
+
     // Truncate if too long but preserve the beginning
     if (title.length > 60) {
       title = title.slice(0, 57) + "...";
     }
-    
+
     return title || "New Chat";
   };
   const handlePromptClick = async (prompt: string) => {
@@ -1906,7 +2001,7 @@ This AI Agent is created on ASKOXY.AI — a platform where anyone can build AI A
 ${url}`.trim();
 
     setAgentShareText(staticMessage);
-    setShowAgentShareModal(true); 
+    setShowAgentShareModal(true);
   };
 
   // Confirm / cancel from modal
@@ -1920,7 +2015,6 @@ ${url}`.trim();
   };
 
   const filteredHistory = useMemo(() => {
-    
     if (!historySearch.trim()) return history;
     const searchLower = historySearch.toLowerCase();
     return history.filter((h) => h.title.toLowerCase().includes(searchLower));
@@ -1937,6 +2031,61 @@ ${url}`.trim();
       navigate("/bharath-aistore", { replace: true });
     }
   };
+  // ----- Profile data from localStorage -----
+  interface ProfileData {
+    userFirstName?: string;
+    userLastName?: string;
+    customerEmail?: string;
+    alterMobileNumber?: string;
+    customerId?: string;
+    whatsappNumber?: string;
+  }
+
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+  // Load profileData from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("profileData");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setProfile(parsed);
+      }
+    } catch (e) {
+      console.error("Failed to parse profileData from localStorage", e);
+    }
+  }, []);
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const profileDisplayName = useMemo(() => {
+    if (!profile) return "Guest user";
+    const first = (profile.userFirstName || "").trim();
+    const last = (profile.userLastName || "").trim();
+    const name = `${first} ${last}`.trim();
+    return name || profile.customerEmail || "User";
+  }, [profile]);
+
+  const profileInitials = useMemo(() => {
+    const name = profileDisplayName;
+    const parts = name.split(" ").filter(Boolean);
+    if (parts.length === 0) return "U";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }, [profileDisplayName]);
 
   const isCollapsed = !isXs && !sidebarOpen;
 
@@ -1986,567 +2135,645 @@ ${url}`.trim();
 
   return (
     <>
-      {!userId &&
-        (() => {
-          try {
-            sessionStorage.setItem(
-              "returnTo",
-              `${location.pathname}${location.search || ""}`
-            );
-          } catch (e) {
-            console.warn("Could not save returnTo:", e);
-          }
-          return (
-            <Navigate
-              to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
-                currentPath
-              )}`}
-            />
-          );
-        })()}
-
-      <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">
-        {/* Header */}
-        <header
-          className="sticky top-0  flex items-center border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur h-14 px-2 sm:px-4 z-20"
-          style={{
-            left: effectiveLeftOffset,
-            right: effectiveRightOffset,
-            width: effectiveContentWidth1,
-          }}
-        >
-          {/* Left controls */}
-          <div className="flex items-center gap-2 min-w-0">
-            {/* Mobile: open/close drawer */}
-            <button
-              onClick={() => setSidebarOpen((v) => !v)}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 sm:hidden"
-              aria-label="Toggle sidebar"
-              title="Toggle sidebar"
-            >
-              <svg
-                className="w-6 h-6 text-black dark:text-white"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-
-            {/* Assistant name on desktop (kept short, full name inside HeaderInfo) */}
-            <div className="hidden sm:block truncate font-medium text-black dark:text-white">
-              {assistant?.name || "Assistant"}
-            </div>
-          </div>
-
-          {/* Mobile: centered assistant name */}
-          <div className="flex-1 text-center sm:hidden">
-            <div className="truncate font-medium text-black dark:text-white">
-              {assistant?.name || "Assistant"}
-            </div>
-          </div>
-
-          {/* Right: Share */}
-          {/* Right: Share */}
-          <div className="ml-auto flex gap-2">
-            {/* Chat Share – Q & A */}
-            <button
-              onClick={handleChatShareClick}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              title="Share last Q&A"
-            >
-              <Share className="w-5 h-5 text-purple-700 dark:text-white" />
-              <span className="hidden sm:inline">Chat Share</span>
-            </button>
-            <Modal
-              open={showAgentShareModal}
-              footer={null}
-              centered
-              onCancel={() => setShowAgentShareModal(false)}
-            >
-              <div className="text-center px-4 py-2">
-                {/* Title */}
-                <h3
-                  style={{
-                    fontSize: "18px",
-                    fontWeight: 600,
-                    marginBottom: "12px",
-                  }}
-                >
-                  Share This AI Agent
-                </h3>
-
-                {/* Description */}
-                <p
-                  style={{
-                    fontSize: "15px",
-                    lineHeight: "1.6",
-                    marginBottom: "20px",
-                    textAlign: "center",
-                  }}
-                >
-                  Share this AI Agent with your friends on WhatsApp.
-                </p>
-
-                {/* Buttons */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "12px",
-                    marginTop: "10px",
-                  }}
-                >
-                  {/* Close */}
-                  <Button
-                    onClick={() => setShowAgentShareModal(false)}
-                    style={{
-                      background: "#e0e0e0",
-                      border: "none",
-                      color: "#000",
-                      padding: "6px 20px",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    Close
-                  </Button>
-
-                  {/* WhatsApp */}
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      const whatsappUrl =
-                        "https://api.whatsapp.com/send?text=" +
-                        encodeURIComponent(agentShareText);
-
-                      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-
-                      setShowAgentShareModal(false);
-                    }}
-                    style={{
-                      background: "#25D366", // WhatsApp green
-                      borderColor: "#25D366",
-                      padding: "6px 20px",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                      color: "#fff",
-                    }}
-                  >
-                    Share on WhatsApp
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-
-            <Modal
-              open={showNoChatModal}
-              onCancel={() => setShowNoChatModal(false)}
-              footer={null} // we will custom-design our own footer so no overlap
-              centered // centers modal vertically
-            >
-              <div className="text-center px-4 py-2">
-                {/* Message Text */}
-                <p
-                  style={{
-                    fontSize: "16px",
-                    lineHeight: "1.6",
-                    marginBottom: "20px",
-                    textAlign: "center",
-                    fontWeight: 500,
-                  }}
-                >
-                  You have not started any chat conversation yet.
-                  <br />
-                  Please start the conversation and then try sharing the chat.
-                </p>
-
-                {/* Buttons Row */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "12px",
-                    marginTop: "10px",
-                  }}
-                >
-                  {/* Close Button */}
-                  <Button
-                    onClick={() => setShowNoChatModal(false)}
-                    style={{
-                      background: "#e0e0e0",
-                      border: "none",
-                      color: "#000",
-                      padding: "6px 20px",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    Close
-                  </Button>
-
-                  {/* Start Chat Button */}
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      setShowNoChatModal(false);
-                      const input = document.getElementById("chat-input");
-                      if (input) input.focus();
-                    }}
-                    style={{
-                      background: "#008CBA", // your color
-                      borderColor: "#008CBA",
-                      padding: "6px 20px",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    Start Chat
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-
-            {/* Agent Share – only URL */}
-            <button
-              onClick={handleAgentShareClick}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              title="Share this AI Agent"
-            >
-              <ExternalLink className="w-5 h-5 text-purple-700 dark:text-white" />
-              <span className="hidden sm:inline">Agent Share</span>
-            </button>
-          </div>
-        </header>
-
-        {showShareQuestion && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg w-80">
-              <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
-                Do you want to share this content?
-              </h2>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={cancelShare}
-                  className="px-4 py-2 bg-gray-300 rounded-md dark:bg-gray-700"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={confirmShareNow}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md"
-                >
-                  Yes, Share
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sidebar */}
-        <aside
-          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
-            isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
-          }`}
-          style={{ width: isXs ? 220 : sidebarOpen ? 240 : 60 }}
-          aria-label="Chat sidebar"
-        >
-          {/* ---------- TOP (HEADER + ACTION BUTTONS) ---------- */}
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
-              <GiElephantHead
-                onClick={() => navigate("/bharath-aistore")}
-                title="Bharat AI Store"
-                className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
-                  !isXs && isCollapsed ? "hidden" : ""
-                }`}
+      <div className="relative  flex min-h-screen bg-[#030617] text-white overflow-x-hidden max-w-[100vw] w-full">
+        {!userId &&
+          (() => {
+            try {
+              sessionStorage.setItem(
+                "returnTo",
+                `${location.pathname}${location.search || ""}`
+              );
+            } catch (e) {
+              console.warn("Could not save returnTo:", e);
+            }
+            return (
+              <Navigate
+                to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
+                  currentPath
+                )}`}
               />
-              <div className="flex items-center gap-1">
-                {/* Mobile close */}
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="sm:hidden inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                  aria-label="Close sidebar"
-                >
-                  <LuPanelRightClose className="h-7 w-7 text-gray-700 dark:text-gray-300" />
-                </button>
+            );
+          })()}
 
-                {/* Collapse toggle */}
-                <button
-                  onClick={() => setSidebarOpen((v) => !v)}
-                  className="hidden sm:inline-flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                  aria-label={
-                    isCollapsed ? "Expand sidebar" : "Collapse sidebar"
-                  }
-                  title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">
+          {/* Header */}
+          <header
+            className="fixed top-0  flex items-center border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur h-14 px-2 sm:px-4 z-20"
+            style={{
+              left: effectiveLeftOffset,
+              right: effectiveRightOffset,
+              width: effectiveContentWidth1,
+            }}
+          >
+            {/* Left controls */}
+            <div className="flex items-center gap-2 min-w-0">
+              {/* Mobile: open/close drawer */}
+              <button
+                onClick={() => setSidebarOpen((v) => !v)}
+                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 sm:hidden"
+                aria-label="Toggle sidebar"
+                title="Toggle sidebar"
+              >
+                <svg
+                  className="w-6 h-6 text-black dark:text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
                 >
-                  {isCollapsed ? (
-                    <LuPanelRightClose className="w-7 h-7 text-black dark:text-white" />
-                  ) : (
-                    <LuPanelLeftClose className="w-7 h-7 text-black dark:text-white" />
-                  )}
-                </button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+
+              {/* Assistant name on desktop (kept short, full name inside HeaderInfo) */}
+              <div className="hidden sm:block truncate font-medium text-black dark:text-white">
+                {assistant?.name || "Assistant"}
               </div>
             </div>
 
-            {/* ---------- BUTTONS + SEARCH (TOP FIXED) ---------- */}
-            <div className="flex-shrink-0 p-2 space-y-1 border-b border-gray-100 dark:border-gray-700">
-              {/* New Chat */}
+            {/* Mobile: centered assistant name */}
+            <div className="flex-1 text-center sm:hidden">
+              <div className="truncate font-medium text-black dark:text-white">
+                {assistant?.name || "Assistant"}
+              </div>
+            </div>
+
+            <div className="ml-auto flex gap-2">
+              {/* Chat Share – Q & A */}
               <button
-                onClick={handleNewChat}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="New Chat"
+                onClick={handleChatShareClick}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                title="Share last Q&A"
               >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="icon flex-shrink-0"
-                  aria-hidden="true"
-                >
-                  {" "}
-                  <path
-                    fill="currentColor"
-                    d="M3.2024399999999997 13.5996V10.400388C3.2024399999999997 9.29346 3.202092 8.41446 3.2598599999999998 7.70742C3.318396 6.991344000000001 3.440388 6.3807719999999994 3.7251 5.821872L3.9102479999999997 5.491404C4.371264 4.7397 5.032704 4.12794 5.822748 3.725388L6.034859999999999 3.625788C6.535991999999999 3.410796 7.081595999999999 3.310188 7.708296 3.258984C8.415263999999999 3.201228 9.293339999999999 3.201564 10.4001 3.201564H11.0001C11.440716 3.201564 11.797979999999999 3.559032 11.798148 3.9996119999999995C11.798148 4.440335999999999 11.440824 4.79766 11.0001 4.79766H10.4001C9.26712 4.79766 8.465256 4.798007999999999 7.838375999999999 4.8492239999999995C7.375332 4.887048 7.047324 4.950816 6.787212 5.043755999999999L6.546971999999999 5.146872C6.01974 5.415515999999999 5.578463999999999 5.824139999999999 5.270796 6.325788L5.147748 6.5460959999999995C4.996656 6.84264 4.9005719999999995 7.219956 4.8501 7.8374999999999995C4.798872 8.464476 4.7985359999999995 9.26712 4.7985359999999995 10.400388V13.5996C4.7985359999999995 14.73288 4.798872 15.53556 4.8501 16.16256C4.9005719999999995 16.77996 4.9966680000000006 17.15736 5.147748 17.453879999999998L5.270796 17.6742C5.578452 18.1758 6.019775999999999 18.584519999999998 6.546971999999999 18.85308L6.787212 18.95628C7.047312000000001 19.04916 7.375368 19.1118 7.838375999999999 19.1496C8.465268 19.200839999999996 9.267071999999999 19.202399999999997 10.4001 19.202399999999997H13.60044C14.73348 19.202399999999997 15.535319999999999 19.200839999999996 16.1622 19.1496C16.77948 19.0992 17.15712 19.00404 17.45364 18.85308L17.67504 18.72888C18.1764 18.42132 18.58548 17.980919999999998 18.85404 17.453879999999998L18.95712 17.213639999999998C19.05012 16.953599999999998 19.11264 16.625519999999998 19.15044 16.16256C19.20168 15.53556 19.20204 14.73288 19.20204 13.5996V12.9996C19.20216 12.559199999999999 19.55964 12.20172 20.00004 12.2016C20.440679999999997 12.2016 20.79792 12.55908 20.79816 12.9996V13.5996C20.79816 14.706599999999998 20.79972 15.585479999999999 20.74188 16.29252C20.69064 16.919159999999998 20.59008 17.46492 20.37504 17.96604L20.27544 18.17808C19.873079999999998 18.96792 19.260839999999998 19.628519999999998 18.50952 20.08944L18.17904 20.274599999999996C17.61996 20.559479999999997 17.00868 20.682479999999998 16.292279999999998 20.741039999999998C15.58536 20.798759999999998 14.7072 20.7984 13.60044 20.7984H10.4001C9.293352 20.7984 8.415252 20.798759999999998 7.708296 20.741039999999998C7.08162 20.689799999999998 6.5359799999999995 20.589239999999997 6.034859999999999 20.3742L5.822748 20.274599999999996C5.0327519999999994 19.87212 4.371252 19.26024 3.9102479999999997 18.50856L3.7251 18.17808C3.4403639999999998 17.61924 3.3184080000000002 17.00868 3.2598599999999998 16.29252C3.202092 15.585479999999999 3.2024399999999997 14.706599999999998 3.2024399999999997 13.5996ZM16.15752 3.7359359999999997C17.304119999999998 2.8008 18.99456 2.867628 20.063399999999998 3.9363239999999995L20.2638 4.15782C21.13692 5.228219999999999 21.137159999999998 6.7730760000000005 20.2638 7.843356L20.063399999999998 8.06484L14.007119999999999 14.122319999999998C13.364759999999999 14.76468 12.55488 15.20952 11.673924 15.408959999999999L11.293068 15.47928L9.112212 15.78984C8.863644 15.825239999999999 8.612411999999999 15.74244 8.434859999999999 15.56484C8.257344 15.387239999999998 8.174387999999999 15.13608 8.209859999999999 14.887559999999999L8.521584 12.70776L8.591892 12.3258C8.79144 11.444988 9.236304 10.634892 9.878616 9.992579999999998L15.934919999999998 3.9363239999999995L16.15752 3.7359359999999997Z"
-                  />{" "}
-                </svg>
-                {(!isCollapsed || isXs) && <span>New Chat</span>}
+                <Share className="w-5 h-5 text-purple-700 dark:text-white" />
+                <span className="hidden sm:inline">Chat Share</span>
               </button>
-              {/* Create Agent */}
-              <button
-                onClick={() => (window.location.href = "/main/agentcreate")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="Create Agent"
+              <Modal
+                open={showAgentShareModal}
+                footer={null}
+                centered
+                onCancel={() => setShowAgentShareModal(false)}
               >
-                <svg
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="flex-shrink-0"
-                >
-                  <path
-                    d="M12 5V19M5 12H19"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                {(!isCollapsed || isXs) && <span>Create Agent</span>}
+                <div className="text-center px-4 py-2">
+                  {/* Title */}
+                  <h3
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 600,
+                      marginBottom: "12px",
+                    }}
+                  >
+                    Share This AI Agent
+                  </h3>
+
+                  {/* Description */}
+                  <p
+                    style={{
+                      fontSize: "15px",
+                      lineHeight: "1.6",
+                      marginBottom: "20px",
+                      textAlign: "center",
+                    }}
+                  >
+                    Share this AI Agent with your friends on WhatsApp.
+                  </p>
+
+                  {/* Buttons */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "12px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    {/* Close */}
+                    <Button
+                      onClick={() => setShowAgentShareModal(false)}
+                      style={{
+                        background: "#e0e0e0",
+                        border: "none",
+                        color: "#000",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Close
+                    </Button>
+
+                    {/* WhatsApp */}
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        const whatsappUrl =
+                          "https://api.whatsapp.com/send?text=" +
+                          encodeURIComponent(agentShareText);
+
+                        window.open(
+                          whatsappUrl,
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+
+                        setShowAgentShareModal(false);
+                      }}
+                      style={{
+                        background: "#25D366", // WhatsApp green
+                        borderColor: "#25D366",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        color: "#fff",
+                      }}
+                    >
+                      Share on WhatsApp
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+
+              <Modal
+                open={showNoChatModal}
+                onCancel={() => setShowNoChatModal(false)}
+                footer={null} // we will custom-design our own footer so no overlap
+                centered // centers modal vertically
+              >
+                <div className="text-center px-4 py-2">
+                  {/* Message Text */}
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      lineHeight: "1.6",
+                      marginBottom: "20px",
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    You have not started any chat conversation yet.
+                    <br />
+                    Please start the conversation and then try sharing the chat.
+                  </p>
+
+                  {/* Buttons Row */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "12px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    {/* Close Button */}
+                    <Button
+                      onClick={() => setShowNoChatModal(false)}
+                      style={{
+                        background: "#e0e0e0",
+                        border: "none",
+                        color: "#000",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Close
+                    </Button>
+
+                    {/* Start Chat Button */}
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        setShowNoChatModal(false);
+                        const input = document.getElementById("chat-input");
+                        if (input) input.focus();
+                      }}
+                      style={{
+                        background: "#008CBA", // your color
+                        borderColor: "#008CBA",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Start Chat
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+
+              {/* Agent Share – only URL */}
+              <button
+                onClick={handleAgentShareClick}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                title="Share this AI Agent"
+              >
+                <ExternalLink className="w-5 h-5 text-purple-700 dark:text-white" />
+                <span className="hidden sm:inline">Agent Share</span>
               </button>
-              {/* Explore Agents */}
-              <button
-                onClick={() => (window.location.href = "/bharath-aistore")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="Explore Agents"
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="icon flex-shrink-0"
-                  aria-hidden="true"
-                >
-                  {" "}
-                  <path
-                    fill="currentColor"
-                    d="M7.94556 14.0277C7.9455 12.9376 7.06204 12.054 5.97192 12.054C4.88191 12.0542 3.99835 12.9376 3.99829 14.0277C3.99829 15.1177 4.88188 16.0012 5.97192 16.0013C7.06207 16.0013 7.94556 15.1178 7.94556 14.0277ZM16.0012 14.0277C16.0012 12.9376 15.1177 12.054 14.0276 12.054C12.9375 12.0541 12.054 12.9376 12.054 14.0277C12.054 15.1178 12.9375 16.0012 14.0276 16.0013C15.1177 16.0013 16.0012 15.1178 16.0012 14.0277ZM7.94556 5.97201C7.94544 4.88196 7.062 3.99837 5.97192 3.99837C4.88195 3.99849 3.99841 4.88203 3.99829 5.97201C3.99829 7.06208 4.88187 7.94552 5.97192 7.94564C7.06207 7.94564 7.94556 7.06216 7.94556 5.97201ZM16.0012 5.97201C16.0011 4.88196 15.1177 3.99837 14.0276 3.99837C12.9376 3.99843 12.0541 4.882 12.054 5.97201C12.054 7.06212 12.9375 7.94558 14.0276 7.94564C15.1177 7.94564 16.0012 7.06216 16.0012 5.97201ZM9.27563 14.0277C9.27563 15.8524 7.79661 17.3314 5.97192 17.3314C4.14734 17.3313 2.66821 15.8523 2.66821 14.0277C2.66827 12.2031 4.14737 10.7241 5.97192 10.724C7.79657 10.724 9.27558 12.203 9.27563 14.0277ZM17.3313 14.0277C17.3313 15.8524 15.8523 17.3314 14.0276 17.3314C12.203 17.3313 10.7239 15.8523 10.7239 14.0277C10.7239 12.2031 12.203 10.724 14.0276 10.724C15.8522 10.724 17.3312 12.203 17.3313 14.0277ZM9.27563 5.97201C9.27563 7.7967 7.79661 9.27572 5.97192 9.27572C4.14734 9.2756 2.66821 7.79662 2.66821 5.97201C2.66833 4.14749 4.14741 2.66841 5.97192 2.6683C7.79654 2.6683 9.27552 4.14742 9.27563 5.97201ZM17.3313 5.97201C17.3313 7.79669 15.8523 9.27572 14.0276 9.27572C12.203 9.27566 10.7239 7.79666 10.7239 5.97201C10.724 4.14746 12.203 2.66836 14.0276 2.6683C15.8522 2.6683 17.3312 4.14742 17.3313 5.97201Z"
-                  />{" "}
-                </svg>
-                {(!isCollapsed || isXs) && <span>Explore Agents</span>}
-              </button>
-              <button
-                onClick={() => (window.location.href = "/all-ai-stores")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="Explore AI Stores"
-              >
-                <AiFillAppstore className="h-5 w-5" />
-                {(!isCollapsed || isXs) && <span>Explore AI Stores</span>}
-              </button>{" "}
-              <button
-                onClick={() => (window.location.href = "/usercreateaistore")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="Create AI Store"
-              >
-                <HiSparkles className="h-5 w-5" />
-                {(!isCollapsed || isXs) && <span>Create AI Store</span>}
-                  
-              </button>
-              {/* Search */}
-              {isCollapsed && !isXs ? (
+            </div>
+          </header>
+
+          {showShareQuestion && (
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg w-80">
+                <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
+                  Do you want to share this content?
+                </h2>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={cancelShare}
+                    className="px-4 py-2 bg-gray-300 rounded-md dark:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={confirmShareNow}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-md"
+                  >
+                    Yes, Share
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sidebar */}
+          <aside
+            className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
+              isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
+            }`}
+            style={{ width: isXs ? 220 : sidebarOpen ? 240 : 60 }}
+            aria-label="Chat sidebar"
+          >
+            {/* ---------- TOP (HEADER + ACTION BUTTONS) ---------- */}
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
+                <GiElephantHead
+                  onClick={() => navigate("/bharath-aistore")}
+                  title="Bharat AI Store"
+                  className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
+                    !isXs && isCollapsed ? "hidden" : ""
+                  }`}
+                />
+                <div className="flex items-center gap-1">
+                  {/* Mobile close */}
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="sm:hidden inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    aria-label="Close sidebar"
+                  >
+                    <LuPanelRightClose className="h-7 w-7 text-gray-700 dark:text-gray-300" />
+                  </button>
+
+                  {/* Collapse toggle */}
+                  <button
+                    onClick={() => setSidebarOpen((v) => !v)}
+                    className="hidden sm:inline-flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    aria-label={
+                      isCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                    }
+                    title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  >
+                    {isCollapsed ? (
+                      <LuPanelRightClose className="w-7 h-7 text-black dark:text-white" />
+                    ) : (
+                      <LuPanelLeftClose className="w-7 h-7 text-black dark:text-white" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* ---------- BUTTONS + SEARCH (TOP FIXED) ---------- */}
+              <div className="flex-shrink-0 p-2 space-y-1 border-b border-gray-100 dark:border-gray-700">
+                {/* New Chat */}
                 <button
-                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  onClick={() => setSidebarOpen(true)}
-                  title="Search"
+                  onClick={handleNewChat}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="New Chat"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              ) : (
-                <div className="relative w-full">
-                  <input
-                    value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    placeholder="Search chats"
-                    className="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pr-10 pl-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
                   <svg
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
-                    width="18"
-                    height="18"
+                    width="22"
+                    height="22"
                     viewBox="0 0 24 24"
                     fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="icon flex-shrink-0"
+                    aria-hidden="true"
+                  >
+                    {" "}
+                    <path
+                      fill="currentColor"
+                      d="M3.2024399999999997 13.5996V10.400388C3.2024399999999997 9.29346 3.202092 8.41446 3.2598599999999998 7.70742C3.318396 6.991344000000001 3.440388 6.3807719999999994 3.7251 5.821872L3.9102479999999997 5.491404C4.371264 4.7397 5.032704 4.12794 5.822748 3.725388L6.034859999999999 3.625788C6.535991999999999 3.410796 7.081595999999999 3.310188 7.708296 3.258984C8.415263999999999 3.201228 9.293339999999999 3.201564 10.4001 3.201564H11.0001C11.440716 3.201564 11.797979999999999 3.559032 11.798148 3.9996119999999995C11.798148 4.440335999999999 11.440824 4.79766 11.0001 4.79766H10.4001C9.26712 4.79766 8.465256 4.798007999999999 7.838375999999999 4.8492239999999995C7.375332 4.887048 7.047324 4.950816 6.787212 5.043755999999999L6.546971999999999 5.146872C6.01974 5.415515999999999 5.578463999999999 5.824139999999999 5.270796 6.325788L5.147748 6.5460959999999995C4.996656 6.84264 4.9005719999999995 7.219956 4.8501 7.8374999999999995C4.798872 8.464476 4.7985359999999995 9.26712 4.7985359999999995 10.400388V13.5996C4.7985359999999995 14.73288 4.798872 15.53556 4.8501 16.16256C4.9005719999999995 16.77996 4.9966680000000006 17.15736 5.147748 17.453879999999998L5.270796 17.6742C5.578452 18.1758 6.019775999999999 18.584519999999998 6.546971999999999 18.85308L6.787212 18.95628C7.047312000000001 19.04916 7.375368 19.1118 7.838375999999999 19.1496C8.465268 19.200839999999996 9.267071999999999 19.202399999999997 10.4001 19.202399999999997H13.60044C14.73348 19.202399999999997 15.535319999999999 19.200839999999996 16.1622 19.1496C16.77948 19.0992 17.15712 19.00404 17.45364 18.85308L17.67504 18.72888C18.1764 18.42132 18.58548 17.980919999999998 18.85404 17.453879999999998L18.95712 17.213639999999998C19.05012 16.953599999999998 19.11264 16.625519999999998 19.15044 16.16256C19.20168 15.53556 19.20204 14.73288 19.20204 13.5996V12.9996C19.20216 12.559199999999999 19.55964 12.20172 20.00004 12.2016C20.440679999999997 12.2016 20.79792 12.55908 20.79816 12.9996V13.5996C20.79816 14.706599999999998 20.79972 15.585479999999999 20.74188 16.29252C20.69064 16.919159999999998 20.59008 17.46492 20.37504 17.96604L20.27544 18.17808C19.873079999999998 18.96792 19.260839999999998 19.628519999999998 18.50952 20.08944L18.17904 20.274599999999996C17.61996 20.559479999999997 17.00868 20.682479999999998 16.292279999999998 20.741039999999998C15.58536 20.798759999999998 14.7072 20.7984 13.60044 20.7984H10.4001C9.293352 20.7984 8.415252 20.798759999999998 7.708296 20.741039999999998C7.08162 20.689799999999998 6.5359799999999995 20.589239999999997 6.034859999999999 20.3742L5.822748 20.274599999999996C5.0327519999999994 19.87212 4.371252 19.26024 3.9102479999999997 18.50856L3.7251 18.17808C3.4403639999999998 17.61924 3.3184080000000002 17.00868 3.2598599999999998 16.29252C3.202092 15.585479999999999 3.2024399999999997 14.706599999999998 3.2024399999999997 13.5996ZM16.15752 3.7359359999999997C17.304119999999998 2.8008 18.99456 2.867628 20.063399999999998 3.9363239999999995L20.2638 4.15782C21.13692 5.228219999999999 21.137159999999998 6.7730760000000005 20.2638 7.843356L20.063399999999998 8.06484L14.007119999999999 14.122319999999998C13.364759999999999 14.76468 12.55488 15.20952 11.673924 15.408959999999999L11.293068 15.47928L9.112212 15.78984C8.863644 15.825239999999999 8.612411999999999 15.74244 8.434859999999999 15.56484C8.257344 15.387239999999998 8.174387999999999 15.13608 8.209859999999999 14.887559999999999L8.521584 12.70776L8.591892 12.3258C8.79144 11.444988 9.236304 10.634892 9.878616 9.992579999999998L15.934919999999998 3.9363239999999995L16.15752 3.7359359999999997Z"
+                    />{" "}
+                  </svg>
+                  {(!isCollapsed || isXs) && <span>New Chat</span>}
+                </button>
+                {/* Create Agent */}
+                <button
+                  onClick={() => (window.location.href = "/main/agentcreate")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Create Agent"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="flex-shrink-0"
                   >
                     <path
-                      d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
+                      d="M12 5V19M5 12H19"
+                      strokeWidth="2"
                       strokeLinecap="round"
-                      strokeLinejoin="round"
                     />
                   </svg>
-                </div>
-              )}
-            </div>
+                  {(!isCollapsed || isXs) && <span>Create Agent</span>}
+                </button>
+                {/* Explore Agents */}
+                <button
+                  onClick={() => (window.location.href = "/bharath-aistore")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Explore Agents"
+                >
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="icon flex-shrink-0"
+                    aria-hidden="true"
+                  >
+                    {" "}
+                    <path
+                      fill="currentColor"
+                      d="M7.94556 14.0277C7.9455 12.9376 7.06204 12.054 5.97192 12.054C4.88191 12.0542 3.99835 12.9376 3.99829 14.0277C3.99829 15.1177 4.88188 16.0012 5.97192 16.0013C7.06207 16.0013 7.94556 15.1178 7.94556 14.0277ZM16.0012 14.0277C16.0012 12.9376 15.1177 12.054 14.0276 12.054C12.9375 12.0541 12.054 12.9376 12.054 14.0277C12.054 15.1178 12.9375 16.0012 14.0276 16.0013C15.1177 16.0013 16.0012 15.1178 16.0012 14.0277ZM7.94556 5.97201C7.94544 4.88196 7.062 3.99837 5.97192 3.99837C4.88195 3.99849 3.99841 4.88203 3.99829 5.97201C3.99829 7.06208 4.88187 7.94552 5.97192 7.94564C7.06207 7.94564 7.94556 7.06216 7.94556 5.97201ZM16.0012 5.97201C16.0011 4.88196 15.1177 3.99837 14.0276 3.99837C12.9376 3.99843 12.0541 4.882 12.054 5.97201C12.054 7.06212 12.9375 7.94558 14.0276 7.94564C15.1177 7.94564 16.0012 7.06216 16.0012 5.97201ZM9.27563 14.0277C9.27563 15.8524 7.79661 17.3314 5.97192 17.3314C4.14734 17.3313 2.66821 15.8523 2.66821 14.0277C2.66827 12.2031 4.14737 10.7241 5.97192 10.724C7.79657 10.724 9.27558 12.203 9.27563 14.0277ZM17.3313 14.0277C17.3313 15.8524 15.8523 17.3314 14.0276 17.3314C12.203 17.3313 10.7239 15.8523 10.7239 14.0277C10.7239 12.2031 12.203 10.724 14.0276 10.724C15.8522 10.724 17.3312 12.203 17.3313 14.0277ZM9.27563 5.97201C9.27563 7.7967 7.79661 9.27572 5.97192 9.27572C4.14734 9.2756 2.66821 7.79662 2.66821 5.97201C2.66833 4.14749 4.14741 2.66841 5.97192 2.6683C7.79654 2.6683 9.27552 4.14742 9.27563 5.97201ZM17.3313 5.97201C17.3313 7.79669 15.8523 9.27572 14.0276 9.27572C12.203 9.27566 10.7239 7.79666 10.7239 5.97201C10.724 4.14746 12.203 2.66836 14.0276 2.6683C15.8522 2.6683 17.3312 4.14742 17.3313 5.97201Z"
+                    />{" "}
+                  </svg>
+                  {(!isCollapsed || isXs) && <span>Explore Agents</span>}
+                </button>
+                <button
+                  onClick={() => (window.location.href = "/all-ai-stores")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Explore AI Stores"
+                >
+                  <AiFillAppstore className="h-5 w-5" />
+                  {(!isCollapsed || isXs) && <span>Explore AI Stores</span>}
+                </button>{" "}
+                <button
+                  onClick={() => (window.location.href = "/usercreateaistore")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Create AI Store"
+                >
+                  <HiSparkles className="h-5 w-5" />
+                  {(!isCollapsed || isXs) && <span>Create AI Store</span>}
+                    
+                </button>
+                {/* Search */}
+                {isCollapsed && !isXs ? (
+                  <button
+                    className="w-10 h-10 mx-auto flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    onClick={() => setSidebarOpen(true)}
+                    title="Search"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                ) : (
+                  <div className="relative w-full">
+                    <input
+                      value={historySearch}
+                      onChange={(e) => setHistorySearch(e.target.value)}
+                      placeholder="Search chats"
+                      className="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pr-10 pl-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <svg
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <path
+                        d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
 
-            <div className="px-2 pb-24 overflow-y-auto h-[calc(100vh-56px-48px-64px-56px)]">
-              {!isCollapsed || isXs ? (
-                <>
-                  <div className="p-3 space-y-3 text-xs text-gray-500">
-                    Chat History
+              <div className="px-2 pb-24 overflow-y-auto h-[calc(100vh-56px-48px-64px-56px)]">
+                {!isCollapsed || isXs ? (
+                  <>
+                    <div className="p-3 space-y-3 text-xs text-gray-500">
+                      Chat History
+                    </div>
+
+                    {historyLoading ? (
+                      <div className="p-3 space-y-3">
+                        {[...Array(6)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : filteredHistory.length === 0 ? (
+                      <div className="text-xs text-gray-500 px-2 py-8">
+                        No chats yet.
+                      </div>
+                    ) : (
+                      <ul className="space-y-1">
+                        {filteredHistory.map((h) => (
+                          <li key={h.id} className="group">
+                            <button
+                              className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${
+                                h.id === currentChatId
+                                  ? "bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500"
+                                  : ""
+                              }`}
+                              onClick={() => openHistoryChat(h.id)}
+                              title={h.title}
+                            >
+                              <div className="flex flex-col flex-1 min-w-0 pt-1">
+                                <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {h.title}
+                                </span>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <ul className="space-y-2 mt-3">
+                    {filteredHistory.map((h) => (
+                      <li key={h.id} className="flex justify-center">
+                        <button
+                          className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${
+                            h.id === currentChatId
+                              ? "ring-2 ring-blue-500 ring-inset"
+                              : ""
+                          }`}
+                          title={h.title}
+                          onClick={() => openHistoryChat(h.id)}
+                        >
+                          {(h.title || "?").trim().charAt(0).toUpperCase()}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* ---------- FOOTER (FIXED LOGOUT BUTTON) ---------- */}
+              {/* <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2">
+                <button
+                  onClick={handleLogout}
+                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {(!isCollapsed || isXs) && (
+                    <span className="text-sm font-semibold">Log out</span>
+                  )}
+                </button>
+              </div> */}
+              {/* ---------- FOOTER: PROFILE (LIKE CHATGPT) ---------- */}
+              {/* ---------- FOOTER: PROFILE DROPDOWN (LIKE CHATGPT) ---------- */}
+              <div
+                ref={profileMenuRef}
+                className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2 relative"
+              >
+                {/* Profile button at bottom of sidebar */}
+                <button
+                  onClick={() => setShowProfileMenu((v) => !v)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {/* Avatar circle with initials */}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-xs font-semibold text-white">
+                    {profileInitials}
                   </div>
 
-                  {historyLoading ? (
-                    <div className="p-3 space-y-3">
-                      {[...Array(6)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
-                        />
-                      ))}
+                  {/* Name + email – hidden when collapsed on desktop, visible on mobile */}
+                  {(!isCollapsed || isXs) && (
+                    <div className="flex flex-col min-w-0 text-left">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {profileDisplayName}
+                      </span>
+                      {profile?.customerEmail && (
+                        <span className="text-xs text-gray-500 truncate">
+                          {profile.customerEmail}
+                        </span>
+                      )}
                     </div>
-                  ) : filteredHistory.length === 0 ? (
-                    <div className="text-xs text-gray-500 px-2 py-8">
-                      No chats yet.
-                    </div>
-                  ) : (
-                    <ul className="space-y-1">
-                      {filteredHistory.map((h) => (
-                        <li key={h.id} className="group">
-                          <button
-                            className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${
-                              h.id === currentChatId
-                                ? "bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500"
-                                : ""
-                            }`}
-                            onClick={() => openHistoryChat(h.id)}
-                            title={h.title}
-                          >
-                            <div className="flex flex-col flex-1 min-w-0 pt-1">
-                              <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {h.title}
-                              </span>
-                            </div>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
                   )}
-                </>
-              ) : (
-                <ul className="space-y-2 mt-3">
-                  {filteredHistory.map((h) => (
-                    <li key={h.id} className="flex justify-center">
-                      <button
-                        className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${
-                          h.id === currentChatId
-                            ? "ring-2 ring-blue-500 ring-inset"
-                            : ""
-                        }`}
-                        title={h.title}
-                        onClick={() => openHistoryChat(h.id)}
-                      >
-                        {(h.title || "?").trim().charAt(0).toUpperCase()}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                  <div
+                    className="p-2  text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-colors"
+                    aria-label="Open profile menu"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </div>
+                </button>
 
-            {/* ---------- FOOTER (FIXED LOGOUT BUTTON) ---------- */}
-            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2">
-              <button
-                onClick={handleLogout}
-                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition"
-              >
-                <LogOut className="w-4 h-4" />
-                {(!isCollapsed || isXs) && (
-                  <span className="text-sm font-semibold">Log out</span>
+                {/* Small dropdown panel ABOVE the button, like ChatGPT */}
+                {showProfileMenu && (
+                  <div className="absolute bottom-14 left-2 right-2 rounded-2xl bg-white shadow-2xl border border-gray-200 dark:bg-gray-900 dark:border-gray-700 py-2">
+                    {/* Top: name + avatar */}
+                    <div className="flex items-center gap-3 px-3 pb-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-xs font-semibold text-white">
+                        {profileInitials}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                          {profileDisplayName}
+                        </span>
+                        {profile?.customerEmail && (
+                          <span className="text-xs text-gray-500 truncate">
+                            {profile.customerEmail}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+
+                    {/* Logout row */}
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 font-medium"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log out</span>
+                    </button>
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
-          </div>
-        </aside>
-        {/* FIXED: Right Sidebar Toggle Button */}
-        {!isXs && (
-          <button
-            onClick={() => setRightSidebarOpen((prev) => !prev)}
-            className="fixed top-1/2 -translate-y-1/2 z-30 w-6 h-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 animate-pulse rounded-full shadow-md"
-            style={{
-              right: `${rightSidebarOpen ? RIGHT_SIDEBAR_WIDTH : 0}px`,
-            }}
-            title={
-              rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
-            }
-          >
-            <LuPanelRightClose
-              className="w-5 h-5 text-purple-600 dark:text-purple-400"
+          </aside>
+          {/* FIXED: Right Sidebar Toggle Button */}
+          {!isXs && (
+            <button
+              onClick={() => setRightSidebarOpen((prev) => !prev)}
+              className="fixed top-1/2 -translate-y-1/2 z-30 w-6 h-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 animate-pulse rounded-full shadow-md"
               style={{
-                transform: rightSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
+                right: `${rightSidebarOpen ? RIGHT_SIDEBAR_WIDTH : 0}px`,
               }}
-            />
-          </button>
-        )}
-        {userId && !isXs && rightSidebarOpen && (
-          <aside
-            className={`fixed right-0 top-0 h-full z-30 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-600 transition-all duration-300 overflow-y-auto`}
-            style={{
-              width: rightSidebarWidth,
-              right: 0,
-            }}
-          >
-            {/* 💡 Inline glow animations for each color */}
-            <style>
-              {`
+              title={
+                rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
+              }
+            >
+              <LuPanelRightClose
+                className="w-5 h-5 text-purple-600 dark:text-purple-400"
+                style={{
+                  transform: rightSidebarOpen
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+                }}
+              />
+            </button>
+          )}
+          {userId && !isXs && rightSidebarOpen && (
+            <aside
+              className={`fixed right-0 top-0 h-full z-30 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-600 transition-all duration-300 overflow-y-auto`}
+              style={{
+                width: rightSidebarWidth,
+                right: 0,
+              }}
+            >
+              {/* 💡 Inline glow animations for each color */}
+              <style>
+                {`
       @keyframes glowPurple {
         0%, 100% {
           box-shadow: 0 0 6px rgba(168, 85, 247, 0.3),
@@ -2615,563 +2842,570 @@ ${url}`.trim();
         border-radius: 0.75rem;
       }
     `}
-            </style>
+              </style>
 
-            {/* Right sidebar content */}
-            <div className="p-4">
-              <div className="space-y-3">
-                {promos.map((p, index) => {
-                  // Assign different glow classes based on index
-                  const glowClasses = [
-                    "glow-purple",
-                    "glow-blue",
-                    "glow-green",
-                    "glow-orange",
-                  ];
-                  const glowClass = glowClasses[index % glowClasses.length]; // loops if >4
+              {/* Right sidebar content */}
+              <div className="p-4">
+                <div className="space-y-3">
+                  {promos.map((p, index) => {
+                    // Assign different glow classes based on index
+                    const glowClasses = [
+                      "glow-purple",
+                      "glow-blue",
+                      "glow-green",
+                      "glow-orange",
+                    ];
+                    const glowClass = glowClasses[index % glowClasses.length]; // loops if >4
 
-                  return (
-                    <div
-                      key={p.id}
-                      className={`bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden cursor-pointer shadow-sm transition ${glowClass}`}
-                      onClick={() => openPromo(p.href)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === "Enter" && openPromo(p.href)}
-                    >
-                      <img
-                        src={p.src}
-                        alt={p.alt}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        className="w-full h-32 object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            "data:image/svg+xml;charset=UTF-8," +
-                            encodeURIComponent(
-                              `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='200'>
+                    return (
+                      <div
+                        key={p.id}
+                        className={`bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden cursor-pointer shadow-sm transition ${glowClass}`}
+                        onClick={() => openPromo(p.href)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && openPromo(p.href)
+                        }
+                      >
+                        <img
+                          src={p.src}
+                          alt={p.alt}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-32 object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "data:image/svg+xml;charset=UTF-8," +
+                              encodeURIComponent(
+                                `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='200'>
                       <rect width='100%' height='100%' fill='#eee'/>
                       <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#999' font-family='Arial' font-size='16'>
                         Image unavailable
                       </text>
                     </svg>`
-                            );
-                        }}
-                      />
-                      <div className="p-3">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">
-                          {p.alt}
-                        </h3>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </aside>
-        )}
-        {/* Overlay */}
-        <div
-          className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${
-            overlayVisible
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => {
-            setSidebarOpen(false);
-            setRightSidebarOpen(false);
-          }}
-          aria-hidden
-        />
-
-        {/* Main */}
-        <main
-          className={`flex flex-col bg-white dark:bg-gray-800 transition-all duration-200 min-h-[calc(100vh-var(--header))] ${
-            isXs ? "" : `ml-[${leftOffset}px] mr-[${rightOffset}px]`
-          }`}
-          style={{
-            marginLeft: leftOffset, // desktop pushes content, mobile stays 0 (overlay pattern)
-            paddingTop: 56, // header height (h-14)
-            marginRight: effectiveRightOffset,
-            width: effectiveContentWidth1,
-            ["--header" as any]: `${HEADER_HEIGHT}px`,
-          }}
-        >
-          {assistant && messages.length === 0 && (
-            <section
-              className="w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 mt-6"
-              aria-label="Assistant info"
-            >
-              <div className="rounded-lg bg-white dark:bg-gray-900 p-4 sm:p-5 flex flex-col items-center text-center">
-                {/* 1) Image */}
-                <div className="flex items-center justify-center">
-                  {assistant?.profileUrl ? (
-                    <img
-                      src={assistant.profileUrl}
-                      alt={assistant.name}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow">
-                      <GiElephantHead className="w-8 h-8 text-white" />
-                    </div>
-                  )}
-                </div>
-
-                {/* 2) Name */}
-                <h1 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
-                  {assistant.name}
-                </h1>
-
-                {/* 3) Description */}
-                {assistant.description ? (
-                  <p className="mt-1 text-sm sm:text-[15px] text-gray-700 dark:text-gray-300">
-                    {assistant.description}
-                  </p>
-                ) : null}
-
-                {/* 4) Ratings */}
-                <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm pb-8">
-                  <span className="text-gray-700 dark:text-gray-200">
-                    <strong>My rating:</strong>{" "}
-                    {hasRated && myRating != null && myRating > 0
-                      ? `${myRating.toFixed(1)}/5`
-                      : "—"}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-300">|</span>
-                  <span className="text-gray-700 dark:text-gray-200">
-                    <strong>Overall:</strong>{" "}
-                    {overallCount > 0 && overallAvg > 0
-                      ? `${overallAvg.toFixed(1)}/5 (${overallCount})`
-                      : "Not rated yet"}
-                  </span>
-
-                  {!alreadyRated && (
-                    <div className="flex justify-center">
-                      <button
-                        onClick={() => {
-                          if (alreadyRated) {
-                            message.info("You’ve already rated this agent.");
-                            return;
-                          }
-                          setShowRatingModal(true);
-                        }}
-                        disabled={loadingRatings}
-                        title="Rate & Comments"
-                        aria-label="Rate and add comments"
-                        className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md bg-purple-600 text-white font-medium text-sm shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors"
-                      >
-                        <StarIcon className="w-4 h-4 shrink-0" />
-                        <span>Rate</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* 5) Conversation starters — moved here to sit just under ratings */}
-                {visiblePrompts.length > 0 && (
-                  <div className="w-full mt-3">
-                    {(() => {
-                      const countToShow = isXs
-                        ? Math.min(2, visiblePrompts.length)
-                        : Math.min(4, visiblePrompts.length);
-                      const promptsToShow = visiblePrompts.slice(
-                        0,
-                        countToShow
-                      );
-                      const colClass =
-                        countToShow === 1
-                          ? "grid-cols-1 max-w-xs"
-                          : countToShow === 2
-                          ? "grid-cols-2 max-w-lg"
-                          : countToShow === 3
-                          ? "grid-cols-3 max-w-3xl"
-                          : "grid-cols-4 max-w-5xl";
-                      return (
-                        <div className={`grid gap-3 ${colClass} mx-auto`}>
-                          {promptsToShow.map((prompt, idx) => (
-                            <button
-                              key={`${prompt}-${idx}`}
-                              onClick={() => handlePromptClick(prompt)}
-                              className="p-4 rounded-lg shadow bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-indigo-800 transition text-gray-700 dark:text-white text-left text-sm touch-manipulation"
-                              style={{ WebkitTapHighlightColor: "transparent" }}
-                              title={prompt}
-                            >
-                              {prompt}
-                            </button>
-                          ))}
+                              );
+                          }}
+                        />
+                        <div className="p-3">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">
+                            {p.alt}
+                          </h3>
                         </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </section>
+            </aside>
           )}
-          {/* Rating Modal */}
-          <Modal
-            title="Rate & Comments"
-            open={showRatingModal}
-            onCancel={() => setShowRatingModal(false)}
-            footer={
-              hasRated
-                ? []
-                : [
-                    <button
-                      key="submit"
-                      className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                      disabled={
-                        submittingRating || !(myRating && myRating >= 1)
-                      }
-                      onClick={submitMyRating}
-                    >
-                      {submittingRating ? "Submitting..." : "Submit"}
-                    </button>,
-                  ]
-            }
-          >
-            <div className="space-y-3">
-              {/* Mine (interactive) */}
-              <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Rate this Agent
-                </div>
-                <div className="mt-1 flex items-center gap-3">
-                  <StarRow
-                    value={myRating ?? 0} // stays 0 (NOT 5) until user picks
-                    onChange={hasRated ? undefined : (v) => setMyRating(v)}
-                    readOnly={hasRated || submittingRating}
-                    size={22}
-                  />
-                  {!hasRated && (
-                    <span className="text-xs text-gray-500">
-                      Select 1–5 stars
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Comment */}
-              <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {hasRated ? "Comment" : "Comments (optional)"}
-                </div>
-                <textarea
-                  className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm"
-                  placeholder="Write something…"
-                  value={myComment}
-                  onChange={(e) => setMyComment(e.target.value)}
-                  rows={3}
-                  readOnly={hasRated}
-                />
-              </div>
-            </div>
-          </Modal>
-
-          {/* Subscription Modal */}
-          <SubscriptionModal
-            open={showSubscriptionModal}
-            onCancel={() => setShowSubscriptionModal(false)}
-            subscriptionPlans={subscriptionPlans}
-            loadingPlans={loadingPlans}
-            agentId={agentId || ""}
-            userId={userId || ""}
+          {/* Overlay */}
+          <div
+            className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${
+              overlayVisible
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }`}
+            onClick={() => {
+              setSidebarOpen(false);
+              setRightSidebarOpen(false);
+            }}
+            aria-hidden
           />
 
-          {/* Content area */}
-          {isFetchingAssistant ? (
-            <div className="flex-1 grid place-items-center min-h-[calc(100vh-56px)]">
-              <Loader2 className="animate-spin w-8 h-8 text-purple-700 dark:text-white" />
-            </div>
-          ) : (
-            <>
-              {/* ======= Conversation ======= */}
-              <div className="flex-1 w-full">
-                <div className="mx-auto w-full max-w-4xl px-3 sm:px-2 lg:px-2 pt-2 sm:pt-4 pb-[7.5rem]">
-                  {messages.length === 0 ? (
-                    <div className="pt-1" />
-                  ) : (
-                    <>
-                      {messages.map((msg, idx) =>
-                        msg.role === "user" ? (
-                          <div
-                            key={idx}
-                            className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${
-                              editingIndex === idx ? "w-full" : ""
-                            }`}
-                          >
-                            {editingIndex === idx ? (
-                              <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
-                                <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-2xl p-4 shadow-md">
-                                  <div className="flex items-start gap-3">
-                                    <div className="flex-1 min-w-0">
-                                      <textarea
-                                        className="w-full text-[13px] sm:text-sm resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 overflow-auto p-1 max-h-[32dvh]"
-                                        style={{ minHeight: "20px" }}
-                                        value={editingContent}
-                                        onChange={(e) =>
-                                          setEditingContent(e.target.value)
-                                        }
-                                        onInput={(e) => {
-                                          const target =
-                                            e.target as HTMLTextAreaElement;
-                                          target.style.height = "auto";
-                                          target.style.height =
-                                            target.scrollHeight + "px";
+          {/* Main */}
+          <main
+            className={`flex flex-col bg-white dark:bg-gray-800 transition-all duration-200 min-h-[calc(100vh-var(--header))] ${
+              isXs ? "" : `ml-[${leftOffset}px] mr-[${rightOffset}px]`
+            }`}
+            style={{
+              marginLeft: leftOffset, // desktop pushes content, mobile stays 0 (overlay pattern)
+              paddingTop: 56, // header height (h-14)
+              marginRight: effectiveRightOffset,
+              width: effectiveContentWidth1,
+              ["--header" as any]: `${HEADER_HEIGHT}px`,
+            }}
+          >
+            {assistant && messages.length === 0 && (
+              <section
+                className="w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 mt-6"
+                aria-label="Assistant info"
+              >
+                <div className="rounded-lg bg-white dark:bg-gray-900 p-4 sm:p-5 flex flex-col items-center text-center">
+                  {/* 1) Image */}
+                  <div className="flex items-center justify-center">
+                    {assistant?.profileUrl ? (
+                      <img
+                        src={assistant.profileUrl}
+                        alt={assistant.name}
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow">
+                        <GiElephantHead className="w-8 h-8 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2) Name */}
+                  <h1 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
+                    {assistant.name}
+                  </h1>
+
+                  {/* 3) Description */}
+                  {assistant.description ? (
+                    <p className="mt-1 text-sm sm:text-[15px] text-gray-700 dark:text-gray-300">
+                      {assistant.description}
+                    </p>
+                  ) : null}
+
+                  {/* 4) Ratings */}
+                  <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm pb-8">
+                    <span className="text-gray-700 dark:text-gray-200">
+                      <strong>My rating:</strong>{" "}
+                      {hasRated && myRating != null && myRating > 0
+                        ? `${myRating.toFixed(1)}/5`
+                        : "—"}
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-300">|</span>
+                    <span className="text-gray-700 dark:text-gray-200">
+                      <strong>Overall:</strong>{" "}
+                      {overallCount > 0 && overallAvg > 0
+                        ? `${overallAvg.toFixed(1)}/5 (${overallCount})`
+                        : "Not rated yet"}
+                    </span>
+
+                    {!alreadyRated && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => {
+                            if (alreadyRated) {
+                              message.info("You’ve already rated this agent.");
+                              return;
+                            }
+                            setShowRatingModal(true);
+                          }}
+                          disabled={loadingRatings}
+                          title="Rate & Comments"
+                          aria-label="Rate and add comments"
+                          className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md bg-purple-600 text-white font-medium text-sm shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors"
+                        >
+                          <StarIcon className="w-4 h-4 shrink-0" />
+                          <span>Rate</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 5) Conversation starters — moved here to sit just under ratings */}
+                  {visiblePrompts.length > 0 && (
+                    <div className="w-full mt-3">
+                      {(() => {
+                        const countToShow = isXs
+                          ? Math.min(2, visiblePrompts.length)
+                          : Math.min(4, visiblePrompts.length);
+                        const promptsToShow = visiblePrompts.slice(
+                          0,
+                          countToShow
+                        );
+                        const colClass =
+                          countToShow === 1
+                            ? "grid-cols-1 max-w-xs"
+                            : countToShow === 2
+                            ? "grid-cols-2 max-w-lg"
+                            : countToShow === 3
+                            ? "grid-cols-3 max-w-3xl"
+                            : "grid-cols-4 max-w-5xl";
+                        return (
+                          <div className={`grid gap-3 ${colClass} mx-auto`}>
+                            {promptsToShow.map((prompt, idx) => (
+                              <button
+                                key={`${prompt}-${idx}`}
+                                onClick={() => handlePromptClick(prompt)}
+                                className="p-4 rounded-lg shadow bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-indigo-800 transition text-gray-700 dark:text-white text-left text-sm touch-manipulation"
+                                style={{
+                                  WebkitTapHighlightColor: "transparent",
+                                }}
+                                title={prompt}
+                              >
+                                {prompt}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+            {/* Rating Modal */}
+            <Modal
+              title="Rate & Comments"
+              open={showRatingModal}
+              onCancel={() => setShowRatingModal(false)}
+              footer={
+                hasRated
+                  ? []
+                  : [
+                      <button
+                        key="submit"
+                        className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                        disabled={
+                          submittingRating || !(myRating && myRating >= 1)
+                        }
+                        onClick={submitMyRating}
+                      >
+                        {submittingRating ? "Submitting..." : "Submit"}
+                      </button>,
+                    ]
+              }
+            >
+              <div className="space-y-3">
+                {/* Mine (interactive) */}
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Rate this Agent
+                  </div>
+                  <div className="mt-1 flex items-center gap-3">
+                    <StarRow
+                      value={myRating ?? 0} // stays 0 (NOT 5) until user picks
+                      onChange={hasRated ? undefined : (v) => setMyRating(v)}
+                      readOnly={hasRated || submittingRating}
+                      size={22}
+                    />
+                    {!hasRated && (
+                      <span className="text-xs text-gray-500">
+                        Select 1–5 stars
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Comment */}
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {hasRated ? "Comment" : "Comments (optional)"}
+                  </div>
+                  <textarea
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm"
+                    placeholder="Write something…"
+                    value={myComment}
+                    onChange={(e) => setMyComment(e.target.value)}
+                    rows={3}
+                    readOnly={hasRated}
+                  />
+                </div>
+              </div>
+            </Modal>
+
+            {/* Subscription Modal */}
+            <SubscriptionModal
+              open={showSubscriptionModal}
+              onCancel={() => setShowSubscriptionModal(false)}
+              subscriptionPlans={subscriptionPlans}
+              loadingPlans={loadingPlans}
+              agentId={agentId || ""}
+              userId={userId || ""}
+            />
+
+            {/* Content area */}
+            {isFetchingAssistant ? (
+              <div className="flex-1 grid place-items-center min-h-[calc(100vh-56px)]">
+                <Loader2 className="animate-spin w-8 h-8 text-purple-700 dark:text-white" />
+              </div>
+            ) : (
+              <>
+                {/* ======= Conversation ======= */}
+                <div className="flex-1 w-full">
+                  <div className="mx-auto w-full max-w-4xl px-3 sm:px-2 lg:px-2 pt-2 sm:pt-4 pb-[7.5rem]">
+                    {messages.length === 0 ? (
+                      <div className="pt-1" />
+                    ) : (
+                      <>
+                        {messages.map((msg, idx) =>
+                          msg.role === "user" ? (
+                            <div
+                              key={idx}
+                              className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${
+                                editingIndex === idx ? "w-full" : ""
+                              }`}
+                            >
+                              {editingIndex === idx ? (
+                                <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
+                                  <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-2xl p-4 shadow-md">
+                                    <div className="flex items-start gap-3">
+                                      <div className="flex-1 min-w-0">
+                                        <textarea
+                                          className="w-full text-[13px] sm:text-sm resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 overflow-auto p-1 max-h-[32dvh]"
+                                          style={{ minHeight: "20px" }}
+                                          value={editingContent}
+                                          onChange={(e) =>
+                                            setEditingContent(e.target.value)
+                                          }
+                                          onInput={(e) => {
+                                            const target =
+                                              e.target as HTMLTextAreaElement;
+                                            target.style.height = "auto";
+                                            target.style.height =
+                                              target.scrollHeight + "px";
+                                          }}
+                                          placeholder="Edit your message..."
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                      <button
+                                        onClick={() => {
+                                          setEditingIndex(null);
+                                          setEditingContent("");
                                         }}
-                                        placeholder="Edit your message..."
-                                      />
+                                        className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          handleEditSave(idx, editingContent)
+                                        }
+                                        disabled={!editingContent.trim()}
+                                        className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                      >
+                                        Save
+                                      </button>
                                     </div>
                                   </div>
-                                  <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <button
-                                      onClick={() => {
-                                        setEditingIndex(null);
-                                        setEditingContent("");
-                                      }}
-                                      className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleEditSave(idx, editingContent)
-                                      }
-                                      disabled={!editingContent.trim()}
-                                      className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
                                 </div>
+                              ) : (
+                                <>
+                                  <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative group">
+                                    <MarkdownRenderer
+                                      content={cleanContent(msg.content)}
+                                    />
+
+                                    <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            msg.content
+                                          );
+                                          message.success(
+                                            "Copied to clipboard"
+                                          );
+                                        }}
+                                        className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                        title="Copy"
+                                      >
+                                        <svg
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="w-4 h-4"
+                                          aria-hidden="true"
+                                        >
+                                          <rect
+                                            x="9"
+                                            y="9"
+                                            width="13"
+                                            height="13"
+                                            rx="2"
+                                            ry="2"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                          <path
+                                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                        </svg>
+                                      </button>
+                                      <button
+                                        onClick={() => handleEdit(idx)}
+                                        className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                        title="Edit"
+                                      >
+                                        <svg
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="w-4 h-4"
+                                          aria-hidden="true"
+                                        >
+                                          <path
+                                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                          <path
+                                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white mt-2">
+                                    <svg
+                                      width="20"
+                                      height="20"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-5 h-5"
+                                      aria-hidden="true"
+                                    >
+                                      <path
+                                        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                      <circle
+                                        cx="12"
+                                        cy="7"
+                                        r="4"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        fill="none"
+                                      />
+                                    </svg>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div
+                              key={idx}
+                              className="flex mb-3 sm:mb-4 justify-start gap-2"
+                            >
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-400 to-cyan-400 text-white mt-1">
+                                <GiElephantHead className="w-5 h-5" />
                               </div>
-                            ) : (
-                              <>
-                                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative group">
+                              <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                                <div className="items-start gap-2 flex-1">
                                   <MarkdownRenderer
                                     content={cleanContent(msg.content)}
                                   />
+                                </div>
+                                <div className="flex justify-end gap-2 mt-2">
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(
+                                        cleanContent(msg.content)
+                                      );
+                                      message.success("Copied to clipboard");
+                                    }}
+                                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                    title="Copy"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
 
-                                  <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                    <button
-                                      onClick={() => {
+                                  <button
+                                    onClick={async () => {
+                                      if (navigator.share) {
+                                        try {
+                                          await navigator.share({
+                                            title:
+                                              assistant?.name || "Assistant",
+                                            text: msg.content,
+                                          });
+                                        } catch (err) {
+                                          console.error(
+                                            "Share cancelled or failed:",
+                                            err
+                                          );
+                                        }
+                                      } else {
                                         navigator.clipboard.writeText(
                                           msg.content
                                         );
-                                        message.success("Copied to clipboard");
-                                      }}
-                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                      title="Copy"
-                                    >
-                                      <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="w-4 h-4"
-                                        aria-hidden="true"
-                                      >
-                                        <rect
-                                          x="9"
-                                          y="9"
-                                          width="13"
-                                          height="13"
-                                          rx="2"
-                                          ry="2"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                        <path
-                                          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                      </svg>
-                                    </button>
-                                    <button
-                                      onClick={() => handleEdit(idx)}
-                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                      title="Edit"
-                                    >
-                                      <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="w-4 h-4"
-                                        aria-hidden="true"
-                                      >
-                                        <path
-                                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                        <path
-                                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white mt-2">
-                                  <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-5 h-5"
-                                    aria-hidden="true"
-                                  >
-                                    <path
-                                      d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                    <circle
-                                      cx="12"
-                                      cy="7"
-                                      r="4"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      fill="none"
-                                    />
-                                  </svg>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <div
-                            key={idx}
-                            className="flex mb-3 sm:mb-4 justify-start gap-2"
-                          >
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-400 to-cyan-400 text-white mt-1">
-                              <GiElephantHead className="w-5 h-5" />
-                            </div>
-                            <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-                              <div className="items-start gap-2 flex-1">
-                                <MarkdownRenderer
-                                  content={cleanContent(msg.content)}
-                                />
-                              </div>
-                              <div className="flex justify-end gap-2 mt-2">
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(
-                                      cleanContent(msg.content)
-                                    );
-                                    message.success("Copied to clipboard");
-                                  }}
-                                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                  title="Copy"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </button>
-
-                                <button
-                                  onClick={async () => {
-                                    if (navigator.share) {
-                                      try {
-                                        await navigator.share({
-                                          title: assistant?.name || "Assistant",
-                                          text: msg.content,
-                                        });
-                                      } catch (err) {
-                                        console.error(
-                                          "Share cancelled or failed:",
-                                          err
+                                        message.info(
+                                          "Copied text to share manually"
                                         );
                                       }
-                                    } else {
-                                      navigator.clipboard.writeText(
-                                        msg.content
-                                      );
-                                      message.info(
-                                        "Copied text to share manually"
-                                      );
-                                    }
-                                  }}
-                                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                  title="Share"
-                                >
-                                  <Share2 className="w-4 h-4" />
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    handleReadAloud(
-                                      cleanContent(msg.content),
-                                      idx
-                                    )
-                                  }
-                                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                  title={
-                                    speakingIdx === idx
-                                      ? "Stop Reading"
-                                      : "Read Aloud"
-                                  }
-                                >
-                                  {speakingIdx === idx ? (
-                                    <Square className="w-4 h-4" />
-                                  ) : (
-                                    <Volume2 className="w-4 h-4" />
-                                  )}
-                                </button>
-
-                                {idx === messages.length - 1 && (
-                                  <button
-                                    onClick={() => handleRegenerate(idx)}
+                                    }}
                                     className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                    title="Regenerate"
+                                    title="Share"
                                   >
-                                    <RefreshCcw className="w-4 h-4" />
+                                    <Share2 className="w-4 h-4" />
                                   </button>
-                                )}
+
+                                  <button
+                                    onClick={() =>
+                                      handleReadAloud(
+                                        cleanContent(msg.content),
+                                        idx
+                                      )
+                                    }
+                                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                    title={
+                                      speakingIdx === idx
+                                        ? "Stop Reading"
+                                        : "Read Aloud"
+                                    }
+                                  >
+                                    {speakingIdx === idx ? (
+                                      <Square className="w-4 h-4" />
+                                    ) : (
+                                      <Volume2 className="w-4 h-4" />
+                                    )}
+                                  </button>
+
+                                  {idx === messages.length - 1 && (
+                                    <button
+                                      onClick={() => handleRegenerate(idx)}
+                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                      title="Regenerate"
+                                    >
+                                      <RefreshCcw className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )
-                      )}
-                      {loading && (
-                        <div className="flex justify-start mb-3 sm:mb-4">
-                          <div className="flex items-center gap-3 px-4 py-3  dark:bg-gray-800 ">
-                            {/* Option 2: Pulse wave */}
-                            <div className="flex items-center gap-1">
-                              <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave"></span>
-                              <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-150"></span>
-                              <span className="w-1 h-8 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-300"></span>
-                              <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-450"></span>
-                              <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-600"></span>
+                          )
+                        )}
+                        {loading && (
+                          <div className="flex justify-start mb-3 sm:mb-4">
+                            <div className="flex items-center gap-3 px-4 py-3  dark:bg-gray-800 ">
+                              {/* Option 2: Pulse wave */}
+                              <div className="flex items-center gap-1">
+                                <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave"></span>
+                                <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-150"></span>
+                                <span className="w-1 h-8 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-300"></span>
+                                <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-450"></span>
+                                <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-600"></span>
+                              </div>
+
+                              {/* Thinking text */}
+                              <span
+                                className="text-sm text-gray-600 dark:text-gray-300 font-bold ml-2 transition-opacity duration-300"
+                                aria-live="polite"
+                              >
+                                {loadingMessages[loadingMessageIndex]}
+                              </span>
                             </div>
-
-                            {/* Thinking text */}
-                            <span
-                              className="text-sm text-gray-600 dark:text-gray-300 font-bold ml-2 transition-opacity duration-300"
-                              aria-live="polite"
-                            >
-                              {loadingMessages[loadingMessageIndex]}
-                            </span>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      <style>
-                        {`
+                        <style>
+                          {`
     /* Typing dots animation */
     @keyframes typing {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
@@ -3233,222 +3467,223 @@ ${url}`.trim();
     .animation-delay-450 { animation-delay: 0.45s; }
     .animation-delay-600 { animation-delay: 0.6s; }
   `}
-                      </style>
-                    </>
-                  )}
-                  <div ref={messagesEndRef} />
+                        </style>
+                      </>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
                 </div>
-              </div>
 
-              {/* Composer */}
-              <div
-                className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent px-3 sm:px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
-                style={{
-                  left: effectiveLeftOffset,
-                  right: effectiveRightOffset,
-                  width: effectiveContentWidth1,
-                  zIndex: 29,
-                }}
-              >
-                {/* MOBILE: Always visible files panel (simple layout with close button) */}
-                {selectedFiles.length > 0 && (
-                  <div className="sm:hidden w-full max-w-4xl mx-auto mb-2">
-                    <div className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl p-2 shadow-sm">
-                      {selectedFiles.map((f, i) => (
-                        <div
-                          key={`file_${f.name}_${i}`}
-                          className="flex items-center justify-between px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-600 mb-1 last:mb-0"
-                        >
-                          <span className="text-xs truncate flex-1 mr-2 text-gray-800 dark:text-gray-100">
-                            {f.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFileAt(i)}
-                            className="text-red-500 hover:text-red-700 text-lg leading-none"
-                            title="Remove file"
-                            aria-label={`Remove ${f.name}`}
+                {/* Composer */}
+                <div
+                  className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent px-3 sm:px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
+                  style={{
+                    left: effectiveLeftOffset,
+                    right: effectiveRightOffset,
+                    width: effectiveContentWidth1,
+                    zIndex: 29,
+                  }}
+                >
+                  {/* MOBILE: Always visible files panel (simple layout with close button) */}
+                  {selectedFiles.length > 0 && (
+                    <div className="sm:hidden w-full max-w-4xl mx-auto mb-2">
+                      <div className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl p-2 shadow-sm">
+                        {selectedFiles.map((f, i) => (
+                          <div
+                            key={`file_${f.name}_${i}`}
+                            className="flex items-center justify-between px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-600 mb-1 last:mb-0"
                           >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ===== DESKTOP: Chips row above bar ===== */}
-                {selectedFiles.length > 0 && (
-                  <div className="hidden sm:block w-full max-w-4xl mx-auto mb-2">
-                    <div className="flex flex-wrap gap-2 p-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow">
-                      {selectedFiles.map((f, i) => (
-                        <div
-                          key={`${f.name}_${f.size}_${i}`}
-                          className="flex items-center gap-2 px-2 py-1 rounded-full border text-sm bg-gray-50 dark:bg-gray-600"
-                        >
-                          <span
-                            className="truncate max-w-[220px]"
-                            title={f.name}
-                          >
-                            {f.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFileAt(i)}
-                            className="rounded-full px-2 py-0.5 hover:bg-red-100 dark:hover:bg-red-800"
-                            title="Remove file"
-                            aria-label={`Remove ${f.name}`}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ===== CHAT BAR (mobile-first, responsive grid) ===== */}
-                <div className="w-full max-w-4xl mx-auto rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500">
-                  {/* Grid: [ + ] [ textarea ] [ mic/send ] on all sizes; spacing adapts */}
-                  <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3">
-                    {/* LEFT: + file picker */}
-                    <label className="inline-flex items-center justify-center cursor-pointer">
-                      <input
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={handleFilePicker}
-                        accept=".pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp"
-                      />
-                      <span
-                        className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
-                        title="Add files"
-                        aria-label="Add files"
-                      >
-                        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </span>
-                    </label>
-
-                    {/* CENTER: Textarea (grows, no overlap) */}
-                    <div className="min-w-0">
-                      <textarea
-                        ref={(el) => {
-                          if (!el) return;
-                          // Auto-resize height dynamically
-                          el.style.height = "auto";
-                          el.style.height = `${Math.min(
-                            el.scrollHeight,
-                            128
-                          )}px`; // 128px = max-h-32
-                        }}
-                        onInput={(e) => {
-                          const el = e.currentTarget;
-                          el.style.height = "auto";
-                          el.style.height = `${Math.min(
-                            el.scrollHeight,
-                            128
-                          )}px`;
-                          if (!loading) setInput(el.value);
-                        }}
-                        rows={1}
-                        className="w-full bg-transparent text-[16px] focus:outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-32 overflow-y-auto p-1 resize-none"
-                        placeholder={
-                          loading ? "AI is responding..." : "Ask anything..."
-                        }
-                        value={input}
-                        onChange={(e) => !loading && setInput(e.target.value)}
-                        style={{ minHeight: "20px" }}
-                        onKeyDown={handleKeyDown}
-                        disabled={loading}
-                        inputMode="text"
-                      />
-                    </div>
-
-                    {/* RIGHT: Mic + Send / Stop */}
-                    <div className="flex items-center gap-2">
-                      {/* Updated Voice Button: Round mic normally, square red stop when recording with pulse animation */}
-                      {isRecording ? (
-                        <button
-                          onClick={handleToggleVoice}
-                          className="w-10 h-10 flex items-center justify-center bg-red-500 text-white border-0 shadow-md animate-pulse"
-                          style={{ borderRadius: 0 }} // Square (not rounded)
-                          title="Stop Voice"
-                          aria-label="Stop Voice"
-                        >
-                          <div className="flex items-center gap-1">
-                            <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave"></span>
-                            <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-150"></span>
-                            <span className="w-1 h-4 bg-white rounded-full animate-pulse-wave animation-delay-300"></span>
-                            <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-450"></span>
-                            <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave animation-delay-600"></span>
+                            <span className="text-xs truncate flex-1 mr-2 text-gray-800 dark:text-gray-100">
+                              {f.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeFileAt(i)}
+                              className="text-red-500 hover:text-red-700 text-lg leading-none"
+                              title="Remove file"
+                              aria-label={`Remove ${f.name}`}
+                            >
+                              ×
+                            </button>
                           </div>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleToggleVoice}
-                          className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600`}
-                          aria-label="Voice input"
-                          title="Voice input"
-                        >
-                          <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                      )}
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                      {loading ? (
-                        <button
-                          onClick={handleStop}
-                          className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-red-700 dark:text-white hover:bg-gray-800 hover:text-white transition"
-                          title="Stop"
-                          aria-label="Stop"
+                  {/* ===== DESKTOP: Chips row above bar ===== */}
+                  {selectedFiles.length > 0 && (
+                    <div className="hidden sm:block w-full max-w-4xl mx-auto mb-2">
+                      <div className="flex flex-wrap gap-2 p-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow">
+                        {selectedFiles.map((f, i) => (
+                          <div
+                            key={`${f.name}_${f.size}_${i}`}
+                            className="flex items-center gap-2 px-2 py-1 rounded-full border text-sm bg-gray-50 dark:bg-gray-600"
+                          >
+                            <span
+                              className="truncate max-w-[220px]"
+                              title={f.name}
+                            >
+                              {f.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeFileAt(i)}
+                              className="rounded-full px-2 py-0.5 hover:bg-red-100 dark:hover:bg-red-800"
+                              title="Remove file"
+                              aria-label={`Remove ${f.name}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== CHAT BAR (mobile-first, responsive grid) ===== */}
+                  <div className="w-full max-w-4xl mx-auto rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500">
+                    {/* Grid: [ + ] [ textarea ] [ mic/send ] on all sizes; spacing adapts */}
+                    <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3">
+                      {/* LEFT: + file picker */}
+                      <label className="inline-flex items-center justify-center cursor-pointer">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={handleFilePicker}
+                          accept=".pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp"
+                        />
+                        <span
+                          className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                          title="Add files"
+                          aria-label="Add files"
                         >
-                          <Square className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={async () => {
-                            if (isRecording) {
-                              try {
-                                recognitionRef.current?.stop();
-                              } catch (err) {
-                                console.warn(
-                                  "Failed to stop voice recognition:",
-                                  err
-                                );
-                              }
-                              setIsRecording(false);
-                            }
-                            if (selectedFiles.length) {
-                              await handleFileUpload(
-                                null,
-                                input ||
-                                  "please describe the file content properly"
-                              );
-                              setInput("");
-                              setShowMobileFiles(false);
-                            } else {
-                              if (!input.trim()) return;
-                              await sendMessage();
-                            }
+                          <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </span>
+                      </label>
+
+                      {/* CENTER: Textarea (grows, no overlap) */}
+                      <div className="min-w-0">
+                        <textarea
+                          ref={(el) => {
+                            if (!el) return;
+                            // Auto-resize height dynamically
+                            el.style.height = "auto";
+                            el.style.height = `${Math.min(
+                              el.scrollHeight,
+                              128
+                            )}px`; // 128px = max-h-32
                           }}
-                          disabled={
-                            (input.trim().length === 0 &&
-                              selectedFiles.length === 0) ||
-                            loading
+                          onInput={(e) => {
+                            const el = e.currentTarget;
+                            el.style.height = "auto";
+                            el.style.height = `${Math.min(
+                              el.scrollHeight,
+                              128
+                            )}px`;
+                            if (!loading) setInput(el.value);
+                          }}
+                          rows={1}
+                          className="w-full bg-transparent text-[16px] focus:outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-32 overflow-y-auto p-1 resize-none"
+                          placeholder={
+                            loading ? "AI is responding..." : "Ask anything..."
                           }
-                          className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-700 dark:text-white hover:bg-gray-800 hover:text-white disabled:opacity-50 transition"
-                          title="Send"
-                          aria-label="Send"
-                        >
-                          <Send className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                      )}
+                          value={input}
+                          onChange={(e) => !loading && setInput(e.target.value)}
+                          style={{ minHeight: "20px" }}
+                          onKeyDown={handleKeyDown}
+                          disabled={loading}
+                          inputMode="text"
+                        />
+                      </div>
+
+                      {/* RIGHT: Mic + Send / Stop */}
+                      <div className="flex items-center gap-2">
+                        {/* Updated Voice Button: Round mic normally, square red stop when recording with pulse animation */}
+                        {isRecording ? (
+                          <button
+                            onClick={handleToggleVoice}
+                            className="w-10 h-10 flex items-center justify-center bg-red-500 text-white border-0 shadow-md animate-pulse"
+                            style={{ borderRadius: 0 }} // Square (not rounded)
+                            title="Stop Voice"
+                            aria-label="Stop Voice"
+                          >
+                            <div className="flex items-center gap-1">
+                              <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave"></span>
+                              <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-150"></span>
+                              <span className="w-1 h-4 bg-white rounded-full animate-pulse-wave animation-delay-300"></span>
+                              <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-450"></span>
+                              <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave animation-delay-600"></span>
+                            </div>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleToggleVoice}
+                            className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600`}
+                            aria-label="Voice input"
+                            title="Voice input"
+                          >
+                            <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </button>
+                        )}
+
+                        {loading ? (
+                          <button
+                            onClick={handleStop}
+                            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-red-700 dark:text-white hover:bg-gray-800 hover:text-white transition"
+                            title="Stop"
+                            aria-label="Stop"
+                          >
+                            <Square className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              if (isRecording) {
+                                try {
+                                  recognitionRef.current?.stop();
+                                } catch (err) {
+                                  console.warn(
+                                    "Failed to stop voice recognition:",
+                                    err
+                                  );
+                                }
+                                setIsRecording(false);
+                              }
+                              if (selectedFiles.length) {
+                                await handleFileUpload(
+                                  null,
+                                  input ||
+                                    "please describe the file content properly"
+                                );
+                                setInput("");
+                                setShowMobileFiles(false);
+                              } else {
+                                if (!input.trim()) return;
+                                await sendMessage();
+                              }
+                            }}
+                            disabled={
+                              (input.trim().length === 0 &&
+                                selectedFiles.length === 0) ||
+                              loading
+                            }
+                            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-700 dark:text-white hover:bg-gray-800 hover:text-white disabled:opacity-50 transition"
+                            title="Send"
+                            aria-label="Send"
+                          >
+                            <Send className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
-        </main>
+              </>
+            )}
+          </main>
+        </div>
       </div>
     </>
   );

@@ -1,5 +1,11 @@
 // /src/AgentStore/BharatAgentsStore.tsx
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Bot,
   Shield,
@@ -271,7 +277,7 @@ const AssistantCard: React.FC<{
   onCopy?: () => void; // NEW: Optional onCopy prop
   index: number;
   q: string;
-}> = ({ assistant, onOpen, onShare,onCopy, index, q }) => {
+}> = ({ assistant, onOpen, onShare, onCopy, index, q }) => {
   const seed = assistant.name || `A${index}`;
   const badge =
     (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
@@ -421,7 +427,6 @@ const ReadMoreModal: React.FC<{
   );
 };
 
-
 // ---------- page ----------
 const BharatAgentsStore: React.FC = () => {
   const navigate = useNavigate();
@@ -433,7 +438,8 @@ const BharatAgentsStore: React.FC = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
-
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const prevQueryRef = useRef<string>(""); // 🔥 NEW
   const location = useLocation();
   const [showHero, setShowHero] = useState(false); // 🔑 toggle state
 
@@ -441,7 +447,9 @@ const BharatAgentsStore: React.FC = () => {
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
   // 🔽 put these near other React hooks in BharatAgentsStore component:
-  const [tab, setTab] = useState<"EXPLORE" | "MINE" | "AISTORES" | "AGENTCREATE"| "AISTORECREATE">("EXPLORE");
+  const [tab, setTab] = useState<
+    "EXPLORE" | "MINE" | "AISTORES" | "AGENTCREATE" | "AISTORECREATE"
+  >("EXPLORE");
 
   // read once; if not logged in, this will be null and we'll hide the "My Agents" tab
   const loggedInUserId =
@@ -504,6 +512,35 @@ const BharatAgentsStore: React.FC = () => {
     "Criminal Law Expert",
     "AI-Based IRDAI LI Reg Audit by ASKOXY.AI",
   ]);
+  // 🔽 Auto-scroll to results when user searches
+  useEffect(() => {
+    const term = (q || "").trim();
+    if (!term) return; // no search → no scroll
+    if (searchLoading) return; // wait until results done
+
+    if (listRef.current) {
+      listRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [q, searchLoading]);
+  // 🔽 When user clears the search, scroll back to top
+  useEffect(() => {
+    const current = (q || "").trim();
+    const prev = (prevQueryRef.current || "").trim();
+
+    // User had some search text before, now it's empty → clear state
+    if (!current && prev) {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+
+    // Update previous value
+    prevQueryRef.current = q || "";
+  }, [q]);
 
   const NEXT_PATH = "/main/agentcreate";
 
@@ -533,9 +570,8 @@ const BharatAgentsStore: React.FC = () => {
     if (!fullAssistantId || !fullAgentId) return;
 
     // Shorten IDs to last 4 chars ONLY for URL (as per previous requirement)
-   const shortAssistantId = fullAssistantId;
-   const shortAgentId = fullAgentId;
-
+    const shortAssistantId = fullAssistantId;
+    const shortAgentId = fullAgentId;
 
     // Generate root-level URL (as per latest route: /:id/:agentId/:agentname)
     const copyUrl = `${window.location.origin}/${encodeURIComponent(
@@ -576,8 +612,8 @@ const BharatAgentsStore: React.FC = () => {
     if (!fullAssistantId || !fullAgentId) return;
 
     // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept internally)
-  const shortAssistantId = fullAssistantId;
-  const shortAgentId = fullAgentId;
+    const shortAssistantId = fullAssistantId;
+    const shortAgentId = fullAgentId;
 
     // Debug log: Full vs short
     console.log("FULL IDs (for APIs/state):", { fullAssistantId, fullAgentId });
@@ -623,30 +659,30 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
 
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
-   const handleLogin1 = () => {
-     setTab("AISTORECREATE");
-     try {
-       setLoading(true);
+  const handleLogin1 = () => {
+    setTab("AISTORECREATE");
+    try {
+      setLoading(true);
 
-       const userId = localStorage.getItem("userId");
-       const redirectPath = "/main/usercreateaistore";
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/usercreateaistore";
 
-       if (userId) {
-         navigate(redirectPath);
-       } else {
-         sessionStorage.setItem("redirectPath", redirectPath);
-         sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
-         // Pass primaryType as query parameter
-         window.location.href = "/whatsappregister?primaryType=AGENT";
-       }
-     } catch (error) {
-       console.error("Sign in error:", error);
-     } finally {
-       setLoading(false);
-     }
-   };
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
+        // Pass primaryType as query parameter
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleLogin = () => {
-        setTab("AGENTCREATE");
+    setTab("AGENTCREATE");
     try {
       setLoading(true);
 
@@ -667,7 +703,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
       setLoading(false);
     }
   };
- 
+
   const fetchAssistants = useCallback(
     async (after?: string, isLoadMore = false) => {
       setLoading(true);
@@ -885,7 +921,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
           </section>
 
           {/* SKELETON GRID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6 items-stretch">
             {Array.from({ length: 12 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -936,9 +972,8 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     const nameSlug = slugify(a.name || "agent");
 
     // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
-   const shortAssistantId = fullAssistantId;
-const shortAgentId = fullAgentId;
-
+    const shortAssistantId = fullAssistantId;
+    const shortAgentId = fullAgentId;
 
     // Debug log: Check full vs short values in console
     console.log("FULL IDs (for APIs/state):", {
@@ -1002,11 +1037,10 @@ const shortAgentId = fullAgentId;
     navigate(targetPath);
   };
   const isSearching = !!(q || "").trim();
- const handleAistoresClick = () => {
+  const handleAistoresClick = () => {
     setTab("AISTORES");
     navigate("/all-ai-stores");
   };
-
 
   return (
     <div className="min-h-screen bg-white">
@@ -1075,97 +1109,120 @@ const shortAgentId = fullAgentId;
             </div>
           </div>
         </section>
+        <div ref={listRef}>
+          <div className="mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
+              {/* Tabs capsule - full-width container with horizontal scroll */}
+              <div className="w-full">
+                <div className="w-full overflow-x-auto">
+                  <div className="inline-flex flex-nowrap items-center gap-1 sm:gap-2 rounded-lg bg-white p-1">
+                    {/* Explore AI Agents */}
+                    <button
+                      onClick={() => setTab("EXPLORE")}
+                      className={[
+                        "shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition",
+                        "focus:outline-none focus:ring-2 focus:ring-purple-400",
+                        tab === "EXPLORE"
+                          ? "bg-purple-600 text-white"
+                          : "text-gray-700 hover:bg-gray-100",
+                      ].join(" ")}
+                      aria-pressed={tab === "EXPLORE"}
+                    >
+                      Explore AI Agents
+                    </button>
 
-        <div className="mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
-            {/* Tabs capsule */}
-            <div className="inline-flex w-full sm:w-auto rounded-lg bg-white p-1 sticky top-0 sm:static z-10">
-              <button
-                onClick={() => setTab("EXPLORE")}
-                className={[
-                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-                  tab === "EXPLORE"
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-700 hover:bg-gray-100",
-                ].join(" ")}
-                aria-pressed={tab === "EXPLORE"}
-              >
-                Explore AI Agents
-              </button>
+                    {/* My AI Agents (only if logged in) */}
+                    {loggedInUserId && (
+                      <button
+                        onClick={() => setTab("MINE")}
+                        className={[
+                          "shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition",
+                          "focus:outline-none focus:ring-2 focus:ring-purple-400",
+                          tab === "MINE"
+                            ? "bg-purple-600 text-white"
+                            : "text-gray-700 hover:bg-gray-100",
+                        ].join(" ")}
+                        aria-pressed={tab === "MINE"}
+                      >
+                        My AI Agents
+                      </button>
+                    )}
 
-              {loggedInUserId && (
-                <button
-                  onClick={() => setTab("MINE")}
-                  className={[
-                    "ml-1 flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-                    tab === "MINE"
-                      ? "bg-purple-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100",
-                  ].join(" ")}
-                  aria-pressed={tab === "MINE"}
-                >
-                  My AI Agents
-                </button>
-              )}
-              <button
-                onClick={handleAistoresClick} // 4. Use the combined handler
-                className={[
-                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-                  tab === "AISTORES"
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-700 hover:bg-gray-100",
-                ].join(" ")}
-                aria-pressed={tab === "AISTORES"}
-              >
-                Explore AI Stores
-              </button>
+                    {/* Explore AI Stores */}
+                    <button
+                      onClick={handleAistoresClick}
+                      className={[
+                        "shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition",
+                        "focus:outline-none focus:ring-2 focus:ring-purple-400",
+                        tab === "AISTORES"
+                          ? "bg-purple-600 text-white"
+                          : "text-gray-700 hover:bg-gray-100",
+                      ].join(" ")}
+                      aria-pressed={tab === "AISTORES"}
+                    >
+                      Explore AI Stores
+                    </button>
 
-              <button
-                onClick={handleLogin} // 4. Use the combined handler
-                className={[
-                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-                  tab === "AGENTCREATE"
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-700 hover:bg-gray-100",
-                ].join(" ")}
-                aria-pressed={tab === "AGENTCREATE"}
-              >
-                Create AI Agent
-              </button>
-              <button
-                onClick={handleLogin1} // 4. Use the combined handler
-                className={[
-                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-                  tab === "AGENTCREATE"
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-700 hover:bg-gray-100",
-                ].join(" ")}
-                aria-pressed={tab === "AISTORECREATE"}
-              >
-                Create AI Store
-              </button>
-              <button
-                onClick={() => {
-                  const userId = localStorage.getItem("userId");
-                  if (userId) {
-                    setVendorModalOpen(true);
-                  } else {
-                    sessionStorage.setItem("redirectPath", "/main/bharath-aistore/agents");
-                    sessionStorage.setItem("primaryType", "AGENT");
-                    window.location.href = "/whatsappregister?primaryType=AGENT";
-                  }
-                }}
-                className={[
-                  "flex-1 sm:flex-none px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none focus:ring-2 focus:ring-purple-400",
-                  "text-gray-700 hover:bg-gray-100",
-                ].join(" ")}
-              >
-                KYC Verification
-              </button>
+                    {/* Create AI Agent */}
+                    <button
+                      onClick={handleLogin}
+                      className={[
+                        "shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition",
+                        "focus:outline-none focus:ring-2 focus:ring-purple-400",
+                        tab === "AGENTCREATE"
+                          ? "bg-purple-600 text-white"
+                          : "text-gray-700 hover:bg-gray-100",
+                      ].join(" ")}
+                      aria-pressed={tab === "AGENTCREATE"}
+                    >
+                      Create AI Agent
+                    </button>
+
+                    {/* Create AI Store */}
+                    <button
+                      onClick={handleLogin1}
+                      className={[
+                        "shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition",
+                        "focus:outline-none focus:ring-2 focus:ring-purple-400",
+                        tab === "AISTORECREATE"
+                          ? "bg-purple-600 text-white"
+                          : "text-gray-700 hover:bg-gray-100",
+                      ].join(" ")}
+                      aria-pressed={tab === "AISTORECREATE"}
+                    >
+                      Create AI Store
+                    </button>
+
+                    {/* KYC Verification */}
+                    <button
+                      onClick={() => {
+                        const userId = localStorage.getItem("userId");
+                        if (userId) {
+                          setVendorModalOpen(true);
+                        } else {
+                          sessionStorage.setItem(
+                            "redirectPath",
+                            "/main/bharath-aistore/agents"
+                          );
+                          sessionStorage.setItem("primaryType", "AGENT");
+                          window.location.href =
+                            "/whatsappregister?primaryType=AGENT";
+                        }
+                      }}
+                      className={[
+                        "shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition",
+                        "focus:outline-none focus:ring-2 focus:ring-purple-400",
+                        "text-gray-700 hover:bg-gray-100",
+                      ].join(" ")}
+                    >
+                      KYC Verification
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
         {/* Heading & subtext stay the same */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">

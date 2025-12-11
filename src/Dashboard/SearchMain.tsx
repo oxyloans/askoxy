@@ -423,14 +423,22 @@ const SearchMain: React.FC = () => {
             {filteredData.items.length > 0 && (
               <>
                 {/* Category Selection - REDUCED SIZE */}
+                {/* Category Selection - MOBILE HORIZONTAL SCROLLABLE */}
                 <div
                   style={{
                     marginBottom: 12,
-
-                    whiteSpace: "nowrap",
+                    overflowX: "auto", // 🔥 horizontal scroll only
+                    WebkitOverflowScrolling: "touch",
                   }}
                 >
-                  <Space size={8}>
+                  <div
+                    style={{
+                      display: "inline-flex", // ✅ keep items in one row
+                      gap: 8,
+                      paddingBottom: 4,
+                      minWidth: "max-content", // ✅ prevents squishing
+                    }}
+                  >
                     {data?.items.map((category) => (
                       <Card
                         key={category.categoryName}
@@ -439,7 +447,6 @@ const SearchMain: React.FC = () => {
                           handleCategorySelect(category.categoryName)
                         }
                         style={{
-                          display: "inline-block",
                           textAlign: "center",
                           width: 85,
                           height: 100,
@@ -455,6 +462,7 @@ const SearchMain: React.FC = () => {
                             selectedCategory === category.categoryName
                               ? "0 3px 8px rgba(92, 51, 145, 0.2)"
                               : "0 2px 4px rgba(0,0,0,0.05)",
+                          flexShrink: 0, // 🔒 don’t shrink in scroll row
                         }}
                         bodyStyle={{
                           padding: "8px 6px",
@@ -518,7 +526,7 @@ const SearchMain: React.FC = () => {
                         </Text>
                       </Card>
                     ))}
-                  </Space>
+                  </div>
                 </div>
 
                 {/* Products Grid */}
