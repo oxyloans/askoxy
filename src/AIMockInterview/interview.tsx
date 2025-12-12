@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { Alert, Modal } from "antd";
 import { api } from "./lib/api";
-import logo from "../assets/img/askoxylogoblack.png";
 
 export default function InterviewPage() {
   function cryptoRandom() {
@@ -22,60 +20,6 @@ export default function InterviewPage() {
   const [status, setStatus] = useState<string>("");
   const [timeLeft, setTimeLeft] = useState(30);
   const [timePerQuestion, setTimePerQuestion] = useState(30);
-
-   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (!stored) {
-     handleLogin()
-    } else {
-      setUser(JSON.parse(stored));
-    }
-  }, []);
-
-   const handleLogin = async () => {
-
-    const stored = localStorage.getItem("profileData") || localStorage.getItem("user") || "";
-
-    console.log("Stored profile data:", stored);
-
-    const phone = stored ? JSON.parse(stored).mobileNumber ? JSON.parse(stored).mobileNumber : JSON.parse(stored).whatsappNumber : "";
-    const name = stored ? JSON.parse(stored).userFirstName + " " + JSON.parse(stored).userLastName : "";
-    console.log("Phone:", phone);
-        console.log("Name:", name);
-     
-    if (!phone) {
-        Modal.warning({ title: "Login Required", content: "Please login to continue." });
-       window.location.href = "/whatsapplogin";
-      return;
-    }
-
-    if (!name) {
-        Modal.warning({ title: "Profile Incomplete", content: "Name not found in profile data, please fill profile details." });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const data = await api.login({ phone_number: phone, name });
-      console.log('Login response:', data);
-
-      if (data.user && data.user.id) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        Modal.success({ title: "Welcome", content: `Welcome, ${data.user.name}!` });
-       window.location.href = "/interview";
-      } else if (data.error) {
-        Modal.error({ title: "Login Failed", content: data.error });
-      } else {
-        Modal.error({ title: "Login Failed", content: "Please try again." });
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      Modal.error({ title: "Error", content: "An error occurred. Please try again." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
 
   // Get time limit based on round
   const getTimeLimit = (roundNumber: number) => {
@@ -104,19 +48,32 @@ export default function InterviewPage() {
   const answerRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [timerStopped, setTimerStopped] = useState(false);
   const [lastFeedback, setLastFeedback] = useState<{ score: number; feedback: string } | null>(null);
   const questionRef = useRef<HTMLDivElement>(null);
   const [askedQuestions, setAskedQuestions] = useState<string[]>([]);
   const [codeOutput, setCodeOutput] = useState<string>("");
   const [codeError, setCodeError] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("python");
-
+  const [isFrontendQuestion, setIsFrontendQuestion] = useState<boolean>(false);
+  const [lineCount, setLineCount] = useState<number>(1);
+  const [modal, setModal] = useState<{show: boolean; type: 'success'|'error'; title: string; message: string; onClose?: () => void} | null>(null);
 
   useEffect(() => {
-    if (question && timeLeft > 0) {
+    const stored = localStorage.getItem("user");
+    if (!stored) {
+      window.location.href = "/login";
+    } else {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (question && timeLeft > 0 && !timerStopped) {
       const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (question && timeLeft === 0 && !loading) {
+    } else if (question && timeLeft === 0 && !loading && !submitting) {
       // Auto-submit when time expires
       const handleTimeExpired = async () => {
         if (!user || !question) return;
@@ -128,8 +85,12 @@ export default function InterviewPage() {
           answer = answerRef.current?.value?.trim() || "No answer provided (time expired)";
         }
         
+        // For Round 2, allow auto-submit even with short answers when time expires
+        // The backend will handle scoring appropriately for short answers
+        
         // Force submit the answer
         setLoading(true);
+        setSubmitting(true);
         try {
           const data = await api.submitAnswer({
             userId: user.id,
@@ -141,15 +102,15 @@ export default function InterviewPage() {
           
           // Handle the response same as manual submit
           if (data.advancedTo) {
-            setQuestion(""); // Clear question first
-            Modal.success({ title: "🎉 Round Completed", content: `Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nRefresh the page to start Round ${data.advancedTo}.` });
+            setQuestion("");
+            setModal({show: true, type: 'success', title: `Round ${data.doneRound} Completed!`, message: `Score: ${data.average}%\nStatus: Passed\n\nRefresh the page to start Round ${data.advancedTo}.`});
           } else if (data.finished) {
             if (data.doneRound === 3) {
-              Modal.success({ title: "🎉 Assessment Completed", content: `Final Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations!` });
+              setModal({show: true, type: 'success', title: 'Assessment Completed!', message: `Final Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations!`});
             }
             setQuestion("");
           } else if (data.doneRound && data.passed === false) {
-            Modal.error({ title: "❌ Round Failed", content: `Round ${data.doneRound}\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria` });
+            setModal({show: true, type: 'error', title: `Round ${data.doneRound} Failed`, message: `Score: ${data.average}%\nStatus: Did not meet passing criteria`});
             setQuestion("");
           } else if (data.question) {
             // Move to next question in same round
@@ -166,19 +127,29 @@ export default function InterviewPage() {
               feedback: data.last.feedback || "",
             });
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Auto-submit error:", err);
+          // Only stop timer for fetch errors, not validation errors during auto-submit
+          if (err.message?.includes("Failed to fetch")) {
+            console.log("⚠️ Auto-submit failed due to network error, stopping timer");
+            setTimerStopped(true);
+          } else {
+            console.log("⚠️ Auto-submit completed with validation error, continuing");
+          }
         } finally {
           setLoading(false);
+          setSubmitting(false);
         }
       };
-      
       handleTimeExpired();
     }
   }, [timeLeft, question, loading]);
 
   useEffect(() => {
-    if (question) setTimeLeft(timePerQuestion);
+    if (question) {
+      setTimeLeft(timePerQuestion);
+      setTimerStopped(false);
+    }
   }, [question, timePerQuestion]);
 
   async function onUploadResume() {
@@ -217,18 +188,18 @@ export default function InterviewPage() {
 
   async function startInterview() {
     if (!user) {
-      Modal.warning({ title: "Login Required", content: "Please log in to start the interview" });
+      alert("Please log in to start the interview");
       window.location.href = "/login";
       return;
     }
 
     if (!parsed) {
-      Modal.warning({ title: "Resume Required", content: "Please upload and parse your resume first" });
-      return;
+      alert("Please upload and parse your resume first");
+      return; 
     }
 
     if (round === 3) {
-      Modal.info({ title: "All Rounds Completed", content: "You have already completed all 3 rounds" });
+      alert("You have already completed all 3 rounds");
       return;
     }
 
@@ -269,7 +240,7 @@ export default function InterviewPage() {
           // Set correct round info
           const roundTypes = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Round" };
           const roundDescriptions = {
-            1: "Multiple choice questions based on your technical skills (Need 8/12 correct to qualify)",
+            1: "Multiple choice questions based on your technical skills",
             2: "Real-world scenarios related to your experience (Need 60% to qualify)",
             3: "Coding problems with input/output format and constraints"
           };
@@ -300,13 +271,15 @@ export default function InterviewPage() {
         3: "Technical Round"
       };
       const roundDescriptions = {
-        1: "Multiple choice questions based on your technical skills (Need 8/12 correct to qualify)",
-        2: "Real-world scenarios related to your experience (Need 60% to qualify)",
-        3: "Coding problems with input/output format and constraints"
+        1: "Multiple choice questions based on your technical skills (Need 70% to qualify)",
+        2: "Real-world scenarios related to your experience (Need 60% to qualify, min 300 chars)",
+        3: "Coding problems with input/output format and constraints (Need 70% to qualify)"
       };
       
       setRoundType(roundTypes[data.round as keyof typeof roundTypes] || "");
       setRoundDescription(roundDescriptions[data.round as keyof typeof roundDescriptions] || "");
+      
+
       
       const timeLimit = data.timeLimit || getTimeLimit(data.round);
       setTimePerQuestion(timeLimit);
@@ -324,7 +297,6 @@ export default function InterviewPage() {
   }
 
   function getTestInput(lang: string) {
-    // Extract function name from question to create proper test
     const functionMatch = question.match(/`([^`]+)\(/); 
     const functionName = functionMatch ? functionMatch[1] : 'testFunction';
     
@@ -333,95 +305,26 @@ export default function InterviewPage() {
         return `# Test with problem example data
 if '${functionName}' in globals():
     func = globals()['${functionName}']
-    
-    # Test with actual problem examples
     try:
         if 'two_sum' in '${functionName}':
-            print("Testing two_sum with [2, 7, 11, 15], target=9")
             result = func([2, 7, 11, 15], 9)
-            print(f"OUTPUT: {result}")
-        elif 'max_non_adjacent' in '${functionName}':
-            print("Testing max_non_adjacent_sum with [3, 2, 7, 10]")
-            result = func([3, 2, 7, 10])
-            print(f"OUTPUT: {result}")
-        elif 'calculate_total' in '${functionName}':
-            print("Testing calculate_total with cart data")
-            result = func([('Laptop', 1200.0), ('Mouse', 25.5)])
-            print(f"OUTPUT: {result}")
         elif 'max_subarray' in '${functionName}':
-            print("Testing max_subarray_sum with [-2,1,-3,4,-1,2,1,-5,4]")
             result = func([-2, 1, -3, 4, -1, 2, 1, -5, 4])
-            print(f"OUTPUT: {result}")
         else:
-            # Generic test for other functions - handle different function signatures
-            print("Testing function with sample data")
-            if any(name in '${functionName}' for name in ['two_sum', 'twoSum', 'find_pairs', 'findPairs']):
-                # Functions that need array and target
-                result = func([1, 2, 3, 4, 5], 6)
-            else:
-                # Other functions just need array
-                result = func([1, 2, 3, 4, 5])
-            print(f"OUTPUT: {result}")
-            
-        print("SUCCESS: Function executed correctly!")
-        
+            result = func([1, 2, 3, 4, 5])
+        print(f"OUTPUT: {result}")
     except Exception as e:
         print(f"ERROR: {str(e)}")
-        print("HINT: Check your function implementation")
 else:
     print(f"ERROR: Function '${functionName}' not found")`;
-      case 'php':
-        // Create appropriate PHP test call based on question
-        let phpTestCall = '';
-        if (question.includes('manageUsers')) {
-          phpTestCall = `${functionName}('add', ['id' => 1, 'name' => 'Test User', 'email' => 'test@example.com'])`;
-        } else {
-          phpTestCall = `${functionName}()`;
-        }
-        
-        return `// Test the function
-if (function_exists('${functionName}')) {
-    try {
-        $result = ${phpTestCall};
-        print_r($result);
-    } catch (Exception $e) {
-        echo "Error: " . $e->getMessage();
-    }
-} else {
-    echo "Function not found. Make sure to define the function.";
-}`;
-      case 'javascript':
-        return `// Test the function
-if (typeof ${functionName} === 'function') {
-    try {
-        const result = ${functionName}([['Laptop', 1200], ['Mouse', 25.5]]);
-        console.log('Result:', result);
-    } catch (e) {
-        console.log('Error calling function:', e.message);
-    }
-} else {
-    console.log('Function not found. Make sure to define the function.');
-}`;
       case 'java':
-        return `public class Main {
-    public static void main(String[] args) {
-        try {
-            if ("${functionName}".contains("max_subarray") || "${functionName}".contains("maxSubarray")) {
-                System.out.println("Testing max_subarray_sum with [-2,1,-3,4,-1,2,1,-5,4]");
-                int[] testArray = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
-                int result = maxSubarraySum(testArray);
-                System.out.println("OUTPUT: " + result);
-            } else {
-                System.out.println("Testing function with sample data");
-                int[] testArray = {1, 2, 3, 4, 5};
-                int result = maxSubarraySum(testArray);
-                System.out.println("OUTPUT: " + result);
-            }
-            System.out.println("SUCCESS: Function executed correctly!");
-        } catch (Exception e) {
-            System.out.println("ERROR: " + e.getMessage());
-            System.out.println("HINT: Check your function implementation");
-        }
+        return `public static void main(String[] args) {
+    try {
+        int[] testArray = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
+        int result = maxSubarraySum(testArray);
+        System.out.println("OUTPUT: " + result);
+    } catch (Exception e) {
+        System.out.println("ERROR: " + e.getMessage());
     }
 }`;
       default: return 'print("Testing function...")';
@@ -430,10 +333,8 @@ if (typeof ${functionName} === 'function') {
 
   function getPlaceholder(lang: string) {
     switch (lang) {
-      case 'python': return 'def calculate_total(cart):\n    # Write your code here\n    pass';
-      case 'php': return 'function manageUsers($action, $data = null) {\n    // Write your code here\n}';
-      case 'javascript': return 'function calculateTotal(cart) {\n    // Write your code here\n}';
-      case 'java': return 'public static int maxSubarraySum(int[] arr) {\n    // Write your code here using Kadane\'s algorithm\n    return 0;\n}';
+      case 'python': return 'def function_name():\n    # Write your code here\n    pass';
+      case 'java': return 'public static int maxSubarraySum(int[] arr) {\n    // Write your code here\n    return 0;\n}';
       default: return 'def function_name():\n    # Write your code here\n    pass';
     }
   }
@@ -458,21 +359,10 @@ if (typeof ${functionName} === 'function') {
       
       const result = await response.json();
       
-      console.log('API Response:', result); // Debug log
-      
       if (result.success) {
-        setCodeOutput(String(result.output || "Code executed successfully"));
+        setCodeOutput(result.output || "Code executed successfully");
       } else {
-        // Handle object errors properly
-        let errorMsg = "Execution failed";
-        if (typeof result.error === 'string') {
-          errorMsg = result.error;
-        } else if (typeof result.stderr === 'string') {
-          errorMsg = result.stderr;
-        } else if (result.error && typeof result.error === 'object') {
-          errorMsg = JSON.stringify(result.error);
-        }
-        setCodeError(errorMsg);
+        setCodeError(result.output || result.error || "Execution failed");
       }
     } catch (error) {
       setCodeError("Failed to run code. Please check your syntax.");
@@ -490,7 +380,7 @@ if (typeof ${functionName} === 'function') {
   }, [selectedLanguage, round]);
 
   async function submitAnswer() {
-    if (!user || !question) return;
+    if (!user || !question || submitting) return;
 
     let ans = "";
     if (round === 1) {
@@ -499,8 +389,14 @@ if (typeof ${functionName} === 'function') {
     } else {
       ans = answerRef.current?.value?.trim() || "";
       if (!ans) return alert("Please enter an answer");
+      
+      // Check minimum character requirement for Round 2
+      if (round === 2 && ans.length < 300) {
+        return alert(`Answer too short! Round 2 requires minimum 300 characters. Current: ${ans.length}`);
+      }
     }
 
+    setSubmitting(true);
     setLoading(true);
     setStatus("Evaluating your answer...");
 
@@ -511,6 +407,7 @@ if (typeof ${functionName} === 'function') {
         domain: parsed?.domains?.[0] || "General",
         question,
         answer: ans,
+        language: isFrontendQuestion ? selectedLanguage : undefined,
         askedQuestions: askedQuestions,
         currentRound: round,
         currentQuestionNo: qNo,
@@ -520,8 +417,33 @@ if (typeof ${functionName} === 'function') {
       setLoading(false);
 
       if (data.error) {
+        if (data.error.includes("Answer too short")) {
+          alert(data.error);
+          return;
+        }
         if (data.error === "Interview not started") {
-          alert("Interview session expired. Please start a new interview.");
+          console.log("⚠️ Interview state not found, attempting to recover...");
+          // Try to restart the interview instead of failing
+          try {
+            const restartData = await api.startInterview({
+              userId: user.id,
+              sessionId,
+              skills: parsed?.skills || [],
+              domain: parsed?.domains?.[0] || "General"
+            });
+            if (restartData.question) {
+              setRound(restartData.round);
+              setQNo(restartData.question_no);
+              setTotalQ(restartData.total_questions);
+              setQuestion(restartData.question);
+              setTimeLeft(restartData.timeLimit || getTimeLimit(restartData.round));
+              setTimePerQuestion(restartData.timeLimit || getTimeLimit(restartData.round));
+              return;
+            }
+          } catch (restartErr) {
+            console.error("Failed to restart interview:", restartErr);
+          }
+          alert("Interview session lost. Please refresh the page to start a new interview.");
           setQuestion("");
           setRound(null);
           return;
@@ -545,65 +467,46 @@ if (typeof ${functionName} === 'function') {
         setQuestion(""); // Clear current question
         
         // Show completion popup with option to continue
-        const proceed = window.confirm(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nClick OK to start Round ${data.advancedTo}`);
+        const proceed = confirm(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nClick OK to start Round ${data.advancedTo}`);
         
         if (proceed) {
-          setLoading(true);
-          setStatus(`Starting Round ${data.advancedTo}...`);
-          
-          try {
-            const nextRoundData = await api.startInterview({
-              userId: user.id,
-              sessionId,
-              skills: parsed?.skills || [],
-              domain: parsed?.domains?.[0] || "General",
-              askedQuestions: []
-            });
+          // Use the nextQuestion from the API response directly
+          if (data.nextQuestion) {
+            setRound(data.advancedTo);
+            setQNo(1);
+            setTotalQ(data.total_questions || getQuestionCount(data.advancedTo));
+            setQuestion(data.nextQuestion);
+            setAskedQuestions([data.nextQuestion]);
             
-            // Use the nextQuestion from the API response directly
-            if (data.nextQuestion) {
-              setRound(data.advancedTo);
-              setQNo(1);
-              setTotalQ(data.total_questions || getQuestionCount(data.advancedTo));
-              setQuestion(data.nextQuestion);
-              setAskedQuestions([data.nextQuestion]);
-              
-              // Set correct round type and description
-              const roundTypes = {
-                1: "MCQ Skills",
-                2: "Scenario Based", 
-                3: "Technical Round"
-              };
-              const roundDescriptions = {
-                1: "Multiple choice questions based on your technical skills (Need 8/12 correct to qualify)",
-                2: "Real-world scenarios related to your experience (Need 60% to qualify)",
-                3: "Coding problems with input/output format and constraints"
-              };
-              
-              setRoundType(roundTypes[data.advancedTo as keyof typeof roundTypes] || "");
-              setRoundDescription(roundDescriptions[data.advancedTo as keyof typeof roundDescriptions] || "");
-              
-              const timeLimit = data.timeLimit || getTimeLimit(data.advancedTo);
-              setTimePerQuestion(timeLimit);
-              setTimeLeft(timeLimit);
-              setSelectedOption("");
-              if (answerRef.current) answerRef.current.value = "";
-              setStatus("");
-            }
-          } catch (err) {
-            console.error("Error starting next round:", err);
-            setStatus("error:Failed to start next round");
-          } finally {
-            setLoading(false);
+            // Set correct round type and description
+            const roundTypes = {
+              1: "MCQ Skills",
+              2: "Scenario Based", 
+              3: "Technical Round"
+            };
+            const roundDescriptions = {
+              1: "Multiple choice questions based on your technical skills (Need 70% to qualify)",
+              2: "Real-world scenarios related to your experience (Need 60% to qualify, min 300 chars)",
+              3: "Coding problems with input/output format and constraints (Need 70% to qualify)"
+            };
+            
+            setRoundType(roundTypes[data.advancedTo as keyof typeof roundTypes] || "");
+            setRoundDescription(roundDescriptions[data.advancedTo as keyof typeof roundDescriptions] || "");
+            
+            const timeLimit = data.timeLimit || getTimeLimit(data.advancedTo);
+            setTimePerQuestion(timeLimit);
+            setTimeLeft(timeLimit);
+            setSelectedOption("");
+            if (answerRef.current) answerRef.current.value = "";
+            setStatus("");
           }
         }
         return;
       }
 
       if (data.finished) {
-        // Show final completion popup
         if (data.doneRound === 3) {
-          alert(`🎉 Assessment Completed!\n\nFinal Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations! You have successfully completed the technical assessment.`);
+          setModal({show: true, type: 'success', title: 'Assessment Completed!', message: `Final Score: ${data.average}%\nStatus: All rounds passed\n\nCongratulations! You have successfully completed the technical assessment.`});
         }
         setStatus("success:" + data.message);
         setQuestion("");
@@ -611,8 +514,7 @@ if (typeof ${functionName} === 'function') {
       }
 
       if (data.doneRound && data.passed === false) {
-        // Show failure popup
-        alert(`❌ Round ${data.doneRound} Failed\n\nScore: ${data.average}%\nStatus: Did not meet passing criteria\n\nThank you for participating in the assessment.`);
+        setModal({show: true, type: 'error', title: `Round ${data.doneRound} Failed`, message: `Score: ${data.average}%\nStatus: Did not meet passing criteria\n\nThank you for participating in the assessment.`});
         setStatus("error:" + (data.message || "Failed Round " + data.doneRound));
         setQuestion("");
         return;
@@ -654,34 +556,53 @@ if (typeof ${functionName} === 'function') {
       console.error("Submit answer error:", err);
       setLoading(false);
       alert("Error: " + err.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <div className="min-h-screen bg-gray-900">
+      {/* Modal */}
+      {modal?.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className={`text-5xl mb-4 ${modal.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                {modal.type === 'success' ? '🎉' : '❌'}
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">{modal.title}</h3>
+              <p className="text-gray-300 text-sm whitespace-pre-line">{modal.message}</p>
+              <button
+                onClick={() => { setModal(null); modal.onClose?.(); }}
+                className="mt-6 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <header className="sticky top-0 z-50 bg-gray-800 border-b border-gray-700">
+        <div className="px-6 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img 
-                src={logo}
-                alt="AskOxy Logo" 
-                className="w-30 h-10 object-contain"
-              />
+              <img src="/assets/logo.png" alt="AskOxy" className="w-16 h-16 object-contain" />
               <div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white">AskOxy Hiring</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">AI Technical Assessment</p>
+                <h1 className="text-base font-semibold text-white">ASKOXY.AI HIRING</h1>
+                <p className="text-xs text-gray-400">Technical Assessment</p>
               </div>
             </div>
             {user && (
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-700">
+                <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-semibold">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm font-medium text-slate-900 dark:text-white hidden sm:inline">
+                <span className="text-sm font-medium text-gray-200 hidden sm:inline">
                   {user.name}
                 </span>
               </div>
@@ -690,18 +611,18 @@ if (typeof ${functionName} === 'function') {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         {!question ? (
-          <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-140px)]">
+          <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
             {/* Left: Resume Upload & Details */}
             <div className="lg:w-1/2 h-full">
-              <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm h-full flex flex-col">
-                <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+              <section className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden shadow-sm h-full flex flex-col">
+                <div className="px-5 py-4 border-b border-gray-700 flex-shrink-0">
+                  <h2 className="text-base font-semibold text-white">
                     {parsed ? "Resume Details" : "Upload Resume"}
                   </h2>
                   {parsed && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Parsed resume information</p>
+                    <p className="text-xs text-gray-400 mt-1">Your profile information</p>
                   )}
                 </div>
 
@@ -709,12 +630,12 @@ if (typeof ${functionName} === 'function') {
                   {!parsed ? (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <label className="block text-xs font-medium text-gray-300 mb-2">
                           Resume File
                         </label>
                         <div
                           onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-4 text-center hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                          className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-emerald-400 hover:bg-gray-700 transition-all cursor-pointer"
                         >
                           <input
                             ref={fileInputRef}
@@ -723,20 +644,20 @@ if (typeof ${functionName} === 'function') {
                             className="hidden"
                             onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                           />
-                          <svg className="w-5 h-5 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-10 h-10 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                           </svg>
                           {selectedFile ? (
                             <div>
-                              <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
+                              <p className="text-sm font-medium text-white truncate">
                                 {selectedFile.name}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">Click to change</p>
+                              <p className="text-xs text-gray-400 mt-1">Click to change</p>
                             </div>
                           ) : (
                             <div>
-                              <p className="text-xs font-medium text-slate-900 dark:text-white">Click to upload</p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">PDF, DOC, DOCX, TXT</p>
+                              <p className="text-sm font-medium text-white">Click to upload</p>
+                              <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX, TXT</p>
                             </div>
                           )}
                         </div>
@@ -746,7 +667,7 @@ if (typeof ${functionName} === 'function') {
                         <button
                           onClick={onUploadResume}
                           disabled={loading || !selectedFile}
-                          className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                         >
                           {loading ? (
                             <>
@@ -766,7 +687,7 @@ if (typeof ${functionName} === 'function') {
                               setSelectedFile(null);
                               if (fileInputRef.current) fileInputRef.current.value = "";
                             }}
-                            className="px-3 py-2 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="px-4 py-2.5 text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
                           >
                             Clear
                           </button>
@@ -777,10 +698,10 @@ if (typeof ${functionName} === 'function') {
                         <div
                           className={`p-3 rounded-lg text-xs ${
                             status.startsWith("error")
-                              ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                              ? "bg-red-900/20 text-red-400"
                               : status.startsWith("warning")
-                              ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
-                              : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                              ? "bg-amber-900/20 text-amber-400"
+                              : "bg-emerald-900/20 text-emerald-400"
                           }`}
                         >
                           {status.replace(/^(error|warning):/, "")}
@@ -790,68 +711,58 @@ if (typeof ${functionName} === 'function') {
                   ) : (
                     <div className="space-y-4">
                       {/* Profile Header */}
-                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                      <div className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg border border-gray-600">
+                        <div className="w-12 h-12 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-lg font-semibold">
                           {parsed.name ? parsed.name.charAt(0).toUpperCase() : "C"}
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                          <h3 className="text-base font-semibold text-white">
                             {parsed.name || "Candidate"}
                           </h3>
-                          <p className="text-xs text-slate-600 dark:text-slate-400">Profile Summary</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Profile Verified</p>
                         </div>
                       </div>
 
                       {/* Skills */}
                       <div>
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2.5 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                          Technical Skills
-                        </p>
+                        <p className="text-xs font-semibold text-gray-300 mb-2">Technical Skills</p>
                         <div className="flex flex-wrap gap-2">
                           {Array.isArray(parsed.skills) && parsed.skills.length > 0 ? (
                             parsed.skills.map((skill: string, idx: number) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
                               >
                                 {skill}
                               </span>
                             ))
                           ) : (
-                            <span className="text-xs text-slate-500 dark:text-slate-400 italic">No skills detected</span>
+                            <span className="text-xs text-gray-400">No skills detected</span>
                           )}
                         </div>
                       </div>
 
                       {/* Domains */}
                       <div>
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2.5 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                          </svg>
-                          Domains
-                        </p>
+                        <p className="text-xs font-semibold text-gray-300 mb-2">Domains</p>
                         <div className="flex flex-wrap gap-2">
                           {Array.isArray(parsed.domains) && parsed.domains.length > 0 ? (
                             parsed.domains.map((domain: string, idx: number) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200"
                               >
                                 {domain}
                               </span>
                             ))
                           ) : (
-                            <span className="text-xs text-slate-500 dark:text-slate-400 italic">No domains detected</span>
+                            <span className="text-sm text-gray-400 italic">No domains detected</span>
                           )}
                         </div>
                       </div>
 
                       {/* Upload New Resume Button */}
-                      <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                      <div className="pt-3 border-t border-gray-700">
                         <button
                           onClick={() => {
                             setParsed(null);
@@ -859,7 +770,7 @@ if (typeof ${functionName} === 'function') {
                             setStatus("");
                             if (fileInputRef.current) fileInputRef.current.value = "";
                           }}
-                          className="w-full px-3 py-2 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                          className="w-full px-4 py-2 text-gray-300 text-sm font-medium rounded-lg border border-gray-600 hover:bg-gray-700 transition-all"
                         >
                           Upload New Resume
                         </button>
@@ -872,73 +783,79 @@ if (typeof ${functionName} === 'function') {
 
             {/* Right: Interview Rounds & Start Button */}
             <div className="lg:w-1/2 h-full">
-              <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm h-full flex flex-col">
-                <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Assessment Structure</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Three rounds of technical evaluation</p>
+              <section className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden shadow-sm h-full flex flex-col">
+                <div className="px-5 py-4 border-b border-gray-700 flex-shrink-0">
+                  <h2 className="text-base font-semibold text-white">Assessment Structure</h2>
+                  <p className="text-xs text-gray-400 mt-1">Three rounds of evaluation</p>
                 </div>
 
                 <div className="p-5 flex-1 flex flex-col min-h-0">
                   <div className="space-y-3 flex-1 overflow-y-auto">
                     {/* Round 1 */}
-                    <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                    <div className="p-4 border border-gray-700 rounded-lg hover:border-emerald-500 hover:bg-gray-700 transition-all">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-sm flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                           1
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">MCQ Skills</h3>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                            Multiple choice questions with 4 options based on your technical skills
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">12 questions • 30 seconds each • Need 8/12 correct</p>
+                          <h3 className="text-sm font-semibold text-white">MCQ Skills</h3>
+                          <p className="text-xs text-gray-400 mt-1">Multiple choice questions</p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                            <span>12 questions</span>
+                            <span>•</span>
+                            <span>30s each</span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Round 2 */}
-                    <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                    <div className="p-4 border border-gray-700 rounded-lg hover:border-teal-500 hover:bg-gray-700 transition-all">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 font-semibold text-sm flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                           2
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Scenario Based</h3>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                            Real-world scenarios related to your experience
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">5 questions • 120 seconds each • Need 60% to qualify</p>
+                          <h3 className="text-sm font-semibold text-white">Scenario Based</h3>
+                          <p className="text-xs text-gray-400 mt-1">Real-world scenarios</p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                            <span>5 questions</span>
+                            <span>•</span>
+                            <span>120s each</span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Round 3 */}
-                    <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                    <div className="p-4 border border-gray-700 rounded-lg hover:border-green-500 hover:bg-gray-700 transition-all">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 font-semibold text-sm flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                           3
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Technical Round</h3>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                            Technical questions based on your skills and experience
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">3 questions • 300 seconds each</p>
+                          <h3 className="text-sm font-semibold text-white">Technical Coding</h3>
+                          <p className="text-xs text-gray-400 mt-1">Coding challenges</p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                            <span>3 questions</span>
+                            <span>•</span>
+                            <span>300s each</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Start Button - Fixed at bottom */}
-                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
+                  <div className="mt-4 pt-4 border-t border-gray-700 flex-shrink-0">
                     {parsed ? (
                       <button
                         onClick={startInterview}
                         disabled={loading || round === 3}
-                        className={`w-full px-6 py-3 rounded-lg font-semibold text-white transition-all ${
+                        className={`w-full px-5 py-3 rounded-lg font-semibold text-white text-sm transition-all ${
                           round === 3
-                            ? "bg-slate-400 cursor-not-allowed"
-                            : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl"
+                            ? "bg-gray-600 cursor-not-allowed"
+                            : "bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow-md"
                         }`}
                       >
                         {loading ? (
@@ -947,7 +864,7 @@ if (typeof ${functionName} === 'function') {
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            Starting Assessment
+                            Starting...
                           </span>
                         ) : round === 3 ? (
                           "Assessment Completed"
@@ -956,9 +873,9 @@ if (typeof ${functionName} === 'function') {
                         )}
                       </button>
                     ) : (
-                      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                        <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-                          Upload and parse your resume to begin the assessment
+                      <div className="p-3 bg-amber-900/20 border border-amber-700 rounded-lg">
+                        <p className="text-xs text-amber-400 text-center">
+                          Upload resume to begin
                         </p>
                       </div>
                     )}
@@ -969,47 +886,49 @@ if (typeof ${functionName} === 'function') {
           </div>
         ) : (
           /* Question View */
-          <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-            <div ref={questionRef} className="w-full max-w-2xl">
-              <section className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="min-h-[calc(100vh-200px)] flex justify-center">
+            <div ref={questionRef} className="w-full max-w-4xl px-8">
+              <section className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden shadow-sm">
               {/* Header */}
-              <div className="px-5 py-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700">
+              <div className="px-5 py-2 bg-gray-900 border-b border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold text-white ${
                         round === 1
-                          ? "bg-blue-600"
+                          ? "bg-emerald-600"
                           : round === 2
-                          ? "bg-purple-600"
-                          : "bg-green-600"
+                          ? "bg-teal-600"
+                          : "bg-indigo-600"
                       }`}
                     >
                       {round}
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                      <h2 className="text-base font-semibold text-white">
                         Round {round}: {roundType}
                       </h2>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-gray-400 mt-0.5">
                         Question {qNo} of {totalQ}
                       </p>
                     </div>
                   </div>
                   <div
                     className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm ${
-                      timeLeft <= 30
-                        ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 animate-pulse"
-                        : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                      timerStopped
+                        ? "bg-gray-900/30 text-gray-400"
+                        : timeLeft <= 30
+                        ? "bg-red-900/30 text-red-400 animate-pulse"
+                        : "bg-amber-900/30 text-amber-400"
                     }`}
                   >
-                    <span className={`${timeLeft <= 30 ? "animate-pulse" : ""}`}>⏱</span>
-                    <span>{timeLeft}s</span>
+                    <span className={`${timeLeft <= 30 && !timerStopped ? "animate-pulse" : ""}`}>⏱</span>
+                    <span>{timerStopped ? "Stopped" : `${timeLeft}s`}</span>
                   </div>
                 </div>
 
                 {roundDescription && (
-                  <div className="text-xs text-slate-600 dark:text-slate-400 italic">
+                  <div className="text-xs text-gray-400 italic">
                     {roundDescription}
                   </div>
                 )}
@@ -1019,13 +938,50 @@ if (typeof ${functionName} === 'function') {
                 {/* Question */}
                 <div>
                   {round === 3 ? (
-                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                      <pre className="text-sm text-slate-900 dark:text-white whitespace-pre-wrap font-mono leading-relaxed">
+                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                      <pre className="text-sm text-white whitespace-pre-wrap font-mono leading-relaxed">
                         {question}
                       </pre>
                     </div>
+                  ) : round === 2 ? (
+                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                      <div className="text-sm text-white leading-relaxed space-y-3">
+                        {question.split('\n').map((line, idx) => {
+                          const trimmedLine = line.trim();
+                          if (!trimmedLine) return null;
+                          
+                          if (trimmedLine.startsWith('**Situation:**')) {
+                            return (
+                              <div key={idx} className="bg-emerald-900/30 p-3 rounded border-l-4 border-emerald-400">
+                                <span className="text-emerald-400 font-semibold text-xs uppercase tracking-wide">Situation</span>
+                                <p className="text-white text-base mt-1 font-medium">
+                                  {trimmedLine.replace('**Situation:**', '').trim()}
+                                </p>
+                              </div>
+                            );
+                          }
+                          
+                          if (trimmedLine.startsWith('**Question:**')) {
+                            return (
+                              <div key={idx} className="bg-teal-900/30 p-3 rounded border-l-4 border-teal-400">
+                                <span className="text-teal-400 font-semibold text-xs uppercase tracking-wide">Question</span>
+                                <p className="text-white text-base mt-1 font-medium">
+                                  {trimmedLine.replace('**Question:**', '').trim()}
+                                </p>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <p key={idx} className="text-gray-200">
+                              {trimmedLine}
+                            </p>
+                          );
+                        }).filter(Boolean)}
+                      </div>
+                    </div>
                   ) : (
-                    <h3 className="text-sm font-medium text-slate-900 dark:text-white leading-relaxed">
+                    <h3 className="text-sm font-medium text-white leading-relaxed">
                       {question.split(/[ABCD]\)/)[0].replace('Question:', '').trim()}
                     </h3>
                   )}
@@ -1045,14 +1001,14 @@ if (typeof ${functionName} === 'function') {
                           key={option}
                           className={`flex items-start gap-2 p-2 rounded border cursor-pointer transition-colors ${
                             selectedOption === option
-                              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
-                              : "border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                              ? "border-emerald-500 bg-emerald-900/30"
+                              : "border-gray-700 hover:border-emerald-600 hover:bg-gray-700/50"
                           }`}
                         >
                           <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
                             selectedOption === option
-                              ? "border-blue-500 bg-blue-500"
-                              : "border-slate-300 dark:border-slate-600"
+                              ? "border-emerald-500 bg-emerald-500"
+                              : "border-gray-600"
                           }`}>
                             {selectedOption === option && (
                               <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
@@ -1068,10 +1024,10 @@ if (typeof ${functionName} === 'function') {
                           />
                           <div className="flex-1">
                             <div className="flex items-start gap-1">
-                              <span className="font-semibold text-blue-600 dark:text-blue-400 text-xs">
+                              <span className="font-semibold text-emerald-400 text-xs">
                                 {option}.
                               </span>
-                              <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                              <span className="text-xs text-gray-300 leading-relaxed">
                                 {optionText}
                               </span>
                             </div>
@@ -1085,27 +1041,46 @@ if (typeof ${functionName} === 'function') {
                 {/* Text Answer */}
                 {round !== 1 && (
                   <div>
-                    <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                      {round === 3 ? "Your Code Solution" : "Your Answer"}
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-semibold text-white">
+                        {round === 3 ? "Your Code Solution" : "Your Answer"}
+                      </label>
+                      {round === 3 ? (
+                        <span className="text-xs text-gray-400">
+                          Lines: {lineCount}
+                        </span>
+                      ) : round === 2 ? (
+                        <span className={`text-xs ${
+                          (answerRef.current?.value?.length || 0) >= 300 
+                            ? 'text-green-400' 
+                            : 'text-amber-400'
+                        }`}>
+                          Characters: {answerRef.current?.value?.length || 0}/300 minimum
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="relative">
                       <textarea
                         ref={answerRef}
                         disabled={timeLeft <= 0}
-                        className={`w-full px-4 py-3 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed ${round === 3 ? 'font-mono pl-12' : ''}`}
-                        placeholder={timeLeft <= 0 ? "Time expired - answer submitted automatically" : round === 3 ? getPlaceholder(selectedLanguage) : "Enter your detailed answer here..."}
-                        rows={round === 3 ? 20 : 8}
-                        style={round === 3 ? { lineHeight: '1.5' } : {}}
+                        className={`w-full px-4 py-3 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${round === 3 ? 'font-mono' : ''}`}
+                        placeholder={timeLeft <= 0 ? "Time expired - answer submitted automatically" : round === 3 ? getPlaceholder(selectedLanguage) : round === 2 ? "Your answer (be specific and concise):\n\n1. Immediate action:\n2. Next steps:\n3. Why this approach:" : "Enter your detailed answer here..."}
+                        style={{
+                          minHeight: round === 3 ? '400px' : round === 2 ? '300px' : '200px',
+                          resize: 'vertical',
+                          lineHeight: '1.5'
+                        }}
+                        onChange={(e) => {
+                          if (round === 3) {
+                            const lines = e.target.value.split('\n').length;
+                            setLineCount(lines);
+                          }
+                          // Force re-render for character count display in Round 2
+                          if (round === 2) {
+                            setLineCount(e.target.value.length);
+                          }
+                        }}
                       />
-                      {round === 3 && (
-                        <div className="absolute left-2 top-3 text-xs text-slate-400 dark:text-slate-500 font-mono pointer-events-none select-none">
-                          {Array.from({ length: 20 }, (_, i) => (
-                            <div key={i} style={{ lineHeight: '1.5', height: '21px' }}>
-                              {String(i + 1).padStart(2, ' ')}
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                     
                     {/* Code Runner for Round 3 */}
@@ -1115,7 +1090,7 @@ if (typeof ${functionName} === 'function') {
                           <select
                             value={selectedLanguage}
                             onChange={(e) => setSelectedLanguage(e.target.value)}
-                            className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                            className="px-2 py-1 text-xs border border-gray-600 rounded bg-gray-900 text-white"
                           >
                             <option value="python">Python</option>
                             <option value="java">Java</option>
@@ -1127,21 +1102,21 @@ if (typeof ${functionName} === 'function') {
                           >
                             {loading ? "Running..." : "▶ Run Code"}
                           </button>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            💡 Backend languages only - Python/Java with line numbers
+                          <p className="text-xs text-gray-400">
+                            💡 Code will be compiled and executed with error checking
                           </p>
                         </div>
                         
                         {/* Output Display */}
                         {codeOutput && (
-                          <div className="bg-slate-900 text-green-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border">
-                            <div className="text-slate-400 mb-1">Output:</div>
+                          <div className="bg-gray-950 text-green-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border border-gray-700">
+                            <div className="text-gray-400 mb-1">Output:</div>
                             {typeof codeOutput === 'string' ? codeOutput : JSON.stringify(codeOutput, null, 2)}
                           </div>
                         )}
                         
                         {codeError && (
-                          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border border-red-200 dark:border-red-800">
+                          <div className="bg-red-900/20 text-red-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border border-red-800">
                             <div className="font-semibold mb-1">Error:</div>
                             {typeof codeError === 'string' ? codeError : JSON.stringify(codeError, null, 2)}
                           </div>
@@ -1153,41 +1128,41 @@ if (typeof ${functionName} === 'function') {
 
                 {/* Feedback Display */}
                 {lastFeedback && (
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="p-4 bg-gray-900 rounded-lg border border-gray-700">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                         Previous Score
                       </span>
-                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      <span className="text-2xl font-bold text-emerald-400">
                         {lastFeedback.score}/10
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-gray-400">
                       {lastFeedback.feedback}
                     </p>
                   </div>
                 )}
 
                 {/* Submit Button */}
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div className="pt-2 border-t border-gray-700">
                   <button
                     onClick={submitAnswer}
-                    disabled={loading || timeLeft <= 0 || (round === 1 && !selectedOption)}
+                    disabled={loading || submitting || (timeLeft <= 0 && !timerStopped) || (round === 1 && !selectedOption)}
                     className={`w-full px-4 py-2 rounded-lg font-semibold text-white transition-all ${
-                      timeLeft <= 0 || (round === 1 && !selectedOption)
-                        ? "bg-slate-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700"
+                      (timeLeft <= 0 && !timerStopped) || (round === 1 && !selectedOption) || submitting
+                        ? "bg-gray-600 cursor-not-allowed"
+                        : "bg-emerald-600 hover:bg-emerald-700"
                     }`}
                   >
-                    {loading ? (
+                    {loading || submitting ? (
                       <span className="inline-flex items-center justify-center gap-2">
                         <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Evaluating
+                        {submitting ? "Submitting..." : "Evaluating"}
                       </span>
-                    ) : timeLeft <= 0 ? (
+                    ) : timeLeft <= 0 && !timerStopped ? (
                       "Time Expired"
                     ) : (
                       "Submit Answer"

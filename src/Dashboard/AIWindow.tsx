@@ -1,38 +1,103 @@
 import React, { useState, useRef, useEffect } from "react";
-import { message as antdMessage } from "antd";
-import { useNavigate } from "react-router-dom";
-import BASE_URL from "../Config";
 import { Mic } from "lucide-react";
-// const OPENAI_KEY = process.env.REACT_APP_OPENAI_KEY;
-const PRODUCT_API = `${BASE_URL}/product-service/showGroupItemsForCustomrs`;
-const OFFERS_API = `${BASE_URL}/product-service/getComboActiveInfo`;
+import BASE_URL from "../Config";
+
+const parseMarkdown = (text: string) => {
+  if (!text) return "";
+
+  // 1️⃣ Fix corrupted rupee symbols
+  text = text.replace(/\?(\d)/g, "₹$1");
+
+  // 2️⃣ Fix corrupted apostrophes like Here?s
+  text = text.replace(/\u2019|\u2018|\u201A|\u2032|\u2035/g, "'");
+  text = text.replace(/([A-Za-z])\?([A-Za-z])/g, "$1'$2");
+
+  // 3️⃣ Remove invisible Unicode causing ??
+  text = text.replace(/[\uFFFD\u200B-\u200F\u202A-\u202E]/g, "");
+
+  // 4️⃣ Remove trailing spaces
+  text = text.replace(/[ \t]+$/gm, "");
+
+  // 5️⃣ Remove horizontal rules (---)
+  text = text.replace(/^---+$/gm, "");
+
+  // 6️⃣ Remove images completely
+  text = text.replace(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/g, "");
+  text = text.replace(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg)/gi, "");
+
+  // 7️⃣ Normalize blank lines:
+  // Keep ONE blank line (for paragraph separation)
+  text = text.replace(/\n{3,}/g, "\n\n");
+
+  // ≠ DO NOT remove ALL blank lines
+  // ≠ DO NOT replace \n with <br> globally (breaks lists/code blocks)
+
+  // 🎯 Handle Markdown formatting into HTML
+  let html = text
+
+    // Bold
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+
+    // Italic
+    .replace(/(^|[^*])\*(.*?)\*(?=[^*]|$)/g, "$1<em>$2</em>")
+
+    // Code block (triple backticks)
+    .replace(
+      /```([\s\S]*?)```/g,
+      (_, code) =>
+        `<pre class="p-3 bg-gray-100 rounded-md text-sm overflow-x-auto"><code>${code.trim()}</code></pre>`
+    )
+
+    // Inline code
+    .replace(
+      /`([^`]+)`/g,
+      '<code class="px-2 py-1 bg-gray-100 rounded text-sm">$1</code>'
+    )
+
+    // Headings
+    .replace(
+      /^#### (.*)$/gim,
+      '<h4 class="text-base font-semibold mt-3 mb-1">$1</h4>'
+    )
+    .replace(
+      /^### (.*)$/gim,
+      '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>'
+    )
+    .replace(
+      /^## (.*)$/gim,
+      '<h2 class="text-xl font-semibold mt-4 mb-2">$1</h2>'
+    )
+    .replace(/^# (.*)$/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>');
+
+  // 🎯 Convert remaining newlines to <br>, BUT safely:
+  // ONLY outside lists, code blocks, and paragraphs.
+  html = html.replace(/([^\n])\n([^\n])/g, "$1<br>$2");
+
+  // Final cleanup
+  html = html.replace(/(<br>\s*){2,}/g, "<br>");
+
+  return html.trim();
+};
 
 interface Message {
   id: string;
   text: string;
   isUser: boolean;
   timestamp: Date;
-  type?: "text" | "products" | "error" | "offers";
-  products?: any[];
-  offers?: any[];
 }
+
 type SpeechRecognitionEvent = Event & {
   results: SpeechRecognitionResultList;
   resultIndex: number;
 };
+
 type SpeechRecognitionErrorEvent = Event & {
   error: string;
   message?: string;
 };
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
 interface AIChatWindowProps {
   botName?: string;
-  language?: string;
   isMobile?: boolean;
   onClose?: () => void;
   onExternalRequest?: (message: string) => void;
@@ -44,35 +109,41 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
   onClose,
   onExternalRequest,
 }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: `Hello! I'm ${botName}. How can I help you today?`,
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ]);
+  // Get userId from localStorage
+  const getUserId = () => {
+    try {
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        console.error("User ID not found in localStorage");
+        return null;
+      }
+      return userId;
+    } catch (error) {
+      console.error("Error reading userId from localStorage:", error);
+      return null;
+    }
+  };
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  // Welcome questions that users can click
+  const welcomeQuestions = [
+    "What products do you have?",
+    "What services are available on ASKOXY?",
+    "Describe Bharath AI Store in ASKOXY.",
+    "Does ASKOXY have jobs or study abroad?",
+  ];
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>(
-    []
-  );
-  const [productsCache, setProductsCache] = useState<any[]>([]);
-  const [offersCache, setOffersCache] = useState<any[]>([]);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  const navigate = useNavigate();
-
   const scrollToBottom = () =>
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
   useEffect(scrollToBottom, [messages]);
 
   useEffect(() => {
-    loadInitialData();
-
     // Listen for external requests from other pages
     const handleExternalRequest = (event: CustomEvent) => {
       const { message } = event.detail;
@@ -111,60 +182,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
     }, 100);
   };
 
-  const loadInitialData = async () => {
-    try {
-      const [productsRes, offersRes] = await Promise.all([
-        fetch(PRODUCT_API),
-        fetch(OFFERS_API),
-      ]);
-
-      const productsData = await productsRes.json();
-      const offersData = await offersRes.json();
-
-      const flattenedProducts: any[] = [];
-      productsData.forEach((group: any) => {
-        group.categories.forEach((cat: any) => {
-          cat.itemsResponseDtoList.forEach((item: any) => {
-            flattenedProducts.push({
-              ...item,
-              groupName: group.groupName,
-              categoryName: cat.categoryName,
-            });
-          });
-        });
-      });
-
-      setProductsCache(flattenedProducts);
-      setOffersCache(offersData);
-      setIsDataLoaded(true);
-    } catch (error) {
-      console.error("Failed to load initial data:", error);
-      antdMessage.error("Failed to load data");
-    }
-  };
-
-  const createSystemPrompt = () =>
-    `You are a smart assistant for an e-commerce platform that sells: rice (like HMT, Sonamasoori), groceries, gold, combo offers, and festival items (like rakhis).
-
-Respond with:
-1. A helpful, one-sentence natural reply to the user's message.
-2. 3–5 keywords from the input, only if they match platform items.
-
-Rules:
-- Answer the question normally in the description.
-- Always include specific item names (like hmt, rakhi, sonamasoori) in keywords if mentioned.
-- If user mentions **offers, deals, discounts, or today’s specials**, include "offers" in keywords.
-- If only general rice is asked (e.g., “what rice do you sell”), use "rice" in keyword. If specific rice is asked (e.g., “what is HMT”), include only "hmt".
-- For valid festival items (e.g., "rakhi"), describe them in the reply and include them in keywords.
-- If it’s a casual message (e.g., “hi”), respond politely and leave keywords blank.
-- Never include unrelated categories like electronics or fashion.
-
-Format:
-Description: <helpful reply>
-Keywords: <comma-separated keywords or leave blank>`;
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -182,93 +200,101 @@ Keywords: <comma-separated keywords or leave blank>`;
     await processUserMessage(currentInput);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   const processUserMessage = async (userInput: string) => {
     try {
       setIsLoading(true);
 
-      // Prepare request body: conversation history + new user input
-      const requestBody = [
-        { role: "system", content: createSystemPrompt() },
-        ...conversationHistory,
-        { role: "user", content: userInput },
-      ];
+      const userId = getUserId();
 
+      if (!userId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            text: "Error: User ID not found. Please log in again.",
+            isUser: false,
+            timestamp: new Date(),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      // console.log("Sending request with userId:", userId);
+      // console.log("User prompt:", userInput);
+      const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `${BASE_URL}/student-service/user/question`,
+        `${BASE_URL}/ai-service/chat1?userId=${userId}`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
+            accept: "*/*",
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({ prompt: userInput }),
         }
       );
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        throw new Error("API call failed: " + response.statusText);
+        const errorText = await response.text();
+        console.error("API error response:", errorText);
+        throw new Error(`API call failed: ${response.statusText}`);
       }
 
-      const content = (await response.text()).trim(); // backend returns plain string
+      const aiResponse = await response.text();
+      console.log("AI Response received:", aiResponse);
 
-      // Extract description and keywords
-      const descriptionMatch = content.match(/Description:\s*(.*)/i);
-      const keywordsMatch = content.match(/Keywords:\s*(.*)/i);
+      if (!aiResponse || aiResponse.trim() === "") {
+        throw new Error("Empty response from API");
+      }
 
-      const description = descriptionMatch?.[1]?.trim() || "";
-      const extractedKeywords =
-        keywordsMatch?.[1]
-          ?.split(",")
-          .map((k: string) => k.trim().toLowerCase())
-          .filter(Boolean) || [];
-
-      // Update conversation history
-      setConversationHistory((prev) => [
-        ...prev,
-        { role: "user", content: userInput },
-        { role: "assistant", content },
-      ]);
-
-      // Update messages shown in UI
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
-          text: description,
+          text: aiResponse.trim(),
           isUser: false,
           timestamp: new Date(),
         },
       ]);
-
-      // Handle keywords logic
-      if (extractedKeywords.includes("offers")) {
-        displayOffers();
-        return;
-      }
-
-      if (extractedKeywords.length > 0 && isDataLoaded) {
-        filterAndDisplayResults(extractedKeywords);
-      }
     } catch (err) {
       console.error("Processing error:", err);
-      antdMessage.error("Failed to process your request.");
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleToggleVoice = () => {
-    // Check if SpeechRecognition API is supported
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      antdMessage.error("Speech Recognition is not supported in this browser.");
+      alert("Speech Recognition is not supported in this browser.");
       return;
     }
 
-    // If already recording, stop the recognition
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
       setIsRecording(false);
@@ -276,25 +302,19 @@ Keywords: <comma-separated keywords or leave blank>`;
       return;
     }
 
-    // Initialize new speech recognition instance
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-US"; // Set language to English
-    recognition.interimResults = true; // Allow interim results for real-time transcription
-    recognition.continuous = true; // Continuous listening
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
 
     recognitionRef.current = recognition;
 
-    // Handle start of voice recording
     recognition.onstart = () => {
-      console.log("🎙️ Voice recording started...");
       setIsRecording(true);
-      antdMessage.info("Voice input started...");
     };
 
-    // Handle speech recognition results
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let transcript = "";
-      // Aggregate final results from speech recognition
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
@@ -302,115 +322,34 @@ Keywords: <comma-separated keywords or leave blank>`;
         }
       }
 
-      // Update input text with transcribed speech
       if (transcript.trim()) {
         setInputText((prev) => (prev.trim() + " " + transcript.trim()).trim());
       }
     };
 
-    // Handle speech recognition errors
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("❌ Voice recognition error:", event.error);
-      antdMessage.error(`Voice input failed: ${event.error}`);
+      console.error("Voice recognition error:", event.error);
       setIsRecording(false);
       recognitionRef.current = null;
     };
 
-    // Handle end of speech recognition
     recognition.onend = () => {
-      console.log("🛑 Voice recognition stopped.");
       setIsRecording(false);
       recognitionRef.current = null;
-      // Automatically send the transcribed message if it exists
-      if (inputText.trim()) {
-        handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
-      }
     };
 
-    // Start speech recognition
     try {
       recognition.start();
     } catch (error) {
       console.error("Failed to start voice recognition:", error);
-      antdMessage.error("Failed to start voice input.");
       setIsRecording(false);
     }
   };
 
-  const displayOffers = () => {
-    if (offersCache.length > 0) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          text: "🎉 Check out these exciting combo offers:",
-          isUser: false,
-          timestamp: new Date(),
-          type: "offers",
-          offers: offersCache,
-        },
-      ]);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          text: "No combo offers are available right now.",
-          isUser: false,
-          timestamp: new Date(),
-          type: "error",
-        },
-      ]);
-    }
-  };
-
-  const filterAndDisplayResults = (keywords: string[]) => {
-    const matchedProducts = productsCache.filter((item: any) => {
-      const searchText =
-        `${item.itemName} ${item.itemDescription} ${item.groupName} ${item.categoryName}`.toLowerCase();
-      return keywords.some((keyword) => searchText.includes(keyword));
-    });
-
-    if (matchedProducts.length > 0) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          text: "🛒 Matching products for you:",
-          isUser: false,
-          timestamp: new Date(),
-          type: "products",
-          products: matchedProducts.slice(0, 10),
-        },
-      ]);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          text: "Currently, these items are not available.",
-          isUser: false,
-          timestamp: new Date(),
-          type: "error",
-        },
-      ]);
-    }
-  };
-
   const clearChat = () => {
-    setMessages([
-      {
-        id: "1",
-        text: `Hello! I'm ${botName}. How can I help you today?`,
-        isUser: false,
-        timestamp: new Date(),
-      },
-    ]);
-    setConversationHistory([]);
-    antdMessage.success("Chat cleared successfully!");
+    setMessages([]);
   };
 
-  // Three dots loading component
   const ThreeDotsLoading = () => (
     <div className="flex items-center space-x-1">
       <div
@@ -428,7 +367,45 @@ Keywords: <comma-separated keywords or leave blank>`;
     </div>
   );
 
-  // Mobile styles
+  const WelcomeScreen = () => (
+    <div className="flex-1 flex flex-col items-center justify-center p-4 space-y-4">
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          Welcome to {botName}! 👋
+        </h3>
+        <p className="text-sm text-gray-600">How can I assist you today?</p>
+      </div>
+
+      <div className="w-full max-w-sm space-y-2">
+        <p className="text-xs text-gray-500 font-medium mb-3">
+          Quick Questions:
+        </p>
+        {welcomeQuestions.map((question, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setInputText(question);
+              // Auto-send the question
+              const userMessage: Message = {
+                id: Date.now().toString(),
+                text: question,
+                isUser: true,
+                timestamp: new Date(),
+              };
+              setMessages([userMessage]);
+              setInputText("");
+              setIsLoading(true);
+              processUserMessage(question);
+            }}
+            className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors duration-200 border border-purple-200 hover:border-purple-300"
+          >
+            <span className="text-sm text-gray-700">{question}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const mobileStyles = isMobile
     ? {
         position: "fixed" as const,
@@ -445,28 +422,19 @@ Keywords: <comma-separated keywords or leave blank>`;
 
   const containerClass = isMobile
     ? `fixed inset-0 w-3/4 h-full bg-white flex flex-col z-50`
-    : `fixed right-0 top-20 bottom-0 w-full max-w-xs sm:max-w-sm md:w-72 bg-white shadow-lg rounded-lg border z-50 flex flex-col transition-all duration-300 overflow-hidden`;
+    : `fixed right-0 top-20 bottom-0 w-full max-w-sm sm:max-w-md md:w-96 bg-white shadow-lg rounded-lg border z-50 flex flex-col transition-all duration-300 overflow-hidden`;
 
   return (
     <div className={containerClass} style={isMobile ? mobileStyles : {}}>
-      <div
-        className={`bg-gradient-to-r from-purple-700 to-purple-600 text-white px-3 py-2  shadow-md ${
-          isMobile ? "" : ""
-        }`}
-      >
-        <div className="flex items-center justify-between ">
-          <div className="flex items-center space-x-2 ">
-            {/* <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
-              </svg>
-            </div> */}
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-700 to-purple-600 text-white px-3 py-2 shadow-md">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
             <div>
               <h3 className="font-bold text-sm">{botName}</h3>
             </div>
           </div>
           <div className="flex items-center space-x-1">
-            {/* Clear Chat Button */}
             <button
               onClick={clearChat}
               className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
@@ -486,7 +454,6 @@ Keywords: <comma-separated keywords or leave blank>`;
                 />
               </svg>
             </button>
-            {/* Close Button (only on mobile) */}
             {isMobile && onClose && (
               <button
                 onClick={onClose}
@@ -513,105 +480,15 @@ Keywords: <comma-separated keywords or leave blank>`;
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-2">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`text-sm ${msg.isUser ? "text-right" : "text-left"}`}
-          >
-            {msg.type === "products" ? (
-              <div className="space-y-2">
-                <div className="font-semibold text-green-600">{msg.text}</div>
-                {msg.products?.map((item) => (
-                  <div
-                    key={item.itemId}
-                    onClick={() => {
-                      navigate(`/main/itemsdisplay/${item.itemId}`);
-                      if (isMobile && onClose) onClose();
-                    }}
-                    className="border rounded-md p-2 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <img
-                      src={item.itemImage}
-                      alt={item.itemName}
-                      className={`${
-                        isMobile ? "h-16 w-16" : "h-12 w-12"
-                      } object-contain float-left mr-2`}
-                    />
-                    <div
-                      className={`${
-                        isMobile ? "text-sm" : "text-xs"
-                      } font-bold text-gray-800 break-words`}
-                    >
-                      {item.itemName}
-                    </div>
-                    <div
-                      className={`${
-                        isMobile ? "text-sm" : "text-xs"
-                      } text-green-600`}
-                    >
-                      ₹{item.itemPrice} • {item.savePercentage}% off
-                    </div>
-                    <div
-                      className={`${
-                        isMobile ? "text-xs" : "text-[10px]"
-                      } text-gray-500`}
-                    >
-                      {item.groupName} - {item.categoryName}
-                    </div>
-                    <div className="clear-both"></div>
-                  </div>
-                ))}
-              </div>
-            ) : msg.type === "offers" ? (
-              <div className="space-y-2">
-                <div className="font-semibold text-orange-600">{msg.text}</div>
-                <div
-                  className={`flex overflow-x-auto space-x-2 pb-2 ${
-                    isMobile ? "gap-3" : ""
-                  }`}
-                >
-                  {msg.offers?.map((offer, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        // navigate(`/main/itemsdisplay/${offer.itemId}`);
-                        if (isMobile && onClose) onClose();
-                      }}
-                      className={`flex-shrink-0 bg-white border rounded-lg p-2 cursor-pointer hover:bg-gray-50 transition
-      ${
-        isMobile ? "min-w-[200px] max-w-[200px]" : "min-w-[180px] max-w-[180px]"
-      }`}
-                    >
-                      <div className="w-full h-24 overflow-hidden rounded-md mb-1">
-                        <img
-                          src={offer.imageUrl}
-                          alt={offer.itemName}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <div
-                        className="font-semibold text-xs text-gray-800 mb-1 truncate"
-                        title={offer.itemName}
-                      >
-                        {offer.itemName}
-                      </div>
-                      {offer.itemDescription && (
-                        <div
-                          className="text-xs text-gray-600 mb-1 line-clamp-2"
-                          title={offer.itemDescription}
-                        >
-                          {offer.itemDescription}
-                        </div>
-                      )}
-                      <div className="text-green-600 text-xs font-bold">
-                        {offer.price ? `₹${offer.price}` : "Special Price!"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
+      {messages.length === 0 ? (
+        <WelcomeScreen />
+      ) : (
+        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`text-sm ${msg.isUser ? "text-right" : "text-left"}`}
+            >
               <div
                 className={`inline-block px-2 py-1.5 rounded-lg max-w-[85%] ${
                   msg.isUser
@@ -619,75 +496,82 @@ Keywords: <comma-separated keywords or leave blank>`;
                     : "bg-gray-100 text-gray-800"
                 } ${isMobile ? "text-base" : "text-sm"}`}
               >
-                <p className="whitespace-pre-wrap break-words leading-relaxed">
-                  {msg.text}
-                </p>
+                {msg.isUser ? (
+                  <p className="whitespace-pre-wrap break-words leading-relaxed">
+                    {msg.text}
+                  </p>
+                ) : (
+                  <div
+                    className="whitespace-pre-wrap break-words leading-relaxed markdown-content"
+                    dangerouslySetInnerHTML={{
+                      __html: parseMarkdown(msg.text),
+                    }}
+                  />
+                )}
               </div>
-            )}
-            <div
-              className={`${
-                isMobile ? "text-xs" : "text-[10px]"
-              } text-gray-400 mt-1 ${msg.isUser ? "text-right" : "text-left"}`}
-            >
-              {msg.timestamp.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              <div
+                className={`${
+                  isMobile ? "text-xs" : "text-[10px]"
+                } text-gray-400 mt-1 ${
+                  msg.isUser ? "text-right" : "text-left"
+                }`}
+              >
+                {msg.timestamp.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="text-left">
-            <div className="inline-block px-2 py-1.5 rounded-lg bg-gray-100">
-              <ThreeDotsLoading />
+          ))}
+          {isLoading && (
+            <div className="text-left">
+              <div className="inline-block px-2 py-1.5 rounded-lg bg-gray-100">
+                <ThreeDotsLoading />
+              </div>
+              <div
+                className={`${
+                  isMobile ? "text-xs" : "text-[10px]"
+                } text-gray-400 mt-1`}
+              >
+                Thinking...
+              </div>
             </div>
-            <div
-              className={`${
-                isMobile ? "text-xs" : "text-[10px]"
-              } text-gray-400 mt-1`}
-            >
-              Typing...
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef}></div>
-      </div>
+          )}
+          <div ref={messagesEndRef}></div>
+        </div>
+      )}
 
-      <form
-        onSubmit={handleSendMessage}
-        className="p-3 sm:p-2 border-t flex items-center space-x-2 bg-white"
-      >
+      {/* Input Area */}
+      <div className="p-3 sm:p-2 border-t flex items-center space-x-2 bg-white">
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
+          onKeyPress={handleKeyPress}
           className={`flex-1 border border-gray-300 px-3 py-2 sm:px-2 sm:py-1.5 ${
             isMobile ? "text-base min-h-[44px]" : "text-sm"
           } rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500`}
           placeholder="Type your message..."
-          disabled={isLoading || !isDataLoaded}
+          disabled={isLoading}
         />
         <button
-          type="button"
           onClick={handleToggleVoice}
           className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${
             isRecording
               ? "bg-red-100 text-red-600 animate-pulse"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          } ${
-            isLoading || !isDataLoaded ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          disabled={isLoading || !isDataLoaded}
+          } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+          disabled={isLoading}
           title={isRecording ? "Stop Voice Input" : "Start Voice Input"}
         >
           <Mic className="w-5 h-5" />
         </button>
         <button
-          type="submit"
+          onClick={handleSendMessage}
           className={`bg-purple-600 text-white ${
             isMobile ? "p-3 min-h-[44px] min-w-[44px]" : "p-2"
           } rounded-lg disabled:bg-gray-400 hover:bg-purple-700 active:bg-purple-800 transition-colors flex items-center justify-center`}
-          disabled={isLoading || !inputText.trim() || !isDataLoaded}
+          disabled={isLoading || !inputText.trim()}
           title="Send message"
         >
           <svg
@@ -704,7 +588,7 @@ Keywords: <comma-separated keywords or leave blank>`;
             />
           </svg>
         </button>
-      </form>
+      </div>
     </div>
   );
 };

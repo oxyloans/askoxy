@@ -116,14 +116,25 @@ const Content1: React.FC = () => {
     );
   };
 
-  // Function to handle external requests from other pages
-  const handleExternalChatRequest = (message: string) => {
+  // Function to handle external requests from other pages (like header AI button)
+  const handleExternalChatRequest = (message?: string) => {
+    // If already open, just close it
+    if (isAiChatOpen) {
+      setIsAiChatOpen(false);
+      return;
+    }
+
+    // Open the window
     setIsAiChatOpen(true);
-    window.dispatchEvent(
-      new CustomEvent("aiChatExternalRequest", {
-        detail: { message },
-      })
-    );
+
+    // Only send message if provided
+    if (message) {
+      window.dispatchEvent(
+        new CustomEvent("aiChatExternalRequest", {
+          detail: { message },
+        })
+      );
+    }
   };
 
   // Register globals
@@ -135,7 +146,7 @@ const Content1: React.FC = () => {
       delete (window as any).openAiChat;
       delete (window as any).sendToAIChat;
     };
-  }, []);
+  }, [isAiChatOpen]);
 
   // Also expose (older path)
   useEffect(() => {
@@ -169,7 +180,9 @@ const Content1: React.FC = () => {
         className={`fixed left-0 h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] 
           transition-all duration-300 bg-white shadow-lg z-20 rounded-r-lg
           ${widthClass}
-          ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
+          ${
+            isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0
           top-16 md:top-20`}
         onMouseEnter={handleSidebarMouseEnter}
         onMouseLeave={handleSidebarMouseLeave}
@@ -198,7 +211,9 @@ const Content1: React.FC = () => {
       {isAiChatOpen && (
         <div
           className={`fixed z-50 transition-all ${
-            isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"
+            isMobile
+              ? "bottom-20 right-2 left-2"
+              : "top-20 bottom-4 right-4 w-[24rem]"
           }`}
         >
           <AIChatWindow
@@ -234,20 +249,20 @@ const Content1: React.FC = () => {
       isMobile
         ? "bottom-6 right-6 bg-purple-600 rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_15px_rgba(192,132,252,0.9)]"
         : isAiChatOpen
-        ? "top-1/2 right-[18rem] -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
+        ? "top-1/2 right-[24rem] -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
         : "top-1/2 right-0 -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
     }
   `}
         title={isAiChatOpen ? "Close ASKOXY.AI" : "Open ASKOXY.AI"}
       >
         <svg
-  className={`${isMobile ? "w-7 h-7" : "w-4 h-4"} ${
-    !isMobile && !isAiChatOpen ? "rotate-180" : ""
-  } transition-transform`}
-  fill="none"
-  stroke="currentColor"
-  viewBox="0 0 24 24"
->
+          className={`${isMobile ? "w-7 h-7" : "w-4 h-4"} ${
+            !isMobile && !isAiChatOpen ? "rotate-180" : ""
+          } transition-transform`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -266,9 +281,15 @@ const Content1: React.FC = () => {
       <div
         className={`transition-all duration-300
           pt-16 md:pt-20
-          ${isMobile ? "pl-0" : isCollapsed && !isHovering ? "md:pl-20" : "md:pl-64"}
+          ${
+            isMobile
+              ? "pl-0"
+              : isCollapsed && !isHovering
+              ? "md:pl-20"
+              : "md:pl-64"
+          }
           ${isMobileOpen ? "pl-0" : "pl-0"}
-          ${!isMobile && isAiChatOpen ? "pr-0 md:pr-[18rem]" : "pr-2"}`}
+          pr-2`}
       >
         <Tabview />
         <main className="min-h-screen p-2 md:p-4 bg-white rounded-tl-lg shadow-sm">

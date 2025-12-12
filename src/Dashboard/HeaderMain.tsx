@@ -1,13 +1,7 @@
-// HeaderMain.tsx
+
 import React, { useEffect, useState, useContext } from "react";
-import { X } from "lucide-react";
-import {
-  FaBars,
-  FaSearch,
-  FaUserCircle,
-  FaTimes,
-  FaShoppingCart,
-} from "react-icons/fa";
+import { X,Sparkles } from "lucide-react";
+import { FaBars, FaSearch,FaUserCircle, FaTimes, FaShoppingCart } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
 import AskOxyLogo from "../assets/img/askoxylogoblack.png";
@@ -35,9 +29,9 @@ const Header: React.FC<HeaderProps> = ({
   const [searchValue, setSearchValue] = useState("");
   const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
-  const [activeButton, setActiveButton] = useState<"profile" | "cart" | null>(
-    null
-  );
+  const [activeButton, setActiveButton] = useState<
+    "profile" | "cart" | "ai" | null
+  >(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showValidationPopup, setShowValidationPopup] = useState(false);
@@ -48,6 +42,7 @@ const Header: React.FC<HeaderProps> = ({
   const [mobileVerified, setMobileVerified] = useState(false);
   const [isLoginWithWhatsapp, setIsLoginWithWhatsapp] = useState(false);
   const [firstName, setFirstName] = useState("");
+  const [isAiHovered, setIsAiHovered] = useState(false);
 
   const toggleSidebar = () => {
     IsMobile5((prev: boolean) => !prev);
@@ -201,6 +196,12 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const handleAiClick = () => {
+    if ((window as any).openAiChat) {
+      (window as any).openAiChat(); // Call without message parameter
+    }
+  };
+
   const handleProfileRedirect = () => {
     setShowValidationPopup(false);
     handleNavigation("/main/profile");
@@ -214,18 +215,19 @@ const Header: React.FC<HeaderProps> = ({
     e.preventDefault();
     const trimmedQuery = searchValue.trim();
 
-    if (trimmedQuery && trimmedQuery.length >= 3) {
-      navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
-      setIsSearchVisible(false);
-      setSearchValue("");
-      setSearchResults([]);
-    } else {
-      setIsSearchVisible(false);
-      setSearchValue("");
-      setSearchResults([]);
-      return; // ← FIXED
-    }
-  };
+   if (trimmedQuery && trimmedQuery.length >= 3) {
+     navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
+     setIsSearchVisible(false);
+     setSearchValue("");
+     setSearchResults([]);
+   } else {
+     setIsSearchVisible(false);
+     setSearchValue("");
+     setSearchResults([]);
+     return; // ← FIXED
+   }
+ };
+
 
   const handleSearchItemClick = (item: SearchResult) => {
     navigate(`/main/itemsdisplay/${item.id}`, {
@@ -352,6 +354,27 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
+      <style>{`
+  @keyframes aiGlow {
+    0%, 100% {
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.6), 0 0 20px rgba(245, 158, 11, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.9), 0 0 30px rgba(245, 158, 11, 0.7);
+    }
+  }
+  .ai-glow {
+    animation: aiGlow 2s ease-in-out infinite;
+  }
+  @keyframes sparkleRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .sparkle-rotate {
+    animation: sparkleRotate 3s linear infinite;
+  }
+`}</style>
+
       <header
         className="fixed top-0 left-0 right-0 z-[1000] h-[80px] w-full font-['Roboto'] border-b border-black/5 shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
         style={{
@@ -387,6 +410,44 @@ const Header: React.FC<HeaderProps> = ({
               aria-label="Toggle search"
             >
               <FaSearch className="w-5 h-5" />
+            </button>
+
+            {/* AI Button */}
+            <button
+              onClick={handleAiClick}
+              onMouseEnter={() => setIsAiHovered(true)}
+              onMouseLeave={() => setIsAiHovered(false)}
+              onMouseDown={() => setActiveButton("ai")}
+              onMouseUp={() => setActiveButton(null)}
+              className={`relative overflow-hidden rounded-full transition-all duration-300 flex items-center gap-2
+    px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500
+    ${activeButton === "ai" ? "scale-95" : "hover:scale-105"}
+  `}
+              aria-label="AI Mode"
+            >
+              <div className="relative">
+                <Sparkles
+                  className="w-5 h-5 text-white sparkle-rotate"
+                  fill="currentColor"
+                />
+                {isAiHovered && (
+                  <>
+                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+                    <span
+                      className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-yellow-200 rounded-full animate-ping"
+                      style={{ animationDelay: "0.3s" }}
+                    ></span>
+                  </>
+                )}
+              </div>
+
+              {/* Always visible on desktop (sm and above), hidden on mobile */}
+              <span className="hidden sm:inline text-white font-semibold text-sm whitespace-nowrap">
+                AI Mode
+              </span>
+
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
             </button>
 
             <button

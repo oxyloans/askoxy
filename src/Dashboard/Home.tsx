@@ -21,6 +21,9 @@ import {
   HandCoins,
   Gem,
   Globe,
+  Sparkles,
+  MessageSquare,
+  Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -575,14 +578,14 @@ const Home: React.FC = () => {
         // },
       ];
 
-      // Log final categories
-      console.log(
-        "Final Categories:",
-        allCategories.map((cat) => ({
-          categoryName: cat.categoryName,
-          itemCount: cat.itemsResponseDtoList.length,
-        }))
-      );
+      // // Log final categories
+      // console.log(
+      //   "Final Categories:",
+      //   allCategories.map((cat) => ({
+      //     categoryName: cat.categoryName,
+      //     itemCount: cat.itemsResponseDtoList.length,
+      //   }))
+      // );
 
       setCategories(allCategories);
       updateProducts(allItems);
@@ -1617,42 +1620,157 @@ const Home: React.FC = () => {
 
       {/* New Offers Modal */}
       <Modal
-        title="Available Offers"
+        title=""
         open={isOffersModalVisible}
         onCancel={handleOffersModalClose}
         footer={[
           <button
             key="close"
-            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg hover:from-purple-700 hover:to-purple-900"
+            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all font-medium"
             onClick={handleOffersModalClose}
           >
             Close
           </button>,
         ]}
         centered
-        width="90%"
-        style={{ maxWidth: "600px" }}
-        bodyStyle={{ maxHeight: "60vh", padding: "16px" }}
+        width="95%"
+        style={{ maxWidth: "950px" }}
+        bodyStyle={{ padding: "20px", overflow: "hidden" }}
       >
         {isFetchingOffers ? (
-          <div className="flex justify-center">
-            <Loader2 className="animate-spin text-purple-600" />
-          </div>
-        ) : offers.length > 0 ? (
-          <div
-            className="space-y-4 offers-scroll-container"
-            style={{ maxHeight: "50vh", overflowY: "auto" }}
-          >
-            {offers.map((offer) => (
-              <div key={offer.id} className="p-4 bg-gray-100 rounded-lg">
-                <h3 className="font-semibold text-purple-800">
-                  {offer.offerName}
-                </h3>
-              </div>
-            ))}
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="animate-spin text-purple-600" size={40} />
           </div>
         ) : (
-          <p className="text-gray-500">No offers available at the moment.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEFT COLUMN - Special Offers (Scrollable) */}
+            <div className="flex flex-col h-[65vh]">
+              <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+                <ShoppingBag className="text-purple-600" size={20} />
+                <h3 className="font-bold text-lg text-purple-800">
+                  Special Offers
+                </h3>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2">
+                <div className="space-y-3">
+                  {offers.length > 0 ? (
+                    offers.map((offer) => (
+                      <div
+                        key={offer.id}
+                        className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 hover:shadow-md cursor-pointer"
+                      >
+                        <h3 className="font-semibold text-purple-900 text-sm leading-relaxed break-words">
+                          {offer.offerName}
+                        </h3>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-6">
+                      No offers available at the moment.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN - AI Mode (Same height as offers) */}
+            <div className="flex flex-col h-[65vh]">
+              <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+                <Sparkles className="text-purple-600" size={22} />
+                <h3 className="font-bold text-xl text-purple-800">
+                  AI-Powered Shopping
+                </h3>
+              </div>
+
+              {/* AI Mode Card - Properly sized and centered */}
+              <div className="flex-1 flex items-center justify-center p-2">
+                <div className="w-full max-w-sm p-5 bg-gradient-to-br from-purple-50 via-amber-50 to-yellow-50 rounded-xl border-2 border-purple-300 shadow-lg">
+                  {/* AI Mode Title with Icon */}
+                  <div className="text-center mb-4">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-amber-500 rounded-full blur-sm opacity-30"></div>
+                        <div className="relative p-2 bg-gradient-to-br from-purple-600 via-purple-700 to-amber-600 rounded-full shadow-md">
+                          <Sparkles
+                            className="text-white"
+                            size={20}
+                            strokeWidth={2.5}
+                          />
+                        </div>
+                      </div>
+                      <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-700 via-purple-600 to-amber-600 bg-clip-text text-transparent">
+                        AI Mode
+                      </h2>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <div className="h-px w-8 bg-gradient-to-r from-transparent via-purple-400 to-transparent"></div>
+                      <Zap className="text-amber-500" size={14} />
+                      <div className="h-px w-8 bg-gradient-to-r from-transparent via-purple-400 to-transparent"></div>
+                    </div>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      Try AI Mode to explore more about{" "}
+                      <span className="font-bold bg-gradient-to-r from-purple-700 to-amber-600 bg-clip-text text-transparent">
+                        Askoxy.ai
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* Features List */}
+                  <div className="space-y-2 mb-5">
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-600 to-amber-500 flex-shrink-0 mt-1.5"></div>
+                      <span className="break-words leading-relaxed">
+                        Personalized recommendations
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-600 to-amber-500 flex-shrink-0 mt-1.5"></div>
+                      <span className="break-words leading-relaxed">
+                        Smart product comparison
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-600 to-amber-500 flex-shrink-0 mt-1.5"></div>
+                      <span className="break-words leading-relaxed">
+                        Natural language search
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-600 to-amber-500 flex-shrink-0 mt-1.5"></div>
+                      <span className="break-words leading-relaxed">
+                        Instant shopping assistance
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <button 
+                    onClick={() => {
+                      if ((window as any).openAiChat) {
+                        (window as any).openAiChat();
+                        handleOffersModalClose();
+                      }
+                    }}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 via-purple-700 to-amber-600 text-white text-base font-bold rounded-lg hover:from-purple-700 hover:via-purple-800 hover:to-amber-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <MessageSquare size={18} />
+                    <span className="whitespace-nowrap">Try AI Mode</span>
+                  </button>
+
+                  {/* Bottom Badge */}
+                  <div className="mt-3 text-center">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 border border-amber-300 rounded-full">
+                      <Sparkles className="text-amber-600" size={12} />
+                      <span className="text-sm font-semibold text-amber-800">
+                        Powered by AI
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </Modal>
 
