@@ -46,6 +46,20 @@ const Header: React.FC<HeaderProps> = ({
     sessionStorage.removeItem("fromAISTore");
     sessionStorage.removeItem("redirectPath");
   }, []);
+  const NAV_ROUTES = [
+    "/bharath-aistore/ai-initiatives",
+    "/bharath-aistore/RadhaAgents",
+    "/awards-rewards",
+  ];
+
+  const hideSearch = NAV_ROUTES.includes(location.pathname);
+useEffect(() => {
+  if (hideSearch) {
+    setIsMobileSearchOpen(false);
+    setQuery("");
+  }
+}, [hideSearch, setQuery]);
+
 
   const handleLogin = () => {
     try {
@@ -238,7 +252,7 @@ useEffect(() => {
     >
       <div className="mx-auto max-w-8xl px-3 sm:px-4 md:px-6 lg:px-8">
         {/* MOBILE SEARCH ROW – ONLY VISIBLE ON SMALL SCREENS */}
-        {isMobileSearchOpen && (
+        {!hideSearch && isMobileSearchOpen && (
           <div className="flex md:hidden items-center gap-3 py-3">
             <button
               aria-label="Close search"
@@ -348,6 +362,8 @@ useEffect(() => {
                   key={item.to}
                   to={item.to}
                   onClick={() => {
+                     setIsMobileSearchOpen(false);
+                     setQuery("");
                     if (location.pathname === item.to) {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }
@@ -374,66 +390,69 @@ useEffect(() => {
           {/* RIGHT: Search + CTA / Mobile Icons */}
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             {/* Desktop search */}
-            <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white shadow-sm focus-within:border-purple-600 focus-within:ring-1 focus-within:ring-purple-600 w-48 md:w-56 lg:w-64">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4 text-gray-500"
-                aria-hidden="true"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="M20 20l-3.5-3.5" />
-              </svg>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search agents…"
-                className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400"
-                aria-label="Search agents"
-              />
-              {!!query && (
+            {!hideSearch && (
+              <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white shadow-sm focus-within:border-purple-600 focus-within:ring-1 focus-within:ring-purple-600 w-48 md:w-56 lg:w-64">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 text-gray-500"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M20 20l-3.5-3.5" />
+                </svg>
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search agents…"
+                  className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400"
+                  aria-label="Search agents"
+                />
+                {!!query && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => setQuery("")}
+                    className="rounded-full p-1 hover:bg-gray-100"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4 text-gray-700"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M6 6l12 12M18 6l-12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Mobile icons (always based on md:hidden, no JS flag) */}
+            <div className="flex md:hidden items-center gap-1.5">
+              {!hideSearch && (
                 <button
-                  type="button"
-                  aria-label="Clear search"
-                  onClick={() => setQuery("")}
-                  className="rounded-full p-1 hover:bg-gray-100"
+                  onClick={() => setIsMobileSearchOpen(true)}
+                  aria-label="Open search"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+                  title="Search"
                 >
                   <svg
                     viewBox="0 0 24 24"
-                    className="h-4 w-4 text-gray-700"
+                    className="h-6 w-6 text-gray-700"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
                     aria-hidden="true"
                   >
-                    <path d="M6 6l12 12M18 6l-12 12" />
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20l-3.5-3.5" />
                   </svg>
                 </button>
               )}
-            </div>
-
-            {/* Mobile icons (always based on md:hidden, no JS flag) */}
-            <div className="flex md:hidden items-center gap-1.5">
-              <button
-                onClick={() => setIsMobileSearchOpen(true)}
-                aria-label="Open search"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-                title="Search"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-6 w-6 text-gray-700"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="M20 20l-3.5-3.5" />
-                </svg>
-              </button>
 
               <button
                 onClick={handleLogin}
@@ -532,8 +551,9 @@ useEffect(() => {
                 <Link
                   key={n.to}
                   to={n.to}
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
+                  onClick={() => { setIsMobileMenuOpen(false);
+                  setIsMobileSearchOpen(false);
+                  setQuery("");  setIsMobileMenuOpen(false);
                   }}
                   className="block rounded-lg px-3 py-3 text-base font-semibold text-gray-800 hover:bg-gray-100"
                 >

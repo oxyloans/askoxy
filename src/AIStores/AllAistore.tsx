@@ -5,8 +5,10 @@ import React, {
   useState,
   useCallback,
 } from "react";
+import { useSearch } from "../BharathAIStore/context/SearchContext";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BASE_URL from "../Config";
+import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
 
 interface StoreAgent {
   agentId: string;
@@ -45,9 +47,56 @@ const AllAIStore: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // --- Search/filter state ---
+  const { debouncedQuery: q } = useSearch();
+  const [searchResults, setSearchResults] = useState<StoreAgent[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const visibleAgents = useMemo(() => {
+    return (store?.agentDetailsOnAdUser || []).filter((a) => a && !a.hideAgent);
+  }, [store]);
+
+  // --- Search/filter effect ---
+  useEffect(() => {
+    const term = (q || "").trim();
+    if (!term) {
+      setSearchResults(null);
+      setSearchError(null);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    // Simple local filter; replace with API call if needed
+    const filtered = visibleAgents.filter((agent) =>
+      agent.agentName.toLowerCase().includes(term.toLowerCase())
+    );
+    setSearchResults(filtered);
+    setSearchLoading(false);
+  }, [q, visibleAgents]);
+
+  // --- Auto-scroll to agent list on search, and scroll to top when search is cleared ---
+  useEffect(() => {
+    const term = (q || "").trim();
+    if (term) {
+      if (agentsSectionRef.current) {
+        agentsSectionRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    } else {
+      // If search is cleared, scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [q, searchLoading]);
+
   const accessToken = localStorage.getItem("accessToken") || "";
   // 👉 Ref to scroll to agents section when clicking CTA button
   const agentsSectionRef = useRef<HTMLDivElement | null>(null);
+  // ✅ Special storeId for #83GLAI banner + logo
+  const is83GLAIStore =
+    store?.storeId === "107a1eda-0458-4031-9017-3787ecd350bb";
   const resolveStoreIdFromSlug = async (slug: string) => {
     try {
       const res = await fetch(
@@ -252,10 +301,6 @@ const AllAIStore: React.FC = () => {
     }
   }, [effectiveStoreId]);
 
-  const visibleAgents = useMemo(() => {
-    return (store?.agentDetailsOnAdUser || []).filter((a) => a && !a.hideAgent);
-  }, [store]);
-
   const LoadingSkeleton = () => (
     <div className="animate-pulse space-y-8">
       <div className="h-64 w-full bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl"></div>
@@ -324,12 +369,47 @@ const AllAIStore: React.FC = () => {
         {!loading && !error && store && (
           <>
             <div className="mb-8">
-              {isRBIStore ? (
-                <section className="relative overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-indigo-50 px-4 py-6 sm:px-8 sm:py-8 shadow-sm">
+              {/* ✅ 83GLAI special hero with Logo */}
+              {is83GLAIStore ? (
+                <section className="relative overflow-hidden">
+                  <div className="relative p-5 sm:p-8 lg:p-10">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-10">
+                      {/* LEFT: Title + Paragraph */}
+                      <div className="max-w-4xl">
+                        <h1 className="mt-1 text-xl sm:text-xl lg:text-1xl font-extrabold text-gray-900">
+                          #83GLAI-Global Lending is Evolving. AI Will Lead the
+                          Change.
+                        </h1>
+
+                        <p className="mt-4 text-sm sm:text-base lg:text-lg text-gray-700 leading-relaxed">
+                          Lending is being redefined globally — across lending
+                          infrastructure, co-lending, open lending, digital
+                          lending platforms, and AI-driven lending engines. AI
+                          is no longer optional; it is becoming the core of
+                          modern lending systems.
+                        </p>
+                      </div>
+
+                      {/* RIGHT: Logo (FULL image, no crop) */}
+                      <div className="flex justify-start lg:justify-end">
+                        <div className="h-28 w-72 sm:h-28 sm:w-72 lg:h-32 lg:w-80 overflow-hidden p-2 flex items-center justify-center">
+                          <img
+                            src={Logo}
+                            alt="ASKOXY.AI"
+                            className="h-full w-full object-contain" // ✅ no crop
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ) : isRBIStore ? (
+                <section className="relative overflow-hidden px-4 py-6 sm:px-8 sm:py-8 ">
                   {/* Soft gradient glow */}
                   <div className="pointer-events-none absolute inset-0 opacity-60">
-                    <div className="absolute -top-10 -left-10 h-32 w-32 rounded-full bg-violet-200 blur-3xl" />
-                    <div className="absolute -bottom-10 -right-6 h-40 w-40 rounded-full bg-purple-200 blur-3xl" />
+                    <div className="absolute -top-10 -left-10 h-32 w-32 rounded-full bg-violet-100 blur-3xl" />
+                    <div className="absolute -bottom-10 -right-6 h-40 w-40 rounded-full bg-purple-100 blur-3xl" />
                   </div>
 
                   <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -394,7 +474,7 @@ const AllAIStore: React.FC = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(
-                              `/asst_8iVCUHAjQWMjGvoHMy9VtKpC/f25c2f3b-e200-44aa-9e72-d9747db8f423/All%20India%20Financial%20Institutions%20MD%20AI`
+                              `/asst_NlzUyaK4szAq70HguzMMYhXm/89d37f65-83ba-4ca3-a744-732cbc473ead/master-directions-complianceai`
                             );
                           }}
                           className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-lg hover:from-violet-700 hover:to-purple-700 hover:shadow-xl transition-all"
@@ -458,85 +538,69 @@ const AllAIStore: React.FC = () => {
               )}
             </div>
 
-            {visibleAgents.length === 0 ? (
+            {/* --- Search-aware agent rendering --- */}
+            <div ref={agentsSectionRef} />
+            {(
+              (q || "").trim()
+                ? (searchResults ?? []).length === 0
+                : visibleAgents.length === 0
+            ) ? (
               <div className="text-center py-20 text-gray-500">
-                <p className="text-2xl font-medium">No agents available yet</p>
-                <p className="mt-2">Check back soon!</p>
+                <p className="text-2xl font-medium">
+                  {searchLoading
+                    ? "Searching…"
+                    : (q || "").trim()
+                    ? "No agents found"
+                    : "No agents available yet"}
+                </p>
+                {searchError && (
+                  <p className="mt-2 text-red-500">{searchError}</p>
+                )}
+                {!(q || "").trim() && <p className="mt-2">Check back soon!</p>}
               </div>
             ) : (
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {visibleAgents.map((agent) => {
-                  const hasValidImage =
-                    agent.imageUrl &&
-                    agent.imageUrl.trim() !== "" &&
-                    agent.imageUrl !== "null";
+                {((q || "").trim() ? searchResults ?? [] : visibleAgents).map(
+                  (agent) => {
+                    const hasValidImage =
+                      agent.imageUrl &&
+                      agent.imageUrl.trim() !== "" &&
+                      agent.imageUrl !== "null";
 
-                  const hue = getHueFromName(agent.agentName);
-                  const bgGradient = `linear-gradient(135deg,
+                    const hue = getHueFromName(agent.agentName);
+                    const bgGradient = `linear-gradient(135deg,
                     hsl(${hue}, 75%, 55%) 0%,
                     hsl(${(hue + 30) % 360}, 75%, 50%) 50%,
                     hsl(${(hue + 60) % 360}, 75%, 45%) 100%)`;
 
-                  return (
-                    <div
-                      key={agent.agentId}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() =>
-                        navigate(
-                          `/${agent.assistantId}/${agent.agentId}/${agent.agentName}`
-                        )
-                      }
-                      className="group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 border border-gray-100"
-                    >
-                      {/* Top Section: Gradient + Initials + Optional Image */}
-                      <div className="relative h-40 w-full bg-slate-100 overflow-hidden">
-                        {/* Always render gradient initials as base */}
-                        <div
-                          className="absolute inset-0 flex items-center justify-center text-white font-black text-6xl"
-                          style={{ background: bgGradient }}
-                        >
-                          {getInitials(agent.agentName)}
-                        </div>
+                    return (
+                      <div
+                        key={agent.agentId}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          navigate(
+                            `/${agent.assistantId}/${agent.agentId}/${agent.agentName}`
+                          )
+                        }
+                        className="group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 border border-gray-100"
+                      >
+                        {/* Top Section: Gradient + Initials + Optional Image */}
+                        <div className="relative h-40 w-full bg-slate-100 overflow-hidden">
+                          {/* Always render gradient initials as base */}
+                          <div
+                            className="absolute inset-0 flex items-center justify-center text-white font-black text-6xl"
+                            style={{ background: bgGradient }}
+                          >
+                            {getInitials(agent.agentName)}
+                          </div>
 
-                        {/* Image on top if valid */}
-                        {hasValidImage && (
-                          <img
-                            src={agent.imageUrl!}
-                            alt={agent.agentName}
-                            className="relative z-10 h-full w-full object-cover"
-                            loading="lazy"
-                            onError={(e) => {
-                              (
-                                e.currentTarget as HTMLImageElement
-                              ).style.display = "none";
-                            }}
-                          />
-                        )}
-                      </div>
-
-                      {/* Agent Badge */}
-                      <div className="absolute top-4 right-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-20">
-                        {getInitials(agent.agentName)} AGENT
-                      </div>
-
-                      {/* Card Content */}
-                      <div className="p-6">
-                        <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-                          {agent.agentName}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-6 line-clamp-3">
-                          {agent.agentCreatorName
-                            ? `Created by ${agent.agentCreatorName}`
-                            : "Smart AI assistant built to help you automate tasks."}
-                        </p>
-
-                        <div className="flex items-center gap-3 mb-6">
-                          {hasValidImage ? (
+                          {/* Image on top if valid */}
+                          {hasValidImage && (
                             <img
                               src={agent.imageUrl!}
                               alt={agent.agentName}
-                              className="h-10 w-10 rounded-full border-2 border-gray-200 object-cover"
+                              className="relative z-10 h-full w-full object-cover"
                               loading="lazy"
                               onError={(e) => {
                                 (
@@ -544,35 +608,68 @@ const AllAIStore: React.FC = () => {
                                 ).style.display = "none";
                               }}
                             />
-                          ) : (
-                            <div
-                              className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold border-2 border-gray-200"
-                              style={{ background: bgGradient }}
-                            >
-                              {getInitials(agent.agentName)}
-                            </div>
                           )}
-
-                          <span className="text-sm text-gray-700 font-medium truncate">
-                            {agent.agentCreatorName || "ASKOXY.AI TEAM"}
-                          </span>
                         </div>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(
-                              `/${agent.assistantId}/${agent.agentId}/${agent.agentName}`
-                            );
-                          }}
-                          className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-md hover:shadow-xl active:scale-98"
-                        >
-                          View Agent
-                        </button>
+                        {/* Agent Badge */}
+                        <div className="absolute top-4 right-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-20">
+                          {getInitials(agent.agentName)} AGENT
+                        </div>
+
+                        {/* Card Content */}
+                        <div className="p-6">
+                          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                            {agent.agentName}
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-6 line-clamp-3">
+                            {agent.agentCreatorName
+                              ? `Created by ${agent.agentCreatorName}`
+                              : "Smart AI assistant built to help you automate tasks."}
+                          </p>
+
+                          <div className="flex items-center gap-3 mb-6">
+                            {hasValidImage ? (
+                              <img
+                                src={agent.imageUrl!}
+                                alt={agent.agentName}
+                                className="h-10 w-10 rounded-full border-2 border-gray-200 object-cover"
+                                loading="lazy"
+                                onError={(e) => {
+                                  (
+                                    e.currentTarget as HTMLImageElement
+                                  ).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <div
+                                className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold border-2 border-gray-200"
+                                style={{ background: bgGradient }}
+                              >
+                                {getInitials(agent.agentName)}
+                              </div>
+                            )}
+
+                            <span className="text-sm text-gray-700 font-medium truncate">
+                              {agent.agentCreatorName || "ASKOXY.AI TEAM"}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(
+                                `/${agent.assistantId}/${agent.agentId}/${agent.agentName}`
+                              );
+                            }}
+                            className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-md hover:shadow-xl active:scale-98"
+                          >
+                            View Agent
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
             )}
           </>

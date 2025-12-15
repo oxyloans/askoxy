@@ -208,40 +208,88 @@ const MyAgentsTab: React.FC = () => {
   const [err, setErr] = useState<string | null>(null);
 
   const approvedAgents = useMemo(() => agents, [agents]);
-
-  const handleOpen = (a: Assistant) => {
-    const loggedIn = !!localStorage.getItem("userId");
-       const slugify = (s: string) =>
-         (s || "agent")
-           .toLowerCase()
-           .replace(/[^a-z0-9]+/g, "-")
-           .replace(/^-+|-+$/g, "");
-    // Extract FULL IDs from API data
-    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
-      .toString()
-      .trim();
-    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
-      .toString()
-      .trim();
-  const nameSlug = slugify(a.name || "agent");
+const slugify = (s: string) =>
+    (s || "agent")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const handleOpen = (a: Assistant) => {
+     
   
-
-    const intended =
-      fullAssistantId && fullAgentId
-        ? `/${fullAssistantId}/${fullAgentId}/${nameSlug}`
-        : fullAssistantId
-        ? `/${fullAssistantId}`
-        : `/${nameSlug}`;
-
-    if (!loggedIn) {
-      try {
+      // Extract FULL IDs from API data (no truncation)
+      const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+        .toString()
+        .trim();
+      const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+        .toString()
+        .trim();
+      const nameSlug = slugify(a.name || "agent");
+  
+      // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
+      const shortAssistantId = fullAssistantId;
+      const shortAgentId = fullAgentId;
+  
+      // Debug log: Check full vs short values in console
+      console.log("FULL IDs (for APIs/state):", {
+        fullAssistantId,
+        fullAgentId,
+        nameSlug,
+      });
+      console.log("SHORT IDs (for URL only):", {
+        shortAssistantId,
+        shortAgentId,
+      });
+  
+      // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
+      const userId =
+        typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+      if (!userId) {
+        let intended = "";
+        if (fullAssistantId && fullAgentId && nameSlug) {
+          intended = `/${encodeURIComponent(
+            shortAssistantId
+          )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+          // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
+          sessionStorage.setItem("fullAssistantId", fullAssistantId);
+          sessionStorage.setItem("fullAgentId", fullAgentId);
+        } else if (fullAssistantId && fullAgentId) {
+          intended = `/${encodeURIComponent(
+            shortAssistantId
+          )}/${encodeURIComponent(shortAgentId)}`;
+          sessionStorage.setItem("fullAssistantId", fullAssistantId);
+          sessionStorage.setItem("fullAgentId", fullAgentId);
+        } else if (fullAssistantId) {
+          intended = `/${encodeURIComponent(shortAssistantId)}`;
+          sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        } else {
+          intended = `/by-name/${encodeURIComponent(nameSlug)}`;
+        }
         sessionStorage.setItem("redirectPath", intended);
-      } catch {}
-      window.location.href = "/whatsapplogin";
-      return;
-    }
-    navigate(intended);
-  };
+        sessionStorage.setItem("fromAISTore", "true");
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+        return;
+      }
+  
+      // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
+      let targetPath = "";
+      if (fullAssistantId && fullAgentId && nameSlug) {
+        targetPath = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+      } else if (fullAssistantId && fullAgentId) {
+        targetPath = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}`;
+      } else if (fullAssistantId) {
+        targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+      } else {
+        targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+      }
+  
+      // Final log: Generated URL (short IDs only, root-level)
+      console.log("Short URL target (4 chars only, no prefix):", targetPath);
+      navigate(targetPath);
+    };
 
   useEffect(() => {
     (async () => {
@@ -367,13 +415,15 @@ const INS_NAME_TO_IMAGE: Record<InsCanonical, string> = {
 };
 
 type InsView = Assistant & { displayName: InsCanonical; imageUrl: string };
-
 async function getAllAssistants(after?: string) {
-  const config: any = { headers: getOptionalAuthHeaders() };
-  if (after) config.params = { after };
-  const res = await apiClient.get("/ai-service/agent/getAllAssistants", config);
+  const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
+    headers: getOptionalAuthHeaders(),
+    params: {
+      limit: 100, // ✅ always include limit
+      ...(after ? { after } : {}),
+    },
+  });
 
-  // NEW: accept data | assistants | root-array
   const raw = Array.isArray(res.data?.data)
     ? res.data.data
     : Array.isArray(res.data?.assistants)
@@ -384,8 +434,9 @@ async function getAllAssistants(after?: string) {
 
   const normalized = raw.map((a: any) => ({
     ...a,
-    assistantId: a?.assistantId || a?.id,
-    agentId: a?.agentId || a?.id || a?.assistantId,
+    // keep assistantId as the real assistant id
+    assistantId: (a?.assistantId || a?.assistant_id || a?.id || "").toString(),
+    agentId: (a?.agentId || a?.assistantId || a?.id || "").toString(),
     imageUrl: a?.imageUrl || a?.image || a?.thumbUrl || "",
     description: a?.description ?? a?.desc ?? "",
     status: a?.status || a?.agentStatus,
@@ -396,9 +447,10 @@ async function getAllAssistants(after?: string) {
   return {
     data: normalized as Assistant[],
     has_more: !!(res.data?.has_more ?? res.data?.hasMore),
-    lastId: res.data?.lastId as string | undefined,
+    lastId: (res.data?.lastId || res.data?.last_id || "").toString(),
   };
 }
+
 
 const normalizeTitle = (s: string) =>
   (s || "")
@@ -652,19 +704,23 @@ const InsuranceTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  async function loadWhitelisted(initialAfter?: string) {
-    let after = initialAfter;
-    let collected: Assistant[] = [];
-    const target = Object.keys(INS_ID_TO_CANONICAL).length;
-    for (let i = 0; i < 5; i++) {
-      const res = await getAllAssistants(after);
-      collected = collected.concat(res.data);
-      const filtered = buildInsuranceListById(collected);
-      setItems(filtered);
-      if (filtered.length >= target || !res.has_more) return;
-      after = res.lastId;
-    }
+async function loadWhitelisted(initialAfter?: string) {
+  let after = initialAfter;
+  let collected: Assistant[] = [];
+  const target = Object.keys(INS_ID_TO_CANONICAL).length;
+
+  for (let i = 0; i < 50; i++) {
+    const res = await getAllAssistants(after);
+    collected = collected.concat(res.data);
+
+    const filtered = buildInsuranceListById(collected);
+    setItems(filtered);
+
+    if (filtered.length >= target || !res.has_more || !res.lastId) return;
+    after = res.lastId;
   }
+}
+
 
   useEffect(() => {
     (async () => {
@@ -685,37 +741,86 @@ const InsuranceTab: React.FC = () => {
     })();
   }, []);
 
-  const handleOpen = (a: any) => {
-    const userId = localStorage.getItem("userId");
-    const assistantId = (a.assistantId || a.id || a.agentId || "")
-      .toString()
-      .trim();
-    const agentId = (a.agentId || a.assistantId || a.id || "")
-      .toString()
-      .trim();
-    const base = window.location.pathname.includes("bharath-aistore")
-      ? "bharath-aistore"
-      : "bharat-aistore";
-    const nameSlug = (a.name || "agent")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+const slugify = (s: string) =>
+  (s || "agent")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+const handleOpen = (a: Assistant) => {
+  // Extract FULL IDs from API data (no truncation)
+  const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+    .toString()
+    .trim();
+  const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+    .toString()
+    .trim();
+  const nameSlug = slugify(a.name || "agent");
 
-    const intended =
-      assistantId && agentId
-        ? `/${base}/assistant/${assistantId}/${agentId}`
-        : assistantId
-        ? `/${base}/assistant/${assistantId}`
-        : `/${base}/assistant/by-name/${nameSlug}`;
+  // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
+  const shortAssistantId = fullAssistantId;
+  const shortAgentId = fullAgentId;
 
-    if (!userId) {
-      sessionStorage.setItem("redirectPath", intended);
-      window.location.href = "/whatsapplogin";
-      return;
+  // Debug log: Check full vs short values in console
+  console.log("FULL IDs (for APIs/state):", {
+    fullAssistantId,
+    fullAgentId,
+    nameSlug,
+  });
+  console.log("SHORT IDs (for URL only):", {
+    shortAssistantId,
+    shortAgentId,
+  });
+
+  // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  if (!userId) {
+    let intended = "";
+    if (fullAssistantId && fullAgentId && nameSlug) {
+      intended = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
+        shortAgentId
+      )}/${encodeURIComponent(nameSlug)}`;
+      // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
+      sessionStorage.setItem("fullAssistantId", fullAssistantId);
+      sessionStorage.setItem("fullAgentId", fullAgentId);
+    } else if (fullAssistantId && fullAgentId) {
+      intended = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
+        shortAgentId
+      )}`;
+      sessionStorage.setItem("fullAssistantId", fullAssistantId);
+      sessionStorage.setItem("fullAgentId", fullAgentId);
+    } else if (fullAssistantId) {
+      intended = `/${encodeURIComponent(shortAssistantId)}`;
+      sessionStorage.setItem("fullAssistantId", fullAssistantId);
+    } else {
+      intended = `/by-name/${encodeURIComponent(nameSlug)}`;
     }
-    navigate(intended);
-  };
+    sessionStorage.setItem("redirectPath", intended);
+    sessionStorage.setItem("fromAISTore", "true");
+    window.location.href = "/whatsappregister?primaryType=AGENT";
+    return;
+  }
 
+  // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
+  let targetPath = "";
+  if (fullAssistantId && fullAgentId && nameSlug) {
+    targetPath = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
+      shortAgentId
+    )}/${encodeURIComponent(nameSlug)}`;
+  } else if (fullAssistantId && fullAgentId) {
+    targetPath = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
+      shortAgentId
+    )}`;
+  } else if (fullAssistantId) {
+    targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+  } else {
+    targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+  }
+
+  // Final log: Generated URL (short IDs only, root-level)
+  console.log("Short URL target (4 chars only, no prefix):", targetPath);
+  navigate(targetPath);
+};
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
@@ -806,18 +911,23 @@ const HealthcareTab: React.FC = () => {
   const [err, setErr] = useState<string | null>(null);
 
   async function loadWhitelisted(initialAfter?: string) {
-    let after = initialAfter;
-    let collected: Assistant[] = [];
-    const target = Object.keys(HC_ID_TO_CANONICAL).length;
-    for (let i = 0; i < 5; i++) {
-      const res = await getAllAssistants(after);
-      collected = collected.concat(res.data);
-      const filtered = buildHealthcareListById(collected);
-      setItems(filtered);
-      if (filtered.length >= target || !res.has_more) return;
-      after = res.lastId;
-    }
-  }
+  let after = initialAfter;
+  let collected: Assistant[] = [];
+  const target = Object.keys(HC_ID_TO_CANONICAL).length;
+
+ for (let i = 0; i < 50; i++) {
+   const res = await getAllAssistants(after); // ✅ limit=100
+   collected = collected.concat(res.data);
+
+   const filtered = buildHealthcareListById(collected);
+   setItems(filtered);
+
+ if (filtered.length >= target || !res.has_more || !res.lastId) return;
+ after = res.lastId;
+
+ }
+}
+
 
   useEffect(() => {
     (async () => {
@@ -838,29 +948,90 @@ const HealthcareTab: React.FC = () => {
     })();
   }, []);
 
-  const handleOpen = (a: any) => {
-    const assistantId = (a.assistantId || a.id || a.agentId || "")
-      .toString()
-      .trim();
-    const agentId = (a.agentId || a.assistantId || a.id || "")
-      .toString()
-      .trim();
-    const base = window.location.pathname.includes("bharath-aistore")
-      ? "bharath-aistore"
-      : "bharat-aistore";
+ const slugify = (s: string) =>
+   (s || "agent")
+     .toLowerCase()
+     .replace(/[^a-z0-9]+/g, "-")
+     .replace(/^-+|-+$/g, "");
 
-    if (assistantId && agentId) {
-      navigate(
-        `/${base}/assistant/${encodeURIComponent(
-          assistantId
-        )}/${encodeURIComponent(agentId)}`
-      );
-      return;
+  
+    const handleOpen = (a: Assistant) => {
+     
+  
+      // Extract FULL IDs from API data (no truncation)
+      const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+        .toString()
+        .trim();
+      const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+        .toString()
+        .trim();
+      const nameSlug = slugify(a.name || "agent");
+  
+      // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
+      const shortAssistantId = fullAssistantId;
+      const shortAgentId = fullAgentId;
+  
+      // Debug log: Check full vs short values in console
+      console.log("FULL IDs (for APIs/state):", {
+        fullAssistantId,
+        fullAgentId,
+        nameSlug,
+      });
+      console.log("SHORT IDs (for URL only):", {
+        shortAssistantId,
+        shortAgentId,
+      });
+  
+      // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
+      const userId =
+        typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+      if (!userId) {
+        let intended = "";
+        if (fullAssistantId && fullAgentId && nameSlug) {
+          intended = `/${encodeURIComponent(
+            shortAssistantId
+          )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+          // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
+          sessionStorage.setItem("fullAssistantId", fullAssistantId);
+          sessionStorage.setItem("fullAgentId", fullAgentId);
+        } else if (fullAssistantId && fullAgentId) {
+          intended = `/${encodeURIComponent(
+            shortAssistantId
+          )}/${encodeURIComponent(shortAgentId)}`;
+          sessionStorage.setItem("fullAssistantId", fullAssistantId);
+          sessionStorage.setItem("fullAgentId", fullAgentId);
+        } else if (fullAssistantId) {
+          intended = `/${encodeURIComponent(shortAssistantId)}`;
+          sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        } else {
+          intended = `/by-name/${encodeURIComponent(nameSlug)}`;
+        }
+        sessionStorage.setItem("redirectPath", intended);
+        sessionStorage.setItem("fromAISTore", "true");
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+        return;
+      }
+  
+      // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
+      let targetPath = "";
+      if (fullAssistantId && fullAgentId && nameSlug) {
+        targetPath = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+      } else if (fullAssistantId && fullAgentId) {
+        targetPath = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}`;
+      } else if (fullAssistantId) {
+        targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+      } else {
+        targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+      }
+  
+      // Final log: Generated URL (short IDs only, root-level)
+      console.log("Short URL target (4 chars only, no prefix):", targetPath);
+      navigate(targetPath);
     }
-    if (assistantId) {
-      navigate(`/${base}/assistant/${encodeURIComponent(assistantId)}`);
-    }
-  };
 
   if (loading) {
     return (

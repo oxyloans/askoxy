@@ -70,7 +70,13 @@ const AllQueries: React.FC = () => {
         requestPayload
       );
 
-      setQueries(response.data);
+     const sortedQueries = [...response.data].sort(
+       (a: Query, b: Query) =>
+         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+     );
+
+     setQueries(sortedQueries);
+     
     } catch (error) {
       console.error("Error fetching queries:", error);
       setQueries([]);
