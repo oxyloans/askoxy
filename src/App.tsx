@@ -353,6 +353,7 @@ const MumbaiDataPage = lazy(() => import("./AskoxyAdmin/MumbaiDataPage"));
 const AgenticAi = lazy(() => import("./components/AgenticAi"));
 const AgentStoreManager = lazy(() => import("./components/AistoreCreation"));
 const GmailContactsScreen = lazy(() => import("./kart/GoogleContact"));
+const AgentCreationSteps = lazy(() => import("./components/AgentCreationSteps"));
 // Simple centered loader component
 const LoadingSpinner =React.memo( () => (
   <div
@@ -450,6 +451,7 @@ const App: React.FC = () => {
               <Route path="jobdetails" element={<JobDetails />} />
               <Route path="caserviceitems" element={<CAServicesItems />} />
               <Route path="metroLogin" element={<MetroLogin />} />
+              <Route path="agentCreationSteps" element={<AgentCreationSteps />} />
               <Route
                 path="services/Freechatgpt"
                 element={<FreeChatGPTmain />}

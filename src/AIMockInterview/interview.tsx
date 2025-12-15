@@ -2,6 +2,8 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { api } from "./lib/api";
+import { Modal } from "antd";
+import  logo from '../assets/img/ask oxy white.png';
 
 export default function InterviewPage() {
   function cryptoRandom() {
@@ -60,14 +62,68 @@ export default function InterviewPage() {
   const [lineCount, setLineCount] = useState<number>(1);
   const [modal, setModal] = useState<{show: boolean; type: 'success'|'error'; title: string; message: string; onClose?: () => void} | null>(null);
 
-  useEffect(() => {
+  const languageOptions = [
+    { value: "python", label: "Python" },
+    { value: "javascript", label: "JavaScript" },
+    { value: "java", label: "Java" },
+    { value: "c", label: "C" },
+    { value: "cpp", label: "C++" }
+  ];
+
+    useEffect(() => {
     const stored = localStorage.getItem("user");
     if (!stored) {
-      window.location.href = "/login";
+     handleLogin()
     } else {
       setUser(JSON.parse(stored));
     }
   }, []);
+
+   const handleLogin = async () => {
+
+    const stored = localStorage.getItem("profileData") || localStorage.getItem("user") || "";
+
+    console.log("Stored profile data:", stored);
+
+    const phone = stored ? JSON.parse(stored).mobileNumber ? JSON.parse(stored).mobileNumber : JSON.parse(stored).whatsappNumber : "";
+    const name = stored ? JSON.parse(stored).userFirstName + " " + JSON.parse(stored).userLastName : "";
+    console.log("Phone:", phone);
+        console.log("Name:", name);
+     
+    if (!phone) {
+        Modal.warning({ title: "Login Required", content: "Please login to continue." });
+       window.location.href = "/whatsapplogin";
+      return;
+    }
+
+    if (!name) {
+        Modal.warning({ title: "Profile Incomplete", content: "Name not found in profile data, please fill profile details." });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await api.login({ phone_number: phone, name });
+      console.log('Login response:', data);
+
+      if (data.user && data.user.id) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        Modal.success({ title: "Welcome", content: `Welcome, ${data.user.name}!` });
+       window.location.href = "/interview";
+      } else if (data.error) {
+        Modal.error({ title: "Login Failed", content: data.error });
+      } else {
+        Modal.error({ title: "Login Failed", content: "Please try again." });
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      Modal.error({ title: "Error", content: "An error occurred. Please try again." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   useEffect(() => {
     if (question && timeLeft > 0 && !timerStopped) {
@@ -221,6 +277,7 @@ export default function InterviewPage() {
       if (data.error) throw new Error(data.error);
 
       if (data.finished) {
+        
         setStatus("success:" + data.message);
         return;
       }
@@ -306,7 +363,12 @@ export default function InterviewPage() {
 if '${functionName}' in globals():
     func = globals()['${functionName}']
     try:
-        if 'two_sum' in '${functionName}':
+        if 'is_palindrome' in '${functionName}':
+            result1 = func("A man, a plan, a canal, Panama")
+            result2 = func("Hello, World!")
+            print(f"Test 1: {result1}, Test 2: {result2}")
+            return
+        elif 'two_sum' in '${functionName}':
             result = func([2, 7, 11, 15], 9)
         elif 'max_subarray' in '${functionName}':
             result = func([-2, 1, -3, 4, -1, 2, 1, -5, 4])
@@ -345,22 +407,39 @@ else:
     setLoading(true);
     setCodeOutput("");
     setCodeError("");
+
+    const postdata = {
+        code: answerRef.current.value,
+        language: selectedLanguage,
+        testInput: getTestInput(selectedLanguage)
+    }
     
     try {
-      const response = await fetch('/api/code-runner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: answerRef.current.value,
-          language: selectedLanguage,
-          testInput: getTestInput(selectedLanguage)
-        })
-      });
+      // const response = await fetch('http://localhost:3001/api/code-runner', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     code: answerRef.current.value,
+      //     language: selectedLanguage,
+      //     testInput: getTestInput(selectedLanguage)
+      //   })
+      // });
+
+      const response = await api.codeRunner(postdata);
       
       const result = await response.json();
       
       if (result.success) {
-        setCodeOutput(result.output || "Code executed successfully");
+        if (result.error === false && result.output) {
+          // Handle case where success is true but there's an error in output
+          if (result.output.includes('ERROR:')) {
+            setCodeError(result.output);
+          } else {
+            setCodeOutput(result.output);
+          }
+        } else {
+          setCodeOutput(result.output || "Code executed successfully");
+        }
       } else {
         setCodeError(result.output || result.error || "Execution failed");
       }
@@ -467,7 +546,7 @@ else:
         setQuestion(""); // Clear current question
         
         // Show completion popup with option to continue
-        const proceed = confirm(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nClick OK to start Round ${data.advancedTo}`);
+        const proceed = window.confirm(`🎉 Round ${data.doneRound} Completed!\n\nScore: ${data.average}%\nStatus: Passed\n\nClick OK to start Round ${data.advancedTo}`);
         
         if (proceed) {
           // Use the nextQuestion from the API response directly
@@ -591,9 +670,9 @@ else:
         <div className="px-6 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src="/assets/logo.png" alt="AskOxy" className="w-16 h-16 object-contain" />
+              <img src={logo} alt="AskOxy" className="w-40 h-18 object-contain" />
               <div>
-                <h1 className="text-base font-semibold text-white">ASKOXY.AI HIRING</h1>
+                <h1 className="text-base font-semibold text-white">HIRING</h1>
                 <p className="text-xs text-gray-400">Technical Assessment</p>
               </div>
             </div>
@@ -1092,8 +1171,9 @@ else:
                             onChange={(e) => setSelectedLanguage(e.target.value)}
                             className="px-2 py-1 text-xs border border-gray-600 rounded bg-gray-900 text-white"
                           >
-                            <option value="python">Python</option>
-                            <option value="java">Java</option>
+                            {languageOptions.map(lang => (
+                              <option key={lang.value} value={lang.value}>{lang.label}</option>
+                            ))}
                           </select>
                           <button
                             onClick={runCode}

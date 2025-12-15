@@ -2668,6 +2668,7 @@ ${url}`.trim();
               </div> */}
               {/* ---------- FOOTER: PROFILE (LIKE CHATGPT) ---------- */}
               {/* ---------- FOOTER: PROFILE DROPDOWN (LIKE CHATGPT) ---------- */}
+              {/* ---------- FOOTER: PROFILE DROPDOWN (LIKE CHATGPT) ---------- */}
               <div
                 ref={profileMenuRef}
                 className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2 relative"
@@ -2677,7 +2678,7 @@ ${url}`.trim();
                   onClick={() => setShowProfileMenu((v) => !v)}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  {/* Avatar circle with initials */}
+                  {/* Avatar circle with initials – ALWAYS visible (even when collapsed) */}
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-xs font-semibold text-white">
                     {profileInitials}
                   </div>
@@ -2695,12 +2696,16 @@ ${url}`.trim();
                       )}
                     </div>
                   )}
-                  <div
-                    className="p-2  text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-colors"
-                    aria-label="Open profile menu"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </div>
+
+                  {/* Three dots – ONLY show when sidebar is expanded or on mobile */}
+                  {(!isCollapsed || isXs) && (
+                    <div
+                      className="ml-auto p-2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-colors"
+                      aria-label="Open profile menu"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </div>
+                  )}
                 </button>
 
                 {/* Small dropdown panel ABOVE the button, like ChatGPT */}

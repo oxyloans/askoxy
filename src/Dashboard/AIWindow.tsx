@@ -127,10 +127,10 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
 
   // Welcome questions that users can click
   const welcomeQuestions = [
-    "What products do you have?",
-    "What services are available on ASKOXY?",
-    "Describe Bharath AI Store in ASKOXY.",
-    "Does ASKOXY have jobs or study abroad?",
+    "Show me Askoxy.ai products and offers.",
+    "Check gold prices and offers on Askoxy.ai.",
+    "What services does Askoxy.ai offer?",
+    "Explain Askoxy.ai’s AI agents.",
   ];
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);

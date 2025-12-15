@@ -98,4 +98,15 @@ export const api = {
     });
     return response.json();
   },
+
+  async codeRunner(data: any) {
+    const response = await fetch(`${API_BASE_URL}/api/code-runner`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  }
 };
+
