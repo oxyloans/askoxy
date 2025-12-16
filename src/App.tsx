@@ -28,6 +28,7 @@ const MyCrypto = lazy(() => import("./Dashboard/MyCrypto"));
 const LoanManagementLandingPage = lazy(
   () => import("./components/LoanManagementLandingPage")
 );
+const OfferScreen  = lazy(() => import('./kart/OfferScreen'))
 const AdminSidebar = lazy(() => import("./AskoxyAdmin/Sider"));
 const Home = lazy(() => import("./Dashboard/Home"));
 const CampaignsAdd = lazy(() => import("./AskoxyAdmin/CampaignsAdd"));
@@ -354,6 +355,7 @@ const AgenticAi = lazy(() => import("./components/AgenticAi"));
 const AgentStoreManager = lazy(() => import("./components/AistoreCreation"));
 const GmailContactsScreen = lazy(() => import("./kart/GoogleContact"));
 const AgentCreationSteps = lazy(() => import("./components/AgentCreationSteps"));
+const TripPlanner = lazy(() => import("./AITripPlanner/TripPlanner"));
 // Simple centered loader component
 const LoadingSpinner =React.memo( () => (
   <div
@@ -439,6 +441,8 @@ const App: React.FC = () => {
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
+              <Route path="/offer" element={<OfferScreen  />} />
+              <Route path="/tripplanner" element={<TripPlanner />} />
               {/* ----------------------------- */}
               <Route path="dashboard/:tab" element={<DashboardMain />} />
               {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}
