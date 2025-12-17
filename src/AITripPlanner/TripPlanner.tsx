@@ -4,6 +4,7 @@ import TripForm from './components/TripForm';
 import TripResult from './components/TripResult';
 import { TripFormData, TripResponse, StatusState } from './types';
 import './TripPlanner.css';
+import TravelLoader from './components/TravelLoader';
 
 const TripPlanner: React.FC = () => {
   const [status, setStatus] = useState<StatusState>({ text: 'Ready', color: '#10b981' });
@@ -25,16 +26,20 @@ const TripPlanner: React.FC = () => {
       <Header status={status} />
       <div className="container">
         <div className="left-panel">
-          <TripForm 
+          <TripForm
             onTripGenerated={handleTripGenerated}
             updateStatus={updateStatus}
           />
         </div>
         <div className="right-panel">
-          <TripResult 
-            tripResult={tripResult}
-            formData={formData}
-          />
+          {status.text === "Generating..." ? (
+    <TravelLoader />
+  ) : (
+    <TripResult
+      tripResult={tripResult}
+      formData={formData}
+    />
+  )}
         </div>
       </div>
     </div>

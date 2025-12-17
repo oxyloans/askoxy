@@ -1,260 +1,315 @@
-import React,{useEffect} from 'react';
-import { Modal } from 'antd';
-import { Loader2 } from 'lucide-react';
-import axios from 'axios';
-import BASE_URL from '../../Config';
-import PaymentSuccessModal from './PaymentSuccessModal';
+import React, { useEffect, useState, useMemo } from "react";
+import { Modal, Input } from "antd";
+import axios from "axios";
+import BASE_URL from "../../Config";
 import { load } from "@cashfreepayments/cashfree-js";
+
+/* =========================
+   HELPERS
+   ========================= */
+
+// Normalize agent API response
+const normalizeAgentsResponse = (resData) => {
+  if (Array.isArray(resData)) return resData;
+  if (Array.isArray(resData.data)) return resData.data;
+  if (Array.isArray(resData.content)) return resData.content;
+  if (Array.isArray(resData.assistants)) return resData.assistants;
+  return [];
+};
+
+// Group subscription plans
+const groupPlans = (apiPlans) => {
+  const grouped = {};
+  (apiPlans || []).forEach((item) => {
+    if (!item.status) return;
+
+    if (!grouped[item.plan]) {
+      grouped[item.plan] = {
+        name: item.plan,
+        billingPlans: [],
+      };
+    }
+
+    grouped[item.plan].billingPlans.push({
+      id: item.id,
+      type: item.planType,
+      amount: item.planAmount,
+      aiAgents: item.aiAgents || 0,
+    });
+  });
+
+  return Object.values(grouped);
+};
+
+/* =========================
+   COMPONENT
+   ========================= */
 
 const SubscriptionModal = ({
   open,
   onCancel,
   subscriptionPlans,
-  loadingPlans,
   agentId,
   userId,
 }) => {
+  const [cashfree, setCashfree] = useState(null);
 
-  const [paymentSessionId, setPaymentSessionId] = React.useState(null);
-  const [paymentSuccessModalOpen, setPaymentSuccessModalOpen] = React.useState(false);
+  const [activeBillingPlanId, setActiveBillingPlanId] = useState(null);
+  const [selectedBillingPlan, setSelectedBillingPlan] = useState(null);
 
+  const [agents, setAgents] = useState([]);
+  const [selectedAgents, setSelectedAgents] = useState([]);
 
-  let cashfree;
-   var initializeSDK = async function () {
-      cashfree = await load({
-        mode: "sandbox",
+  const [lastAssistantId, setLastAssistantId] = useState(null);
+  const [hasMoreAgents, setHasMoreAgents] = useState(true);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+
+  const [searchText, setSearchText] = useState("");
+
+  /* =========================
+     INIT CASHFREE
+     ========================= */
+  useEffect(() => {
+    load({ mode: "sandbox" }).then(setCashfree);
+  }, []);
+
+  const groupedPlans = groupPlans(subscriptionPlans);
+
+  /* =========================
+     FETCH AGENTS (APPROVED ONLY)
+     ========================= */
+  const fetchAgents = async (reset = false) => {
+    if (loadingAgents) return;
+    setLoadingAgents(true);
+
+    try {
+      const url =
+        reset || !lastAssistantId
+          ? `${BASE_URL}/ai-service/agent/getAllAssistants?limit=20`
+          : `${BASE_URL}/ai-service/agent/getAllAssistants?limit=20&after=${lastAssistantId}`;
+
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}`,
+        },
       });
-    };
 
-    useEffect(() => {
-    initializeSDK();
-    }, [paymentSessionId]);
-  
-    useEffect(() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const paymentSessionId = urlParams.get("order_id");
-      setPaymentSessionId(paymentSessionId);
-      if (paymentSessionId) {
-          axios.get(`${BASE_URL}/ai-service/cashFreePaymetStatus?orderId=${paymentSessionId}`,{
-            "headers": {
-             'Content-Type': 'application/json',
-             'Authorization': `Bearer ${localStorage.getItem('accessToken')|| ""}`
-           }
-          })
-            .then((response) => {
-              console.log("Payment successful:", response.data.payment_status);
-              // alert("Payment successful!");
-              if(response.data.payment_status === "SUCCESS"){
-              setPaymentSuccessModalOpen(true);
-              }
-            })
-            .catch((error) => {
-              console.error("Error processing payment:", error);
-            });
+      const list = normalizeAgentsResponse(res.data).filter(
+        (agent) => agent.status === "APPROVED"
+      );
+
+      setAgents((prev) => (reset ? list : [...prev, ...list]));
+
+      if (list.length > 0) {
+        setLastAssistantId(list[list.length - 1].agentId);
       }
-    
-    }, []);
-    
-  const paymentHandler = (planId) => {
-    const currentURL = window.location.origin + window.location.pathname;
-    alert(currentURL);
-     
-    const requestBody = {
-      "agentId": agentId,
-      "planId": planId,
-      "url": currentURL+"?order_id={orderId}",
-      "userId": userId
+
+      if (list.length < 20) {
+        setHasMoreAgents(false);
+      }
+    } catch (err) {
+      console.error("Failed to fetch agents", err);
+    } finally {
+      setLoadingAgents(false);
     }
-    axios.post(`${BASE_URL}/ai-service/customersPromptSubscription1`, requestBody)
-      .then(response => {
-        const { url } = response.data;
-        setPaymentSessionId(response.data.order_token);
-         let checkoutOptions = {
-      paymentSessionId:response.data.order_token ,
-      redirectTarget: "_self",
+  };
+
+  /* =========================
+     BILLING PLAN SELECT
+     ========================= */
+  const selectBillingPlan = (bp) => {
+    setActiveBillingPlanId(bp.id);
+    setSelectedBillingPlan(bp);
+    setAgents([]);
+    setSelectedAgents([]);
+    setSearchText("");
+    setLastAssistantId(null);
+    setHasMoreAgents(true);
+    fetchAgents(true);
+  };
+
+  /* =========================
+     AGENT TOGGLE (FIXED)
+     ========================= */
+  const toggleAgent = (agent) => {
+    const exists = selectedAgents.some(
+      (a) => a.agentId === agent.agentId
+    );
+
+    if (exists) {
+      setSelectedAgents((prev) =>
+        prev.filter((a) => a.agentId !== agent.agentId)
+      );
+      return;
+    }
+
+    if (selectedAgents.length >= selectedBillingPlan.aiAgents) return;
+
+    setSelectedAgents((prev) => [
+      ...prev,
+      { agentId: agent.agentId },
+    ]);
+  };
+
+  /* =========================
+     SEARCH FILTER
+     ========================= */
+  const filteredAgents = useMemo(() => {
+    if (!searchText) return agents;
+    return agents.filter((a) =>
+      a.name?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [agents, searchText]);
+
+  /* =========================
+     PAYMENT (BACKEND FORMAT)
+     ========================= */
+  const proceedToPayment = async () => {
+    const currentURL = window.location.origin + window.location.pathname;
+
+    const payload = {
+      agentId,
+      userId,
+      planId: selectedBillingPlan.id,
+      paymentId: "",
+      status: "INITIATED",
+      url: `${currentURL}?order_id={orderId}`,
+      list: selectedAgents, // [{ agentId }]
     };
-    cashfree.checkout(checkoutOptions);
-      })
-      .catch(error => {
-        console.error('Error creating payment:', error);
-      });
-  }
+
+    const res = await axios.post(
+      `${BASE_URL}/ai-service/customersPromptSubscription1`,
+      payload
+    );
+
+    cashfree.checkout({
+      paymentSessionId: res.data.order_token,
+      redirectTarget: "_self",
+    });
+  };
+
+  /* =========================
+     RENDER
+     ========================= */
 
   return (
-    <>
     <Modal
       open={open}
-       closable={{ closeIcon: <span className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-bold cursor-pointer">&times;</span> }}
       onCancel={onCancel}
       footer={null}
-      width="90%"
-      style={{ maxWidth: '1100px',top: 20, }}
       centered
-      title={""}
-      className="no-border-modal"
-     styles={{
-    content: { border: "none", padding: 0, background: "transparent",borderRadius: '25px' },
-    header: { display: "none" },
-    }}
-     
+      width="90%"
+      style={{ maxWidth: 1200 }}
     >
-      <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-10 md:p-12 mb-10 relative border-none outline-none overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 dark:from-indigo-500/10 dark:to-purple-500/10"></div>
-        <div className="relative z-10">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Choose Your Plan</h2>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">Unlock unlimited AI conversations and premium features</p>
-        </div>
-        
-        {loadingPlans ? (
-          <div className="flex justify-center py-12">
-            <div className="flex flex-col items-center">
-              <Loader2 className="animate-spin w-8 h-8 text-purple-600 mb-2" />
-              <span className="text-sm text-gray-500">Loading plans...</span>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {subscriptionPlans.map((plan, index) => {
-              const isRecommended = index === 1;
-              const planTypeFormatted = plan.planType.toLowerCase().replace('_', ' ');
-              
-              return (
-                <div 
-                  key={plan.id}
-                  className={`relative backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 rounded-2xl transition-all duration-300 hover:scale-105 ${
-                    isRecommended 
-                      ? 'shadow-2xl shadow-indigo-500/20 bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/30 dark:from-gray-800 dark:via-indigo-900/10 dark:to-purple-900/10' 
-                      : 'shadow-xl hover:shadow-2xl'
-                  }`}
-                >
-                  {isRecommended && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-1.5 rounded-full text-xs font-semibold shadow-lg">
-                        MOST POPULAR
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="p-4 md:p-6">
-                    <div className="text-center mb-8">
-                      <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
-                        isRecommended 
-                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600' 
-                          : 'bg-gray-100 dark:bg-gray-700'
-                      }`}>
-                        <span className={`text-2xl font-bold ${
-                          isRecommended ? 'text-white' : 'text-gray-600 dark:text-gray-300'
-                        }`}>
-                          {planTypeFormatted.charAt(0).toUpperCase()}
+      <div className="p-8 bg-slate-50 rounded-xl">
+
+        <h2 className="text-3xl font-bold text-center mb-8">
+          Choose Your Plan
+        </h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {groupedPlans.map((plan) => (
+            <div key={plan.name} className="bg-white p-6 rounded-xl shadow">
+
+              <h3 className="text-xl font-bold mb-4">{plan.name}</h3>
+
+              {plan.billingPlans.map((bp) => (
+                <div key={bp.id} className="mb-4">
+
+                  {/* Billing Plan */}
+                  <button
+                    onClick={() => selectBillingPlan(bp)}
+                    className={`w-full flex justify-between px-4 py-3 rounded-lg
+                      ${
+                        activeBillingPlanId === bp.id
+                          ? "bg-indigo-600 text-white"
+                          : "bg-gray-100"
+                      }`}
+                  >
+                    <span>{bp.type.replace("_", " ")}</span>
+                    <span>₹{bp.amount}</span>
+                  </button>
+
+                  {/* AGENT SELECTOR (ONLY HERE) */}
+                  {activeBillingPlanId === bp.id && (
+                    <div className="mt-4 border rounded-lg p-4 bg-gray-50">
+
+                      <div className="flex justify-between mb-3">
+                        <strong>Select Agents</strong>
+                        <span>
+                          {selectedAgents.length}/{bp.aiAgents}
                         </span>
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white capitalize mb-2">
-                        {planTypeFormatted}
-                      </h3>
-                      <div className="mb-4">
-                        <span className="text-4xl font-bold text-gray-900 dark:text-white">₹{plan.planAmount}</span>
-                        <span className="text-gray-500 dark:text-gray-400 ml-1">/{planTypeFormatted.split(' ')[0]}</span>
+
+                      <Input
+                        placeholder="Search approved agents..."
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        className="mb-3"
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {filteredAgents.map((agent) => {
+                          const selected = selectedAgents.some(
+                            (a) => a.agentId === agent.agentId
+                          );
+                          const disabled =
+                            !selected &&
+                            selectedAgents.length >= bp.aiAgents;
+
+                          return (
+                            <div
+                              key={agent.agentId}
+                              onClick={() =>
+                                !disabled && toggleAgent(agent)
+                              }
+                              className={`p-3 border rounded cursor-pointer transition
+                                ${
+                                  selected
+                                    ? "border-indigo-600 bg-indigo-100"
+                                    : "border-gray-300"
+                                }
+                                ${disabled && "opacity-40 cursor-not-allowed"}
+                              `}
+                            >
+                              <div className="font-semibold">
+                                {agent.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                AI Assistant
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-                    
-                    <div className="space-y-4 mb-8">
-                      <div className="flex items-center">
-                        <div className="w-5 h-5 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
-                          <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <span className="text-gray-700 dark:text-gray-300">Unlimited AI conversations</span>
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-5 h-5 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
-                          <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <span className="text-gray-700 dark:text-gray-300">Priority support</span>
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-5 h-5 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
-                          <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <span className="text-gray-700 dark:text-gray-300">Advanced AI models</span>
-                      </div>
-                      {isRecommended && (
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
-                            <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <span className="text-gray-700 dark:text-gray-300">Exclusive features</span>
-                        </div>
+
+                      {hasMoreAgents && (
+                        <button
+                          onClick={() => fetchAgents()}
+                          disabled={loadingAgents}
+                          className="mt-3 text-sm text-indigo-600 disabled:opacity-50"
+                        >
+                          {loadingAgents ? "Loading..." : "Load more"}
+                        </button>
                       )}
+
+                      <button
+                        disabled={selectedAgents.length !== bp.aiAgents}
+                        onClick={proceedToPayment}
+                        className="mt-4 w-full py-3 bg-green-600 text-white rounded disabled:opacity-50"
+                      >
+                        Proceed to Payment
+                      </button>
+
                     </div>
-                    
-                    <button 
-                      onClick={() => paymentHandler(plan.id)}
-                      className={`group w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 relative overflow-hidden ${
-                        isRecommended 
-                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105' 
-                          : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-900 dark:text-white hover:from-indigo-100 hover:to-purple-100 dark:hover:from-gray-600 dark:hover:to-gray-500 hover:shadow-lg'
-                      }`}
-                    >
-                      <span className="relative z-10">{isRecommended ? 'Get Started' : 'Select Plan'}</span>
-                      {isRecommended && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      )}
-                    </button>
-                  </div>
+                  )}
                 </div>
-              );
-            })}
-            
-            {subscriptionPlans.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <div className="text-gray-400 mb-2">
-                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
-                </div>
-                <p className="text-gray-500 dark:text-gray-400">No subscription plans available at the moment.</p>
-              </div>
-            )}
-          </div>
-        )}
-        
-          <div className="text-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-6 text-sm text-gray-500 dark:text-gray-400">
-              <div className="flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                30-day money-back guarantee
-              </div>
-              <div className="flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Secure payment
-              </div>
+              ))}
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </Modal>
-    <PaymentSuccessModal
-      open={paymentSuccessModalOpen}
-      onClose={() => setPaymentSuccessModalOpen(false)}
-    />
-    </>
   );
 };
 

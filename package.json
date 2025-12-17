@@ -23,6 +23,7 @@
     "@tabler/icons-react": "^3.35.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
+    "@types/marked": "^6.0.0",
     "@types/node": "^16.18.108",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
@@ -41,7 +42,9 @@
     "html2canvas": "^1.4.1",
     "katex": "^0.16.25",
     "libphonenumber-js": "^1.12.24",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.473.0",
+    "marked": "^9.1.0",
     "moment": "^2.30.1",
     "papaparse": "^5.5.3",
     "react": "^18.3.1",
@@ -71,9 +74,7 @@
     "tailwind-scrollbar-hide": "^2.0.0",
     "uuid": "^11.1.0",
     "web-vitals": "^2.1.4",
-    "xlsx": "^0.18.5",
-    "marked": "^9.1.0",
-    "@types/marked": "^6.0.0"
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts --max_old_space_size=8192 start",

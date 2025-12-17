@@ -13,6 +13,7 @@ import {
   FaUserFriends,
   FaUsers,
   FaUser,
+  FaRegCheckCircle
 } from "react-icons/fa";
 import { IoLayers, IoLogOut } from "react-icons/io5";
 import { FaCreditCard, FaRobot, FaBriefcase } from "react-icons/fa6";
@@ -213,8 +214,13 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           to: "/main/jobDetails",
-          label: "My Jobs",
+          label: "All Jobs",
           icon: <FaBriefcase size={16} />,
+        },
+        {
+          to: "/main/appliedjobs",
+          label: "My Applications",
+          icon: <FaRegCheckCircle size={16} />,
         },
       ],
     },

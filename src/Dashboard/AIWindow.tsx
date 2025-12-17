@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mic } from "lucide-react";
+import { Mic, Sparkles } from "lucide-react";
 import BASE_URL from "../Config";
 
 const parseMarkdown = (text: string) => {
@@ -26,35 +26,21 @@ const parseMarkdown = (text: string) => {
   text = text.replace(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg)/gi, "");
 
   // 7️⃣ Normalize blank lines:
-  // Keep ONE blank line (for paragraph separation)
   text = text.replace(/\n{3,}/g, "\n\n");
-
-  // ≠ DO NOT remove ALL blank lines
-  // ≠ DO NOT replace \n with <br> globally (breaks lists/code blocks)
 
   // 🎯 Handle Markdown formatting into HTML
   let html = text
-
-    // Bold
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-
-    // Italic
     .replace(/(^|[^*])\*(.*?)\*(?=[^*]|$)/g, "$1<em>$2</em>")
-
-    // Code block (triple backticks)
     .replace(
       /```([\s\S]*?)```/g,
       (_, code) =>
         `<pre class="p-3 bg-gray-100 rounded-md text-sm overflow-x-auto"><code>${code.trim()}</code></pre>`
     )
-
-    // Inline code
     .replace(
       /`([^`]+)`/g,
       '<code class="px-2 py-1 bg-gray-100 rounded text-sm">$1</code>'
     )
-
-    // Headings
     .replace(
       /^#### (.*)$/gim,
       '<h4 class="text-base font-semibold mt-3 mb-1">$1</h4>'
@@ -69,11 +55,7 @@ const parseMarkdown = (text: string) => {
     )
     .replace(/^# (.*)$/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>');
 
-  // 🎯 Convert remaining newlines to <br>, BUT safely:
-  // ONLY outside lists, code blocks, and paragraphs.
   html = html.replace(/([^\n])\n([^\n])/g, "$1<br>$2");
-
-  // Final cleanup
   html = html.replace(/(<br>\s*){2,}/g, "<br>");
 
   return html.trim();
@@ -101,6 +83,8 @@ interface AIChatWindowProps {
   isMobile?: boolean;
   onClose?: () => void;
   onExternalRequest?: (message: string) => void;
+  persistedMessages?: Message[];
+  onMessagesChange?: (messages: Message[]) => void;
 }
 
 const AIChatWindow: React.FC<AIChatWindowProps> = ({
@@ -108,8 +92,9 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
   isMobile = false,
   onClose,
   onExternalRequest,
+  persistedMessages = [],
+  onMessagesChange,
 }) => {
-  // Get userId from localStorage
   const getUserId = () => {
     try {
       const userId = localStorage.getItem("userId");
@@ -123,15 +108,34 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       return null;
     }
   };
-  const [messages, setMessages] = useState<Message[]>([]);
 
-  // Welcome questions that users can click
+  const [messages, setMessages] = useState<Message[]>(persistedMessages);
+  const [loadingText, setLoadingText] = useState("Thinking");
+
+  useEffect(() => {
+    if (onMessagesChange) {
+      onMessagesChange(messages);
+    }
+  }, [messages, onMessagesChange]);
+
   const welcomeQuestions = [
-    "Show me Askoxy.ai products and offers.",
-    "Check gold prices and offers on Askoxy.ai.",
-    "What services does Askoxy.ai offer?",
-    "Explain Askoxy.ai’s AI agents.",
+    "Show today’s rice and grocery offers",
+    "Which rice varieties are trending now?",
+    "Check today’s gold prices",
+    "Show gold offers and investment options",
+    "Show the best product offers today",
+    "Recommend products based on my needs",
+    "Explain what AskOxy.ai can do",
+    "What is Bharat AI Store?",
+    "Show available AI agents",
+    "How can I create my own AI agent?",
+    "Show my AI agents",
+    "Track my recent order",
+    "What payment methods are available?",
+    "What are the membership benefits?",
+    "What is BMV coin and how can I use it?",
   ];
+
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -143,8 +147,29 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
 
   useEffect(scrollToBottom, [messages]);
 
+  // Animated loading text effect
   useEffect(() => {
-    // Listen for external requests from other pages
+    if (!isLoading) return;
+
+    const loadingStates = [
+      "Thinking",
+      "Analyzing",
+      "Processing",
+      "Digging deeper",
+      "Getting response",
+      "Almost there",
+    ];
+    let index = 0;
+
+    const interval = setInterval(() => {
+      index = (index + 1) % loadingStates.length;
+      setLoadingText(loadingStates[index]);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  useEffect(() => {
     const handleExternalRequest = (event: CustomEvent) => {
       const { message } = event.detail;
       if (message) {
@@ -227,8 +252,6 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         return;
       }
 
-      // console.log("Sending request with userId:", userId);
-      // console.log("User prompt:", userInput);
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
         `${BASE_URL}/ai-service/chat1?userId=${userId}`,
@@ -348,60 +371,69 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
 
   const clearChat = () => {
     setMessages([]);
+    if (onMessagesChange) {
+      onMessagesChange([]);
+    }
   };
 
-  const ThreeDotsLoading = () => (
-    <div className="flex items-center space-x-1">
+  const EnhancedLoadingAnimation = () => (
+    <div className="flex items-center space-x-2">
       <div
-        className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
-        style={{ animationDelay: "0ms" }}
+        className="w-3 h-3 bg-purple-600 rounded-full animate-bounce"
+        style={{ animationDelay: "0ms", animationDuration: "0.6s" }}
       ></div>
       <div
-        className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
-        style={{ animationDelay: "150ms" }}
+        className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
+        style={{ animationDelay: "150ms", animationDuration: "0.6s" }}
       ></div>
       <div
-        className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
-        style={{ animationDelay: "300ms" }}
+        className="w-3 h-3 bg-purple-400 rounded-full animate-bounce"
+        style={{ animationDelay: "300ms", animationDuration: "0.6s" }}
       ></div>
     </div>
   );
-
   const WelcomeScreen = () => (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 space-y-4">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">
-          Welcome to {botName}! 👋
+    <div className="flex-1 flex flex-col p-6 overflow-hidden">
+      <div className="text-center mb-6 flex-shrink-0">
+        <h3 className="text-2xl font-bold text-gray-800 mb-2">
+          Welcome to {botName}!
         </h3>
-        <p className="text-sm text-gray-600">How can I assist you today?</p>
+        <p className="text-base text-gray-600">
+          How can I assist you today? Choose a quick question or type your own.
+        </p>
       </div>
 
-      <div className="w-full max-w-sm space-y-2">
-        <p className="text-xs text-gray-500 font-medium mb-3">
-          Quick Questions:
-        </p>
-        {welcomeQuestions.map((question, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setInputText(question);
-              // Auto-send the question
-              const userMessage: Message = {
-                id: Date.now().toString(),
-                text: question,
-                isUser: true,
-                timestamp: new Date(),
-              };
-              setMessages([userMessage]);
-              setInputText("");
-              setIsLoading(true);
-              processUserMessage(question);
-            }}
-            className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors duration-200 border border-purple-200 hover:border-purple-300"
-          >
-            <span className="text-sm text-gray-700">{question}</span>
-          </button>
-        ))}
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-gray-100">
+        <div className="w-full max-w-5xl mx-auto pb-4">
+          <p className="text-sm text-gray-500 font-semibold mb-4 sticky top-0 bg-white py-2 z-10">
+            Quick Questions:
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {welcomeQuestions.map((question, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setInputText(question);
+                  const userMessage: Message = {
+                    id: Date.now().toString(),
+                    text: question,
+                    isUser: true,
+                    timestamp: new Date(),
+                  };
+                  setMessages([userMessage]);
+                  setInputText("");
+                  setIsLoading(true);
+                  processUserMessage(question);
+                }}
+                className="text-left px-4 py-3 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl transition-all duration-300 border border-purple-200 hover:border-purple-400 hover:shadow-md transform hover:-translate-y-0.5"
+              >
+                <span className="text-sm font-medium text-gray-700 line-clamp-2">
+                  {question}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -421,27 +453,33 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
     : {};
 
   const containerClass = isMobile
-    ? `fixed inset-0 w-3/4 h-full bg-white flex flex-col z-50`
-    : `fixed right-0 top-20 bottom-0 w-full max-w-sm sm:max-w-md md:w-96 bg-white shadow-lg rounded-lg border z-50 flex flex-col transition-all duration-300 overflow-hidden`;
+    ? `fixed inset-0 w-full h-full bg-white flex flex-col z-50`
+    : `w-full h-full bg-white shadow-2xl rounded-l-lg border-l border-t border-b border-purple-200 flex flex-col overflow-hidden`;
 
   return (
     <div className={containerClass} style={isMobile ? mobileStyles : {}}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-700 to-purple-600 text-white px-3 py-2 shadow-md">
+      <div className="bg-gradient-to-r from-purple-700 via-purple-600 to-purple-700 text-white px-4 py-3 shadow-lg flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <Sparkles className="w-6 h-6" />
+              </svg>
+            </div>
             <div>
-              <h3 className="font-bold text-sm">{botName}</h3>
+              <h3 className="font-bold text-base">{botName}</h3>
+              <p className="text-xs text-purple-200">Always here to help</p>
             </div>
           </div>
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-2">
             <button
               onClick={clearChat}
-              className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
               title="Clear Chat"
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -454,14 +492,14 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
                 />
               </svg>
             </button>
-            {isMobile && onClose && (
+            {onClose && (
               <button
                 onClick={onClose}
-                className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
                 title="Close Chat"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -483,57 +521,61 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       {messages.length === 0 ? (
         <WelcomeScreen />
       ) : (
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`text-sm ${msg.isUser ? "text-right" : "text-left"}`}
+              className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}
             >
-              <div
-                className={`inline-block px-2 py-1.5 rounded-lg max-w-[85%] ${
-                  msg.isUser
-                    ? "bg-purple-600 text-white ml-auto"
-                    : "bg-gray-100 text-gray-800"
-                } ${isMobile ? "text-base" : "text-sm"}`}
-              >
-                {msg.isUser ? (
-                  <p className="whitespace-pre-wrap break-words leading-relaxed">
-                    {msg.text}
-                  </p>
-                ) : (
-                  <div
-                    className="whitespace-pre-wrap break-words leading-relaxed markdown-content"
-                    dangerouslySetInnerHTML={{
-                      __html: parseMarkdown(msg.text),
-                    }}
-                  />
-                )}
-              </div>
-              <div
-                className={`${
-                  isMobile ? "text-xs" : "text-[10px]"
-                } text-gray-400 mt-1 ${
-                  msg.isUser ? "text-right" : "text-left"
-                }`}
-              >
-                {msg.timestamp.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+              <div className="flex flex-col max-w-[75%]">
+                <div
+                  className={`px-5 py-3 rounded-2xl shadow-sm ${
+                    msg.isUser
+                      ? "bg-gradient-to-br from-purple-600 to-purple-700 text-white"
+                      : "bg-white text-gray-800 border border-gray-200"
+                  } ${isMobile ? "text-base" : "text-sm"}`}
+                >
+                  {msg.isUser ? (
+                    <p className="whitespace-pre-wrap break-words leading-relaxed">
+                      {msg.text}
+                    </p>
+                  ) : (
+                    <div
+                      className="whitespace-pre-wrap break-words leading-relaxed markdown-content"
+                      dangerouslySetInnerHTML={{
+                        __html: parseMarkdown(msg.text),
+                      }}
+                    />
+                  )}
+                </div>
+                <div
+                  className={`${
+                    isMobile ? "text-xs" : "text-[11px]"
+                  } text-gray-400 mt-1.5 px-2 ${
+                    msg.isUser ? "text-right" : "text-left"
+                  }`}
+                >
+                  {msg.timestamp.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
               </div>
             </div>
           ))}
           {isLoading && (
-            <div className="text-left">
-              <div className="inline-block px-2 py-1.5 rounded-lg bg-gray-100">
-                <ThreeDotsLoading />
-              </div>
-              <div
-                className={`${
-                  isMobile ? "text-xs" : "text-[10px]"
-                } text-gray-400 mt-1`}
-              >
-                Thinking...
+            <div className="flex justify-start">
+              <div className="flex flex-col">
+                <div className="px-2">
+                  <EnhancedLoadingAnimation />
+                </div>
+                <div
+                  className={`${
+                    isMobile ? "text-m" : "text-[11px]"
+                  } text-purple-600 font-medium mt-1.5 px-2 animate-pulse`}
+                >
+                  {loadingText}...
+                </div>
               </div>
             </div>
           )}
@@ -542,24 +584,24 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       )}
 
       {/* Input Area */}
-      <div className="p-3 sm:p-2 border-t flex items-center space-x-2 bg-white">
+      <div className="p-4 border-t border-gray-200 bg-white flex items-center space-x-3 flex-shrink-0 shadow-lg">
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyPress={handleKeyPress}
-          className={`flex-1 border border-gray-300 px-3 py-2 sm:px-2 sm:py-1.5 ${
+          className={`flex-1 border-2 border-gray-300 px-4 py-3 ${
             isMobile ? "text-base min-h-[44px]" : "text-sm"
-          } rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500`}
-          placeholder="Type your message..."
+          } rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all`}
+          placeholder="Type your message here..."
           disabled={isLoading}
         />
         <button
           onClick={handleToggleVoice}
-          className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${
+          className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all flex-shrink-0 ${
             isRecording
-              ? "bg-red-100 text-red-600 animate-pulse"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              ? "bg-red-100 text-red-600 animate-pulse ring-2 ring-red-300"
+              : "bg-purple-100 text-purple-600 hover:bg-purple-200"
           } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
           disabled={isLoading}
           title={isRecording ? "Stop Voice Input" : "Start Voice Input"}
@@ -568,14 +610,14 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         </button>
         <button
           onClick={handleSendMessage}
-          className={`bg-purple-600 text-white ${
-            isMobile ? "p-3 min-h-[44px] min-w-[44px]" : "p-2"
-          } rounded-lg disabled:bg-gray-400 hover:bg-purple-700 active:bg-purple-800 transition-colors flex items-center justify-center`}
+          className={`bg-gradient-to-r from-purple-600 to-purple-700 text-white flex-shrink-0 ${
+            isMobile ? "p-3 min-h-[44px] min-w-[44px]" : "px-5 py-3"
+          } rounded-xl disabled:from-gray-400 disabled:to-gray-400 hover:from-purple-700 hover:to-purple-800 active:scale-95 transition-all shadow-md flex items-center justify-center`}
           disabled={isLoading || !inputText.trim()}
           title="Send message"
         >
           <svg
-            className="w-4 h-4"
+            className="w-5 h-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

@@ -1,6 +1,6 @@
 // /src/AgentStore/AIResources.tsx
 import React, { useMemo, useState, useEffect } from "react";
-import { Bot, Shield } from "lucide-react";
+import { Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Highlighter from "../components/Highlighter";
@@ -35,15 +35,6 @@ interface Assistant {
   link: string;
 }
 
-// ---------- Helpers ----------
-const gradientFor = (seed: string) => {
-  const hues = [265, 210, 155, 120, 35];
-  let sum = 0;
-  for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i);
-  const h = hues[sum % hues.length];
-  return `from-[hsl(${h}deg_90%_60%)] to-[hsl(${(h + 30) % 360}deg_90%_50%)]`;
-};
-
 // ---------- Assistants ----------
 const STATIC_ASSISTANTS: Assistant[] = [
   {
@@ -52,7 +43,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     created_at: 1697059200000,
     name: "Askoxy.AI",
     description:
-      "AI-Based Marketplace for Products and Services - Unlimited ChatGPT prompts at no cost.",
+      "Askoxy.AI is an AI-powered marketplace designed to help users discover products, services, and intelligent tools in one place. It enables unlimited AI interactions, smart recommendations, and productivity use cases for individuals, businesses, and entrepreneurs across multiple domains.",
     model: "gpt-4",
     instructions: "Provide conversational AI chat support",
     tools: [],
@@ -60,7 +51,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Chat" },
+    metadata: { category: "Chat", timeAgo: "1d" },
     response_format: "text",
     image: "https://i.ibb.co/SXsSVTXn/ask1.png",
     link: "/",
@@ -70,7 +61,8 @@ const STATIC_ASSISTANTS: Assistant[] = [
     object: "assistant",
     created_at: 1697059200000,
     name: "OXYGPT Chat",
-    description: "A conversational AI assistant for human-like chat.",
+    description:
+      "OXYGPT Chat is a conversational AI assistant built for natural, human-like interactions. It helps users ask questions, generate ideas, solve problems, and receive intelligent responses instantly for daily productivity, learning, and professional use cases.",
     model: "gpt-4",
     instructions: "Provide conversational AI chat support",
     tools: [],
@@ -78,7 +70,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Chat" },
+    metadata: { category: "Chat", timeAgo: "18h" },
     response_format: "text",
     image: Logo2,
     link: "/genoxy",
@@ -88,7 +80,8 @@ const STATIC_ASSISTANTS: Assistant[] = [
     object: "assistant",
     created_at: 1697145600000,
     name: "OXYGPT Voice Assistant",
-    description: "Voice-enabled AI assistant with real-time commands.",
+    description:
+      "OXYGPT Voice Assistant allows users to interact with AI using voice commands in real time. It supports hands-free conversations, instant responses, and smart task execution, making it ideal for accessibility, multitasking, and voice-driven AI experiences.",
     model: "gpt-4",
     instructions: "Enable real-time voice conversations and commands",
     tools: [],
@@ -96,7 +89,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Voice" },
+    metadata: { category: "Voice", timeAgo: "18h" },
     response_format: "audio",
     image: Logo1,
     link: "/voiceAssistant/welcome",
@@ -106,7 +99,8 @@ const STATIC_ASSISTANTS: Assistant[] = [
     object: "assistant",
     created_at: 1697232000000,
     name: "AI LLMs",
-    description: "Explore Large Language Models for knowledge and reasoning.",
+    description:
+      "AI LLMs helps users explore large language models and understand how advanced AI reasoning works. It provides insights, demos, and explanations for developers, learners, and enterprises interested in modern AI language technologies.",
     model: "gpt-4",
     instructions: "Assist with LLM-related insights and demos",
     tools: [],
@@ -114,7 +108,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Research" },
+    metadata: { category: "Research", timeAgo: "1d" },
     response_format: "text",
     image: Logo4,
     link: "/genoxy/chat",
@@ -124,7 +118,8 @@ const STATIC_ASSISTANTS: Assistant[] = [
     object: "assistant",
     created_at: 1697318400000,
     name: "AI Video Generation",
-    description: "Generate videos using AI for marketing and education.",
+    description:
+      "AI Video Generation enables users to create videos using artificial intelligence for marketing, education, and storytelling. It supports automated content creation, visual generation, and AI-assisted video workflows for creators and businesses.",
     model: "gpt-4",
     instructions: "Assist with AI video creation and generation",
     tools: [],
@@ -132,7 +127,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Media" },
+    metadata: { category: "Media", timeAgo: "3w" },
     response_format: "video",
     image: Logo3,
     link: "/ai-videos",
@@ -141,8 +136,9 @@ const STATIC_ASSISTANTS: Assistant[] = [
     id: "6",
     object: "assistant",
     created_at: 1697059200000,
-    name: "Free Ai Book",
-    description: "Learn and explore today’s AI tools.",
+    name: "Free AI Book",
+    description:
+      "Free AI Book is a learning resource designed to help users understand modern artificial intelligence tools and concepts. It provides easy explanations, practical examples, and guided knowledge for beginners, students, and professionals.",
     model: "gpt-4",
     instructions: "Provide conversational AI chat support",
     tools: [],
@@ -150,7 +146,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Chat" },
+    metadata: { category: "Resources", timeAgo: "1w" },
     response_format: "text",
     image: Logo5,
     link: "/freeaibook",
@@ -159,8 +155,9 @@ const STATIC_ASSISTANTS: Assistant[] = [
     id: "7",
     object: "assistant",
     created_at: 1697145600000,
-    name: "Glms",
-    description: "AI-powered lending platform with 60+ use cases.",
+    name: "GLMS",
+    description:
+      "GLMS is an AI-powered lending and financial intelligence platform supporting multiple BFSI use cases. It helps organizations understand lending workflows, compliance, and AI-driven financial solutions through real-world examples and tools.",
     model: "gpt-4",
     instructions: "Enable real-time voice conversations and commands",
     tools: [],
@@ -168,7 +165,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Voice" },
+    metadata: { category: "Voice", timeAgo: "20h" },
     response_format: "audio",
     image: Logo6,
     link: "/glms",
@@ -177,8 +174,9 @@ const STATIC_ASSISTANTS: Assistant[] = [
     id: "8",
     object: "assistant",
     created_at: 1697232000000,
-    name: "Job street",
-    description: "Helping organizations with BFSI job readiness.",
+    name: "Job Street",
+    description:
+      "Job Street focuses on career readiness and BFSI job preparation by combining AI guidance with industry insights. It helps learners, freshers, and professionals prepare for interviews and develop job-relevant skills.",
     model: "gpt-4",
     instructions: "Assist with LLM-related insights and demos",
     tools: [],
@@ -186,7 +184,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Research" },
+    metadata: { category: "Research", timeAgo: "1d" },
     response_format: "text",
     image: Logo7,
     link: "/jobstreet",
@@ -196,7 +194,8 @@ const STATIC_ASSISTANTS: Assistant[] = [
     object: "assistant",
     created_at: 1697318400000,
     name: "BillionAIre Hub",
-    description: "AI Studio-as-a-Service in Hyderabad.",
+    description:
+      "BillionAIre Hub is an AI studio-as-a-service initiative based in Hyderabad. It enables startups, enterprises, and creators to build, test, and deploy AI solutions with access to tools, expertise, and innovation support.",
     model: "gpt-4",
     instructions: "Assist with AI video creation and generation",
     tools: [],
@@ -204,87 +203,200 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Media" },
+    metadata: { category: "Media", timeAgo: "18h" },
     response_format: "video",
     image: Logo8,
     link: "/freeaibook",
   },
 ];
 
-// ---------- Skeleton Loader ----------
+
+// ---------- Skeleton Loader (Edge Style) ----------
 const AssistantSkeleton: React.FC = () => (
-  <div className="animate-pulse bg-white rounded-2xl shadow-sm ring-1 ring-gray-200 overflow-hidden flex flex-col h-full">
-    <div className="h-40 bg-gray-200" />
-    <div className="p-4 flex-1 flex flex-col justify-between">
-      <div>
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-        <div className="h-3 bg-gray-200 rounded w-full mb-1" />
-        <div className="h-3 bg-gray-200 rounded w-5/6" />
-      </div>
-      <div className="h-8 bg-gray-300 rounded mt-4" />
+  <div
+    style={{
+      background: "#fff",
+      borderRadius: 26,
+      padding: 14,
+      border: "1px solid rgba(0,0,0,0.06)",
+      boxShadow: "0 1px 0 rgba(0,0,0,0.03)",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      animation: "pulse 1.4s ease-in-out infinite",
+    }}
+  >
+    <div
+      style={{
+        height: 170,
+        borderRadius: 22,
+        background: "#e5e7eb",
+        marginBottom: 12,
+      }}
+    />
+    <div style={{ padding: "0 8px 6px 8px" }}>
+      <div
+        style={{
+          height: 12,
+          width: "60%",
+          background: "#e5e7eb",
+          borderRadius: 8,
+          marginBottom: 10,
+        }}
+      />
+      <div
+        style={{
+          height: 14,
+          width: "90%",
+          background: "#e5e7eb",
+          borderRadius: 8,
+          marginBottom: 8,
+        }}
+      />
+      <div
+        style={{
+          height: 14,
+          width: "75%",
+          background: "#e5e7eb",
+          borderRadius: 8,
+        }}
+      />
     </div>
   </div>
 );
 
-// ---------- Card ----------
-const AssistantCard: React.FC<{
-  assistant: Assistant;
-  index: number;
-  q: string;
-}> = ({ assistant, index, q }) => {
+// ---------- Edge-style Card ----------
+const AssistantCard: React.FC<{ assistant: Assistant; q: string }> = ({
+  assistant,
+  q,
+}) => {
   const navigate = useNavigate();
-  const seed = assistant.name || `A${index}`;
-  const badge = assistant.metadata?.category || "Tools";
+
+  const timeAgo =
+    assistant?.metadata?.timeAgo ||
+    (() => {
+      // fallback from created_at timestamp
+      const ms = assistant.created_at;
+      if (!ms) return "1d";
+      const diff = Date.now() - ms;
+      const hours = Math.max(1, Math.floor(diff / (1000 * 60 * 60)));
+      if (hours < 24) return `${hours}h`;
+      const days = Math.floor(hours / 24);
+      return `${days}d`;
+    })();
+
+  const source = assistant?.metadata?.category || "AI Initiatives";
+
+  const onOpen = () => navigate(assistant.link);
 
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => navigate(assistant.link)}
-      onKeyDown={(e) =>
-        e.key === "Enter" || e.key === " " ? navigate(assistant.link) : null
-      }
-      className="group relative cursor-pointer flex flex-col rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:-translate-y-1 transition-transform duration-200 overflow-hidden h-full"
+      onClick={onOpen}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " " ? onOpen() : null)}
+      className="edgeCard"
+      style={{
+        background: "#ffffff",
+        borderRadius: 26,
+        padding: 14,
+        border: "1px solid rgba(0,0,0,0.06)",
+        boxShadow: "0 1px 0 rgba(0,0,0,0.03)",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        cursor: "pointer",
+        textDecoration: "none",
+        color: "inherit",
+        transition:
+          "transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease",
+      }}
     >
-      {/* Image Section */}
+      {/* Image */}
       <div
-        className={`relative h-44 w-full bg-gradient-to-br ${gradientFor(
-          seed
-        )}`}
+        style={{
+          borderRadius: 22,
+          overflow: "hidden",
+          background: "#e9e9e9",
+        }}
       >
         <img
           src={assistant.image}
           alt={`${assistant.name} thumbnail`}
-          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            width: "100%",
+            height: 170,
+            objectFit: "cover",
+            display: "block",
+          }}
           loading="lazy"
         />
       </div>
 
-      {/* Content Section */}
-      <div className="flex flex-col justify-between flex-1 p-4">
-        <div>
-          <h3 className="font-semibold text-base text-gray-900 mb-1">
-            <Highlighter text={assistant.name} query={q} />
-          </h3>
-          <p className="text-sm text-gray-600 line-clamp-3">
-            <Highlighter text={assistant.description} query={q} />
-          </p>
+      {/* Body */}
+      <div style={{ padding: "12px 8px 6px 8px" }}>
+        {/* Meta row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12,
+            color: "rgba(0,0,0,0.62)",
+            lineHeight: 1,
+            marginBottom: 8,
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 3,
+              background: "rgba(0,0,0,0.2)",
+              display: "inline-block",
+            }}
+          />
+          <span style={{ fontWeight: 600, color: "rgba(0,0,0,0.7)" }}>
+            {source}
+          </span>
+          <span style={{ opacity: 0.8 }}>•</span>
+          <span style={{ opacity: 0.9 }}>{timeAgo}</span>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 border border-gray-200 text-gray-700 px-2 py-0.5 text-[11px]">
-            <Shield className="h-3.5 w-3.5" />
-            {badge}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(assistant.link);
-            }}
-            className="rounded-lg bg-purple-600 px-3 py-1.5 text-white text-xs font-semibold hover:bg-purple-700 transition"
-          >
-            View
-          </button>
+        {/* Title */}
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 800,
+            color: "rgba(0,0,0,0.85)",
+            lineHeight: 1.3,
+            display: "-webkit-box",
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical" as any,
+            overflow: "hidden",
+            marginBottom: 6,
+          }}
+          title={assistant.name}
+        >
+          <Highlighter text={assistant.name} query={q} />
+        </div>
+
+        {/* Description */}
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "rgba(0,0,0,0.62)",
+            lineHeight: 1.85,
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical" as any,
+            overflow: "hidden",
+          }}
+          title={assistant.description}
+        >
+          <Highlighter text={assistant.description} query={q} />
         </div>
       </div>
     </div>
@@ -297,7 +409,7 @@ const AiResources: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1200);
+    const timer = setTimeout(() => setLoading(false), 900);
     return () => clearTimeout(timer);
   }, []);
 
@@ -312,40 +424,68 @@ const AiResources: React.FC = () => {
   }, [q]);
 
   return (
-    <div className="bg-white min-h-screen">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* ---- Header Section (Left-Aligned) ---- */}
-        <div className="mb-8 text-left">
-          <h2 className="text-3xl font-bold text-gray-900">AI Initiatives</h2>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base">
+    <div style={{ background: "white", minHeight: "100vh", padding: 22 }}>
+      {/* hover + responsive + pulse */}
+      <style>{`
+        @keyframes pulse { 
+          0%,100% { opacity: 1; } 
+          50% { opacity: 0.55; } 
+        }
+        .edgeCard:hover {
+          transform: translateY(-2px);
+          border-color: rgba(0,0,0,0.1);
+          box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+        .edgeGrid {
+          display: grid;
+          gap: 18px;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        @media (max-width: 1150px) { .edgeGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (max-width: 860px)  { .edgeGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 520px)  { .edgeGrid { grid-template-columns: repeat(1, minmax(0, 1fr)); } }
+      `}</style>
+
+      <main style={{ maxWidth: 1280, margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 18 }}>
+          <h2
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              color: "rgba(0,0,0,0.86)",
+              margin: 0,
+            }}
+          >
+            AI Initiatives
+          </h2>
+          <p
+            style={{ marginTop: 8, marginBottom: 0, color: "rgba(0,0,0,0.6)" }}
+          >
             Explore our curated AI initiatives.
           </p>
         </div>
 
-        {/* ---- Card Grid (One Row - 4 Cards) ---- */}
         {loading ? (
-          <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr">
-            {Array.from({ length: 9 }).map((_, i) => (
+          <div className="edgeGrid">
+            {Array.from({ length: 8 }).map((_, i) => (
               <AssistantSkeleton key={i} />
             ))}
           </div>
         ) : filteredAssistants.length === 0 ? (
-          <div className="text-center py-16">
-            <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div style={{ textAlign: "center", padding: "64px 0" }}>
+            <Bot style={{ width: 56, height: 56, color: "rgba(0,0,0,0.35)" }} />
+            <h3 style={{ marginTop: 14, marginBottom: 6, fontWeight: 800 }}>
               No Initiatives Found
             </h3>
-            <p className="text-gray-600">Try a different search term.</p>
+            <p style={{ margin: 0, color: "rgba(0,0,0,0.6)" }}>
+              Try a different search term.
+            </p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr">
-            {filteredAssistants.slice(0, 9).map((assistant, index) => (
-              <AssistantCard
-                key={assistant.id}
-                assistant={assistant}
-                index={index}
-                q={q}
-              />
+          <div className="edgeGrid">
+            {filteredAssistants.slice(0, 9).map((assistant) => (
+              <AssistantCard key={assistant.id} assistant={assistant} q={q} />
             ))}
           </div>
         )}
@@ -355,4 +495,3 @@ const AiResources: React.FC = () => {
 };
 
 export default AiResources;
-

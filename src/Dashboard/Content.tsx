@@ -15,6 +15,8 @@ const Content1: React.FC = () => {
   // AI Chat Window toggle state - closed by default on mobile
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [isAiChatAnimating, setIsAiChatAnimating] = useState(false);
 
   const onCollapse = (collapsed: boolean) => {
     setIsCollapsed(collapsed);
@@ -40,12 +42,20 @@ const Content1: React.FC = () => {
     }
   };
 
-  // Toggle AI Chat Window
   const toggleAiChat = () => {
-    setIsAiChatOpen(!isAiChatOpen);
+    if (!isAiChatOpen) {
+      setIsAiChatOpen(true);
+      // Small delay to ensure DOM is ready before animating
+      setTimeout(() => {
+        setIsAiChatAnimating(true);
+      }, 10);
+    } else {
+      setIsAiChatAnimating(false);
+      // Wait for animation to complete before unmounting
+      setTimeout(() => setIsAiChatOpen(false), 300);
+    }
   };
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -80,7 +90,6 @@ const Content1: React.FC = () => {
     if (customerId) {
       fetchProfileData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId]);
 
   const fetchProfileData = async () => {
@@ -116,27 +125,28 @@ const Content1: React.FC = () => {
     );
   };
 
-  // Function to handle external requests from other pages (like header AI button)
   const handleExternalChatRequest = (message?: string) => {
-    // If already open, just close it
     if (isAiChatOpen) {
-      setIsAiChatOpen(false);
+      setIsAiChatAnimating(false);
+      setTimeout(() => setIsAiChatOpen(false), 300);
       return;
     }
 
-    // Open the window
     setIsAiChatOpen(true);
+    setTimeout(() => {
+      setIsAiChatAnimating(true);
+    }, 10);
 
-    // Only send message if provided
     if (message) {
-      window.dispatchEvent(
-        new CustomEvent("aiChatExternalRequest", {
-          detail: { message },
-        })
-      );
+      setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent("aiChatExternalRequest", {
+            detail: { message },
+          })
+        );
+      }, 100);
     }
   };
-
   // Register globals
   useEffect(() => {
     (window as any).openAiChat = handleExternalChatRequest;
@@ -207,21 +217,37 @@ const Content1: React.FC = () => {
         />
       )}
 
-      {/* AI Chat Window */}
       {isAiChatOpen && (
         <div
-          className={`fixed z-50 transition-all ${
+          className={`fixed z-50 transition-all duration-300 ease-in-out ${
             isMobile
               ? "bottom-20 right-2 left-2"
-              : "top-20 bottom-4 right-4 w-[24rem]"
+              : `top-20 bottom-0 right-0 ${
+                  isAiChatAnimating
+                    ? "translate-x-0 opacity-100"
+                    : "translate-x-full opacity-0"
+                }`
           }`}
+          style={
+            !isMobile
+              ? {
+                  width: "52rem",
+                  transformOrigin: "right center",
+                }
+              : undefined
+          }
         >
           <AIChatWindow
             isMobile={isMobile}
-            onClose={() => setIsAiChatOpen(false)}
+            onClose={() => {
+              setIsAiChatAnimating(false);
+              setTimeout(() => setIsAiChatOpen(false), 300);
+            }}
             onExternalRequest={(message) =>
               console.log("External request:", message)
             }
+            persistedMessages={chatMessages}
+            onMessagesChange={setChatMessages}
           />
         </div>
       )}
@@ -248,8 +274,8 @@ const Content1: React.FC = () => {
     ${
       isMobile
         ? "bottom-6 right-6 bg-purple-600 rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_15px_rgba(192,132,252,0.9)]"
-        : isAiChatOpen
-        ? "top-1/2 right-[24rem] -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
+        : isAiChatOpen && isAiChatAnimating
+        ? "top-1/2 right-[52rem] -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
         : "top-1/2 right-0 -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
     }
   `}
@@ -258,7 +284,7 @@ const Content1: React.FC = () => {
         <svg
           className={`${isMobile ? "w-7 h-7" : "w-4 h-4"} ${
             !isMobile && !isAiChatOpen ? "rotate-180" : ""
-          } transition-transform`}
+          } transition-transform duration-300`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -277,7 +303,6 @@ const Content1: React.FC = () => {
           />
         </svg>
       </button>
-
       <div
         className={`transition-all duration-300
           pt-16 md:pt-20

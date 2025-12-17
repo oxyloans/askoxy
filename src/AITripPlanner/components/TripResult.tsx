@@ -7,6 +7,10 @@ interface TripResultProps {
   formData: TripFormData | null;
 }
 
+ const baseUrl = process.env.NODE_ENV === 'development' 
+        ? "https://5fupmayclj.execute-api.ap-south-1.amazonaws.com/dev2"
+        : "https://5fupmayclj.execute-api.ap-south-1.amazonaws.com/dev2";
+
 const TripResult: React.FC<TripResultProps> = ({ tripResult, formData }) => {
   const [activeTab, setActiveTab] = useState('itinerary');
   const [audioLoading, setAudioLoading] = useState(false);
@@ -15,9 +19,9 @@ const TripResult: React.FC<TripResultProps> = ({ tripResult, formData }) => {
     if (!tripResult) return;
     
     try {
-      const baseUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://127.0.0.1:8000' 
-        : 'https://wh1zaek8a5.execute-api.ap-south-1.amazonaws.com/dev';
+      // const baseUrl = process.env.NODE_ENV === 'development' 
+      //   ? 'http://127.0.0.1:8000' 
+      //   : 'https://5fupmayclj.execute-api.ap-south-1.amazonaws.com/dev2';
       
       // Extract filename from pdf_link if available
       const pdfLink = (tripResult as any).pdf_link;
@@ -53,10 +57,10 @@ const TripResult: React.FC<TripResultProps> = ({ tripResult, formData }) => {
     setAudioLoading(true);
     
     try {
-      const baseUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://127.0.0.1:8000' 
-        : 'https://wh1zaek8a5.execute-api.ap-south-1.amazonaws.com/dev';
-      
+      // const baseUrl = process.env.NODE_ENV === 'development' 
+      //   ? 'http://127.0.0.1:8000' 
+      //   : 'https://5fupmayclj.execute-api.ap-south-1.amazonaws.com/dev2';
+     
       const response = await fetch(`${baseUrl}/trip-audio?meta=1`, {
         method: 'POST',
         headers: {

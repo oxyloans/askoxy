@@ -46,9 +46,12 @@ const TripForm: React.FC<TripFormProps> = ({ onTripGenerated, updateStatus }) =>
     updateStatus('Generating...', '#f59e0b');
 
     try {
-      const baseUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://127.0.0.1:8000' 
-        : 'https://wh1zaek8a5.execute-api.ap-south-1.amazonaws.com/dev';
+      // const baseUrl = process.env.NODE_ENV === 'development' 
+      //   ? 'http://127.0.0.1:8000' 
+      //   : 'https://5fupmayclj.execute-api.ap-south-1.amazonaws.com/dev2';
+       const baseUrl = process.env.NODE_ENV === 'development' 
+        ? "https://5fupmayclj.execute-api.ap-south-1.amazonaws.com/dev2"
+        : "https://5fupmayclj.execute-api.ap-south-1.amazonaws.com/dev2";
 
       const response = await axios.post(`${baseUrl}/trip-plan`, formData, {
         headers: {
@@ -69,9 +72,9 @@ const TripForm: React.FC<TripFormProps> = ({ onTripGenerated, updateStatus }) =>
 
   return (
     <div className="left-content">
-      <img src="./assets/ask_oxy_white.png" alt="AskOxy Logo" className="logo" />
+       {/* <img src="./assets/ask_oxy_white.png" alt="AskOxy Logo" className="logo" /> */}
       
-      <div className="welcome-section">
+     {/* <div className="welcome-section">
         <h1 className="welcome-title">Plan Your Journey</h1>
         <p className="welcome-subtitle">AI-powered travel itineraries 🌍</p>
         <div className="instructions">
@@ -83,7 +86,7 @@ const TripForm: React.FC<TripFormProps> = ({ onTripGenerated, updateStatus }) =>
             <span className="feature-item">🌤️ Weather forecasts</span>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="form-container">
         <form onSubmit={handleSubmit}>

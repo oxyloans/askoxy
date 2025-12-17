@@ -4,6 +4,7 @@ import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 import { SearchProvider } from "./until/SearchContext";
+import AppliedJobs from "./Dashboard/AppliedJobs";
 const Landingpage = lazy(() => import("./components/Landingpage"));
 // const Freerudraksha = lazy(() => import("./components/Services/Freerudraksh"));
 const TermsAndConditions = lazy(() => import("./kart/TermsAndConditions"));
@@ -879,6 +880,7 @@ const App: React.FC = () => {
                 />
                 <Route path="create-aiagent" element={<CreateAgentWizard />} />
                 <Route path="bharat-expert" element={<CreateAgentMain />} />
+                <Route path="appliedjobs" element={<AppliedJobs />} />
                 {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
                 <Route path="agentcreate" element={<QuickAgentCreate />} />
                 <Route

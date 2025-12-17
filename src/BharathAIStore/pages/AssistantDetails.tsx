@@ -1303,16 +1303,16 @@ const AssistantDetails: React.FC = () => {
 
       const userMessages = messages.filter((m) => m.role === "user");
 
-      //  if(!subscriptionValid && userMessages.length >=5){
-      //   setMessages((prevMessages) => [
-      //       ...prevMessages,
-      //       { role: "assistant", content: "You've reached your message limit. Please upgrade your plan to continue chatting." },
-      //     ]);
-      //   setShowSubscriptionModal(true);
-      //   fetchSubscriptionPlans();
-      //   setLoading(false);
-      //   return;
-      // }
+       if(!subscriptionValid && userMessages.length >=1){
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { role: "assistant", content: "You've reached your message limit. Please upgrade your plan to continue chatting." },
+          ]);
+        setShowSubscriptionModal(true);
+        fetchSubscriptionPlans();
+        setLoading(false);
+        return;
+      }
 
       // Stop voice if active before sending
 
@@ -3109,7 +3109,7 @@ ${url}`.trim();
               open={showSubscriptionModal}
               onCancel={() => setShowSubscriptionModal(false)}
               subscriptionPlans={subscriptionPlans}
-              loadingPlans={loadingPlans}
+              // loadingPlans={loadingPlans}
               agentId={agentId || ""}
               userId={userId || ""}
             />
