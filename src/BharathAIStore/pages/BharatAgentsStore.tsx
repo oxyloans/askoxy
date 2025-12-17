@@ -270,119 +270,130 @@ function makeInitialsSVG(name: string) {
 }
 
 // ---------- reusable assistant card ----------
+// ---------- reusable assistant card ----------
 const AssistantCard: React.FC<{
   assistant: Assistant;
   onOpen: () => void;
   onShare?: () => void;
-  onCopy?: () => void; // NEW: Optional onCopy prop
+  onCopy?: () => void;
   index: number;
   q: string;
 }> = ({ assistant, onOpen, onShare, onCopy, index, q }) => {
-  const seed = assistant.name || `A${index}`;
-  const badge =
-    (assistant.metadata && (assistant.metadata.category as string)) || "Tools";
+ const badge = (() => {
+   const name = (assistant.name || "").trim();
+   if (!name) return "AI";
+
+   const words = name.split(/\s+/);
+   if (words.length === 1) return words[0][0]?.toUpperCase() || "AI";
+
+   return (words[0][0] + words[1][0]).toUpperCase();
+ })();
 
   const fallbackSVG = makeInitialsSVG(assistant.name || "AI");
   const chosenThumb = (assistant.imageUrl || "").trim() || fallbackSVG;
   const [imgSrc, setImgSrc] = useState<string>(chosenThumb);
 
+  const onCardKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onOpen();
+    }
+  };
+
   return (
-    <div
+    <article
       role="button"
       tabIndex={0}
       onClick={onOpen}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " " ? onOpen() : null)}
-      className={[
-        "relative group cursor-pointer rounded-2xl",
-        "shadow-purple-400/60",
-        "after:absolute after:-inset-[2px] after:rounded-2xl after:content-[''] after:-z-10",
-        "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)] after:pointer-events-none",
-        "transition-transform hover:-translate-y-0.5",
-        "h-full flex flex-col", // ✅ equal-height cell
-      ].join(" ")}
+      onKeyDown={onCardKeyDown}
       aria-label={`Open ${assistant.name}`}
+      className={[
+        "group relative h-full flex flex-col cursor-pointer",
+        "rounded-3xl border border-gray-200 bg-white shadow-sm",
+        "transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+        "focus:outline-none focus:ring-2 focus:ring-purple-500/30",
+      ].join(" ")}
     >
-      <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 hover:shadow-lg hover:ring-gray-300 transition overflow-hidden flex flex-col h-full">
-        {/* Thumbnail / Header */}
-        <div className="relative w-full">
-          <div
-            className="relative h-0 w-full pb-[56%] overflow-hidden"
-            aria-hidden="true"
-          >
+      {/* ✅ IMAGE BOX: rounded on ALL 4 sides */}
+      <div className="p-3">
+        <div className="relative overflow-hidden rounded-2xl bg-gray-100">
+          <div className="relative h-0 w-full pb-[56%]" aria-hidden="true">
             <img
               src={imgSrc}
               alt={`${assistant.name} thumbnail`}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               loading="lazy"
               decoding="async"
               onError={() => setImgSrc(fallbackSVG)}
             />
           </div>
-          <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
-            <Bot className="h-6 w-6 text-purple-700" />
-          </div>
-        </div>
 
-        {/* Content */}
-        <div className="pt-9 px-4 sm:px-5 pb-5 flex flex-col h-full">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
-                <Highlighter text={assistant.name || ""} query={q} />
-              </h3>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">
-                <Highlighter text={assistant.description || ""} query={q} />
-              </p>
-            </div>
-
-            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 text-[11px]">
-              <Shield className="h-3.5 w-3.5" />
-              {badge}
-            </span>
+          {/* ✅ badge inside image (doesn’t break rounding) */}
+          <div className="absolute right-3 top-3 rounded-full bg-black/30 px-3 py-1 backdrop-blur-sm">
+            <span className="text-[11px] font-bold text-white">{badge}</span>
           </div>
 
-          {/* Push the CTA to the bottom for alignment */}
-          <div className="mt-auto pt-5 flex items-center gap-2">
-            <button
-              onClick={onOpen}
-              className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
-            >
-              Open
-            </button>
-
-            {onShare && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation(); // prevent card Open click
-                  onShare();
-                }}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-2.5 py-2 text-gray-600 hover:bg-gray-50"
-                aria-label={`Share ${assistant.name}`}
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-            )}
-            {/* NEW: Copy Button (shows if onCopy provided) */}
-            {onCopy && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation(); // prevent card Open click
-                  onCopy();
-                }}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-2.5 py-2 text-gray-600 hover:bg-gray-50"
-                aria-label={`Copy URL for ${assistant.name}`}
-                title="Copy URL"
-              >
-                <Copy className="h-4 w-4" />{" "}
-                {/* Import Copy from lucide-react */}
-              </button>
-            )}
+          {/* ✅ bot icon inside image (no overhang outside card) */}
+          <div className="absolute left-3 bottom-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/95 shadow ring-1 ring-gray-200">
+            <Bot className="h-5 w-5 text-purple-700" />
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Content */}
+      <div className="px-4 sm:px-5 pb-5 flex flex-col flex-1">
+        <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
+          <Highlighter text={assistant.name || ""} query={q} />
+        </h3>
+
+        <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">
+          <Highlighter text={assistant.description || ""} query={q} />
+        </p>
+
+        {/* CTA row pinned to bottom */}
+        <div className="mt-auto pt-5 flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
+            className="inline-flex items-center justify-center rounded-xl bg-purple-600 px-4 py-2 text-white text-[13px] font-semibold hover:bg-purple-700 transition"
+          >
+            Open
+          </button>
+
+          {onShare && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare();
+              }}
+              className="inline-flex items-center justify-center rounded-xl border border-gray-300 px-3 py-2 text-gray-600 hover:bg-gray-50 transition"
+              aria-label={`Share ${assistant.name}`}
+              title="Share"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+          )}
+
+          {onCopy && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCopy();
+              }}
+              className="inline-flex items-center justify-center rounded-xl border border-gray-300 px-3 py-2 text-gray-600 hover:bg-gray-50 transition"
+              aria-label={`Copy URL for ${assistant.name}`}
+              title="Copy URL"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
   );
 };
 
@@ -477,7 +488,7 @@ const BharatAgentsStore: React.FC = () => {
 
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 20,
+    pageSize: 50,
     hasMore: true,
     total: 0,
   });
@@ -874,9 +885,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     });
   }, [q, searchResults, approvedAssistants]);
 
-  // your existing `shownAssistants` remains unchanged...
 
-  // mine (approved + owned by me); no search override here per requirement
   const myApprovedAssistants = useMemo(() => {
     if (!loggedInUserId) return [];
     return approvedAssistants.filter(
@@ -1283,7 +1292,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
         ) : (
           <>
             {/* ✅ Grid of real cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6 items-stretch">
               {finalAssistants.map((assistant, index) => (
                 <div
                   key={

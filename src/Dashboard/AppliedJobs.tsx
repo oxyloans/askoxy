@@ -215,26 +215,7 @@ const AppliedJobs: React.FC = () => {
         responsive: ["lg"] as any,
         render: (date: string) => formatDate(date),
       },
-      {
-        title: "Updated",
-        dataIndex: "updatedAt",
-        key: "updatedAt",
-        align: "center" as const,
-        responsive: ["xl"] as any,
-        render: (date: string) => formatDate(date),
-      },
-      {
-        title: "Status",
-        dataIndex: "jobStatus",
-        key: "jobStatus",
-        align: "center" as const,
-        render: (val: boolean) =>
-          val ? (
-            <Tag color="green">Active</Tag>
-          ) : (
-            <Tag color="red">Inactive</Tag>
-          ),
-      },
+    
       //   {
       //     title: "Action",
       //     key: "actions",

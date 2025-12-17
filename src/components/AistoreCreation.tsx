@@ -16,7 +16,11 @@ import {
   Empty,
   Spin,
   Image,
+  Upload,
+  Row,
+  Col,
 } from "antd";
+
 import {
   EditOutlined,
   PlusOutlined,
@@ -118,6 +122,62 @@ const AgentStoreManager: React.FC = () => {
       fallbackCopy(text);
     }
   };
+const [isBulkUploadModal, setIsBulkUploadModal] = useState(false);
+const [bulkUploading, setBulkUploading] = useState(false);
+const [uploadForm] = Form.useForm();
+
+const userId = localStorage.getItem("userId") || "";
+
+// AntD Upload -> Form normalize
+const normFile = (e: any) => {
+  if (Array.isArray(e)) return e;
+  return e?.fileList;
+};
+
+const handleMultiAgentUpload = async (values: any) => {
+  try {
+    const storeId = values?.storeId;
+    const view = values?.view;
+    const fileObj = values?.file?.[0]?.originFileObj; // Upload component file
+
+    if (!storeId) return message.error("Please select a store");
+    if (!view) return message.error("Please select view");
+    if (!fileObj) return message.error("Please choose a file");
+    if (!userId) return message.error("UserId not found. Please login again.");
+
+    setBulkUploading(true);
+
+    const formData = new FormData();
+    formData.append("storeId", storeId);
+    formData.append("userId", userId);
+    formData.append("view", view);
+    formData.append("file", fileObj);
+
+    const res = await fetch(`${BASE_URL}/ai-service/agent/uploadMultiAgents1`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt || "Upload failed");
+    }
+
+    message.success("Agents uploaded successfully");
+    setIsBulkUploadModal(false);
+    uploadForm.resetFields();
+
+    // refresh store list
+    fetchStores();
+  } catch (err: any) {
+    message.error(err?.message || "Failed to upload agents");
+  } finally {
+    setBulkUploading(false);
+  }
+};
 
   const fallbackCopy = (text: string): void => {
     const textarea: HTMLTextAreaElement = document.createElement("textarea");
@@ -530,6 +590,7 @@ const AgentStoreManager: React.FC = () => {
             >
               Copy
             </Button>
+            
           </Space>
         );
       },
@@ -637,46 +698,6 @@ const AgentStoreManager: React.FC = () => {
       ),
     },
   ];
-  // Multi-Agent Upload Handler
-  const [uploading, setUploading] = useState(false);
-  const [uploadForm] = Form.useForm();
-  const userId = localStorage.getItem("userId") || "";
-
-  const handleMultiAgentUpload = async (values:any) => {
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("storeId", values.storeId);
-      formData.append("userId", userId);
-      formData.append("view", values.view);
-      if (values.file && values.file.file) {
-        formData.append("file", values.file.file);
-      } else {
-        message.error("Please select a file to upload.");
-        setUploading(false);
-        return;
-      }
-
-      const res = await fetch(
-        `${BASE_URL}/ai-service/agent/uploadMultiAgents1`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: formData,
-        }
-      );
-      if (!res.ok) throw new Error("Failed to upload agents");
-      message.success("Agents uploaded successfully!");
-      uploadForm.resetFields();
-      fetchStores();
-    } catch (err:any) {
-      message.error(err.message || "Failed to upload agents");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   return (
     <div style={{ padding: "16px", background: "#fff", minHeight: "100vh" }}>
@@ -720,7 +741,20 @@ const AgentStoreManager: React.FC = () => {
           >
             Add AI Store
           </Button>
-
+          {/* <Button
+            icon={<UsergroupAddOutlined />}
+            style={{
+              background: "#ba4d00ff",
+              borderColor: "#ba4d00ff",
+              height: "40px",
+              color: "#f7f7f7",
+              fontWeight: "500",
+            }}
+            type="default"
+            onClick={() => setIsBulkUploadModal(true)}
+          >
+            Bulk Upload Agents
+          </Button> */}
           <Button
             type="primary"
             icon={<FaShoppingCart />}
@@ -738,92 +772,164 @@ const AgentStoreManager: React.FC = () => {
           </Button>
         </div>
       </div>
-      {/* <div
-        style={{
-          marginBottom: 32,
-          marginLeft: "auto",
-          marginRight: "auto",
+      <Modal
+        open={isBulkUploadModal}
+        title="Bulk Upload Agents"
+        onCancel={() => {
+          setIsBulkUploadModal(false);
+          uploadForm.resetFields();
         }}
+        onOk={() => uploadForm.submit()}
+        okText="Upload"
+        confirmLoading={bulkUploading}
+        width={720}
       >
-        <h1 style={{ marginBottom: 16 }}>Bulk Upload Agents</h1>
-
         <Form
           form={uploadForm}
           layout="vertical"
           onFinish={handleMultiAgentUpload}
           initialValues={{ view: "public" }}
         >
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "nowrap", // ✅ always one line
-              gap: 16,
-              alignItems: "flex-end",
-              overflowX: "auto",
-              paddingBottom: 6,
-            }}
-          >
-          
-            <div style={{ width: 260 }}>
+          <Row gutter={[12, 12]}>
+            <Col xs={24} md={12}>
               <Form.Item
                 name="storeId"
                 label="Store"
                 rules={[{ required: true, message: "Please select a store" }]}
               >
-                <Select placeholder="Select Store" showSearch />
+                <Select
+                  placeholder="Select Store"
+                  showSearch
+                  optionFilterProp="label"
+                  allowClear
+                >
+                  {(storeData || []).map((s) => (
+                    <Select.Option
+                      key={s.storeId}
+                      value={s.storeId}
+                      label={s.storeName}
+                    >
+                      {s.storeName}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
-            </div>
+            </Col>
 
-          
-            <div style={{ width: 260 }}>
+            <Col xs={24} md={12}>
               <Form.Item
                 name="view"
                 label="View"
                 rules={[{ required: true, message: "Please select view" }]}
               >
                 <Select>
-                  <Select.Option value="public">Public</Select.Option>
-                  <Select.Option value="private">Private</Select.Option>
+                  <Select.Option value="public">public</Select.Option>
+                  <Select.Option value="private">private</Select.Option>
                 </Select>
               </Form.Item>
-            </div>
+            </Col>
 
-          
-            <div style={{ width: 260 }}>
-              <Form.Item
-                name="file"
-                label="File"
-                valuePropName="fileList"
-                getValueFromEvent={(e) =>
-                  Array.isArray(e) ? e : e && e.fileList
-                }
-                rules={[{ required: true, message: "Please upload a file" }]}
-              >
-                <Input type="file" accept=".csv,.xlsx,.xls,.json" />
-              </Form.Item>
-            </div>
-
-           
-            <div style={{ width: 260 }}>
-              <Form.Item label=" ">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={uploading}
+            <Col xs={24}>
+              <Form.Item label="Excel Format (Required)">
+                <div
                   style={{
-                    width: "100%", // ✅ SAME WIDTH
-                    height: 40, // ✅ SAME HEIGHT
-                    background: "#0089c4",
-                    borderColor: "#0089c4",
+                    marginBottom: 12,
+                    padding: 12,
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 8,
+                    background: "#fafafa",
                   }}
                 >
-                  Upload
-                </Button>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                    Excel Format (Headers must be exact)
+                  </div>
+
+                  <div style={{ overflowX: "auto" }}>
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        minWidth: 520,
+                      }}
+                    >
+                      <thead>
+                        <tr>
+                          {["role", "goal", "purpose", "agentName"].map((h) => (
+                            <th
+                              key={h}
+                              style={{
+                                border: "1px solid #d9d9d9",
+                                padding: 8,
+                                background: "#fff",
+                                textAlign: "left",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            student
+                          </td>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            study_abroad
+                          </td>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            usa_details
+                          </td>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            USA-Agent
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            parent
+                          </td>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            loan_help
+                          </td>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            education_loan
+                          </td>
+                          <td style={{ border: "1px solid #eee", padding: 8 }}>
+                            Loan-Agent
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+                    Note: Excel first row must be exactly:
+                    <b> role, goal, purpose, agentName</b>
+                  </div>
+                </div>
               </Form.Item>
-            </div>
-          </div>
+
+              <Form.Item
+                name="file"
+                label="Upload Excel File"
+                valuePropName="fileList"
+                getValueFromEvent={normFile}
+                rules={[
+                  { required: true, message: "Please upload Excel file" },
+                ]}
+              >
+                <Upload.Dragger beforeUpload={() => false} maxCount={1}>
+                  <p className="ant-upload-drag-icon" />
+                  <p className="ant-upload-text">
+                    Click or drag Excel file to upload
+                  </p>
+                </Upload.Dragger>
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
-      </div> */}
+      </Modal>
 
       <Table<Store>
         columns={columns}

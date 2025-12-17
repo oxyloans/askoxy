@@ -419,44 +419,377 @@ const App: React.FC = () => {
       localStorage.setItem("entryPoint", location.pathname);
     }
   }, [location.pathname]);
-  const ScrollToTopMemo = React.memo(ScrollToTop);
+
   return (
     <CartProvider>
       <SearchProvider>
         <RemoveTrailingSlash />
-        
-        <Suspense fallback ={<LoadingSpinner/>}>
+      <Suspense fallback={<LoadingSpinner />}>
         <div className="App">
-         
-            <Routes>
-              <Route path="/shopretail" element={<HomePage />} />
-              <Route path="/shop-form" element={<ShopFormPage />} />
-              <Route path="/shop-list" element={<ShopListPage />} />
-              <Route path="/shop-edit/:id" element={<ShopEditForm />} />
-              <Route path="/carnival-form" element={<CarnivalFormPage />} />
-              <Route path="/carnival-list" element={<CarnivalListPage />} />
+          <Routes>
+            {/* ===================================================== */}
+            {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
+            {/* ===================================================== */}
+            <Route path="/shopretail" element={<HomePage />} />
+            <Route path="/shop-form" element={<ShopFormPage />} />
+            <Route path="/shop-list" element={<ShopListPage />} />
+            <Route path="/shop-edit/:id" element={<ShopEditForm />} />
+
+            <Route path="/carnival-form" element={<CarnivalFormPage />} />
+            <Route path="/carnival-list" element={<CarnivalListPage />} />
+            <Route path="/carnivals/edit/:id" element={<CarnivalEditPage />} />
+
+            <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
+            <Route path="/paymentcashfree" element={<PaymentCashfree />} />
+            <Route path="/interview" element={<InterviewPage />} />
+            <Route path="/offer" element={<OfferScreen />} />
+            <Route path="/tripplanner" element={<TripPlanner />} />
+
+            {/* NOTE: These are your existing relative routes (kept same) */}
+            <Route path="dashboard/:tab" element={<DashboardMain />} />
+            <Route path="services/freeai-genai" element={<FreeAiandGenAi />} />
+            <Route path="services/:id/:type" element={<CampaignDetails />} />
+            <Route path="blog/:id/:type" element={<BlogDetails />} />
+            <Route path="jobdetails" element={<JobDetails />} />
+            <Route path="caserviceitems" element={<CAServicesItems />} />
+            <Route path="metroLogin" element={<MetroLogin />} />
+            <Route path="agentCreationSteps" element={<AgentCreationSteps />} />
+            <Route path="services/Freechatgpt" element={<FreeChatGPTmain />} />
+            <Route path="services/myrotary" element={<MyRotaryServices />} />
+            <Route path="services/bmvcoin" element={<BMVCOINmain />} />
+            <Route
+              path="services/freesample-steelcontainer"
+              element={<FreeSample />}
+            />
+            <Route
+              path="services/machines-manufacturing"
+              element={<MachinesManufacturingServices />}
+            />
+            <Route path="service/oxyloans-service" element={<OxyLoans />} />
+            <Route path="services/legalservice" element={<LegalService />} />
+            <Route path="services/we-are-hiring" element={<HiringService />} />
+
+            {/* ===================================================== */}
+            {/* ✅ AUTH ROUTES (WhatsApp Login/Register) */}
+            {/* ===================================================== */}
+            <Route path="/whatsapplogin" element={<WhatsappLogin />} />
+            <Route path="/whatsappregister" element={<WhatsappRegister />} />
+
+            {/* ===================================================== */}
+            {/* ✅ OTHER PUBLIC ROUTES */}
+            {/* ===================================================== */}
+            <Route path="/freerice" element={<FreeRiceBlog />} />
+            <Route path="/usercreateaistore" element={<AgentStoreManager />} />
+            <Route path="/userFeedback" element={<Feedback />} />
+            <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
+            <Route path="/aiassistant" element={<ChatInterface />} />
+            <Route
+              path="/usermobilenumberupdate"
+              element={<MobileNumberUpdate />}
+            />
+            <Route path="/userregister" element={<UserRegister />} />
+            <Route path="/userlogin" element={<UserLogin />} />
+
+            {/* ===================================================== */}
+            {/* ✅ PUBLIC PAGES UNDER LAYOUT */}
+            {/* ===================================================== */}
+            <Route element={<Layout />}>
+              <Route path="/bharath-aistore" element={<BharatAgentsStore />} />
+              <Route path="/all-ai-stores" element={<AllAIStores />} />
+              <Route path="/ai-store/:storeSlug" element={<AllAIStore />} />
+              <Route path="/ai-store/:storeSlug/:type" element={<AllAIStore />} />
+
               <Route
-                path="/carnivals/edit/:id"
-                element={<CarnivalEditPage />}
+                path="/bharath-aistore/insurance"
+                element={<InsuranceAgentsPage />}
               />
-              <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
-              <Route path="/paymentcashfree" element={<PaymentCashfree />} />
-              <Route path="/interview" element={<InterviewPage />} />
-              <Route path="/offer" element={<OfferScreen  />} />
-              <Route path="/tripplanner" element={<TripPlanner />} />
-              {/* ----------------------------- */}
+              <Route
+                path="/bharath-aistore/RadhaAgents"
+                element={<AdminMyAgentsPage />}
+              />
+              <Route
+                path="/bharath-aistore/hiddenagents"
+                element={<RadhaHiddenAgents />}
+              />
+              <Route
+                path="/bharath-aistore/healthcare"
+                element={<HealthcareAgentsPage />}
+              />
+              <Route path="/awards-rewards" element={<AwardsRewardsVideo />} />
+              <Route
+                path="/bharath-aistore/ai-initiatives"
+                element={<AiResources />}
+              />
+            </Route>
+
+            {/* ===================================================== */}
+            {/* ✅ MORE PUBLIC ROUTES */}
+            {/* ===================================================== */}
+            <Route path="/jobstreet" element={<JobStreet />} />
+            <Route path="/:id/:agentId/:agentname" element={<AssistantDetails />} />
+            <Route path="/myblogs" element={<BlogsPage />} />
+            <Route path="/wearehiring" element={<HiringPages />} />
+            <Route path="/myservices" element={<ServicesPage />} />
+            <Route path="/celebshield" element={<CelebShieldPage />} />
+            <Route path="/termsandconditions" element={<TermsAndConditions />} />
+            <Route path="/rcsconsentform" element={<RCSConsentForm />} />
+            <Route
+              path="/loanmanagement"
+              element={<LoanManagementLandingPage />}
+            />
+
+            {/* LOS / Dashboards */}
+            <Route path="/los" element={<CASDashboard />} />
+            <Route path="/los/:useCaseId/:type" element={<CASRouteRenderer />} />
+            <Route path="/cms" element={<CMSDashboard />} />
+            <Route path="/cms/:useCaseId/:type" element={<CMSRouteRenderer />} />
+            <Route path="/fms" element={<FMSDashboard />} />
+            <Route path="/fms/:useCaseId/:type" element={<FMSRouteRenderer />} />
+            <Route path="/glms" element={<LandingPage />} />
+
+            {/* AI Videos / Content */}
+            <Route path="/ai-masterclasses" element={<OurAIVideos />} />
+            <Route path="/ai-videos" element={<AiVideosGenerated />} />
+            <Route path="/genoxyai-services" element={<LandingPage1 />} />
+
+            {/* Free AI Book */}
+            <Route path="/freeaibook" element={<Content2 />}>
+              <Route index element={<FreeAiBookLandingPage />} />
+              <Route
+                path="view"
+                element={
+                  <ProtectedRoute>
+                    <FreeAiBook />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+
+            {/* GenOxy */}
+            <Route
+              path="/aiblockchainanditservices"
+              element={<AIBlockchainAndItServices />}
+            />
+            <Route path="/insurancevoice" element={<InsuranceLLmVoice />} />
+            <Route path="/genoxy" element={<GenOxy />} />
+            <Route
+              path="/genoxy/tie"
+              element={<Navigate to="/genoxy/chat?a=tie-llm" replace />}
+            />
+            <Route
+              path="/genoxy/klm"
+              element={
+                <Navigate
+                  to={"/genoxy/chat?a=" + encodeURIComponent("klm-fashions LLM")}
+                  replace
+                />
+              }
+            />
+            <Route path="/genoxy/chat" element={<GenOxy />} />
+            <Route path="/genoxy/llm-faqs" element={<LLMFAQPage />} />
+            <Route path="/genoxy/faqslide" element={<FaqLLMSlides />} />
+
+            {/* Voice Assistants */}
+            <Route
+              path="/voiceAssistant"
+              element={<Navigate to="/voiceAssistant/welcome" replace />}
+            />
+            <Route path="/voiceAssistant/:screen" element={<RealtimePage />} />
+            <Route path="/caandcsservices" element={<CACSService />} />
+            <Route
+              path="/visavoice"
+              element={<Navigate to="/visavoice/welcome" replace />}
+            />
+            <Route path="/visavoice/:screen" element={<VisaVoice />} />
+
+            {/* Other Landing / Service pages */}
+            <Route
+              path="/goldandsilveranddiamonds"
+              element={<GoldAndSilverAndDiamond />}
+            />
+            <Route
+              path="/loansinvestments"
+              element={<LoansInvestmentsLandingPage />}
+            />
+            <Route path="/realestate" element={<RealEstate />} />
+            <Route path="/rice2roboecommers" element={<Rice2RoboEcommers />} />
+            <Route path="/nyayagpt" element={<Nyayagpt />} />
+            <Route path="/gstonrice" element={<GSTRiceFAQ />} />
+
+            {/* Employee / Internal */}
+            <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
+            <Route path="/planoftheday" element={<PlanOfTheDay />} />
+            <Route
+              path="/userinstructionsview"
+              element={<EmployeeInteractions />}
+            />
+            <Route
+              path="/taskmanagement/chatview/:id"
+              element={<EmployeeViewChat />}
+            />
+            <Route path="/taskupdated" element={<TaskUpdate />} />
+            <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
+            <Route path="/leavestatus" element={<TeamLeaveStatus />} />
+            <Route path="/all-statuses" element={<AllStatusPage />} />
+            <Route path="/assigned-task" element={<AdminTasks />} />
+            <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
+
+            {/* Auth / Help */}
+            <Route path="/hiddenlogin" element={<HiddenLogin />} />
+            <Route path="/forgot" element={<ForgotPasswordPage />} />
+            <Route path="/contactus" element={<ContactUs />} />
+            <Route path="/faqs" element={<RiceOfferFAQs />} />
+
+            {/* Study Abroad */}
+            <Route path="/studyabroad" element={<StudyAbroadLandingPage />} />
+            <Route path="/all-universities" element={<AllUniversities />} />
+            <Route path="/student-dashboard" element={<StudentMainDashboard />} />
+            <Route path="/student-home" element={<UserSelectionPage />} />
+            <Route path="/listofuniversities" element={<UniversityListPage />} />
+
+            {/* Misc */}
+            <Route path="/qrcode" element={<QR />} />
+            <Route path="/agenticai" element={<AgenticAi />} />
+            <Route
+              path="/bharat-agentbusiness"
+              element={<CreateAgentStep2 />}
+            />
+            <Route path="/oxygroup" element={<OxyGroup />} />
+            <Route path="/pinkfunding" element={<PinkFunding />} />
+            <Route path="/climatecrisis" element={<Climatecrisis />} />
+            <Route path="/thank-you" element={<ThankYouPage />} />
+            <Route path="/freechatgptnormal" element={<FreeChatGPTnormal />} />
+            <Route
+              path="/proud-lender/testimonials"
+              element={<TestimonialsPage />}
+            />
+            <Route path="/templates" element={<DesignTemplatesPage />} />
+            <Route path="/template1" element={<UniversityPromoCard />} />
+            <Route path="/template2" element={<PromoCard />} />
+            <Route path="/steamricevsrawrice" element={<RiceComparison />} />
+            <Route
+              path="/aiandgenaivsverficationandvalidation"
+              element={<FREEAIANDGENAI />}
+            />
+            <Route path="/future" element={<Landingpage />} />
+            <Route path="/apidocs" element={<ApiDocs />} />
+            <Route path="/womensday" element={<WomensDay />} />
+            <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+            <Route path="/bmvpdf" element={<BMVPDF />} />
+            <Route path="/teststore" element={<TestStore />} />
+            <Route
+              path="/teststore/assistant/:id/:agentId"
+              element={<TestAgentDetails />}
+            />
+
+            {/* ===================================================== */}
+            {/* ✅ PROTECTED MAIN APP ROUTES (/main) */}
+            {/* ===================================================== */}
+            <Route
+              path="/main"
+              element={
+                <RequireAuth>
+                  <Content1 />
+                </RequireAuth>
+              }
+            >
+              {/* Default */}
+              <Route
+                index
+                element={<Navigate to="/main/dashboard/products" replace />}
+              />
+
+              {/* Dashboard */}
+              <Route
+                path="/main/dashboard/accomdation-gpt"
+                element={<AccomidationGpt />}
+              />
+              <Route
+                path="/main/dashboard/accreditations-gpt"
+                element={<AccreditationsRecognization />}
+              />
+              <Route
+                path="/main/dashboard/applicationsupport-gpt"
+                element={<ApplicationSupport />}
+              />
+              <Route
+                path="/main/dashboard/courses-gpt"
+                element={<CoursesGpt />}
+              />
+              <Route
+                path="/main/dashboard/preparation-gpt"
+                element={<PreparationGpt />}
+              />
+              <Route
+                path="/main/dashboard/foreign-exchange"
+                element={<ForeignExchange />}
+              />
+              <Route
+                path="/main/dashboard/informationaboutcountries-gpt"
+                element={<InformationAboutCountries />}
+              />
+              <Route path="/main/dashboard/loans-gpt" element={<LoansGpt />} />
+              <Route
+                path="/main/dashboard/logistics-gpt"
+                element={<LogisticsGpt />}
+              />
+
+              {/* ✅ inside /main already protected — no need nested RequireAuth */}
+              <Route
+                path="/main/dashboard/barcodescanner"
+                element={<BarcodeScanner />}
+              />
+
+              <Route
+                path="/main/dashboard/placements-gpt"
+                element={<PlacementsGpt />}
+              />
+              <Route
+                path="/main/dashboard/qualificationspecialization-gpt"
+                element={<QualificationSpecializationGPT />}
+              />
+              <Route
+                path="/main/dashboard/universities-gpt"
+                element={<University />}
+              />
+              <Route
+                path="/main/dashboard/offer-letter-samples"
+                element={<UniversityOffers />}
+              />
+              <Route
+                path="/main/dashboard/scholarships-gpt"
+                element={<ScholarshipGpt />}
+              />
+              <Route
+                path="/main/dashboard/reviews-gpt"
+                element={<ReviewsGpt />}
+              />
+              <Route path="/main/dashboard/home" element={<Home />} />
+              <Route path="/main/dashboard/rice-gpt" element={<RiceGpt />} />
+              <Route
+                path="/main/dashboard/universitiesagents-gpt"
+                element={<UniversityAgents />}
+              />
+              <Route path="/main/dashboard/visa-gpt" element={<VisaGpt />} />
+
+              {/* Internal */}
               <Route path="dashboard/:tab" element={<DashboardMain />} />
-              {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}
+              <Route path="dashboard/myservices" element={<ServicesPage />} />
+              <Route path="dashboard/myblogs" element={<BlogsPage />} />
+              <Route path="jobdetails" element={<JobDetails />} />
+              <Route path="caserviceitems" element={<CAServicesItems />} />
+              <Route path="cartcaservice" element={<CartCaCsService />} />
+              <Route path="servicecalist" element={<ServiceCAList />} />
+              <Route path="servicedashboard" element={<ServiceDashboard />} />
+
+              {/* Services */}
               <Route
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
               />
               <Route path="services/:id/:type" element={<CampaignDetails />} />
               <Route path="blog/:id/:type" element={<BlogDetails />} />
-              <Route path="jobdetails" element={<JobDetails />} />
-              <Route path="caserviceitems" element={<CAServicesItems />} />
-              <Route path="metroLogin" element={<MetroLogin />} />
-              <Route path="agentCreationSteps" element={<AgentCreationSteps />} />
+              <Route path="addblogs" element={<AddBlog />} />
               <Route
                 path="services/Freechatgpt"
                 element={<FreeChatGPTmain />}
@@ -477,621 +810,150 @@ const App: React.FC = () => {
                 path="services/we-are-hiring"
                 element={<HiringService />}
               />
-              {/* ----------------------- */}
-              {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
-              <Route path="/whatsapplogin" element={<WhatsappLogin />} />
-              <Route path="/whatsappregister" element={<WhatsappRegister />} />
-              <Route path="/freerice" element={<FreeRiceBlog />} />
-              <Route
-                path="/usercreateaistore"
-                element={<AgentStoreManager />}
-              />
-              <Route path="/userFeedback" element={<Feedback />} />
-              <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
-              <Route path="/aiassistant" element={<ChatInterface />} />
-              <Route
-                path="/usermobilenumberupdate"
-                element={<MobileNumberUpdate />}
-              />
-              <Route path="/userregister" element={<UserRegister />} />
-              {/* <Route path="/glmshome" element={<UseCases />} /> */}
-              <Route element={<Layout />}>
-                <Route
-                  path="/bharath-aistore"
-                  element={<BharatAgentsStore />}
-                />
-                <Route path="/all-ai-stores" element={<AllAIStores />} />
-                <Route path="/ai-store/:storeSlug" element={<AllAIStore />} />
-                <Route
-                  path="/bharath-aistore/insurance"
-                  element={<InsuranceAgentsPage />}
-                />
-                <Route
-                  path="/bharath-aistore/RadhaAgents"
-                  element={<AdminMyAgentsPage />}
-                />
-                <Route path="/all-ai-stores" element={<AllAIStores />} />
-                <Route
-                  path="/ai-store/:storeSlug/:type"
-                  element={<AllAIStore />}
-                />
-                <Route
-                  path="/bharath-aistore/hiddenagents"
-                  element={<RadhaHiddenAgents />}
-                />
-                <Route
-                  path="/bharath-aistore/healthcare"
-                  element={<HealthcareAgentsPage />}
-                />
-                <Route
-                  path="/awards-rewards"
-                  element={<AwardsRewardsVideo />}
-                />
-                <Route
-                  path="/bharath-aistore/ai-initiatives"
-                  element={<AiResources />}
-                />
-              </Route>
-              <Route path="/jobstreet" element={<JobStreet />} />
-              <Route
-                path="/:id/:agentId/:agentname"
-                element={<AssistantDetails />}
-              />
-              <Route path="/myblogs" element={<BlogsPage />} />
-              <Route path="/wearehiring" element={<HiringPages />} />
-              <Route path="/myservices" element={<ServicesPage />} />
-              <Route path="/celebshield" element={<CelebShieldPage />} />
-              <Route
-                path="/termsandconditions"
-                element={<TermsAndConditions />}
-              />
-              <Route path="/rcsconsentform" element={<RCSConsentForm />} />
-              <Route
-                path="/loanmanagement"
-                element={<LoanManagementLandingPage />}
-              />
-              <Route path="/los" element={<CASDashboard />} />
-              <Route
-                path="/los/:useCaseId/:type"
-                element={<CASRouteRenderer />}
-              />
-              <Route path="/ai-masterclasses" element={<OurAIVideos />} />
-              <Route path="/ai-videos" element={<AiVideosGenerated />} />
-              <Route path="/genoxyai-services" element={<LandingPage1 />} />
-              <Route path="/cms" element={<CMSDashboard />} />
-              <Route
-                path="/cms/:useCaseId/:type"
-                element={<CMSRouteRenderer />}
-              />
-              <Route path="/fms" element={<FMSDashboard />} />
-              <Route
-                path="/fms/:useCaseId/:type"
-                element={<FMSRouteRenderer />}
-              />
-              <Route path="/glms" element={<LandingPage />} />
-              <Route path="/freeaibook" element={<Content2 />}>
-                <Route index element={<FreeAiBookLandingPage />} />
-                <Route
-                  path="view"
-                  element={
-                    <ProtectedRoute>
-                      <FreeAiBook />
-                    </ProtectedRoute>
-                  }
-                />
-              </Route>
-              <Route
-                path="/aiblockchainanditservices"
-                element={<AIBlockchainAndItServices />}
-              />
-              <Route path="/insurancevoice" element={<InsuranceLLmVoice />} />
-              <Route path="/genoxy" element={<GenOxy />} />
-              <Route
-                path="/genoxy/tie"
-                element={<Navigate to="/genoxy/chat?a=tie-llm" replace />}
-              />
-              <Route
-                path="/genoxy/klm"
-                element={
-                  <Navigate
-                    to={
-                      "/genoxy/chat?a=" + encodeURIComponent("klm-fashions LLM")
-                    }
-                    replace
-                  />
-                }
-              />
-              {/* Added: New route for chat interface */}
-              <Route path="/genoxy/chat" element={<GenOxy />} />
-              <Route path="/genoxy/llm-faqs" element={<LLMFAQPage />} />
-              <Route path="/genoxy/faqslide" element={<FaqLLMSlides />} />
-              <Route
-                path="/voiceAssistant"
-                element={<Navigate to="/voiceAssistant/welcome" replace />}
-              />
-              <Route
-                path="/voiceAssistant/:screen"
-                element={<RealtimePage />}
-              />
-              <Route path="/caandcsservices" element={<CACSService />} />
-              <Route
-                path="/visavoice"
-                element={<Navigate to="/visavoice/welcome" replace />}
-              />
-              <Route path="/visavoice/:screen" element={<VisaVoice />} />
-              <Route
-                path="/goldandsilveranddiamonds"
-                element={<GoldAndSilverAndDiamond />}
-              />
-              <Route
-                path="/loansinvestments"
-                element={<LoansInvestmentsLandingPage />}
-              />
-              <Route path="/realestate" element={<RealEstate />} />
-              <Route
-                path="/rice2roboecommers"
-                element={<Rice2RoboEcommers />}
-              />
-              <Route path="/nyayagpt" element={<Nyayagpt />} />
-              <Route path="/gstonrice" element={<GSTRiceFAQ />} />
-              <Route path="/userlogin" element={<UserLogin />} />{" "}
-              <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
-              <Route path="/planoftheday" element={<PlanOfTheDay />} />
-              <Route
-                path="/userinstructionsview"
-                element={<EmployeeInteractions />}
-              />
-              <Route
-                path="/taskmanagement/chatview/:id"
-                element={<EmployeeViewChat />}
-              />
-              <Route path="/taskupdated" element={<TaskUpdate />} />
-              <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
-              <Route path="/leavestatus" element={<TeamLeaveStatus />} />
-              <Route path="/all-statuses" element={<AllStatusPage />} />
-              <Route path="/assigned-task" element={<AdminTasks />} />
-              <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
-              <Route path="/hiddenlogin" element={<HiddenLogin />} />
-              <Route path="/forgot" element={<ForgotPasswordPage />} />
-              <Route path="/contactus" element={<ContactUs />} />
-              <Route path="/faqs" element={<RiceOfferFAQs />} />
-              {/* study abrad */}
-              <Route path="/studyabroad" element={<StudyAbroadLandingPage />} />
-              <Route path="/all-universities" element={<AllUniversities />} />
-              <Route
-                path="/student-dashboard"
-                element={<StudentMainDashboard />}
-              />
-              <Route path="/student-home" element={<UserSelectionPage />} />
-              {/* <Route path="/universities" element={<UniversityDetailsPage />} /> */}
-              <Route
-                path="/listofuniversities"
-                element={<UniversityListPage />}
-              />
-              {/* <Route path="/course" element={<CoursesPage />} /> */}
-              {/* <Route
-              path="/communities/maruthielite"
-              element={<RiceSalePage />}
-            /> */}
-              <Route path="/qrcode" element={<QR />} />
-              <Route path="/agenticai" element={<AgenticAi />} />
-              {/* <Route path="/verify-agent" element={<VerifyIdentity />} /> */}
-              {/* <Route path="/bharat-agent" element={<CreateAgentStep1 />} /> */}
-              <Route
-                path="/bharat-agentbusiness"
-                element={<CreateAgentStep2 />}
-              />
-              {/* <Route path="/bharat-agentprocess" element={<AgentProcess />} /> */}
-              {/* <Route path="/bharat-targetcus" element={<AgentTarget />} />
-            <Route path="/bharat-contact" element={<AgentContact />} />
-            <Route path="/bharat-generate" element={<AgentGenerate />} /> */}
-              <Route path="/oxygroup" element={<OxyGroup />} />
-              <Route path="/pinkfunding" element={<PinkFunding />} />
-              <Route path="/climatecrisis" element={<Climatecrisis />} />
-              <Route path="/thank-you" element={<ThankYouPage />} />
-              <Route
-                path="/freechatgptnormal"
-                element={<FreeChatGPTnormal />}
-              />
-              <Route
-                path="/proud-lender/testimonials"
-                element={<TestimonialsPage />}
-              />
-              <Route path="/templates" element={<DesignTemplatesPage />} />
-              <Route path="/template1" element={<UniversityPromoCard />} />
-              <Route path="/template2" element={<PromoCard />} />
-              <Route path="/steamricevsrawrice" element={<RiceComparison />} />
-              <Route
-                path="/aiandgenaivsverficationandvalidation"
-                element={<FREEAIANDGENAI />}
-              />
-              {/* Landing Page (First Page) */}
-              <Route path="/future" element={<Landingpage />} />
-              <Route path="/" element={<CurrentLandingPage />} />
-              <Route path="/apidocs" element={<ApiDocs />} />
-              {/* WhatsApp Login (Before Clicking Sign-in) */}
-              {/* <Route path="/communities/srilakshmi" element={<RiceSalePage />} /> */}
-              <Route path="/womensday" element={<WomensDay />} />
-              {/* Dashboard (After Login) */}
-              {/* Redirect Unknown Routes to Landing Page */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-              {/* {kartpage routes} */}
-              {/* <Route path="/buyRice" element={<Ricebags />} /> */}
-              <Route path="/privacypolicy" element={<PrivacyPolicy />} />
-              <Route path="/bmvpdf" element={<BMVPDF />} />
-              <Route path="/teststore" element={<TestStore />} />
-              <Route
-                path="/teststore/assistant/:id/:agentId"
-                element={<TestAgentDetails />}
-              />
-              {/* {Dashboard Main routes} */}
-              <Route
-                path="/main"
-                element={
-                  <RequireAuth>
-                    <Content1 />
-                  </RequireAuth>
-                }
-              >
-                <Route
-                  index
-                  element={<Navigate to="/main/dashboard/products" replace />}
-                />
-                <Route
-                  path="/main/dashboard/accomdation-gpt"
-                  element={<AccomidationGpt />}
-                />
-                <Route
-                  path="/main/dashboard/accreditations-gpt"
-                  element={<AccreditationsRecognization />}
-                />
-                <Route
-                  path="/main/dashboard/applicationsupport-gpt"
-                  element={<ApplicationSupport />}
-                />
-                <Route
-                  path="/main/dashboard/courses-gpt"
-                  element={<CoursesGpt />}
-                />{" "}
-                <Route
-                  path="/main/dashboard/preparation-gpt"
-                  element={<PreparationGpt />}
-                />
-                <Route
-                  path="/main/dashboard/foreign-exchange"
-                  element={<ForeignExchange />}
-                />
-                <Route
-                  path="/main/dashboard/informationaboutcountries-gpt"
-                  element={<InformationAboutCountries />}
-                />
-                <Route
-                  path="/main/dashboard/loans-gpt"
-                  element={<LoansGpt />}
-                />
-                <Route
-                  path="/main/dashboard/logistics-gpt"
-                  element={<LogisticsGpt />}
-                />
-                <Route
-                  path="/main/dashboard/barcodescanner"
-                  element={
-                    <RequireAuth>
-                      <BarcodeScanner />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/main/dashboard/placements-gpt"
-                  element={<PlacementsGpt />}
-                />
-                <Route
-                  path="/main/dashboard/qualificationspecialization-gpt"
-                  element={<QualificationSpecializationGPT />}
-                />
-                <Route
-                  path="/main/dashboard/universities-gpt"
-                  element={<University />}
-                />
-                <Route
-                  path="/main/dashboard/offer-letter-samples"
-                  element={<UniversityOffers />}
-                />
-                <Route
-                  path="/main/dashboard/scholarships-gpt"
-                  element={<ScholarshipGpt />}
-                />
-                <Route
-                  path="/main/dashboard/reviews-gpt"
-                  element={<ReviewsGpt />}
-                />
-                <Route path="/main/dashboard/home" element={<Home />} />
-                <Route path="/main/dashboard/rice-gpt" element={<RiceGpt />} />
-                <Route
-                  path="/main/dashboard/universitiesagents-gpt"
-                  element={<UniversityAgents />}
-                />
-                <Route path="/main/dashboard/visa-gpt" element={<VisaGpt />} />
-                <Route path="dashboard/:tab" element={<DashboardMain />} />
-                <Route path="dashboard/myservices" element={<ServicesPage />} />
-                <Route path="dashboard/myblogs" element={<BlogsPage />} />
-                <Route path="jobdetails" element={<JobDetails />} />
-                <Route path="caserviceitems" element={<CAServicesItems />} />
-                <Route path="cartcaservice" element={<CartCaCsService />} />
-                <Route path="servicecalist" element={<ServiceCAList />} />
-                <Route path="servicedashboard" element={<ServiceDashboard />} />
-                {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
-                {/* <Route
-                path="services/freerudraksha"
-                element={<Freerudraksha />}
-              /> */}
-                <Route
-                  path="services/freeai-genai"
-                  element={<FreeAiandGenAi />}
-                />
-                {/* <Route
-                path="services/campaign/:type"
-                element={<CampaignDetails />}
-              /> */}
-                <Route
-                  path="services/:id/:type"
-                  element={<CampaignDetails />}
-                />
-                <Route path="blog/:id/:type" element={<BlogDetails />} />
-                <Route path="addblogs" element={<AddBlog />} />
-                {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
-                <Route
-                  path="services/Freechatgpt"
-                  element={<FreeChatGPTmain />}
-                />
-                <Route
-                  path="services/myrotary"
-                  element={<MyRotaryServices />}
-                />
-                <Route path="services/bmvcoin" element={<BMVCOINmain />} />
-                <Route
-                  path="services/freesample-steelcontainer"
-                  element={<FreeSample />}
-                />
-                <Route
-                  path="services/machines-manufacturing"
-                  element={<MachinesManufacturingServices />}
-                />
-                <Route path="service/oxyloans-service" element={<OxyLoans />} />
-                <Route
-                  path="services/legalservice"
-                  element={<LegalService />}
-                />
-                <Route
-                  path="services/we-are-hiring"
-                  element={<HiringService />}
-                />
-                <Route
-                  path="wallet"
-                  element={
-                    <RequireAuth>
-                      <MyWalletPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="bharath-aistore/agents"
-                  element={<AllAgentsPage />}
-                />
-                <Route path="create-aiagent" element={<CreateAgentWizard />} />
-                <Route path="bharat-expert" element={<CreateAgentMain />} />
-                <Route path="appliedjobs" element={<AppliedJobs />} />
-                {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
-                <Route path="agentcreate" element={<QuickAgentCreate />} />
-                <Route
-                  path="usercreateaistore"
-                  element={<AgentStoreManager />}
-                />
-                <Route path="chatbasedagent" element={<ChatBasedAgent />} />
-                <Route
-                  path="chatinterface/assistant/:id/:agentId"
-                  element={<ChatInterface1 />}
-                />
-                <Route path="mycart" element={<CartPage />} />
-                <Route
-                  path="myorders"
-                  element={
-                    <RequireAuth>
-                      <MyOrders />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="profile"
-                  element={
-                    <RequireAuth>
-                      <ProfilePage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="referral"
-                  element={
-                    <RequireAuth>
-                      <ReferralPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="bulkinvite"
-                  element={
-                    <RequireAuth>
-                      <BulkInvite />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="google"
-                  element={
-                    <RequireAuth>
-                      <GmailContactsScreen />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="itemsdisplay/:itemId"
-                  element={<ItemDisplayPage />}
-                />
-                <Route
-                  path="subscription"
-                  element={
-                    <RequireAuth>
-                      <SubscriptionPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="writetous/:id"
-                  element={
-                    <RequireAuth>
-                      <WriteToUs />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="writetous"
-                  element={
-                    <RequireAuth>
-                      <WriteToUs />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="crypto"
-                  element={
-                    <RequireAuth>
-                      <MyCrypto />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="tickethistory"
-                  element={
-                    <RequireAuth>
-                      <TicketHistoryPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route path="search-main" element={<SearchMain />} />
-                <Route
-                  path="checkout"
-                  element={
-                    <RequireAuth>
-                      <CheckoutPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="manageaddresses"
-                  element={
-                    <RequireAuth>
-                      <ManageAddressesPage />
-                    </RequireAuth>
-                  }
-                />
-              </Route>
-              {/* Partner start */}
-              <Route path="/partnerLogin" element={<PartnerLogin />} />
-              <Route path="/home" element={<PartnerHome />}>
-                <Route index element={<MainPage />} />{" "}
-                {/* <Route path="newOrders" element={<NewOrders />} />
-              <Route path="acceptedOrders" element={<AcceptedOrders />} />
-              <Route path="assignedOrders" element={<AssignedOrders />} /> */}
-                <Route path="newOrders/:status" element={<NewOrders />} />
-                <Route path="acceptedOrders/:status" element={<NewOrders />} />
-                <Route path="assignedOrders/:status" element={<NewOrders />} />
-                <Route path="orderDetails" element={<OrderDetailsPage />} />
-                <Route path="allOrders" element={<AllOrders />} />
-                <Route path="addvehicle" element={<VehicleManagement />} />
-                <Route path="dbList" element={<DeliveryBoyList />} />
-                <Route path="queryManagement" element={<AllQueries />} />
-                <Route path="marketreport" element={<MarketReport />} />
-                <Route path="scan-qr" element={<BarcodeScanner />} />
-                <Route path="itemsList" element={<PartnerItemsList />} />
-                <Route path="dbOrderList" element={<DbOrderDetails />} />
-                <Route path="feedback" element={<FeedbackDashboard />} />
-                <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
-                <Route path="orderReport" element={<OrderReport />} />
-                <Route path="orderstats" element={<OrderStatsDashboard />} />
-                <Route path="updatestock" element={<StockUpdate />} />
-                <Route path="versionUpdate" element={<VersionUpdate />} />
-                <Route path="updateoffers" element={<OfferImagesUpdate />} />
-                <Route path="addReference" element={<AddReference />} />
-                <Route path="stockdetails" element={<StockTable />} />
-                <Route
-                  path="cartamountbasedorderplaces"
-                  element={<WalletEligibilitySlabs />}
-                />
-              </Route>
-              {/* Partner end */}
-              {/* ----------Admin Routes Start---------- */}
-              <Route path="/admin" element={<Login />} />
-              <Route path="/adminRegister" element={<Register />} />
-              <Route path="/admn" element={<AdminSidebar />}>
-                <Route path="dashboard" element={<Admin />} />
-                <Route path="registeredUsers" element={<RegisteredUser />} />
-                <Route path="allqueries" element={<AllQueries />} />
-                <Route
-                  path="allcampaignsdetails"
-                  element={<AllCampaignsDetails />}
-                />
-                <Route path="campaignsadd" element={<CampaignsAdd />} />
-                <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
-                <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
-                <Route path="advocates" element={<AdvocatesDataPage />} />
-                <Route path="talwardata" element={<TalwarDataPage />} />
-                <Route path="mumbaidata" element={<MumbaiDataPage />} />
-                <Route
-                  path="assignedtalwarData"
-                  element={<TalwarAssignedDataPage />}
-                />
-                <Route path="assignedData" element={<AssignedDataPage />} />
-                <Route
-                  path="kukatpallyassignedData"
-                  element={<KukatpallyAssignedDataPage />}
-                />
-                <Route path="addjobs" element={<AddJob />} />
-                <Route
-                  path="helpDeskUsers"
-                  element={<HelpDeskUsersDashboard />}
-                />
-                <Route path="dataAssigned" element={<DataAssigned />} />
-                <Route path="referredData" element={<ReferredData />} />
-                <Route path="orderReport" element={<OrderReport />} />
-                <Route path="feedback" element={<FeedbackDashboard />} />
-                <Route path="helpdashboard" element={<HelpDeskDashboard />} />
-                <Route path="todaycalls" element={<CallerHistoryPage />} />
-                <Route path="addblogs" element={<AddBlog />} />
-                <Route path="orderstats" element={<OrderStatsDashboard />} />
-                <Route path="updatestock" element={<StockUpdate />} />
 
-                <Route
-                  path="superAdminComments"
-                  element={<SuperAdminComments />}
-                />
-                <Route path="pincodeorders" element={<OrdersByPincode />} />
-                <Route path="alljobdetails" element={<JobsAdminPage />} />
-                <Route path="userAppliedJobs" element={<UserAppliedJob />} />
-                <Route path="assistants" element={<AssistantDashboard />} />
-                <Route
-                  path="conversation/:assistantId"
-                  element={<AssistantOverview />}
-                />
-                <Route path="createassistant" element={<CreateAssistant />} />
-              </Route>
-              {/* ----------Admin Routes end---------- */}
-            </Routes>
-        
+              {/* Wallet / Orders / Profile etc (already protected by /main) */}
+              <Route path="wallet" element={<MyWalletPage />} />
+              <Route path="myorders" element={<MyOrders />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="referral" element={<ReferralPage />} />
+              <Route path="bulkinvite" element={<BulkInvite />} />
+              <Route path="google" element={<GmailContactsScreen />} />
+              <Route path="mycart" element={<CartPage />} />
+              <Route path="subscription" element={<SubscriptionPage />} />
+              <Route path="writetous" element={<WriteToUs />} />
+              <Route path="writetous/:id" element={<WriteToUs />} />
+              <Route path="crypto" element={<MyCrypto />} />
+              <Route path="tickethistory" element={<TicketHistoryPage />} />
+              <Route path="search-main" element={<SearchMain />} />
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="manageaddresses" element={<ManageAddressesPage />} />
+
+              {/* Agents */}
+              <Route
+                path="bharath-aistore/agents"
+                element={<AllAgentsPage />}
+              />
+              <Route path="create-aiagent" element={<CreateAgentWizard />} />
+              <Route path="bharat-expert" element={<CreateAgentMain />} />
+              <Route path="appliedjobs" element={<AppliedJobs />} />
+              <Route path="agentcreate" element={<QuickAgentCreate />} />
+              <Route path="usercreateaistore" element={<AgentStoreManager />} />
+              <Route path="chatbasedagent" element={<ChatBasedAgent />} />
+              <Route
+                path="chatinterface/assistant/:id/:agentId"
+                element={<ChatInterface1 />}
+              />
+
+              {/* ✅ Deep link route (your requirement) */}
+              <Route path="itemsdisplay/:itemId" element={<ItemDisplayPage />} />
+            </Route>
+
+            {/* ===================================================== */}
+            {/* ✅ PARTNER ROUTES */}
+            {/* ===================================================== */}
+            <Route path="/partnerLogin" element={<PartnerLogin />} />
+            <Route path="/home" element={<PartnerHome />}>
+              <Route index element={<MainPage />} />
+              <Route path="newOrders/:status" element={<NewOrders />} />
+              <Route path="acceptedOrders/:status" element={<NewOrders />} />
+              <Route path="assignedOrders/:status" element={<NewOrders />} />
+              <Route path="orderDetails" element={<OrderDetailsPage />} />
+              <Route path="allOrders" element={<AllOrders />} />
+              <Route path="addvehicle" element={<VehicleManagement />} />
+              <Route path="dbList" element={<DeliveryBoyList />} />
+              <Route path="queryManagement" element={<AllQueries />} />
+              <Route path="marketreport" element={<MarketReport />} />
+              <Route path="scan-qr" element={<BarcodeScanner />} />
+              <Route path="itemsList" element={<PartnerItemsList />} />
+              <Route path="dbOrderList" element={<DbOrderDetails />} />
+              <Route path="feedback" element={<FeedbackDashboard />} />
+              <Route path="exchangeorders" element={<ExchangeOrdersPage />} />
+              <Route path="orderReport" element={<OrderReport />} />
+              <Route path="orderstats" element={<OrderStatsDashboard />} />
+              <Route path="updatestock" element={<StockUpdate />} />
+              <Route path="versionUpdate" element={<VersionUpdate />} />
+              <Route path="updateoffers" element={<OfferImagesUpdate />} />
+              <Route path="addReference" element={<AddReference />} />
+              <Route path="stockdetails" element={<StockTable />} />
+              <Route
+                path="cartamountbasedorderplaces"
+                element={<WalletEligibilitySlabs />}
+              />
+            </Route>
+
+            {/* ===================================================== */}
+            {/* ✅ ADMIN ROUTES */}
+            {/* ===================================================== */}
+            <Route path="/admin" element={<Login />} />
+            <Route path="/adminRegister" element={<Register />} />
+            <Route path="/admn" element={<AdminSidebar />}>
+              <Route path="dashboard" element={<Admin />} />
+              <Route path="registeredUsers" element={<RegisteredUser />} />
+              <Route path="allqueries" element={<AllQueries />} />
+              <Route
+                path="allcampaignsdetails"
+                element={<AllCampaignsDetails />}
+              />
+              <Route path="campaignsadd" element={<CampaignsAdd />} />
+              <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
+              <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
+              <Route path="advocates" element={<AdvocatesDataPage />} />
+              <Route path="talwardata" element={<TalwarDataPage />} />
+              <Route path="mumbaidata" element={<MumbaiDataPage />} />
+              <Route
+                path="assignedtalwarData"
+                element={<TalwarAssignedDataPage />}
+              />
+              <Route path="assignedData" element={<AssignedDataPage />} />
+              <Route
+                path="kukatpallyassignedData"
+                element={<KukatpallyAssignedDataPage />}
+              />
+              <Route path="addjobs" element={<AddJob />} />
+              <Route
+                path="helpDeskUsers"
+                element={<HelpDeskUsersDashboard />}
+              />
+              <Route path="dataAssigned" element={<DataAssigned />} />
+              <Route path="referredData" element={<ReferredData />} />
+              <Route path="orderReport" element={<OrderReport />} />
+              <Route path="feedback" element={<FeedbackDashboard />} />
+              <Route path="helpdashboard" element={<HelpDeskDashboard />} />
+              <Route path="todaycalls" element={<CallerHistoryPage />} />
+              <Route path="addblogs" element={<AddBlog />} />
+              <Route path="orderstats" element={<OrderStatsDashboard />} />
+              <Route path="updatestock" element={<StockUpdate />} />
+              <Route
+                path="superAdminComments"
+                element={<SuperAdminComments />}
+              />
+              <Route path="pincodeorders" element={<OrdersByPincode />} />
+              <Route path="alljobdetails" element={<JobsAdminPage />} />
+              <Route path="userAppliedJobs" element={<UserAppliedJob />} />
+              <Route path="assistants" element={<AssistantDashboard />} />
+              <Route
+                path="conversation/:assistantId"
+                element={<AssistantOverview />}
+              />
+              <Route path="createassistant" element={<CreateAssistant />} />
+            </Route>
+
+            {/* ===================================================== */}
+            {/* ✅ LANDING */}
+            {/* ===================================================== */}
+            <Route path="/" element={<CurrentLandingPage />} />
+
+            {/* ===================================================== */}
+            {/* ✅ FALLBACK */}
+            {/* ===================================================== */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
-        </Suspense>
-      </SearchProvider>
-    </CartProvider>
-  );
+      </Suspense>
+    </SearchProvider>
+  </CartProvider>
+);
+
 };
 
 export default App;

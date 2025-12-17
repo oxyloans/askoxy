@@ -5,15 +5,25 @@ interface RequireAuthProps {
 }
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
-  const token = localStorage.getItem("accessToken") ?localStorage.getItem("accessToken"):localStorage.getItem("userId")  // Check for authentication token
-  const location = useLocation(); // Get current location
+  const accessToken = localStorage.getItem("accessToken");
+  const userId = localStorage.getItem("userId");
+  const token = accessToken || userId;
+
+  const location = useLocation();
 
   if (!token) {
-    // Redirect to login page, and store current location for redirection after login
-    return <Navigate to="/whatapplogin" state={{ from: location }} replace />;
+    // ✅ Save FULL current path only if not already saved
+    const fullPath = location.pathname + location.search + location.hash;
+
+    if (!sessionStorage.getItem("redirectPath")) {
+      sessionStorage.setItem("redirectPath", fullPath);
+    }
+
+    // ✅ Redirect to WhatsApp Login
+    return <Navigate to="/whatsapplogin" replace />;
   }
 
-  return children; // Allow access if authenticated
+  return children;
 };
 
 export default RequireAuth;
