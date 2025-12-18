@@ -43,7 +43,7 @@ import O6 from "../assets/img/35kg1.png";
 import CB from "../assets/img/cashback offer png.png";
 import Cashew from "../assets/img/rakhi1.png";
 import Riceoffers from "../assets/img/rice offers.png";
-import festive from "../assets/img/festive.png";
+import festive from "../assets/img/festive.webp";
 
 import gold from "../assets/img/gold.png";
 import allitems from "../assets/img/all items.png";
@@ -518,8 +518,8 @@ const Home: React.FC = () => {
       );
       const rakhiItems = sortedUniqueItems.filter(
         (item: Item) =>
-          item.categoryType?.toLowerCase() === "festival" &&
-          item.categoryName?.toLowerCase() === "rakhi"
+          item.categoryType?.toLowerCase() === "silver" &&
+          item.categoryName?.toLowerCase() === "silver"
       );
       // Log filtered items to verify correct categorization
       console.log("All Items Count:", allItems.length);
@@ -541,7 +541,7 @@ const Home: React.FC = () => {
         Groceries: grocerie,
         Rice: rice,
         Gold: gold,
-        Rakhi: festive,
+        Silver: festive,
       };
 
       // Create fixed categories with images
@@ -570,12 +570,12 @@ const Home: React.FC = () => {
           itemsResponseDtoList: goldItems,
           subCategories: [],
         },
-        // {
-        //   categoryName: "Festival", // show "Festival" but fetches RAKHI items
-        //   categoryImage: defaultCategoryImages["Rakhi"],
-        //   itemsResponseDtoList: rakhiItems,
-        //   subCategories: [],
-        // },
+        {
+          categoryName: "Silver", // show "Silver" but fetches SILVER items
+          categoryImage: defaultCategoryImages["Silver"],
+          itemsResponseDtoList: rakhiItems,
+          subCategories: [],
+        },
       ];
 
       // // Log final categories
@@ -1355,7 +1355,7 @@ const Home: React.FC = () => {
       Groceries: "GROCERY",
       Rice: "RICE",
       Gold: "GOLD",
-      Festival: "FESTIVAL",
+      Silver: "SILVER",
     };
 
     // NEW: Get the category type based on the active category
@@ -1393,7 +1393,7 @@ const Home: React.FC = () => {
       Groceries: "GROCERY",
       Rice: "RICE",
       Gold: "GOLD",
-      Festival: "FESTIVAL",
+      Silver: "SILVER",
     };
 
     // NEW: Update the active category type based on the selected category

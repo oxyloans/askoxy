@@ -429,29 +429,33 @@ const App: React.FC = () => {
     <CartProvider>
       <SearchProvider>
         <RemoveTrailingSlash />
-        
-        <Suspense fallback ={<LoadingSpinner/>}>
-        <div className="App">
-         
+
+        <Suspense fallback={<LoadingSpinner />}>
+          <div className="App">
             <Routes>
+              {/* ===================================================== */}
+              {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
+              {/* ===================================================== */}
               <Route path="/shopretail" element={<HomePage />} />
               <Route path="/shop-form" element={<ShopFormPage />} />
               <Route path="/shop-list" element={<ShopListPage />} />
               <Route path="/shop-edit/:id" element={<ShopEditForm />} />
+              <Route path="/90dayjobplan" element={<JobTraining90DaysPage />} />
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
               <Route
                 path="/carnivals/edit/:id"
                 element={<CarnivalEditPage />}
               />
+
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
-              <Route path="/offer" element={<OfferScreen  />} />
+              <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
-              {/* ----------------------------- */}
+
+              {/* NOTE: These are your existing relative routes (kept same) */}
               <Route path="dashboard/:tab" element={<DashboardMain />} />
-              {/* <Route path="services/freerudraksha" element={<Freerudraksha />} /> */}
               <Route
                 path="services/freeai-genai"
                 element={<FreeAiandGenAi />}
@@ -461,7 +465,10 @@ const App: React.FC = () => {
               <Route path="jobdetails" element={<JobDetails />} />
               <Route path="caserviceitems" element={<CAServicesItems />} />
               <Route path="metroLogin" element={<MetroLogin />} />
-              <Route path="agentCreationSteps" element={<AgentCreationSteps />} />
+              <Route
+                path="agentCreationSteps"
+                element={<AgentCreationSteps />}
+              />
               <Route
                 path="services/Freechatgpt"
                 element={<FreeChatGPTmain />}
@@ -482,10 +489,16 @@ const App: React.FC = () => {
                 path="services/we-are-hiring"
                 element={<HiringService />}
               />
-              {/* ----------------------- */}
-              {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
+
+              {/* ===================================================== */}
+              {/* ✅ AUTH ROUTES (WhatsApp Login/Register) */}
+              {/* ===================================================== */}
               <Route path="/whatsapplogin" element={<WhatsappLogin />} />
               <Route path="/whatsappregister" element={<WhatsappRegister />} />
+
+              {/* ===================================================== */}
+              {/* ✅ OTHER PUBLIC ROUTES */}
+              {/* ===================================================== */}
               <Route path="/freerice" element={<FreeRiceBlog />} />
               <Route
                 path="/usercreateaistore"
@@ -499,7 +512,11 @@ const App: React.FC = () => {
                 element={<MobileNumberUpdate />}
               />
               <Route path="/userregister" element={<UserRegister />} />
-              {/* <Route path="/glmshome" element={<UseCases />} /> */}
+              <Route path="/userlogin" element={<UserLogin />} />
+
+              {/* ===================================================== */}
+              {/* ✅ PUBLIC PAGES UNDER LAYOUT */}
+              {/* ===================================================== */}
               <Route element={<Layout />}>
                 <Route
                   path="/bharath-aistore"
@@ -508,17 +525,16 @@ const App: React.FC = () => {
                 <Route path="/all-ai-stores" element={<AllAIStores />} />
                 <Route path="/ai-store/:storeSlug" element={<AllAIStore />} />
                 <Route
+                  path="/ai-store/:storeSlug/:type"
+                  element={<AllAIStore />}
+                />
+                <Route
                   path="/bharath-aistore/insurance"
                   element={<InsuranceAgentsPage />}
                 />
                 <Route
                   path="/bharath-aistore/RadhaAgents"
                   element={<AdminMyAgentsPage />}
-                />
-                <Route path="/all-ai-stores" element={<AllAIStores />} />
-                <Route
-                  path="/ai-store/:storeSlug/:type"
-                  element={<AllAIStore />}
                 />
                 <Route
                   path="/bharath-aistore/hiddenagents"
@@ -537,6 +553,10 @@ const App: React.FC = () => {
                   element={<AiResources />}
                 />
               </Route>
+
+              {/* ===================================================== */}
+              {/* ✅ MORE PUBLIC ROUTES */}
+              {/* ===================================================== */}
               <Route path="/jobstreet" element={<JobStreet />} />
               <Route
                 path="/:id/:agentId/:agentname"
@@ -555,14 +575,13 @@ const App: React.FC = () => {
                 path="/loanmanagement"
                 element={<LoanManagementLandingPage />}
               />
+
+              {/* LOS / Dashboards */}
               <Route path="/los" element={<CASDashboard />} />
               <Route
                 path="/los/:useCaseId/:type"
                 element={<CASRouteRenderer />}
               />
-              <Route path="/ai-masterclasses" element={<OurAIVideos />} />
-              <Route path="/ai-videos" element={<AiVideosGenerated />} />
-              <Route path="/genoxyai-services" element={<LandingPage1 />} />
               <Route path="/cms" element={<CMSDashboard />} />
               <Route
                 path="/cms/:useCaseId/:type"
@@ -574,6 +593,13 @@ const App: React.FC = () => {
                 element={<FMSRouteRenderer />}
               />
               <Route path="/glms" element={<LandingPage />} />
+
+              {/* AI Videos / Content */}
+              <Route path="/ai-masterclasses" element={<OurAIVideos />} />
+              <Route path="/ai-videos" element={<AiVideosGenerated />} />
+              <Route path="/genoxyai-services" element={<LandingPage1 />} />
+
+              {/* Free AI Book */}
               <Route path="/freeaibook" element={<Content2 />}>
                 <Route index element={<FreeAiBookLandingPage />} />
                 <Route
@@ -585,6 +611,7 @@ const App: React.FC = () => {
                   }
                 />
               </Route>
+              {/* GenOxy */}
               <Route
                 path="/aiblockchainanditservices"
                 element={<AIBlockchainAndItServices />}
@@ -606,10 +633,11 @@ const App: React.FC = () => {
                   />
                 }
               />
-              {/* Added: New route for chat interface */}
               <Route path="/genoxy/chat" element={<GenOxy />} />
               <Route path="/genoxy/llm-faqs" element={<LLMFAQPage />} />
               <Route path="/genoxy/faqslide" element={<FaqLLMSlides />} />
+
+              {/* Voice Assistants */}
               <Route
                 path="/voiceAssistant"
                 element={<Navigate to="/voiceAssistant/welcome" replace />}
@@ -624,6 +652,8 @@ const App: React.FC = () => {
                 element={<Navigate to="/visavoice/welcome" replace />}
               />
               <Route path="/visavoice/:screen" element={<VisaVoice />} />
+
+              {/* Other Landing / Service pages */}
               <Route
                 path="/goldandsilveranddiamonds"
                 element={<GoldAndSilverAndDiamond />}
@@ -639,7 +669,8 @@ const App: React.FC = () => {
               />
               <Route path="/nyayagpt" element={<Nyayagpt />} />
               <Route path="/gstonrice" element={<GSTRiceFAQ />} />
-              <Route path="/userlogin" element={<UserLogin />} />{" "}
+
+              {/* Employee / Internal */}
               <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
               <Route path="/planoftheday" element={<PlanOfTheDay />} />
               <Route
@@ -656,11 +687,14 @@ const App: React.FC = () => {
               <Route path="/all-statuses" element={<AllStatusPage />} />
               <Route path="/assigned-task" element={<AdminTasks />} />
               <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
+
+              {/* Auth / Help */}
               <Route path="/hiddenlogin" element={<HiddenLogin />} />
               <Route path="/forgot" element={<ForgotPasswordPage />} />
               <Route path="/contactus" element={<ContactUs />} />
               <Route path="/faqs" element={<RiceOfferFAQs />} />
-              {/* study abrad */}
+
+              {/* Study Abroad */}
               <Route path="/studyabroad" element={<StudyAbroadLandingPage />} />
               <Route path="/all-universities" element={<AllUniversities />} />
               <Route
@@ -668,28 +702,18 @@ const App: React.FC = () => {
                 element={<StudentMainDashboard />}
               />
               <Route path="/student-home" element={<UserSelectionPage />} />
-              {/* <Route path="/universities" element={<UniversityDetailsPage />} /> */}
               <Route
                 path="/listofuniversities"
                 element={<UniversityListPage />}
               />
-              {/* <Route path="/course" element={<CoursesPage />} /> */}
-              {/* <Route
-              path="/communities/maruthielite"
-              element={<RiceSalePage />}
-            /> */}
+
+              {/* Misc */}
               <Route path="/qrcode" element={<QR />} />
               <Route path="/agenticai" element={<AgenticAi />} />
-              {/* <Route path="/verify-agent" element={<VerifyIdentity />} /> */}
-              {/* <Route path="/bharat-agent" element={<CreateAgentStep1 />} /> */}
               <Route
                 path="/bharat-agentbusiness"
                 element={<CreateAgentStep2 />}
               />
-              {/* <Route path="/bharat-agentprocess" element={<AgentProcess />} /> */}
-              {/* <Route path="/bharat-targetcus" element={<AgentTarget />} />
-            <Route path="/bharat-contact" element={<AgentContact />} />
-            <Route path="/bharat-generate" element={<AgentGenerate />} /> */}
               <Route path="/oxygroup" element={<OxyGroup />} />
               <Route path="/pinkfunding" element={<PinkFunding />} />
               <Route path="/climatecrisis" element={<Climatecrisis />} />
@@ -710,18 +734,9 @@ const App: React.FC = () => {
                 path="/aiandgenaivsverficationandvalidation"
                 element={<FREEAIANDGENAI />}
               />
-              {/* Landing Page (First Page) */}
               <Route path="/future" element={<Landingpage />} />
-              <Route path="/" element={<CurrentLandingPage />} />
               <Route path="/apidocs" element={<ApiDocs />} />
-              {/* WhatsApp Login (Before Clicking Sign-in) */}
-              {/* <Route path="/communities/srilakshmi" element={<RiceSalePage />} /> */}
               <Route path="/womensday" element={<WomensDay />} />
-              {/* Dashboard (After Login) */}
-              {/* Redirect Unknown Routes to Landing Page */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-              {/* {kartpage routes} */}
-              {/* <Route path="/buyRice" element={<Ricebags />} /> */}
               <Route path="/privacypolicy" element={<PrivacyPolicy />} />
               <Route path="/bmvpdf" element={<BMVPDF />} />
               <Route path="/teststore" element={<TestStore />} />
@@ -729,7 +744,10 @@ const App: React.FC = () => {
                 path="/teststore/assistant/:id/:agentId"
                 element={<TestAgentDetails />}
               />
-              {/* {Dashboard Main routes} */}
+
+              {/* ===================================================== */}
+              {/* ✅ PROTECTED MAIN APP ROUTES (/main) */}
+              {/* ===================================================== */}
               <Route
                 path="/main"
                 element={
@@ -738,6 +756,7 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               >
+                {/* Default */}
                 <Route
                   index
                   element={<Navigate to="/main/dashboard/products" replace />}
@@ -747,17 +766,9 @@ const App: React.FC = () => {
                   element={<AccomidationGpt />}
                 />
                 <Route
-                  path="/main/dashboard/accreditations-gpt"
-                  element={<AccreditationsRecognization />}
-                />
-                <Route
                   path="/main/dashboard/applicationsupport-gpt"
                   element={<ApplicationSupport />}
                 />
-                <Route
-                  path="/main/dashboard/courses-gpt"
-                  element={<CoursesGpt />}
-                />{" "}
                 <Route
                   path="/main/dashboard/preparation-gpt"
                   element={<PreparationGpt />}
@@ -770,6 +781,7 @@ const App: React.FC = () => {
                   path="/main/dashboard/informationaboutcountries-gpt"
                   element={<InformationAboutCountries />}
                 />
+
                 <Route
                   path="/main/dashboard/loans-gpt"
                   element={<LoansGpt />}
@@ -780,11 +792,7 @@ const App: React.FC = () => {
                 />
                 <Route
                   path="/main/dashboard/barcodescanner"
-                  element={
-                    <RequireAuth>
-                      <BarcodeScanner />
-                    </RequireAuth>
-                  }
+                  element={<BarcodeScanner />}
                 />
                 <Route
                   path="/main/dashboard/placements-gpt"
@@ -817,6 +825,8 @@ const App: React.FC = () => {
                   element={<UniversityAgents />}
                 />
                 <Route path="/main/dashboard/visa-gpt" element={<VisaGpt />} />
+
+                {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
@@ -825,26 +835,6 @@ const App: React.FC = () => {
                 <Route path="cartcaservice" element={<CartCaCsService />} />
                 <Route path="servicecalist" element={<ServiceCAList />} />
                 <Route path="servicedashboard" element={<ServiceDashboard />} />
-                {/* <Route path="services/freerudraksha" element={<FreeRudrakshaPage/>} /> */}
-                {/* <Route
-                path="services/freerudraksha"
-                element={<Freerudraksha />}
-              /> */}
-                <Route
-                  path="services/freeai-genai"
-                  element={<FreeAiandGenAi />}
-                />
-                {/* <Route
-                path="services/campaign/:type"
-                element={<CampaignDetails />}
-              /> */}
-                <Route
-                  path="services/:id/:type"
-                  element={<CampaignDetails />}
-                />
-                <Route path="blog/:id/:type" element={<BlogDetails />} />
-                <Route path="addblogs" element={<AddBlog />} />
-                {/* <Route path="/studyabroad" element={<StudyAbroad />} /> */}
                 <Route
                   path="services/Freechatgpt"
                   element={<FreeChatGPTmain />}
@@ -871,13 +861,24 @@ const App: React.FC = () => {
                   path="services/we-are-hiring"
                   element={<HiringService />}
                 />
+                {/* Wallet / Orders / Profile etc (already protected by /main) */}
+                <Route path="wallet" element={<MyWalletPage />} />
+                <Route path="myorders" element={<MyOrders />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="referral" element={<ReferralPage />} />
+                <Route path="bulkinvite" element={<BulkInvite />} />
+                <Route path="google" element={<GmailContactsScreen />} />
+                <Route path="mycart" element={<CartPage />} />
+                <Route path="subscription" element={<SubscriptionPage />} />
+                <Route path="writetous" element={<WriteToUs />} />
+                <Route path="writetous/:id" element={<WriteToUs />} />
+                <Route path="crypto" element={<MyCrypto />} />
+                <Route path="tickethistory" element={<TicketHistoryPage />} />
+                <Route path="search-main" element={<SearchMain />} />
+                <Route path="checkout" element={<CheckoutPage />} />
                 <Route
-                  path="wallet"
-                  element={
-                    <RequireAuth>
-                      <MyWalletPage />
-                    </RequireAuth>
-                  }
+                  path="manageaddresses"
+                  element={<ManageAddressesPage />}
                 />
                 <Route
                   path="bharath-aistore/agents"
@@ -886,7 +887,6 @@ const App: React.FC = () => {
                 <Route path="create-aiagent" element={<CreateAgentWizard />} />
                 <Route path="bharat-expert" element={<CreateAgentMain />} />
                 <Route path="appliedjobs" element={<AppliedJobs />} />
-                {/* <Route path="createagent" element={<AgentEntryPage />} /> */}
                 <Route path="agentcreate" element={<QuickAgentCreate />} />
                 <Route
                   path="usercreateaistore"
@@ -897,116 +897,18 @@ const App: React.FC = () => {
                   path="chatinterface/assistant/:id/:agentId"
                   element={<ChatInterface1 />}
                 />
-                <Route path="mycart" element={<CartPage />} />
-                <Route
-                  path="myorders"
-                  element={
-                    <RequireAuth>
-                      <MyOrders />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="profile"
-                  element={
-                    <RequireAuth>
-                      <ProfilePage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="referral"
-                  element={
-                    <RequireAuth>
-                      <ReferralPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="bulkinvite"
-                  element={
-                    <RequireAuth>
-                      <BulkInvite />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="google"
-                  element={
-                    <RequireAuth>
-                      <GmailContactsScreen />
-                    </RequireAuth>
-                  }
-                />
+                {/* ✅ Deep link route (your requirement) */}
                 <Route
                   path="itemsdisplay/:itemId"
                   element={<ItemDisplayPage />}
                 />
-                <Route
-                  path="subscription"
-                  element={
-                    <RequireAuth>
-                      <SubscriptionPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="writetous/:id"
-                  element={
-                    <RequireAuth>
-                      <WriteToUs />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="writetous"
-                  element={
-                    <RequireAuth>
-                      <WriteToUs />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="crypto"
-                  element={
-                    <RequireAuth>
-                      <MyCrypto />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="tickethistory"
-                  element={
-                    <RequireAuth>
-                      <TicketHistoryPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route path="search-main" element={<SearchMain />} />
-                <Route
-                  path="checkout"
-                  element={
-                    <RequireAuth>
-                      <CheckoutPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="manageaddresses"
-                  element={
-                    <RequireAuth>
-                      <ManageAddressesPage />
-                    </RequireAuth>
-                  }
-                />
               </Route>
-              {/* Partner start */}
+              {/* ===================================================== */}
+              {/* ✅ PARTNER ROUTES */}
+              {/* ===================================================== */}
               <Route path="/partnerLogin" element={<PartnerLogin />} />
               <Route path="/home" element={<PartnerHome />}>
-                <Route index element={<MainPage />} />{" "}
-                {/* <Route path="newOrders" element={<NewOrders />} />
-              <Route path="acceptedOrders" element={<AcceptedOrders />} />
-              <Route path="assignedOrders" element={<AssignedOrders />} /> */}
+                <Route index element={<MainPage />} />
                 <Route path="newOrders/:status" element={<NewOrders />} />
                 <Route path="acceptedOrders/:status" element={<NewOrders />} />
                 <Route path="assignedOrders/:status" element={<NewOrders />} />
@@ -1033,8 +935,10 @@ const App: React.FC = () => {
                   element={<WalletEligibilitySlabs />}
                 />
               </Route>
-              {/* Partner end */}
-              {/* ----------Admin Routes Start---------- */}
+
+              {/* ===================================================== */}
+              {/* ✅ ADMIN ROUTES */}
+              {/* ===================================================== */}
               <Route path="/admin" element={<Login />} />
               <Route path="/adminRegister" element={<Register />} />
               <Route path="/admn" element={<AdminSidebar />}>
@@ -1074,7 +978,6 @@ const App: React.FC = () => {
                 <Route path="addblogs" element={<AddBlog />} />
                 <Route path="orderstats" element={<OrderStatsDashboard />} />
                 <Route path="updatestock" element={<StockUpdate />} />
-
                 <Route
                   path="superAdminComments"
                   element={<SuperAdminComments />}
@@ -1089,10 +992,18 @@ const App: React.FC = () => {
                 />
                 <Route path="createassistant" element={<CreateAssistant />} />
               </Route>
-              {/* ----------Admin Routes end---------- */}
+
+              {/* ===================================================== */}
+              {/* ✅ LANDING */}
+              {/* ===================================================== */}
+              <Route path="/" element={<CurrentLandingPage />} />
+
+              {/* ===================================================== */}
+              {/* ✅ FALLBACK */}
+              {/* ===================================================== */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-        
-        </div>
+          </div>
         </Suspense>
       </SearchProvider>
     </CartProvider>
