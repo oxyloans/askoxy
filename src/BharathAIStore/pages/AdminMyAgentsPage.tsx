@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Bot, Shield, X, ExternalLink } from "lucide-react";
+import { Bot, Shield, X,Info, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BASE_URL from "../../Config";
@@ -135,60 +135,105 @@ function normalizeAssistantsPayload(resData: any): Assistant[] {
   }));
 }
 
-const AdminCard: React.FC<{ a: Assistant; onOpen: () => void }> = ({
-  a,
+const AssistantCard: React.FC<{ assistant: Assistant; onOpen: () => void }> = ({
+  assistant,
   onOpen,
 }) => {
-  const title = a.name || "Untitled Agent";
-  const fallbackSrc = makeInitialsSVG(title);
-  const [imgSrc, setImgSrc] = useState(
-    (a.imageUrl || "").trim() || fallbackSrc
-  );
-  const approved = isApprovedStatus(a.status);
+  const title = assistant.name || "Untitled Agent";
+
+  const badge = (() => {
+    const name = (title || "").trim();
+    if (!name) return "AI";
+    const words = name.split(/\s+/);
+    if (words.length === 1) return words[0][0]?.toUpperCase() || "AI";
+    return (words[0][0] + words[1][0]).toUpperCase();
+  })();
+
+  const fallbackSVG = makeInitialsSVG(title);
+  const chosenThumb = (assistant.imageUrl || "").trim() || fallbackSVG;
+  const [imgSrc, setImgSrc] = useState<string>(chosenThumb);
+
+  const onCardKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onOpen();
+    }
+  };
+
+  const approved = isApprovedStatus(assistant.status);
+
   return (
-    <div
+    <article
+      role="button"
+      tabIndex={0}
       onClick={onOpen}
-      className="group cursor-pointer rounded-xl bg-white ring-1 ring-gray-200 hover:ring-gray-300 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
+      onKeyDown={onCardKeyDown}
+      aria-label={`Open ${title}`}
+      className={[
+        "group relative h-full flex flex-col cursor-pointer",
+        "rounded-3xl border border-gray-200 bg-white shadow-sm",
+        "transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+        "focus:outline-none focus:ring-2 focus:ring-purple-500/30",
+      ].join(" ")}
     >
-      {/* Stable 16:9 media header */}
-      <div className="relative w-full h-0 pb-[56%] bg-gray-50">
-        <img
-          src={imgSrc}
-          alt={title}
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={() => setImgSrc(fallbackSrc)}
-          loading="lazy"
-          decoding="async"
-        />
+      {/* Image box */}
+      <div className="p-3">
+        <div className="relative overflow-hidden rounded-2xl bg-gray-100">
+          <div className="relative h-0 w-full pb-[56%]" aria-hidden="true">
+            <img
+              src={imgSrc}
+              alt={`${title} thumbnail`}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+              onError={() => setImgSrc(fallbackSVG)}
+            />
+          </div>
+
+          {/* badge */}
+          <div className="absolute right-3 top-3 rounded-full bg-black/30 px-3 py-1 backdrop-blur-sm">
+            <span className="text-[11px] font-bold text-white">{badge}</span>
+          </div>
+
+          {/* bot icon */}
+          <div className="absolute left-3 bottom-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/95 shadow ring-1 ring-gray-200">
+            <Bot className="h-5 w-5 text-purple-700" />
+          </div>
+        </div>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col gap-2">
-        <h3 className="font-semibold text-[15px] text-gray-900 line-clamp-2">
+      {/* Content */}
+      <div className="px-4 sm:px-5 pb-5 flex flex-col flex-1">
+        <h3 className="font-semibold text-[16px] text-gray-900 leading-snug line-clamp-2">
           {title}
         </h3>
 
-        <p className="text-sm text-gray-600 line-clamp-3">
-          {a.description || ""}
+        <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3">
+          {assistant.description || ""}
         </p>
 
-        <div className="mt-auto flex items-center justify-between pt-2">
+        {/* Bottom row */}
+        <div className="mt-auto pt-5 flex items-center justify-between gap-2">
           <span
-            className={`text-[11px] font-medium rounded-full px-2 py-0.5 ${
+            className={[
+              "text-[11px] font-medium rounded-full px-2.5 py-1 border",
               approved
-                ? "bg-green-100 text-green-700"
-                : "bg-gray-100 text-gray-600"
-            }`}
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-gray-50 text-gray-700 border-gray-200",
+            ].join(" ")}
           >
-            {a.status || "Unknown"}
+            {assistant.status || "Unknown"}
           </span>
-          <span className="text-sm font-medium text-purple-600 group-hover:text-purple-700">
+
+          <span className="text-sm font-semibold text-purple-600 group-hover:text-purple-700">
             Open →
           </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
+
 
 const MyAgentsTab: React.FC = () => {
   const navigate = useNavigate();
@@ -344,20 +389,26 @@ const slugify = (s: string) =>
     );
   }
 
-  return loading ? (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6 items-stretch auto-rows-fr">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div className="animate-pulse bg-white rounded-xl ring-1 ring-gray-200 shadow-sm overflow-hidden">
-          <div className="bg-gray-200 h-0 pb-[56%] w-full" />
-          <div className="p-4">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
-            <div className="h-3 bg-gray-200 rounded w-full mb-2" />
-            <div className="h-3 bg-gray-200 rounded w-5/6" />
-          </div>
+return loading ? (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 items-stretch auto-rows-fr">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div
+        key={`sk-${i}`}
+        className="animate-pulse rounded-3xl border border-gray-200 bg-white shadow-sm"
+      >
+        <div className="p-3">
+          <div className="rounded-2xl bg-gray-200 h-0 pb-[56%] w-full" />
         </div>
-      ))}
-    </div>
-  ) : approvedAgents.length === 0 ? (
+        <div className="px-4 sm:px-5 pb-5">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+          <div className="h-3 bg-gray-200 rounded w-full mb-2" />
+          <div className="h-3 bg-gray-200 rounded w-5/6" />
+          <div className="mt-5 h-6 bg-gray-200 rounded w-28" />
+        </div>
+      </div>
+    ))}
+  </div>
+) : approvedAgents.length === 0 ? (
     <div className="text-center py-16">
       <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
       <h3 className="text-lg font-semibold text-gray-900">
@@ -371,14 +422,15 @@ const slugify = (s: string) =>
       </p>
     </div>
   ) : (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6 items-stretch auto-rows-fr">
-      {approvedAgents.map((a, i) => (
-        <div key={`${a.assistantId || a.id || i}`} className="h-full">
-          <AdminCard a={a} onOpen={() => handleOpen(a)} />
-        </div>
-      ))}
-    </div>
-  );
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 items-stretch auto-rows-fr">
+    {approvedAgents.map((a, i) => (
+      <div key={`${a.assistantId || a.id || i}`} className="h-full">
+        <AssistantCard assistant={a} onOpen={() => handleOpen(a)} />
+      </div>
+    ))}
+  </div>
+);
+
 };
 
 /* ============================================================
@@ -704,23 +756,31 @@ const InsuranceTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-async function loadWhitelisted(initialAfter?: string) {
-  let after = initialAfter;
-  let collected: Assistant[] = [];
-  const target = Object.keys(INS_ID_TO_CANONICAL).length;
+  async function loadWhitelisted(initialAfter?: string) {
+    let after = initialAfter;
 
-  for (let i = 0; i < 50; i++) {
-    const res = await getAllAssistants(after);
-    collected = collected.concat(res.data);
+    const targetIds = new Set(Object.keys(INS_ID_TO_CANONICAL));
+    const foundById = new Map<string, Assistant>();
 
-    const filtered = buildInsuranceListById(collected);
-    setItems(filtered);
+    // ✅ Most important: stop early once we found all allowlisted IDs
+    for (let i = 0; i < 20; i++) {
+      const res = await getAllAssistants(after);
 
-    if (filtered.length >= target || !res.has_more || !res.lastId) return;
-    after = res.lastId;
+      for (const a of res.data) {
+        const id = (a.assistantId || a.id || "").toString().trim();
+        if (id && targetIds.has(id)) {
+          foundById.set(id, a);
+        }
+      }
+
+      // ✅ Only update UI with matched items (small array)
+      setItems(buildInsuranceListById(Array.from(foundById.values())));
+
+      if (foundById.size >= targetIds.size || !res.has_more || !res.lastId)
+        break;
+      after = res.lastId;
+    }
   }
-}
-
 
   useEffect(() => {
     (async () => {
@@ -741,90 +801,77 @@ async function loadWhitelisted(initialAfter?: string) {
     })();
   }, []);
 
-const slugify = (s: string) =>
-  (s || "agent")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-const handleOpen = (a: Assistant) => {
-  // Extract FULL IDs from API data (no truncation)
-  const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
-    .toString()
-    .trim();
-  const fullAgentId = (a.agentId || a.assistantId || a.id || "")
-    .toString()
-    .trim();
-  const nameSlug = slugify(a.name || "agent");
+  const slugify = (s: string) =>
+    (s || "agent")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
-  // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
-  const shortAssistantId = fullAssistantId;
-  const shortAgentId = fullAgentId;
+  const handleOpen = (a: Assistant) => {
+    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+      .toString()
+      .trim();
+    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+      .toString()
+      .trim();
+    const nameSlug = slugify(a.name || "agent");
 
-  // Debug log: Check full vs short values in console
-  console.log("FULL IDs (for APIs/state):", {
-    fullAssistantId,
-    fullAgentId,
-    nameSlug,
-  });
-  console.log("SHORT IDs (for URL only):", {
-    shortAssistantId,
-    shortAgentId,
-  });
+    // ✅ keep same behavior (no truncation)
+    const shortAssistantId = fullAssistantId;
+    const shortAgentId = fullAgentId;
 
-  // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
-  const userId =
-    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-  if (!userId) {
-    let intended = "";
-    if (fullAssistantId && fullAgentId && nameSlug) {
-      intended = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
-        shortAgentId
-      )}/${encodeURIComponent(nameSlug)}`;
-      // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
-      sessionStorage.setItem("fullAssistantId", fullAssistantId);
-      sessionStorage.setItem("fullAgentId", fullAgentId);
-    } else if (fullAssistantId && fullAgentId) {
-      intended = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
-        shortAgentId
-      )}`;
-      sessionStorage.setItem("fullAssistantId", fullAssistantId);
-      sessionStorage.setItem("fullAgentId", fullAgentId);
-    } else if (fullAssistantId) {
-      intended = `/${encodeURIComponent(shortAssistantId)}`;
-      sessionStorage.setItem("fullAssistantId", fullAssistantId);
-    } else {
-      intended = `/by-name/${encodeURIComponent(nameSlug)}`;
+    const userId =
+      typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+    if (!userId) {
+      let intended = "";
+      if (fullAssistantId && fullAgentId && nameSlug) {
+        intended = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        sessionStorage.setItem("fullAgentId", fullAgentId);
+      } else if (fullAssistantId && fullAgentId) {
+        intended = `/${encodeURIComponent(
+          shortAssistantId
+        )}/${encodeURIComponent(shortAgentId)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        sessionStorage.setItem("fullAgentId", fullAgentId);
+      } else if (fullAssistantId) {
+        intended = `/${encodeURIComponent(shortAssistantId)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+      } else {
+        intended = `/by-name/${encodeURIComponent(nameSlug)}`;
+      }
+
+      sessionStorage.setItem("redirectPath", intended);
+      sessionStorage.setItem("fromAISTore", "true");
+      window.location.href = "/whatsappregister?primaryType=AGENT";
+      return;
     }
-    sessionStorage.setItem("redirectPath", intended);
-    sessionStorage.setItem("fromAISTore", "true");
-    window.location.href = "/whatsappregister?primaryType=AGENT";
-    return;
-  }
 
-  // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
-  let targetPath = "";
-  if (fullAssistantId && fullAgentId && nameSlug) {
-    targetPath = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
-      shortAgentId
-    )}/${encodeURIComponent(nameSlug)}`;
-  } else if (fullAssistantId && fullAgentId) {
-    targetPath = `/${encodeURIComponent(shortAssistantId)}/${encodeURIComponent(
-      shortAgentId
-    )}`;
-  } else if (fullAssistantId) {
-    targetPath = `/${encodeURIComponent(shortAssistantId)}`;
-  } else {
-    targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
-  }
+    let targetPath = "";
+    if (fullAssistantId && fullAgentId && nameSlug) {
+      targetPath = `/${encodeURIComponent(
+        shortAssistantId
+      )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+    } else if (fullAssistantId && fullAgentId) {
+      targetPath = `/${encodeURIComponent(
+        shortAssistantId
+      )}/${encodeURIComponent(shortAgentId)}`;
+    } else if (fullAssistantId) {
+      targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+    } else {
+      targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+    }
 
-  // Final log: Generated URL (short IDs only, root-level)
-  console.log("Short URL target (4 chars only, no prefix):", targetPath);
-  navigate(targetPath);
-};
+    navigate(targetPath);
+  };
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={`ins-skeleton-${i}`}
             className="animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden"
@@ -847,7 +894,9 @@ const handleOpen = (a: Assistant) => {
       </div>
     );
   }
+
   if (err) return <div className="text-sm text-red-600">{err}</div>;
+
   if (items.length === 0)
     return (
       <div className="text-center py-16">
@@ -859,8 +908,9 @@ const handleOpen = (a: Assistant) => {
       </div>
     );
 
+  // ✅ 4 cards per row (desktop)
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch auto-rows-fr">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch auto-rows-fr">
       {items.map((a, i) => (
         <TileCard
           key={`${a.displayName}-${a.assistantId || a.id || i}`}
@@ -872,6 +922,7 @@ const handleOpen = (a: Assistant) => {
     </div>
   );
 };
+
 
 /* ============================================================
    HEALTHCARE (embedded)
@@ -911,23 +962,28 @@ const HealthcareTab: React.FC = () => {
   const [err, setErr] = useState<string | null>(null);
 
   async function loadWhitelisted(initialAfter?: string) {
-  let after = initialAfter;
-  let collected: Assistant[] = [];
-  const target = Object.keys(HC_ID_TO_CANONICAL).length;
+    let after = initialAfter;
 
- for (let i = 0; i < 50; i++) {
-   const res = await getAllAssistants(after); // ✅ limit=100
-   collected = collected.concat(res.data);
+    const targetIds = new Set(Object.keys(HC_ID_TO_CANONICAL));
+    const foundById = new Map<string, Assistant>();
 
-   const filtered = buildHealthcareListById(collected);
-   setItems(filtered);
+    for (let i = 0; i < 20; i++) {
+      const res = await getAllAssistants(after);
 
- if (filtered.length >= target || !res.has_more || !res.lastId) return;
- after = res.lastId;
+      for (const a of res.data) {
+        const id = (a.assistantId || a.id || "").toString().trim();
+        if (id && targetIds.has(id)) {
+          foundById.set(id, a);
+        }
+      }
 
- }
-}
+      setItems(buildHealthcareListById(Array.from(foundById.values())));
 
+      if (foundById.size >= targetIds.size || !res.has_more || !res.lastId)
+        break;
+      after = res.lastId;
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -948,95 +1004,76 @@ const HealthcareTab: React.FC = () => {
     })();
   }, []);
 
- const slugify = (s: string) =>
-   (s || "agent")
-     .toLowerCase()
-     .replace(/[^a-z0-9]+/g, "-")
-     .replace(/^-+|-+$/g, "");
+  const slugify = (s: string) =>
+    (s || "agent")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
-  
-    const handleOpen = (a: Assistant) => {
-     
-  
-      // Extract FULL IDs from API data (no truncation)
-      const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
-        .toString()
-        .trim();
-      const fullAgentId = (a.agentId || a.assistantId || a.id || "")
-        .toString()
-        .trim();
-      const nameSlug = slugify(a.name || "agent");
-  
-      // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
-      const shortAssistantId = fullAssistantId;
-      const shortAgentId = fullAgentId;
-  
-      // Debug log: Check full vs short values in console
-      console.log("FULL IDs (for APIs/state):", {
-        fullAssistantId,
-        fullAgentId,
-        nameSlug,
-      });
-      console.log("SHORT IDs (for URL only):", {
-        shortAssistantId,
-        shortAgentId,
-      });
-  
-      // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
-      const userId =
-        typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-      if (!userId) {
-        let intended = "";
-        if (fullAssistantId && fullAgentId && nameSlug) {
-          intended = `/${encodeURIComponent(
-            shortAssistantId
-          )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
-          // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
-          sessionStorage.setItem("fullAssistantId", fullAssistantId);
-          sessionStorage.setItem("fullAgentId", fullAgentId);
-        } else if (fullAssistantId && fullAgentId) {
-          intended = `/${encodeURIComponent(
-            shortAssistantId
-          )}/${encodeURIComponent(shortAgentId)}`;
-          sessionStorage.setItem("fullAssistantId", fullAssistantId);
-          sessionStorage.setItem("fullAgentId", fullAgentId);
-        } else if (fullAssistantId) {
-          intended = `/${encodeURIComponent(shortAssistantId)}`;
-          sessionStorage.setItem("fullAssistantId", fullAssistantId);
-        } else {
-          intended = `/by-name/${encodeURIComponent(nameSlug)}`;
-        }
-        sessionStorage.setItem("redirectPath", intended);
-        sessionStorage.setItem("fromAISTore", "true");
-        window.location.href = "/whatsappregister?primaryType=AGENT";
-        return;
-      }
-  
-      // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
-      let targetPath = "";
+  const handleOpen = (a: Assistant) => {
+    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
+      .toString()
+      .trim();
+    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
+      .toString()
+      .trim();
+    const nameSlug = slugify(a.name || "agent");
+
+    const shortAssistantId = fullAssistantId;
+    const shortAgentId = fullAgentId;
+
+    const userId =
+      typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+    if (!userId) {
+      let intended = "";
       if (fullAssistantId && fullAgentId && nameSlug) {
-        targetPath = `/${encodeURIComponent(
+        intended = `/${encodeURIComponent(
           shortAssistantId
         )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        sessionStorage.setItem("fullAgentId", fullAgentId);
       } else if (fullAssistantId && fullAgentId) {
-        targetPath = `/${encodeURIComponent(
+        intended = `/${encodeURIComponent(
           shortAssistantId
         )}/${encodeURIComponent(shortAgentId)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
+        sessionStorage.setItem("fullAgentId", fullAgentId);
       } else if (fullAssistantId) {
-        targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+        intended = `/${encodeURIComponent(shortAssistantId)}`;
+        sessionStorage.setItem("fullAssistantId", fullAssistantId);
       } else {
-        targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+        intended = `/by-name/${encodeURIComponent(nameSlug)}`;
       }
-  
-      // Final log: Generated URL (short IDs only, root-level)
-      console.log("Short URL target (4 chars only, no prefix):", targetPath);
-      navigate(targetPath);
+
+      sessionStorage.setItem("redirectPath", intended);
+      sessionStorage.setItem("fromAISTore", "true");
+      window.location.href = "/whatsappregister?primaryType=AGENT";
+      return;
     }
+
+    let targetPath = "";
+    if (fullAssistantId && fullAgentId && nameSlug) {
+      targetPath = `/${encodeURIComponent(
+        shortAssistantId
+      )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+    } else if (fullAssistantId && fullAgentId) {
+      targetPath = `/${encodeURIComponent(
+        shortAssistantId
+      )}/${encodeURIComponent(shortAgentId)}`;
+    } else if (fullAssistantId) {
+      targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+    } else {
+      targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+    }
+
+    navigate(targetPath);
+  };
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
-        {Array.from({ length: 2 }).map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={`hc-skel-${i}`}
             className="animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden"
@@ -1049,7 +1086,7 @@ const HealthcareTab: React.FC = () => {
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
               <div className="h-3 bg-gray-200 rounded w-full mb-2" />
               <div className="h-3 bg-gray-200 rounded w-5/6" />
-              <div className="mt-5 flex items-center gap-2 mt-auto">
+              <div className="mt-5 flex items-center gap-2">
                 <div className="h-8 w-20 bg-gray-200 rounded" />
                 <div className="h-8 w-16 bg-gray-200 rounded" />
               </div>
@@ -1059,7 +1096,9 @@ const HealthcareTab: React.FC = () => {
       </div>
     );
   }
+
   if (err) return <div className="text-sm text-red-600">{err}</div>;
+
   if (items.length === 0)
     return (
       <div className="text-center py-16">
@@ -1072,7 +1111,7 @@ const HealthcareTab: React.FC = () => {
     );
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch auto-rows-fr">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch auto-rows-fr">
       {items.map((a, i) => (
         <TileCard
           key={`${a.displayName}-${a.assistantId || a.id || i}`}
@@ -1085,12 +1124,13 @@ const HealthcareTab: React.FC = () => {
   );
 };
 
+
 const OtherAgentsTab: React.FC = () => {
   const [items, setItems] = useState<OtherAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [selectedUrl, setSelectedUrl] = useState<string | null>(null); // disclaimer
-  const [category, setCategory] = useState<string>("ALL"); // NEW
+  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const [category, setCategory] = useState<string>("ALL");
 
   useEffect(() => {
     (async () => {
@@ -1100,7 +1140,6 @@ const OtherAgentsTab: React.FC = () => {
         const res = await apiClient.get("/ai-service/agent/getAllUrls", {
           headers: getOptionalAuthHeaders(),
         });
-        // Accept array with or without categoryType
         const list: OtherAgent[] = Array.isArray(res?.data) ? res.data : [];
         setItems(list);
       } catch (e: any) {
@@ -1113,7 +1152,6 @@ const OtherAgentsTab: React.FC = () => {
     })();
   }, []);
 
-  // Build category list (ALL + unique)
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const it of items) {
@@ -1123,7 +1161,6 @@ const OtherAgentsTab: React.FC = () => {
     return ["ALL", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [items]);
 
-  // Apply filter
   const filtered = useMemo(
     () =>
       category === "ALL"
@@ -1136,6 +1173,7 @@ const OtherAgentsTab: React.FC = () => {
   );
 
   const openWithDisclaimer = (url: string) => setSelectedUrl(url);
+
   const confirmNavigation = () => {
     if (selectedUrl) {
       window.open(selectedUrl, "_blank", "noopener,noreferrer");
@@ -1145,8 +1183,8 @@ const OtherAgentsTab: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch auto-rows-fr">
+        {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={`other-skeleton-${i}`}
             className="animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden flex flex-col"
@@ -1154,11 +1192,13 @@ const OtherAgentsTab: React.FC = () => {
             <div className="relative w-full">
               <div className="h-0 w-full pb-[56%] bg-gray-200" />
             </div>
-            <div className="pt-6 px-5 pb-5">
+            <div className="pt-6 px-5 pb-5 flex-1 flex flex-col">
               <div className="h-4 bg-gray-200 rounded w-2/3 mb-3" />
               <div className="h-3 bg-gray-200 rounded w-full mb-2" />
               <div className="h-3 bg-gray-200 rounded w-5/6" />
-              <div className="mt-5 h-8 w-24 bg-gray-200 rounded" />
+              <div className="mt-auto pt-5">
+                <div className="h-8 w-24 bg-gray-200 rounded" />
+              </div>
             </div>
           </div>
         ))}
@@ -1203,33 +1243,47 @@ const OtherAgentsTab: React.FC = () => {
         </select>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch auto-rows-fr">
+      {/* Grid (4 per row on desktop) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch auto-rows-fr">
         {filtered.map((a) => {
           const title = a.agentName || "AI Agent";
-          const fallback = makeInitialsSVG(title);
+          const banner = makeInitialsSVG(title);
+
           return (
-            <div
+            <article
               key={a.id}
               onClick={() => openWithDisclaimer(a.url)}
-              className="group cursor-pointer rounded-xl bg-white ring-1 ring-gray-200 hover:ring-gray-300 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") &&
+                openWithDisclaimer(a.url)
+              }
+              className="group cursor-pointer rounded-2xl bg-white ring-1 ring-gray-200 hover:ring-gray-300 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
+              aria-label={`Open ${title}`}
             >
-              {/* Generated fallback banner */}
-              <div className="relative w-full h-0 pb-[40%] bg-gray-50">
+              {/* Banner (same as other cards ratio) */}
+              <div className="relative w-full h-0 pb-[56%] bg-gray-50">
                 <img
-                  src={makeInitialsSVG(title)}
+                  src={banner}
                   alt={title}
                   className="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"
                   decoding="async"
                 />
+
+                {/* Bottom left icon badge (consistent look) */}
+                <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-xl bg-white shadow ring-1 ring-gray-200 flex items-center justify-center">
+                  <Bot className="h-6 w-6 text-purple-700" />
+                </div>
               </div>
 
-              <div className="p-4 flex-1 flex flex-col gap-2">
+              <div className="pt-8 p-5 flex-1 flex flex-col gap-2">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="font-semibold text-[15px] text-gray-900 line-clamp-2">
                     {title}
                   </h3>
+
                   {a.categoryType && (
                     <span className="shrink-0 text-[11px] font-medium rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5">
                       {a.categoryType}
@@ -1245,7 +1299,7 @@ const OtherAgentsTab: React.FC = () => {
                   Open →
                 </div>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
@@ -1291,114 +1345,154 @@ const AdminMyAgentsPage: React.FC = () => {
   >("my");
   const [showTabsInfo, setShowTabsInfo] = useState(false);
 
+  const tabs = useMemo(
+    () => [
+      { key: "my" as const, label: "Radha Agents" },
+      { key: "insurance" as const, label: "Insurance Agents" },
+      { key: "healthcare" as const, label: "Healthcare Agents" },
+      { key: "other" as const, label: "GPT Store Agents" },
+    ],
+    []
+  );
+
   return (
-    <div className="min-h-screen bg-white">
-      <main className="max-w-7xl mx-auto">
-        <section className="soft-animated-bg p-[2px] rounded-2xl mb-8">
-          <div className="bg-white/90 backdrop-blur rounded-2xl px-5 sm:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-6 items-center">
-              {/* Text: first on mobile, left on desktop */}
-              <div className="order-1 md:order-1 md:col-span-3 text-gray-800 leading-relaxed">
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-purple-600 mb-3">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-white">
+      {/* Top glow */}
+     
+
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* HERO */}
+        <section className="relative overflow-hidden ">
+          {/* soft background pattern */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 opacity-60"
+           
+          />
+          <div className="relative p-2 sm:p-2 lg:p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+              {/* Text */}
+              <div className="lg:col-span-7">
+                
+                <h2 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-purple-700">
                   Greetings from Radhakrishna!
                 </h2>
-                <p className="text-[15px] sm:text-base mb-3">
-                  I’m genuinely excited about the AI Agents roadmap we’re
-                  building at Bharat AI Store. My personal mission is simple —
-                  to make every task in our company executable by an AI Agent.
-                </p>
-                <p className="text-[15px] sm:text-base mb-3">
-                  As part of this journey, I’m experimenting daily with dozens
-                  of AI Agents — some smart, some still learning, all evolving.
-                  Each one represents a step toward a more autonomous, scalable
-                  future.
-                </p>
-                <p className="text-[15px] sm:text-base mb-5">
-                  Below, you’ll find a growing collection of my live
-                  experiments. These agents may be basic today, but together,
-                  they represent the foundation of the AI-driven enterprise of
-                  tomorrow.
-                </p>
-                <div className="mt-2 font-semibold text-brown-900">
-                  CEO &amp; Founder <br />
-                  ASKOXY.AI AI-Z Marketplace <br />
-                  OxyLoans — RBI Approved P2P NBFC
+
+                <div className="mt-4 space-y-3 text-[15px] sm:text-base leading-relaxed text-gray-700">
+                  <p>
+                    I’m genuinely excited about the AI Agents roadmap we’re
+                    building at Bharat AI Store. My personal mission is simple —
+                    to make every task in our company executable by an AI Agent.
+                  </p>
+                  <p>
+                    As part of this journey, I’m experimenting daily with dozens
+                    of AI Agents — some smart, some still learning, all
+                    evolving. Each one represents a step toward a more
+                    autonomous, scalable future.
+                  </p>
+                  <p>
+                    Below, you’ll find a growing collection of my live
+                    experiments. These agents may be basic today, but together,
+                    they represent the foundation of the AI-driven enterprise of
+                    tomorrow.
+                  </p>
+                </div>
+
+                <div className="bg-white/70 backdrop-blur px-4 py-4">
+                  <div className="text-sm font-semibold text-gray-900">
+                    CEO &amp; Founder
+                  </div>
+                  <div className="mt-1 text-sm text-gray-700">
+                    ASKOXY.AI AI-Z Marketplace <br />
+                    OxyLoans — RBI Approved P2P NBFC
+                  </div>
                 </div>
               </div>
 
-              {/* Image: second on mobile, right on desktop; rounded, no shadow */}
-              <div className="order-2 md:order-2 md:col-span-2 flex justify-center items-center">
-                <div className="w-[90%] aspect-[3/4] md:aspect-[4/5] rounded-2xl overflow-hidden flex items-center justify-center bg-white">
-                  <img
-                    src="https://i.ibb.co/TBMnfC2K/radha-Prompt.png"
-                    alt="Radhakrishna. Thatavarti"
-                    className="object-contain rounded-2xl w-full h-full md:h-[360px] lg:h-[410px]"
-                    loading="lazy"
-                    decoding="async"
-                    sizes="(max-width: 768px) 100vw, 40vw"
-                  />
+              {/* Image */}
+              <div className="lg:col-span-5">
+                <div className="mx-auto max-w-sm lg:max-w-none">
+                  <div className="relative">
+                    {/* gradient border */}
+                  
+                    <div className="relative ">
+                      <div className="aspect-[4/5] w-full overflow-hidden ">
+                        <img
+                          src="https://i.ibb.co/TBMnfC2K/radha-Prompt.png"
+                          alt="Radhakrishna. Thatavarti"
+                          className="h-full w-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                          sizes="(max-width: 1024px) 100vw, 40vw"
+                        />
+                      </div>
+
+                     
+                    </div>
+                  </div>
+
+                 
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Tabs */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <button
-            onClick={() => setActiveTab("my")}
-            className={`px-4 py-2 rounded-full text-sm font-medium border ${
-              activeTab === "my"
-                ? "bg-purple-600 text-white border-purple-600"
-                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-            }`}
-            type="button"
-          >
-            Radha Agents
-          </button>
-          <button
-            onClick={() => setActiveTab("insurance")}
-            className={`px-4 py-2 rounded-full text-sm font-medium border ${
-              activeTab === "insurance"
-                ? "bg-purple-600 text-white border-purple-600"
-                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-            }`}
-            type="button"
-          >
-            Insurance Agents
-          </button>
-          <button
-            onClick={() => setActiveTab("healthcare")}
-            className={`px-4 py-2 rounded-full text-sm font-medium border ${
-              activeTab === "healthcare"
-                ? "bg-purple-600 text-white border-purple-600"
-                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-            }`}
-            type="button"
-          >
-            Healthcare Agents
-          </button>
+        {/* TABS BAR */}
+        <section className="mt-8">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+              Agents Library
+            </h3>
 
-          {/* NEW tab */}
-          <button
-            onClick={() => setActiveTab("other")}
-            className={`px-4 py-2 rounded-full text-sm font-medium border ${
-              activeTab === "other"
-                ? "bg-purple-600 text-white border-purple-600"
-                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-            }`}
-            type="button"
-          >
-            GPT Store Agents
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => setShowTabsInfo(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              aria-label="Tabs info"
+            >
+              <Info className="h-4 w-4" />
+              Info
+            </button>
+          </div>
 
-        {activeTab === "my" && <MyAgentsTab />}
-        {activeTab === "insurance" && <InsuranceTab />}
-        {activeTab === "healthcare" && <HealthcareTab />}
-        {activeTab === "other" && <OtherAgentsTab />}
+          {/* sticky tabs */}
+          <div className="mt-4 sticky top-0 z-40">
+            <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur px-3 py-3 shadow-sm">
+              <div className="flex flex-wrap gap-2">
+                {tabs.map((t) => {
+                  const active = activeTab === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={() => setActiveTab(t.key)}
+                      type="button"
+                      className={[
+                        "px-4 py-2 rounded-full text-sm font-semibold border transition",
+                        "focus:outline-none focus:ring-2 focus:ring-purple-500/30",
+                        active
+                          ? "bg-purple-600 text-white border-purple-600 shadow-sm"
+                          : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50",
+                      ].join(" ")}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
-        {/* Tiny Modal explaining tabs */}
+          {/* TAB CONTENT */}
+          <div className="mt-6">
+            {activeTab === "my" && <MyAgentsTab />}
+            {activeTab === "insurance" && <InsuranceTab />}
+            {activeTab === "healthcare" && <HealthcareTab />}
+            {activeTab === "other" && <OtherAgentsTab />}
+          </div>
+        </section>
+
+        {/* Modal explaining tabs */}
         {showTabsInfo && (
           <div className="fixed inset-0 z-[110]">
             <div
@@ -1406,11 +1500,11 @@ const AdminMyAgentsPage: React.FC = () => {
               onClick={() => setShowTabsInfo(false)}
             />
             <div className="absolute inset-0 flex items-center justify-center p-4">
-              <div className="w-full max-w-md rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
+              <div className="w-full max-w-md rounded-2xl bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                   <h3 className="font-semibold text-gray-900">Tabs</h3>
                   <button
-                    className="p-1 rounded-md hover:bg-gray-100"
+                    className="p-2 rounded-lg hover:bg-gray-100"
                     aria-label="Close"
                     onClick={() => setShowTabsInfo(false)}
                     type="button"
@@ -1418,18 +1512,21 @@ const AdminMyAgentsPage: React.FC = () => {
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
-                <div className="px-5 py-4 text-sm text-gray-700">
+                <div className="px-5 py-4 text-sm text-gray-700 leading-relaxed">
                   <p>
-                    <strong>My Agents</strong> shows your own approved agents
+                    <strong>Radha Agents</strong> shows your own approved agents
                     (by userId). <strong>Insurance</strong> and{" "}
                     <strong>Healthcare</strong> list curated assistants.{" "}
-                    <strong>Other AI Agents</strong> shows external agents from{" "}
-                    <code>/api/ai-service/agent/getAllUrls</code>.
+                    <strong>GPT Store Agents</strong> shows external agents from{" "}
+                    <code className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">
+                      /api/ai-service/agent/getAllUrls
+                    </code>
+                    .
                   </p>
                 </div>
                 <div className="px-5 pb-5">
                   <button
-                    className="ml-auto block px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                    className="ml-auto block px-4 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold"
                     onClick={() => setShowTabsInfo(false)}
                     type="button"
                   >

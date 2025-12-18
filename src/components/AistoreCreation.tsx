@@ -741,7 +741,7 @@ const handleMultiAgentUpload = async (values: any) => {
           >
             Add AI Store
           </Button>
-          {/* <Button
+          <Button
             icon={<UsergroupAddOutlined />}
             style={{
               background: "#ba4d00ff",
@@ -754,7 +754,7 @@ const handleMultiAgentUpload = async (values: any) => {
             onClick={() => setIsBulkUploadModal(true)}
           >
             Bulk Upload Agents
-          </Button> */}
+          </Button>
           <Button
             type="primary"
             icon={<FaShoppingCart />}
