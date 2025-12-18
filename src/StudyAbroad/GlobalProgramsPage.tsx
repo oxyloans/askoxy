@@ -487,7 +487,9 @@ const programs: Program[] = [
   },
 ];
 
-const GlobalProgramsPage: React.FC<GlobalProgramsPageProps> = ({ onNavigate }) => {
+const GlobalProgramsPage: React.FC<GlobalProgramsPageProps> = ({
+  onNavigate,
+}) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleToggle = (id: string) => {
@@ -806,7 +808,9 @@ const GlobalProgramsPage: React.FC<GlobalProgramsPageProps> = ({ onNavigate }) =
                           : "border-purple-600 text-purple-700 hover:bg-purple-600 hover:text-white"
                       }`}
                     >
-                      {isExpanded ? "Hide Full Details" : "View Full Program Details"}
+                      {isExpanded
+                        ? "Hide Full Details"
+                        : "View Full Program Details"}
                     </button>
 
                     <a
