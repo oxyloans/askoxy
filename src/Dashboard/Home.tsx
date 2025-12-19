@@ -43,7 +43,7 @@ import O6 from "../assets/img/35kg1.png";
 import CB from "../assets/img/cashback offer png.png";
 import Cashew from "../assets/img/rakhi1.png";
 import Riceoffers from "../assets/img/rice offers.png";
-import festive from "../assets/img/festive.webp";
+import festive from "../assets/img/silver.png";
 
 import gold from "../assets/img/gold.png";
 import allitems from "../assets/img/all items.png";

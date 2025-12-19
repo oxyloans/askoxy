@@ -1103,8 +1103,8 @@ const ItemDisplayPage = () => {
                               {
                                 ...getAllImages()[currentImageIndex],
                                 id:
-                                  getAllImages()[currentImageIndex].imageId ||
-                                  "image-fallback",
+                                  getAllImages()[currentImageIndex].imageId
+                                 
                               },
                               currentImageIndex
                             )
@@ -1627,9 +1627,9 @@ const ItemDisplayPage = () => {
               onClick={(e) => e.stopPropagation()}
             />
 
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+            {/* <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-4 py-2 rounded-lg">
               Image {fullscreenImage.index + 1} of {modalData.images.length}
-            </div>
+            </div> */}
 
             {modalData.images.length > 1 && (
               <>

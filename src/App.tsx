@@ -5,6 +5,10 @@ import CartProvider from "./until/CartProvider";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 import { SearchProvider } from "./until/SearchContext";
 import AppliedJobs from "./Dashboard/AppliedJobs";
+import NinetyDayPlanPage from "./components/NinetyDayPlanPage";
+import CASRouteRenderer1 from "./GLMS/CAS/Pages/CASRouteRenderer1";
+import FMSRoutes1 from "./GLMS/FMS/Pages/FMSRoutes1";
+import CMSroutes1 from "./GLMS/CMS/Pages/CMSroutes1";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -453,6 +457,14 @@ const App: React.FC = () => {
               <Route path="/interview" element={<InterviewPage />} />
               <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
+              <Route
+                path="/ninetydayplan"
+                element={
+                  <RequireAuth>
+                    <NinetyDayPlanPage />
+                  </RequireAuth>
+                }
+              />
 
               {/* NOTE: These are your existing relative routes (kept same) */}
               <Route path="dashboard/:tab" element={<DashboardMain />} />
@@ -581,6 +593,18 @@ const App: React.FC = () => {
               <Route
                 path="/los/:useCaseId/:type"
                 element={<CASRouteRenderer />}
+              />
+              <Route
+                path="/lo-system/:useCaseId/:type"
+                element={<CASRouteRenderer1 />}
+              />
+              <Route
+                path="/fm-system/:useCaseId/:type"
+                element={<FMSRoutes1 />}
+              />
+              <Route
+                path="/cm-system/:useCaseId/:type"
+                element={<CMSroutes1 />}
               />
               <Route path="/cms" element={<CMSDashboard />} />
               <Route
@@ -781,7 +805,6 @@ const App: React.FC = () => {
                   path="/main/dashboard/informationaboutcountries-gpt"
                   element={<InformationAboutCountries />}
                 />
-
                 <Route
                   path="/main/dashboard/loans-gpt"
                   element={<LoansGpt />}
@@ -789,6 +812,10 @@ const App: React.FC = () => {
                 <Route
                   path="/main/dashboard/logistics-gpt"
                   element={<LogisticsGpt />}
+                />
+                <Route
+                  path="/main/dashboard/accreditations-gpt"
+                  element={<AccreditationsRecognization />}
                 />
                 <Route
                   path="/main/dashboard/barcodescanner"
@@ -801,7 +828,11 @@ const App: React.FC = () => {
                 <Route
                   path="/main/dashboard/qualificationspecialization-gpt"
                   element={<QualificationSpecializationGPT />}
-                />
+                />{" "}
+                <Route
+                  path="/main/dashboard/courses-gpt"
+                  element={<CoursesGpt />}
+                />{" "}
                 <Route
                   path="/main/dashboard/universities-gpt"
                   element={<University />}
@@ -825,7 +856,6 @@ const App: React.FC = () => {
                   element={<UniversityAgents />}
                 />
                 <Route path="/main/dashboard/visa-gpt" element={<VisaGpt />} />
-
                 {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
@@ -869,6 +899,11 @@ const App: React.FC = () => {
                 <Route path="bulkinvite" element={<BulkInvite />} />
                 <Route path="google" element={<GmailContactsScreen />} />
                 <Route path="mycart" element={<CartPage />} />
+                <Route
+                  path="services/:id/:type"
+                  element={<CampaignDetails />}
+                />
+                <Route path="blog/:id/:type" element={<BlogDetails />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="writetous" element={<WriteToUs />} />
                 <Route path="writetous/:id" element={<WriteToUs />} />

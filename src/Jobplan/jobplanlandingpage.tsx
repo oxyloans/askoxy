@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import DayPlan from "../assets/img/90dayplanflow.png";
+import { useNavigate } from "react-router-dom";
 
 type CTAConfig = {
   primaryLabel?: string;
@@ -402,7 +403,7 @@ const SectionShell = ({
   children: React.ReactNode;
   rightSlot?: React.ReactNode;
 }) => (
-  <section id={id} className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
+  <section id={id} className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h2 className="text-2xl font-bold text-slate-900 sm:text-4xl">
@@ -421,7 +422,7 @@ const SectionShell = ({
 );
 
 const DividerGlow = () => (
-  <div className="mx-auto max-w-6xl px-4 sm:px-6">
+  <div className="mx-auto max-w-7xl px-4 sm:px-6">
     <div
       className="h-px w-full"
       style={{
@@ -548,7 +549,7 @@ export default function JobTraining90DaysPage({
     }
   }, []);
 
-  const joinProgramHref = isLoggedIn ? JOIN_LOGGEDIN_URL : JOIN_PUBLIC_URL;
+  const joinProgramHref = "/ninetydayplan";
 
   const whatYouGet = useMemo(
     () => [
@@ -713,6 +714,7 @@ export default function JobTraining90DaysPage({
       <ArrowRight className={big ? "h-5 w-5" : "h-4 w-4"} />
     </a>
   );
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -724,8 +726,11 @@ export default function JobTraining90DaysPage({
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4">
-          <a href="#top" className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-3"
+          >
             <GradientIconBadge size={40}>
               <IconSpark className="h-5 w-5" />
             </GradientIconBadge>
@@ -734,7 +739,7 @@ export default function JobTraining90DaysPage({
               <p className="text-sm font-bold text-slate-900">{brandName}</p>
               <p className="text-xs text-slate-600">90 days to job-ready</p>
             </div>
-          </a>
+          </button>
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-8 text-sm text-slate-700 md:flex">
@@ -779,7 +784,7 @@ export default function JobTraining90DaysPage({
         {/* Mobile nav panel */}
         {mobileNavOpen ? (
           <div className="md:hidden border-t border-slate-200 bg-white/95">
-            <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 grid gap-2 text-sm">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 grid gap-2 text-sm">
               <a
                 onClick={() => setMobileNavOpen(false)}
                 href="#what-you-get"
@@ -821,7 +826,7 @@ export default function JobTraining90DaysPage({
       {/* Hero */}
       <section
         id="top"
-        className="mx-auto max-w-6xl px-4 sm:px-6 pt-10 pb-10 sm:pt-14 sm:pb-14"
+        className="mx-auto max-w-7xl px-4 sm:px-6 pt-10 pb-10 sm:pt-14 sm:pb-14"
       >
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <div>
@@ -881,95 +886,181 @@ export default function JobTraining90DaysPage({
       <DividerGlow />
 
       {/* Visual Flow */}
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-4xl">
-            Your 90-Day Journey
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
-            A clear path from daily discipline to job-ready professional
-          </p>
-        </div>
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
+        {/* Background layer */}
+        <div className="relative rounded-[36px] overflow-hidden">
+          {/* soft gradient background */}
+          <div
+            className="absolute inset-0 opacity-70"
+            style={{
+              background: `
+          radial-gradient(circle at 20% 20%, ${C2}22, transparent 60%),
+          radial-gradient(circle at 80% 60%, ${C3}18, transparent 60%),
+          linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,255,255,0.72))
+        `,
+            }}
+          />
+          {/* subtle blur glow */}
+          <div
+            className="pointer-events-none absolute -inset-10 blur-3xl opacity-30"
+            style={{ background: gradSoft }}
+          />
 
-        <div className="mt-10">
-          <SoftCard className="p-4 sm:p-5">
-            <div
-              className="relative rounded-3xl p-[3px]"
-              style={{ background: grad }}
-            >
-              <img
-                src={DayPlan}
-                alt="90 Day Training Flow"
-                loading="lazy"
-                className="w-full h-auto rounded-[22px]"
-              />
+          {/* Content */}
+          <div className="relative px-4 sm:px-8 py-10 sm:py-14">
+            <div className="text-center">
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+                Your 90-Day Journey
+              </h2>
+              <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                A clear path from daily discipline to job-ready professional
+              </p>
             </div>
-          </SoftCard>
+
+            <div className="mt-8 sm:mt-10">
+              <SoftCard className="p-4 sm:p-5">
+                <div className="relative">
+                  {/* glow behind image */}
+                  <div
+                    className="pointer-events-none absolute -inset-4 rounded-[30px] blur-3xl opacity-35"
+                    style={{ background: gradSoft }}
+                  />
+
+                  {/* gradient border frame */}
+                  <div
+                    className="relative rounded-3xl p-[3px]"
+                    style={{
+                      background: grad,
+                      boxShadow: "0 18px 50px rgba(23,59,99,0.18)",
+                    }}
+                  >
+                    <img
+                      src={DayPlan}
+                      alt="90 Day Training Flow"
+                      loading="lazy"
+                      className="w-full h-auto rounded-[22px] bg-white block"
+                    />
+                  </div>
+
+                  {/* optional helper text */}
+                  <p className="mt-4 text-xs sm:text-sm text-slate-500 text-center">
+                    Tip: Follow the flow step-by-step — one use case per day.
+                  </p>
+                </div>
+              </SoftCard>
+            </div>
+          </div>
         </div>
       </section>
 
       <DividerGlow />
-
-      {/* What You Get */}
       <SectionShell
         id="what-you-get"
         title="What You Get"
         subtitle="Everything you need to become job-ready in 90 days"
         rightSlot={<GradientPill text="Clear • Practical • Daily" />}
       >
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {whatYouGet.map((item) => {
-            const WIcon = item.icon;
-            return (
-              <div
-                key={item.title}
-                className="h-full rounded-3xl border"
-                style={{
-                  borderColor: `${C2}66`,
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.80))",
-                  boxShadow: "0 18px 46px rgba(15, 23, 42, 0.06)",
-                }}
-              >
-                <div className="h-full rounded-3xl bg-white/80 backdrop-blur-sm p-6 transition hover:-translate-y-0.5 hover:shadow-xl">
-                  <div className="h-full flex flex-col">
-                    <div className="flex items-start gap-4">
-                      <GradientIconBadge>
-                        <WIcon className="h-6 w-6" />
-                      </GradientIconBadge>
+        {/* ✅ Section background wrapper */}
+        <div className="relative rounded-[36px] overflow-hidden">
+          {/* soft gradient base */}
+          <div
+            className="absolute inset-0 opacity-80"
+            style={{
+              background: `
+          radial-gradient(circle at 18% 22%, ${C2}20, transparent 62%),
+          radial-gradient(circle at 82% 68%, ${C3}18, transparent 62%),
+          linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))
+        `,
+            }}
+          />
 
-                      <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-slate-900">
-                          {item.title}
-                        </h3>
-                        <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                          {item.desc}
-                        </p>
+          {/* subtle glow */}
+          <div
+            className="pointer-events-none absolute -inset-12 blur-3xl opacity-25"
+            style={{ background: gradSoft }}
+          />
+
+          {/* ✅ content stays above background */}
+          <div className="relative p-4 sm:p-6 lg:p-8">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-7 sm:grid-cols-2 lg:grid-cols-3">
+              {whatYouGet.map((item) => {
+                const WIcon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="group relative h-full rounded-3xl border bg-white/85 backdrop-blur-sm overflow-hidden transition
+                         focus-within:ring-2 focus-within:ring-offset-2"
+                    style={{
+                      borderColor: `${C2}66`,
+                      boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
+                    }}
+                    tabIndex={0}
+                  >
+                    {/* soft gradient glow (hover only) */}
+                    <div
+                      className="pointer-events-none absolute -inset-12 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        background: `
+                    radial-gradient(circle at 30% 20%, ${C2}26, transparent 60%),
+                    radial-gradient(circle at 70% 70%, ${C3}1f, transparent 60%)
+                  `,
+                      }}
+                    />
+
+                    {/* card content */}
+                    <div className="relative flex h-full flex-col p-5 sm:p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="shrink-0">
+                          <GradientIconBadge>
+                            <WIcon className="h-6 w-6" />
+                          </GradientIconBadge>
+                        </div>
+
+                        <div className="min-w-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-slate-900 leading-snug">
+                            {item.title}
+                          </h3>
+                          <p className="mt-2 text-sm sm:text-[15px] text-slate-600 leading-relaxed">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* footer pinned */}
+                      <div className="mt-auto pt-5 sm:pt-6">
+                        <div
+                          className="h-px w-full"
+                          style={{
+                            background: `linear-gradient(90deg, transparent, ${C2}55, transparent)`,
+                          }}
+                        />
+                        <div className="mt-4 flex items-center justify-between">
+                          <span
+                            className="text-xs font-semibold tracking-wide"
+                            style={{ color: C3 }}
+                          >
+                            Included
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            90-day plan
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="mt-auto">
-                      <div
-                        className="mt-5 h-px w-full"
-                        style={{
-                          background: `linear-gradient(90deg, transparent, ${C2}55, transparent)`,
-                        }}
-                      />
-                      <div className="mt-4 flex items-center justify-between">
-                        <span
-                          className="text-xs font-semibold"
-                          style={{ color: C3 }}
-                        >
-                          Included
-                        </span>
-                        <span className="text-xs text-slate-500">90-day plan</span>
-                      </div>
-                    </div>
+                    {/* lift shadow on hover */}
+                    <div
+                      className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        boxShadow: "0 22px 60px rgba(15, 23, 42, 0.10)",
+                      }}
+                    />
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </SectionShell>
 
@@ -982,40 +1073,105 @@ export default function JobTraining90DaysPage({
         subtitle="Six phases that transform you into a job-ready professional"
         rightSlot={<GradientPill text="6 Phases" />}
       >
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {steps.map((s) => {
-            const StepIcon = s.icon;
+        {/* Section background */}
+        <div className="relative rounded-[36px] overflow-hidden">
+          {/* soft background */}
+          <div
+            className="absolute inset-0 opacity-80"
+            style={{
+              background: `
+          radial-gradient(circle at 20% 25%, ${C2}1f, transparent 60%),
+          radial-gradient(circle at 80% 70%, ${C3}1a, transparent 60%),
+          linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))
+        `,
+            }}
+          />
 
-            return (
-              <div
-                key={s.title}
-                className="h-full rounded-3xl bg-white p-6"
-                style={{
-                  boxShadow:
-                    "inset 0 1px 2px rgba(255,255,255,0.9), inset 0 -2px 6px rgba(15,23,42,0.08)",
-                }}
-              >
-                <div className="h-full flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-semibold text-slate-500">
-                      {s.phase}
-                    </span>
+          {/* subtle glow */}
+          <div
+            className="pointer-events-none absolute -inset-12 blur-3xl opacity-25"
+            style={{ background: gradSoft }}
+          />
 
-                    <div style={{ color: C3 }}>
-                      <StepIcon className="h-6 w-6" />
+          {/* content */}
+          <div className="relative p-4 sm:p-6 lg:p-8">
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {steps.map((s, idx) => {
+                const StepIcon = s.icon;
+
+                return (
+                  <div
+                    key={s.title}
+                    className="group relative h-full rounded-3xl border bg-white/90 backdrop-blur-sm overflow-hidden transition"
+                    style={{
+                      borderColor: `${C2}66`,
+                      boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
+                    }}
+                  >
+                    {/* hover glow */}
+                    <div
+                      className="pointer-events-none absolute -inset-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        background: `
+                    radial-gradient(circle at 30% 20%, ${C2}26, transparent 60%),
+                    radial-gradient(circle at 70% 70%, ${C3}1f, transparent 60%)
+                  `,
+                      }}
+                    />
+
+                    {/* card content */}
+                    <div className="relative flex h-full flex-col p-5 sm:p-6">
+                      {/* header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-semibold tracking-wide text-slate-500">
+                          {s.phase}
+                        </span>
+
+                        <span
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl"
+                          style={{
+                            background: `${C3}14`,
+                            color: C3,
+                          }}
+                        >
+                          <StepIcon className="h-5 w-5" />
+                        </span>
+                      </div>
+
+                      <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+                        {s.title}
+                      </h3>
+
+                      <p className="mt-2 text-sm sm:text-[15px] text-slate-600 leading-relaxed">
+                        {s.desc}
+                      </p>
+
+                      {/* footer */}
+                      <div className="mt-auto pt-5 sm:pt-6">
+                        <div
+                          className="h-px w-full"
+                          style={{
+                            background: `linear-gradient(90deg, transparent, ${C2}55, transparent)`,
+                          }}
+                        />
+                        <span className="mt-3 block text-xs text-slate-500">
+                          Step {idx + 1} of 6
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <h3 className="text-base font-semibold text-slate-900">
-                    {s.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                    {s.desc}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+                    {/* lift shadow */}
+                    <div
+                      className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        boxShadow: "0 22px 60px rgba(15, 23, 42, 0.10)",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </SectionShell>
 
@@ -1027,36 +1183,110 @@ export default function JobTraining90DaysPage({
         subtitle="Built around daily discipline, real use cases, and clarity in explanations."
         rightSlot={<GradientPill text="Proof of skill" />}
       >
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((t, idx) => (
-            <div
-              key={idx}
-              className="h-full rounded-3xl bg-white border p-6"
-              style={{ borderColor: `${C2}66` }}
-            >
-              <div className="h-full flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {t.name}
-                    </p>
-                    <p className="text-xs text-slate-600">{t.role}</p>
+        {/* ✅ Section background wrapper */}
+        <div className="relative rounded-[36px] overflow-hidden">
+          {/* soft gradient base */}
+          <div
+            className="absolute inset-0 opacity-80"
+            style={{
+              background: `
+          radial-gradient(circle at 18% 22%, ${C2}20, transparent 62%),
+          radial-gradient(circle at 82% 68%, ${C3}18, transparent 62%),
+          linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))
+        `,
+            }}
+          />
+
+          {/* subtle glow */}
+          <div
+            className="pointer-events-none absolute -inset-12 blur-3xl opacity-25"
+            style={{ background: gradSoft }}
+          />
+
+          {/* content */}
+          <div className="relative p-4 sm:p-6 lg:p-8">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {testimonials.map((t, idx) => (
+                <div
+                  key={idx}
+                  className="group relative h-full rounded-3xl border bg-white/90 backdrop-blur-sm overflow-hidden transition"
+                  style={{
+                    borderColor: `${C2}66`,
+                    boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
+                  }}
+                >
+                  {/* soft hover glow */}
+                  <div
+                    className="pointer-events-none absolute -inset-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      background: `radial-gradient(circle at 30% 20%, ${C2}26, transparent 60%),
+                             radial-gradient(circle at 80% 70%, ${C3}1f, transparent 60%)`,
+                    }}
+                  />
+
+                  <div className="relative h-full flex flex-col p-5 sm:p-6">
+                    {/* header */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm sm:text-[15px] font-semibold text-slate-900 leading-tight truncate">
+                          {t.name}
+                        </p>
+                        <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-snug">
+                          {t.role}
+                        </p>
+                      </div>
+
+                      <span
+                        className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-2xl"
+                        style={{ background: gradSoft, color: C3 }}
+                        aria-hidden="true"
+                      >
+                        <IconChat className="h-5 w-5" />
+                      </span>
+                    </div>
+
+                    {/* quote */}
+                    <div className="mt-4 flex-1">
+                      <p className="text-sm sm:text-[15px] text-slate-700 leading-relaxed">
+                        <span className="text-slate-400">“</span>
+                        {t.quote}
+                        <span className="text-slate-400">”</span>
+                      </p>
+                    </div>
+
+                    {/* footer */}
+                    <div className="mt-5 pt-4">
+                      <div
+                        className="h-px w-full"
+                        style={{
+                          background: `linear-gradient(90deg, transparent, ${C2}55, transparent)`,
+                        }}
+                      />
+                      <div className="mt-3 flex items-center justify-between">
+                        <span
+                          className="text-xs font-semibold"
+                          style={{ color: C3 }}
+                        >
+                          Verified learner
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          90-day plan
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  <span
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl"
-                    style={{ background: gradSoft, color: C3 }}
-                  >
-                    <IconChat className="h-5 w-5" />
-                  </span>
+                  {/* lift shadow */}
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      boxShadow: "0 22px 60px rgba(15, 23, 42, 0.10)",
+                    }}
+                  />
                 </div>
-
-                <p className="text-sm text-slate-700 leading-relaxed">
-                  “{t.quote}”
-                </p>
-              </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </SectionShell>
 
@@ -1065,79 +1295,111 @@ export default function JobTraining90DaysPage({
       {/* Who + Outcomes */}
       <section
         id="outcomes"
-        className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16"
+        className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16"
       >
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Section background */}
+        <div className="relative rounded-[36px] overflow-hidden">
+          {/* soft gradient base */}
           <div
-            className="rounded-3xl bg-white"
+            className="absolute inset-0 opacity-80"
             style={{
-              boxShadow:
-                "inset 0 2px 3px rgba(255,255,255,0.9), inset 0 -6px 12px rgba(15,23,42,0.10)",
+              background: `
+          radial-gradient(circle at 18% 22%, ${C2}20, transparent 62%),
+          radial-gradient(circle at 82% 68%, ${C3}18, transparent 62%),
+          linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))
+        `,
             }}
-          >
-            <SoftCard className="p-8 bg-transparent shadow-none">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-900">
-                    Who This Is For
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    A structured plan for consistent progress.
-                  </p>
-                </div>
-                <GradientIconBadge size={46}>
-                  <IconUsers className="h-6 w-6" />
-                </GradientIconBadge>
+          />
+
+          {/* subtle glow */}
+          <div
+            className="pointer-events-none absolute -inset-12 blur-3xl opacity-25"
+            style={{ background: gradSoft }}
+          />
+
+          {/* Content */}
+          <div className="relative p-4 sm:p-6 lg:p-8">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* LEFT CARD */}
+              <div
+                className="group relative h-full rounded-3xl border bg-white/90 backdrop-blur-sm transition"
+                style={{
+                  borderColor: `${C2}66`,
+                  boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
+                }}
+              >
+                <SoftCard className="p-6 sm:p-8 bg-transparent shadow-none h-full">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                        Who This Is For
+                      </h3>
+                      <p className="mt-2 text-sm sm:text-base text-slate-600">
+                        A structured plan for consistent progress.
+                      </p>
+                    </div>
+
+                    <GradientIconBadge size={46}>
+                      <IconUsers className="h-6 w-6" />
+                    </GradientIconBadge>
+                  </div>
+
+                  <ul className="mt-6 space-y-3">
+                    {whoItsFor.map((t) => (
+                      <li key={t} className="flex gap-3 items-start">
+                        <span
+                          className="mt-1.5 inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ background: grad }}
+                        />
+                        <span className="text-sm sm:text-base text-slate-700 leading-relaxed">
+                          {t}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </SoftCard>
               </div>
 
-              <ul className="mt-6 space-y-3">
-                {whoItsFor.map((t) => (
-                  <li key={t} className="flex gap-3 items-start">
-                    <span
-                      className="mt-1.5 inline-block h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ background: grad }}
-                    />
-                    <span className="text-slate-700">{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </SoftCard>
-          </div>
+              {/* RIGHT CARD */}
+              <div
+                className="group relative h-full rounded-3xl border bg-white/90 backdrop-blur-sm transition"
+                style={{
+                  borderColor: `${C2}66`,
+                  boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
+                }}
+              >
+                <SoftCard className="p-6 sm:p-8 bg-transparent shadow-none h-full">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                        Results by Day 90
+                      </h3>
+                      <p className="mt-2 text-sm sm:text-base text-slate-600">
+                        Outcome-focused, based on real work.
+                      </p>
+                    </div>
 
-          <div
-            className="rounded-3xl bg-white"
-            style={{
-              boxShadow:
-                "inset 0 2px 3px rgba(255,255,255,0.9), inset 0 -6px 12px rgba(15,23,42,0.10)",
-            }}
-          >
-            <SoftCard className="p-8 bg-transparent shadow-none">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-900">
-                    Results by Day 90
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Outcome-focused, based on real work.
-                  </p>
-                </div>
-                <GradientIconBadge size={46}>
-                  <IconBriefcase className="h-6 w-6" />
-                </GradientIconBadge>
+                    <GradientIconBadge size={46}>
+                      <IconBriefcase className="h-6 w-6" />
+                    </GradientIconBadge>
+                  </div>
+
+                  <ul className="mt-6 space-y-3">
+                    {outcomes.map((t) => (
+                      <li key={t} className="flex gap-3 items-start">
+                        <span
+                          className="mt-1.5 inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ background: grad }}
+                        />
+                        <span className="text-sm sm:text-base text-slate-700 leading-relaxed">
+                          {t}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </SoftCard>
               </div>
-
-              <ul className="mt-6 space-y-3">
-                {outcomes.map((t) => (
-                  <li key={t} className="flex gap-3 items-start">
-                    <span
-                      className="mt-1.5 inline-block h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ background: grad }}
-                    />
-                    <span className="text-slate-700">{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </SoftCard>
+            </div>
           </div>
         </div>
       </section>
@@ -1151,42 +1413,81 @@ export default function JobTraining90DaysPage({
         subtitle="Quick answers about the 90-day program structure."
         rightSlot={<GradientPill text="Simple" />}
       >
-        <div className="grid gap-4">
-          {faqs.map((f, i) => (
-            <FAQItem
-              key={f.q}
-              q={f.q}
-              a={f.a}
-              open={faqOpenIndex === i}
-              onToggle={() => setFaqOpenIndex((prev) => (prev === i ? null : i))}
-            />
-          ))}
+        {/* Section background */}
+        <div className="relative rounded-[36px] overflow-hidden">
+          {/* soft gradient base */}
+          <div
+            className="absolute inset-0 opacity-80"
+            style={{
+              background: `
+          radial-gradient(circle at 18% 22%, ${C2}20, transparent 62%),
+          radial-gradient(circle at 82% 68%, ${C3}18, transparent 62%),
+          linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))
+        `,
+            }}
+          />
+
+          {/* subtle glow */}
+          <div
+            className="pointer-events-none absolute -inset-12 blur-3xl opacity-25"
+            style={{ background: gradSoft }}
+          />
+
+          {/* content */}
+          <div className="relative p-4 sm:p-6 lg:p-8">
+            <div className="grid gap-3 sm:gap-4">
+              {faqs.map((f, i) => (
+                <FAQItem
+                  key={f.q}
+                  q={f.q}
+                  a={f.a}
+                  open={faqOpenIndex === i}
+                  onToggle={() =>
+                    setFaqOpenIndex((prev) => (prev === i ? null : i))
+                  }
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </SectionShell>
+      <DividerGlow />
 
       {/* Final CTA – Compact Gradient Card */}
-      <section id="join" className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+      <section
+        id="join"
+        className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-12"
+      >
         <div
-          className="rounded-3xl p-6 sm:p-7 shadow-xl"
+          className="relative overflow-hidden rounded-3xl p-6 sm:p-8"
           style={{
             background: grad,
-            boxShadow: "0 16px 36px rgba(23,59,99,0.22)",
+            boxShadow: "0 18px 50px rgba(23,59,99,0.22)",
           }}
         >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* soft glow overlay */}
+          <div
+            className="pointer-events-none absolute -inset-10 opacity-30 blur-3xl"
+            style={{ background: "rgba(255,255,255,0.20)" }}
+          />
+
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <h2 className="text-lg sm:text-2xl font-bold text-white">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
                 Ready to start your 90-day job plan?
               </h2>
-              <p className="mt-1 text-sm sm:text-base text-white/85">
+              <p className="mt-2 text-sm sm:text-base text-white/85 leading-relaxed">
                 Daily discipline • Real use cases • Interview readiness
               </p>
             </div>
 
-            {/* ✅ Join button now routes based on login */}
+            {/* ✅ Join button */}
             <a
               href={joinProgramHref}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm sm:text-base font-semibold transition hover:shadow-lg"
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5
+                   text-sm sm:text-base font-semibold transition
+                   hover:shadow-xl active:scale-[0.99]
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               style={{ color: C3 }}
             >
               {cta.primaryLabel}
@@ -1196,12 +1497,21 @@ export default function JobTraining90DaysPage({
         </div>
       </section>
 
-      {/* Mobile sticky CTA bar */}
+      {/* ✅ Mobile sticky CTA bar */}
       <div className="md:hidden fixed bottom-3 left-0 right-0 z-50 px-4">
         <div
-          className="rounded-2xl border bg-white/95 backdrop-blur-md shadow-2xl"
-          style={{ borderColor: `${C2}66` }}
+          className="relative overflow-hidden rounded-2xl border bg-white/95 backdrop-blur-md"
+          style={{
+            borderColor: `${C2}66`,
+            boxShadow: "0 18px 50px rgba(15, 23, 42, 0.18)",
+          }}
         >
+          {/* subtle gradient line */}
+          <div
+            className="absolute left-0 right-0 top-0 h-[3px]"
+            style={{ background: grad }}
+          />
+
           <div className="flex items-center justify-between gap-3 p-3">
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-900 truncate">
@@ -1212,10 +1522,12 @@ export default function JobTraining90DaysPage({
               </p>
             </div>
 
-            {/* ✅ Join button now routes based on login */}
             <a
               href={joinProgramHref}
-              className="shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white"
+              className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+                   text-sm font-semibold text-white transition
+                   active:scale-[0.99]
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               style={{ background: grad }}
             >
               {cta.primaryLabel}
@@ -1225,7 +1537,168 @@ export default function JobTraining90DaysPage({
         </div>
       </div>
 
-      <div className="h-24 md:hidden" />
+      <footer className="mx-auto max-w-7xl px-4 sm:px-6 pb-10 pt-10 sm:pt-14">
+        {/* Footer background card */}
+        <div className="relative rounded-[36px] overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-80"
+            style={{
+              background: `
+          radial-gradient(circle at 18% 22%, ${C2}20, transparent 62%),
+          radial-gradient(circle at 82% 68%, ${C3}18, transparent 62%),
+          linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))
+        `,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute -inset-12 blur-3xl opacity-25"
+            style={{ background: gradSoft }}
+          />
+
+          <div className="relative p-5 sm:p-8">
+            <div className="grid gap-8 lg:grid-cols-12">
+              {/* Brand */}
+              <div className="lg:col-span-5 min-w-0">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border bg-white/80"
+                    style={{ borderColor: `${C2}66` }}
+                  >
+                    <span
+                      className="text-lg font-extrabold"
+                      style={{ color: C3 }}
+                    >
+                      <GradientIconBadge size={40}>
+                        <IconSpark className="h-5 w-5" />
+                      </GradientIconBadge>
+                    </span>
+                  </span>
+
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 truncate">
+                      {brandName}
+                    </p>
+                    <p className="text-xs text-slate-600 truncate">
+                      90 days to job-ready
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-sm sm:text-[15px] text-slate-600 leading-relaxed max-w-prose">
+                  A discipline-first program built on daily execution, real use
+                  cases, mini interviews, and deployment-ready skills.
+                </p>
+
+                {/* Optional social icons */}
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <a
+                    href="#top"
+                    className="inline-flex items-center rounded-2xl border bg-white/80 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:shadow"
+                    style={{ borderColor: `${C2}66` }}
+                  >
+                    Back to top
+                  </a>
+                  <a
+                    href="#faq"
+                    className="inline-flex items-center rounded-2xl border bg-white/80 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:shadow"
+                    style={{ borderColor: `${C2}66` }}
+                  >
+                    FAQ
+                  </a>
+                  <a
+                    href="#join"
+                    className="inline-flex items-center rounded-2xl px-4 py-2 text-xs font-semibold text-white transition hover:shadow"
+                    style={{ background: grad }}
+                  >
+                    Join now
+                  </a>
+                </div>
+              </div>
+
+              {/* Links */}
+              <div className="lg:col-span-7 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Program
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                    <li>
+                      <a className="hover:text-slate-900" href="#how-it-works">
+                        How it works
+                      </a>
+                    </li>
+                    <li>
+                      <a className="hover:text-slate-900" href="#what-you-get">
+                        What you get
+                      </a>
+                    </li>
+                    <li>
+                      <a className="hover:text-slate-900" href="#outcomes">
+                        Outcomes
+                      </a>
+                    </li>
+                    <li>
+                      <a className="hover:text-slate-900" href="#join">
+                        Join the plan
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Support
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                    <li>
+                      <a className="hover:text-slate-900" href="#faq">
+                        FAQs
+                      </a>
+                    </li>
+                    <li>
+                      <a className="hover:text-slate-900" href="/privacy">
+                        Privacy policy
+                      </a>
+                    </li>
+                    <li>
+                      <a className="hover:text-slate-900" href="/terms">
+                        Terms
+                      </a>
+                    </li>
+                    <li>
+                      <a className="hover:text-slate-900" href="/contact">
+                        Contact
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* divider */}
+            <div
+              className="mt-8 h-px w-full"
+              style={{
+                background: `linear-gradient(90deg, transparent, ${C2}55, transparent)`,
+              }}
+            />
+
+            {/* bottom row */}
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-slate-500">
+                © {new Date().getFullYear()} {brandName}. All rights reserved.
+              </p>
+
+              <p className="text-xs text-slate-500">
+                Built for clarity • Practice • Proof of skill
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ IMPORTANT: reserve space so mobile sticky CTA doesn’t cover footer */}
+        <div className="h-24 md:hidden" />
+      </footer>
     </div>
   );
 }
