@@ -676,22 +676,226 @@ export default function NinetyDayPlanPage() {
             style={{ background: "rgba(144,183,215,0.22)" }}
           />
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-2">
-              <Pill text="90-Day Job Plan" />
-              <Pill text="Day 1–51: Use Cases" />
-              <Pill text="Day 52–90: Build + Deploy" />
-              <Pill text="Daily Discipline" />
+          <div className="relative p-6 sm:p-10">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-2">
+                <Pill text="90-Day Job Plan" />
+                <Pill text="Day 1–51: Use Cases" />
+                <Pill text="Day 52–90: Build + Deploy" />
+                <Pill text="Daily Discipline" />
+              </div>
+
+              {/* ✅ Logout Button (Top Right) */}
+              <button
+                onClick={handleLogout}
+                className="self-start sm:self-auto inline-flex items-center justify-center rounded-2xl border bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                style={{ borderColor: `${C2}66`, color: C3 }}
+              >
+                Log Out
+              </button>
             </div>
 
-            {/* ✅ Logout Button (Top Right) */}
-            <button
-              onClick={handleLogout}
-              className="self-start sm:self-auto inline-flex items-center justify-center rounded-2xl border bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-              style={{ borderColor: `${C2}66`, color: C3 }}
-            >
-              Log Out
-            </button>
+            <div className="mt-6 grid gap-8 lg:grid-cols-12 lg:items-start">
+              {/* Left */}
+              <div className="lg:col-span-7 min-w-0">
+                <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.12]">
+                  90 Days → <span style={{ color: C3 }}>Job-Ready</span>
+                </h1>
+                <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed max-w-prose">
+                  Days 1–51: Real BFSI workflows (Business + System). Days
+                  52–90: Integration, coding, testing, deployment, documentation
+                  — and a complete shipped project.
+                </p>
+
+                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <PrimaryBtn
+                    label="Start Day-1 (Customer ID Creation)"
+                    onClick={() => {
+                      setTab("usecases");
+                      setSelectedDay(1);
+                    }}
+                  />
+                  <SecondaryBtn
+                    label="Jump to Build Phase (Day-52)"
+                    onClick={() => {
+                      setTab("integration");
+                      setSelectedDay(52);
+                    }}
+                  />
+                </div>
+
+                <div className="mt-6">
+                  <ProgressBar value={selectedDay} max={90} />
+                </div>
+
+                {/* Day chips */}
+                <div className="mt-5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-slate-500">
+                      Quick day jump
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Selected: Day {selectedDay}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+                    {dayChips.map((d) => (
+                      <DayChip
+                        key={d}
+                        day={d}
+                        active={d === selectedDay}
+                        onClick={() => setSelectedDay(d)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right */}
+              <div className="lg:col-span-5">
+                <SoftCard className="p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-500">
+                        Current Day
+                      </p>
+                      <p className="text-lg font-extrabold text-slate-900">
+                        Day {selectedDay}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {isUseCaseDay ? "Use Case Day" : "Build & Deploy Day"}
+                      </p>
+                    </div>
+                    <span
+                      className="shrink-0 inline-flex h-12 w-12 items-center justify-center rounded-2xl border bg-white"
+                      style={{ borderColor: `${C2}66`, color: C3 }}
+                      aria-hidden="true"
+                    >
+                      {isUseCaseDay ? "UC" : "BD"}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2">
+                    <ToggleBtn
+                      active={viewType === "business"}
+                      label="Business"
+                      onClick={() => setViewType("business")}
+                    />
+                    <ToggleBtn
+                      active={viewType === "system"}
+                      label="System"
+                      onClick={() => setViewType("system")}
+                    />
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <SecondaryBtn
+                      label="Previous"
+                      onClick={goPrev}
+                      className="w-full"
+                    />
+                    <PrimaryBtn
+                      label="Next"
+                      onClick={goNext}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div
+                    className="mt-4 rounded-2xl border bg-white/80 p-4"
+                    style={{ borderColor: `${C2}66` }}
+                  >
+                    <p className="text-xs font-semibold text-slate-500">
+                      Today’s focus
+                    </p>
+
+                    {isUseCaseDay ? (
+                      <>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold text-slate-900 truncate">
+                            {selectedUseCase?.title || "Use Case"}
+                          </p>
+                          {selectedUseCase ? (
+                            <ModuleTag module={selectedUseCase.module} />
+                          ) : null}
+                        </div>
+                        <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                          {selectedUseCase?.description}
+                        </p>
+                        <div className="mt-3">
+                          <button
+                            onClick={openSelectedUseCase}
+                            className="w-full rounded-2xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-95"
+                            style={{ background: GRAD }}
+                          >
+                            Open Day {selectedDay} ({viewType})
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-2 text-sm font-bold text-slate-900 truncate">
+                          {selectedTask?.title || "Build & Deploy"}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                          {selectedTask?.description}
+                        </p>
+                        {selectedTask?.tags?.length ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {selectedTask.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full border bg-white/70 px-3 py-1 text-xs font-semibold"
+                                style={{
+                                  borderColor: `${C2}66`,
+                                  color: "#475569",
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setTab("usecases")}
+                      className={cx(
+                        "rounded-2xl border px-5 py-3 text-sm font-semibold transition",
+                        tab === "usecases"
+                          ? "bg-white"
+                          : "bg-white/70 hover:bg-white"
+                      )}
+                      style={{
+                        borderColor: `${C2}66`,
+                        color: tab === "usecases" ? C3 : "#64748b",
+                      }}
+                    >
+                      Days 1–51
+                    </button>
+                    <button
+                      onClick={() => setTab("integration")}
+                      className={cx(
+                        "rounded-2xl border px-5 py-3 text-sm font-semibold transition",
+                        tab === "integration"
+                          ? "bg-white"
+                          : "bg-white/70 hover:bg-white"
+                      )}
+                      style={{
+                        borderColor: `${C2}66`,
+                        color: tab === "integration" ? C3 : "#64748b",
+                      }}
+                    >
+                      Days 52–90
+                    </button>
+                  </div>
+                </SoftCard>
+              </div>
+            </div>
           </div>
         </div>
       </header>

@@ -624,7 +624,7 @@ const AllAIStore: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-6 line-clamp-3">
                             {agent.agentCreatorName
                               ? `Created by ${agent.agentCreatorName}`
-                              : "Smart AI assistant built to help you automate tasks."}
+                              : ""}
                           </p>
 
                           <div className="flex items-center gap-3 mb-6">
