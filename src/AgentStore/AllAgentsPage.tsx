@@ -1,6 +1,7 @@
 // src/AgentStore/AllAgentsPage.tsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import BASE_URL from "../Config";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
@@ -199,6 +200,7 @@ type Assistant = {
   view: string | null;
   screenStatus?: "STAGE1" | "STAGE2" | "STAGE3" | "STAGE4" | null;
   certificateUrl?: string | null; // ✅ add this
+  businessCardId?: string | null;
   conStarter1?: string | null;
   conStarter2?: string | null;
   conStarter3?: string | null;
@@ -280,6 +282,12 @@ const AllAgentsPage: React.FC = () => {
   // separate loaders for each button
   const [editInstrLoading, setEditInstrLoading] = useState(false);
   const [editStarterLoading, setEditStarterLoading] = useState(false);
+  const [showBusinessCardModal, setShowBusinessCardModal] = useState(false);
+  const [businessCardData, setBusinessCardData] = useState<any>(null);
+  const [businessCardLoading, setBusinessCardLoading] = useState(false);
+  const [currentBusinessCardId, setCurrentBusinessCardId] = useState<string | null>(null);
+  const [isEditingBusinessCard, setIsEditingBusinessCard] = useState(false);
+  const [editBusinessCardData, setEditBusinessCardData] = useState<any>(null);
 
   const [namePromptOpen, setNamePromptOpen] = useState(false);
   const [tempRecipient, setTempRecipient] = useState("");
@@ -388,6 +396,78 @@ const AllAgentsPage: React.FC = () => {
   }
 
   const [certLoadingFor, setCertLoadingFor] = useState<string | null>(null);
+
+  const fetchBusinessCardData = async (businessCardId: string) => {
+    if (!businessCardId) return;
+    
+    try {
+      setBusinessCardLoading(true);
+      axios.get(`${BASE_URL}/ai-service/agent/getBusinessCardById/${businessCardId}`,{
+        headers:{
+          Authorization: `Bearer ${getAccessToken()}`
+        }
+      })
+      .then((response)=>{
+        console.log(response.data);
+        setBusinessCardData(response.data.data);
+        setShowBusinessCardModal(true);     
+      }).catch((error)=>{
+        console.log(error.response);
+      })
+    
+    } catch (err: any) {
+      console.error(err);
+      // message.error("Failed to fetch business card data");
+    } finally {
+      setBusinessCardLoading(false);
+    }
+  };
+
+  const handleBusinessCardEdit = (businessCardData: any) => {
+    if (!businessCardData) return;
+    setIsEditingBusinessCard(true);
+    setEditBusinessCardData({ ...businessCardData });
+  };
+
+  const handleBusinessCardSubmit = async () => {
+    try {
+      setBusinessCardLoading(true);
+      
+      const requestBody = {
+        fullName: editBusinessCardData?.fullName || "",
+        jobTitle: editBusinessCardData?.jobTitle || "",
+        companyName: editBusinessCardData?.companyName || "",
+        email: editBusinessCardData?.email || "",
+        mobileNumber: editBusinessCardData?.mobileNumber || "",
+        website: editBusinessCardData?.webSite || "",
+        address: editBusinessCardData?.address || "",
+        userId: localStorage.getItem("userId") || "",
+        id: currentBusinessCardId || "",
+        imagePath: editBusinessCardData?.imagePath || ""
+      };
+
+      await axios.patch(`${BASE_URL}/ai-service/agent/updateBusinessCardData`, requestBody, {
+        headers: {
+          Authorization: `Bearer ${getAccessToken()}`
+        }
+      });
+      
+      setBusinessCardData(editBusinessCardData);
+      setIsEditingBusinessCard(false);
+      setShowBusinessCardModal(false);
+      message.success("Business card updated successfully!");
+    } catch (err: any) {
+      console.error(err);
+      message.error("Failed to update business card");
+    } finally {
+      setBusinessCardLoading(false);
+    }
+  };
+
+  const handleBusinessCardCancel = () => {
+    setIsEditingBusinessCard(false);
+    setEditBusinessCardData(null);
+  };
 
   async function generateCertificate(agent: Assistant) {
     if (!agent?.id || !agent?.agentName) {
@@ -1843,6 +1923,8 @@ const AllAgentsPage: React.FC = () => {
                           View Files
                         </Button>
 
+                      
+
                         {/* ✅ Action Buttons: Edit | View | Delete */}
                         <div className="flex gap-2 ml-auto flex-wrap justify-end w-full sm:w-auto">
                           {/* Responsive action row — User History + Certificate */}
@@ -1998,6 +2080,34 @@ const AllAgentsPage: React.FC = () => {
                               </svg>
                               <span>View</span>
                             </button>
+
+                            {/* Business Card Button */}
+                            {a.businessCardId && (
+                              <button
+                                onClick={() => {
+                                  setCurrentBusinessCardId(a.businessCardId!);
+                                  fetchBusinessCardData(a.businessCardId!);
+                                }}
+                                title="View Business Card Details"
+                                disabled={businessCardLoading}
+                                className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
+      bg-[#3B82F6] text-white
+      hover:bg-[#2563EB] transition-all shadow-sm
+      flex-1 sm:flex-none justify-center disabled:opacity-60"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="w-4 h-4"
+                                >
+                                  <path d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4Zm0 2h16v12H4V6Zm2 2v2h4V8H6Zm0 4v2h8v-2H6Z" />
+                                </svg>
+                                <span>{businessCardLoading ? "Loading..." : "Business Card"}</span>
+                              </button>
+                            )}
+
+      
 
                             {/* ✏️ Edit Button (same row) */}
                             <button
@@ -2831,6 +2941,112 @@ const AllAgentsPage: React.FC = () => {
               isOpen={vendorModalOpen}
               onClose={() => setVendorModalOpen(false)}
             />
+
+
+{/* Display and edit Buisness card details Modal */}
+      <Modal
+        title="Business Card Details"
+        open={showBusinessCardModal}
+        onCancel={() => {
+          setShowBusinessCardModal(false);
+          setIsEditingBusinessCard(false);
+          setEditBusinessCardData(null);
+        }}
+        footer={[
+          <Button key="cancel" onClick={() => {
+            setShowBusinessCardModal(false);
+            setIsEditingBusinessCard(false);
+            setEditBusinessCardData(null);
+          }}>Cancel</Button>,
+          isEditingBusinessCard ? (
+            <Button key="submit" type="primary" loading={businessCardLoading} onClick={handleBusinessCardSubmit}>Submit</Button>
+          ) : (
+            <Button key="edit" type="primary" onClick={() => handleBusinessCardEdit(businessCardData)}>Edit</Button>
+          )
+        ]}
+        width={600}
+      >
+        {businessCardData && (
+          <div>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label><strong>Full Name:</strong></label>
+                <Input
+                  value={isEditingBusinessCard ? editBusinessCardData?.fullName : businessCardData.fullName}
+                  disabled={!isEditingBusinessCard}
+                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, fullName: e.target.value})}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label><strong>Job Title:</strong></label>
+                <Input
+                  value={isEditingBusinessCard ? editBusinessCardData?.jobTitle : businessCardData.jobTitle}
+                  disabled={!isEditingBusinessCard}
+                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, jobTitle: e.target.value})}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label><strong>Company:</strong></label>
+                <Input
+                  value={isEditingBusinessCard ? editBusinessCardData?.companyName : businessCardData.companyName}
+                  disabled={!isEditingBusinessCard}
+                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, companyName: e.target.value})}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label><strong>Email:</strong></label>
+                <Input
+                  value={isEditingBusinessCard ? editBusinessCardData?.email : businessCardData.email}
+                  disabled={!isEditingBusinessCard}
+                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, email: e.target.value})}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label><strong>Mobile:</strong></label>
+                <Input
+                  value={isEditingBusinessCard ? editBusinessCardData?.mobileNumber : businessCardData.mobileNumber}
+                  disabled={!isEditingBusinessCard}
+                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, mobileNumber: e.target.value})}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label><strong>Website:</strong></label>
+                <Input
+                  value={isEditingBusinessCard ? editBusinessCardData?.webSite : (businessCardData.webSite || '')}
+                  disabled={!isEditingBusinessCard}
+                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, webSite: e.target.value})}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label><strong>Address:</strong></label>
+              <Input.TextArea
+                value={isEditingBusinessCard ? editBusinessCardData?.address : businessCardData.address}
+                disabled={!isEditingBusinessCard}
+                onChange={(e) => setEditBusinessCardData({...editBusinessCardData, address: e.target.value})}
+                rows={3}
+                style={{ marginTop: 4 }}
+              />
+            </div>
+            {businessCardData.imagePath && (
+              <div>
+                <div><strong>Business Card Image:</strong></div>
+                <img src={businessCardData.imagePath} alt="Business Card" style={{ maxWidth: '100%', marginTop: 8 }} />
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={!!editAgent}

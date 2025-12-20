@@ -411,12 +411,12 @@ const TripResult: React.FC<TripResultProps> = ({ tripResult, formData }) => {
             >
               💰 Pricing
             </button>
-            <button 
+            {/* <button 
               className={`tab-btn ${activeTab === 'packages' ? 'active' : ''}`}
               onClick={() => setActiveTab('packages')}
             >
               🎆 Our Packages
-            </button>
+            </button> */}
             <button 
               className={`tab-btn ${activeTab === 'weather' ? 'active' : ''}`}
               onClick={() => setActiveTab('weather')}
@@ -443,13 +443,13 @@ const TripResult: React.FC<TripResultProps> = ({ tripResult, formData }) => {
               {audioLoading ? '⏳ Generating...' : '🎧 Audio Summary'}
             </button>
             <button className="action-btn" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }} onClick={handleShareTrip}>📤 Share Trip</button>
-            <button 
+            {/* <button 
               className="action-btn" 
               style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
               onClick={() => setActiveTab('packages')}
             >
               🎆 View Our Packages
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

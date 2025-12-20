@@ -13,7 +13,8 @@ import {
   FaUserFriends,
   FaUsers,
   FaUser,
-  FaRegCheckCircle
+  FaRegCheckCircle,
+  FaCog
 } from "react-icons/fa";
 import { IoLayers, IoLogOut } from "react-icons/io5";
 import { FaCreditCard, FaRobot, FaBriefcase } from "react-icons/fa6";
@@ -107,18 +108,58 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <TbLayoutDashboardFilled size={18} />,
       label: "Dashboard",
     },
+    // {
+    //   type: "item",
+    //   to: "/main/subscription",
+    //   icon: <FaCreditCard size={18} />,
+    //   label: "My Subscriptions",
+    // },
     {
-      type: "item",
+      type: "dropdown",
+      key: "account",
+      icon: <FaCog size={18} />,
+      label: "Account",
+      items: [
+        {
+          to: "/main/profile",
+          label: "Profile",
+          icon: <FaUser style={{ fontSize: 16 }} />,
+        },
+        // {
+        //   to: "/main/usercreateaistore",
+        //   label: "Agent KYC Verification",
+        //   icon: <HiSparkles size={16} />,
+        // },
+        {
+          to: "/main/freelanceform",
+          label: "Freelancer",
+          icon: <FaPlusCircle size={16} />,
+        },
+        
+      {
+        to: "/main/wallet",
+        icon: <FaWallet size={18} />,
+        label: "My Wallet",
+      },
+       {
+      to: "/main/crypto",
+      icon: <FaCoins size={18} />,
+      label: "My Crypto",
+    },
+       {
       to: "/main/subscription",
       icon: <FaCreditCard size={18} />,
       label: "My Subscriptions",
     },
-    {
-      type: "item",
-      to: "/main/profile",
-      icon: <FaUser size={18} />,
-      label: "Profile",
+       
+      ],
     },
+    // {
+    //   type: "item",
+    //   to: "/main/profile",
+    //   icon: <FaUser size={18} />,
+    //   label: "Profile",
+    // },
     {
       type: "item",
       to: "/main/myorders",
@@ -126,19 +167,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: "My Orders",
     },
 
-    {
-      type: "item",
-      to: "/main/wallet",
-      icon: <FaWallet size={18} />,
-      label: "My Wallet",
-    },
+    // {
+    //   type: "item",
+    //   to: "/main/wallet",
+    //   icon: <FaWallet size={18} />,
+    //   label: "My Wallet",
+    // },
 
-    {
-      type: "item",
-      to: "/main/crypto",
-      icon: <FaCoins size={18} />,
-      label: "My Crypto",
-    },
+    // {
+    //   type: "item",
+    //   to: "/main/crypto",
+    //   icon: <FaCoins size={18} />,
+    //   label: "My Crypto",
+    // },
 
      // Bharat AI Store dropdown
     {

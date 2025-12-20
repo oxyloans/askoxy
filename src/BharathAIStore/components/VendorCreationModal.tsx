@@ -131,7 +131,7 @@ const VendorCreationModal: React.FC<VendorCreationModalProps> = ({
       if (!response.ok) {
         throw new Error(data.message || "Failed to create vendor");
       }
-      alert("Success: Vendor KYC details captured.");
+      alert("Success: KYC details captured.");
       getVendorId();
     } catch (error: any) {
       alert("Error: " + (error.message || "Something went wrong"));
@@ -230,7 +230,7 @@ const VendorCreationModal: React.FC<VendorCreationModalProps> = ({
             disabled={loading}
             className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Submitting..." : "Create Vendor"}
+            {loading ? "Submitting..." : "Verify & Submit KYC"}
           </button>
         </div>
       </div>

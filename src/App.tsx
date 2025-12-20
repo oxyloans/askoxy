@@ -9,6 +9,7 @@ import NinetyDayPlanPage from "./components/NinetyDayPlanPage";
 import CASRouteRenderer1 from "./GLMS/CAS/Pages/CASRouteRenderer1";
 import FMSRoutes1 from "./GLMS/FMS/Pages/FMSRoutes1";
 import CMSroutes1 from "./GLMS/CMS/Pages/CMSroutes1";
+import FreelancerForm from "./components/FreelancerForm";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -899,6 +900,7 @@ const App: React.FC = () => {
                 <Route path="bulkinvite" element={<BulkInvite />} />
                 <Route path="google" element={<GmailContactsScreen />} />
                 <Route path="mycart" element={<CartPage />} />
+                <Route path="freelanceform" element={<FreelancerForm />} />
                 <Route
                   path="services/:id/:type"
                   element={<CampaignDetails />}
