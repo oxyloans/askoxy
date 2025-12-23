@@ -154,7 +154,7 @@ const AIBlockchainHeader = memo(function AIBlockchainHeader({
               </span>
               <span className="ml-3 text-xl font-bold text-blue-900">
                 AI
-                <span className="text-purple-600"> Blockchain </span>&
+                <span className="text-purple-600"> Blockchain, Crypto </span>&
                 <span className="text-blue-600"> IT Services</span>
               </span>
             </button>

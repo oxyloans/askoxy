@@ -15,7 +15,7 @@ const FreeAiBook: React.FC = () => {
   const whatsappNumber = localStorage.getItem("whatsappNumber");
   const LOGIN_URL = "/whatsappregister";
 
-  const jobPlanImageUrl = "https://i.ibb.co/Vc4SFD3g/90-day.jpg";
+  const jobPlanImageUrl = "https://i.ibb.co/twj7WCX3/90-dayl.png";
 
   useEffect(() => {
     const sendMarketingRequest = async () => {

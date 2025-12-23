@@ -48,7 +48,7 @@ function AIBlockchainHeroSection() {
     setIsLoading(true);
     try {
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/0f02/ai-blockchain-it-services";
+      const redirectPath = "/main/crypto";
 
       if (userId) {
         navigate(redirectPath);
@@ -65,120 +65,111 @@ function AIBlockchainHeroSection() {
 
   const features = [
     {
-      title: "AI-Powered Solutions",
+      title: "AI Solutions",
       color: "text-cyan-400",
-      description:
-        "Automate workflows, analyze big data, and personalize user experiences using machine learning and AI models.",
+      description: "Smart automation and data-driven intelligence.",
     },
     {
-      title: "Blockchain Technology",
+      title: "Blockchain",
       color: "text-purple-400",
-      description:
-        "Build transparent, decentralized, and tamper-proof systems for finance, healthcare, logistics, and more.",
+      description: "Secure, transparent, decentralized systems.",
     },
     {
-      title: "End-to-End IT Services",
+      title: "IT Services",
       color: "text-pink-400",
-      description:
-        "From cloud infrastructure to app development, we provide scalable and secure IT solutions tailored to your business needs.",
+      description: "End-to-end scalable technology support.",
     },
   ];
 
   return (
-    <section
-      className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 lg:py-16 pb-20 overflow-hidden"
-      aria-label="AI Blockchain Hero Section"
-    >
-      {/* Background Glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse delay-500"></div>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 lg:py-16 pb-20 overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Text Content */}
-          <div
-            className={`lg:col-span-7 space-y-8 text-center lg:text-left transform transition-all duration-700 ${
-              isVisible
-                ? "translate-x-0 opacity-100"
-                : "-translate-x-10 opacity-0"
-            }`}
-          >
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white">
-                {fullHeadingText}
-                <span className="block mt-2">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">
-                    {typedText}
-                    <span
-                      aria-hidden="true"
-                      className={`inline-block w-1 h-12 bg-cyan-400 ml-1 ${
-                        isTypingComplete ? "animate-pulse" : ""
-                      }`}
-                    ></span>
-                  </span>
-                </span>
-              </h1>
 
-              <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mt-8 mx-auto lg:mx-0">
-                Empowering enterprises with cutting-edge Artificial
-                Intelligence, secure Blockchain solutions, and robust IT
-                services to accelerate innovation, enhance security, and drive
-                digital transformation.
-              </p>
+          {/* LEFT CONTENT */}
+          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
 
-              {/* Feature Highlights */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-                {features.map(({ title, color, description }, index) => (
-                  <div
-                    key={index}
-                    className={`bg-white/5 backdrop-blur-sm rounded-3xl p-4 border border-white/10 shadow-lg transition-all hover:shadow-xl hover:bg-white/10 cursor-pointer hover:text-white hover:${color.replace(
-                      "text-",
-                      "shadow-"
-                    )}`}
-                    title={title}
-                  >
-                    <h3
-                      className={`text-2xl font-semibold mb-3 text-center ${color}`}
-                    >
-                      {title}
-                    </h3>
-                    <p className="text-gray-300 text-center text-sm leading-relaxed">
-                      {description}
-                    </p>
-                  </div>
-                ))}
-              </div>
+            {/* Heading (15% smaller) */}
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+              {fullHeadingText}
+              <span className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">
+                {typedText}
+                <span className="inline-block w-1 h-10 bg-cyan-400 ml-1 animate-pulse"></span>
+              </span>
+            </h1>
+
+            {/* Description */}
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto lg:mx-0">
+              Empowering enterprises with cutting-edge Artificial Intelligence,
+              secure Blockchain solutions, and robust IT services.
+            </p>
+
+            {/* Feature Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+              {features.map((f, i) => (
+                <div
+                  key={i}
+                  className="bg-white/5 border border-white/10 rounded-2xl p-3"
+                >
+                  <h3 className={`text-lg font-semibold mb-1 ${f.color}`}>
+                    {f.title}
+                  </h3>
+                  <p className="text-gray-300 text-xs">
+                    {f.description}
+                  </p>
+                </div>
+              ))}
             </div>
 
-            {/* Call To Action */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mt-8">
+            {/* BMVCOINS OFFER */}
+            <div className="bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl p-5 mt-6 max-w-xl mx-auto lg:mx-0">
+              <h3 className="text-xl font-bold text-cyan-400 mb-1">
+                🎉 LIMITED TIME OFFER
+              </h3>
+
+              <p className="text-sm text-white font-semibold">
+                Get ₹20 Worth of BMVCOINS Free Today!
+              </p>
+
+              <p className="text-xs text-gray-300 mt-1">
+                (1 BMVCOIN = ₹0.02 • You get 1000 Coins = ₹20)
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 mt-3 text-center">
+                <div className="bg-black/30 rounded-lg p-2">
+                  <p className="text-gray-400 text-xs">Guaranteed Minimum</p>
+                  <p className="text-white text-sm font-bold">₹20</p>
+                </div>
+                <div className="bg-black/30 rounded-lg p-2">
+                  <p className="text-gray-400 text-xs">Potential Maximum</p>
+                  <p className="text-white text-sm font-bold">₹2,000</p>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-gray-400 mt-3">
+                Total Distributed: ₹2,000+ (1,00,000 BMVCOINS)
+              </p>
+            </div>
+
+            {/* CTA BUTTON (UNCHANGED SIZE) */}
+            <div className="mt-6 flex justify-center lg:justify-start">
               <button
                 onClick={handleSignIn}
                 disabled={isLoading}
-                className="group bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-4 px-8 rounded-full flex items-center justify-center gap-3 hover:from-cyan-600 hover:to-blue-700 shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105"
+                className="group bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-4 px-8 rounded-full flex items-center gap-3 hover:scale-105 transition"
               >
-                {isLoading ? "Loading..." : "Get Started"}
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {isLoading ? "Loading..." : "Claim Free Coins"}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1" />
               </button>
             </div>
           </div>
 
-          {/* Hero Image */}
-          <div
-            className={`lg:col-span-5 transition-all duration-700 transform ${
-              isVisible
-                ? "translate-x-0 opacity-100"
-                : "translate-x-10 opacity-0"
-            } flex justify-center`}
-          >
+          {/* RIGHT IMAGE */}
+          <div className="lg:col-span-5 flex justify-center">
             <img
               src="https://i.ibb.co/GfBNqQFY/OurApp.png"
               alt="AI and Blockchain Technology"
-              className="rounded-3xl shadow-2xl object-cover w-full max-w-md lg:max-w-full"
-              loading="lazy"
+              className="rounded-3xl shadow-2xl w-full max-w-md"
             />
           </div>
         </div>

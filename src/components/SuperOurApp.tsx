@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react"; // Close icon
 
-// === Image imports (s1…s12) ===
 import s1 from "../assets/img/s1.png";
 import s2 from "../assets/img/s2.png";
 import s3 from "../assets/img/s3.png";
@@ -18,7 +17,6 @@ import s12 from "../assets/img/s12.png";
 import s13 from "../assets/img/s13.png";
 import s14 from "../assets/img/s14.png";
 
-// Left side big image
 import leftImage from "../assets/img/megahero.png";
 
 type Tile = {
@@ -34,7 +32,7 @@ export default function SuperOurApp() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCryptoModalOpen, setIsCryptoModalOpen] = useState<boolean>(false);
 
-  // ✅ NEW: control FAB visibility based on grid visibility
+  // ✅ control FAB visibility based on grid visibility
   const [showFab, setShowFab] = useState<boolean>(true);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,7 +41,6 @@ export default function SuperOurApp() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // show only while at least 10% of the grid wrapper is visible
         setShowFab(entry.isIntersecting && entry.intersectionRatio >= 0.1);
       },
       { threshold: [0, 0.1, 0.5, 1] }
@@ -92,6 +89,11 @@ export default function SuperOurApp() {
     }
   };
 
+  // ✅ UPDATED ORDER:
+  // Row-1: OXYGPT, Rice2Robo, Bharat AI Store, 90 DAY JOB PLAN
+  // Row-2: Loans, BlockChain, Real Estate, Gold/Silver
+  // Row-3: Nyaya GPT, GLMS, CA&CS, Study Abroad
+  // ❌ Crypto removed from grid (now separate button below)
   const tiles: Tile[] = [
     { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
     {
@@ -101,17 +103,18 @@ export default function SuperOurApp() {
       title: "Rice 2 Robo\nECommerce",
     },
     {
-      id: "s11",
+      id: "s2",
       src: s2,
       onClick: () => navigate("/bharath-aistore"),
       title: "Bharat AI \nStore & More",
     },
     {
-      id: "s12",
-      src: s12,
-      onClick: () => setIsCryptoModalOpen(true),
-      title: "Crypto",
+      id: "s11",
+      src: s11,
+      route: "/90dayjobplan",
+      title: "90 Day\nJob Plan",
     },
+
     {
       id: "s4",
       src: s4,
@@ -122,9 +125,8 @@ export default function SuperOurApp() {
       id: "s10",
       src: s10,
       route: "/aiblockchainanditservices",
-      title: "BlockChain",
+      title: "BlockChain & \nCrypto",
     },
-    { id: "s5", src: s5, route: "/nyayagpt", title: "Nyaya GPT" },
     { id: "s6", src: s6, route: "/realestate", title: "Real Estate" },
     {
       id: "s3",
@@ -132,6 +134,8 @@ export default function SuperOurApp() {
       route: "/goldandsilveranddiamonds",
       title: "Gold, Silver\n& Diamonds",
     },
+
+    { id: "s5", src: s5, route: "/nyayagpt", title: "Nyaya GPT" },
     { id: "s8", src: s8, route: "/glms", title: "GLMS, Blogs\nJob Street" },
     {
       id: "s1",
@@ -167,9 +171,10 @@ export default function SuperOurApp() {
               />
             </div>
 
-            {/* Right: 12-tile grid */}
+            {/* Right: grid + crypto button */}
             <div className="w-full lg:w-[52%]">
               <div className="mx-auto max-w-[780px]" ref={gridRef}>
+                {/* 12-tile grid */}
                 <div
                   className={[
                     "grid",
@@ -207,6 +212,35 @@ export default function SuperOurApp() {
                     </div>
                   ))}
                 </div>
+
+                {/* ✅ Crypto button (like tile), but NOT inside grid */}
+                {/* <div className="mt-4 flex justify-center sm:justify-end">
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() => setIsCryptoModalOpen(true)}
+                      className={[
+                        "w-[96px] sm:w-[110px] md:w-[120px]",
+                        "aspect-square rounded-[18px]",
+                        "transform hover:scale-110 transition-all duration-150",
+                        "flex items-center justify-center p-2 sm:p-2.5 md:p-3",
+                      ].join(" ")}
+                      aria-label="Crypto"
+                      title="Crypto"
+                    >
+                      <img
+                        src={s12}
+                        alt="Crypto"
+                        className="w-full h-full object-contain select-none"
+                        draggable={false}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </button>
+                    <p className="mt-2 text-center text-white font-semibold leading-tight text-[11px] sm:text-[12px] md:text-[13px]">
+                      Crypto
+                    </p>
+                  </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -216,7 +250,7 @@ export default function SuperOurApp() {
         </div>
       </div>
 
-      {/* === Floating ASKOXY icon button (click => My Services) === */}
+      {/* Floating ASKOXY icon button (click => My Services) */}
       {showFab && !isCryptoModalOpen && (
         <div
           className="fixed z-50 pointer-events-none"
@@ -244,7 +278,7 @@ export default function SuperOurApp() {
         </div>
       )}
 
-      {/* === Modal for Crypto Claim === */}
+      {/* Modal for Crypto Claim */}
       {isCryptoModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">

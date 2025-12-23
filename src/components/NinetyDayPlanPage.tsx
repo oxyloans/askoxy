@@ -83,6 +83,72 @@ const PrimaryBtn = ({
   </button>
 );
 
+const WhatsAppJoinCard = () => {
+  const WHATSAPP_GROUP_LINK =
+    "https://chat.whatsapp.com/EItom0BMte185NndsmGCXL";
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(WHATSAPP_GROUP_LINK);
+      alert("WhatsApp group link copied!");
+    } catch {
+      alert("Copy failed. Please copy manually.");
+    }
+  };
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-8 sm:pb-10">
+      <div
+        className="relative overflow-hidden rounded-[36px] border bg-white/90 backdrop-blur-sm"
+        style={{
+          borderColor: `${C2}66`,
+          boxShadow: "0 24px 70px rgba(15, 23, 42, 0.08)",
+        }}
+      >
+        <div className="absolute inset-0" style={{ background: SOFT_BG }} />
+        <div
+          className="absolute -inset-10 opacity-30 blur-3xl"
+          style={{ background: "rgba(144,183,215,0.25)" }}
+        />
+
+        <div className="relative p-6 sm:p-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap gap-2">
+                <Pill text="Community" />
+                <Pill text="Daily Guidance" />
+                <Pill text="90-Day Job Plan" />
+              </div>
+
+              <h2 className="mt-4 text-2xl sm:text-3xl font-extrabold text-slate-900">
+                Join our WhatsApp Group
+              </h2>
+
+              <p className="mt-2 text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
+                Our CEO will guide you daily inside the group. Get daily tasks,
+                clarifications, and support to complete the 90-day plan.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <PrimaryBtn
+                label="Join WhatsApp Group"
+                onClick={() => window.open(WHATSAPP_GROUP_LINK, "_blank")}
+                className="w-full sm:w-auto"
+              />
+              <SecondaryBtn
+                label="Copy Link"
+                onClick={copyLink}
+                className="w-full sm:w-auto"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const SecondaryBtn = ({
   label,
   onClick,
@@ -1180,6 +1246,8 @@ export default function NinetyDayPlanPage() {
           </div>
         </section>
       )}
+
+      <WhatsAppJoinCard />
 
       {/* Footer */}
       <footer className="border-t bg-white">

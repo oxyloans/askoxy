@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import DayPlan from "../assets/img/90dayplanflow (1).png";
+import DayPlan from "../assets/img/90dayplanflow.png";
 import { useNavigate } from "react-router-dom";
 import Logo1 from "../assets/img/oxy1.png";
 import Logo2 from "../assets/img/oxybrick.png";
@@ -519,7 +519,7 @@ export default function JobTraining90DaysPage({
     primaryLabel: "Join the Program",
     secondaryLabel: "Talk to Our Team",
   },
-  headerImageUrl = "https://i.ibb.co/Vc4SFD3g/90-day.jpg",
+  headerImageUrl = "https://i.ibb.co/rKDmJkGr/90-dayl.png",
 }: Props) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
@@ -747,9 +747,6 @@ export default function JobTraining90DaysPage({
             <a href="#what-you-get" className="transition hover:text-slate-900">
               Benefits
             </a>
-            <a href="#how-it-works" className="transition hover:text-slate-900">
-              Process
-            </a>
             <a href="#outcomes" className="transition hover:text-slate-900">
               Results
             </a>
@@ -842,10 +839,10 @@ export default function JobTraining90DaysPage({
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <GradientPill text="Daily Discipline" />
-              <GradientPill text="51 Use Cases" />
-              <GradientPill text="Mini Interviews" />
-              <GradientPill text="Deployment + Integration" />
+              {/* Hashtag Pills */}
+              <GradientPill text="#NoCost" />
+              <GradientPill text="#FreeMentoring" />
+              <GradientPill text="#CommunityDevelopment" />
             </div>
 
             <h1 className="mt-5 text-3xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
@@ -918,7 +915,7 @@ export default function JobTraining90DaysPage({
           />
 
           {/* Content */}
-          <div className="relative px-4 sm:px-8 py-10 sm:py-14">
+          <div className="relative px-4 sm:px-4 py-6 sm:py-8">
             <div className="text-center">
               <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
                 Your 90-Day Journey
@@ -928,7 +925,7 @@ export default function JobTraining90DaysPage({
               </p>
             </div>
 
-            <div className="mt-8 sm:mt-10">
+            <div className="mt-4 sm:mt-4">
               <SoftCard className="p-4 sm:p-5">
                 <div className="relative">
                   {/* glow behind image */}
@@ -1077,117 +1074,6 @@ export default function JobTraining90DaysPage({
 
       <DividerGlow />
 
-      {/* How It Works */}
-      <SectionShell
-        id="how-it-works"
-        title="How It Works"
-        subtitle="Six phases that transform you into a job-ready professional"
-        rightSlot={<GradientPill text="6 Phases" />}
-      >
-        {/* Section background */}
-        <div className="relative rounded-[36px] overflow-hidden">
-          {/* soft background */}
-          <div
-            className="absolute inset-0 opacity-80"
-            style={{
-              background: `
-          radial-gradient(circle at 20% 25%, ${C2}1f, transparent 60%),
-          radial-gradient(circle at 80% 70%, ${C3}1a, transparent 60%),
-          linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.74))
-        `,
-            }}
-          />
-
-          {/* subtle glow */}
-          <div
-            className="pointer-events-none absolute -inset-12 blur-3xl opacity-25"
-            style={{ background: gradSoft }}
-          />
-
-          {/* content */}
-          <div className="relative p-4 sm:p-6 lg:p-8">
-            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {steps.map((s, idx) => {
-                const StepIcon = s.icon;
-
-                return (
-                  <div
-                    key={s.title}
-                    className="group relative h-full rounded-3xl border bg-white/90 backdrop-blur-sm overflow-hidden transition"
-                    style={{
-                      borderColor: `${C2}66`,
-                      boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
-                    }}
-                  >
-                    {/* hover glow */}
-                    <div
-                      className="pointer-events-none absolute -inset-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{
-                        background: `
-                    radial-gradient(circle at 30% 20%, ${C2}26, transparent 60%),
-                    radial-gradient(circle at 70% 70%, ${C3}1f, transparent 60%)
-                  `,
-                      }}
-                    />
-
-                    {/* card content */}
-                    <div className="relative flex h-full flex-col p-5 sm:p-6">
-                      {/* header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-semibold tracking-wide text-slate-500">
-                          {s.phase}
-                        </span>
-
-                        <span
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl"
-                          style={{
-                            background: `${C3}14`,
-                            color: C3,
-                          }}
-                        >
-                          <StepIcon className="h-5 w-5" />
-                        </span>
-                      </div>
-
-                      <h3 className="text-base sm:text-lg font-semibold text-slate-900">
-                        {s.title}
-                      </h3>
-
-                      <p className="mt-2 text-sm sm:text-[15px] text-slate-600 leading-relaxed">
-                        {s.desc}
-                      </p>
-
-                      {/* footer */}
-                      <div className="mt-auto pt-5 sm:pt-6">
-                        <div
-                          className="h-px w-full"
-                          style={{
-                            background: `linear-gradient(90deg, transparent, ${C2}55, transparent)`,
-                          }}
-                        />
-                        <span className="mt-3 block text-xs text-slate-500">
-                          Step {idx + 1} of 6
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* lift shadow */}
-                    <div
-                      className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{
-                        boxShadow: "0 22px 60px rgba(15, 23, 42, 0.10)",
-                      }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </SectionShell>
-
-      <DividerGlow />
-
       {/* Testimonials */}
       <SectionShell
         title="Learner Feedback"
@@ -1302,122 +1188,6 @@ export default function JobTraining90DaysPage({
       </SectionShell>
 
       <DividerGlow />
-      <SectionShell id="partners" title="" subtitle="" rightSlot={null}>
-        <div className="relative rounded-[36px] overflow-hidden">
-          {/* soft background */}
-          <div
-            className="absolute inset-0 opacity-80"
-            style={{
-              background: `
-          radial-gradient(circle at 20% 25%, ${C2}1f, transparent 60%),
-          radial-gradient(circle at 80% 70%, ${C3}1a, transparent 60%),
-          linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85))
-        `,
-            }}
-          />
-
-          {/* subtle glow */}
-          <div
-            className="pointer-events-none absolute -inset-12 blur-3xl opacity-30"
-            style={{ background: gradSoft }}
-          />
-
-          {/* content */}
-          <div className="relative px-4 sm:px-8 py-10 sm:py-14">
-            {/* Heading */}
-            <div className="text-center mb-10">
-              <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
-                Our Partner Platforms
-              </h2>
-              <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-3xl mx-auto">
-                Trusted platforms powering lending and real estate ecosystems
-                across Bharat.
-              </p>
-            </div>
-
-            {/* Logos grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {/* LOGO 1 */}
-              <div className="flex flex-col items-center">
-                <div className="relative w-full">
-                  <div
-                    className="absolute -inset-3 rounded-[32px] blur-3xl opacity-40"
-                    style={{ background: gradSoft }}
-                  />
-                  <div
-                    className="relative rounded-[32px] p-[3px] shadow-2xl"
-                    style={{
-                      background: grad,
-                      boxShadow: "0 18px 50px rgba(23,59,99,0.22)",
-                    }}
-                  >
-                    <div className="bg-white rounded-[30px] flex items-center justify-center h-[200px] sm:h-[260px] lg:h-[300px] p-6 sm:p-10">
-                      <img
-                        src={Logo1}
-                        alt="OxyLoans"
-                        loading="lazy"
-                        draggable={false}
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => window.open("https://oxyloans.com/", "_blank")}
-                  className="mt-6 px-8 py-3 rounded-full font-semibold text-white text-sm sm:text-base transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, #5c3391, #7b3fb8)",
-                    boxShadow: "0 10px 24px rgba(92,51,145,0.35)",
-                  }}
-                >
-                  Visit OxyLoans
-                </button>
-              </div>
-
-              {/* LOGO 2 */}
-              <div className="flex flex-col items-center">
-                <div className="relative w-full">
-                  <div
-                    className="absolute -inset-3 rounded-[32px] blur-3xl opacity-40"
-                    style={{ background: gradSoft }}
-                  />
-                  <div
-                    className="relative rounded-[32px] p-[3px] shadow-2xl"
-                    style={{
-                      background: grad,
-                      boxShadow: "0 18px 50px rgba(23,59,99,0.22)",
-                    }}
-                  >
-                    <div className="bg-white rounded-[30px] flex items-center justify-center h-[200px] sm:h-[260px] lg:h-[300px] p-6 sm:p-10">
-                      <img
-                        src={Logo2}
-                        alt="OxyBricks"
-                        loading="lazy"
-                        draggable={false}
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() =>
-                    window.open("https://oxybricks.world/", "_blank")
-                  }
-                  className="mt-6 px-8 py-3 rounded-full font-semibold text-white text-sm sm:text-base transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, #008cba, #00b4d8)",
-                    boxShadow: "0 10px 24px rgba(0,140,186,0.35)",
-                  }}
-                >
-                  Visit OxyBricks
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </SectionShell>
 
       {/* Who + Outcomes */}
       <section
@@ -1579,6 +1349,150 @@ export default function JobTraining90DaysPage({
         </div>
       </SectionShell>
       <DividerGlow />
+
+      {/* ✅ Official Partners (after FAQ) */}
+      <SectionShell
+        id="official-partners"
+        title="Our Popular Platforms"
+        subtitle="Trusted brands from public"
+        rightSlot={<GradientPill text="Trusted" />}
+      >
+        <div className="grid gap-5 sm:gap-6 md:grid-cols-2">
+          {/* Partner 1 */}
+          <a
+            href="https://oxyloans.com/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Visit OxyLoans"
+            className="group block"
+            style={{ textDecoration: "none" }}
+          >
+            <div
+              className="relative rounded-[24px] bg-white overflow-hidden transition-transform"
+              style={{
+                border: "1px solid rgba(15,23,42,0.10)",
+                boxShadow:
+                  "0 14px 36px rgba(15,23,42,0.10), 0 2px 0 rgba(255,255,255,0.8) inset",
+              }}
+            >
+              {/* simple 3D hover */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background:
+                    "radial-gradient(circle at 20% 15%, rgba(99,102,241,0.12), transparent 55%), radial-gradient(circle at 80% 75%, rgba(168,85,247,0.10), transparent 55%)",
+                }}
+              />
+
+              <div className="relative p-4 sm:p-5">
+                <img
+                  src="https://i.ibb.co/d0Ldd0tT/oxy1.png"
+                  alt="OxyLoans"
+                  loading="lazy"
+                  className="w-full h-auto block"
+                  style={{
+                    objectFit: "contain", // ✅ no crop
+                    borderRadius: 18,
+                    background: "transparent",
+                  }}
+                />
+
+                <div className="mt-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm sm:text-base font-semibold text-slate-900">
+                      OxyLoans - RBI Approved P2P NBFC
+                    </p>
+                  </div>
+
+                  <span
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border"
+                    style={{
+                      borderColor: "rgba(99,102,241,0.35)",
+                      background: "rgba(99,102,241,0.10)",
+                    }}
+                  >
+                    <ArrowRight className="h-5 w-5" />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* hover lift */}
+            <style>{`
+          a.group:hover > div {
+            transform: translateY(-4px);
+          }
+        `}</style>
+          </a>
+
+          {/* Partner 2 */}
+          <a
+            href="https://oxybricks.world/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Visit OxyBricks"
+            className="group block"
+            style={{ textDecoration: "none" }}
+          >
+            <div
+              className="relative rounded-[24px] bg-white overflow-hidden transition-transform"
+              style={{
+                border: "1px solid rgba(15,23,42,0.10)",
+                boxShadow:
+                  "0 14px 36px rgba(15,23,42,0.10), 0 2px 0 rgba(255,255,255,0.8) inset",
+              }}
+            >
+              {/* simple 3D hover */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background:
+                    "radial-gradient(circle at 20% 15%, rgba(99,102,241,0.12), transparent 55%), radial-gradient(circle at 80% 75%, rgba(168,85,247,0.10), transparent 55%)",
+                }}
+              />
+
+              <div className="relative p-4 sm:p-5">
+                <img
+                  src="https://i.ibb.co/mVHrYfW4/oxybrick.png"
+                  alt="OxyBricks"
+                  loading="lazy"
+                  className="w-full h-auto block"
+                  style={{
+                    objectFit: "contain", // ✅ no crop
+                    borderRadius: 18,
+                    background: "transparent",
+                  }}
+                />
+
+                <div className="mt-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm sm:text-base font-semibold text-slate-900">
+                      OxyBricks - Fractional Ownership in Real Estate & GOLD
+                    </p>
+                  </div>
+
+                  <span
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border"
+                    style={{
+                      borderColor: "rgba(168,85,247,0.35)",
+                      background: "rgba(168,85,247,0.10)",
+                    }}
+                  >
+                    <ArrowRight className="h-5 w-5" />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* hover lift */}
+            <style>{`
+          a.group:hover > div {
+            transform: translateY(-4px);
+          }
+        `}</style>
+          </a>
+        </div>
+      </SectionShell>
 
       {/* Final CTA – Compact Gradient Card */}
       <section
@@ -1749,11 +1663,6 @@ export default function JobTraining90DaysPage({
                     Program
                   </p>
                   <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                    <li>
-                      <a className="hover:text-slate-900" href="#how-it-works">
-                        How it works
-                      </a>
-                    </li>
                     <li>
                       <a className="hover:text-slate-900" href="#what-you-get">
                         What you get
