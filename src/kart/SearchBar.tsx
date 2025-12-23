@@ -94,23 +94,36 @@ const SearchBar = () => {
     }
   }, [debouncedValue]);
 
- useEffect(() => {
-   // Only run this auto-back logic when the SearchBar itself is active
-   if (!isFocused) return;
+  useEffect(() => {
+    // Only run this auto-back logic when the SearchBar itself is active
+    if (!isFocused) return;
 
-   const timer = setTimeout(() => {
-     if (
-       searchValue.trim() === "" &&
-       location.pathname === "/main/search-main"
-     ) {
-       setIsFocused(false);
-       setSearchResults([]);
-       navigate("/main/dashboard/home", { state: null });
-     }
-   }, 500);
+    const timer = setTimeout(() => {
+      if (
+        searchValue.trim() === "" &&
+        location.pathname === "/main/search-main"
+      ) {
+        setIsFocused(false);
+        setSearchResults([]);
+        navigate("/main/dashboard/home", { state: null });
+      }
+    }, 500);
 
-   return () => clearTimeout(timer);
- }, [searchValue, location.pathname, isFocused]);
+    return () => clearTimeout(timer);
+  }, [searchValue, location.pathname, isFocused]);
+  // ✅ AUTO-REDIRECT TO HOME WHEN USER CLEARS / BACKSPACES BELOW 3 CHARS
+  useEffect(() => {
+    const trimmed = searchValue.trim();
+
+    if (
+      location.pathname === "/main/search-main" &&
+      trimmed.length < MIN_SEARCH_LENGTH
+    ) {
+      setIsFocused(false);
+      setSearchResults([]);
+      navigate("/main/dashboard/home", { replace: true, state: null });
+    }
+  }, [searchValue, location.pathname]);
 
   useEffect(() => {
     if (isFocused && searchValue.trim() === "") {
@@ -220,11 +233,12 @@ const SearchBar = () => {
       setSearchResults([]);
     }
   };
-
   const handleClearSearch = () => {
     setSearchValue("");
+    setDebouncedValue(""); // ✅ important: stop auto effect
     setSearchResults([]);
-    navigate("/main/dashboard/home", { state: null }); // Clear state
+    setIsFocused(false);
+    navigate("/main/dashboard/home", { replace: true, state: null });
   };
 
   const handleItemClick = (item: SearchItem) => {

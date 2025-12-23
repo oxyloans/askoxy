@@ -238,7 +238,7 @@ const FreelancerForm: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)", padding: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #faf5ff 0%,  100%)", padding: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ width: "100%", maxWidth: "768px" }}>
         <div style={{ background: "white", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", border: "1px solid #E5E7EB", overflow: "hidden" }}>
           {/* Header */}

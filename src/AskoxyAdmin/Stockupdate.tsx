@@ -679,7 +679,7 @@ fetchStockData(item.itemId);
                   ]}
                 >
                   <Select placeholder="Select category">
-                    {["GOLD", "RICE", "GROCERY", "FESTIVAL"].map((cat) => (
+                    {["GOLD", "RICE", "GROCERY", "SILVER"].map((cat) => (
                       <Select.Option key={cat} value={cat}>
                         {cat}
                       </Select.Option>

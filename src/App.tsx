@@ -885,6 +885,10 @@ const App: React.FC = () => {
                 />
                 <Route path="service/oxyloans-service" element={<OxyLoans />} />
                 <Route
+                  path="services/freeai-genai"
+                  element={<FreeAiandGenAi />}
+                />
+                <Route
                   path="services/legalservice"
                   element={<LegalService />}
                 />
@@ -901,6 +905,7 @@ const App: React.FC = () => {
                 <Route path="google" element={<GmailContactsScreen />} />
                 <Route path="mycart" element={<CartPage />} />
                 <Route path="freelanceform" element={<FreelancerForm />} />
+                <Route path="addblogs" element={<AddBlog />} />
                 <Route
                   path="services/:id/:type"
                   element={<CampaignDetails />}

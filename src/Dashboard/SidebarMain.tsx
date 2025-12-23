@@ -114,46 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     //   icon: <FaCreditCard size={18} />,
     //   label: "My Subscriptions",
     // },
-    {
-      type: "dropdown",
-      key: "account",
-      icon: <FaCog size={18} />,
-      label: "Account",
-      items: [
-        {
-          to: "/main/profile",
-          label: "Profile",
-          icon: <FaUser style={{ fontSize: 16 }} />,
-        },
-        // {
-        //   to: "/main/usercreateaistore",
-        //   label: "Agent KYC Verification",
-        //   icon: <HiSparkles size={16} />,
-        // },
-        {
-          to: "/main/freelanceform",
-          label: "Freelancer",
-          icon: <FaPlusCircle size={16} />,
-        },
-        
-      {
-        to: "/main/wallet",
-        icon: <FaWallet size={18} />,
-        label: "My Wallet",
-      },
-       {
-      to: "/main/crypto",
-      icon: <FaCoins size={18} />,
-      label: "My Crypto",
-    },
-       {
-      to: "/main/subscription",
-      icon: <FaCreditCard size={18} />,
-      label: "My Subscriptions",
-    },
-       
-      ],
-    },
+
     // {
     //   type: "item",
     //   to: "/main/profile",
@@ -180,18 +141,55 @@ const Sidebar: React.FC<SidebarProps> = ({
     //   icon: <FaCoins size={18} />,
     //   label: "My Crypto",
     // },
+    // {
+    //   to: "/main/usercreateaistore",
+    //   label: "Agent KYC Verification",
+    //   icon: <HiSparkles size={16} />,
+    // },
 
-     // Bharat AI Store dropdown
     {
       type: "dropdown",
-      key: "ai-store",
+      key: "account_menu",
+      icon: <FaCog size={18} />,
+      label: "Account Settings",
+      items: [
+        {
+          to: "/main/profile",
+          label: "Profile",
+          icon: <FaUser size={16} />,
+        },
+        {
+          to: "/main/freelanceform",
+          label: "Freelancer Account",
+          icon: <FaPlusCircle size={16} />,
+        },
+        {
+          to: "/main/wallet",
+          label: "Wallet",
+          icon: <FaWallet size={16} />,
+        },
+        {
+          to: "/main/crypto",
+          label: "Crypto Wallet",
+          icon: <FaCoins size={16} />,
+        },
+        {
+          to: "/main/subscription",
+          label: "Subscriptions",
+          icon: <FaCreditCard size={16} />,
+        },
+      ],
+    },
+    {
+      type: "dropdown",
+      key: "bharat_ai_store",
       icon: <FaStore size={18} />,
       label: "Bharat AI Store",
       items: [
         {
-          to: "/bharath-aistore",
-          label: "Bharat AI Store",
-          icon: <FaRobot style={{ fontSize: 16 }} />,
+          to: "/all-ai-stores",
+          label: "Explore AI Stores",
+          icon: <FaRobot size={16} />,
         },
         {
           to: "/main/usercreateaistore",
@@ -204,6 +202,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaPlusCircle size={16} />,
         },
         {
+          to: "/bharath-aistore",
+          label: "Explore AI Agents",
+          icon: <FaRobot size={16} />,
+        },
+        {
           to: "/main/bharath-aistore/agents",
           label: "My AI Agents",
           icon: <FaRobot size={16} />,
@@ -211,12 +214,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
 
-    // Referral & Invites dropdown
     {
       type: "dropdown",
-      key: "referral",
+      key: "referrals_invites",
       icon: <ImUsers size={18} />,
-      label: "Referral & Invites",
+      label: "Referrals & Invites",
       items: [
         {
           to: "/main/referral",
@@ -231,17 +233,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         {
           to: "/main/google",
           label: "Google Contacts",
-          icon: <FaGoogle style={{ fontSize: 16 }} />,
+          icon: <FaGoogle size={16} />,
         },
       ],
     },
-    
-    // My Creations dropdown
+
+    // My Content & Jobs
     {
       type: "dropdown",
-      key: "creations",
+      key: "my_content_jobs",
       icon: <IoLayers size={18} />,
-      label: "My Blogs & Jobs",
+      label: "My Content & Jobs",
       items: [
         {
           to: "/main/dashboard/myservices",
@@ -266,10 +268,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
 
-    // Support dropdown
+    // Help & Support
     {
       type: "dropdown",
-      key: "support",
+      key: "help_support",
       icon: <FaHandsHelping size={18} />,
       label: "Help & Support",
       items: [

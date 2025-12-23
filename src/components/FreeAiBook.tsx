@@ -80,15 +80,25 @@ const FreeAiBook: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="md:w-1/2 p-6 flex justify-center">
-          <img src={aiImage} alt="AI Book" className="object-contain shadow-lg" />
+          <img
+            src={aiImage}
+            alt="AI Book"
+            className="object-contain shadow-lg"
+          />
         </div>
 
         <div className="md:w-1/2 p-6 flex flex-col justify-center">
           <p className="text-gray-700 mb-4 text-justify">
-            Step into the AI Universe: Discover, learn, and create with today’s most powerful AI tools. From your very first prompt to shaping global impact, explore how AI is transforming industries, generating text, images, music, and code, and powering innovations like ChatGPT and MidJourney.
+            Step into the AI Universe: Discover, learn, and create with today’s
+            most powerful AI tools. From your very first prompt to shaping
+            global impact, explore how AI is transforming industries, generating
+            text, images, music, and code, and powering innovations like ChatGPT
+            and MidJourney.
           </p>
           <p className="text-gray-700 mb-6 text-justify">
-            Our Mission: To empower one million learners with AI skills and unlock career opportunities of the future. Join the revolution, master AI, and be part of the next wave of technological innovation.
+            Our Mission: To empower one million learners with AI skills and
+            unlock career opportunities of the future. Join the revolution,
+            master AI, and be part of the next wave of technological innovation.
           </p>
 
           <motion.button
@@ -101,15 +111,15 @@ const FreeAiBook: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* ===== 90 Day Job Plan Heading ===== */}
+      {/* ===== 90 Days Job Plan Heading ===== */}
       <div className="text-center mt-12 mb-6">
         <h3 className="text-3xl md:text-4xl font-extrabold text-purple-900">
-          90 Day Job Plan
+          90 Days Job Plan
         </h3>
         <div className="w-24 h-1.5 mt-4 mx-auto rounded-full bg-gradient-to-r from-purple-300 via-indigo-300 to-pink-300" />
       </div>
 
-      {/* ===== 90 Day Job Plan Card (Image RIGHT on Desktop) ===== */}
+      {/* ===== 90 Days Job Plan Card (Image RIGHT on Desktop) ===== */}
       <motion.div
         className="flex flex-col md:flex-row-reverse bg-white border shadow-md w-full max-w-7xl"
         initial={{ opacity: 0, y: 20 }}
@@ -120,7 +130,7 @@ const FreeAiBook: React.FC = () => {
         <div className="md:w-1/2 p-6 flex justify-center">
           <img
             src={jobPlanImageUrl}
-            alt="90 Day Job Plan"
+            alt="90 Days Job Plan"
             className="object-contain shadow-lg"
             loading="lazy"
           />
@@ -128,21 +138,22 @@ const FreeAiBook: React.FC = () => {
 
         {/* Content LEFT */}
         <div className="md:w-1/2 p-6 flex flex-col justify-center">
-<p className="text-gray-800 mb-3 text-lg font-semibold">
-  Become job-ready in 90 days — one use case per day, one step at a time.
-</p>
+          <p className="text-gray-800 mb-3 text-lg font-semibold">
+            Become job-ready in 90 days — one use case per day, one step at a
+            time.
+          </p>
 
-<p className="text-gray-700 mb-4 text-justify">
-  The 90-Day Job Plan is a structured, discipline-driven job readiness program
-  designed to transform learners into confident, job-ready professionals in
-  just 90 days.
-</p>
+          <p className="text-gray-700 mb-4 text-justify">
+            The 90-Day Job Plan is a structured, discipline-driven job readiness
+            program designed to transform learners into confident, job-ready
+            professionals in just 90 days.
+          </p>
 
-<p className="text-gray-700 mb-4 text-justify">
-  Unlike traditional courses that focus on theory or certificates, this program
-  is built on daily execution, real-world use cases, and practical proof of
-  skill.
-</p>
+          <p className="text-gray-700 mb-4 text-justify">
+            Unlike traditional courses that focus on theory or certificates,
+            this program is built on daily execution, real-world use cases, and
+            practical proof of skill.
+          </p>
 
           <motion.button
             onClick={handleJobPlanViewMore}

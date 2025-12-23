@@ -276,16 +276,9 @@ const handleViewComments = async (task: Task) => {
       align: "center" as const,
       render: (_: any, record: any) => {
         // Handle assignedTo array
-        const hasValidAssignee =
-          Array.isArray(record.taskAssignTo) &&
-          record.taskAssignTo.length > 0 &&
-          record.taskAssignTo.some((a: any) => a && a.trim() !== "");
+        
 
-        const assignedToText = hasValidAssignee
-          ? Array.isArray(record.taskAssignTo)
-            ? record.taskAssignTo.join(", ")
-            : record.taskAssignTo
-          : "N/A";
+       
 
         return (
           <div
@@ -414,6 +407,8 @@ const handleViewComments = async (task: Task) => {
       title: "Actions",
       key: "actions",
       align: "center" as const,
+    
+      width: 260,
       render: (_: any, record: Task) => (
         <Space wrap style={{ justifyContent: "center" }}>
           {record.status !== "completed" && (
@@ -431,6 +426,7 @@ const handleViewComments = async (task: Task) => {
                   borderColor: "#008cba",
                   borderRadius: 6,
                 }}
+                size="small"
               >
                 Complete
               </Button>
@@ -448,6 +444,7 @@ const handleViewComments = async (task: Task) => {
                 danger
                 icon={<CloseOutlined />}
                 style={{ borderRadius: 6 }}
+                size="small"
               >
                 Reject
               </Button>
@@ -467,21 +464,24 @@ const handleViewComments = async (task: Task) => {
                 color: "#fff",
                 borderRadius: 6,
               }}
+              size="small"
             >
               Delete
             </Button>
           </Popconfirm>
+
           <Button
             icon={<CommentOutlined />}
             style={{
               background: "#1ab394",
               color: "white",
               borderColor: "#1ab394",
+              borderRadius: 6,
             }}
             size="small"
             onClick={() => handleCommentsAdd(record)}
           >
-            Add Comments
+            Add
           </Button>
 
           <Button
@@ -490,6 +490,7 @@ const handleViewComments = async (task: Task) => {
               background: "#351664",
               color: "white",
               borderColor: "#351664",
+              borderRadius: 6,
             }}
             size="small"
             onClick={() => handleViewComments(record)}

@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
-import DayPlan from "../assets/img/90dayplanflow.png";
+import DayPlan from "../assets/img/90dayplanflow (1).png";
 import { useNavigate } from "react-router-dom";
-
+import Logo1 from "../assets/img/oxy1.png";
+import Logo2 from "../assets/img/oxybrick.png";
 type CTAConfig = {
   primaryLabel?: string;
   primaryHref?: string;
@@ -755,6 +756,9 @@ export default function JobTraining90DaysPage({
             <a href="#faq" className="transition hover:text-slate-900">
               FAQ
             </a>
+            <a href="#partners" className="transition hover:text-slate-900">
+              Partners
+            </a>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -812,6 +816,13 @@ export default function JobTraining90DaysPage({
                 className="rounded-xl px-3 py-2 hover:bg-slate-50"
               >
                 FAQ
+              </a>
+              <a
+                onClick={() => setMobileNavOpen(false)}
+                href="#partners"
+                className="rounded-xl px-3 py-2 hover:bg-slate-50"
+              >
+                Partners
               </a>
 
               <div className="pt-2 flex gap-2">
@@ -874,7 +885,7 @@ export default function JobTraining90DaysPage({
             >
               <img
                 src={headerImageUrl}
-                alt="90 Day Program"
+                alt="90 Days Program"
                 loading="lazy"
                 className="w-full h-auto rounded-[30px] bg-white"
               />
@@ -936,7 +947,7 @@ export default function JobTraining90DaysPage({
                   >
                     <img
                       src={DayPlan}
-                      alt="90 Day Training Flow"
+                      alt="90 Days Training Flow"
                       loading="lazy"
                       className="w-full h-auto rounded-[22px] bg-white block"
                     />
@@ -1291,6 +1302,122 @@ export default function JobTraining90DaysPage({
       </SectionShell>
 
       <DividerGlow />
+      <SectionShell id="partners" title="" subtitle="" rightSlot={null}>
+        <div className="relative rounded-[36px] overflow-hidden">
+          {/* soft background */}
+          <div
+            className="absolute inset-0 opacity-80"
+            style={{
+              background: `
+          radial-gradient(circle at 20% 25%, ${C2}1f, transparent 60%),
+          radial-gradient(circle at 80% 70%, ${C3}1a, transparent 60%),
+          linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85))
+        `,
+            }}
+          />
+
+          {/* subtle glow */}
+          <div
+            className="pointer-events-none absolute -inset-12 blur-3xl opacity-30"
+            style={{ background: gradSoft }}
+          />
+
+          {/* content */}
+          <div className="relative px-4 sm:px-8 py-10 sm:py-14">
+            {/* Heading */}
+            <div className="text-center mb-10">
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
+                Our Partner Platforms
+              </h2>
+              <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-3xl mx-auto">
+                Trusted platforms powering lending and real estate ecosystems
+                across Bharat.
+              </p>
+            </div>
+
+            {/* Logos grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              {/* LOGO 1 */}
+              <div className="flex flex-col items-center">
+                <div className="relative w-full">
+                  <div
+                    className="absolute -inset-3 rounded-[32px] blur-3xl opacity-40"
+                    style={{ background: gradSoft }}
+                  />
+                  <div
+                    className="relative rounded-[32px] p-[3px] shadow-2xl"
+                    style={{
+                      background: grad,
+                      boxShadow: "0 18px 50px rgba(23,59,99,0.22)",
+                    }}
+                  >
+                    <div className="bg-white rounded-[30px] flex items-center justify-center h-[200px] sm:h-[260px] lg:h-[300px] p-6 sm:p-10">
+                      <img
+                        src={Logo1}
+                        alt="OxyLoans"
+                        loading="lazy"
+                        draggable={false}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => window.open("https://oxyloans.com/", "_blank")}
+                  className="mt-6 px-8 py-3 rounded-full font-semibold text-white text-sm sm:text-base transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #5c3391, #7b3fb8)",
+                    boxShadow: "0 10px 24px rgba(92,51,145,0.35)",
+                  }}
+                >
+                  Visit OxyLoans
+                </button>
+              </div>
+
+              {/* LOGO 2 */}
+              <div className="flex flex-col items-center">
+                <div className="relative w-full">
+                  <div
+                    className="absolute -inset-3 rounded-[32px] blur-3xl opacity-40"
+                    style={{ background: gradSoft }}
+                  />
+                  <div
+                    className="relative rounded-[32px] p-[3px] shadow-2xl"
+                    style={{
+                      background: grad,
+                      boxShadow: "0 18px 50px rgba(23,59,99,0.22)",
+                    }}
+                  >
+                    <div className="bg-white rounded-[30px] flex items-center justify-center h-[200px] sm:h-[260px] lg:h-[300px] p-6 sm:p-10">
+                      <img
+                        src={Logo2}
+                        alt="OxyBricks"
+                        loading="lazy"
+                        draggable={false}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() =>
+                    window.open("https://oxybricks.world/", "_blank")
+                  }
+                  className="mt-6 px-8 py-3 rounded-full font-semibold text-white text-sm sm:text-base transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #008cba, #00b4d8)",
+                    boxShadow: "0 10px 24px rgba(0,140,186,0.35)",
+                  }}
+                >
+                  Visit OxyBricks
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SectionShell>
 
       {/* Who + Outcomes */}
       <section

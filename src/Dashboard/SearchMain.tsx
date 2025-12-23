@@ -1,5 +1,5 @@
 // SearchMain.tsx
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Row,
@@ -102,7 +102,35 @@ const SearchMain: React.FC = () => {
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
   const MIN_SEARCH_LENGTH = 3;
+  // ✅ Helpers: hide empty / null / undefined / 0.0 values from UI
+  const isValidText = (v: any) => {
+    if (v === null || v === undefined) return false;
+    const s = String(v).trim();
+    if (!s) return false;
+    const lower = s.toLowerCase();
+    if (
+      lower === "null" ||
+      lower === "undefined" ||
+      lower === "na" ||
+      lower === "n/a"
+    )
+      return false;
+    return true;
+  };
 
+  const isValidNumber = (v: any) => {
+    if (v === null || v === undefined) return false;
+    const n = Number(v);
+    if (!Number.isFinite(n)) return false;
+    return n > 0; // ✅ 0.0 / 0 will be treated as invalid (not displayed)
+  };
+
+  const isValidImageUrl = (url: any) => {
+    if (!isValidText(url)) return false;
+    const s = String(url).trim();
+    if (s.includes("placehold") || s.includes("placeholder")) return false;
+    return true;
+  };
   useEffect(() => {
     const trimmedQuery = query.trim();
     if (trimmedQuery && trimmedQuery.length >= MIN_SEARCH_LENGTH) {
@@ -125,9 +153,17 @@ const SearchMain: React.FC = () => {
         }
       );
       setData(response.data);
-      if (response.data.items && response.data.items.length > 0) {
-        setSelectedCategory(response.data.items[0].categoryName);
-      }
+      const firstValid = (response.data?.items || []).find((cat) => {
+        const hasValidName = isValidText(cat.categoryName);
+        const list = Array.isArray(cat.itemsResponseDtoList)
+          ? cat.itemsResponseDtoList
+          : [];
+        const hasValidItems = list.some(
+          (p) => isValidNumber(p.itemPrice) && isValidNumber(p.itemMrp)
+        );
+        return hasValidName && hasValidItems;
+      });
+      setSelectedCategory(firstValid?.categoryName || null);
     } catch (err) {
       console.error("Error fetching search data:", err);
       setError("Failed to fetch search results. Please try again.");
@@ -310,9 +346,7 @@ const SearchMain: React.FC = () => {
   };
 
   const handleAgentClick = (agent: Agent) => {
-    navigate(
-      `/${agent.assistantId}/${agent.agentId}/${agent.name}`
-    );
+    navigate(`/${agent.assistantId}/${agent.agentId}/${agent.name}`);
   };
 
   const isItemUserAdded = (itemId: string): boolean => {
@@ -325,42 +359,66 @@ const SearchMain: React.FC = () => {
     data?.empty || (!data?.agents.length && !data?.items.length);
 
   // CRITICAL FILTER: Remove items with itemPrice <= 0 OR itemMrp <= 0 OR quantity <= 0
-  const filteredData = data
-    ? {
-        ...data,
-        items: selectedCategory
-          ? [
-              data.items
-                .find((cat) => cat.categoryName === selectedCategory)
-                ?.itemsResponseDtoList.filter(
-                  (prod) =>
-                    prod.itemPrice > 0 && prod.itemMrp > 0 && prod.quantity > 0
-                ) || [],
-            ].map((list) => ({
-              categoryName: selectedCategory,
-              itemsResponseDtoList: list,
-              categoryLogo:
-                data.items.find((cat) => cat.categoryName === selectedCategory)
-                  ?.categoryLogo || "",
-            }))
-          : data.items
-              .map((cat) => ({
-                ...cat,
-                itemsResponseDtoList: cat.itemsResponseDtoList.filter(
-                  (prod) =>
-                    prod.itemPrice > 0 && prod.itemMrp > 0 && prod.quantity > 0
-                ),
-              }))
-              .filter((cat) => cat.itemsResponseDtoList.length > 0),
-      }
-    : null;
+  const filteredData = useMemo(() => {
+    if (!data) return null;
 
-  const totalItems = filteredData
-    ? filteredData.items.reduce(
-        (acc, cat) => acc + cat.itemsResponseDtoList.length,
-        0
-      )
-    : 0;
+    // 1) Filter items inside categories
+    const cleanedCategories: Category[] = (data.items || [])
+      .map((cat) => {
+        const items = Array.isArray(cat.itemsResponseDtoList)
+          ? cat.itemsResponseDtoList
+          : [];
+
+        const cleanedItems = items.filter((prod) => {
+          // ✅ don’t show if price/mrp is 0.0 or null or undefined
+          if (!isValidNumber(prod.itemPrice)) return false;
+          if (!isValidNumber(prod.itemMrp)) return false;
+
+          // quantity filter? keep it OPTIONAL. Many times quantity can be 0 but still show.
+          // If you want to hide out-of-stock, enable this:
+          // if (!isValidNumber(prod.quantity)) return false;
+
+          return true;
+        });
+
+        return {
+          ...cat,
+          // ✅ hide logo if invalid (we’ll also hide while rendering)
+          categoryLogo: isValidImageUrl(cat.categoryLogo)
+            ? cat.categoryLogo
+            : "",
+          // ✅ hide name if invalid
+          categoryName: isValidText(cat.categoryName) ? cat.categoryName : "",
+          itemsResponseDtoList: cleanedItems,
+        };
+      })
+      // remove categories that have no valid name OR no valid items
+      .filter(
+        (cat) =>
+          isValidText(cat.categoryName) && cat.itemsResponseDtoList.length > 0
+      );
+
+    // 2) Apply selectedCategory
+    let finalCategories: Category[] = cleanedCategories;
+
+    if (isValidText(selectedCategory)) {
+      const chosen = cleanedCategories.find(
+        (c) => c.categoryName === selectedCategory
+      );
+      finalCategories = chosen ? [chosen] : cleanedCategories;
+    }
+
+    // 3) Filter agents minimal safety (optional)
+    const cleanedAgents: Agent[] = (data.agents || []).filter((a) =>
+      isValidText(a?.name)
+    );
+
+    return {
+      ...data,
+      agents: cleanedAgents,
+      items: finalCategories,
+    };
+  }, [data, selectedCategory]);
 
   if (!query || query.trim().length < MIN_SEARCH_LENGTH) {
     return (
@@ -391,7 +449,7 @@ const SearchMain: React.FC = () => {
 
         {isLoading && (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <Spin size="small" tip="Loading results..." />
+            <Spin size="large" tip="Loading results..." />
           </div>
         )}
 
@@ -439,113 +497,117 @@ const SearchMain: React.FC = () => {
                       minWidth: "max-content", // ✅ prevents squishing
                     }}
                   >
-                    {data?.items.map((category) => (
-                      <Card
-                        key={category.categoryName}
-                        hoverable
-                        onClick={() =>
-                          handleCategorySelect(category.categoryName)
-                        }
-                        style={{
-                          textAlign: "center",
-                          width: 85,
-                          height: 100,
-                          border:
-                            selectedCategory === category.categoryName
+                    {filteredData.items.map((category) => {
+                      // ✅ if category name is invalid, don’t render at all
+                      if (!isValidText(category.categoryName)) return null;
+
+                      const isSelected =
+                        selectedCategory === category.categoryName;
+
+                      return (
+                        <Card
+                          key={category.categoryName}
+                          hoverable
+                          onClick={() =>
+                            handleCategorySelect(category.categoryName)
+                          }
+                          style={{
+                            textAlign: "center",
+                            width: 85,
+                            height: 100,
+                            border: isSelected
                               ? "2px solid #5c3391"
                               : "1px solid #e8e8e8",
-                          borderRadius: 10,
-                          background: "#fff",
-                          transition: "all 0.3s ease",
-                          cursor: "pointer",
-                          boxShadow:
-                            selectedCategory === category.categoryName
+                            borderRadius: 10,
+                            background: "#fff",
+                            transition: "all 0.3s ease",
+                            cursor: "pointer",
+                            boxShadow: isSelected
                               ? "0 3px 8px rgba(92, 51, 145, 0.2)"
                               : "0 2px 4px rgba(0,0,0,0.05)",
-                          flexShrink: 0, // 🔒 don’t shrink in scroll row
-                        }}
-                        bodyStyle={{
-                          padding: "8px 6px",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {/* Category Image */}
-                        {category.categoryLogo && (
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              width: "100%",
-                              marginBottom: 6,
-                            }}
-                          >
-                            <Image
-                              src={category.categoryLogo}
-                              alt={category.categoryName}
-                              height={48}
-                              width={48}
-                              preview={false}
-                              style={{
-                                objectFit: "cover",
-                                borderRadius: "50%",
-                                border:
-                                  selectedCategory === category.categoryName
-                                    ? "2px solid #5c3391"
-                                    : "1px solid #ddd",
-                                padding: 3,
-                                background:
-                                  selectedCategory === category.categoryName
-                                    ? "#f5f0ff"
-                                    : "#fafafa",
-                                transition: "all 0.3s ease",
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        {/* Category Name */}
-                        <Text
-                          strong
-                          style={{
-                            fontSize: 11,
-                            lineHeight: "14px",
-                            color:
-                              selectedCategory === category.categoryName
-                                ? "#5c3391"
-                                : "#333",
-                            textAlign: "center",
-                            marginTop: 2,
-                            whiteSpace: "normal",
+                            flexShrink: 0,
+                          }}
+                          bodyStyle={{
+                            padding: "8px 6px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
                         >
-                          {category.categoryName}
-                        </Text>
-                      </Card>
-                    ))}
+                          {/* ✅ Category Image ONLY if valid */}
+                          {isValidImageUrl(category.categoryLogo) && (
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                width: "100%",
+                                marginBottom: 6,
+                              }}
+                            >
+                              <Image
+                                src={category.categoryLogo}
+                                alt={category.categoryName}
+                                height={48}
+                                width={48}
+                                preview={false}
+                                style={{
+                                  objectFit: "cover",
+                                  borderRadius: "50%",
+                                  border: isSelected
+                                    ? "2px solid #5c3391"
+                                    : "1px solid #ddd",
+                                  padding: 3,
+                                  background: isSelected
+                                    ? "#f5f0ff"
+                                    : "#fafafa",
+                                  transition: "all 0.3s ease",
+                                }}
+                                fallback=""
+                              />
+                            </div>
+                          )}
+
+                          {/* ✅ Category Name ONLY if valid */}
+                          {isValidText(category.categoryName) && (
+                            <Text
+                              strong
+                              style={{
+                                fontSize: 11,
+                                lineHeight: "14px",
+                                color: isSelected ? "#5c3391" : "#333",
+                                textAlign: "center",
+                                marginTop: 2,
+                                whiteSpace: "normal",
+                              }}
+                            >
+                              {category.categoryName}
+                            </Text>
+                          )}
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
-
                 {/* Products Grid */}
                 {filteredData.items.map((category) => (
                   <div key={category.categoryName} style={{ marginBottom: 24 }}>
                     {/* Category Title */}
-                    <Title
-                      level={4}
-                      style={{
-                        marginBottom: 12,
-                        marginTop: 12,
-                        color: "#5c3391",
-                        fontWeight: 700,
-                        textAlign: "left",
-                      }}
-                    >
-                      {category.categoryName}
-                    </Title>
-
+                    {isValidText(category.categoryName) && (
+                      <Title
+                        level={4}
+                        style={{
+                          marginBottom: 12,
+                          marginTop: 12,
+                          color: "#5c3391",
+                          fontWeight: 700,
+                          textAlign: "left",
+                        }}
+                      >
+                        {category.categoryName}
+                      </Title>
+                    )}
                     {category.itemsResponseDtoList.length === 0 ? (
                       <Alert
                         message={`No items available in ${category.categoryName}`}
@@ -556,10 +618,24 @@ const SearchMain: React.FC = () => {
                     ) : (
                       <Row gutter={[16, 16]} justify="start">
                         {category.itemsResponseDtoList.map((product) => {
+                          // ✅ HARD GUARD: if price/mrp invalid -> DON’T render
+                          if (
+                            !isValidNumber(product.itemPrice) ||
+                            !isValidNumber(product.itemMrp)
+                          ) {
+                            return null;
+                          }
+
                           const discount = calculateDiscount(
                             product.itemMrp,
                             product.itemPrice
                           );
+
+                          // ✅ Weight show only if >0
+                          const showWeight = isValidNumber(product.weight);
+
+                          // ✅ BMV show only if >0
+                          const showCoins = isValidNumber(product.bmvCoins);
 
                           return (
                             <Col
@@ -609,11 +685,10 @@ const SearchMain: React.FC = () => {
                                       "0 2px 8px rgba(0, 0, 0, 0.08)";
                                   }}
                                 >
-                                  {/* Image Section */}
                                   <div
                                     style={{
                                       width: "100%",
-                                      height: 180, // ✅ fixed image area
+                                      height: 180,
                                       borderRadius: 10,
                                       background: "#f9f9f9",
                                       overflow: "hidden",
@@ -623,18 +698,26 @@ const SearchMain: React.FC = () => {
                                       marginBottom: 12,
                                     }}
                                   >
-                                    <Image
-                                      src={product.itemImage}
-                                      alt={product.itemName}
-                                      height={180}
-                                      width="100%"
-                                      preview={false}
-                                      style={{
-                                        objectFit: "contain", // ✅ ensures full image visible without crop
-                                        borderRadius: 10,
-                                      }}
-                                      fallback="https://via.placeholder.com/180?text=No+Image" // ✅ fallback image
-                                    />
+                                    {isValidImageUrl(product.itemImage) ? (
+                                      <Image
+                                        src={product.itemImage}
+                                        alt={product.itemName}
+                                        height={180}
+                                        width="100%"
+                                        preview={false}
+                                        style={{
+                                          objectFit: "contain",
+                                          borderRadius: 10,
+                                        }}
+                                        fallback=""
+                                      />
+                                    ) : (
+                                      <div
+                                        style={{ color: "#999", fontSize: 12 }}
+                                      >
+                                        No Image
+                                      </div>
+                                    )}
                                   </div>
 
                                   {/* Product Info */}
@@ -647,34 +730,48 @@ const SearchMain: React.FC = () => {
                                     }}
                                   >
                                     <div>
-                                      <Title
-                                        level={5}
-                                        ellipsis={{ rows: 2 }}
-                                        style={{
-                                          marginBottom: 8,
-                                          fontWeight: 600,
-                                          color: "#1a1a1a",
-                                          fontSize: 15,
-                                          lineHeight: 1.4,
-                                          minHeight: 42,
-                                        }}
-                                      >
-                                        {product.itemName}
-                                      </Title>
+                                      {/* ✅ Item Name only if valid */}
+                                      {isValidText(product.itemName) ? (
+                                        <Title
+                                          level={5}
+                                          ellipsis={{ rows: 2 }}
+                                          style={{
+                                            marginBottom: 8,
+                                            fontWeight: 600,
+                                            color: "#1a1a1a",
+                                            fontSize: 15,
+                                            lineHeight: 1.4,
+                                            minHeight: 42,
+                                          }}
+                                        >
+                                          {product.itemName}
+                                        </Title>
+                                      ) : (
+                                        <Title
+                                          level={5}
+                                          style={{ marginBottom: 8 }}
+                                        >
+                                          Item
+                                        </Title>
+                                      )}
 
-                                      <Text
-                                        type="secondary"
-                                        style={{
-                                          fontSize: 13,
-                                          display: "block",
-                                          marginBottom: 10,
-                                          color: "#666",
-                                        }}
-                                      >
-                                        Weight: {product.weight} kg
-                                      </Text>
+                                      {/* ✅ Weight only if valid */}
+                                      {showWeight && (
+                                        <Text
+                                          type="secondary"
+                                          style={{
+                                            fontSize: 13,
+                                            display: "block",
+                                            marginBottom: 10,
+                                            color: "#666",
+                                          }}
+                                        >
+                                          Weight: {product.weight} kg
+                                        </Text>
+                                      )}
 
-                                      {product.bmvCoins > 0 && (
+                                      {/* ✅ BMV Coins only if valid */}
+                                      {showCoins && (
                                         <Tag
                                           style={{
                                             background:
@@ -692,7 +789,7 @@ const SearchMain: React.FC = () => {
                                         </Tag>
                                       )}
 
-                                      {/* Price Section */}
+                                      {/* ✅ Price Section ONLY if valid (already guarded) */}
                                       <div
                                         style={{
                                           marginBottom: 12,
@@ -709,7 +806,10 @@ const SearchMain: React.FC = () => {
                                             fontWeight: 700,
                                           }}
                                         >
-                                          ₹{product.itemPrice.toLocaleString()}
+                                          ₹
+                                          {Number(
+                                            product.itemPrice
+                                          ).toLocaleString()}
                                         </Text>
                                         <Text
                                           delete
@@ -719,7 +819,10 @@ const SearchMain: React.FC = () => {
                                             color: "#999",
                                           }}
                                         >
-                                          ₹{product.itemMrp.toLocaleString()}
+                                          ₹
+                                          {Number(
+                                            product.itemMrp
+                                          ).toLocaleString()}
                                         </Text>
                                       </div>
                                     </div>
@@ -772,8 +875,9 @@ const SearchMain: React.FC = () => {
                                               )
                                             }
                                             disabled={
-                                              cartItems[product.itemId] >=
-                                              product.quantity
+                                              (cartItems[product.itemId] ||
+                                                0) >=
+                                              Number(product.quantity || 0)
                                             }
                                             loading={
                                               loadingItems.items[product.itemId]
@@ -825,8 +929,6 @@ const SearchMain: React.FC = () => {
                 ))}
               </>
             )}
-
-            {/* Agents Section - REDUCED SIZE */}
             {filteredData.agents.length > 0 && (
               <div style={{ marginBottom: 32 }}>
                 <Title
@@ -862,6 +964,9 @@ const SearchMain: React.FC = () => {
                     ];
                     const color = bgColors[index % bgColors.length];
 
+                    const agentImg = agent.imageUrl || agent.profileImagePath;
+                    const showAgentImg = isValidImageUrl(agentImg);
+
                     return (
                       <Col xs={24} sm={12} md={8} lg={6} key={agent.agentId}>
                         <Badge.Ribbon
@@ -884,7 +989,7 @@ const SearchMain: React.FC = () => {
                               justifyContent: "space-between",
                             }}
                           >
-                            {/* Image or Initials */}
+                            {/* ✅ Image with 4-side rounded */}
                             <div
                               style={{
                                 width: "100%",
@@ -892,29 +997,31 @@ const SearchMain: React.FC = () => {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                borderRadius: 10,
+                                borderRadius: 12, // ✅ rounded 4 sides
                                 background: "#fafafa",
                                 overflow: "hidden",
                                 marginBottom: 12,
                               }}
                             >
-                              {agent.imageUrl || agent.profileImagePath ? (
+                              {showAgentImg ? (
                                 <Image
-                                  src={agent.imageUrl || agent.profileImagePath}
+                                  src={agentImg}
                                   alt={agent.name}
                                   height={180}
                                   width="100%"
                                   preview={false}
                                   style={{
                                     objectFit: "cover",
-                                    borderRadius: 10,
+                                    borderRadius: 12, // ✅ rounded 4 sides
                                   }}
+                                  fallback=""
                                 />
                               ) : (
                                 <div
                                   style={{
                                     height: 90,
                                     width: 90,
+                                    borderRadius: 14,
                                     backgroundColor: color,
                                     display: "flex",
                                     alignItems: "center",
@@ -953,10 +1060,9 @@ const SearchMain: React.FC = () => {
                                   "No description available"}
                               </Paragraph>
 
-                              {/* View Button */}
                               <Button
                                 onClick={(e) => {
-                                  e.stopPropagation(); // prevent triggering card click
+                                  e.stopPropagation();
                                   handleAgentClick(agent);
                                 }}
                                 style={{
@@ -965,8 +1071,9 @@ const SearchMain: React.FC = () => {
                                   border: "none",
                                   width: "100%",
                                   marginTop: 10,
-                                  borderRadius: 8,
+                                  borderRadius: 10,
                                   fontWeight: 600,
+                                  height: 42,
                                 }}
                               >
                                 View
@@ -983,6 +1090,7 @@ const SearchMain: React.FC = () => {
           </>
         )}
       </div>
+
       <Footer />
     </div>
   );

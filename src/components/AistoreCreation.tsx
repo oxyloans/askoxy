@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa";
+import * as XLSX from "xlsx";
 import {
   Table,
   Button,
@@ -698,6 +699,32 @@ const handleMultiAgentUpload = async (values: any) => {
       ),
     },
   ];
+const downloadExcelTemplate = () => {
+  // Sheet data (rows)
+  const data = [
+    ["role", "goal", "purpose", "agentName"], // ✅ headers
+    ["student", "study_abroad", "usa_details", "USA-Agent"],
+    ["parent", "loan_help", "education_loan", "Loan-Agent"],
+  ];
+
+  // Create worksheet
+  const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+  // Optional: column widths (professional look)
+  worksheet["!cols"] = [
+    { wch: 18 },
+    { wch: 20 },
+    { wch: 22 },
+    { wch: 20 },
+  ];
+
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Agents");
+
+  // Download file
+  XLSX.writeFile(workbook, "bulk-upload-agents-template.xlsx");
+};
 
   return (
     <div style={{ padding: "16px", background: "#fff", minHeight: "100vh" }}>
@@ -840,8 +867,20 @@ const handleMultiAgentUpload = async (values: any) => {
                     background: "#fafafa",
                   }}
                 >
-                  <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                    Excel Format (Headers must be exact)
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                      Excel Format (Headers must be exact)
+                    </div>
+
+                    <Button type="default" onClick={downloadExcelTemplate}>
+                      Download Template (.xlsx)
+                    </Button>
                   </div>
 
                   <div style={{ overflowX: "auto" }}>

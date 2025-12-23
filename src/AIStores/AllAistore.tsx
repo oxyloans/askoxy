@@ -583,56 +583,62 @@ const AllAIStore: React.FC = () => {
                             `/${agent.assistantId}/${agent.agentId}/${agent.agentName}`
                           )
                         }
-                        className="group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 border border-gray-100"
+                        className="group relative cursor-pointer rounded-3xl border border-slate-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-100 active:scale-[0.99]"
                       >
-                        {/* Top Section: Gradient + Initials + Optional Image */}
-                        <div className="relative h-40 w-full bg-slate-100 overflow-hidden">
-                          {/* Always render gradient initials as base */}
-                          <div
-                            className="absolute inset-0 flex items-center justify-center text-white font-black text-6xl"
-                            style={{ background: bgGradient }}
-                          >
-                            {getInitials(agent.agentName)}
+                        {/* ✅ TOP IMAGE BOX (Rounded on ALL 4 corners) */}
+                        <div className="relative overflow-hidden rounded-2xl bg-slate-100">
+                          <div className="relative h-40 w-full sm:h-44">
+                            {/* Gradient Base */}
+                            <div
+                              className="absolute inset-0 flex items-center justify-center text-white font-black"
+                              style={{ background: bgGradient }}
+                            >
+                              <span className="text-6xl opacity-40">
+                                {getInitials(agent.agentName)}
+                              </span>
+                            </div>
+
+                            {/* Image on top if valid */}
+                            {hasValidImage && (
+                              <img
+                                src={agent.imageUrl!}
+                                alt={agent.agentName}
+                                className="relative z-10 h-full w-full object-cover bg-white"
+                                loading="lazy"
+                                onError={(e) => {
+                                  (
+                                    e.currentTarget as HTMLImageElement
+                                  ).style.display = "none";
+                                }}
+                              />
+                            )}
+
+                            {/* ✅ Small badge */}
+                            <div className="absolute right-3 top-3 z-20 rounded-full bg-black/25 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
+                              {getInitials(agent.agentName)} AGENT
+                            </div>
                           </div>
-
-                          {/* Image on top if valid */}
-                          {hasValidImage && (
-                            <img
-                              src={agent.imageUrl!}
-                              alt={agent.agentName}
-                              className="relative z-10 h-full w-full object-cover"
-                              loading="lazy"
-                              onError={(e) => {
-                                (
-                                  e.currentTarget as HTMLImageElement
-                                ).style.display = "none";
-                              }}
-                            />
-                          )}
                         </div>
 
-                        {/* Agent Badge */}
-                        <div className="absolute top-4 right-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-20">
-                          {getInitials(agent.agentName)} AGENT
-                        </div>
-
-                        {/* Card Content */}
-                        <div className="p-6">
-                          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                        {/* ✅ Content */}
+                        <div className="flex flex-col px-2 pb-2 pt-4">
+                          <h3 className="line-clamp-2 text-[16px] font-extrabold text-slate-900 group-hover:text-violet-700">
                             {agent.agentName}
                           </h3>
-                          <p className="text-sm text-gray-600 mb-6 line-clamp-3">
+
+                          <p className="mt-2 line-clamp-2 text-sm text-slate-600">
                             {agent.agentCreatorName
                               ? `Created by ${agent.agentCreatorName}`
                               : ""}
                           </p>
 
-                          <div className="flex items-center gap-3 mb-6">
+                          {/* ✅ Creator row */}
+                          <div className="mt-4 flex items-center gap-3">
                             {hasValidImage ? (
                               <img
                                 src={agent.imageUrl!}
                                 alt={agent.agentName}
-                                className="h-10 w-10 rounded-full border-2 border-gray-200 object-cover"
+                                className="h-10 w-10 rounded-full border border-slate-200 object-cover"
                                 loading="lazy"
                                 onError={(e) => {
                                   (
@@ -642,18 +648,19 @@ const AllAIStore: React.FC = () => {
                               />
                             ) : (
                               <div
-                                className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold border-2 border-gray-200"
+                                className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center text-white font-bold"
                                 style={{ background: bgGradient }}
                               >
                                 {getInitials(agent.agentName)}
                               </div>
                             )}
 
-                            <span className="text-sm text-gray-700 font-medium truncate">
+                            <span className="text-sm font-semibold text-slate-700 truncate">
                               {agent.agentCreatorName || "ASKOXY.AI TEAM"}
                             </span>
                           </div>
 
+                          {/* ✅ CTA */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -661,7 +668,7 @@ const AllAIStore: React.FC = () => {
                                 `/${agent.assistantId}/${agent.agentId}/${agent.agentName}`
                               );
                             }}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-md hover:shadow-xl active:scale-98"
+                            className="mt-5 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:shadow-violet-200 active:scale-95"
                           >
                             View Agent
                           </button>
