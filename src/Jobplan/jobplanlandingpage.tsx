@@ -753,9 +753,6 @@ export default function JobTraining90DaysPage({
             <a href="#faq" className="transition hover:text-slate-900">
               FAQ
             </a>
-            <a href="#partners" className="transition hover:text-slate-900">
-              Partners
-            </a>
           </nav>
 
           <div className="flex items-center gap-2">

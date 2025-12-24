@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 type ModuleKey = "lo-system" | "fm-system" | "cm-system";
@@ -19,6 +19,17 @@ type PhaseTask = {
   tags?: string[];
 };
 
+type BookTopic = {
+  no: number;
+  title: string;
+  page: number;
+};
+
+type BookDayPlan = {
+  day: number; // 1..ceil(topics/2)
+  topics: BookTopic[];
+};
+
 const C1 = "#364d69";
 const C2 = "#90b7d7";
 const C3 = "#173b63";
@@ -29,6 +40,88 @@ const SOFT_BG =
 
 const cx = (...classes: Array<string | false | undefined | null>) =>
   classes.filter(Boolean).join(" ");
+
+const images = [
+  "https://i.ibb.co/Pz5RSRWy/6-8-9-7-ASKOXY-AI-BOOK-images-7.jpg",
+  "https://i.ibb.co/7xvJXrmv/6-8-9-7-ASKOXY-AI-BOOK-images-8.jpg",
+  "https://i.ibb.co/Cprh5mfK/6-8-9-7-ASKOXY-AI-BOOK-images-9.jpg",
+  "https://i.ibb.co/CK7D4QG1/6-8-9-7-ASKOXY-AI-BOOK-images-10.jpg",
+  "https://i.ibb.co/LXvTMdQD/6-8-9-7-ASKOXY-AI-BOOK-images-11.jpg",
+  "https://i.ibb.co/MyMcjH0h/6-8-9-7-ASKOXY-AI-BOOK-images-12.jpg",
+  "https://i.ibb.co/XZ2VzFgQ/6-8-9-7-ASKOXY-AI-BOOK-images-13.jpg",
+  "https://i.ibb.co/jkryC3x4/6-8-9-7-ASKOXY-AI-BOOK-images-14.jpg",
+  "https://i.ibb.co/whR03KjG/6-8-9-7-ASKOXY-AI-BOOK-images-15.jpg",
+  "https://i.ibb.co/Pv6cRyV6/6-8-9-7-ASKOXY-AI-BOOK-images-16.jpg",
+  "https://i.ibb.co/7xDBzhwr/6-8-9-7-ASKOXY-AI-BOOK-images-17.jpg",
+  "https://i.ibb.co/d46dwyzQ/6-8-9-7-ASKOXY-AI-BOOK-images-18.jpg",
+  "https://i.ibb.co/BDbzQ1N/6-8-9-7-ASKOXY-AI-BOOK-images-19.jpg",
+  "https://i.ibb.co/1fm2hDFf/6-8-9-7-ASKOXY-AI-BOOK-images-20.jpg",
+  "https://i.ibb.co/MkSwpL7f/6-8-9-7-ASKOXY-AI-BOOK-images-21.jpg",
+  "https://i.ibb.co/mCLqjGK1/6-8-9-7-ASKOXY-AI-BOOK-images-22.jpg",
+  "https://i.ibb.co/sdNbZ0Vv/6-8-9-7-ASKOXY-AI-BOOK-images-23.jpg",
+  "https://i.ibb.co/vxT6v2Ts/6-8-9-7-ASKOXY-AI-BOOK-images-24.jpg",
+  "https://i.ibb.co/zTDby58w/6-8-9-7-ASKOXY-AI-BOOK-images-25.jpg",
+  "https://i.ibb.co/v6xbs6j0/6-8-9-7-ASKOXY-AI-BOOK-images-26.jpg",
+  "https://i.ibb.co/GQPkD5bH/6-8-9-7-ASKOXY-AI-BOOK-images-27.jpg",
+  "https://i.ibb.co/JWFvSccb/6-8-9-7-ASKOXY-AI-BOOK-images-28.jpg",
+  "https://i.ibb.co/Ng9drLyB/6-8-9-7-ASKOXY-AI-BOOK-images-29.jpg",
+  "https://i.ibb.co/DfsmBYWD/6-8-9-7-ASKOXY-AI-BOOK-images-30.jpg",
+  "https://i.ibb.co/x8hMtc8N/6-8-9-7-ASKOXY-AI-BOOK-images-31.jpg",
+  "https://i.ibb.co/7xGnPRdK/6-8-9-7-ASKOXY-AI-BOOK-images-32.jpg",
+  "https://i.ibb.co/8nsdmFNH/6-8-9-7-ASKOXY-AI-BOOK-images-33.jpg",
+  "https://i.ibb.co/NgjkfDrC/6-8-9-7-ASKOXY-AI-BOOK-images-34.jpg",
+  "https://i.ibb.co/39kzTV71/6-8-9-7-ASKOXY-AI-BOOK-images-35.jpg",
+  "https://i.ibb.co/GQrx4mj0/6-8-9-7-ASKOXY-AI-BOOK-images-36.jpg",
+  "https://i.ibb.co/sd7g2X61/6-8-9-7-ASKOXY-AI-BOOK-images-37.jpg",
+  "https://i.ibb.co/TMScMmR0/6-8-9-7-ASKOXY-AI-BOOK-images-38.jpg",
+  "https://i.ibb.co/FT3FKVb/6-8-9-7-ASKOXY-AI-BOOK-images-39.jpg",
+  "https://i.ibb.co/YB903bL5/6-8-9-7-ASKOXY-AI-BOOK-images-40.jpg",
+  "https://i.ibb.co/C5XcgBqL/6-8-9-7-ASKOXY-AI-BOOK-images-41.jpg",
+  "https://i.ibb.co/xSwxLW28/6-8-9-7-ASKOXY-AI-BOOK-images-42.jpg",
+  "https://i.ibb.co/6JpZnZz2/6-8-9-7-ASKOXY-AI-BOOK-images-43.jpg",
+  "https://i.ibb.co/gZp1PNnr/6-8-9-7-ASKOXY-AI-BOOK-images-44.jpg",
+  "https://i.ibb.co/Nd4MQ5pG/6-8-9-7-ASKOXY-AI-BOOK-images-47.jpg",
+  "https://i.ibb.co/9HtnGWnx/6-8-9-7-ASKOXY-AI-BOOK-images-48.jpg",
+  "https://i.ibb.co/VYtz6GrY/6-8-9-7-ASKOXY-AI-BOOK-images-49.jpg",
+  "https://i.ibb.co/4Z3qzt11/6-8-9-7-ASKOXY-AI-BOOK-images-50.jpg",
+  "https://i.ibb.co/bgq164rq/6-8-9-7-ASKOXY-AI-BOOK-images-51.jpg",
+  "https://i.ibb.co/NnLPjLPg/6-8-9-7-ASKOXY-AI-BOOK-images-52.jpg",
+  "https://i.ibb.co/Dft2RwFH/6-8-9-7-ASKOXY-AI-BOOK-images-53.jpg",
+  "https://i.ibb.co/5XVXXvSd/6-8-9-7-ASKOXY-AI-BOOK-images-54.jpg",
+  "https://i.ibb.co/qPm27L0/6-8-9-7-ASKOXY-AI-BOOK-images-55.jpg",
+  "https://i.ibb.co/sp6KnZHz/6-8-9-7-ASKOXY-AI-BOOK-images-56.jpg",
+  "https://i.ibb.co/TDXkpLg1/6-8-9-7-ASKOXY-AI-BOOK-images-57.jpg",
+  "https://i.ibb.co/Fksrxzgz/6-8-9-7-ASKOXY-AI-BOOK-images-58.jpg",
+  "https://i.ibb.co/35XnzTyQ/6-8-9-7-ASKOXY-AI-BOOK-images-59.jpg",
+  "https://i.ibb.co/gZNLQ94f/6-8-9-7-ASKOXY-AI-BOOK-images-60.jpg",
+  "https://i.ibb.co/GqftNzP/6-8-9-7-ASKOXY-AI-BOOK-images-61.jpg",
+  "https://i.ibb.co/d4YVvJkd/6-8-9-7-ASKOXY-AI-BOOK-images-62.jpg",
+  "https://i.ibb.co/5gcSPZMJ/6-8-9-7-ASKOXY-AI-BOOK-images-63.jpg",
+  "https://i.ibb.co/VW5bQ0Vq/6-8-9-7-ASKOXY-AI-BOOK-images-64.jpg",
+  "https://i.ibb.co/7JYjCLxX/6-8-9-7-ASKOXY-AI-BOOK-images-65.jpg",
+  "https://i.ibb.co/Tx37Vhk2/6-8-9-7-ASKOXY-AI-BOOK-images-66.jpg",
+  "https://i.ibb.co/M5VrZGZx/6-8-9-7-ASKOXY-AI-BOOK-images-67.jpg",
+  "https://i.ibb.co/m5F4RpDv/6-8-9-7-ASKOXY-AI-BOOK-images-68.jpg",
+  "https://i.ibb.co/wFLSJJ2x/6-8-9-7-ASKOXY-AI-BOOK-images-69.jpg",
+  "https://i.ibb.co/zVWyQnP2/6-8-9-7-ASKOXY-AI-BOOK-images-70.jpg",
+  "https://i.ibb.co/8n5GQjRB/6-8-9-7-ASKOXY-AI-BOOK-images-71.jpg",
+  "https://i.ibb.co/Qj3Trv8S/6-8-9-7-ASKOXY-AI-BOOK-images-72.jpg",
+  "https://i.ibb.co/60mSkxL4/6-8-9-7-ASKOXY-AI-BOOK-images-73.jpg",
+  "https://i.ibb.co/MxdDKptH/6-8-9-7-ASKOXY-AI-BOOK-images-74.jpg",
+  "https://i.ibb.co/ksTMYZxp/6-8-9-7-ASKOXY-AI-BOOK-images-75.jpg",
+  "https://i.ibb.co/RpLs69tW/6-8-9-7-ASKOXY-AI-BOOK-images-76.jpg",
+  "https://i.ibb.co/tT65xjvs/6-8-9-7-ASKOXY-AI-BOOK-images-77.jpg",
+  "https://i.ibb.co/VYZvKdrB/6-8-9-7-ASKOXY-AI-BOOK-images-78.jpg",
+  "https://i.ibb.co/TMxY0Q6s/6-8-9-7-ASKOXY-AI-BOOK-images-79.jpg",
+  "https://i.ibb.co/G3TKjtPW/6-8-9-7-ASKOXY-AI-BOOK-images-80.jpg",
+  "https://i.ibb.co/nMQDJtWJ/6-8-9-7-ASKOXY-AI-BOOK-images-81.jpg",
+  "https://i.ibb.co/wZ5w0fnq/6-8-9-7-ASKOXY-AI-BOOK-images-82.jpg",
+  "https://i.ibb.co/JFvQqZvL/6-8-9-7-ASKOXY-AI-BOOK-images-83.jpg",
+  "https://i.ibb.co/HL56f16t/6-8-9-7-ASKOXY-AI-BOOK-images-84.jpg",
+  "https://i.ibb.co/m51mBXzy/6-8-9-7-ASKOXY-AI-BOOK-images-85.jpg",
+  "https://i.ibb.co/Xf6dGrtg/6-8-9-7-ASKOXY-AI-BOOK-images-86.jpg",
+  "https://i.ibb.co/7xwC465Z/6-8-9-7-ASKOXY-AI-BOOK-images-87.jpg",
+];
 
 const Pill = ({ text }: { text: string }) => (
   <span
@@ -82,6 +175,119 @@ const PrimaryBtn = ({
     {label}
   </button>
 );
+
+const SecondaryBtn = ({
+  label,
+  onClick,
+  className = "",
+}: {
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) => (
+  <button
+    onClick={onClick}
+    className={cx(
+      "inline-flex items-center justify-center rounded-2xl border bg-white/80 px-5 py-3 text-sm font-semibold",
+      "transition hover:bg-white active:scale-[0.99]",
+      "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+      className
+    )}
+    style={{ borderColor: `${C2}66`, color: C3 }}
+  >
+    {label}
+  </button>
+);
+
+const ToggleBtn = ({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className={cx(
+      "flex-1 rounded-2xl border px-4 py-2 text-sm font-semibold transition",
+      "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+      active ? "bg-white" : "bg-white/60"
+    )}
+    style={{
+      borderColor: `${C2}66`,
+      color: active ? C3 : "#64748b",
+    }}
+  >
+    {label}
+  </button>
+);
+
+const DayChip = ({
+  day,
+  active,
+  onClick,
+  prefix = "Day",
+}: {
+  day: number;
+  active: boolean;
+  onClick: () => void;
+  prefix?: string;
+}) => (
+  <button
+    onClick={onClick}
+    className={cx(
+      "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+      "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+      active ? "bg-white" : "bg-white/70 hover:bg-white"
+    )}
+    style={{
+      borderColor: active ? `${C3}55` : `${C2}66`,
+      color: active ? C3 : "#334155",
+      boxShadow: active ? "0 10px 22px rgba(23,59,99,0.12)" : "none",
+    }}
+    aria-label={`${prefix} ${day}`}
+  >
+    {prefix} {day}
+  </button>
+);
+
+const ProgressBar = ({ value, max }: { value: number; max: number }) => {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between text-xs text-slate-600">
+        <span>Progress</span>
+        <span className="font-semibold" style={{ color: C3 }}>
+          {value}/{max} days
+        </span>
+      </div>
+      <div
+        className="mt-2 h-2.5 rounded-full border bg-white overflow-hidden"
+        style={{ borderColor: `${C2}66` }}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, background: GRAD }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const ModuleTag = ({ module }: { module: ModuleKey }) => {
+  const label =
+    module === "lo-system" ? "LOS" : module === "fm-system" ? "FMS" : "CMS";
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+      style={{ background: `${C3}14`, color: C3 }}
+    >
+      {label}
+    </span>
+  );
+};
 
 const WhatsAppJoinCard = () => {
   const WHATSAPP_GROUP_LINK =
@@ -149,120 +355,201 @@ const WhatsAppJoinCard = () => {
   );
 };
 
-const SecondaryBtn = ({
-  label,
-  onClick,
-  className = "",
-}: {
-  label: string;
-  onClick: () => void;
-  className?: string;
-}) => (
-  <button
-    onClick={onClick}
-    className={cx(
-      "inline-flex items-center justify-center rounded-2xl border bg-white/80 px-5 py-3 text-sm font-semibold",
-      "transition hover:bg-white active:scale-[0.99]",
-      "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-      className
-    )}
-    style={{ borderColor: `${C2}66`, color: C3 }}
-  >
-    {label}
-  </button>
-);
+/** ✅ BOOK INDEX (topics + page numbers) */
+const BOOK_TOPICS: BookTopic[] = [
+  { no: 1, title: "What is AI?", page: 5 },
+  { no: 2, title: "What is Gen AI?", page: 6 },
+  { no: 3, title: "Why Learn AI?", page: 7 },
+  { no: 4, title: "How to Use This Book", page: 8 },
+  { no: 5, title: "Mission Million AI Coders", page: 9 },
+  { no: 6, title: "What is Prompt Engineering?", page: 10 },
+  { no: 7, title: "Popular AI Platforms, LLMs & Tools", page: 11 },
+  { no: 8, title: "Writing Great AI Prompt Instructions", page: 12 },
+  { no: 9, title: "Think in Prompts, Not Just Tasks", page: 13 },
+  { no: 10, title: "A Good AI Prompt Engineering", page: 14 },
+  { no: 11, title: "AI Prompt Engineering Tips", page: 15 },
+  { no: 12, title: "Prompt Engineering Kit", page: 16 },
+  { no: 13, title: "Prompt Templates – Reuse, Remix, Repeat", page: 17 },
+  { no: 14, title: "Your First 5 Prompts – Get Started Today", page: 18 },
+  { no: 15, title: "Daily Prompt Habits to Build Your AI Muscle", page: 19 },
+  { no: 16, title: "Chain of Thought – Step-by-Step Thinking", page: 20 },
+  { no: 17, title: "Types of Prompts – Zero, One & Few-Shot", page: 21 },
+  { no: 18, title: "Role-Based Prompts", page: 22 },
+  { no: 19, title: "Agent Style Prompts", page: 23 },
+  { no: 20, title: "Meta Prompts", page: 24 },
+  { no: 21, title: "Loops in AI / Gen AI", page: 26 },
 
-const ToggleBtn = ({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={cx(
-      "flex-1 rounded-2xl border px-4 py-2 text-sm font-semibold transition",
-      "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-      active ? "bg-white" : "bg-white/60"
-    )}
-    style={{
-      borderColor: `${C2}66`,
-      color: active ? C3 : "#64748b",
-    }}
-  >
-    {label}
-  </button>
-);
+  { no: 22, title: "Debugging in AI vs Gen AI", page: 27 },
+  { no: 23, title: "Prompting Mistakes to Avoid", page: 28 },
+  { no: 24, title: "Prompt vs Completion", page: 29 },
+  { no: 25, title: "Tone Variations", page: 30 },
+  { no: 26, title: "Length Control", page: 31 },
+  { no: 27, title: "Language & Dialect Shift", page: 32 },
+  { no: 28, title: "Practical: Logic Bugs", page: 33 },
+  { no: 29, title: "Testing Your AI Model", page: 34 },
+  { no: 30, title: "Test Plan", page: 35 },
+  { no: 31, title: "From Binary to Brain – How AI Understands Data", page: 36 },
+  { no: 32, title: "What are Tokens & Embeddings", page: 37 },
+  { no: 33, title: "LLMs & Tokens", page: 38 },
+  { no: 34, title: "What is Vector Embedding?", page: 39 },
+  { no: 35, title: "Vector Embeddings", page: 40 },
+  { no: 36, title: "Storing Images, Texts & Vectors", page: 41 },
+  { no: 37, title: "Image Transformation", page: 42 },
+  { no: 38, title: "Spotting Patterns", page: 43 },
+  { no: 39, title: "How AI Paints a Picture – From", page: 44 },
+  { no: 40, title: "Being Creative with AI & Gen AI", page: 45 },
 
-const DayChip = ({
-  day,
-  active,
-  onClick,
-}: {
-  day: number;
-  active: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={cx(
-      "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
-      "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-      active ? "bg-white" : "bg-white/70 hover:bg-white"
-    )}
-    style={{
-      borderColor: active ? `${C3}55` : `${C2}66`,
-      color: active ? C3 : "#334155",
-      boxShadow: active ? "0 10px 22px rgba(23,59,99,0.12)" : "none",
-    }}
-    aria-label={`Go to Day ${day}`}
-  >
-    Day {day}
-  </button>
-);
+  { no: 41, title: "Inside a GPU", page: 46 },
+  { no: 42, title: "Who Builds AI Tools?", page: 47 },
+  { no: 43, title: "Understanding Language Model Sizes", page: 48 },
+  { no: 44, title: "Which Model Fits Which Task?", page: 49 },
+  { no: 45, title: "What is RAG?", page: 50 },
+  { no: 46, title: "Metadata Filtering in LLMs", page: 52 },
+  { no: 47, title: "FAISS vs ChromaDB", page: 53 },
+  { no: 48, title: "Chunking", page: 54 },
+  { no: 49, title: "AI Agents in Action", page: 55 },
+  { no: 50, title: "AI Agent vs Assistant vs Language Model", page: 56 },
+  { no: 51, title: "Multi-tool Agent in Action", page: 57 },
+  { no: 52, title: "Re-ranking Logic in LLM", page: 58 },
+  { no: 53, title: "AI Decision Making", page: 59 },
+  { no: 54, title: "OpenAI API – Request Structure", page: 60 },
+  { no: 55, title: "Streamlit UI Components", page: 61 },
+  { no: 56, title: "Ask Your PDF – How It Works", page: 62 },
+  {
+    no: 57,
+    title: "How an AI Prompt Engineer Can Earn Lakhs of Money",
+    page: 63,
+  },
+  { no: 58, title: "Jobs You Can Do as a Prompt Engineer", page: 64 },
+  { no: 59, title: "Platforms & Niches", page: 65 },
+  { no: 60, title: "Creating Prompt Products – Templates & Packs", page: 66 },
+  { no: 61, title: "Can AI Get a Virus?", page: 67 },
 
-const ProgressBar = ({ value, max }: { value: number; max: number }) => {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  { no: 62, title: "AI Under Attack", page: 68 },
+  { no: 63, title: "AI & Human Jobs – A Future Together?", page: 69 },
+  { no: 64, title: "AI Under Attack", page: 70 },
+  { no: 65, title: "What is Agentic AI?", page: 71 },
+];
+
+function getBookPageImageUrl(page: number) {
+  const idx = page - 1;
+  if (idx >= 0 && idx < images.length) return images[idx];
+  return null;
+}
+
+function BookPreviewModal({
+  open,
+  onClose,
+  page,
+  url,
+  onPrevPage,
+  onNextPage,
+}: {
+  open: boolean;
+  onClose: () => void;
+  page: number;
+  url: string | null;
+  onPrevPage: () => void;
+  onNextPage: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") onPrevPage();
+      if (e.key === "ArrowRight") onNextPage();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose, onPrevPage, onNextPage]);
+
+  if (!open) return null;
+
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between text-xs text-slate-600">
-        <span>Progress</span>
-        <span className="font-semibold" style={{ color: C3 }}>
-          {value}/{max} days
-        </span>
-      </div>
+    <div className="fixed inset-0 z-[999] flex items-center justify-center px-4">
       <div
-        className="mt-2 h-2.5 rounded-full border bg-white overflow-hidden"
-        style={{ borderColor: `${C2}66` }}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${pct}%`, background: GRAD }}
-        />
+        className="absolute inset-0 bg-black/60"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-5xl rounded-3xl bg-white shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b px-4 sm:px-6 py-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-slate-500">
+              Book Page Preview
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onPrevPage}
+              className="rounded-xl border px-3 py-2 text-xs font-semibold bg-white"
+              style={{ borderColor: `${C2}66`, color: C3 }}
+              title="Prev Page (←)"
+            >
+              Prev
+            </button>
+            <button
+              onClick={onNextPage}
+              className="rounded-xl border px-3 py-2 text-xs font-semibold bg-white"
+              style={{ borderColor: `${C2}66`, color: C3 }}
+              title="Next Page (→)"
+            >
+              Next
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-xl px-3 py-2 text-xs font-semibold text-white"
+              style={{ background: GRAD }}
+              title="Close (Esc)"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-6">
+          {url ? (
+            <div
+              className="rounded-3xl border bg-white overflow-hidden"
+              style={{ borderColor: `${C2}66` }}
+            >
+              <img
+                src={url}
+                alt={`Book Page ${page}`}
+                className="w-full h-[70vh] object-contain bg-white"
+                loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <div className="p-3 text-xs text-slate-600">
+                Tip: Use ← / → keys to change page, Esc to close.
+              </div>
+            </div>
+          ) : (
+            <div
+              className="rounded-3xl border bg-white p-6"
+              style={{ borderColor: `${C2}66` }}
+            >
+              <p className="text-sm font-bold text-slate-900">
+                Page image not available
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                This page number is out of your image mapping range.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-};
-
-const ModuleTag = ({ module }: { module: ModuleKey }) => {
-  const label = module.toUpperCase();
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
-      style={{ background: `${C3}14`, color: C3 }}
-    >
-      {label}
-    </span>
-  );
-};
+}
 
 export default function NinetyDayPlanPage() {
   const navigate = useNavigate();
 
-  // ✅ Your 51 use cases (LOS + FMS + CMS) -> keep exactly like your file, but FIXED module assignment
+  // ✅ Your 51 use cases (LOS + FMS + CMS)
   const useCases: UseCase[] = useMemo(() => {
     const base: Array<
       Pick<UseCase, "useCaseId" | "title" | "description" | "module">
@@ -587,13 +874,12 @@ export default function NinetyDayPlanPage() {
       },
     ];
 
-    // ✅ Ensure EXACT 51 days. If base is < 51, repeat; if base > 51, take first 51.
     const finalList: UseCase[] = Array.from({ length: 51 }, (_, idx) => {
       const day = idx + 1;
       const seed = base[idx % base.length];
       return {
         day,
-        module: seed.module, // ✅ FIXED (your previous code forced "los")
+        module: seed.module,
         useCaseId: seed.useCaseId || `usecase-${day}`,
         title: seed.title || `Use Case #${day}`,
         description:
@@ -667,16 +953,39 @@ export default function NinetyDayPlanPage() {
     return tasks;
   }, []);
 
+  /** ✅ Book daily plan: 2 topics/day, in index sequence */
+  const bookDailyPlan: BookDayPlan[] = useMemo(() => {
+    const days: BookDayPlan[] = [];
+    let day = 1;
+    for (let i = 0; i < BOOK_TOPICS.length; i += 2) {
+      days.push({
+        day,
+        topics: BOOK_TOPICS.slice(i, i + 2),
+      });
+      day++;
+    }
+    return days;
+  }, []);
+
   const [tab, setTab] = useState<"usecases" | "integration">("usecases");
   const [viewType, setViewType] = useState<ViewType>("business");
   const [query, setQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [moduleFilter, setModuleFilter] = useState<ModuleKey | "all">("all");
 
+  /** ✅ Book plan state */
+  const [bookDay, setBookDay] = useState<number>(1);
+
+  /** ✅ Book modal state */
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewPage, setPreviewPage] = useState<number>(1);
+  const [previewTitle, setPreviewTitle] = useState<string>("");
+
   const maxDay = 90;
 
   const selectedUseCase = useCases.find((u) => u.day === selectedDay);
   const selectedTask = phaseTasks.find((t) => t.day === selectedDay);
+  const isUseCaseDay = selectedDay <= 51;
 
   const goPrev = useCallback(
     () => setSelectedDay((d) => Math.max(1, d - 1)),
@@ -709,24 +1018,54 @@ export default function NinetyDayPlanPage() {
   }, [query, useCases, moduleFilter]);
 
   const dayChips = useMemo(() => {
-    // show nearby 15 chips around selected day (better on mobile)
     const start = Math.max(1, selectedDay - 7);
     const end = Math.min(maxDay, start + 14);
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }, [selectedDay]);
 
-  const isUseCaseDay = selectedDay <= 51;
+  const bookDayChips = useMemo(() => {
+    const maxBookDay = bookDailyPlan.length;
+    const start = Math.max(1, bookDay - 7);
+    const end = Math.min(maxBookDay, start + 14);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [bookDay, bookDailyPlan.length]);
+
+  const selectedBookDayPlan = useMemo(() => {
+    return bookDailyPlan.find((d) => d.day === bookDay);
+  }, [bookDailyPlan, bookDay]);
+
   const handleLogout = useCallback(() => {
-    // ✅ clear all stored login/session data
     localStorage.clear();
     sessionStorage.clear();
-
-    // ✅ redirect to same plan page
     window.location.href = "/90dayjobplan";
+  }, []);
+
+  const openPreview = useCallback((page: number) => {
+    setPreviewPage(page);
+    setPreviewOpen(true);
+  }, []);
+
+  const previewUrl = useMemo(
+    () => getBookPageImageUrl(previewPage),
+    [previewPage]
+  );
+
+  const changePreviewPageBy = useCallback((delta: number) => {
+    setPreviewPage((p) => Math.max(1, Math.min(images.length, p + delta)));
   }, []);
 
   return (
     <div className="min-h-screen" style={{ background: "#f8fafc" }}>
+      {/* ✅ Book modal (full screen preview) */}
+      <BookPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        page={previewPage}
+        url={previewUrl}
+        onPrevPage={() => changePreviewPageBy(-1)}
+        onNextPage={() => changePreviewPageBy(1)}
+      />
+
       {/* HERO */}
       <header className="mx-auto max-w-7xl px-4 sm:px-6 pt-10 pb-8 sm:pt-14">
         <div
@@ -748,10 +1087,9 @@ export default function NinetyDayPlanPage() {
                 <Pill text="90-Day Job Plan" />
                 <Pill text="Day 1–51: Use Cases" />
                 <Pill text="Day 52–90: Build + Deploy" />
-                <Pill text="Daily Discipline" />
+                <Pill text="AI Book: 2 Topics/Day" />
               </div>
 
-              {/* ✅ Logout Button (Top Right) */}
               <button
                 onClick={handleLogout}
                 className="self-start sm:self-auto inline-flex items-center justify-center rounded-2xl border bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
@@ -966,6 +1304,156 @@ export default function NinetyDayPlanPage() {
         </div>
       </header>
 
+      {/* ✅ AI BOOK DAILY PLAN (2 topics/day) */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 -mt-2 pb-6">
+        <SoftCard className="p-5 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap gap-2">
+                <Pill text="ASKOXY.AI Book" />
+                <Pill text="2 Topics / Day" />
+                <Pill text={"Total Days: 33"} />
+              </div>
+              <h2 className="mt-3 text-xl sm:text-2xl font-extrabold text-slate-900">
+                Daily Book Learning Plan (Index Order)
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Every day: 2 topics in sequence.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <SecondaryBtn
+                label="Prev Book Day"
+                onClick={() => setBookDay((d) => Math.max(1, d - 1))}
+              />
+              <PrimaryBtn
+                label="Next Book Day"
+                onClick={() =>
+                  setBookDay((d) => Math.min(bookDailyPlan.length, d + 1))
+                }
+              />
+            </div>
+          </div>
+
+          {/* Book day chips */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-500">
+                Quick book day jump
+              </p>
+              <p className="text-xs text-slate-500">
+                Selected: Book Day {bookDay}
+              </p>
+            </div>
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+              {bookDayChips.map((d) => (
+                <DayChip
+                  key={d}
+                  day={d}
+                  prefix="Book Day"
+                  active={d === bookDay}
+                  onClick={() => setBookDay(d)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Selected book day content */}
+          <div
+            className="mt-4 rounded-3xl border bg-white/80 p-5"
+            style={{ borderColor: `${C2}66` }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">
+                  Today’s Book Topics
+                </p>
+                <p className="text-lg font-extrabold text-slate-900">
+                  Book Day {bookDay}
+                </p>
+              </div>
+              <span
+                className="inline-flex items-center rounded-2xl border bg-white px-3 py-2 text-xs font-semibold"
+                style={{ borderColor: `${C2}66`, color: C3 }}
+              >
+                {selectedBookDayPlan?.topics.length || 0} topics
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {(selectedBookDayPlan?.topics || []).map((t) => {
+                const pageUrl = getBookPageImageUrl(t.page);
+
+                return (
+                  <div
+                    key={t.no}
+                    className="rounded-3xl border bg-white p-4"
+                    style={{
+                      borderColor: `${C2}66`,
+                      boxShadow: "0 12px 26px rgba(15,23,42,0.06)",
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-slate-500">
+                          Book Page
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* ✅ SHOW IMAGE DIRECTLY (inline) */}
+                    <div
+                      className="mt-3 rounded-2xl border bg-white overflow-hidden"
+                      style={{ borderColor: `${C2}66` }}
+                    >
+                      {pageUrl ? (
+                        <img
+                          src={pageUrl}
+                          alt={`Page ${t.page}`}
+                          className="w-full h-[240px] object-contain bg-white"
+                          loading="lazy"
+                          onError={(e) => {
+                            // If image fails to load, show fallback text
+                            (
+                              e.currentTarget as HTMLImageElement
+                            ).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="p-3 text-xs text-slate-600">
+                          Page image not available (out of image range).
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (!pageUrl) {
+                            alert(
+                              "Page image not mapped for this page number."
+                            );
+                            return;
+                          }
+                          openPreview(t.page);
+                        }}
+                        className="flex-1 rounded-2xl px-4 py-2 text-xs font-semibold text-white transition hover:opacity-95"
+                        style={{ background: GRAD, opacity: pageUrl ? 1 : 0.6 }}
+                        disabled={!pageUrl}
+                      >
+                        Preview (Full Screen)
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </SoftCard>
+      </section>
+
       {/* TOOLBAR */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">
         <SoftCard className="p-4 sm:p-5">
@@ -1000,9 +1488,9 @@ export default function NinetyDayPlanPage() {
                   style={{ borderColor: `${C2}66`, color: "#0f172a" }}
                 >
                   <option value="all">All Modules</option>
-                  <option value="los">LOS</option>
-                  <option value="fms">FMS</option>
-                  <option value="cms">CMS</option>
+                  <option value="lo-system">LOS</option>
+                  <option value="fm-system">FMS</option>
+                  <option value="cm-system">CMS</option>
                 </select>
               </div>
             ) : (
@@ -1076,7 +1564,6 @@ export default function NinetyDayPlanPage() {
                         }}
                         className="rounded-2xl border bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white"
                         style={{ borderColor: `${C2}66`, color: C3 }}
-                        aria-label={`Open Business for Day ${u.day}`}
                       >
                         Business
                       </button>
@@ -1088,7 +1575,6 @@ export default function NinetyDayPlanPage() {
                         }}
                         className="rounded-2xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-95"
                         style={{ background: GRAD }}
-                        aria-label={`Open System for Day ${u.day}`}
                       >
                         System
                       </button>
@@ -1110,7 +1596,6 @@ export default function NinetyDayPlanPage() {
             })}
           </div>
 
-          {/* Bridge card */}
           <div className="mt-8">
             <SoftCard className="p-5 sm:p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1249,7 +1734,6 @@ export default function NinetyDayPlanPage() {
 
       <WhatsAppJoinCard />
 
-      {/* Footer */}
       <footer className="border-t bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1265,7 +1749,7 @@ export default function NinetyDayPlanPage() {
         </div>
       </footer>
 
-      {/* ✅ Mobile Sticky Bottom Bar (BEST UX) */}
+      {/* Mobile Sticky Bottom Bar */}
       <div className="md:hidden fixed bottom-3 left-0 right-0 z-50 px-4">
         <div
           className="rounded-2xl border bg-white/95 backdrop-blur-md shadow-2xl"
@@ -1314,7 +1798,6 @@ export default function NinetyDayPlanPage() {
         </div>
       </div>
 
-      {/* spacing for sticky bar */}
       <div className="h-20 md:hidden" />
     </div>
   );
