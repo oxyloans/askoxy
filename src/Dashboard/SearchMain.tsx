@@ -1,5 +1,6 @@
 // SearchMain.tsx
-import React, { useContext, useState, useEffect, useMemo } from "react";
+import React, { useContext, useState, useEffect, useMemo, useRef } from "react";
+
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Row,
@@ -20,10 +21,12 @@ import { ArrowLeft, Loader2, Home, ChevronRight } from "lucide-react";
 import BASE_URL from "../Config";
 import axios from "axios";
 import { message } from "antd";
-import { motion } from "framer-motion";
+import "./SearchMain.css";
+
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
+
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -90,6 +93,8 @@ const SearchMain: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // ✅ store refs for each category section
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
@@ -163,7 +168,7 @@ const SearchMain: React.FC = () => {
         );
         return hasValidName && hasValidItems;
       });
-      setSelectedCategory(firstValid?.categoryName || null);
+      setSelectedCategory(null);
     } catch (err) {
       console.error("Error fetching search data:", err);
       setError("Failed to fetch search results. Please try again.");
@@ -214,9 +219,23 @@ const SearchMain: React.FC = () => {
     navigate(-1);
   };
 
-  const handleCategorySelect = (categoryName: string) => {
-    setSelectedCategory(categoryName);
-  };
+ const handleCategorySelect = (categoryName: string) => {
+   setSelectedCategory(categoryName);
+
+   requestAnimationFrame(() => {
+     const el = document.getElementById(
+       `cat-${encodeURIComponent(categoryName)}`
+     );
+
+     if (el) {
+       const yOffset = -90; // if header fixed, keep -90 (try -70/-110)
+       const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+       window.scrollTo({ top: y, behavior: "smooth" });
+     }
+   });
+ };
+
 
   const handleAddToCart = async (item: Product) => {
     if (!token || !customerId) {
@@ -373,6 +392,7 @@ const SearchMain: React.FC = () => {
           // ✅ don’t show if price/mrp is 0.0 or null or undefined
           if (!isValidNumber(prod.itemPrice)) return false;
           if (!isValidNumber(prod.itemMrp)) return false;
+          if (!isValidText(prod.itemName)) return false; // ✅ show even if price is 0
 
           // quantity filter? keep it OPTIONAL. Many times quantity can be 0 but still show.
           // If you want to hide out-of-stock, enable this:
@@ -399,14 +419,15 @@ const SearchMain: React.FC = () => {
       );
 
     // 2) Apply selectedCategory
+    // ✅ Always keep ALL categories (for scrolling)
     let finalCategories: Category[] = cleanedCategories;
 
-    if (isValidText(selectedCategory)) {
-      const chosen = cleanedCategories.find(
-        (c) => c.categoryName === selectedCategory
-      );
-      finalCategories = chosen ? [chosen] : cleanedCategories;
-    }
+    // if (isValidText(selectedCategory)) {
+    //   const chosen = cleanedCategories.find(
+    //     (c) => c.categoryName === selectedCategory
+    //   );
+    //   finalCategories = chosen ? [chosen] : cleanedCategories;
+    // }
 
     // 3) Filter agents minimal safety (optional)
     const cleanedAgents: Agent[] = (data.agents || []).filter((a) =>
@@ -435,7 +456,15 @@ const SearchMain: React.FC = () => {
 
   return (
     <div style={{ minHeight: "100vh", background: "white" }}>
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 16px" }}>
+      <div
+        className="px-2 sm:px-3 md:px-4"
+        style={{
+          maxWidth: 1400,
+          margin: "0 auto",
+          paddingTop: 20,
+          paddingBottom: 20,
+        }}
+      >
         {/* Breadcrumb */}
         <Space style={{ marginBottom: 16 }}>
           <Home
@@ -518,6 +547,7 @@ const SearchMain: React.FC = () => {
                             border: isSelected
                               ? "2px solid #5c3391"
                               : "1px solid #e8e8e8",
+
                             borderRadius: 10,
                             background: "#fff",
                             transition: "all 0.3s ease",
@@ -592,7 +622,11 @@ const SearchMain: React.FC = () => {
                 </div>
                 {/* Products Grid */}
                 {filteredData.items.map((category) => (
-                  <div key={category.categoryName} style={{ marginBottom: 24 }}>
+                  <div
+                    key={category.categoryName}
+                    id={`cat-${encodeURIComponent(category.categoryName)}`}
+                    style={{ marginBottom: 24 }}
+                  >
                     {/* Category Title */}
                     {isValidText(category.categoryName) && (
                       <Title
@@ -616,314 +650,329 @@ const SearchMain: React.FC = () => {
                         style={{ marginBottom: 16 }}
                       />
                     ) : (
-                      <Row gutter={[16, 16]} justify="start">
-                        {category.itemsResponseDtoList.map((product) => {
-                          // ✅ HARD GUARD: if price/mrp invalid -> DON’T render
-                          if (
-                            !isValidNumber(product.itemPrice) ||
-                            !isValidNumber(product.itemMrp)
-                          ) {
-                            return null;
-                          }
+                      <div className="search-grid-wrap">
+                        <div className="search-grid">
+                          {category.itemsResponseDtoList.map((product) => {
+                            // ✅ HARD GUARD: if price/mrp invalid -> DON’T render
+                            if (
+                              !isValidNumber(product.itemPrice) ||
+                              !isValidNumber(product.itemMrp)
+                            ) {
+                              return null;
+                            }
 
-                          const discount = calculateDiscount(
-                            product.itemMrp,
-                            product.itemPrice
-                          );
+                            const discount = calculateDiscount(
+                              product.itemMrp,
+                              product.itemPrice
+                            );
 
-                          // ✅ Weight show only if >0
-                          const showWeight = isValidNumber(product.weight);
+                            // ✅ Weight show only if >0
+                            const showWeight = isValidNumber(product.weight);
 
-                          // ✅ BMV show only if >0
-                          const showCoins = isValidNumber(product.bmvCoins);
+                            // ✅ Get unit from API response, only show if available
+                            const unitDisplay = isValidText(product.units)
+                              ? product.units
+                              : "";
 
-                          return (
-                            <Col
-                              xs={24}
-                              sm={12}
-                              md={8}
-                              lg={6}
-                              key={product.itemId}
-                            >
-                              <Badge.Ribbon
-                                text={`${discount}% Off`}
-                                color="#8b3eea"
-                                style={{
-                                  display: discount > 0 ? "block" : "none",
-                                  fontSize: 13,
-                                  fontWeight: 600,
-                                }}
+                            // ✅ BMV show only if >0
+                            const showCoins = isValidNumber(product.bmvCoins);
+
+                            return (
+                              <div
+                                key={product.itemId}
+                                className="search-grid-item"
                               >
-                                <Card
-                                  hoverable
-                                  onClick={() => handleItemClick(product)}
+                                <Badge.Ribbon
+                                  text={`${discount}% Off`}
+                                  color="#8b3eea"
                                   style={{
-                                    height: 420, // ✅ fixed card height
-                                    borderRadius: 12,
-                                    boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-                                    transition: "all 0.3s ease",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "space-between",
-                                  }}
-                                  bodyStyle={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    padding: 16,
-                                    height: "100%",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform =
-                                      "translateY(-4px)";
-                                    e.currentTarget.style.boxShadow =
-                                      "0 8px 16px rgba(92, 51, 145, 0.15)";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform =
-                                      "translateY(0)";
-                                    e.currentTarget.style.boxShadow =
-                                      "0 2px 8px rgba(0, 0, 0, 0.08)";
+                                    display: discount > 0 ? "block" : "none",
+                                    fontSize: 13,
+                                    fontWeight: 600,
                                   }}
                                 >
-                                  <div
+                                  <Card
+                                    hoverable
+                                    onClick={() => handleItemClick(product)}
                                     style={{
-                                      width: "100%",
-                                      height: 180,
-                                      borderRadius: 10,
-                                      background: "#f9f9f9",
-                                      overflow: "hidden",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      marginBottom: 12,
-                                    }}
-                                  >
-                                    {isValidImageUrl(product.itemImage) ? (
-                                      <Image
-                                        src={product.itemImage}
-                                        alt={product.itemName}
-                                        height={180}
-                                        width="100%"
-                                        preview={false}
-                                        style={{
-                                          objectFit: "contain",
-                                          borderRadius: 10,
-                                        }}
-                                        fallback=""
-                                      />
-                                    ) : (
-                                      <div
-                                        style={{ color: "#999", fontSize: 12 }}
-                                      >
-                                        No Image
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Product Info */}
-                                  <div
-                                    style={{
-                                      flexGrow: 1,
+                                      height: "auto",
+                                      minHeight: 380,
+                                      borderRadius: 12,
+                                      boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                                      transition: "all 0.3s ease",
                                       display: "flex",
                                       flexDirection: "column",
                                       justifyContent: "space-between",
                                     }}
+                                    bodyStyle={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      padding: 16,
+                                      height: "100%",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.transform =
+                                        "translateY(-4px)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 8px 16px rgba(92, 51, 145, 0.15)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.transform =
+                                        "translateY(0)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 2px 8px rgba(0, 0, 0, 0.08)";
+                                    }}
                                   >
-                                    <div>
-                                      {/* ✅ Item Name only if valid */}
-                                      {isValidText(product.itemName) ? (
-                                        <Title
-                                          level={5}
-                                          ellipsis={{ rows: 2 }}
+                                    <div
+                                      style={{
+                                        width: "100%",
+                                        height: 160,
+                                        borderRadius: 10,
+                                        background: "#f9f9f9",
+                                        overflow: "hidden",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        marginBottom: 12,
+                                      }}
+                                    >
+                                      {isValidImageUrl(product.itemImage) ? (
+                                        <Image
+                                          src={product.itemImage}
+                                          alt={product.itemName}
+                                          height={160}
+                                          width="100%"
+                                          preview={false}
                                           style={{
-                                            marginBottom: 8,
-                                            fontWeight: 600,
-                                            color: "#1a1a1a",
-                                            fontSize: 15,
-                                            lineHeight: 1.4,
-                                            minHeight: 42,
+                                            objectFit: "contain",
+                                            borderRadius: 10,
                                           }}
-                                        >
-                                          {product.itemName}
-                                        </Title>
+                                          fallback=""
+                                        />
                                       ) : (
-                                        <Title
-                                          level={5}
-                                          style={{ marginBottom: 8 }}
-                                        >
-                                          Item
-                                        </Title>
-                                      )}
-
-                                      {/* ✅ Weight only if valid */}
-                                      {showWeight && (
-                                        <Text
-                                          type="secondary"
+                                        <div
                                           style={{
-                                            fontSize: 13,
-                                            display: "block",
-                                            marginBottom: 10,
-                                            color: "#666",
-                                          }}
-                                        >
-                                          Weight: {product.weight} kg
-                                        </Text>
-                                      )}
-
-                                      {/* ✅ BMV Coins only if valid */}
-                                      {showCoins && (
-                                        <Tag
-                                          style={{
-                                            background:
-                                              "linear-gradient(135deg, #fff4e6 0%, #ffe7ba 100%)",
-                                            color: "#d46b08",
-                                            border: "1px solid #ffd591",
-                                            fontWeight: 600,
-                                            fontSize: 11,
-                                            padding: "2px 8px",
-                                            marginBottom: 10,
-                                            display: "inline-block",
-                                          }}
-                                        >
-                                          Earn {product.bmvCoins} BMVCOINS
-                                        </Tag>
-                                      )}
-
-                                      {/* ✅ Price Section ONLY if valid (already guarded) */}
-                                      <div
-                                        style={{
-                                          marginBottom: 12,
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 8,
-                                        }}
-                                      >
-                                        <Text
-                                          strong
-                                          style={{
-                                            fontSize: 22,
-                                            color: "#1a1a1a",
-                                            fontWeight: 700,
-                                          }}
-                                        >
-                                          ₹
-                                          {Number(
-                                            product.itemPrice
-                                          ).toLocaleString()}
-                                        </Text>
-                                        <Text
-                                          delete
-                                          type="secondary"
-                                          style={{
-                                            fontSize: 14,
                                             color: "#999",
+                                            fontSize: 12,
                                           }}
                                         >
-                                          ₹
-                                          {Number(
-                                            product.itemMrp
-                                          ).toLocaleString()}
-                                        </Text>
-                                      </div>
+                                          No Image
+                                        </div>
+                                      )}
                                     </div>
 
-                                    {/* Add / Quantity Buttons */}
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                      {isItemUserAdded(product.itemId) ? (
-                                        <Space.Compact
-                                          style={{ width: "100%" }}
-                                        >
-                                          <Button
-                                            icon={<MinusOutlined />}
-                                            onClick={() =>
-                                              handleQuantityChange(
-                                                product,
-                                                false
-                                              )
-                                            }
-                                            loading={
-                                              loadingItems.items[product.itemId]
-                                            }
+                                    {/* Product Info */}
+                                    <div
+                                      style={{
+                                        flexGrow: 1,
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "space-between",
+                                      }}
+                                    >
+                                      <div>
+                                        {/* ✅ Item Name only if valid */}
+                                        {isValidText(product.itemName) ? (
+                                          <Title
+                                            level={5}
+                                            ellipsis={{ rows: 2 }}
                                             style={{
-                                              flex: 1,
-                                              height: 44,
-                                              backgroundColor: "#5c3391",
-                                              borderColor: "#5c3391",
-                                              color: "white",
+                                              marginBottom: 8,
                                               fontWeight: 600,
-                                            }}
-                                          />
-                                          <Button
-                                            style={{
-                                              flex: 1,
-                                              height: 44,
-                                              backgroundColor: "white",
-                                              color: "#5c3391",
-                                              fontWeight: "bold",
-                                              fontSize: 16,
-                                              border: "1px solid #5c3391",
+                                              color: "#1a1a1a",
+                                              fontSize: 15,
+                                              lineHeight: 1.4,
+                                              minHeight: 42,
                                             }}
                                           >
-                                            {cartItems[product.itemId] || 0}
-                                          </Button>
+                                            {product.itemName}
+                                          </Title>
+                                        ) : (
+                                          <Title
+                                            level={5}
+                                            style={{ marginBottom: 8 }}
+                                          >
+                                            Item
+                                          </Title>
+                                        )}
+
+                                        {/* ✅ Weight only if valid */}
+                                        {showWeight && (
+                                          <Text
+                                            type="secondary"
+                                            style={{
+                                              fontSize: 13,
+                                              display: "block",
+                                              marginBottom: 10,
+                                              color: "#666",
+                                            }}
+                                          >
+                                            Weight: {product.weight}
+                                            {unitDisplay
+                                              ? ` ${unitDisplay}`
+                                              : ""}
+                                          </Text>
+                                        )}
+
+                                        {/* ✅ BMV Coins only if valid */}
+                                        {showCoins && (
+                                          <Tag
+                                            style={{
+                                              background:
+                                                "linear-gradient(135deg, #fff4e6 0%, #ffe7ba 100%)",
+                                              color: "#d46b08",
+                                              border: "1px solid #ffd591",
+                                              fontWeight: 600,
+                                              fontSize: 11,
+                                              padding: "2px 8px",
+                                              marginBottom: 10,
+                                              display: "inline-block",
+                                            }}
+                                          >
+                                            Earn {product.bmvCoins} BMVCOINS
+                                          </Tag>
+                                        )}
+
+                                        {/* ✅ Price Section ONLY if valid (already guarded) */}
+                                        <div
+                                          style={{
+                                            marginBottom: 12,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                          }}
+                                        >
+                                          <Text
+                                            strong
+                                            style={{
+                                              fontSize: 22,
+                                              color: "#1a1a1a",
+                                              fontWeight: 700,
+                                            }}
+                                          >
+                                            ₹
+                                            {Number(
+                                              product.itemPrice
+                                            ).toLocaleString()}
+                                          </Text>
+                                          <Text
+                                            delete
+                                            type="secondary"
+                                            style={{
+                                              fontSize: 14,
+                                              color: "#999",
+                                            }}
+                                          >
+                                            ₹
+                                            {Number(
+                                              product.itemMrp
+                                            ).toLocaleString()}
+                                          </Text>
+                                        </div>
+                                      </div>
+
+                                      {/* Add / Quantity Buttons */}
+                                      <div onClick={(e) => e.stopPropagation()}>
+                                        {isItemUserAdded(product.itemId) ? (
+                                          <Space.Compact
+                                            style={{ width: "100%" }}
+                                          >
+                                            <Button
+                                              icon={<MinusOutlined />}
+                                              onClick={() =>
+                                                handleQuantityChange(
+                                                  product,
+                                                  false
+                                                )
+                                              }
+                                              loading={
+                                                loadingItems.items[
+                                                  product.itemId
+                                                ]
+                                              }
+                                              style={{
+                                                flex: 1,
+                                                height: 44,
+                                                backgroundColor: "#5c3391",
+                                                borderColor: "#5c3391",
+                                                color: "white",
+                                                fontWeight: 600,
+                                              }}
+                                            />
+                                            <Button
+                                              style={{
+                                                flex: 1,
+                                                height: 44,
+                                                backgroundColor: "white",
+                                                color: "#5c3391",
+                                                fontWeight: "bold",
+                                                fontSize: 16,
+                                                border: "1px solid #5c3391",
+                                              }}
+                                            >
+                                              {cartItems[product.itemId] || 0}
+                                            </Button>
+                                            <Button
+                                              icon={<PlusOutlined />}
+                                              onClick={() =>
+                                                handleQuantityChange(
+                                                  product,
+                                                  true
+                                                )
+                                              }
+                                              disabled={
+                                                (cartItems[product.itemId] ||
+                                                  0) >=
+                                                Number(product.quantity || 0)
+                                              }
+                                              loading={
+                                                loadingItems.items[
+                                                  product.itemId
+                                                ]
+                                              }
+                                              style={{
+                                                flex: 1,
+                                                height: 44,
+                                                backgroundColor: "#5c3391",
+                                                borderColor: "#5c3391",
+                                                color: "white",
+                                                fontWeight: 600,
+                                              }}
+                                            />
+                                          </Space.Compact>
+                                        ) : (
                                           <Button
-                                            icon={<PlusOutlined />}
+                                            type="primary"
+                                            block
                                             onClick={() =>
-                                              handleQuantityChange(
-                                                product,
-                                                true
-                                              )
-                                            }
-                                            disabled={
-                                              (cartItems[product.itemId] ||
-                                                0) >=
-                                              Number(product.quantity || 0)
+                                              handleAddToCart(product)
                                             }
                                             loading={
                                               loadingItems.items[product.itemId]
                                             }
                                             style={{
-                                              flex: 1,
                                               height: 44,
-                                              backgroundColor: "#5c3391",
-                                              borderColor: "#5c3391",
-                                              color: "white",
-                                              fontWeight: 600,
+                                              background:
+                                                "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
+                                              border: "none",
+                                              fontWeight: 700,
+                                              fontSize: 15,
+                                              borderRadius: 8,
+                                              marginTop: "auto",
                                             }}
-                                          />
-                                        </Space.Compact>
-                                      ) : (
-                                        <Button
-                                          type="primary"
-                                          block
-                                          onClick={() =>
-                                            handleAddToCart(product)
-                                          }
-                                          loading={
-                                            loadingItems.items[product.itemId]
-                                          }
-                                          style={{
-                                            height: 44,
-                                            background:
-                                              "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
-                                            border: "none",
-                                            fontWeight: 700,
-                                            fontSize: 15,
-                                            borderRadius: 8,
-                                            marginTop: "auto",
-                                          }}
-                                        >
-                                          🛒 Add to Cart
-                                        </Button>
-                                      )}
+                                          >
+                                            🛒 Add to Cart
+                                          </Button>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                </Card>
-                              </Badge.Ribbon>
-                            </Col>
-                          );
-                        })}
-                      </Row>
+                                  </Card>
+                                </Badge.Ribbon>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -941,150 +990,152 @@ const SearchMain: React.FC = () => {
                 >
                   AI Assistants
                 </Title>
+                <div className="search-grid-wrap">
+                  <div className="search-grid">
+                    {filteredData.agents.map((agent, index) => {
+                      const initials = agent.name
+                        ? agent.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()
+                        : "AI";
 
-                <Row gutter={[16, 16]}>
-                  {filteredData.agents.map((agent, index) => {
-                    const initials = agent.name
-                      ? agent.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()
-                      : "AI";
+                      const bgColors = [
+                        "#5c3391",
+                        "#312c74",
+                        "#8e44ad",
+                        "#9b59b6",
+                        "#6a1b9a",
+                        "#4a148c",
+                        "#7b1fa2",
+                      ];
+                      const color = bgColors[index % bgColors.length];
 
-                    const bgColors = [
-                      "#5c3391",
-                      "#312c74",
-                      "#8e44ad",
-                      "#9b59b6",
-                      "#6a1b9a",
-                      "#4a148c",
-                      "#7b1fa2",
-                    ];
-                    const color = bgColors[index % bgColors.length];
+                      const agentImg = agent.imageUrl || agent.profileImagePath;
+                      const showAgentImg = isValidImageUrl(agentImg);
 
-                    const agentImg = agent.imageUrl || agent.profileImagePath;
-                    const showAgentImg = isValidImageUrl(agentImg);
-
-                    return (
-                      <Col xs={24} sm={12} md={8} lg={6} key={agent.agentId}>
-                        <Badge.Ribbon
-                          text={agent.status}
-                          color={agent.activeStatus ? "green" : "red"}
-                        >
-                          <Card
-                            hoverable
-                            onClick={() => handleAgentClick(agent)}
-                            style={{
-                              height: 380,
-                              borderRadius: 12,
-                              boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-                              transition: "all 0.3s ease",
-                            }}
-                            bodyStyle={{
-                              padding: 16,
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "space-between",
-                            }}
+                      return (
+                        <div key={agent.agentId} className="search-grid-item">
+                          <Badge.Ribbon
+                            text={agent.status}
+                            color={agent.activeStatus ? "green" : "red"}
                           >
-                            {/* ✅ Image with 4-side rounded */}
-                            <div
+                            <Card
+                              hoverable
+                              onClick={() => handleAgentClick(agent)}
                               style={{
-                                width: "100%",
-                                height: 180,
+                                height: "auto",
+                                minHeight: 360,
+                                borderRadius: 12,
+                                boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                                transition: "all 0.3s ease",
+                              }}
+                              bodyStyle={{
+                                padding: 16,
                                 display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: 12, // ✅ rounded 4 sides
-                                background: "#fafafa",
-                                overflow: "hidden",
-                                marginBottom: 12,
+                                flexDirection: "column",
+                                justifyContent: "space-between",
                               }}
                             >
-                              {showAgentImg ? (
-                                <Image
-                                  src={agentImg}
-                                  alt={agent.name}
-                                  height={180}
-                                  width="100%"
-                                  preview={false}
+                              {/* ✅ Image with 4-side rounded */}
+                              <div
+                                style={{
+                                  width: "100%",
+                                  height: 160,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  borderRadius: 12, // ✅ rounded 4 sides
+                                  background: "#fafafa",
+                                  overflow: "hidden",
+                                  marginBottom: 12,
+                                }}
+                              >
+                                {showAgentImg ? (
+                                  <Image
+                                    src={agentImg}
+                                    alt={agent.name}
+                                    height={160}
+                                    width="100%"
+                                    preview={false}
+                                    style={{
+                                      objectFit: "cover",
+                                      borderRadius: 12, // ✅ rounded 4 sides
+                                    }}
+                                    fallback=""
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      height: 90,
+                                      width: 90,
+                                      borderRadius: 14,
+                                      backgroundColor: color,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: 30,
+                                      fontWeight: "bold",
+                                      color: "white",
+                                      textTransform: "uppercase",
+                                    }}
+                                  >
+                                    {initials}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Agent Info */}
+                              <div style={{ textAlign: "left" }}>
+                                <Title
+                                  level={5}
+                                  ellipsis
                                   style={{
-                                    objectFit: "cover",
-                                    borderRadius: 12, // ✅ rounded 4 sides
-                                  }}
-                                  fallback=""
-                                />
-                              ) : (
-                                <div
-                                  style={{
-                                    height: 90,
-                                    width: 90,
-                                    borderRadius: 14,
-                                    backgroundColor: color,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: 30,
-                                    fontWeight: "bold",
-                                    color: "white",
-                                    textTransform: "uppercase",
+                                    marginBottom: 6,
+                                    color: "#333",
+                                    fontWeight: 600,
                                   }}
                                 >
-                                  {initials}
-                                </div>
-                              )}
-                            </div>
+                                  {agent.name}
+                                </Title>
 
-                            {/* Agent Info */}
-                            <div style={{ textAlign: "left" }}>
-                              <Title
-                                level={5}
-                                ellipsis
-                                style={{
-                                  marginBottom: 6,
-                                  color: "#333",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {agent.name}
-                              </Title>
+                                <Paragraph
+                                  type="secondary"
+                                  ellipsis={{ rows: 3 }}
+                                  style={{ fontSize: 13, color: "#555" }}
+                                >
+                                  {agent.description ||
+                                    "No description available"}
+                                </Paragraph>
 
-                              <Paragraph
-                                type="secondary"
-                                ellipsis={{ rows: 3 }}
-                                style={{ fontSize: 13, color: "#555" }}
-                              >
-                                {agent.description ||
-                                  "No description available"}
-                              </Paragraph>
-
-                              <Button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAgentClick(agent);
-                                }}
-                                style={{
-                                  backgroundColor: "#008cba",
-                                  color: "white",
-                                  border: "none",
-                                  width: "100%",
-                                  marginTop: 10,
-                                  borderRadius: 10,
-                                  fontWeight: 600,
-                                  height: 42,
-                                }}
-                              >
-                                View
-                              </Button>
-                            </div>
-                          </Card>
-                        </Badge.Ribbon>
-                      </Col>
-                    );
-                  })}
-                </Row>
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAgentClick(agent);
+                                  }}
+                                  style={{
+                                    backgroundColor: "#008cba",
+                                    color: "white",
+                                    border: "none",
+                                    width: "100%",
+                                    marginTop: 10,
+                                    borderRadius: 10,
+                                    fontWeight: 600,
+                                    height: 42,
+                                  }}
+                                >
+                                  View
+                                </Button>
+                              </div>
+                            </Card>
+                          </Badge.Ribbon>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
           </>

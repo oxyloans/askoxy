@@ -1,7 +1,12 @@
-
 import React, { useEffect, useState, useContext } from "react";
-import { X,Sparkles } from "lucide-react";
-import { FaBars, FaSearch,FaUserCircle, FaTimes, FaShoppingCart } from "react-icons/fa";
+import { X, Sparkles } from "lucide-react";
+import {
+  FaBars,
+  FaSearch,
+  FaUserCircle,
+  FaTimes,
+  FaShoppingCart,
+} from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
 import AskOxyLogo from "../assets/img/askoxylogoblack.png";
@@ -211,32 +216,38 @@ const Header: React.FC<HeaderProps> = ({
     setSearchValue(e.target.value);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedQuery = searchValue.trim();
+const handleSearchSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  const trimmedQuery = searchValue.trim();
 
-   if (trimmedQuery && trimmedQuery.length >= 3) {
-     navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
-     setIsSearchVisible(false);
-     setSearchValue("");
-     setSearchResults([]);
-   } else {
-     setIsSearchVisible(false);
-     setSearchValue("");
-     setSearchResults([]);
-     return; // ← FIXED
-   }
- };
+  if (trimmedQuery && trimmedQuery.length >= 3) {
+    navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
+
+    // close overlay and cleanup
+    setIsSearchVisible(false);
+    setSearchValue("");
+    setSearchResults([]);
+    setIsFocused(false);
+  } else {
+    setIsSearchVisible(false);
+    setSearchValue("");
+    setSearchResults([]);
+    return;
+  }
+};
 
 
   const handleSearchItemClick = (item: SearchResult) => {
-    navigate(`/main/itemsdisplay/${item.id}`, {
-      state: { productName: item.productName },
-    });
+    // Close mobile search overlay
     setIsSearchVisible(false);
     setSearchValue("");
     setIsFocused(false);
     setSearchResults([]);
+
+    // Navigate to item details
+    navigate(`/main/itemsdisplay/${item.id}`, {
+      state: { productName: item.productName },
+    });
   };
 
   const toggleSearch = () => {
@@ -275,10 +286,8 @@ const Header: React.FC<HeaderProps> = ({
   }, [isSearchVisible]);
 
   const renderSearchResults = () => {
-    if (
-      searchValue.length < 3 ||
-      (searchResults.length === 0 && !isSearching)
-    ) {
+    // Show suggestions when no search has been performed yet (empty input)
+    if (searchValue.trim().length === 0) {
       return (
         <div className="bg-white py-3 px-4">
           <p className="text-xs text-gray-500 mb-3 font-medium">
@@ -292,13 +301,13 @@ const Header: React.FC<HeaderProps> = ({
               onClick={() => {
                 setSearchValue(text);
                 setIsFocused(false);
-                if (text.length >= 3) {
-                  navigate("/main/search-main", {
-                    state: { searchQuery: text },
-                  });
-                }
-                setIsSearchVisible(false);
-                setSearchResults([]);
+                // On mobile, perform search directly, on desktop navigate
+               navigate("/main/search-main", { state: { searchQuery: text } });
+               setIsSearchVisible(false);
+               setSearchValue("");
+               setSearchResults([]);
+               setIsFocused(false);
+
               }}
             >
               <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
@@ -309,6 +318,7 @@ const Header: React.FC<HeaderProps> = ({
       );
     }
 
+    // Show loading spinner while searching
     if (isSearching) {
       return (
         <div className="bg-white py-6 px-4">
@@ -320,34 +330,72 @@ const Header: React.FC<HeaderProps> = ({
       );
     }
 
-    return (
-      <div className="bg-white py-3 px-4">
-        {searchResults.length > 0 ? (
-          <>
-            <p className="text-xs text-gray-500 mb-3 font-medium">
-              Search results:
-            </p>
-            {searchResults.map((item, index) => (
-              <button
-                type="button"
-                key={index}
-                className="w-full py-3 text-left flex items-center space-x-3 transition-colors duration-200 hover:bg-purple-50 rounded-lg px-2 mb-1"
-                onClick={() => handleSearchItemClick(item)}
-              >
-                <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
-                <span className="text-sm text-gray-700 line-clamp-2">
-                  {item.productName}
-                </span>
-              </button>
-            ))}
-          </>
-        ) : (
+    // Show search results if we have them
+    if (searchResults.length > 0) {
+      return (
+        <div className="bg-white py-3 px-4">
+          <p className="text-xs text-gray-500 mb-3 font-medium">
+            Search results:
+          </p>
+          {searchResults.map((item, index) => (
+            <button
+              type="button"
+              key={index}
+              className="w-full py-3 text-left flex items-center space-x-3 transition-colors duration-200 hover:bg-purple-50 rounded-lg px-2 mb-1"
+              onClick={() => handleSearchItemClick(item)}
+            >
+              <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
+              <span className="text-sm text-gray-700 line-clamp-2">
+                {item.productName}
+              </span>
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    // Show "no results" only when search was performed but returned nothing
+    if (searchValue.length >= 3 && searchResults.length === 0 && !isSearching) {
+      return (
+        <div className="bg-white py-3 px-4">
           <div className="text-center py-6">
             <p className="text-sm text-gray-500">
               No results found for "{searchValue}"
             </p>
           </div>
-        )}
+        </div>
+      );
+    }
+
+    // Default: show suggestions for partial input
+    return (
+      <div className="bg-white py-3 px-4">
+        <p className="text-xs text-gray-500 mb-3 font-medium">
+          Suggested searches:
+        </p>
+        {searchTexts.map((text, index) => (
+          <button
+            type="button"
+            key={index}
+            className="w-full py-3 text-left flex items-center space-x-3 transition-colors duration-200 hover:bg-purple-50 rounded-lg px-2 mb-1"
+            onClick={() => {
+              setSearchValue(text);
+              setIsFocused(false);
+              if (window.innerWidth < 640) {
+                searchProducts(text);
+              } else {
+                navigate("/main/search-main", {
+                  state: { searchQuery: text },
+                });
+                setIsSearchVisible(false);
+                setSearchResults([]);
+              }
+            }}
+          >
+            <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
+            <span className="text-sm text-gray-700">{text}</span>
+          </button>
+        ))}
       </div>
     );
   };

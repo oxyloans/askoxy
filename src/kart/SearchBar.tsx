@@ -69,6 +69,7 @@ const SearchBar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const MIN_SEARCH_LENGTH = 3;
+  const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
     if (location.state?.selectedItemName) {
@@ -83,14 +84,23 @@ const SearchBar = () => {
     return () => clearTimeout(timer);
   }, [searchValue]);
 
-  // ⭐ AUTO-NAVIGATE TO SEARCH-MAIN WHEN USER TYPES 3+ LETTERS
+  // ⭐ AUTO-SEARCH: MOBILE = SHOW RESULTS, DESKTOP = NAVIGATE TO SEARCH PAGE
   useEffect(() => {
     if (debouncedValue.trim().length >= MIN_SEARCH_LENGTH) {
-      setIsFocused(false); // ⭐ closes dropdown when auto search happens
-      setSearchResults([]); // ⭐ avoid blank dropdown area
-      navigate("/main/search-main", {
-        state: { searchQuery: debouncedValue.trim() },
-      });
+      // Detect if mobile device
+      const isMobile = window.innerWidth < 640;
+
+      if (isMobile) {
+        // Mobile: Perform search directly and show results in dropdown
+        performSearch(debouncedValue.trim());
+      } else {
+        // Desktop: Navigate to search page
+        setIsFocused(false); // ⭐ closes dropdown when navigation happens
+        setSearchResults([]); // ⭐ avoid blank dropdown area
+        navigate("/main/search-main", {
+          state: { searchQuery: debouncedValue.trim() },
+        });
+      }
     }
   }, [debouncedValue]);
 
@@ -253,10 +263,12 @@ const SearchBar = () => {
       );
 
     if (isDefaultSuggestion) {
+      // For default suggestions, always navigate to search page (both mobile and desktop)
       navigate("/main/search-main", {
         state: { searchQuery: item.itemName },
       });
     } else {
+      // For actual search results, navigate to item details
       navigate(`/main/itemsdisplay/${item.itemId}`, {
         state: { item, selectedItemName: item.itemName },
       });

@@ -15,7 +15,6 @@ import {
   message,
   Skeleton,
   Tooltip,
-  Badge,
   Result,
   Spin,
   Space,
@@ -66,11 +65,6 @@ interface TaskResponse {
   id: string;
 }
 
-interface AgentChatResponse {
-  thread_id: string;
-  assistant_reply: string;
-}
-
 interface Task {
   id: string;
   userId: string;
@@ -94,10 +88,10 @@ const PlanOfTheDay: React.FC = () => {
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
   const [isSubmissionWindowOpen, setIsSubmissionWindowOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [validatingPlan, setValidatingPlan] = useState<boolean>(false);
-  const [assistantReply, setAssistantReply] = useState<string>("");
-  const [planValidated, setPlanValidated] = useState<boolean>(false);
-  const [previousTasks, setPreviousTasks] = useState<Task[]>([]);
+  const [aiResponse, setAiResponse] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAiResponse, setShowAiResponse] = useState(false);
+  const [hasSeenAiResponse, setHasSeenAiResponse] = useState(false);
 
   useEffect(() => {
     const today = new Date();
@@ -139,36 +133,39 @@ const PlanOfTheDay: React.FC = () => {
 
   useEffect(() => {
     if (isEditing && todayTask) {
+      // Strip the " - Plan by [username]" suffix when editing
+      const originalPlan = todayTask.planOftheDay.replace(
+        /\s*-\s*Plan by\s+.*$/,
+        ""
+      );
       form.setFieldsValue({
-        planOftheDay: todayTask.planOftheDay,
+        planOftheDay: originalPlan,
         taskTeam: todayTask.taskTeam,
       });
-      // Reset validation state when editing
-      setAssistantReply("");
-      setPlanValidated(false);
     }
   }, [isEditing, todayTask, form]);
 
-  const checkPendingTasksForToday = async (userIdValue: string) => {
+  const checkPendingTasksForToday = async (userId: string) => {
     setFetchingStatus(true);
     setErrorState(false);
+    const token = sessionStorage.getItem("accessToken") || "";
+    console.log("userId", userId);
     try {
       const response = await axios.post(
         `${BASE_URL}/user-service/write/getAllTaskUpdates`,
         {
           taskStatus: "PENDING",
-          userId: userIdValue,
+          userId: userId,
         },
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-
       const tasks: Task[] = response.data;
-      setPreviousTasks(tasks); // Store previous tasks for matching
-
+      console.log("tasks", tasks);
       const today = new Date();
       const todayStr =
         today.getFullYear() +
@@ -203,45 +200,6 @@ const PlanOfTheDay: React.FC = () => {
     }
   };
 
-  // Function to check if plan matches any previous plan
-  const findMatchingPreviousPlan = (planContent: string): Task | null => {
-    if (!planContent || previousTasks.length === 0) return null;
-
-    const normalizedInput = planContent.trim().toLowerCase();
-    
-    // Check for similar plans (simple similarity check)
-    for (const task of previousTasks) {
-      if (task.planOftheDay) {
-        const normalizedTaskPlan = task.planOftheDay.trim().toLowerCase();
-        
-        // Check if the input is very similar to a previous plan (80% similarity)
-        // Simple approach: check if major words match
-        const inputWords = normalizedInput.split(/\s+/).filter((w: string) => w.length > 3);
-        const taskWords = normalizedTaskPlan.split(/\s+/).filter((w: string) => w.length > 3);
-        
-        if (inputWords.length > 0 && taskWords.length > 0) {
-          const matchingWords = inputWords.filter((word: string) => 
-            taskWords.some((tWord: string) => tWord.includes(word) || word.includes(tWord))
-          );
-          const similarity = matchingWords.length / Math.max(inputWords.length, taskWords.length);
-          
-          if (similarity >= 0.7) {
-            return task;
-          }
-        }
-        
-        // Also check exact or near-exact match
-        if (normalizedInput === normalizedTaskPlan || 
-            normalizedTaskPlan.includes(normalizedInput) ||
-            normalizedInput.includes(normalizedTaskPlan)) {
-          return task;
-        }
-      }
-    }
-    
-    return null;
-  };
-
   const onFinish = async (values: TaskFormValues) => {
     setLoading(true);
     try {
@@ -251,34 +209,71 @@ const PlanOfTheDay: React.FC = () => {
         return;
       }
 
-      let payload;
       const isEditMode = isEditing && todayTask;
+
       if (isEditMode) {
+        // For edit mode, directly update
+        await savePlanToDatabase(values, true);
+      } else if (showAiResponse) {
+        // User has seen AI response and is submitting modified plan - save directly
+        await savePlanToDatabase(values, false);
+      } else {
+        // For new submission, first call AI service
+        await callAiService(values.planOftheDay);
+        // Don't save yet - let user see AI response and modify if needed
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error in onFinish:", error);
+      setLoading(false);
+    }
+  };
+
+  const savePlanToDatabase = async (
+    values: TaskFormValues,
+    isEditMode: boolean = false
+  ) => {
+    try {
+      // Include username with the plan text
+      const planWithUsername = `${values.planOftheDay} - Plan by ${userName}`;
+
+      let payload;
+      if (isEditMode && todayTask) {
         payload = {
           id: todayTask.id,
-          planOftheDay: values.planOftheDay,
+          planOftheDay: planWithUsername,
+          taskTeam: values.taskTeam || todayTask.taskTeam, // Preserve existing team or use new one
           taskStatus: "PENDING",
           userId: userId,
         };
       } else {
         payload = {
-          planOftheDay: values.planOftheDay,
+          planOftheDay: planWithUsername,
           taskAssinedBy: sessionStorage.getItem("Name"),
           taskTeam: values.taskTeam,
           userId: userId,
         };
       }
 
-      const response = await axios.patch<TaskResponse>(
-        `${BASE_URL}/user-service/write/userTaskUpdate`,
-        payload
-      );
+      // Use POST for new submissions, PATCH for edits
+      const response = isEditMode
+        ? await axios.patch<TaskResponse>(
+            `${BASE_URL}/user-service/write/userTaskUpdate`,
+            payload
+          )
+        : await axios.patch<TaskResponse>(
+            `${BASE_URL}/user-service/write/userTaskUpdate`,
+            payload
+          );
+
       if (response.data.success) {
         if (!isEditMode) {
           sessionStorage.setItem("taskId", response.data.id);
         }
 
         setSubmissionSuccess(true);
+        setShowAiResponse(false); // Hide AI response after successful save
 
         const action = isEditMode ? "updated" : "submitted";
         notification.success({
@@ -287,15 +282,15 @@ const PlanOfTheDay: React.FC = () => {
           placement: "topRight",
         });
 
-        setTimeout(() => {
+        setTimeout(async () => {
           checkPendingTasksForToday(userId);
           setSubmissionSuccess(false);
+          setHasSeenAiResponse(false); // Reset for next submission
+          setShowAiResponse(false); // Reset AI response display
+          setAiResponse(""); // Clear AI response
           if (isEditMode) {
             setIsEditing(false);
           }
-          // Reset validation state after successful submission
-          setAssistantReply("");
-          setPlanValidated(false);
         }, 1000);
 
         form.resetFields();
@@ -303,13 +298,14 @@ const PlanOfTheDay: React.FC = () => {
         message.error("Failed to update task.");
       }
     } catch (error) {
-      console.error("Error updating task:", error);
+      console.error("Error saving plan:", error);
       notification.error({
         message: "Error",
-        description: "An error occurred while updating the task.",
+        description: "An error occurred while saving the task.",
         placement: "topRight",
       });
     } finally {
+      // ✅ MAIN FIX: stop "Updating..." after API completes
       setLoading(false);
     }
   };
@@ -328,120 +324,48 @@ const PlanOfTheDay: React.FC = () => {
     checkPendingTasksForToday(userId);
   };
 
-  const validatePlanWithAI = async (planContent: string) => {
-    if (!planContent || planContent.trim().length < 30) {
-      setAssistantReply("");
-      setPlanValidated(false);
-      return;
-    }
-
-    setValidatingPlan(true);
-    setPlanValidated(false);
-    setAssistantReply("");
-
+  const callAiService = async (planText: string) => {
+    setAiLoading(true);
     try {
-      // First, check if this plan matches any previous plan
-      const matchingTask = findMatchingPreviousPlan(planContent);
-      
-      if (matchingTask && matchingTask.planOftheDay) {
-        // If match found, use the previous plan
-        const previousPlan = matchingTask.planOftheDay;
-        setAssistantReply(previousPlan);
-        form.setFieldsValue({
-          planOftheDay: previousPlan,
-        });
-        setPlanValidated(true);
-        setValidatingPlan(false);
-        notification.info({
-          message: "Previous Plan Found",
-          description: "A similar plan was found. Using the previous plan format.",
-          placement: "topRight",
-        });
-        return;
-      }
-
-      // If no match, proceed with AI call
-      const currentUserId = userId || sessionStorage.getItem("userId") || "";
-      const currentUserName = userName || sessionStorage.getItem("Name") || "";
-      const accessToken = sessionStorage.getItem("accessToken");
-      
-      // Format the content with clear instruction to improve the plan
-      const instructionPrompt = `${planContent}${currentUserName ? `\n\nUser: ${currentUserName}` : ''}`;
-      
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      
-      if (accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`;
-      }
-      
-      const response = await axios.post<AgentChatResponse>(
+      const token = sessionStorage.getItem("accessToken") || "";
+      const response = await axios.post(
         `${BASE_URL}/ai-service/agent/agentChat1`,
         {
           agentId: "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0",
-          userId: currentUserId,
+          userId: userId,
           messageHistory: [
             {
               role: "user",
-              content: instructionPrompt,
+              content: `${planText} - Plan by ${userName}`,
             },
           ],
         },
         {
-          headers,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
-      if (response.data && response.data.assistant_reply) {
-        const modifiedPlan = response.data.assistant_reply.trim();
-        
-        // Check if response contains error messages instead of improved plan
-        const errorKeywords = [
-          "could not find",
-          "not available",
-          "no recorded",
-          "unable to",
-          "cannot find",
-          "not found",
-          "i could not",
-          "i cannot"
-        ];
-        
-        const isErrorResponse = errorKeywords.some(keyword => 
-          modifiedPlan.toLowerCase().includes(keyword.toLowerCase())
-        );
-        
-        if (isErrorResponse) {
-          // If it's an error response, don't replace user's plan
-          notification.warning({
-            message: "AI Response",
-            description: "The AI couldn't improve your plan. You can continue with your original plan.",
-            placement: "topRight",
-          });
-          setAssistantReply("");
-          // Keep the original plan content - don't update the field
-          setPlanValidated(true); // Still allow submission with original plan
-        } else {
-          // Update the TextArea field with the AI-modified plan (response is displayed directly in TextArea)
-          setAssistantReply(modifiedPlan);
-          form.setFieldsValue({
-            planOftheDay: modifiedPlan,
-          });
-          setPlanValidated(true);
-        }
+      if (response.data.assistant_reply) {
+        setAiResponse(response.data.assistant_reply);
+        setShowAiResponse(true);
       }
     } catch (error: any) {
-      console.error("Error validating plan with AI:", error);
+      console.error("Error calling AI service:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Unknown error occurred";
       notification.error({
-        message: "Validation Error",
-        description:
-          error.response?.data?.message || "Failed to validate plan. Please try again.",
+        message: "AI Service Unavailable",
+        description: `Unable to process your plan: ${errorMessage}. Your plan has been saved.`,
         placement: "topRight",
+        duration: 5,
       });
-      setPlanValidated(false);
     } finally {
-      setValidatingPlan(false);
+      setAiLoading(false);
     }
   };
 
@@ -451,6 +375,181 @@ const PlanOfTheDay: React.FC = () => {
       <Text className="text-gray-600 mt-4">Checking your task status...</Text>
     </div>
   );
+
+  const renderAiLoadingState = () => (
+    <div className="flex flex-col items-center justify-center py-10">
+      <Spin size="large" />
+      <Text className="text-gray-600 mt-4">
+        Processing your plan with AI...
+      </Text>
+      <Text className="text-sm text-gray-500 mt-2">
+        This may take a few moments
+      </Text>
+    </div>
+  );
+
+  const renderFormWithAiResponse = () => (
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={onFinish}
+      className="space-y-5"
+      size="large"
+    >
+      <Form.Item
+        name="planOftheDay"
+        label={
+          <span className="text-gray-700 font-medium text-sm sm:text-base flex items-center">
+            What's your plan for today?
+          </span>
+        }
+        rules={[
+          {
+            required: true,
+            message: "Please enter your plan for the day!",
+          },
+          {
+            min: 30,
+            message: "Your plan should be at least 30 characters",
+          },
+        ]}
+      >
+        <TextArea
+          rows={4}
+          placeholder="Describe your tasks and goals for today..."
+          maxLength={8000}
+          showCount
+          className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400 transition-all"
+        />
+      </Form.Item>
+
+      <Form.Item
+        name="taskTeam"
+        label={
+          <span className="text-gray-700 font-medium text-sm sm:text-base flex items-center">
+            Select Team
+          </span>
+        }
+        rules={
+          isEditing
+            ? []
+            : [{ required: true, message: "Please select a team!" }]
+        }
+      >
+        <Select
+          placeholder="Select your team"
+          className="rounded-lg"
+          size="large"
+          optionLabelProp="label"
+          showSearch
+          disabled={isEditing}
+          filterOption={(input, option) =>
+            (typeof option?.label === "string" &&
+              option.label.toLowerCase().includes(input.toLowerCase())) ??
+            false
+          }
+        >
+          {TEAM_OPTIONS.map((team) => (
+            <Option key={team} value={team} label={formatTeamName(team)}>
+              <div className="flex items-center py-1">
+                <Tag color={TEAM_COLORS[team] || "default"} className="mr-2">
+                  {team.charAt(0)}
+                </Tag>
+                <span>{formatTeamName(team)}</span>
+              </div>
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      {/* AI Response Display */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <Text strong className="text-blue-800">
+            AI Response
+          </Text>
+        </div>
+        <Paragraph className="text-gray-700 mb-0 whitespace-pre-line">
+          {aiResponse}
+        </Paragraph>
+      </div>
+
+      <Divider className="my-6" />
+
+      <Form.Item className="mb-0">{renderSubmitButtons()}</Form.Item>
+    </Form>
+  );
+
+  const renderAiResponseState = () => {
+    const currentValues = form.getFieldsValue();
+    return (
+      <div className="space-y-5">
+        {/* User's Plan Display */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+            <Text strong className="text-gray-800">
+              What's your plan for today?
+            </Text>
+          </div>
+          <Paragraph className="text-gray-700 mb-0 whitespace-pre-line">
+            {currentValues.planOftheDay}
+          </Paragraph>
+        </div>
+
+        {/* AI Response Display */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <Text strong className="text-blue-800">
+              AI Response
+            </Text>
+          </div>
+          <Paragraph className="text-gray-700 mb-4 whitespace-pre-line">
+            {aiResponse}
+          </Paragraph>
+        </div>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            <Text strong className="text-yellow-800">
+              Review Your Plan
+            </Text>
+          </div>
+          <Paragraph className="text-gray-700 mb-4">
+            You can modify your plan based on the AI feedback above, or proceed
+            with your original plan.
+          </Paragraph>
+        </div>
+
+        <div className="flex gap-3 flex-wrap">
+          <Button
+            type="primary"
+            onClick={async () => {
+              const values = form.getFieldsValue();
+              await savePlanToDatabase(values, false);
+            }}
+            loading={loading}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Save Plan to Database
+          </Button>
+          <Button
+            onClick={() => {
+              setShowAiResponse(false);
+              setAiResponse("");
+              // Keep the form values so user can modify
+              setHasSeenAiResponse(false); // Reset so they can see AI response again if they want
+            }}
+          >
+            Modify Plan First
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   const renderErrorState = () => (
     <Result
@@ -522,17 +621,20 @@ const PlanOfTheDay: React.FC = () => {
               <span className="block sm:hidden text-xs text-gray-600 ml-2">
                 Submitted at {formatTime(todayTask.planCreatedAt)}
               </span>
-           
-                <Button
-                  type="link"
-                  icon={<EditOutlined />}
-                  onClick={() => setIsEditing(true)}
-                  style={{ color: "#f7f7f7",backgroundColor:"#008cba" ,border:"#008cba"}}
-                  size="small"
-                >
-                  Edit
-                </Button>
-          
+
+              <Button
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => setIsEditing(true)}
+                style={{
+                  color: "#f7f7f7",
+                  backgroundColor: "#008cba",
+                  border: "#008cba",
+                }}
+                size="small"
+              >
+                Edit
+              </Button>
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg mb-4">
@@ -540,8 +642,6 @@ const PlanOfTheDay: React.FC = () => {
               {todayTask.planOftheDay}
             </Paragraph>
           </div>
-
-         
         </Card>
       )}
     </div>
@@ -581,19 +681,6 @@ const PlanOfTheDay: React.FC = () => {
 
   const renderSubmitButtons = () => {
     const isEditMode = isEditing && todayTask;
-    const planContent = form.getFieldValue("planOftheDay");
-    const teamSelected = form.getFieldValue("taskTeam");
-    
-    // For new submissions (not edit mode), disable if:
-    // - Validating plan
-    // - Plan not validated yet (API response not received)
-    // - Team not selected
-    const isSubmitDisabled = !isEditMode && (
-      validatingPlan || 
-      !planValidated || 
-      !teamSelected
-    );
-
     const buttonText = submissionSuccess
       ? isEditMode
         ? "Plan Updated!"
@@ -620,8 +707,7 @@ const PlanOfTheDay: React.FC = () => {
             onClick={() => {
               form.resetFields();
               setIsEditing(false);
-              setAssistantReply("");
-              setPlanValidated(false);
+              setLoading(false); // ✅ add this
             }}
             className="flex-1 h-8 rounded-md"
           >
@@ -636,7 +722,6 @@ const PlanOfTheDay: React.FC = () => {
             htmlType="submit"
             loading={loading}
             block
-            
             className={`flex-1 ${buttonClass}`}
           >
             {buttonText}
@@ -651,12 +736,9 @@ const PlanOfTheDay: React.FC = () => {
           color: "#f7f7f7",
           backgroundColor: "#008cba",
           border: "#008cba",
-          opacity: isSubmitDisabled ? 0.6 : 1,
-          cursor: isSubmitDisabled ? "not-allowed" : "pointer",
         }}
         htmlType="submit"
-        loading={loading || validatingPlan}
-        disabled={isSubmitDisabled}
+        loading={loading}
         block
         icon={icon}
         className={buttonClass}
@@ -679,7 +761,9 @@ const PlanOfTheDay: React.FC = () => {
         label={
           <span className="text-gray-700 font-medium text-sm sm:text-base flex items-center">
             {isEditing
-              ? "Edit your plan for today?"
+              ? "Edit your plan for today:"
+              : showAiResponse
+              ? "Modify your plan (AI response shown below):"
               : "What's your plan for today?"}
           </span>
         }
@@ -695,42 +779,12 @@ const PlanOfTheDay: React.FC = () => {
         ]}
       >
         <TextArea
-          rows={8}
+          rows={4}
           placeholder="Describe your tasks and goals for today..."
           maxLength={8000}
           showCount
           className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400 transition-all"
-          onBlur={(e) => {
-            const value = e.target.value;
-            if (value && value.trim().length >= 30 && !isEditing) {
-              // Only validate if plan hasn't been validated yet or user made significant changes
-              // Check if current value is different from the assistant reply
-              if (!assistantReply || value.trim() !== assistantReply.trim()) {
-                validatePlanWithAI(value);
-              }
-            } else if (!value || value.trim().length < 30) {
-              // Reset validation if content is too short
-              setAssistantReply("");
-              setPlanValidated(false);
-            }
-          }}
-          onChange={(e) => {
-            // Don't reset validation when user edits after AI modification
-            // User should be able to edit the AI-modified plan and still submit
-            const currentValue = e.target.value;
-            // Only reset if user clears the field completely
-            if (!currentValue || currentValue.trim().length === 0) {
-              setAssistantReply("");
-              setPlanValidated(false);
-            }
-          }}
         />
-        {validatingPlan && (
-          <div className="mt-2 flex items-center gap-2 text-blue-600">
-            <Spin size="small" />
-            <Text className="text-sm">AI is improving your plan...</Text>
-          </div>
-        )}
       </Form.Item>
 
       <Form.Item
@@ -822,6 +876,8 @@ const PlanOfTheDay: React.FC = () => {
           <div className="p-5 md:p-6 lg:p-8">
             {fetchingStatus
               ? renderLoadingState()
+              : aiLoading
+              ? renderAiLoadingState()
               : errorState
               ? renderErrorState()
               : isSubmitted
@@ -829,7 +885,9 @@ const PlanOfTheDay: React.FC = () => {
                 ? renderFormState()
                 : renderSubmittedState()
               : isSubmissionWindowOpen
-              ? renderFormState()
+              ? showAiResponse
+                ? renderFormWithAiResponse()
+                : renderFormState()
               : renderClosedState()}
           </div>
         </Card>
