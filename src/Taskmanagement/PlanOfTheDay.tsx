@@ -66,6 +66,11 @@ interface TaskResponse {
   id: string;
 }
 
+interface AgentChatResponse {
+  thread_id: string;
+  assistant_reply: string;
+}
+
 interface Task {
   id: string;
   userId: string;
@@ -89,6 +94,10 @@ const PlanOfTheDay: React.FC = () => {
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
   const [isSubmissionWindowOpen, setIsSubmissionWindowOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [validatingPlan, setValidatingPlan] = useState<boolean>(false);
+  const [assistantReply, setAssistantReply] = useState<string>("");
+  const [planValidated, setPlanValidated] = useState<boolean>(false);
+  const [previousTasks, setPreviousTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     const today = new Date();
@@ -114,7 +123,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 10 * 60 + 25;
+      const closeTimeInMinutes = 21 * 60 + 25;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes
@@ -134,6 +143,9 @@ const PlanOfTheDay: React.FC = () => {
         planOftheDay: todayTask.planOftheDay,
         taskTeam: todayTask.taskTeam,
       });
+      // Reset validation state when editing
+      setAssistantReply("");
+      setPlanValidated(false);
     }
   }, [isEditing, todayTask, form]);
 
@@ -155,6 +167,7 @@ const PlanOfTheDay: React.FC = () => {
       );
 
       const tasks: Task[] = response.data;
+      setPreviousTasks(tasks); // Store previous tasks for matching
 
       const today = new Date();
       const todayStr =
@@ -188,6 +201,45 @@ const PlanOfTheDay: React.FC = () => {
     } finally {
       setFetchingStatus(false);
     }
+  };
+
+  // Function to check if plan matches any previous plan
+  const findMatchingPreviousPlan = (planContent: string): Task | null => {
+    if (!planContent || previousTasks.length === 0) return null;
+
+    const normalizedInput = planContent.trim().toLowerCase();
+    
+    // Check for similar plans (simple similarity check)
+    for (const task of previousTasks) {
+      if (task.planOftheDay) {
+        const normalizedTaskPlan = task.planOftheDay.trim().toLowerCase();
+        
+        // Check if the input is very similar to a previous plan (80% similarity)
+        // Simple approach: check if major words match
+        const inputWords = normalizedInput.split(/\s+/).filter((w: string) => w.length > 3);
+        const taskWords = normalizedTaskPlan.split(/\s+/).filter((w: string) => w.length > 3);
+        
+        if (inputWords.length > 0 && taskWords.length > 0) {
+          const matchingWords = inputWords.filter((word: string) => 
+            taskWords.some((tWord: string) => tWord.includes(word) || word.includes(tWord))
+          );
+          const similarity = matchingWords.length / Math.max(inputWords.length, taskWords.length);
+          
+          if (similarity >= 0.7) {
+            return task;
+          }
+        }
+        
+        // Also check exact or near-exact match
+        if (normalizedInput === normalizedTaskPlan || 
+            normalizedTaskPlan.includes(normalizedInput) ||
+            normalizedInput.includes(normalizedTaskPlan)) {
+          return task;
+        }
+      }
+    }
+    
+    return null;
   };
 
   const onFinish = async (values: TaskFormValues) => {
@@ -241,6 +293,9 @@ const PlanOfTheDay: React.FC = () => {
           if (isEditMode) {
             setIsEditing(false);
           }
+          // Reset validation state after successful submission
+          setAssistantReply("");
+          setPlanValidated(false);
         }, 1000);
 
         form.resetFields();
@@ -271,6 +326,123 @@ const PlanOfTheDay: React.FC = () => {
 
   const handleRetry = () => {
     checkPendingTasksForToday(userId);
+  };
+
+  const validatePlanWithAI = async (planContent: string) => {
+    if (!planContent || planContent.trim().length < 30) {
+      setAssistantReply("");
+      setPlanValidated(false);
+      return;
+    }
+
+    setValidatingPlan(true);
+    setPlanValidated(false);
+    setAssistantReply("");
+
+    try {
+      // First, check if this plan matches any previous plan
+      const matchingTask = findMatchingPreviousPlan(planContent);
+      
+      if (matchingTask && matchingTask.planOftheDay) {
+        // If match found, use the previous plan
+        const previousPlan = matchingTask.planOftheDay;
+        setAssistantReply(previousPlan);
+        form.setFieldsValue({
+          planOftheDay: previousPlan,
+        });
+        setPlanValidated(true);
+        setValidatingPlan(false);
+        notification.info({
+          message: "Previous Plan Found",
+          description: "A similar plan was found. Using the previous plan format.",
+          placement: "topRight",
+        });
+        return;
+      }
+
+      // If no match, proceed with AI call
+      const currentUserId = userId || sessionStorage.getItem("userId") || "";
+      const currentUserName = userName || sessionStorage.getItem("Name") || "";
+      const accessToken = sessionStorage.getItem("accessToken");
+      
+      // Format the content with clear instruction to improve the plan
+      const instructionPrompt = `${planContent}${currentUserName ? `\n\nUser: ${currentUserName}` : ''}`;
+      
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+      
+      const response = await axios.post<AgentChatResponse>(
+        `${BASE_URL}/ai-service/agent/agentChat1`,
+        {
+          agentId: "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0",
+          userId: currentUserId,
+          messageHistory: [
+            {
+              role: "user",
+              content: instructionPrompt,
+            },
+          ],
+        },
+        {
+          headers,
+        }
+      );
+
+      if (response.data && response.data.assistant_reply) {
+        const modifiedPlan = response.data.assistant_reply.trim();
+        
+        // Check if response contains error messages instead of improved plan
+        const errorKeywords = [
+          "could not find",
+          "not available",
+          "no recorded",
+          "unable to",
+          "cannot find",
+          "not found",
+          "i could not",
+          "i cannot"
+        ];
+        
+        const isErrorResponse = errorKeywords.some(keyword => 
+          modifiedPlan.toLowerCase().includes(keyword.toLowerCase())
+        );
+        
+        if (isErrorResponse) {
+          // If it's an error response, don't replace user's plan
+          notification.warning({
+            message: "AI Response",
+            description: "The AI couldn't improve your plan. You can continue with your original plan.",
+            placement: "topRight",
+          });
+          setAssistantReply("");
+          // Keep the original plan content - don't update the field
+          setPlanValidated(true); // Still allow submission with original plan
+        } else {
+          // Update the TextArea field with the AI-modified plan (response is displayed directly in TextArea)
+          setAssistantReply(modifiedPlan);
+          form.setFieldsValue({
+            planOftheDay: modifiedPlan,
+          });
+          setPlanValidated(true);
+        }
+      }
+    } catch (error: any) {
+      console.error("Error validating plan with AI:", error);
+      notification.error({
+        message: "Validation Error",
+        description:
+          error.response?.data?.message || "Failed to validate plan. Please try again.",
+        placement: "topRight",
+      });
+      setPlanValidated(false);
+    } finally {
+      setValidatingPlan(false);
+    }
   };
 
   const renderLoadingState = () => (
@@ -409,6 +581,19 @@ const PlanOfTheDay: React.FC = () => {
 
   const renderSubmitButtons = () => {
     const isEditMode = isEditing && todayTask;
+    const planContent = form.getFieldValue("planOftheDay");
+    const teamSelected = form.getFieldValue("taskTeam");
+    
+    // For new submissions (not edit mode), disable if:
+    // - Validating plan
+    // - Plan not validated yet (API response not received)
+    // - Team not selected
+    const isSubmitDisabled = !isEditMode && (
+      validatingPlan || 
+      !planValidated || 
+      !teamSelected
+    );
+
     const buttonText = submissionSuccess
       ? isEditMode
         ? "Plan Updated!"
@@ -435,6 +620,8 @@ const PlanOfTheDay: React.FC = () => {
             onClick={() => {
               form.resetFields();
               setIsEditing(false);
+              setAssistantReply("");
+              setPlanValidated(false);
             }}
             className="flex-1 h-8 rounded-md"
           >
@@ -449,7 +636,7 @@ const PlanOfTheDay: React.FC = () => {
             htmlType="submit"
             loading={loading}
             block
-          
+            
             className={`flex-1 ${buttonClass}`}
           >
             {buttonText}
@@ -464,9 +651,12 @@ const PlanOfTheDay: React.FC = () => {
           color: "#f7f7f7",
           backgroundColor: "#008cba",
           border: "#008cba",
+          opacity: isSubmitDisabled ? 0.6 : 1,
+          cursor: isSubmitDisabled ? "not-allowed" : "pointer",
         }}
         htmlType="submit"
-        loading={loading}
+        loading={loading || validatingPlan}
+        disabled={isSubmitDisabled}
         block
         icon={icon}
         className={buttonClass}
@@ -505,12 +695,42 @@ const PlanOfTheDay: React.FC = () => {
         ]}
       >
         <TextArea
-          rows={4}
+          rows={8}
           placeholder="Describe your tasks and goals for today..."
           maxLength={8000}
           showCount
           className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400 transition-all"
+          onBlur={(e) => {
+            const value = e.target.value;
+            if (value && value.trim().length >= 30 && !isEditing) {
+              // Only validate if plan hasn't been validated yet or user made significant changes
+              // Check if current value is different from the assistant reply
+              if (!assistantReply || value.trim() !== assistantReply.trim()) {
+                validatePlanWithAI(value);
+              }
+            } else if (!value || value.trim().length < 30) {
+              // Reset validation if content is too short
+              setAssistantReply("");
+              setPlanValidated(false);
+            }
+          }}
+          onChange={(e) => {
+            // Don't reset validation when user edits after AI modification
+            // User should be able to edit the AI-modified plan and still submit
+            const currentValue = e.target.value;
+            // Only reset if user clears the field completely
+            if (!currentValue || currentValue.trim().length === 0) {
+              setAssistantReply("");
+              setPlanValidated(false);
+            }
+          }}
         />
+        {validatingPlan && (
+          <div className="mt-2 flex items-center gap-2 text-blue-600">
+            <Spin size="small" />
+            <Text className="text-sm">AI is improving your plan...</Text>
+          </div>
+        )}
       </Form.Item>
 
       <Form.Item

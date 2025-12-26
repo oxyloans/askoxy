@@ -39,6 +39,12 @@ interface Assistant {
   description?: string | null;
   profileUrl?: string;
 }
+type FromStore = {
+  storeId?: string;
+  storeName?: string;
+  storeSlug?: string;
+};
+
 type APIRole = "user" | "assistant";
 type APIMessage = { role: APIRole; content: string };
 
@@ -129,6 +135,39 @@ const AssistantDetails: React.FC = () => {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [showAgentShareModal, setShowAgentShareModal] = useState(false);
   const [agentShareText, setAgentShareText] = useState("");
+  const fromStoreFromNav = (location.state as any)?.fromStore as
+    | FromStore
+    | undefined;
+
+  const FROM_STORE_KEY = `fromStore_${id || ""}_${agentId || ""}`;
+
+  const [fromStore, setFromStore] = useState<FromStore | null>(() => {
+    if (fromStoreFromNav) return fromStoreFromNav;
+    try {
+      const raw = sessionStorage.getItem(FROM_STORE_KEY);
+      return raw ? (JSON.parse(raw) as FromStore) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    // Persist store context (helps when auth redirect happens)
+    if (fromStoreFromNav?.storeSlug || fromStoreFromNav?.storeName) {
+      sessionStorage.setItem(FROM_STORE_KEY, JSON.stringify(fromStoreFromNav));
+      setFromStore(fromStoreFromNav);
+    }
+  }, [FROM_STORE_KEY, fromStoreFromNav]);
+
+  const handleBack = () => {
+    if (fromStore?.storeSlug) {
+      navigate(`/ai-store/${fromStore.storeSlug}`, {
+        state: { storeId: fromStore.storeId },
+      });
+    } else {
+      navigate("/all-ai-stores");
+    }
+  };
 
   // Track threadIds for each chat separately (since backend doesn't store them)
   const [threadIdMap, setThreadIdMap] = useState<Record<string, string>>({});
@@ -2189,17 +2228,38 @@ ${url}`.trim();
                 </svg>
               </button>
 
-              {/* Assistant name on desktop (kept short, full name inside HeaderInfo) */}
-              <div className="hidden sm:block truncate font-medium text-black dark:text-white">
-                {assistant?.name || "Assistant"}
+              <div className="hidden sm:flex items-center min-w-0">
+                {fromStore?.storeName ? (
+                  <button
+                    onClick={handleBack}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-black transition whitespace-nowrap"
+                    title={`Back to ${fromStore.storeName}`}
+                  >
+                    ← Back to {fromStore.storeName}
+                  </button>
+                ) : (
+                  <div className="min-w-0 truncate text-base font-semibold text-black dark:text-white">
+                    {assistant?.name || "Assistant"}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Mobile: centered assistant name */}
             <div className="flex-1 text-center sm:hidden">
-              <div className="truncate font-medium text-black dark:text-white">
-                {assistant?.name || "Assistant"}
-              </div>
+              {fromStore?.storeName ? (
+                <button
+                  onClick={handleBack}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-black transition whitespace-nowrap"
+                  title={`Back to ${fromStore.storeName}`}
+                >
+                  ← Back to {fromStore.storeName}
+                </button>
+              ) : (
+                <div className="truncate text-base font-semibold text-black dark:text-white">
+                  {assistant?.name || "Assistant"}
+                </div>
+              )}
             </div>
 
             <div className="ml-auto flex gap-2">
@@ -2415,7 +2475,15 @@ ${url}`.trim();
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
                 <GiElephantHead
-                  onClick={() => navigate("/bharath-aistore")}
+                  onClick={() => {
+                    // Check if we came from a specific store
+                    const state = location.state as any;
+                    if (state?.fromStore && state?.storeSlug) {
+                      navigate(`/all-ai-stores/${state.storeSlug}`);
+                    } else {
+                      navigate("/bharath-aistore");
+                    }
+                  }}
                   title="Bharat AI Store"
                   className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
                     !isXs && isCollapsed ? "hidden" : ""

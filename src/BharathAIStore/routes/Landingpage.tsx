@@ -8,6 +8,7 @@ const Layout: React.FC = () => {
   const bharatAgentsStoreRef = useRef<HTMLDivElement>(null);
   const aiResourcesRef = useRef<HTMLDivElement>(null);
   const freeAIBookRef = useRef<HTMLDivElement>(null);
+  const allAIStoresRef = useRef<HTMLDivElement>(null);
 
   return (
     <SearchProvider>
@@ -16,6 +17,7 @@ const Layout: React.FC = () => {
           bharatAgentsStoreRef={bharatAgentsStoreRef}
           aiResourcesRef={aiResourcesRef}
           freeAIBookRef={freeAIBookRef}
+          allAIStoresRef={allAIStoresRef}
         />
         <main className="flex-1">
           <Outlet />

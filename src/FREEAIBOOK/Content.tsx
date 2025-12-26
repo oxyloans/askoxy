@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import axios from "axios";
 import Header from "./Header";
 import Footer from "./Footer";
-import AIChatWindow from "../Dashboard/AIWindow";
+import AIChatWindow from "../components/AssistantAI";
 import BASE_URL from "../Config";
 import {  useNavigate, useLocation } from "react-router-dom";
 const Content2: React.FC = () => {
@@ -161,6 +161,7 @@ ${isMobile ? "bottom-20 right-2 left-2" : "top-20 bottom-2 right-2 w-[18rem]"}`}
             onExternalRequest={(message) =>
               console.log("External request:", message)
             }
+            assistantId="asst_ynAlbuttMrSrETgstodARDwC"
           />
         </div>
       )}

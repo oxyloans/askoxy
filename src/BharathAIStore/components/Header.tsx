@@ -19,12 +19,14 @@ interface HeaderProps {
   bharatAgentsStoreRef: React.RefObject<HTMLDivElement>;
   aiResourcesRef: React.RefObject<HTMLDivElement>;
   freeAIBookRef: React.RefObject<HTMLDivElement>;
+  allAIStoresRef: React.RefObject<HTMLDivElement>;
 }
 
 const Header: React.FC<HeaderProps> = ({
   bharatAgentsStoreRef,
   aiResourcesRef,
   freeAIBookRef,
+  allAIStoresRef,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -107,6 +109,14 @@ useEffect(() => {
         freeAIBookRef.current?.scrollIntoView({ behavior: "smooth" });
       },
     },
+    {
+      label: "EXPLORE AI STORES",
+      to: "/all-ai-stores",
+      sectionId: "all-ai-stores",
+      scrollTo: () => {
+        allAIStoresRef.current?.scrollIntoView({ behavior: "smooth" });
+      },
+    },
   ];
 
   // Observe sections to set active nav highlight
@@ -142,14 +152,19 @@ useEffect(() => {
       freeAIBookRef.current.setAttribute("data-section-id", "awards-rewards");
       observer.observe(freeAIBookRef.current);
     }
+    if (allAIStoresRef.current) {
+      allAIStoresRef.current.setAttribute("data-section-id", "all-ai-stores");
+      observer.observe(allAIStoresRef.current);
+    }
 
     return () => {
       if (bharatAgentsStoreRef.current)
         observer.unobserve(bharatAgentsStoreRef.current);
       if (aiResourcesRef.current) observer.unobserve(aiResourcesRef.current);
       if (freeAIBookRef.current) observer.unobserve(freeAIBookRef.current);
+      if (allAIStoresRef.current) observer.unobserve(allAIStoresRef.current);
     };
-  }, [bharatAgentsStoreRef, aiResourcesRef, freeAIBookRef]);
+  }, [bharatAgentsStoreRef, aiResourcesRef, freeAIBookRef, allAIStoresRef]);
 
   useEffect(() => {
     if (isMobileSearchOpen && inputRef.current) inputRef.current.focus();
@@ -211,6 +226,11 @@ useEffect(() => {
     if (
       location.pathname === "/awards-rewards" &&
       sectionId === "awards-rewards"
+    )
+      return true;
+    if (
+      location.pathname === "/all-ai-stores" &&
+      sectionId === "all-ai-stores"
     )
       return true;
     return activeSection === sectionId;
