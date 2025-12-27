@@ -20,7 +20,7 @@ import {
   ClearOutlined,
   MessageOutlined,
   UserOutlined,
-  EditOutlined
+  EditOutlined,
 } from "@ant-design/icons";
 import VendorCreationModal from "../BharathAIStore/components/VendorCreationModal";
 
@@ -241,7 +241,6 @@ const sortByDate = (arr: any[]) =>
     return db - da; // newest first
   });
 
-
 /** -------- Main Page -------- */
 const AllAgentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -285,7 +284,9 @@ const AllAgentsPage: React.FC = () => {
   const [showBusinessCardModal, setShowBusinessCardModal] = useState(false);
   const [businessCardData, setBusinessCardData] = useState<any>(null);
   const [businessCardLoading, setBusinessCardLoading] = useState(false);
-  const [currentBusinessCardId, setCurrentBusinessCardId] = useState<string | null>(null);
+  const [currentBusinessCardId, setCurrentBusinessCardId] = useState<
+    string | null
+  >(null);
   const [isEditingBusinessCard, setIsEditingBusinessCard] = useState(false);
   const [editBusinessCardData, setEditBusinessCardData] = useState<any>(null);
 
@@ -399,22 +400,26 @@ const AllAgentsPage: React.FC = () => {
 
   const fetchBusinessCardData = async (businessCardId: string) => {
     if (!businessCardId) return;
-    
+
     try {
       setBusinessCardLoading(true);
-      axios.get(`${BASE_URL}/ai-service/agent/getBusinessCardById/${businessCardId}`,{
-        headers:{
-          Authorization: `Bearer ${getAccessToken()}`
-        }
-      })
-      .then((response)=>{
-        console.log(response.data);
-        setBusinessCardData(response.data.data);
-        setShowBusinessCardModal(true);     
-      }).catch((error)=>{
-        console.log(error.response);
-      })
-    
+      axios
+        .get(
+          `${BASE_URL}/ai-service/agent/getBusinessCardById/${businessCardId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${getAccessToken()}`,
+            },
+          }
+        )
+        .then((response) => {
+          console.log(response.data);
+          setBusinessCardData(response.data.data);
+          setShowBusinessCardModal(true);
+        })
+        .catch((error) => {
+          console.log(error.response);
+        });
     } catch (err: any) {
       console.error(err);
       // message.error("Failed to fetch business card data");
@@ -432,7 +437,7 @@ const AllAgentsPage: React.FC = () => {
   const handleBusinessCardSubmit = async () => {
     try {
       setBusinessCardLoading(true);
-      
+
       const requestBody = {
         fullName: editBusinessCardData?.fullName || "",
         jobTitle: editBusinessCardData?.jobTitle || "",
@@ -443,15 +448,19 @@ const AllAgentsPage: React.FC = () => {
         address: editBusinessCardData?.address || "",
         userId: localStorage.getItem("userId") || "",
         id: currentBusinessCardId || "",
-        imagePath: editBusinessCardData?.imagePath || ""
+        imagePath: editBusinessCardData?.imagePath || "",
       };
 
-      await axios.patch(`${BASE_URL}/ai-service/agent/updateBusinessCardData`, requestBody, {
-        headers: {
-          Authorization: `Bearer ${getAccessToken()}`
+      await axios.patch(
+        `${BASE_URL}/ai-service/agent/updateBusinessCardData`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
         }
-      });
-      
+      );
+
       setBusinessCardData(editBusinessCardData);
       setIsEditingBusinessCard(false);
       setShowBusinessCardModal(false);
@@ -647,28 +656,27 @@ const AllAgentsPage: React.FC = () => {
         return;
       }
 
-   setData((prev) => {
-     // sort helper
-     const sortByDate = (arr: any[]) =>
-       arr.sort((a, b) => {
-         const da = new Date(a.created_at).getTime();
-         const db = new Date(b.createdAt).getTime();
-         return db - da; // newest first
-       });
+      setData((prev) => {
+        // sort helper
+        const sortByDate = (arr: any[]) =>
+          arr.sort((a, b) => {
+            const da = new Date(a.created_at).getTime();
+            const db = new Date(b.createdAt).getTime();
+            return db - da; // newest first
+          });
 
-     return {
-       userId: raw?.userId ?? prev?.userId ?? resolvedUserId,
+        return {
+          userId: raw?.userId ?? prev?.userId ?? resolvedUserId,
 
-       assistants: Array.isArray(raw?.assistants)
-         ? sortByDate(raw.assistants)
-         : prev?.assistants ?? [],
+          assistants: Array.isArray(raw?.assistants)
+            ? sortByDate(raw.assistants)
+            : prev?.assistants ?? [],
 
-       conversations: Array.isArray(raw?.conversations)
-         ? sortByDate(raw.conversations)
-         : prev?.conversations ?? [],
-     };
-   });
-
+          conversations: Array.isArray(raw?.conversations)
+            ? sortByDate(raw.conversations)
+            : prev?.conversations ?? [],
+        };
+      });
     } catch {
       // ignore transient refresh errors
     }
@@ -924,16 +932,15 @@ const AllAgentsPage: React.FC = () => {
         }
 
         const raw = text ? JSON.parse(text) : {};
-       setData({
-         userId: raw?.userId ?? uid ?? "",
-         assistants: Array.isArray(raw?.assistants)
-           ? sortByDate(raw.assistants)
-           : [],
-         conversations: Array.isArray(raw?.conversations)
-           ? sortByDate(raw.conversations)
-           : [],
-       });
-
+        setData({
+          userId: raw?.userId ?? uid ?? "",
+          assistants: Array.isArray(raw?.assistants)
+            ? sortByDate(raw.assistants)
+            : [],
+          conversations: Array.isArray(raw?.conversations)
+            ? sortByDate(raw.conversations)
+            : [],
+        });
       } catch (e: any) {
         setError(e?.message || "Failed to load agents.");
       } finally {
@@ -1090,6 +1097,8 @@ const AllAgentsPage: React.FC = () => {
 
     setEditAgent({
       ...a,
+      // keep agent name
+      agentName: (a.agentName || a.name || "").trim(),
       // keep only 2 conversation starters
       conStarter1:
         latest?.conStarter1 || a.conStarter1 || (a as any).conStarter1 || "",
@@ -1256,6 +1265,7 @@ const AllAgentsPage: React.FC = () => {
 
         // 🔹 Core fields (same as create)
         agentName: editAgent.agentName,
+        name: editAgent.agentName, // Also set name field for consistency
         description: editAgent.description,
         roleUser: editAgent.roleUser,
         goals: editAgent.goals,
@@ -1568,44 +1578,43 @@ const AllAgentsPage: React.FC = () => {
           />
         </div>
         <div>
-         <Button
-          style={{
-            backgroundColor: "#1ab394",
-            color: "white",
-            borderColor: "#1ab394",
-            marginRight:10
-          }}
-          icon={<EditOutlined />}
-          size={btnSize}
-          block={btnBlock}
-          // onClick={gotoStore}
+          <Button
+            style={{
+              backgroundColor: "#1ab394",
+              color: "white",
+              borderColor: "#1ab394",
+              marginRight: 10,
+            }}
+            icon={<EditOutlined />}
+            size={btnSize}
+            block={btnBlock}
+            // onClick={gotoStore}
             onClick={() => {
-                  const userId = localStorage.getItem("userId");
-                  if (userId) {
-                    setVendorModalOpen(true);
-                  } else {
-                    // sessionStorage.setItem("redirectPath", "/main/bharath-aistore/agents");
-                    // sessionStorage.setItem("primaryType", "AGENT");
-                    // window.location.href = "/whatsappregister?primaryType=AGENT";
-                  }
-                }
+              const userId = localStorage.getItem("userId");
+              if (userId) {
+                setVendorModalOpen(true);
+              } else {
+                // sessionStorage.setItem("redirectPath", "/main/bharath-aistore/agents");
+                // sessionStorage.setItem("primaryType", "AGENT");
+                // window.location.href = "/whatsappregister?primaryType=AGENT";
               }
-        >
-          KYC Verification
-        </Button>
-        <Button
-          style={{
-            backgroundColor: "#1ab394",
-            color: "white",
-            borderColor: "#1ab394",
-          }}
-          icon={<PlayCircleOutlined />}
-          size={btnSize}
-          block={btnBlock}
-          onClick={gotoStore}
-        >
-          Bharath AI Store
-        </Button>
+            }}
+          >
+            KYC Verification
+          </Button>
+          <Button
+            style={{
+              backgroundColor: "#1ab394",
+              color: "white",
+              borderColor: "#1ab394",
+            }}
+            icon={<PlayCircleOutlined />}
+            size={btnSize}
+            block={btnBlock}
+            onClick={gotoStore}
+          >
+            Bharath AI Store
+          </Button>
         </div>
       </div>
 
@@ -1923,8 +1932,6 @@ const AllAgentsPage: React.FC = () => {
                           View Files
                         </Button>
 
-                      
-
                         {/* ✅ Action Buttons: Edit | View | Delete */}
                         <div className="flex gap-2 ml-auto flex-wrap justify-end w-full sm:w-auto">
                           {/* Responsive action row — User History + Certificate */}
@@ -2103,11 +2110,13 @@ const AllAgentsPage: React.FC = () => {
                                 >
                                   <path d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4Zm0 2h16v12H4V6Zm2 2v2h4V8H6Zm0 4v2h8v-2H6Z" />
                                 </svg>
-                                <span>{businessCardLoading ? "Loading..." : "Business Card"}</span>
+                                <span>
+                                  {businessCardLoading
+                                    ? "Loading..."
+                                    : "Business Card"}
+                                </span>
                               </button>
                             )}
-
-      
 
                             {/* ✏️ Edit Button (same row) */}
                             <button
@@ -2937,13 +2946,12 @@ const AllAgentsPage: React.FC = () => {
         )}
       </main>
 
-       <VendorCreationModal
-              isOpen={vendorModalOpen}
-              onClose={() => setVendorModalOpen(false)}
-            />
+      <VendorCreationModal
+        isOpen={vendorModalOpen}
+        onClose={() => setVendorModalOpen(false)}
+      />
 
-
-{/* Display and edit Buisness card details Modal */}
+      {/* Display and edit Buisness card details Modal */}
       <Modal
         title="Business Card Details"
         open={showBusinessCardModal}
@@ -2953,95 +2961,196 @@ const AllAgentsPage: React.FC = () => {
           setEditBusinessCardData(null);
         }}
         footer={[
-          <Button key="cancel" onClick={() => {
-            setShowBusinessCardModal(false);
-            setIsEditingBusinessCard(false);
-            setEditBusinessCardData(null);
-          }}>Cancel</Button>,
+          <Button
+            key="cancel"
+            onClick={() => {
+              setShowBusinessCardModal(false);
+              setIsEditingBusinessCard(false);
+              setEditBusinessCardData(null);
+            }}
+          >
+            Cancel
+          </Button>,
           isEditingBusinessCard ? (
-            <Button key="submit" type="primary" loading={businessCardLoading} onClick={handleBusinessCardSubmit}>Submit</Button>
+            <Button
+              key="submit"
+              type="primary"
+              loading={businessCardLoading}
+              onClick={handleBusinessCardSubmit}
+            >
+              Submit
+            </Button>
           ) : (
-            <Button key="edit" type="primary" onClick={() => handleBusinessCardEdit(businessCardData)}>Edit</Button>
-          )
+            <Button
+              key="edit"
+              type="primary"
+              onClick={() => handleBusinessCardEdit(businessCardData)}
+            >
+              Edit
+            </Button>
+          ),
         ]}
         width={600}
       >
         {businessCardData && (
           <div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
               <div style={{ flex: 1 }}>
-                <label><strong>Full Name:</strong></label>
+                <label>
+                  <strong>Full Name:</strong>
+                </label>
                 <Input
-                  value={isEditingBusinessCard ? editBusinessCardData?.fullName : businessCardData.fullName}
+                  value={
+                    isEditingBusinessCard
+                      ? editBusinessCardData?.fullName
+                      : businessCardData.fullName
+                  }
                   disabled={!isEditingBusinessCard}
-                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, fullName: e.target.value})}
+                  onChange={(e) =>
+                    setEditBusinessCardData({
+                      ...editBusinessCardData,
+                      fullName: e.target.value,
+                    })
+                  }
                   style={{ marginTop: 4 }}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label><strong>Job Title:</strong></label>
+                <label>
+                  <strong>Job Title:</strong>
+                </label>
                 <Input
-                  value={isEditingBusinessCard ? editBusinessCardData?.jobTitle : businessCardData.jobTitle}
+                  value={
+                    isEditingBusinessCard
+                      ? editBusinessCardData?.jobTitle
+                      : businessCardData.jobTitle
+                  }
                   disabled={!isEditingBusinessCard}
-                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, jobTitle: e.target.value})}
+                  onChange={(e) =>
+                    setEditBusinessCardData({
+                      ...editBusinessCardData,
+                      jobTitle: e.target.value,
+                    })
+                  }
                   style={{ marginTop: 4 }}
                 />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
               <div style={{ flex: 1 }}>
-                <label><strong>Company:</strong></label>
+                <label>
+                  <strong>Company:</strong>
+                </label>
                 <Input
-                  value={isEditingBusinessCard ? editBusinessCardData?.companyName : businessCardData.companyName}
+                  value={
+                    isEditingBusinessCard
+                      ? editBusinessCardData?.companyName
+                      : businessCardData.companyName
+                  }
                   disabled={!isEditingBusinessCard}
-                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, companyName: e.target.value})}
+                  onChange={(e) =>
+                    setEditBusinessCardData({
+                      ...editBusinessCardData,
+                      companyName: e.target.value,
+                    })
+                  }
                   style={{ marginTop: 4 }}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label><strong>Email:</strong></label>
+                <label>
+                  <strong>Email:</strong>
+                </label>
                 <Input
-                  value={isEditingBusinessCard ? editBusinessCardData?.email : businessCardData.email}
+                  value={
+                    isEditingBusinessCard
+                      ? editBusinessCardData?.email
+                      : businessCardData.email
+                  }
                   disabled={!isEditingBusinessCard}
-                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, email: e.target.value})}
+                  onChange={(e) =>
+                    setEditBusinessCardData({
+                      ...editBusinessCardData,
+                      email: e.target.value,
+                    })
+                  }
                   style={{ marginTop: 4 }}
                 />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
               <div style={{ flex: 1 }}>
-                <label><strong>Mobile:</strong></label>
+                <label>
+                  <strong>Mobile:</strong>
+                </label>
                 <Input
-                  value={isEditingBusinessCard ? editBusinessCardData?.mobileNumber : businessCardData.mobileNumber}
+                  value={
+                    isEditingBusinessCard
+                      ? editBusinessCardData?.mobileNumber
+                      : businessCardData.mobileNumber
+                  }
                   disabled={!isEditingBusinessCard}
-                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, mobileNumber: e.target.value})}
+                  onChange={(e) =>
+                    setEditBusinessCardData({
+                      ...editBusinessCardData,
+                      mobileNumber: e.target.value,
+                    })
+                  }
                   style={{ marginTop: 4 }}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label><strong>Website:</strong></label>
+                <label>
+                  <strong>Website:</strong>
+                </label>
                 <Input
-                  value={isEditingBusinessCard ? editBusinessCardData?.webSite : (businessCardData.webSite || '')}
+                  value={
+                    isEditingBusinessCard
+                      ? editBusinessCardData?.webSite
+                      : businessCardData.webSite || ""
+                  }
                   disabled={!isEditingBusinessCard}
-                  onChange={(e) => setEditBusinessCardData({...editBusinessCardData, webSite: e.target.value})}
+                  onChange={(e) =>
+                    setEditBusinessCardData({
+                      ...editBusinessCardData,
+                      webSite: e.target.value,
+                    })
+                  }
                   style={{ marginTop: 4 }}
                 />
               </div>
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label><strong>Address:</strong></label>
+              <label>
+                <strong>Address:</strong>
+              </label>
               <Input.TextArea
-                value={isEditingBusinessCard ? editBusinessCardData?.address : businessCardData.address}
+                value={
+                  isEditingBusinessCard
+                    ? editBusinessCardData?.address
+                    : businessCardData.address
+                }
                 disabled={!isEditingBusinessCard}
-                onChange={(e) => setEditBusinessCardData({...editBusinessCardData, address: e.target.value})}
+                onChange={(e) =>
+                  setEditBusinessCardData({
+                    ...editBusinessCardData,
+                    address: e.target.value,
+                  })
+                }
                 rows={3}
                 style={{ marginTop: 4 }}
               />
             </div>
             {businessCardData.imagePath && (
               <div>
-                <div><strong>Business Card Image:</strong></div>
-                <img src={businessCardData.imagePath} alt="Business Card" style={{ maxWidth: '100%', marginTop: 8 }} />
+                <div>
+                  <strong>Business Card Image:</strong>
+                </div>
+                <img
+                  src={businessCardData.imagePath}
+                  alt="Business Card"
+                  style={{ maxWidth: "100%", marginTop: 8 }}
+                />
               </div>
             )}
           </div>
@@ -3114,6 +3223,26 @@ const AllAgentsPage: React.FC = () => {
                 </span>
               </button>
             </div>
+
+            {/* Agent Name */}
+            <p className="mt-4">
+              <b>Agent Name</b>
+            </p>
+            <Input
+              className="mb-4"
+              value={editAgent?.agentName || ""}
+              onChange={(e) => {
+                const v = e.target.value || "";
+                if (v.length > 100) {
+                  message.error("Agent Name cannot exceed 100 characters.");
+                }
+                const trimmed = v.slice(0, 100);
+                setEditAgent((prev) =>
+                  prev ? { ...prev, agentName: trimmed } : prev
+                );
+              }}
+              placeholder="Enter agent name"
+            />
 
             {/* Instructions */}
             <p className="mt-4">

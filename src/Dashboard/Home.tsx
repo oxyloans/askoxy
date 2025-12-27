@@ -171,7 +171,7 @@ const Home: React.FC = () => {
   const { count, setCount } = context;
   const [products, setProducts] = useState<DashboardItem[]>([]);
   const [displayProducts, setDisplayProducts] = useState<DashboardItem[]>([]);
-  const [displayCount, setDisplayCount] = useState(5);
+  const [displayCount, setDisplayCount] = useState(20);
   const [services, setServices] = useState<DashboardItem[]>([]);
   const [freeGPTs, setFreeGPTs] = useState<DashboardItem[]>([]);
   const [cryptocurrency, setCryptocurrency] = useState<DashboardItem[]>([]);
@@ -1420,7 +1420,7 @@ const Home: React.FC = () => {
 
       console.log(`Products for category ${categoryName}:`, productItems);
       setProducts(productItems);
-      setDisplayCount(5);
+      setDisplayCount(20); // Changed from 5 to 20 to show 20 items initially
       setSearchTerm("");
       setSelectedWeight(null);
       // NEW: Scroll to the products section smoothly after category change
@@ -1655,7 +1655,7 @@ const Home: React.FC = () => {
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all font-medium"
                   onClick={() => navigate("/offer")}
                 >
-                  View All Offers
+                  See All Offers
                 </button>
               </div>
 
@@ -1752,7 +1752,7 @@ const Home: React.FC = () => {
                   </div>
 
                   {/* CTA Button */}
-                  <button 
+                  <button
                     onClick={() => {
                       if ((window as any).openAiChat) {
                         (window as any).openAiChat();
@@ -1851,7 +1851,7 @@ const Home: React.FC = () => {
               className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center justify-center hover:bg-purple-700 transition-colors"
               onClick={viewAllProducts}
             >
-              View All
+              See All
               <ArrowRight size={16} className="ml-1" />
             </motion.button>
           </div>
@@ -1978,7 +1978,7 @@ const Home: React.FC = () => {
                   className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
                   onClick={viewAllProducts}
                 >
-                  View All
+                  See All
                   <ArrowRight size={16} className="ml-1" />
                 </motion.button>
               </div>
@@ -1998,7 +1998,7 @@ const Home: React.FC = () => {
               className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
               onClick={viewAllServices}
             >
-              View All
+              See All
               <ArrowRight size={16} className="ml-1" />
             </motion.button>
           </div>
