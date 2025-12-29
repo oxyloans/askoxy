@@ -1,7 +1,7 @@
 let user = "production";
 let API_BASE_URL = "";
 if (user==="production") {
-  API_BASE_URL = "https://ai-mock-interview-6tm9.onrender.com";
+  API_BASE_URL = "https://interviews-zadn.onrender.com";
 } else {
   API_BASE_URL = "http://localhost:3001";
 }
