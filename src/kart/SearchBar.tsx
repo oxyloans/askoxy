@@ -50,11 +50,13 @@ interface SearchItem {
 }
 
 const defaultSuggestions = [
-  "Sonamasoori Rice",
-  "HMT Rice",
+  "Basmati Rice",
+  "HMT",
+  "Cashews",
   "Brown Rice",
-  "P2P Lending Agent",
-  "Gold Agents",
+  "Gold",
+  "SonaMasoori",
+  "P2P Lending AI Agent",
 ];
 
 const SearchBar = () => {
@@ -97,9 +99,9 @@ const SearchBar = () => {
         // Desktop: Navigate to search page
         setIsFocused(false); // ⭐ closes dropdown when navigation happens
         setSearchResults([]); // ⭐ avoid blank dropdown area
-        navigate("/main/search-main", {
-          state: { searchQuery: debouncedValue.trim() },
-        });
+        navigate(
+          `/main/search-main?q=${encodeURIComponent(debouncedValue.trim())}`
+        );
       }
     }
   }, [debouncedValue]);
@@ -122,6 +124,7 @@ const SearchBar = () => {
     return () => clearTimeout(timer);
   }, [searchValue, location.pathname, isFocused]);
   // ✅ AUTO-REDIRECT TO HOME WHEN USER CLEARS / BACKSPACES BELOW 3 CHARS
+  // But keep dropdown visible for suggestions
   useEffect(() => {
     const trimmed = searchValue.trim();
 
@@ -129,14 +132,16 @@ const SearchBar = () => {
       location.pathname === "/main/search-main" &&
       trimmed.length < MIN_SEARCH_LENGTH
     ) {
+      // Don't clear searchResults - let the other useEffect handle showing default suggestions
       setIsFocused(false);
-      setSearchResults([]);
+      // setSearchResults([]); // Remove this line to keep dropdown visible
       navigate("/main/dashboard/home", { replace: true, state: null });
     }
   }, [searchValue, location.pathname]);
 
   useEffect(() => {
     if (isFocused && searchValue.trim() === "") {
+      // Show default suggestions only when focused and search is empty
       setSearchResults(
         defaultSuggestions.map((name, index) => ({
           itemId: `temp-${index}`,
@@ -154,10 +159,11 @@ const SearchBar = () => {
           isDefaultSuggestion: true,
         }))
       );
-    } else if (!isFocused && searchValue.trim() === "") {
+    } else if (!isFocused || (searchValue.trim() !== "" && !isFocused)) {
+      // Clear results when not focused
       setSearchResults([]);
     }
-  }, [isFocused, searchValue]);
+  }, [searchValue, isFocused]);
 
   // Handle clicks outside to close dropdown
   useEffect(() => {
@@ -179,8 +185,13 @@ const SearchBar = () => {
   }, []);
 
   const performSearch = async (query: string) => {
-    if (!query.trim() || query.trim().length < MIN_SEARCH_LENGTH) {
-      setSearchResults([]);
+    if (!query.trim()) {
+      // If query is completely empty, don't clear results - let useEffect handle default suggestions
+      setIsSearching(false);
+      return;
+    }
+    if (query.trim().length < MIN_SEARCH_LENGTH) {
+      // For short queries, don't clear results - let useEffect handle default suggestions
       setIsSearching(false);
       return;
     }
@@ -234,21 +245,21 @@ const SearchBar = () => {
     e.preventDefault();
     const trimmed = searchValue.trim();
     if (trimmed && trimmed.length >= MIN_SEARCH_LENGTH) {
-      navigate("/main/search-main", { state: { searchQuery: trimmed } });
+      navigate(`/main/search-main?q=${encodeURIComponent(trimmed)}`);
       setIsFocused(false);
-      setSearchResults([]);
+      // Don't clear searchResults - let default suggestions remain
+      // setSearchResults([]);
     } else {
-      navigate("/main/dashboard/home", { state: null });
-      setIsFocused(false);
-      setSearchResults([]);
+      // For empty or short searches, keep dropdown open with suggestions
+      // Don't navigate away or close dropdown
+      // The useEffect will ensure default suggestions are shown
     }
   };
   const handleClearSearch = () => {
     setSearchValue("");
     setDebouncedValue(""); // ✅ important: stop auto effect
-    setSearchResults([]);
-    setIsFocused(false);
-    navigate("/main/dashboard/home", { replace: true, state: null });
+    // Keep dropdown open to show default suggestions
+    // The useEffect will automatically show default suggestions when searchValue becomes empty
   };
 
   const handleItemClick = (item: SearchItem) => {
@@ -264,9 +275,7 @@ const SearchBar = () => {
 
     if (isDefaultSuggestion) {
       // For default suggestions, always navigate to search page (both mobile and desktop)
-      navigate("/main/search-main", {
-        state: { searchQuery: item.itemName },
-      });
+      navigate(`/main/search-main?q=${encodeURIComponent(item.itemName)}`);
     } else {
       // For actual search results, navigate to item details
       navigate(`/main/itemsdisplay/${item.itemId}`, {
@@ -316,7 +325,7 @@ const SearchBar = () => {
       </form>
 
       {/* Dropdown Results */}
-      {isFocused && (
+      {searchResults.length > 0 && (
         <div
           ref={dropdownRef}
           className="absolute z-[1050] mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-[320px] md:max-h-96 overflow-y-auto"

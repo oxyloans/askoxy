@@ -135,9 +135,7 @@ const AssistantDetails: React.FC = () => {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [showAgentShareModal, setShowAgentShareModal] = useState(false);
   const [agentShareText, setAgentShareText] = useState("");
-  const fromStoreFromNav = (location.state as any)?.fromStore as
-    | FromStore
-    | undefined;
+  const fromStoreFromNav = location.state as any as FromStore | undefined;
 
   const FROM_STORE_KEY = `fromStore_${id || ""}_${agentId || ""}`;
 
@@ -2266,7 +2264,7 @@ ${url}`.trim();
               {/* Chat Share – Q & A */}
               <button
                 onClick={handleChatShareClick}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                 title="Share last Q&A"
               >
                 <Share className="w-5 h-5 text-purple-700 dark:text-white" />
@@ -2428,7 +2426,7 @@ ${url}`.trim();
               {/* Agent Share – only URL */}
               <button
                 onClick={handleAgentShareClick}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                 title="Share this AI Agent"
               >
                 <ExternalLink className="w-5 h-5 text-purple-700 dark:text-white" />

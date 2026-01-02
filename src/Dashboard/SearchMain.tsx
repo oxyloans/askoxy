@@ -1,7 +1,7 @@
 // SearchMain.tsx
 import React, { useContext, useState, useEffect, useMemo, useRef } from "react";
 
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Row,
   Col,
@@ -80,6 +80,7 @@ interface CartItem {
 const SearchMain: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const context = useContext(CartContext);
 
   if (!context) {
@@ -87,14 +88,14 @@ const SearchMain: React.FC = () => {
   }
 
   const { setCount } = context;
-  const query = (location.state as { searchQuery?: string })?.searchQuery || "";
+  const query = searchParams.get("q") || "";
   const [data, setData] = useState<ApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   // ✅ store refs for each category section
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
-const productsTopRef = useRef<HTMLDivElement | null>(null);
+  const productsTopRef = useRef<HTMLDivElement | null>(null);
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [loadingItems, setLoadingItems] = useState<{
@@ -143,24 +144,23 @@ const productsTopRef = useRef<HTMLDivElement | null>(null);
       setData(null);
       setError("Search query too short (min 3 characters)");
     }
-  }, [query]);
-const handleCategorySelect = (categoryName: string | null) => {
-  setSelectedCategory(categoryName);
+  }, [query, searchParams]);
+  const handleCategorySelect = (categoryName: string | null) => {
+    setSelectedCategory(categoryName);
 
-  if (!productsTopRef.current) return;
+    if (!productsTopRef.current) return;
 
-  const yOffset = -90; // adjust if needed
-  const y =
-    productsTopRef.current.getBoundingClientRect().top +
-    window.pageYOffset +
-    yOffset;
+    const yOffset = -90; // adjust if needed
+    const y =
+      productsTopRef.current.getBoundingClientRect().top +
+      window.pageYOffset +
+      yOffset;
 
-  window.scrollTo({
-    top: y,
-    behavior: "smooth",
-  });
-};
-
+    window.scrollTo({
+      top: y,
+      behavior: "smooth",
+    });
+  };
 
   const fetchSearchData = async (q: string) => {
     setIsLoading(true);
@@ -234,8 +234,6 @@ const handleCategorySelect = (categoryName: string | null) => {
   const handleBack = () => {
     navigate(-1);
   };
-
-
 
   const handleAddToCart = async (item: Product) => {
     if (!token || !customerId) {
@@ -426,10 +424,7 @@ const handleCategorySelect = (categoryName: string | null) => {
           isValidText(cat.categoryName) && cat.itemsResponseDtoList.length > 0
       );
 
-  
     let finalCategories: Category[] = cleanedCategories;
-
-  
 
     // 3) Filter agents minimal safety (optional)
     const cleanedAgents: Agent[] = (data.agents || []).filter((a) =>

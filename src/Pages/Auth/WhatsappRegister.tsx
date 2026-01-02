@@ -78,6 +78,8 @@ const WhatsappRegister = () => {
     mobileOTP: ["", "", "", "", "", ""],
   });
   const otpRefs = useRef<HTMLInputElement[]>([]);
+  const autoSubmitRef = useRef(false);
+
   const [otpMethod, setOtpMethod] = useState<"whatsapp" | "mobile">("whatsapp");
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
   const [error, setError] = useState<string>("");
@@ -108,6 +110,26 @@ const WhatsappRegister = () => {
   const params = Object.fromEntries(queryParams.entries());
   const userType = params.userType;
   const urlPrimaryType = params.primaryType;
+  useEffect(() => {
+    if (!showOtp) return;
+
+    if (otpMethod === "whatsapp") {
+      const otp = credentials.otp.join("");
+      if (otp.length === 4 && !autoSubmitRef.current) {
+        autoSubmitRef.current = true;
+        document.getElementById("otpSubmitButton")?.click();
+      }
+    }
+
+    if (otpMethod === "mobile") {
+      const otp = credentials.mobileOTP.join("");
+      if (otp.length === 6 && !autoSubmitRef.current) {
+        autoSubmitRef.current = true;
+        document.getElementById("otpSubmitButton")?.click();
+      }
+    }
+  }, [credentials, otpMethod, showOtp]);
+
 
   const savePreferences = () => {
     localStorage.setItem(
@@ -632,6 +654,8 @@ const WhatsappRegister = () => {
   };
 
   const handleResendOtp = async () => {
+    autoSubmitRef.current = false;
+
     if (!resendDisabled) {
       setResendDisabled(true);
       setResendTimer(30);
@@ -687,6 +711,8 @@ const WhatsappRegister = () => {
               otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
             } number`
           );
+          autoSubmitRef.current = false;
+
           setCredentials((prev) => ({
             otp: otpMethod === "whatsapp" ? ["", "", "", ""] : prev.otp,
             mobileOTP:
@@ -732,6 +758,7 @@ const WhatsappRegister = () => {
   const isGmailButtonEnabled = receiveNotifications && agreeToTerms;
 
   const handleChangeNumber = () => {
+    autoSubmitRef.current = false;
     setOtpShow(false);
     setisPhoneDisabled(false);
     setOtpError("");

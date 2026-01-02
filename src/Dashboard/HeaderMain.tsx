@@ -57,13 +57,14 @@ const Header: React.FC<HeaderProps> = ({
   const customerId = localStorage.getItem("userId");
 
   const searchTexts = [
-    "Sonamasuri Rice",
-    "Kolam Rice",
-    "HMT Rice",
-    "Gold Agents",
-    "P2P Lending Agents",
+    "SonaMasoori",
+    "HMT",
+    "Brown Rice",
+    "Cashews",
+    "Basmati Rice",
+    "Gold",
+    "P2P Lending AI Agent",
   ];
-
   const context = useContext(CartContext);
 
   if (!context) {
@@ -216,26 +217,25 @@ const Header: React.FC<HeaderProps> = ({
     setSearchValue(e.target.value);
   };
 
-const handleSearchSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  const trimmedQuery = searchValue.trim();
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedQuery = searchValue.trim();
 
-  if (trimmedQuery && trimmedQuery.length >= 3) {
-    navigate("/main/search-main", { state: { searchQuery: trimmedQuery } });
+    if (trimmedQuery && trimmedQuery.length >= 3) {
+      navigate(`/main/search-main?q=${encodeURIComponent(trimmedQuery)}`);
 
-    // close overlay and cleanup
-    setIsSearchVisible(false);
-    setSearchValue("");
-    setSearchResults([]);
-    setIsFocused(false);
-  } else {
-    setIsSearchVisible(false);
-    setSearchValue("");
-    setSearchResults([]);
-    return;
-  }
-};
-
+      // close overlay and cleanup
+      setIsSearchVisible(false);
+      setSearchValue("");
+      setSearchResults([]);
+      setIsFocused(false);
+    } else {
+      setIsSearchVisible(false);
+      setSearchValue("");
+      setSearchResults([]);
+      return;
+    }
+  };
 
   const handleSearchItemClick = (item: SearchResult) => {
     // Close mobile search overlay
@@ -302,12 +302,11 @@ const handleSearchSubmit = (e: React.FormEvent) => {
                 setSearchValue(text);
                 setIsFocused(false);
                 // On mobile, perform search directly, on desktop navigate
-               navigate("/main/search-main", { state: { searchQuery: text } });
-               setIsSearchVisible(false);
-               setSearchValue("");
-               setSearchResults([]);
-               setIsFocused(false);
-
+                navigate(`/main/search-main?q=${encodeURIComponent(text)}`);
+                setIsSearchVisible(false);
+                setSearchValue("");
+                setSearchResults([]);
+                setIsFocused(false);
               }}
             >
               <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
@@ -384,9 +383,7 @@ const handleSearchSubmit = (e: React.FormEvent) => {
               if (window.innerWidth < 640) {
                 searchProducts(text);
               } else {
-                navigate("/main/search-main", {
-                  state: { searchQuery: text },
-                });
+                navigate(`/main/search-main?q=${encodeURIComponent(text)}`);
                 setIsSearchVisible(false);
                 setSearchResults([]);
               }

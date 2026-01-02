@@ -100,6 +100,8 @@ const WhatsappLogin: React.FC = () => {
   });
   const [userDetails, setUserDetails] = useState<any>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const autoSubmitRef = useRef(false);
+
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
   const [otpMethod, setOtpMethod] = useState<"mobile" | "whatsapp">("whatsapp");
   const [showEnglish, setShowEnglish] = useState<boolean>(true);
@@ -125,6 +127,28 @@ const WhatsappLogin: React.FC = () => {
     "CUSTOMER" | "STUDENT" | "AGENT"
   >("CUSTOMER");
   const [showGoogleButton, setShowGoogleButton] = useState<boolean>(true);
+
+  // Check if OTP is complete
+  const isOtpComplete =
+    otpMethod === "whatsapp"
+      ? credentials.otp.every((digit) => digit !== "")
+      : credentials.mobileOTP.every((digit) => digit !== "");
+useEffect(() => {
+  if (!showOtp) return;
+  if (!isOtpComplete) return;
+  if (isLoading) return;
+  if (autoSubmitRef.current) return;
+
+  autoSubmitRef.current = true;
+
+  // small delay for better UX
+  setTimeout(() => {
+    handleOtpSubmit({
+      preventDefault: () => {},
+    } as React.FormEvent<HTMLFormElement>);
+  }, 300);
+}, [isOtpComplete, showOtp]);
+
   // Retrieve variables from localStorage and sessionStorage
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
@@ -333,6 +357,8 @@ const WhatsappLogin: React.FC = () => {
   };
 
   const handleOtpChange = (value: string, index: number) => {
+    autoSubmitRef.current = false;
+
     const sanitizedValue = value.replace(/[^0-9]/g, "");
     if (sanitizedValue.length <= 1) {
       if (otpMethod === "whatsapp") {
@@ -352,6 +378,8 @@ const WhatsappLogin: React.FC = () => {
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    autoSubmitRef.current = false;
+
     e.preventDefault();
     const pastedData = e.clipboardData
       .getData("text")
@@ -359,13 +387,13 @@ const WhatsappLogin: React.FC = () => {
       .slice(0, otpMethod === "whatsapp" ? 4 : 6);
 
     if (otpMethod === "whatsapp") {
-      const newOtp = [...credentials.otp];
+      const newOtp = Array(4).fill("");
       pastedData.split("").forEach((char, index) => {
         if (index < 4) newOtp[index] = char;
       });
       setCredentials((prev) => ({ ...prev, otp: newOtp }));
     } else {
-      const newMobileOtp = [...credentials.mobileOTP];
+      const newMobileOtp = Array(6).fill("");
       pastedData.split("").forEach((char, index) => {
         if (index < 6) newMobileOtp[index] = char;
       });
@@ -602,6 +630,7 @@ const WhatsappLogin: React.FC = () => {
       }
     } finally {
       setIsLoading(false);
+      autoSubmitRef.current = false;
     }
   };
 
@@ -891,95 +920,101 @@ const WhatsappLogin: React.FC = () => {
                     } as any
                   }
                 />
-              {otpMethod === "whatsapp" ? (
-                <FaWhatsapp className="pointer-events-none absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              ) : (
-                <PhoneCall className="pointer-events-none absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                {otpMethod === "whatsapp" ? (
+                  <FaWhatsapp className="pointer-events-none absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                ) : (
+                  <PhoneCall className="pointer-events-none absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                )}
+              </div>
+
+              {/* Inline error (kept) */}
+              {error && (
+                <p className="mt-2 animate-fadeIn flex items-center gap-1 text-sm text-red-600">
+                  <X className="w-4 h-4" />
+                  {error}
+                </p>
               )}
             </div>
 
-            {/* Inline error (kept) */}
-            {error && (
-              <p className="mt-2 animate-fadeIn flex items-center gap-1 text-sm text-red-600">
-                <X className="w-4 h-4" />
-                {error}
-              </p>
+            {/* Pre-OTP note + Get OTP button */}
+            {!showOtp && (
+              <>
+                {/* Informational note (method-specific) */}
+                <div className="text-center text-sm">
+                  {otpMethod === "whatsapp" ? (
+                    <p className="text-green-600">
+                      <strong>Note:</strong> 🌍 WhatsApp OTP works globally —
+                      India and beyond!
+                    </p>
+                  ) : (
+                    <p className="text-purple-600">
+                      <strong>Note:</strong> 📩 SMS OTP is for Indian numbers
+                      (+91) only.
+                    </p>
+                  )}
+                </div>
+
+                {/* Primary action: Get OTP (method color) */}
+                <button
+                  type="submit"
+                  disabled={isGetOtpButtonDisabled || isLoading}
+                  className={`mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed ${
+                    isGetOtpButtonDisabled || isLoading
+                      ? "bg-gray-400 opacity-60"
+                      : otpMethod === "whatsapp"
+                      ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
+                      : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
+                  }`}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Sending OTP...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5" />
+                      Get OTP via{" "}
+                      {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
+                    </>
+                  )}
+                </button>
+              </>
             )}
-          </div>
 
-          {/* Pre-OTP note + Get OTP button */}
-          {!showOtp && (
-            <>
-              {/* Informational note (method-specific) */}
-              <div className="text-center text-sm">
-                {otpMethod === "whatsapp" ? (
-                  <p className="text-green-600">
-                    <strong>Note:</strong> 🌍 WhatsApp OTP works globally — India and beyond!
-                  </p>
-                ) : (
-                  <p className="text-purple-600">
-                    <strong>Note:</strong> 📩 SMS OTP is for Indian numbers (+91) only.
-                  </p>
-                )}
-              </div>
-
-              {/* Primary action: Get OTP (method color) */}
-              <button
-                type="submit"
-                disabled={isGetOtpButtonDisabled || isLoading}
-                className={`mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed ${
-                  isGetOtpButtonDisabled || isLoading
-                    ? "bg-gray-400 opacity-60"
-                    : otpMethod === "whatsapp"
-                    ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
-                    : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
+            {/* OTP entry section */}
+            {showOtp && (
+              <div
+                className={`space-y-4 transition-all duration-500 ${
+                  animateOtp ? "animate-slideInUp" : ""
                 }`}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Sending OTP...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-5 w-5" />
-                    Get OTP via {otpMethod === "whatsapp" ? "WhatsApp" : "SMS"}
-                  </>
-                )}
-              </button>
-            </>
-          )}
-
-          {/* OTP entry section */}
-          {showOtp && (
-            <div
-              className={`space-y-4 transition-all duration-500 ${
-                animateOtp ? "animate-slideInUp" : ""
-              }`}
-            >
-              {/* Sent info line */}
-              <div className="text-center">
-                <div className="mb-2 flex items-center justify-center gap-2">
-                  {otpMethod === "whatsapp" ? (
-                    <MessageCircle className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <Smartphone className="h-5 w-5 text-purple-500" />
-                  )}
-                  <span className="text-sm text-gray-600">
-                    OTP sent to your {otpMethod === "whatsapp" ? "WhatsApp" : "mobile"}
-                  </span>
+                {/* Sent info line */}
+                <div className="text-center">
+                  <div className="mb-2 flex items-center justify-center gap-2">
+                    {otpMethod === "whatsapp" ? (
+                      <MessageCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <Smartphone className="h-5 w-5 text-purple-500" />
+                    )}
+                    <span className="text-sm text-gray-600">
+                      OTP sent to your{" "}
+                      {otpMethod === "whatsapp" ? "WhatsApp" : "mobile"}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {/* OTP inputs (same logic; consistent sizes/focus) */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  Enter {otpMethod === "whatsapp" ? "4" : "6"}-digit OTP{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="flex justify-center gap-2 sm:gap-3">
-                  {(otpMethod === "whatsapp" ? credentials.otp : credentials.mobileOTP).map(
-                    (digit, index) => (
+                {/* OTP inputs (same logic; consistent sizes/focus) */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Enter {otpMethod === "whatsapp" ? "4" : "6"}-digit OTP{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex justify-center gap-2 sm:gap-3">
+                    {(otpMethod === "whatsapp"
+                      ? credentials.otp
+                      : credentials.mobileOTP
+                    ).map((digit, index) => (
                       <input
                         key={index}
                         ref={(el) => {
@@ -997,72 +1032,72 @@ const WhatsappLogin: React.FC = () => {
                         className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg border text-center text-lg font-semibold outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                         aria-label={`OTP digit ${index + 1}`}
                       />
-                    )
+                    ))}
+                  </div>
+
+                  {/* OTP error (unchanged) */}
+                  {otpError && (
+                    <p className="animate-fadeIn text-center text-sm text-red-600 flex items-center justify-center gap-1">
+                      <X className="w-4 h-4" />
+                      {otpError}
+                    </p>
                   )}
                 </div>
 
-                {/* OTP error (unchanged) */}
-                {otpError && (
-                  <p className="animate-fadeIn text-center text-sm text-red-600 flex items-center justify-center gap-1">
-                    <X className="w-4 h-4" />
-                    {otpError}
-                  </p>
-                )}
-              </div>
-
-              {/* Verify button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed ${
-                  isLoading
-                    ? "bg-gray-400 opacity-60"
-                    : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
-                }`}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="h-5 w-5" />
-                    Verify OTP
-                  </>
-                )}
-              </button>
-
-              {/* Resend + Change number */}
-              <div className="text-center">
+                {/* Verify button */}
                 <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={resendDisabled || isLoading}
-                  className={`text-sm font-medium transition-colors ${
-                    resendDisabled || isLoading
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-purple-600 hover:text-purple-800"
+                  type="submit"
+                  disabled={isLoading || !isOtpComplete}
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed ${
+                    isLoading || !isOtpComplete
+                      ? "bg-gray-400 opacity-60"
+                      : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
                   }`}
                 >
-                  <RefreshCcw className="mr-1 inline h-4 w-4" />
-                  {resendDisabled ? `Resend OTP in ${resendTimer}s` : "Resend OTP"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="h-5 w-5" />
+                      Verify OTP
+                    </>
+                  )}
                 </button>
-              </div>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleChangeNumber}
-                  className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Change Number
-                </button>
+                {/* Resend + Change number */}
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resendDisabled || isLoading}
+                    className={`text-sm font-medium transition-colors ${
+                      resendDisabled || isLoading
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-purple-600 hover:text-purple-800"
+                    }`}
+                  >
+                    <RefreshCcw className="mr-1 inline h-4 w-4" />
+                    {resendDisabled
+                      ? `Resend OTP in ${resendTimer}s`
+                      : "Resend OTP"}
+                  </button>
+                </div>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleChangeNumber}
+                    className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Change Number
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
           </form>
-      
 
           {/* {showGoogleButton && primaryType === "CUSTOMER" && (
             <div className="flex items-center my-4">
