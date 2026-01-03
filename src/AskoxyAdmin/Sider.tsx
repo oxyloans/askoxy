@@ -9,7 +9,8 @@ import {
   FaBars,
   FaTimes,
   FaUserCircle,
-  FaClipboardList,FaBriefcase ,
+  FaClipboardList,
+  FaBriefcase,
   FaHeadset,
   FaUsers,
   FaFileAlt,
@@ -26,21 +27,25 @@ import {
   FaStore,
   FaBlog,
   FaBoxes,
-  FaRobot 
+  FaRobot,
 } from "react-icons/fa";
 import { RiFileUserLine } from "react-icons/ri";
 import {
   RiAdminLine,
   RiBriefcaseLine,
   RiListUnordered,
-  RiMapPin2Line,RiFileCheckLine ,
+  RiMapPin2Line,
+  RiFileCheckLine,
 } from "react-icons/ri";
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
-  SolutionOutlined,BookOutlined ,SafetyCertificateOutlined,
+  SolutionOutlined,
+  BookOutlined,
+  SafetyCertificateOutlined,
   UserOutlined,
-  HomeOutlined,EnvironmentOutlined ,
+  HomeOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 import { MdPayment, MdWork } from "react-icons/md";
@@ -113,7 +118,7 @@ const Sidebar: React.FC = () => {
           icon: <FaRobot className="text-blue-400" />,
           link: "/admn/assistants",
           roles: ["HELPDESKSUPERADMIN"],
-        },
+        },
       ],
     },
     {
@@ -134,54 +139,54 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
+          title: "Askoxy Assigned Data",
+          icon: <FaClipboardList className="text-yellow-400" />,
+          link: "/admn/assignedData",
+          roles: ["HELPDESKADMIN"],
+        },
+        {
           title: "All AskOxy Users",
           icon: <FaRegAddressCard className="text-green-400" />,
           link: "/admn/dataAssigned",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
-         {
+        {
           title: "All Kukatpally Data",
-          icon: <EnvironmentOutlined  className="text-green-400" />,
+          icon: <EnvironmentOutlined className="text-green-400" />,
           link: "/admn/kukatpally",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
-              {
+        {
           title: "Kukatpally Assign Data",
-          icon: <RiFileUserLine  className="text-yellow-400" />,
+          icon: <RiFileUserLine className="text-yellow-400" />,
           link: "/admn/kukatpallyassignedData",
           roles: ["HELPDESKADMIN"],
         },
-           {
+        {
           title: "Advocate Data",
-          icon: <BookOutlined   className="text-green-400" />,
+          icon: <BookOutlined className="text-green-400" />,
           link: "/admn/advocates",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
-  title: "All Talwar Data",
-  icon: <SafetyCertificateOutlined className="text-red-500" />, 
-  link: "/admn/talwardata",
-  roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-},
-{
-  title: "All Mumbai Data",
-  icon: <ApartmentOutlined className="text-blue-500" />,
-  link: "/admn/mumbaidata",
-  roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-},
-{
-  title: "Assigned Talwar Data",
-  icon: <RiFileCheckLine  className="text-red-500" />,
-  link: "/admn/assignedtalwarData",
-  roles: ["HELPDESKADMIN"],
-},
+          title: "All Talwar Data",
+          icon: <SafetyCertificateOutlined className="text-red-500" />,
+          link: "/admn/talwardata",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
         {
-          title: "ASKOXY Assigned Data",
-          icon: <FaClipboardList className="text-yellow-400" />,
-          link: "/admn/assignedData",
+          title: "All Mumbai Data",
+          icon: <ApartmentOutlined className="text-blue-500" />,
+          link: "/admn/mumbaidata",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
+        {
+          title: "Assigned Talwar Data",
+          icon: <RiFileCheckLine className="text-red-500" />,
+          link: "/admn/assignedtalwarData",
           roles: ["HELPDESKADMIN"],
         },
-     
+
         {
           title: "Referred Data",
           icon: <FaUsers className="text-blue-500" />,
@@ -201,9 +206,9 @@ const Sidebar: React.FC = () => {
           link: "/admn/campaignsadd",
           roles: ["HELPDESKSUPERADMIN"],
         },
-          {
+        {
           title: "Add We are hiring",
-          icon: <FaBriefcase  className="text-green-400" />,
+          icon: <FaBriefcase className="text-green-400" />,
           link: "/admn/wearehiringadd",
           roles: ["HELPDESKSUPERADMIN"],
         },
@@ -322,6 +327,20 @@ const Sidebar: React.FC = () => {
     },
   ];
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const isCategoryActive = (category: SidebarCategory) => {
+    return category.items.some(
+      (item) => item.roles.includes(userRole!) && isActive(item.link)
+    );
+  };
+
+  const isCategoryExpanded = (categoryTitle: string) => {
+    return expandedCategories.includes(categoryTitle);
+  };
+
   useEffect(() => {
     if (
       !primaryType ||
@@ -335,6 +354,21 @@ const Sidebar: React.FC = () => {
 
     setUserRole(primaryType);
   }, [navigate]);
+
+  // Auto-expand category if current route matches any of its child items
+  useEffect(() => {
+    if (!userRole) return;
+
+    const activeCategory = sidebarCategories.find((category) =>
+      category.items.some(
+        (item) => item.roles.includes(userRole) && isActive(item.link)
+      )
+    );
+
+    if (activeCategory && !expandedCategories.includes(activeCategory.title)) {
+      setExpandedCategories((prev) => [...prev, activeCategory.title]);
+    }
+  }, [location.pathname, userRole]);
 
   useEffect(() => {
     const checkAccessToken = () => {
@@ -396,24 +430,10 @@ const Sidebar: React.FC = () => {
         // If clicking on an already expanded category, collapse it
         return prev.filter((cat) => cat !== categoryTitle);
       } else {
-        // If clicking on a collapsed category, expand it and close others
-        return [categoryTitle];
+        // If clicking on a collapsed category, expand it (allow multiple open)
+        return [...prev, categoryTitle];
       }
     });
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const isCategoryActive = (category: SidebarCategory) => {
-    return category.items.some(
-      (item) => item.roles.includes(userRole!) && isActive(item.link)
-    );
-  };
-
-  const isCategoryExpanded = (categoryTitle: string) => {
-    return expandedCategories.includes(categoryTitle);
   };
 
   if (!userRole) {
@@ -574,7 +594,7 @@ const Sidebar: React.FC = () => {
                   <div
                     className={`overflow-hidden transition-all duration-400 ease-in-out ${
                       isExpanded && !collapsed
-                        ? "max-h-80 opacity-100 mt-1"
+                        ? "max-h-[1000px] opacity-100 mt-1"
                         : "max-h-0 opacity-0"
                     }`}
                   >

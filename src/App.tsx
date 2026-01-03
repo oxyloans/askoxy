@@ -10,6 +10,7 @@ import CASRouteRenderer1 from "./GLMS/CAS/Pages/CASRouteRenderer1";
 import FMSRoutes1 from "./GLMS/FMS/Pages/FMSRoutes1";
 import CMSroutes1 from "./GLMS/CMS/Pages/CMSroutes1";
 import FreelancerForm from "./components/FreelancerForm";
+import FloatingCallButton from "./components/FloatingCallButton";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -437,6 +438,8 @@ const App: React.FC = () => {
 
         <Suspense fallback={<LoadingSpinner />}>
           <div className="App">
+           {localStorage.getItem('userId') &&
+            <FloatingCallButton />}
             <Routes>
               {/* ===================================================== */}
               {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
