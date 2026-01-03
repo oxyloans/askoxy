@@ -145,6 +145,12 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKADMIN"],
         },
         {
+          title: "Users Recent Orders ",
+          icon: <FaClipboardList className="text-yellow-400" />,
+          link: "/admn/userOrdersIntegration",
+          roles: ["HELPDESKADMIN"],
+        },
+        {
           title: "All AskOxy Users",
           icon: <FaRegAddressCard className="text-green-400" />,
           link: "/admn/dataAssigned",

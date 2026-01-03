@@ -11,6 +11,7 @@ import FMSRoutes1 from "./GLMS/FMS/Pages/FMSRoutes1";
 import CMSroutes1 from "./GLMS/CMS/Pages/CMSroutes1";
 import FreelancerForm from "./components/FreelancerForm";
 import FloatingCallButton from "./components/FloatingCallButton";
+import UserOrdersIntegration from "./AskoxyAdmin/UserOrdersIntegration";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -438,8 +439,7 @@ const App: React.FC = () => {
 
         <Suspense fallback={<LoadingSpinner />}>
           <div className="App">
-           {localStorage.getItem('userId') &&
-            <FloatingCallButton />}
+            {localStorage.getItem("userId") && <FloatingCallButton />}
             <Routes>
               {/* ===================================================== */}
               {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
@@ -1005,6 +1005,7 @@ const App: React.FC = () => {
                   element={<TalwarAssignedDataPage />}
                 />
                 <Route path="assignedData" element={<AssignedDataPage />} />
+                <Route path="userOrdersIntegration" element={<UserOrdersIntegration />} />
                 <Route
                   path="kukatpallyassignedData"
                   element={<KukatpallyAssignedDataPage />}

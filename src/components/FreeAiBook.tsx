@@ -3,12 +3,14 @@ import { motion } from "framer-motion";
 import aiImage from "../assets/img/book.png";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import { message } from "antd";
+import { message, Modal } from "antd";
+
 import axios from "axios";
 
 const FreeAiBook: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [marketingLoading, setMarketingLoading] = useState(false);
 
   const userId = localStorage.getItem("userId");
   const mobileNumber = localStorage.getItem("mobileNumber");
@@ -22,7 +24,7 @@ const FreeAiBook: React.FC = () => {
       if (!userId) return;
 
       try {
-        setIsLoading(true);
+        setMarketingLoading(true);
         const response = await axios.post(
           `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
           {
@@ -39,24 +41,15 @@ const FreeAiBook: React.FC = () => {
       } catch (error) {
         console.error(error);
       } finally {
-        setIsLoading(false);
+        setMarketingLoading(false);
       }
     };
 
     sendMarketingRequest();
   }, [userId, mobileNumber, whatsappNumber]);
 
-  const handleSignIn = () => {
-    setIsLoading(true);
-    const redirectPath = "/freeaibook/view";
-    const uid = localStorage.getItem("userId");
-
-    if (uid) navigate(redirectPath);
-    else {
-      sessionStorage.setItem("redirectPath", redirectPath);
-      window.location.href = LOGIN_URL;
-    }
-    setIsLoading(false);
+  const handleViewMore = () => {
+    setShowOfferModal(true);
   };
 
   const handleJobPlanViewMore = () => {
@@ -102,9 +95,8 @@ const FreeAiBook: React.FC = () => {
           </p>
 
           <motion.button
-            onClick={handleSignIn}
-            disabled={isLoading}
-            className="self-start px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-semibold"
+            onClick={handleViewMore}
+            className="self-start px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-semibold hover:from-indigo-500 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             View More
           </motion.button>
@@ -163,6 +155,162 @@ const FreeAiBook: React.FC = () => {
           </motion.button>
         </div>
       </motion.div>
+
+      <Modal
+        open={showOfferModal}
+        onCancel={() => setShowOfferModal(false)}
+        footer={null}
+        centered
+        destroyOnClose
+        title="Offer Information"
+        width={520}
+        styles={{
+          body: {
+            padding: 0,
+          },
+        }}
+      >
+        <div
+          style={{
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 12,
+              border: "1px solid #f0f0f0",
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "16px 16px 12px",
+                borderBottom: "1px solid #f0f0f0",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
+                Offer Ended
+              </div>
+              <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
+                The offer ended on <b>31st December 2025</b>.
+              </div>
+            </div>
+
+            {/* Content */}
+            <div
+              style={{
+                padding: "14px 16px 16px",
+                display: "grid",
+                gap: 12,
+              }}
+            >
+              {/* Info card */}
+              <div
+                style={{
+                  borderRadius: 10,
+                  background: "#fafafa",
+                  border: "1px solid #f0f0f0",
+                  padding: 12,
+                }}
+              >
+                <div
+                  style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}
+                >
+                  The book will be available again soon in our store.
+                </div>
+              </div>
+
+              {/* Bid card */}
+              <div
+                style={{
+                  borderRadius: 10,
+                  border: "1px solid #f0f0f0",
+                  padding: 14,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: "#111827",
+                    marginBottom: 6,
+                    textAlign: "center",
+                  }}
+                >
+                  Special Appreciation Bid
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "#6b7280",
+                    textAlign: "center",
+                    lineHeight: 1.5,
+                    marginBottom: 12,
+                  }}
+                >
+                  To appreciate our first copy buyer, we are hosting a special
+                  bid.
+                </div>
+
+                {/* Highlight */}
+                <div
+                  style={{
+                    borderRadius: 10,
+                    background: "#FFFBEB",
+                    border: "1px solid #FDE68A",
+                    padding: 12,
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}
+                  >
+                    The highest bidder wins the first copy
+                  </div>
+                  <div style={{ marginTop: 4, fontSize: 13, color: "#374151" }}>
+                    and an exclusive chit-chat session with our CEO.
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div
+                  style={{
+                    marginTop: 12,
+                    borderRadius: 10,
+                    background: "#F9FAFB",
+                    border: "1px solid #f0f0f0",
+                    padding: 10,
+                    textAlign: "center",
+                    fontSize: 13,
+                    color: "#374151",
+                    fontWeight: 600,
+                  }}
+                >
+                  Stay tuned for updates!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Responsive width helper */}
+          <style>
+            {`
+        /* Make modal fit nicely on small screens */
+        .ant-modal {
+          max-width: calc(100vw - 24px) !important;
+        }
+        .ant-modal-content {
+          border-radius: 14px !important;
+          overflow: hidden;
+        }
+      `}
+          </style>
+        </div>
+      </Modal>
     </section>
   );
 };

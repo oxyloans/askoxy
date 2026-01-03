@@ -165,6 +165,23 @@ interface HelpDeskUser {
   lastFourDigitsUserId: string;
 }
 
+// Define order status mapping
+const orderStatusMap: { [key: string]: string } = {
+  "0": "Incomplete",
+  "1": "Order Placed",
+  "2": "Order Accepted",
+  "3": "Order Assigned",
+  PickedUp: "Order Picked Up",
+  "4": "Order Delivered",
+  "5": "Order Rejected",
+  "6": "Order Canceled",
+};
+
+const paymentTypeMap: { [key: number]: string } = {
+  1: "COD",
+  2: "ONLINE",
+};
+
 const AssignedDataPage: React.FC = () => {
   const [userData, setUserData] = useState<UserData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -357,24 +374,7 @@ const AssignedDataPage: React.FC = () => {
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case "1":
-        return "placed";
-      case "2":
-        return "Accepted";
-      case "3":
-        return "assigned";
-      case "4":
-        return "Delivered";
-      case "5":
-        return "Rejected";
-      case "6":
-        return "cancelled";
-      case "PickedUp":
-        return "pickedUp";
-      default:
-        return "Unknown";
-    }
+    return orderStatusMap[status] || "Unknown";
   };
 
   const getStatusColor = (status: string) => {
@@ -398,14 +398,7 @@ const AssignedDataPage: React.FC = () => {
     }
   };
   const getPaymentTypeText = (type: number) => {
-    switch (type) {
-      case 2:
-        return "Online";
-      case 1:
-        return "Cash on Delivery";
-      default:
-        return "Unknown";
-    }
+    return paymentTypeMap[type] || "Unknown";
   };
 
   const getColumnsForAllOrders = (orders: OrderData[]) => {
@@ -588,7 +581,6 @@ const AssignedDataPage: React.FC = () => {
     setOrderDetailsVisible(true);
     fetchOrderDetails(record.userId);
   };
-
 
   const getHelpDeskName = (assignedToId: string): string => {
     const helpDeskUser = helpDeskUsers.find(

@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
+import { Modal } from "antd";
 import Highlighter from "../components/Highlighter";
 
 // ---------- Images ----------
@@ -210,6 +211,167 @@ const STATIC_ASSISTANTS: Assistant[] = [
   },
 ];
 
+// ---------- Offer Modal Component ----------
+const OfferModal: React.FC<{ open: boolean; onCancel: () => void }> = ({
+  open,
+  onCancel,
+}) => {
+  return (
+    <Modal
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      centered
+      destroyOnClose
+      title="Offer Information"
+      width={520}
+      styles={{
+        body: {
+          padding: 0,
+        },
+      }}
+    >
+      <div
+        style={{
+          padding: "16px",
+        }}
+      >
+        <div
+          style={{
+            borderRadius: 12,
+            border: "1px solid #f0f0f0",
+            overflow: "hidden",
+            background: "#fff",
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              padding: "16px 16px 12px",
+              borderBottom: "1px solid #f0f0f0",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
+              Offer Ended
+            </div>
+            <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
+              The offer ended on <b>31st December 2025</b>.
+            </div>
+          </div>
+
+          {/* Content */}
+          <div
+            style={{
+              padding: "14px 16px 16px",
+              display: "grid",
+              gap: 12,
+            }}
+          >
+            {/* Info card */}
+            <div
+              style={{
+                borderRadius: 10,
+                background: "#fafafa",
+                border: "1px solid #f0f0f0",
+                padding: 12,
+              }}
+            >
+              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}>
+                The book will be available again soon in our store.
+              </div>
+            </div>
+
+            {/* Bid card */}
+            <div
+              style={{
+                borderRadius: 10,
+                border: "1px solid #f0f0f0",
+                padding: 14,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "#111827",
+                  marginBottom: 6,
+                  textAlign: "center",
+                }}
+              >
+                Special Appreciation Bid
+              </div>
+
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#6b7280",
+                  textAlign: "center",
+                  lineHeight: 1.5,
+                  marginBottom: 12,
+                }}
+              >
+                To appreciate our first copy buyer, we are hosting a special
+                bid.
+              </div>
+
+              {/* Highlight */}
+              <div
+                style={{
+                  borderRadius: 10,
+                  background: "#FFFBEB",
+                  border: "1px solid #FDE68A",
+                  padding: 12,
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}
+                >
+                  The highest bidder wins the first copy
+                </div>
+                <div style={{ marginTop: 4, fontSize: 13, color: "#374151" }}>
+                  and an exclusive chit-chat session with our CEO.
+                </div>
+              </div>
+
+              {/* Note */}
+              <div
+                style={{
+                  marginTop: 12,
+                  borderRadius: 10,
+                  background: "#F9FAFB",
+                  border: "1px solid #f0f0f0",
+                  padding: 10,
+                  textAlign: "center",
+                  fontSize: 13,
+                  color: "#374151",
+                  fontWeight: 600,
+                }}
+              >
+                Stay tuned for updates!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Responsive width helper */}
+        <style>
+          {`
+          /* Make modal fit nicely on small screens */
+          .ant-modal {
+            max-width: calc(100vw - 24px) !important;
+          }
+          .ant-modal-content {
+            border-radius: 14px !important;
+            overflow: hidden;
+          }
+        `}
+        </style>
+      </div>
+    </Modal>
+  );
+};
 
 // ---------- Skeleton Loader (Edge Style) ----------
 const AssistantSkeleton: React.FC = () => (
@@ -266,10 +428,11 @@ const AssistantSkeleton: React.FC = () => (
 );
 
 // ---------- Edge-style Card ----------
-const AssistantCard: React.FC<{ assistant: Assistant; q: string }> = ({
-  assistant,
-  q,
-}) => {
+const AssistantCard: React.FC<{
+  assistant: Assistant;
+  q: string;
+  onShowOfferModal: () => void;
+}> = ({ assistant, q, onShowOfferModal }) => {
   const navigate = useNavigate();
 
   const timeAgo =
@@ -287,7 +450,14 @@ const AssistantCard: React.FC<{ assistant: Assistant; q: string }> = ({
 
   const source = assistant?.metadata?.category || "AI Initiatives";
 
-  const onOpen = () => navigate(assistant.link);
+  const onOpen = () => {
+    if (assistant.id === "6") {
+      // Free AI Book
+      onShowOfferModal();
+    } else {
+      navigate(assistant.link);
+    }
+  };
 
   return (
     <div
@@ -407,6 +577,7 @@ const AssistantCard: React.FC<{ assistant: Assistant; q: string }> = ({
 const AiResources: React.FC = () => {
   const { debouncedQuery: q } = useSearch();
   const [loading, setLoading] = useState(true);
+  const [showOfferModal, setShowOfferModal] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 900);
@@ -485,11 +656,22 @@ const AiResources: React.FC = () => {
         ) : (
           <div className="edgeGrid">
             {filteredAssistants.slice(0, 9).map((assistant) => (
-              <AssistantCard key={assistant.id} assistant={assistant} q={q} />
+              <AssistantCard
+                key={assistant.id}
+                assistant={assistant}
+                q={q}
+                onShowOfferModal={() => setShowOfferModal(true)}
+              />
             ))}
           </div>
         )}
       </main>
+
+      {/* Offer Modal for Free AI Book */}
+      <OfferModal
+        open={showOfferModal}
+        onCancel={() => setShowOfferModal(false)}
+      />
     </div>
   );
 };

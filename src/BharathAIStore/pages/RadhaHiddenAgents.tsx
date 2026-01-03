@@ -1,8 +1,6 @@
 // src/BharathAIStore/pages/RadhaHiddenAgents.tsx
-import React, { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
-import BASE_URL from "../../Config"; // same pattern as BharatAgentsStore
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Bot } from "lucide-react";
 
 // ------------------ Types ------------------
@@ -14,14 +12,7 @@ export interface Assistant {
   description?: string;
   imageUrl?: string;
   hideAgent?: boolean; // ✅ from API: true means this agent should be shown here
-}
-
-export interface AssistantsResponse {
-  object: string;
-  data: Assistant[];
-  hasMore: boolean;
-  firstId?: string;
-  lastId?: string;
+  link?: string; // Direct link for static agents
 }
 
 // ------------------ Initials fallback (same logic as Store) ------------------
@@ -80,58 +71,6 @@ function makeInitialsSVG(name: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-// ------------------ API client ------------------
-const apiClient = axios.create({ baseURL: BASE_URL });
-
-// ------------------ API ------------------
-async function getAssistants(
-  limit: number,
-  after?: string
-): Promise<AssistantsResponse> {
-  const params: any = { limit };
-  if (after) params.after = after;
-
-  const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
-    params,
-    headers: {
-      "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}`
-        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
-        : {}),
-    },
-    // withCredentials: true, // enable if you use cookie auth
-  });
-
-  const normalized: Assistant[] = (res.data?.data ?? []).map(
-    (assistant: any) => {
-      // ✅ Properly normalize hideAgent to boolean: handle boolean true/false or string "true"/"false"
-      const rawHideAgent = assistant.hideAgent;
-      const hideAgent =
-        rawHideAgent === true ||
-        String(rawHideAgent).toLowerCase() === "true" ||
-        rawHideAgent === 1 ||
-        rawHideAgent === "1"; // Also handle numeric 1/"1" if needed
-
-      return {
-        ...assistant,
-        assistantId: assistant.assistantId || assistant.id,
-        agentId: assistant.agentId || assistant.id,
-        imageUrl:
-          assistant.imageUrl || assistant.image || assistant.thumbUrl || "",
-        hideAgent, // ✅ Now correctly boolean: true only if explicitly true/"true"
-      };
-    }
-  );
-
-  return {
-    object: res.data?.object ?? "list",
-    data: normalized,
-    hasMore: !!res.data?.hasMore,
-    firstId: res.data?.firstId,
-    lastId: res.data?.lastId,
-  };
-}
-
 const HiddenAssistantCard: React.FC<{
   assistant: Assistant;
   onOpen: () => void;
@@ -142,8 +81,9 @@ const HiddenAssistantCard: React.FC<{
 
   return (
     <div
+      onClick={onOpen}
       className={[
-        "relative group rounded-2xl",
+        "relative group rounded-2xl cursor-pointer",
         "shadow-purple-400/60",
         "after:absolute after:-inset-[2px] after:rounded-2xl after:content-[''] after:-z-10",
         "after:shadow-[0_0_0_6px_rgba(147,51,234,0.12)] after:pointer-events-none",
@@ -184,13 +124,13 @@ const HiddenAssistantCard: React.FC<{
             </p>
           </div>
 
-          {/* Open button */}
+          {/* Open button - now just visual since whole card is clickable */}
           <div className="mt-auto pt-5 flex items-center gap-2">
             <button
-              onClick={onOpen}
               type="button"
               className="inline-flex items-center justify-center rounded-lg bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-[13px] font-semibold transition"
-              title="Open agent"
+              title="Click anywhere on card to open agent"
+              disabled
             >
               Open
             </button>
@@ -201,57 +141,35 @@ const HiddenAssistantCard: React.FC<{
   );
 };
 
+// ------------------ Static Agents ------------------
+const staticAgents: Assistant[] = [
+  {
+    id: "ftcci-agent-static",
+    assistantId: "ftcci-agent-static",
+    agentId: "ftcci-agent-static",
+    name: "FTCCI Agent",
+    description:
+      "AI Agent that organizes and retrieves FTCCI Federation contacts across industries. Provides quick access to business leaders, policymakers, and professionals, enabling networking, partnerships, and opportunities in Telangana and beyond.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/asst_CjeprnghuYO8OsMdCD8JIx8A/3bf72057-bdc0-4864-afac-51f39f6a7524/ftcci-agent",
+  },
+  {
+    id: "oxygroup-task-management-static",
+    assistantId: "oxygroup-task-management-static",
+    agentId: "oxygroup-task-management-static",
+    name: "OXYGroup Task Management",
+    description:
+      "An intelligent agent monitors employees' daily task updates, verifies authenticity, detects duplicate submissions, flags errors, and ensures accurate and genuine reporting of morning plans and end-of-day reports.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/asst_V41gWq69vrfVyCc4rTMScxIE/d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0/oxygroup-task-management",
+  },
+];
+
 // ------------------ Page ------------------
 const RadhaHiddenAgents: React.FC = () => {
-  const [hiddenAgents, setHiddenAgents] = useState<Assistant[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [err, setErr] = useState<string | null>(null);
-
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchAll = async () => {
-      try {
-        setLoading(true);
-        setErr(null);
-
-        const pageSize = 50;
-        let after: string | undefined = undefined;
-        const all: Assistant[] = [];
-
-        // keep fetching until API says no more pages
-        for (let safeg = 0; safeg < 20; safeg++) {
-          const resp: AssistantsResponse = await getAssistants(pageSize, after);
-          all.push(...resp.data);
-          if (!resp.hasMore) break;
-          after = resp.lastId || undefined;
-        }
-
-        // ✅ Filter correctly based on hideAgent flag (now properly boolean)
-        const onlyHidden = all.filter((a) => a.hideAgent === true);
-
-        if (!cancelled) setHiddenAgents(onlyHidden);
-      } catch (e: any) {
-        if (!cancelled) {
-          const msg =
-            e?.response?.data?.message ||
-            e?.message ||
-            "Failed to load hidden agents";
-          setErr(msg);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchAll();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const slugify = (s: string) =>
     (s || "agent")
@@ -260,7 +178,13 @@ const RadhaHiddenAgents: React.FC = () => {
       .replace(/^-+|-+$/g, "");
 
   const handleOpen = (a: Assistant) => {
-    // Extract FULL IDs from API data (no truncation)
+    // For static agents with direct links, navigate directly
+    if (a.link) {
+      window.location.href = a.link;
+      return;
+    }
+
+    // Fallback for dynamic agents (though we don't have any now)
     const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
       .toString()
       .trim();
@@ -269,41 +193,27 @@ const RadhaHiddenAgents: React.FC = () => {
       .trim();
     const nameSlug = slugify(a.name || "agent");
 
-    // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
-    const shortAssistantId = fullAssistantId;
-    const shortAgentId = fullAgentId;
-
-    // Debug log: Check full vs short values in console
-    console.log("FULL IDs (for APIs/state):", {
-      fullAssistantId,
-      fullAgentId,
-      nameSlug,
-    });
-    console.log("SHORT IDs (for URL only):", {
-      shortAssistantId,
-      shortAgentId,
-    });
-
-    // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
+    // Check if user is logged in
     const userId =
       typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
     if (!userId) {
+      // Guest redirect logic
       let intended = "";
       if (fullAssistantId && fullAgentId && nameSlug) {
         intended = `/${encodeURIComponent(
-          shortAssistantId
-        )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
-        // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
+          fullAssistantId
+        )}/${encodeURIComponent(fullAgentId)}/${encodeURIComponent(nameSlug)}`;
         sessionStorage.setItem("fullAssistantId", fullAssistantId);
         sessionStorage.setItem("fullAgentId", fullAgentId);
       } else if (fullAssistantId && fullAgentId) {
         intended = `/${encodeURIComponent(
-          shortAssistantId
-        )}/${encodeURIComponent(shortAgentId)}`;
+          fullAssistantId
+        )}/${encodeURIComponent(fullAgentId)}`;
         sessionStorage.setItem("fullAssistantId", fullAssistantId);
         sessionStorage.setItem("fullAgentId", fullAgentId);
       } else if (fullAssistantId) {
-        intended = `/${encodeURIComponent(shortAssistantId)}`;
+        intended = `/${encodeURIComponent(fullAssistantId)}`;
         sessionStorage.setItem("fullAssistantId", fullAssistantId);
       } else {
         intended = `/by-name/${encodeURIComponent(nameSlug)}`;
@@ -311,28 +221,24 @@ const RadhaHiddenAgents: React.FC = () => {
       sessionStorage.setItem("redirectPath", intended);
       sessionStorage.setItem("fromAISTore", "true");
       window.location.href = "/whatsappregister?primaryType=AGENT";
-      return;
-    }
-
-    // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
-    let targetPath = "";
-    if (fullAssistantId && fullAgentId && nameSlug) {
-      targetPath = `/${encodeURIComponent(
-        shortAssistantId
-      )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
-    } else if (fullAssistantId && fullAgentId) {
-      targetPath = `/${encodeURIComponent(
-        shortAssistantId
-      )}/${encodeURIComponent(shortAgentId)}`;
-    } else if (fullAssistantId) {
-      targetPath = `/${encodeURIComponent(shortAssistantId)}`;
     } else {
-      targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+      // Logged-in user navigation
+      let targetPath = "";
+      if (fullAssistantId && fullAgentId && nameSlug) {
+        targetPath = `/${encodeURIComponent(
+          fullAssistantId
+        )}/${encodeURIComponent(fullAgentId)}/${encodeURIComponent(nameSlug)}`;
+      } else if (fullAssistantId && fullAgentId) {
+        targetPath = `/${encodeURIComponent(
+          fullAssistantId
+        )}/${encodeURIComponent(fullAgentId)}`;
+      } else if (fullAssistantId) {
+        targetPath = `/${encodeURIComponent(fullAssistantId)}`;
+      } else {
+        targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
+      }
+      navigate(targetPath);
     }
-
-    // Final log: Generated URL (short IDs only, root-level)
-    console.log("Short URL target (4 chars only, no prefix):", targetPath);
-    navigate(targetPath);
   };
 
   return (
@@ -348,28 +254,17 @@ const RadhaHiddenAgents: React.FC = () => {
           ← Back to Radha’s AI Lab
         </Link>
       </div>
-      {loading && <div className="text-gray-600">Loading hidden agents…</div>}
-      {err && (
-        <div className="text-red-600 font-medium whitespace-pre-wrap break-words">
-          Error: {err}
-        </div>
-      )}
-      {!loading && !err && hiddenAgents.length === 0 && (
-        <div className="text-gray-600">No hidden agents found.</div>
-      )}
 
-      {!loading && !err && hiddenAgents.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
-          {hiddenAgents.map((a) => (
-            <div
-              key={a.assistantId || a.id || a.agentId || ""}
-              className="h-full flex flex-col"
-            >
-              <HiddenAssistantCard assistant={a} onOpen={() => handleOpen(a)} />
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+        {staticAgents.map((a) => (
+          <div
+            key={a.assistantId || a.id || a.agentId || ""}
+            className="h-full flex flex-col"
+          >
+            <HiddenAssistantCard assistant={a} onOpen={() => handleOpen(a)} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

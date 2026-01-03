@@ -123,62 +123,66 @@ const AgentStoreManager: React.FC = () => {
       fallbackCopy(text);
     }
   };
-const [isBulkUploadModal, setIsBulkUploadModal] = useState(false);
-const [bulkUploading, setBulkUploading] = useState(false);
-const [uploadForm] = Form.useForm();
+  const [isBulkUploadModal, setIsBulkUploadModal] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [uploadForm] = Form.useForm();
 
-const userId = localStorage.getItem("userId") || "";
+  const userId = localStorage.getItem("userId") || "";
 
-// AntD Upload -> Form normalize
-const normFile = (e: any) => {
-  if (Array.isArray(e)) return e;
-  return e?.fileList;
-};
+  // AntD Upload -> Form normalize
+  const normFile = (e: any) => {
+    if (Array.isArray(e)) return e;
+    return e?.fileList;
+  };
 
-const handleMultiAgentUpload = async (values: any) => {
-  try {
-    const storeId = values?.storeId;
-    const view = values?.view;
-    const fileObj = values?.file?.[0]?.originFileObj; // Upload component file
+  const handleMultiAgentUpload = async (values: any) => {
+    try {
+      const storeId = values?.storeId;
+      const view = values?.view;
+      const fileObj = values?.file?.[0]?.originFileObj; // Upload component file
 
-    if (!storeId) return message.error("Please select a store");
-    if (!view) return message.error("Please select view");
-    if (!fileObj) return message.error("Please choose a file");
-    if (!userId) return message.error("UserId not found. Please login again.");
+      if (!storeId) return message.error("Please select a store");
+      if (!view) return message.error("Please select view");
+      if (!fileObj) return message.error("Please choose a file");
+      if (!userId)
+        return message.error("UserId not found. Please login again.");
 
-    setBulkUploading(true);
+      setBulkUploading(true);
 
-    const formData = new FormData();
-    formData.append("storeId", storeId);
-    formData.append("userId", userId);
-    formData.append("view", view);
-    formData.append("file", fileObj);
+      const formData = new FormData();
+      formData.append("storeId", storeId);
+      formData.append("userId", userId);
+      formData.append("view", view);
+      formData.append("file", fileObj);
 
-    const res = await fetch(`${BASE_URL}/ai-service/agent/uploadMultiAgents1`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: formData,
-    });
+      const res = await fetch(
+        `${BASE_URL}/ai-service/agent/uploadMultiAgents1`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
+        }
+      );
 
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt || "Upload failed");
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Upload failed");
+      }
+
+      message.success("Agents uploaded successfully");
+      setIsBulkUploadModal(false);
+      uploadForm.resetFields();
+
+      // refresh store list
+      fetchStores();
+    } catch (err: any) {
+      message.error(err?.message || "Failed to upload agents");
+    } finally {
+      setBulkUploading(false);
     }
-
-    message.success("Agents uploaded successfully");
-    setIsBulkUploadModal(false);
-    uploadForm.resetFields();
-
-    // refresh store list
-    fetchStores();
-  } catch (err: any) {
-    message.error(err?.message || "Failed to upload agents");
-  } finally {
-    setBulkUploading(false);
-  }
-};
+  };
 
   const fallbackCopy = (text: string): void => {
     const textarea: HTMLTextAreaElement = document.createElement("textarea");
@@ -211,7 +215,7 @@ const handleMultiAgentUpload = async (values: any) => {
         : [result];
 
       const validStores: Store[] = data.filter(
-        (store: any) => store && store.storeId
+        (store: any) => store && store.storeId && store.userId === userId
       );
       setStoreData(validStores);
       // 🔥 keep modal store in sync after reload
@@ -591,7 +595,6 @@ const handleMultiAgentUpload = async (values: any) => {
             >
               Copy
             </Button>
-            
           </Space>
         );
       },
@@ -699,32 +702,27 @@ const handleMultiAgentUpload = async (values: any) => {
       ),
     },
   ];
-const downloadExcelTemplate = () => {
-  // Sheet data (rows)
-  const data = [
-    ["role", "goal", "purpose", "agentName"], // ✅ headers
-    ["student", "study_abroad", "usa_details", "USA-Agent"],
-    ["parent", "loan_help", "education_loan", "Loan-Agent"],
-  ];
+  const downloadExcelTemplate = () => {
+    // Sheet data (rows)
+    const data = [
+      ["role", "goal", "purpose", "agentName"], // ✅ headers
+      ["student", "study_abroad", "usa_details", "USA-Agent"],
+      ["parent", "loan_help", "education_loan", "Loan-Agent"],
+    ];
 
-  // Create worksheet
-  const worksheet = XLSX.utils.aoa_to_sheet(data);
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-  // Optional: column widths (professional look)
-  worksheet["!cols"] = [
-    { wch: 18 },
-    { wch: 20 },
-    { wch: 22 },
-    { wch: 20 },
-  ];
+    // Optional: column widths (professional look)
+    worksheet["!cols"] = [{ wch: 18 }, { wch: 20 }, { wch: 22 }, { wch: 20 }];
 
-  // Create workbook
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Agents");
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Agents");
 
-  // Download file
-  XLSX.writeFile(workbook, "bulk-upload-agents-template.xlsx");
-};
+    // Download file
+    XLSX.writeFile(workbook, "bulk-upload-agents-template.xlsx");
+  };
 
   return (
     <div style={{ padding: "16px", background: "#fff", minHeight: "100vh" }}>
@@ -766,22 +764,24 @@ const downloadExcelTemplate = () => {
               setIsStoreModal(true);
             }}
           >
-            Add AI Store
+            Create AI Store
           </Button>
-          <Button
-            icon={<UsergroupAddOutlined />}
-            style={{
-              background: "#ba4d00ff",
-              borderColor: "#ba4d00ff",
-              height: "40px",
-              color: "#f7f7f7",
-              fontWeight: "500",
-            }}
-            type="default"
-            onClick={() => setIsBulkUploadModal(true)}
-          >
-            Bulk Upload Agents
-          </Button>
+          {storeData.length > 0 && (
+            <Button
+              icon={<UsergroupAddOutlined />}
+              style={{
+                background: "#ba4d00ff",
+                borderColor: "#ba4d00ff",
+                height: "40px",
+                color: "#f7f7f7",
+                fontWeight: "500",
+              }}
+              type="default"
+              onClick={() => setIsBulkUploadModal(true)}
+            >
+              Bulk Upload Agents
+            </Button>
+          )}
           <Button
             type="primary"
             icon={<FaShoppingCart />}
