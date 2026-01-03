@@ -137,9 +137,9 @@ const STATIC_ASSISTANTS: Assistant[] = [
     id: "6",
     object: "assistant",
     created_at: 1697059200000,
-    name: "Free AI Book",
+    name: "AI Book",
     description:
-      "Free AI Book is a learning resource designed to help users understand modern artificial intelligence tools and concepts. It provides easy explanations, practical examples, and guided knowledge for beginners, students, and professionals.",
+      "AI Book is a learning resource designed to help users understand modern artificial intelligence tools and concepts. It provides easy explanations, practical examples, and guided knowledge for beginners, students, and professionals.",
     model: "gpt-4",
     instructions: "Provide conversational AI chat support",
     tools: [],

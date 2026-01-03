@@ -162,7 +162,7 @@ const FreeAIBookHome: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
               >
                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                Get Free AI Book
+                Free AI Book
               </motion.button>
 
               {/* AI Masterclasses Button */}

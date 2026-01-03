@@ -154,7 +154,7 @@ const Header: React.FC = () => {
                   onClick={(e) => handleScroll(e, "free-ai-book")}
                   className="text-gray-700 hover:text-indigo-600 transition font-medium"
                 >
-                  Free AI Book
+                   AI Book
                 </a>
                 <a
                   href="#mission-million-ai-coders"
@@ -234,7 +234,7 @@ const Header: React.FC = () => {
                       onClick={(e) => handleScroll(e, "free-ai-book")}
                       className="block text-gray-700 hover:text-indigo-600 transition"
                     >
-                      Free AI Book
+                      AI Book
                     </a>
                   </li>
                   <li className="p-4">

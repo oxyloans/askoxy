@@ -68,7 +68,7 @@ export default function HeroSection() {
       id: "s11",
       src: s14,
       route: "/freeaibook",
-      title: "Free AI Book",
+      title: "AI Book",
     },
     {
       id: "s12",

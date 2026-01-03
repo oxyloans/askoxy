@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import aiImage from "../assets/img/book.png";
+import aiImage from "../assets/img/gt.png";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import { message, Modal } from "antd";
@@ -36,7 +36,7 @@ const FreeAiBook: React.FC = () => {
         );
 
         if (response.status === 200) {
-          message.success("Welcome to Free AI Book");
+          message.success("Welcome to AI Book");
         }
       } catch (error) {
         console.error(error);
@@ -61,7 +61,7 @@ const FreeAiBook: React.FC = () => {
       {/* ===== Free AI Book Heading ===== */}
       <div className="text-center mb-6">
         <h3 className="text-3xl md:text-4xl font-extrabold text-purple-900">
-          Free AI Book
+          AI Book
         </h3>
         <div className="w-24 h-1.5 mt-4 mx-auto rounded-full bg-gradient-to-r from-purple-300 via-indigo-300 to-pink-300" />
       </div>
@@ -82,11 +82,11 @@ const FreeAiBook: React.FC = () => {
 
         <div className="md:w-1/2 p-6 flex flex-col justify-center">
           <p className="text-gray-700 mb-4 text-justify">
-            Step into the AI Universe: Discover, learn, and create with today’s
-            most powerful AI tools. From your very first prompt to shaping
-            global impact, explore how AI is transforming industries, generating
-            text, images, music, and code, and powering innovations like ChatGPT
-            and MidJourney.
+            Enter the AI & GenAI Universe is a beginner-friendly yet powerful
+            guide for anyone who wants to understand and use Artificial
+            Intelligence in real life. With 65 practical chapters, the book
+            explains AI, GenAI, Prompt Engineering, LLMs, AI Agents, and future
+            AI careers in a simple and easy way.
           </p>
           <p className="text-gray-700 mb-6 text-justify">
             Our Mission: To empower one million learners with AI skills and

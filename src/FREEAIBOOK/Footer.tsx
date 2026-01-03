@@ -72,7 +72,7 @@ const Footer: React.FC = () => {
                 href="/freeaibook"
                 className="text-gray-600 hover:text-indigo-600 transition-colors"
               >
-                Free AI Book
+                AI Book
               </a>
             </li>
             <li>

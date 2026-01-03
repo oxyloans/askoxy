@@ -1,25 +1,44 @@
-import React, { useState, useEffect } from "react";
-import { redirect, useNavigate } from "react-router-dom";
-import Header1 from "../components/Header";
-import Footer from "../components/Footer";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchCampaigns, Campaign } from "../components/servicesapi";
-import { PlusIcon } from "lucide-react";
-import { message } from "antd";
+import { message, Empty, Button, Tooltip } from "antd";
+import {
+  FileTextOutlined,
+  UserOutlined,
+  PlusOutlined,
+  ExportOutlined,
+  ShareAltOutlined,
+  CopyOutlined,
+  StarOutlined,
+} from "@ant-design/icons";
+
+const Header1 = React.lazy(() => import("../components/Header"));
+const Footer = React.lazy(() => import("../components/Footer"));
+
+type TabKey = "ALL" | "MY" | "ADD";
 
 const BlogsPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [activeTab, setActiveTab] = useState<TabKey>("ALL");
+
   const navigate = useNavigate();
-  const userId = localStorage.getItem("userId");
+  const prevTabRef = useRef<TabKey>("ALL");
+
+  const userId =
+    localStorage.getItem("userId") ||
+    localStorage.getItem("customerId") ||
+    localStorage.getItem("user_id") ||
+    "";
 
   useEffect(() => {
     const loadCampaigns = async () => {
       try {
-        const campaigns = await fetchCampaigns();
-        const campaignsWithIds = campaigns.map((campaign) => ({
-          ...campaign,
-          id: campaign.campaignId,
+        const list = await fetchCampaigns();
+        const normalized = (list as any[]).map((c: any) => ({
+          ...c,
+          id: c.campaignId,
         }));
-        setCampaigns(campaignsWithIds);
+        setCampaigns(normalized as any);
       } catch (err) {
         console.error("Error loading campaigns:", err);
       }
@@ -28,170 +47,424 @@ const BlogsPage: React.FC = () => {
   }, []);
 
   const slugify = (text: string) =>
-    text
+    (text || "")
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 50);
+      .slice(0, 60);
 
-  const handleCampaignClick = (campaign: Campaign) => {
+  const handleCampaignClick = (campaign: any) => {
+    const url = !userId
+      ? `/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`
+      : `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`;
+    navigate(url);
+  };
+
+  const handleAddBlog = () => {
     if (!userId) {
-      navigate(
-        `/blog/${campaign.campaignId.slice(-4)}/${slugify(
-          campaign.campaignType
-        )}`
-      );
+      message.info("Please login to add your blog");
+      sessionStorage.setItem("redirectPath", "/main/addblogs");
+      navigate("/whatsapplogin");
     } else {
-      navigate(
-        `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
-          campaign.campaignType
-        )}`
-      );
+      navigate("/main/addblogs");
     }
   };
 
   const isImage = (url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
   const isVideo = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
 
-  const blogCampaigns = campaigns.filter(
-    (campaign) =>
-      campaign.campaignStatus !== false && campaign.campainInputType === "BLOG"
-  );
+  const blogCampaigns = useMemo(() => {
+    return (campaigns as any[]).filter(
+      (c: any) => c.campaignStatus !== false && c.campainInputType === "BLOG"
+    );
+  }, [campaigns]);
 
-  const handleAddblog = () => {
-    if (!userId) {
-      message.info("please login to add your blog");
-      navigate("/whatsapplogin");
-      sessionStorage.setItem("redirectPath", "/main/addblogs");
+  const myBlogs = useMemo(() => {
+    return blogCampaigns.filter(
+      (c: any) => (c.createdPersonId || "").toString() === (userId || "")
+    );
+  }, [blogCampaigns, userId]);
+
+  const visibleBlogs = useMemo(() => {
+    if (activeTab === "MY") return myBlogs;
+    return blogCampaigns;
+  }, [activeTab, blogCampaigns, myBlogs]);
+
+  // ✅ Tabs like screenshot: Add Blog is action-tab
+  const onTabClick = (tab: TabKey) => {
+    if (tab === "ADD") {
+      const backTo = prevTabRef.current || "ALL";
+      setActiveTab("ADD");
+      handleAddBlog();
+      setTimeout(() => setActiveTab(backTo), 150);
+      return;
     }
-    else{
-      navigate("/main/addblogs");
+    prevTabRef.current = tab;
+    setActiveTab(tab);
+  };
+
+  // ✅ 4 Color buttons actions
+  const handleShare = (campaign: any) => {
+    const shareUrl = window.location.origin + `/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`;
+    if (navigator.share) {
+      navigator.share({ title: campaign.campaignType, url: shareUrl }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareUrl).then(() => message.success("Link copied"));
     }
+  };
+
+  const handleCopyLink = (campaign: any) => {
+    const shareUrl = window.location.origin + `/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`;
+    navigator.clipboard.writeText(shareUrl).then(() => message.success("Link copied"));
+  };
+
+  const handleSave = () => {
+    message.success("Saved (demo)");
+  };
+
+  const BlogsGrid = ({ list }: { list: any[] }) => {
+    if (!list || list.length === 0) {
+      return (
+        <div className="py-10">
+          <Empty description={activeTab === "MY" ? "No blogs in My Blogs." : "No blogs found."} />
+        </div>
+      );
+    }
+
+    return (
+      <div className="blogsGridWrap">
+        <div className="blogsGrid">
+          {list.map((campaign) => {
+            const mediaUrl = campaign.imageUrls?.[0]?.imageUrl;
+            const showImage = !!mediaUrl && isImage(mediaUrl);
+            const showVideo = !!mediaUrl && isVideo(mediaUrl);
+
+            return (
+              <div key={campaign.campaignId} className="blogCard">
+                <div className="blogMedia" onClick={() => handleCampaignClick(campaign)}>
+                  {showImage ? (
+                    <img
+                      src={mediaUrl}
+                      alt={campaign.campaignType}
+                      loading="lazy"
+                      className="blogMediaImg"
+                    />
+                  ) : showVideo ? (
+                    <video
+                      src={mediaUrl}
+                      className="blogMediaImg"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : (
+                    <div className="blogMediaFallback">No media</div>
+                  )}
+                </div>
+
+                <div className="blogBody">
+                  <h3 className="blogTitle" onClick={() => handleCampaignClick(campaign)}>
+                    {campaign.campaignType}
+                  </h3>
+
+                  <p className="blogDesc" onClick={() => handleCampaignClick(campaign)}>
+                    {campaign.campaignDescription}
+                  </p>
+
+                  {/* ✅ 4 colorful buttons like screenshot */}
+                  <div className="blogActions">
+                    <Button
+                      className="btnOpen"
+                      icon={<ExportOutlined />}
+                      onClick={() => handleCampaignClick(campaign)}
+                    >
+                      Open
+                    </Button>
+
+                    <Tooltip title="Share">
+                      <Button
+                        className="btnShare"
+                        shape="circle"
+                        icon={<ShareAltOutlined />}
+                        onClick={() => handleShare(campaign)}
+                      />
+                    </Tooltip>
+                  </div>
+
+                  {activeTab === "ALL" && (
+                    <div className="blogAuthor">Author: {campaign.campaignTypeAddBy || "-"}</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="min-h-screen">
-      <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
+      <div className="mb-3 p-2">
+        {!userId ? (
+          <Suspense fallback={<div className="p-2" />}>
+            <Header1 />
+          </Suspense>
+        ) : null}
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-4">
-          <div className="w-full rounded-xl bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-purple-100 shadow-sm py-3 px-4 md:px-6">
-            <div className="max-w-8xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-              {/* Text Section */}
-              <div className="text-center sm:text-left">
-                <h4 className="text-lg md:text-xl font-extrabold text-purple-800 tracking-tight drop-shadow-sm">
-                  Write Your Blog & Earn Rewards!
-                </h4>
-                <p className="text-sm md:text-base text-purple-600 mt-0.5">
-                  Share your thoughts with the world — Start earning
-                  <span className="font-semibold text-purple-700">
-                    {" "}
-                    BMVcoins
-                  </span>
-                  ! 🚀
-                </p>
+          {/* ✅ Single top section (simple text + tabs like screenshot) */}
+          <div className="topSection">
+            <div className="topHeading">
+              <div className="h1">Write Your Blog & Earn Rewards!</div>
+              <div className="h2">
+               Share your thoughts with the world — <span className="coin">Start earning BMVcoins! 🚀</span>.
               </div>
+            </div>
 
-              {/* Button */}
+            {/* ✅ Tabs row like image (left aligned) */}
+            <div className="tabRow" role="tablist" aria-label="Blog Tabs">
               <button
-                onClick={handleAddblog}
-                className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 
-        hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 
-        text-white px-5 py-2.5 rounded-full 
-        text-sm font-semibold transition-all duration-300 
-        flex items-center gap-2 
-        hover:scale-[1.05] active:scale-[0.97]
-        shadow-md hover:shadow-lg whitespace-nowrap"
+                className={`tabItem ${activeTab === "ALL" ? "active" : ""}`}
+                onClick={() => onTabClick("ALL")}
+                type="button"
               >
-                <PlusIcon className="w-4 h-4" />
-                Add Blog Post
+                <FileTextOutlined />
+                <span>All Blogs</span>
+              </button>
+
+              <button
+                className={`tabItem ${activeTab === "MY" ? "active" : ""}`}
+                onClick={() => onTabClick("MY")}
+                type="button"
+              >
+                <UserOutlined />
+                <span>My Blogs</span>
+              </button>
+
+              <button
+                className={`tabItem ${activeTab === "ADD" ? "active" : ""}`}
+                onClick={() => onTabClick("ADD")}
+                type="button"
+              >
+                <PlusOutlined />
+                <span>Add Blog</span>
               </button>
             </div>
           </div>
 
-          {blogCampaigns.length > 0 ? (
-            <div className="min-h-screen bg-gray-50 p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                  {blogCampaigns.map((campaign) => {
-                    const mediaUrl = campaign.imageUrls?.[0]?.imageUrl;
-                    const showImage = mediaUrl && isImage(mediaUrl);
-                    const showVideo = mediaUrl && isVideo(mediaUrl);
+          <div className="mt-4">
+            <BlogsGrid list={visibleBlogs} />
+          </div>
 
-                    return (
-                      <div
-                        key={campaign.campaignId}
-                        className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-100 hover:animate-pulse"
-                        onClick={() => handleCampaignClick(campaign)}
-                      >
-                        {/* Media Section - Now at the top */}
-                        <div className="relative h-48 overflow-hidden bg-gray-50">
-                          {showImage ? (
-                            <img
-                              src={mediaUrl}
-                              alt={campaign.campaignType}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              style={{ objectPosition: "center" }}
-                            />
-                          ) : showVideo ? (
-                            <video
-                              src={mediaUrl}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                              style={{ objectPosition: "center" }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-sm text-gray-400 bg-gradient-to-br from-gray-100 to-gray-200">
-                              <div className="text-center">
-                                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                                  <svg
-                                    className="w-6 h-6 text-gray-500"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                                  </svg>
-                                </div>
-                                <span>No media available</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+          <Suspense fallback={<div className="py-8" />}>
+            <Footer />
+          </Suspense>
 
-                        {/* Content Section - Now below the image */}
-                        <div className="p-6 flex-grow flex flex-col">
-                          {/* Title */}
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-4 text-center">
-                            {campaign.campaignType}
-                          </h3>
+          {/* ✅ Styles to match screenshot-like tabs + colorful buttons */}
+          <style>{`
+            .topSection{
+              background: #fff;
+              border: 1px solid #EEF2FF;
+              border-radius: 16px;
+              padding: 14px;
+              box-shadow: 0 10px 24px rgba(2,6,23,.05);
+              display:flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+            .topHeading .h1{
+              font-size: 28px;
+              font-weight: 900;
+              color:#0F172A;
+              line-height: 1.1;
+            }
+            .topHeading .h2{
+              margin-top: 6px;
+              font-size: 14px;
+              color:#475569;
+              font-weight: 600;
+            }
+            .coin{ color:#6D28D9; font-weight: 900; }
 
-                          <p className="text-gray-600 text-center leading-relaxed group-hover:text-gray-800 transition-colors line-clamp-3 flex-grow">
-                            {campaign.campaignDescription}
-                          </p>
+            /* Tabs like image: active purple pill, others simple */
+            .tabRow{
+              display:flex;
+              align-items:center;
+              justify-content:flex-start;
+              gap: 10px;
+              overflow-x:auto;
+              -webkit-overflow-scrolling: touch;
+              padding-bottom: 2px;
+            }
+            .tabRow::-webkit-scrollbar{ height: 6px; }
+            .tabRow::-webkit-scrollbar-thumb{ background:#E5E7EB; border-radius:999px; }
 
-                          {/* Read more link */}
-                          <div className="mt-4 text-center">
-                            <span className="text-sm text-purple-600 font-medium group-hover:text-purple-700 transition-colors">
-                              Read more →
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-center text-gray-500 mt-6">
-              No blogs are available.
-            </p>
-          )}
-          <Footer />
+            .tabItem{
+              border: 1px solid transparent;
+              background: transparent;
+              padding: 9px 12px;
+              border-radius: 10px;
+              font-weight: 800;
+              color:#0F172A;
+              cursor:pointer;
+              display:flex;
+              align-items:center;
+              gap: 8px;
+              white-space: nowrap;
+              transition: all .16s ease;
+            }
+            .tabItem:hover{
+              background:#F8FAFC;
+              border-color:#E2E8F0;
+            }
+            .tabItem.active{
+              background:#7C3AED; /* purple */
+              color:#fff;
+              border-color:#7C3AED;
+              box-shadow: 0 10px 20px rgba(124,58,237,.22);
+            }
+            .tabItem :where(svg){
+              font-size: 16px;
+            }
+
+            /* Grid */
+            .blogsGridWrap{
+              background:#F8FAFC;
+              border: 1px solid #EEF2FF;
+              border-radius: 16px;
+              padding: 12px;
+            }
+            .blogsGrid{
+              display:grid;
+              grid-template-columns: 1fr;
+              gap: 14px;
+            }
+
+            /* Card */
+            .blogCard{
+              background:#fff;
+              border: 1px solid #F1F5F9;
+              border-radius: 16px;
+              overflow:hidden;
+              display:flex;
+              flex-direction:column;
+              box-shadow: 0 10px 24px rgba(2,6,23,.06);
+            }
+            .blogMedia{
+              height: 170px;
+              background:#F1F5F9;
+              overflow:hidden;
+              cursor:pointer;
+            }
+            .blogMediaImg{
+              width:100%;
+              height:100%;
+              object-fit:cover;
+              transition: transform .2s ease;
+            }
+            .blogMedia:hover .blogMediaImg{ transform: scale(1.03); }
+            .blogMediaFallback{
+              height:100%;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              color:#94A3B8;
+              font-weight:800;
+            }
+            .blogBody{
+              padding: 14px;
+              display:flex;
+              flex-direction:column;
+              gap: 10px;
+              flex: 1;
+            }
+            .blogTitle{
+              margin:0;
+              font-size: 18px;
+              font-weight: 900;
+              color:#0F172A;
+              line-height: 1.2;
+              cursor:pointer;
+              display:-webkit-box;
+              -webkit-line-clamp:2;
+              -webkit-box-orient:vertical;
+              overflow:hidden;
+            }
+            .blogDesc{
+              margin:0;
+              color:#475569;
+              line-height: 1.5;
+              cursor:pointer;
+              display:-webkit-box;
+              -webkit-line-clamp:3;
+              -webkit-box-orient:vertical;
+              overflow:hidden;
+              flex:1;
+            }
+
+            /* 4 colorful buttons */
+            .blogActions{
+              display:flex;
+              align-items:center;
+              gap: 10px;
+              margin-top: 2px;
+            }
+            .btnOpen{
+              border-radius: 999px !important;
+              font-weight: 900 !important;
+              background:#7C3AED !important;
+              border-color:#7C3AED !important;
+              color:#fff !important;
+              box-shadow: 0 10px 18px rgba(124,58,237,.22);
+            }
+            .btnShare{
+              border-radius: 999px !important;
+              background:#3B82F6 !important; /* blue */
+              border-color:#3B82F6 !important;
+              color:#fff !important;
+            }
+            .btnCopy{
+              border-radius: 999px !important;
+              background:#22C55E !important; /* green */
+              border-color:#22C55E !important;
+              color:#fff !important;
+            }
+            .btnSave{
+              border-radius: 999px !important;
+              background:#F59E0B !important; /* orange */
+              border-color:#F59E0B !important;
+              color:#fff !important;
+            }
+
+            .blogAuthor{
+              margin-top: 4px;
+              font-size: 12px;
+              font-weight: 800;
+              color:#64748B;
+            }
+
+            @media (min-width: 640px){
+              .blogsGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+              .blogMedia{ height: 190px; }
+            }
+            @media (min-width: 1280px){
+              .blogsGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+              .blogMedia{ height: 200px; }
+            }
+
+            @media (max-width: 767px){
+              .topHeading .h1{ font-size: 24px; }
+              .topHeading .h2{ font-size: 13px; }
+              .blogMedia{ height: 165px; }
+              .tabItem{ padding: 8px 11px; }
+            }
+          `}</style>
         </div>
       </div>
     </div>
