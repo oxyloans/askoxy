@@ -7,6 +7,8 @@ import {
   IconFilter,
 } from "@tabler/icons-react";
 import BASE_URL from "../Config";
+import axios from "axios";
+import { Modal, Radio, Input, Select, Spin, message } from "antd";
 
 interface StoreAgent {
   agentId: string;
@@ -24,7 +26,90 @@ interface AiStore {
   status: string | null;
   storeImageUrl?: string | null;
   agentDetailsOnAdUser?: StoreAgent[];
+  isCompanyStore?: boolean;
+  companyName?: string | null;
 }
+
+/** ✅ company-contact response (as per your backend examples) */
+type CompanyContactResponse = {
+  id?: string | null;
+  name?: string | null;
+  companyName?: string | null;
+  companyEmailId?: string | null;
+  userId?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  isEmployee?: boolean | null;
+  otp?: string | null;
+  salt?: string | null;
+  emailOtpSession?: string | null;
+  personRole?: string | null;
+  message?: string | null;
+  status?: boolean | null;
+};
+
+/** ✅ safe pick helper (matches your profile flow) */
+const pick = (obj: any, ...keys: string[]) => {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+  }
+  return "";
+};
+
+const getAuthHeaders = () => {
+  const accessToken = localStorage.getItem("accessToken");
+  return {
+    Authorization: accessToken ? `Bearer ${accessToken}` : "",
+  };
+};
+
+const safeFullName = (first?: string, last?: string) => {
+  const f = (first || "").trim();
+  const l = (last || "").trim();
+  const full = `${f} ${l}`.trim();
+  return full || f || "User";
+};
+
+const PERSON_ROLES = [
+  "Software Engineer / Developer",
+  "Frontend Developer",
+  "Backend Developer",
+  "Full-Stack Developer",
+  "Mobile App Developer",
+  "DevOps Engineer",
+  "Cloud Engineer",
+  "System Administrator",
+  "Network Engineer",
+  "Data Analyst",
+  "Data Scientist",
+  "Machine Learning Engineer",
+  "AI Engineer",
+  "Business Intelligence (BI) Developer",
+  "Cybersecurity Analyst",
+  "Ethical Hacker / Penetration Tester",
+  "QA Engineer / Software Tester",
+  "Automation Test Engineer",
+  "Project Manager",
+  "Product Manager",
+  "Scrum Master",
+  "Business Analyst",
+  "UI/UX Designer",
+  "Product Designer",
+  "Graphic Designer",
+  "IT Support / Helpdesk",
+  "Technical Support Engineer",
+  "Pre-Sales Engineer",
+  "IT Sales / Account Manager",
+  "Tech Lead",
+  "Engineering Manager",
+  "Solution Architect",
+  "CTO (Chief Technology Officer)",
+  "CIO (Chief Information Officer)",
+  "Other",
+];
+
+type StoreTab = "ALL" | "COMPANY";
 
 const AllAIStores: React.FC = () => {
   const [stores, setStores] = useState<AiStore[]>([]);
@@ -34,11 +119,52 @@ const AllAIStores: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [shareSuccess, setShareSuccess] = useState<string | null>(null);
 
+  // ✅ NEW: Tabs for store listing page
+  const [activeStoreTab, setActiveStoreTab] = useState<StoreTab>("ALL");
+
   const navigate = useNavigate();
 
   const baseAiStoreDomain = "https://www.askoxy.ai";
   const aiStorePrefix = `${baseAiStoreDomain}/ai-store/`;
 
+  /** ---------------------------------------------
+   * ✅ NEW: Profile + Company Gate States
+   * --------------------------------------------- */
+  const [customerId, setCustomerId] = useState<string>("");
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+
+  const profileName = useMemo(
+    () => safeFullName(firstName, lastName),
+    [firstName, lastName]
+  );
+
+  // company contact check
+  const [companyChecking, setCompanyChecking] = useState(false);
+  const [companyContact, setCompanyContact] =
+    useState<CompanyContactResponse | null>(null);
+
+  // gate completion
+  const [companyGateDone, setCompanyGateDone] = useState(false);
+
+  // otp modal
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [salt, setSalt] = useState("");
+  const [emailOtpSession, setEmailOtpSession] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  // if user clicks store before completing gate → hold navigation
+  const [pendingStoreToOpen, setPendingStoreToOpen] = useState<AiStore | null>(
+    null
+  );
+
+  /** ---------------------------------------------
+   * Existing logic: slugify + public URL
+   * --------------------------------------------- */
   const slugify = useCallback(
     (text?: string | null): string =>
       text
@@ -63,6 +189,9 @@ const AllAIStores: React.FC = () => {
 
   const accessToken = localStorage.getItem("accessToken");
 
+  /** ---------------------------------------------
+   * ✅ Fetch stores (your existing function)
+   * --------------------------------------------- */
   const fetchStores = async () => {
     setLoading(true);
     setError(null);
@@ -106,26 +235,167 @@ const AllAIStores: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ UPDATED: filter by (tab + search)
   useEffect(() => {
+    const base =
+      activeStoreTab === "COMPANY"
+        ? stores.filter((s) => !!s?.isCompanyStore)
+        : stores;
+
     if (!searchQuery.trim()) {
-      setFilteredStores(stores);
+      setFilteredStores(base);
       return;
     }
+
     const query = searchQuery.toLowerCase();
     setFilteredStores(
-      stores.filter(
+      base.filter(
         (store) =>
           store.storeName?.toLowerCase().includes(query) ||
           store.description?.toLowerCase().includes(query) ||
           store.storeCreatedBy?.toLowerCase().includes(query)
       )
     );
-  }, [searchQuery, stores]);
+  }, [searchQuery, stores, activeStoreTab]);
+
+  /** ---------------------------------------------
+   * ✅ NEW: Load customerId from storage (best effort)
+   * --------------------------------------------- */
+  useEffect(() => {
+    const id =
+      localStorage.getItem("customerId") ||
+      localStorage.getItem("userId") ||
+      localStorage.getItem("user_id") ||
+      "";
+    if (id) setCustomerId(id);
+  }, []);
+
+  /** ---------------------------------------------
+   * ✅ NEW: Fetch Profile (name + email) from profile API
+   * --------------------------------------------- */
+  useEffect(() => {
+    const run = async () => {
+      if (!customerId) return;
+
+      try {
+        setProfileLoading(true);
+
+        const response = await axios.get(
+          `${BASE_URL}/user-service/customerProfileDetails`,
+          {
+            params: { customerId },
+            headers: { ...getAuthHeaders() },
+          }
+        );
+
+        const data = response?.data || {};
+
+        const profileData = {
+          userFirstName: pick(data, "firstName", "userFirstName"),
+          userLastName: pick(data, "lastName", "userLastName"),
+          customerEmail: pick(data, "email", "customerEmail"),
+        };
+        setFirstName(profileData.userFirstName);
+        setLastName(profileData.userLastName);
+        setEmail(profileData.customerEmail);
+      } catch (e: any) {
+        // ignore
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerId]);
+
+  /** ---------------------------------------------
+   * ✅ Step-1 Check Company Contact
+   * --------------------------------------------- */
+  const checkCompanyContact = useCallback(async () => {
+    if (!customerId) return;
+
+    setCompanyChecking(true);
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/get-company-contact`,
+        {
+          params: { userId: customerId },
+          headers: { ...getAuthHeaders() },
+        }
+      );
+
+      const data: CompanyContactResponse = res?.data || {};
+      setCompanyContact(data);
+      setCompanyGateDone(true);
+      setOtpModalOpen(false);
+      return true;
+    } catch (err: any) {
+      const status = err?.response?.status;
+      return false;
+    } finally {
+      setCompanyChecking(false);
+    }
+  }, [customerId]);
+
+  useEffect(() => {
+    if (!customerId) return;
+    checkCompanyContact();
+  }, [customerId, checkCompanyContact]);
+
+  const saveAsNonEmployee = async () => {
+    console.log("saveAsNonEmployee called");
+    if (!customerId) return;
+    if (sendingOtp) return;
+
+    setSendingOtp(true);
+    try {
+      const payload = {
+        userId: customerId,
+        isEmployee: false,
+        name: profileName,
+      };
+
+      const res = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/add-company-info`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+        }
+      );
+
+      message.success(res?.data?.message || "Saved successfully");
+      setCompanyGateDone(true);
+
+      await checkCompanyContact();
+
+      if (pendingStoreToOpen) {
+        const st = pendingStoreToOpen;
+        setPendingStoreToOpen(null);
+        const slug = slugify(st.storeName);
+        navigate(`/ai-store/${slug}`, { state: { storeId: st.storeId } });
+      }
+    } catch (e: any) {
+      message.error(
+        e?.response?.data?.message || "Failed to save. Please try again."
+      );
+    } finally {
+      setSendingOtp(false);
+    }
+  };
 
   const handleOpenDetails = useCallback(
-    (store: AiStore) => {
+    async (store: AiStore) => {
       const slug = slugify(store.storeName);
-      navigate(`/ai-store/${slug}`, { state: { storeId: store.storeId } });
+
+      // ✅ Company verification is now handled *inside* the AI Store page via a button.
+      // So from listing page we always open the store (no login / gate here).
+      navigate(`/ai-store/${slug}`, {
+        state: { storeId: store.storeId, companyName: store.companyName },
+      });
     },
     [navigate, slugify]
   );
@@ -175,78 +445,130 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     [buildPublicStoreUrl]
   );
 
+  const tabClass = (active: boolean) =>
+    [
+      "whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+      active
+        ? "border-violet-700 bg-violet-700 text-white"
+        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+    ].join(" ");
+
+  const headerTitle =
+    activeStoreTab === "COMPANY" ? "Company AI Stores" : "All AI Stores";
+  const headerDesc =
+    activeStoreTab === "COMPANY"
+      ? "Explore company-created AI Stores (Jobs + Agents)."
+      : "Explore curated collections of AI Agents created by our community.";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50">
+      {/* ✅ Gate loader (small) */}
+      {(profileLoading || companyChecking) && (
+        <div className="mx-auto max-w-[1400px] px-4 pt-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+            <Spin size="small" />
+            <span>
+              Verifying profile & company info…{" "}
+              <span className="text-slate-400">
+                (required for opening AI Stores)
+              </span>
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ✅ Slightly wider on big screens */}
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         {/* Header */}
         <div className="mb-3 sm:mb-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            {/* Left: Title + Desc + Tabs */}
+            <div className="min-w-0">
               <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
-                All AI Stores
+                {headerTitle}
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-                Explore curated collections of AI Agents created by our
-                community.
+                {headerDesc}
               </p>
+
+              {/* ✅ Tabs (mobile scroll) */}
+              <div className="mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <button
+                  type="button"
+                  className={tabClass(activeStoreTab === "ALL")}
+                  onClick={() => setActiveStoreTab("ALL")}
+                >
+                  All AI Stores
+                </button>
+                <button
+                  type="button"
+                  className={tabClass(activeStoreTab === "COMPANY")}
+                  onClick={() => setActiveStoreTab("COMPANY")}
+                >
+                  Company AI Stores
+                </button>
+
+                {stores.length > 0 && (
+                  <div className="ml-2 inline-flex items-center gap-2 rounded-full bg-violet-100 px-4 py-2 text-sm font-medium text-violet-700">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-violet-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
+                    </span>
+                    {filteredStores.length}{" "}
+                    {filteredStores.length === 1 ? "Store" : "Stores"}
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Right: Search (responsive) */}
             {stores.length > 0 && (
-              <div className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-4 py-2 text-sm font-medium text-violet-700 sm:px-6 sm:text-base">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-violet-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
-                </span>
-                {stores.length} {stores.length === 1 ? "Store" : "Stores"}{" "}
-                Available
+              <div className="w-full sm:w-[420px]">
+                <div className="relative">
+                  <IconSearch className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder={
+                      activeStoreTab === "COMPANY"
+                        ? "Search company stores..."
+                        : "Search AI stores..."
+                    }
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm shadow-sm transition-all placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 sm:text-base"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      aria-label="Clear search"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {searchQuery && (
+                  <p className="mt-3 text-sm text-slate-600">
+                    Found {filteredStores.length}{" "}
+                    {filteredStores.length === 1 ? "store" : "stores"}
+                  </p>
+                )}
               </div>
             )}
           </div>
-
-          {/* Search */}
-          {stores.length > 0 && (
-            <div className="mt-5 sm:mt-7">
-              <div className="relative max-w-xl">
-                <IconSearch className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 sm:left-4" />
-                <input
-                  type="text"
-                  placeholder="Search AI Stores by name, description, or creator..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm shadow-sm transition-all placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 sm:pl-12 sm:text-base"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                    aria-label="Clear search"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </div>
-
-              {searchQuery && (
-                <p className="mt-3 text-sm text-slate-600">
-                  Found {filteredStores.length}{" "}
-                  {filteredStores.length === 1 ? "store" : "stores"}
-                </p>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Loading */}
@@ -292,7 +614,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
           </div>
         )}
 
-        {/* ✅ GRID: better width + spacing */}
+        {/* ✅ GRID */}
         {!loading && !error && filteredStores.length > 0 && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
             {filteredStores.map((store) => (
@@ -322,13 +644,11 @@ const StoreCard: React.FC<{
       onClick={() => onOpenDetails(store)}
       className="group relative flex cursor-pointer flex-col rounded-3xl border border-slate-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-100 active:scale-[0.99]"
     >
-      {/* ✅ Image inside its own rounded box (ALL 4 corners) */}
       <DynamicBanner
         storeName={store.storeName}
         storeImageUrl={store.storeImageUrl}
       />
 
-      {/* Content */}
       <div className="flex flex-1 flex-col px-2 pb-2 pt-3">
         <h3 className="line-clamp-2 text-[15px] font-bold text-slate-900 transition-colors group-hover:text-violet-600">
           {store.storeName}
@@ -340,10 +660,8 @@ const StoreCard: React.FC<{
         </p>
       </div>
 
-      {/* Footer */}
       <div className=" px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          {/* ✅ Agent Count (same size as share button) */}
           {store.agentDetailsOnAdUser?.length ? (
             <div className="inline-flex h-10 min-w-[96px] items-center justify-center gap-1 rounded-xl bg-violet-100 px-3 text-xs font-semibold text-violet-700">
               <IconSparkles className="h-4 w-4" />
@@ -353,14 +671,12 @@ const StoreCard: React.FC<{
               </span>
             </div>
           ) : (
-            // ✅ keeps layout balanced even when count is not available
             <div className="h-10 min-w-[96px]" />
           )}
 
-          {/* ✅ Share Button (same height + same width) */}
           <button
             type="button"
-            onClick={(e) => onShare(store, e)} // ✅ use your prop function
+            onClick={(e) => onShare(store, e)}
             className="inline-flex h-10 w-[96px] items-center justify-center rounded-xl bg-white shadow-sm transition-all hover:scale-105 hover:bg-violet-50 hover:shadow-md active:scale-95"
             aria-label="Share AI Store"
           >
@@ -385,7 +701,6 @@ const StoreCard: React.FC<{
         </div>
       </div>
 
-      {/* CTA */}
       <div className="px-2 pb-2 pt-3">
         <button
           type="button"
@@ -441,14 +756,13 @@ const DynamicBanner: React.FC<{
   const showImage = Boolean(isValidImage && !imgError);
 
   return (
-    // ✅ rounded on ALL 4 corners + full image visible
     <div className="relative overflow-hidden rounded-2xl bg-slate-100">
       <div className="relative h-40 w-full sm:h-44">
         {showImage ? (
           <img
             src={storeImageUrl as string}
             alt={storeName}
-            className="h-full w-full object-contain bg-white" // ✅ FULL image (no crop)
+            className="h-full w-full object-contain bg-white"
             onError={() => setImgError(true)}
             loading="lazy"
           />
@@ -472,7 +786,6 @@ const DynamicBanner: React.FC<{
         )}
       </div>
 
-      {/* badge */}
       <div className="absolute right-3 top-3 rounded-full bg-black/20 px-3 py-1 backdrop-blur-sm">
         <span className="text-xs font-bold text-white">Featured</span>
       </div>

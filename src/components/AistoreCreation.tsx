@@ -42,7 +42,6 @@ interface Agent {
   imageUrl: string | null;
   agentStatus: "ACTIVE" | "INACTIVE";
   agentCreatorName: string | null;
-  // inactiveType: string;
 }
 
 interface Store {
@@ -54,6 +53,8 @@ interface Store {
   aiStoreStatus: string;
   agentDetailsOnAdUser: Agent[];
   inactiveType: string;
+  isCompanyStore?: boolean;
+  companyName?: string | null;
 }
 
 const AgentStoreManager: React.FC = () => {
@@ -80,7 +81,10 @@ const AgentStoreManager: React.FC = () => {
     storeName: string;
     description: string;
     storeImageUrl: string;
+    isCompanyStore: boolean;
+    companyName?: string; // ✅ NEW
   }>();
+
   const accessToken: string = localStorage.getItem("token") || "";
 
   const getAuthHeader = (): { Authorization: string } => ({
@@ -123,11 +127,12 @@ const AgentStoreManager: React.FC = () => {
       fallbackCopy(text);
     }
   };
+
   const [isBulkUploadModal, setIsBulkUploadModal] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [uploadForm] = Form.useForm();
 
-  const userId = localStorage.getItem("userId") || "";
+  const userId = localStorage.getItem("userId");
 
   // AntD Upload -> Form normalize
   const normFile = (e: any) => {
@@ -203,24 +208,53 @@ const AgentStoreManager: React.FC = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
+
       const result: any = await res.json();
 
-      // Handle both array and single object response
-      const data: any[] = Array.isArray(result.reverse())
+      // ✅ Handle both array and {data: []} response safely (NO reverse here)
+      const data: any[] = Array.isArray(result)
         ? result
-        : result.data
-        ? Array.isArray(result.data)
-          ? result.data
-          : [result]
+        : Array.isArray(result?.data)
+        ? result.data
+        : result?.data
+        ? [result.data]
         : [result];
 
       const validStores: Store[] = data.filter(
-        (store: any) => store && store.storeId && store.userId === userId
+        (store: any) => store && store.storeId
+          // && store.userId === userId
       );
-      setStoreData(validStores);
+
+      // ✅ Sort: latest updated/created store first
+      const getSortTime = (s: any) => {
+        const val =
+          s?.updatedAt ||
+          s?.updatedDate ||
+          s?.lastUpdatedAt ||
+          s?.modifiedAt ||
+          s?.createdAt ||
+          s?.createdDate;
+
+        const t = val ? new Date(val).getTime() : 0;
+        return Number.isFinite(t) ? t : 0;
+      };
+
+      const sortedStores = [...validStores].sort((a: any, b: any) => {
+        const tb = getSortTime(b);
+        const ta = getSortTime(a);
+
+        // first priority: latest timestamp
+        if (tb !== ta) return tb - ta;
+
+        // fallback: keep order as-is
+        return 0;
+      });
+
+      setStoreData(sortedStores);
+
       // 🔥 keep modal store in sync after reload
       if (selectedStore) {
-        const updatedStore: Store | undefined = validStores.find(
+        const updatedStore: Store | undefined = sortedStores.find(
           (s: Store) => s.storeId === selectedStore.storeId
         );
         if (updatedStore) {
@@ -234,13 +268,13 @@ const AgentStoreManager: React.FC = () => {
       setLoading(false);
     }
   };
+
   // FIXED: Validation first → then confirmation
   const handleSaveStoreClick = async (): Promise<void> => {
     try {
       await form.validateFields(); // This will trigger validation
       setIsStoreConfirm(true); // Only open confirmation if valid
     } catch (errorInfo) {
-      // Validation failed → do nothing, errors already shown
       console.log("Validation Failed:", errorInfo);
     }
   };
@@ -271,12 +305,11 @@ const AgentStoreManager: React.FC = () => {
 
       const mapped: Agent[] = rawList.map((item: any) => ({
         agentId: item.agentId || item.assistantId,
-        assistantId: item.assistantId || item.agentId, // keep both if needed
+        assistantId: item.assistantId || item.agentId,
         agentName: item.name || "Untitled Agent",
-        imageUrl: item.imageUrl || null, // ← THIS IS THE KEY ADDITION
+        imageUrl: item.imageUrl || null,
         agentStatus: item.agentStatus || "INACTIVE",
         agentCreatorName: item.agentCreatorName || null,
-        // Add any other fields your backend expects in agentDetailsOnAdUser
       }));
 
       setAssistants((prev: Agent[]) =>
@@ -325,12 +358,10 @@ const AgentStoreManager: React.FC = () => {
 
       const payload: {
         agentId: string;
-        // storeId: string;
         inactiveType: string;
         agentStatus: "ACTIVE" | "INACTIVE";
       } = {
         agentId: agent.agentId,
-        // storeId,
         agentStatus: newStatus,
         inactiveType: "STOREAGENT",
       };
@@ -350,7 +381,7 @@ const AgentStoreManager: React.FC = () => {
       if (!res.ok) throw new Error("Status update failed");
 
       message.success(`Agent status updated to ${newStatus}`);
-      await fetchStores(); // Wait for fresh data
+      await fetchStores();
       setRefreshTrigger((prev: number) => prev + 1);
     } catch (err: any) {
       message.error(err.message || "Status update failed");
@@ -375,13 +406,25 @@ const AgentStoreManager: React.FC = () => {
             storeName: values.storeName,
             description: values.description,
             storeCreatedBy: "USER",
-            storeImageUrl: values.storeImageUrl, // ← added for update as well
+            storeImageUrl: values.storeImageUrl,
+            isCompanyStore: !!values.isCompanyStore,
+
+            // ✅ ONLY send when Company Store
+            ...(values.isCompanyStore && {
+              companyName: values.companyName,
+            }),
           }
         : {
             storeName: values.storeName,
             description: values.description,
             storeCreatedBy: "USER",
-            storeImageUrl: values.storeImageUrl, // ← from upload API
+            storeImageUrl: values.storeImageUrl,
+            isCompanyStore: !!values.isCompanyStore,
+
+            // ✅ ONLY send when Company Store
+            ...(values.isCompanyStore && {
+              companyName: values.companyName,
+            }),
           };
 
       const res: Response = await fetch(
@@ -406,9 +449,7 @@ const AgentStoreManager: React.FC = () => {
       form.resetFields();
       fetchStores();
     } catch (err: any) {
-      // 👉 This prevents validation errors from showing your generic error
       if (err.errorFields) return;
-
       message.error("Something went wrong");
     } finally {
       setSaving(false);
@@ -461,6 +502,7 @@ const AgentStoreManager: React.FC = () => {
       message.error(err.message || "Failed to save agents");
     }
   };
+
   const toggleStoreStatus = (
     storeId: any,
     currentStatus: any,
@@ -524,6 +566,7 @@ const AgentStoreManager: React.FC = () => {
       },
     });
   };
+
   /** TABLE COLUMNS */
   const columns: any[] = [
     {
@@ -531,14 +574,12 @@ const AgentStoreManager: React.FC = () => {
       dataIndex: "sno",
       key: "sno",
       align: "center",
-
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: "Store Name",
       dataIndex: "storeName",
       key: "storeName",
-
       align: "center",
       render: (text: string) => <strong>{text || "-"}</strong>,
     },
@@ -546,10 +587,20 @@ const AgentStoreManager: React.FC = () => {
       title: "Created By",
       dataIndex: "storeCreatedBy",
       key: "storeCreatedBy",
-
       align: "center",
       render: (text: string) => <Tag color="blue">{text || "-"}</Tag>,
     },
+
+    // ✅ NEW: show Company Store status
+    {
+      title: "Company Store",
+      dataIndex: "isCompanyStore",
+      key: "isCompanyStore",
+      align: "center",
+      render: (val: any) =>
+        val ? <Tag color="green">YES</Tag> : <Tag color="default">NO</Tag>,
+    },
+
     {
       title: "Description",
       dataIndex: "description",
@@ -568,7 +619,6 @@ const AgentStoreManager: React.FC = () => {
           {text}
         </div>
       ),
-
       align: "center",
     },
 
@@ -624,7 +674,7 @@ const AgentStoreManager: React.FC = () => {
             style={{ color: "#008cba", fontWeight: 500 }}
             onClick={() => {
               setSelectedStore(record);
-              setIsAgentsShowModal(true); // Reuse your existing modal
+              setIsAgentsShowModal(true);
             }}
           >
             View {agents.length} Agent{agents.length > 1 ? "s" : ""}
@@ -635,7 +685,6 @@ const AgentStoreManager: React.FC = () => {
     {
       title: "Actions",
       align: "center",
-
       render: (_: any, record: Store) => (
         <Space direction="vertical" size="small" style={{ width: "90%" }}>
           <Button
@@ -649,11 +698,15 @@ const AgentStoreManager: React.FC = () => {
             onClick={() => {
               setIsEditMode(true);
               setSelectedStore(record);
+
               form.setFieldsValue({
                 storeName: record.storeName,
                 description: record.description,
-                storeImageUrl: record.storeImageUrl, // ← ADD THIS
+                storeImageUrl: record.storeImageUrl,
+                isCompanyStore: !!record.isCompanyStore,
+                companyName: record.companyName || undefined, // ✅ NEW
               });
+
               setIsStoreModal(true);
             }}
           >
@@ -676,6 +729,7 @@ const AgentStoreManager: React.FC = () => {
           >
             Add Agents
           </Button>
+
           <Button
             onClick={() =>
               toggleStoreStatus(
@@ -686,9 +740,7 @@ const AgentStoreManager: React.FC = () => {
             }
             style={{
               background:
-                record.aiStoreStatus === "ACTIVE"
-                  ? "#22C14E" // Red for Inactive
-                  : "#ef4444", // Green for Active
+                record.aiStoreStatus === "ACTIVE" ? "#22C14E" : "#ef4444",
               borderColor:
                 record.aiStoreStatus === "ACTIVE" ? "#22C15E" : "#ef4444",
               color: "#fff",
@@ -702,25 +754,21 @@ const AgentStoreManager: React.FC = () => {
       ),
     },
   ];
+
   const downloadExcelTemplate = () => {
-    // Sheet data (rows)
     const data = [
-      ["role", "goal", "purpose", "agentName"], // ✅ headers
+      ["role", "goal", "purpose", "agentName"],
       ["student", "study_abroad", "usa_details", "USA-Agent"],
       ["parent", "loan_help", "education_loan", "Loan-Agent"],
     ];
 
-    // Create worksheet
     const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-    // Optional: column widths (professional look)
     worksheet["!cols"] = [{ wch: 18 }, { wch: 20 }, { wch: 22 }, { wch: 20 }];
 
-    // Create workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Agents");
 
-    // Download file
     XLSX.writeFile(workbook, "bulk-upload-agents-template.xlsx");
   };
 
@@ -735,7 +783,6 @@ const AgentStoreManager: React.FC = () => {
           marginBottom: "20px",
         }}
       >
-        {/* LEFT — Heading */}
         <h1
           style={{
             fontSize: "24px",
@@ -747,7 +794,6 @@ const AgentStoreManager: React.FC = () => {
           Agent AI Store Manager
         </h1>
 
-        {/* RIGHT — Button Group */}
         <div style={{ display: "flex", gap: "12px" }}>
           <Button
             type="primary"
@@ -761,27 +807,33 @@ const AgentStoreManager: React.FC = () => {
             onClick={() => {
               setIsEditMode(false);
               form.resetFields();
+
+              // ✅ default for create
+              form.setFieldsValue({ isCompanyStore: false });
+
               setIsStoreModal(true);
             }}
           >
             Create AI Store
           </Button>
-          {storeData.length > 0 && (
-            <Button
-              icon={<UsergroupAddOutlined />}
-              style={{
-                background: "#ba4d00ff",
-                borderColor: "#ba4d00ff",
-                height: "40px",
-                color: "#f7f7f7",
-                fontWeight: "500",
-              }}
-              type="default"
-              onClick={() => setIsBulkUploadModal(true)}
-            >
-              Bulk Upload Agents
-            </Button>
-          )}
+{ storeData.length > 0 && (
+  
+
+          <Button
+            icon={<UsergroupAddOutlined />}
+            style={{
+              background: "#ba4d00ff",
+              borderColor: "#ba4d00ff",
+              height: "40px",
+              color: "#f7f7f7",
+              fontWeight: "500",
+            }}
+            type="default"
+            onClick={() => setIsBulkUploadModal(true)}
+          >
+            Bulk Upload Agents
+          </Button>
+)}
           <Button
             type="primary"
             icon={<FaShoppingCart />}
@@ -799,6 +851,7 @@ const AgentStoreManager: React.FC = () => {
           </Button>
         </div>
       </div>
+
       <Modal
         open={isBulkUploadModal}
         title="Bulk Upload Agents"
@@ -943,7 +996,7 @@ const AgentStoreManager: React.FC = () => {
                   </div>
 
                   <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
-                    Note: Excel first row must be exactly:
+                    Note: Excel first row must be exactly:{" "}
                     <b> role, goal, purpose, agentName</b>
                   </div>
                 </div>
@@ -1018,14 +1071,19 @@ const AgentStoreManager: React.FC = () => {
             key="confirm"
             type="primary"
             style={{ background: "#1ab394", borderColor: "#1ab394" }}
-            onClick={handleSaveStoreClick} // 🔥 IMPORTANT
+            onClick={handleSaveStoreClick}
           >
             {isEditMode ? "Update Store" : "Create Store"}
           </Button>,
         ]}
         width={500}
       >
-        <Form layout="vertical" form={form} style={{ marginTop: "20px" }}>
+        <Form
+          layout="vertical"
+          form={form}
+          style={{ marginTop: "20px" }}
+          initialValues={{ isCompanyStore: false }} // ✅ default false
+        >
           {/* Store Name */}
           <Form.Item
             name="storeName"
@@ -1053,13 +1111,56 @@ const AgentStoreManager: React.FC = () => {
             <Input.TextArea rows={4} showCount maxLength={500} />
           </Form.Item>
 
+          {/* ✅ NEW: Company Store Toggle */}
+          <Form.Item
+            name="isCompanyStore"
+            label="Company Store"
+            valuePropName="checked"
+          >
+            <Switch
+              checkedChildren="ON"
+              unCheckedChildren="OFF"
+              onChange={(checked) => {
+                if (!checked) form.setFieldsValue({ companyName: undefined });
+              }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            noStyle
+            shouldUpdate={(prev, curr) =>
+              prev.isCompanyStore !== curr.isCompanyStore
+            }
+          >
+            {({ getFieldValue }) =>
+              getFieldValue("isCompanyStore") ? (
+                <Form.Item
+                  name="companyName"
+                  label="Company Name"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Company Name is mandatory for Company Store",
+                    },
+                    {
+                      min: 2,
+                      message: "Company Name must be at least 2 characters",
+                    },
+                  ]}
+                >
+                  <Input placeholder="Enter Company Name" size="large" />
+                </Form.Item>
+              ) : null
+            }
+          </Form.Item>
+
           {/* STORE IMAGE */}
           <Form.Item
             label="Store Image"
             name="storeImageUrl"
             rules={[
               {
-                required: !isEditMode, // required only in create mode
+                required: !isEditMode,
                 message: "Please upload an image",
               },
             ]}
@@ -1113,10 +1214,7 @@ const AgentStoreManager: React.FC = () => {
                       return message.error("Upload failed");
                     }
 
-                    // Save uploaded image URL into form
                     form.setFieldsValue({ storeImageUrl: json.documentPath });
-
-                    // Trigger AntD error to clear
                     form.validateFields(["storeImageUrl"]);
                   } catch {
                     message.error("Upload failed");
@@ -1172,6 +1270,10 @@ const AgentStoreManager: React.FC = () => {
           <p>
             <strong>Description:</strong> {form.getFieldValue("description")}
           </p>
+          <p>
+            <strong>Company Store:</strong>{" "}
+            {form.getFieldValue("isCompanyStore") ? "Yes" : "No"}
+          </p>
           {form.getFieldValue("storeImageUrl") && (
             <div>
               <strong>Store Image:</strong>
@@ -1188,7 +1290,7 @@ const AgentStoreManager: React.FC = () => {
         </Space>
       </Modal>
 
-      {/* VIEW & MANAGE AGENTS MODAL - Now with Table + S.No */}
+      {/* VIEW & MANAGE AGENTS MODAL */}
       <Modal
         title={
           <span
@@ -1206,9 +1308,9 @@ const AgentStoreManager: React.FC = () => {
           setSelectedStore(null);
         }}
         width={800}
-        key={`${selectedStore?.storeId ?? ""}_${refreshTrigger}`} // unique key: safe when storeId is undefined
+        key={`${selectedStore?.storeId ?? ""}_${refreshTrigger}`}
         bodyStyle={{ padding: "20px" }}
-        footer={null} // 🔴 no OK button, only close
+        footer={null}
       >
         {selectedStore && (
           <Table<Agent>
@@ -1240,7 +1342,6 @@ const AgentStoreManager: React.FC = () => {
                   <span style={{ fontWeight: 500 }}>{text.slice(-4)}</span>
                 ),
               },
-
               {
                 title: <strong>Agent Name</strong>,
                 dataIndex: "agentName",
@@ -1259,22 +1360,19 @@ const AgentStoreManager: React.FC = () => {
                 align: "center",
                 render: (url: string | null) => (
                   <div style={{ textAlign: "center" }}>
-                    {" "}
                     <Image
                       width={50}
                       src={url || undefined}
                       alt="company logo"
-                    />{" "}
+                    />
                   </div>
                 ),
               },
-
               {
                 title: <strong>Status</strong>,
                 key: "status",
                 width: 140,
                 align: "center",
-
                 render: (_: any, agent: Agent) => (
                   <Switch
                     checked={agent.agentStatus === "ACTIVE"}
@@ -1302,6 +1400,7 @@ const AgentStoreManager: React.FC = () => {
           />
         )}
       </Modal>
+
       {/* ADD AGENTS MODAL */}
       <Modal
         title={
@@ -1313,7 +1412,7 @@ const AgentStoreManager: React.FC = () => {
         onCancel={() => {
           setIsAgentsModal(false);
           setSelectedAgents([]);
-          setAgentSearch(""); // reset search on close
+          setAgentSearch("");
         }}
         onOk={saveAgentsToStore}
         footer={[
@@ -1350,7 +1449,6 @@ const AgentStoreManager: React.FC = () => {
         width={600}
       >
         <div style={{ marginTop: "12px" }}>
-          {/* 🔍 Search box */}
           <Input.Search
             allowClear
             placeholder="Search agents by name..."
@@ -1410,19 +1508,28 @@ const AgentStoreManager: React.FC = () => {
                       border: `1px solid ${isSelected ? "#1ab394" : "#e8e8e8"}`,
                       cursor: "pointer",
                       transition: "all 0.2s",
-                      ...(isSelected && { background: "#f0f9f4" }), // Optional: highlight selected row
+                      ...(isSelected && { background: "#f0f9f4" }),
                     }}
                     onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-                      // Toggle only if not clicking the checkbox (prevents double-trigger)
-                      if ((e.target as HTMLElement).tagName !== "INPUT") {
-                        setSelectedAgents((prev: Agent[]) =>
-                          isSelected
-                            ? prev.filter(
-                                (x: Agent) => x.agentId !== agent.agentId
-                              )
-                            : [...prev, agent]
-                        );
+                      const target = e.target as HTMLElement;
+
+                      // ✅ If user clicked on checkbox/label/span inside checkbox, do nothing here
+                      // (checkbox onChange will handle it)
+                      if (
+                        target.closest(".ant-checkbox-wrapper") ||
+                        target.closest(".ant-checkbox")
+                      ) {
+                        return;
                       }
+
+                      // ✅ Otherwise: clicking on name / image / row toggles selection
+                      setSelectedAgents((prev: Agent[]) =>
+                        isSelected
+                          ? prev.filter(
+                              (x: Agent) => x.agentId !== agent.agentId
+                            )
+                          : [...prev, agent]
+                      );
                     }}
                     onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
                       if (!isSelected) {
@@ -1444,7 +1551,7 @@ const AgentStoreManager: React.FC = () => {
                     <Checkbox
                       checked={isSelected}
                       onChange={(e: any) => {
-                        e.stopPropagation(); // Prevent bubble to div onClick
+                        e.stopPropagation();
                         setSelectedAgents((prev: Agent[]) =>
                           isSelected
                             ? prev.filter(
@@ -1513,6 +1620,7 @@ const AgentStoreManager: React.FC = () => {
           )}
         </div>
       </Modal>
+
       {/* AGENTS CONFIRMATION */}
       <Modal
         open={isAgentsConfirm}

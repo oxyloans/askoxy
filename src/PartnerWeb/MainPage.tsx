@@ -273,7 +273,7 @@ const MainPage: React.FC = () => {
   const handleLogin = () => {
     const accessToken = localStorage.getItem("partner_Token");
     if (!accessToken) {
-      navigate("/partnerLogin");
+      navigate("/partnerlogin");
     }
   };
 

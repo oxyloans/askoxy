@@ -33,7 +33,7 @@ const PartnerHeader: React.FC<HeaderProps> = ({
     localStorage.removeItem("partner_dbId");
     localStorage.removeItem("partner_Token");
     localStorage.removeItem("partner_scrollPosition");
-    navigate("/partnerLogin");
+    navigate("/partnerlogin");
   };
 
   return (

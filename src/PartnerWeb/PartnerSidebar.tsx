@@ -164,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     localStorage.removeItem("partner_dbId");
     localStorage.removeItem("partner_Token");
     localStorage.removeItem("partner_scrollPosition");
-    navigate("/partnerLogin");
+    navigate("/partnerlogin");
   };
 
   return (

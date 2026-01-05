@@ -432,6 +432,34 @@ const App: React.FC = () => {
     }
   }, [location.pathname]);
 
+  // Check if current route is an admin/partner/employee route where we don't want to show FloatingCallButton
+  const isRestrictedRoute = () => {
+    const currentPath = location.pathname;
+    return (
+      // Login pages
+      currentPath === "/admin" ||
+      currentPath === "/partnerlogin" ||
+      currentPath === "/userlogin" ||
+      // Employee/Internal routes
+      currentPath.startsWith("/userPanelLayout") ||
+      currentPath.startsWith("/planoftheday") ||
+      currentPath.startsWith("/userinstructionsview") ||
+      currentPath.startsWith("/taskmanagement") ||
+      currentPath.startsWith("/taskupdated") ||
+      currentPath.startsWith("/leaveapproval") ||
+      currentPath.startsWith("/leavestatus") ||
+      currentPath.startsWith("/all-statuses") ||
+      currentPath.startsWith("/assigned-task") ||
+      currentPath.startsWith("/taskassigneduser") ||
+      currentPath.startsWith("/usermobilenumberupdate") ||
+      // Partner routes
+      currentPath.startsWith("/home") ||
+      // Admin routes
+      currentPath.startsWith("/admn") ||
+      currentPath.startsWith("/adminRegister")
+    );
+  };
+
   return (
     <CartProvider>
       <SearchProvider>
@@ -439,7 +467,10 @@ const App: React.FC = () => {
 
         <Suspense fallback={<LoadingSpinner />}>
           <div className="App">
-            {localStorage.getItem("userId") && <FloatingCallButton />}
+            {(localStorage.getItem("userId") ||
+              localStorage.getItem("admin_acToken") ||
+              localStorage.getItem("partner_Token")) &&
+              !isRestrictedRoute() && <FloatingCallButton />}
             <Routes>
               {/* ===================================================== */}
               {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
@@ -630,14 +661,14 @@ const App: React.FC = () => {
               {/* Free AI Book */}
               <Route path="/freeaibook" element={<Content2 />}>
                 <Route index element={<FreeAiBookLandingPage />} />
-                <Route
+                {/* <Route
                   path="view"
                   element={
                     <ProtectedRoute>
                       <FreeAiBook />
                     </ProtectedRoute>
                   }
-                />
+                /> */}
               </Route>
               {/* GenOxy */}
               <Route
@@ -951,7 +982,7 @@ const App: React.FC = () => {
               {/* ===================================================== */}
               {/* ✅ PARTNER ROUTES */}
               {/* ===================================================== */}
-              <Route path="/partnerLogin" element={<PartnerLogin />} />
+              <Route path="/partnerlogin" element={<PartnerLogin />} />
               <Route path="/home" element={<PartnerHome />}>
                 <Route index element={<MainPage />} />
                 <Route path="newOrders/:status" element={<NewOrders />} />
@@ -1005,7 +1036,10 @@ const App: React.FC = () => {
                   element={<TalwarAssignedDataPage />}
                 />
                 <Route path="assignedData" element={<AssignedDataPage />} />
-                <Route path="userOrdersIntegration" element={<UserOrdersIntegration />} />
+                <Route
+                  path="userOrdersIntegration"
+                  element={<UserOrdersIntegration />}
+                />
                 <Route
                   path="kukatpallyassignedData"
                   element={<KukatpallyAssignedDataPage />}

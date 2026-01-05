@@ -498,16 +498,7 @@ const UserOrdersIntegration: React.FC = () => {
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={8}>
-          <Card style={{ borderRadius: 12 }}>
-            <Statistic
-              title="Total Revenue"
-              value={totalRevenue}
-             
-              formatter={(value) => `₹${Number(value).toLocaleString("en-IN")}`}
-            />
-          </Card>
-        </Col>
+       
       </Row>
 
       {/* Table */}

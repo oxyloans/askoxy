@@ -516,7 +516,7 @@
 //                         title="Voice Input"
 //                         aria-label="Voice input"
 //                         disabled={loading}
-//                         className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-9 h-9 sm:w-9 sm:h-9 lg:w-8 lg:h-8 
+//                         className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-9 h-9 sm:w-9 sm:h-9 lg:w-8 lg:h-8
 //                           ${
 //                             isRecording
 //                               ? "bg-red-100 text-red-600 animate-pulse shadow-lg"
@@ -549,7 +549,7 @@
 //                       disabled={(!input.trim() && !selectedFile) || loading}
 //                       title="Send"
 //                       aria-label="Send"
-//                       className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-9 h-9 sm:w-9 sm:h-9 lg:w-8 lg:h-8 
+//                       className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-9 h-9 sm:w-9 sm:h-9 lg:w-8 lg:h-8
 //                         ${
 //                           (input.trim() || selectedFile) && !loading
 //                             ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
@@ -699,9 +699,6 @@
 
 // export default WelcomeScreen;
 
-
-
-
 import { usePrompts } from "../hooks/usePrompts";
 import React, {
   ChangeEvent,
@@ -719,7 +716,7 @@ import {
   FileText,
   Image as ImageIcon,
 } from "lucide-react";
-import { message } from "antd";
+import { message, Modal } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/img/askoxylogonew.png";
 import oxyloansLogo from "../../assets/img/image1.png";
@@ -749,8 +746,9 @@ interface WelcomeScreenProps {
 type Tile = {
   id: string;
   src: string;
-  route: string;
+  route?: string; // Make route optional since some tiles might show modals
   title: string;
+  showModal?: boolean; // New property to indicate if this tile should show a modal
 };
 
 // tiles
@@ -762,7 +760,7 @@ const tiles: Tile[] = [
     title: "AI Agents Earn Money",
   },
   { id: "s7", src: s7, route: "/genoxy/chat", title: "AI LLMs" },
-  // { id: "s11", src: s14, route: "/freeaibook", title: "AI Book" },
+  { id: "s11", src: s14, title: "AI Book", showModal: true },
   { id: "s12", src: s12, route: "/ai-videos", title: "AI Videos" },
   { id: "s4", src: s4, route: "/ai-masterclasses", title: "AI Masterclasses" },
   {
@@ -824,6 +822,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [showOfferModal, setShowOfferModal] = useState(false);
 
   // URL query bootstrap
   useEffect(() => {
@@ -839,7 +838,15 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         });
       }
     }
-  }, [location.search, setInput, handleSend, loading, input, selectedFile, setShowDropdown]);
+  }, [
+    location.search,
+    setInput,
+    handleSend,
+    loading,
+    input,
+    selectedFile,
+    setShowDropdown,
+  ]);
 
   // Autosize textarea
   useEffect(() => {
@@ -910,8 +917,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   // File icon
   const getFileIcon = (file: File) => {
-    if (file.type.startsWith("image/")) return <ImageIcon className="w-4 h-4" />;
-    if (file.type === "application/pdf") return <FileText className="w-4 h-4" />;
+    if (file.type.startsWith("image/"))
+      return <ImageIcon className="w-4 h-4" />;
+    if (file.type === "application/pdf")
+      return <FileText className="w-4 h-4" />;
     return <FileText className="w-4 h-4" />;
   };
 
@@ -946,7 +955,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             )}
             <div className="absolute -inset-[3px] bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl blur opacity-20 group-hover:opacity-35 transition duration-300" />
             <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200/70 dark:border-gray-700 overflow-hidden">
-              
               {/* MULTI FILE PREVIEW */}
               {selectedFile.length > 0 && (
                 <div className="px-3 pt-1 pb-1 border-b border-gray-200 dark:border-gray-700 space-y-1 max-h-40 overflow-y-auto">
@@ -1049,7 +1057,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             allowed.includes(f.type)
                           );
                           if (validFiles.length !== files.length) {
-                            alert("Some files were skipped due to unsupported types.");
+                            alert(
+                              "Some files were skipped due to unsupported types."
+                            );
                           }
                           setSelectedFile((prev) => [...prev, ...validFiles]);
                           e.target.value = "";
@@ -1097,14 +1107,18 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                           setInput("");
                         } else {
                           if (!input.trim()) {
-                            message.info("Please enter a message or upload files.");
+                            message.info(
+                              "Please enter a message or upload files."
+                            );
                             return;
                           }
                           await handleSend();
                         }
                         setShowDropdown(false);
                       }}
-                      disabled={(!input.trim() && selectedFile.length === 0) || loading}
+                      disabled={
+                        (!input.trim() && selectedFile.length === 0) || loading
+                      }
                       title="Send"
                       aria-label="Send"
                       className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 w-9 h-9 sm:w-9 sm:h-9 lg:w-8 lg:h-8 
@@ -1188,7 +1202,13 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {tiles.map((t) => (
               <div key={t.id} className="flex flex-col items-center">
                 <button
-                  onClick={() => navigate(t.route)}
+                  onClick={() => {
+                    if (t.showModal) {
+                      setShowOfferModal(true);
+                    } else if (t.route) {
+                      navigate(t.route);
+                    }
+                  }}
                   className="relative w-full aspect-square rounded-2xl overflow-hidden bg-white dark:bg-gray-900 transition"
                   aria-label={t.title}
                   title={t.title}
@@ -1210,6 +1230,163 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </div>
         </section>
       </div>
+
+      {/* OFFER MODAL */}
+      <Modal
+        open={showOfferModal}
+        onCancel={() => setShowOfferModal(false)}
+        footer={null}
+        centered
+        destroyOnClose
+        title="Offer Information"
+        width={520}
+        styles={{
+          body: {
+            padding: 0,
+          },
+        }}
+      >
+        <div
+          style={{
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 12,
+              border: "1px solid #f0f0f0",
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "16px 16px 12px",
+                borderBottom: "1px solid #f0f0f0",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
+                Offer Ended
+              </div>
+              <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
+                The offer ended on <b>31st December 2025</b>.
+              </div>
+            </div>
+
+            {/* Content */}
+            <div
+              style={{
+                padding: "14px 16px 16px",
+                display: "grid",
+                gap: 12,
+              }}
+            >
+              {/* Info card */}
+              <div
+                style={{
+                  borderRadius: 10,
+                  background: "#fafafa",
+                  border: "1px solid #f0f0f0",
+                  padding: 12,
+                }}
+              >
+                <div
+                  style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}
+                >
+                  The book will be available again soon in our store.
+                </div>
+              </div>
+
+              {/* Bid card */}
+              <div
+                style={{
+                  borderRadius: 10,
+                  border: "1px solid #f0f0f0",
+                  padding: 14,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: "#111827",
+                    marginBottom: 6,
+                    textAlign: "center",
+                  }}
+                >
+                  Special Appreciation Bid
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "#6b7280",
+                    textAlign: "center",
+                    lineHeight: 1.5,
+                    marginBottom: 12,
+                  }}
+                >
+                  To appreciate our first copy buyer, we are hosting a special
+                  bid.
+                </div>
+
+                {/* Highlight */}
+                <div
+                  style={{
+                    borderRadius: 10,
+                    background: "#FFFBEB",
+                    border: "1px solid #FDE68A",
+                    padding: 12,
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}
+                  >
+                    The highest bidder wins the first copy
+                  </div>
+                  <div style={{ marginTop: 4, fontSize: 13, color: "#374151" }}>
+                    and an exclusive chit-chat session with our CEO.
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div
+                  style={{
+                    marginTop: 12,
+                    borderRadius: 10,
+                    background: "#F9FAFB",
+                    border: "1px solid #f0f0f0",
+                    padding: 10,
+                    textAlign: "center",
+                    fontSize: 13,
+                    color: "#374151",
+                    fontWeight: 600,
+                  }}
+                >
+                  Stay tuned for updates!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Responsive width helper */}
+          <style>
+            {`
+        /* Make modal fit nicely on small screens */
+        .ant-modal {
+          max-width: calc(100vw - 24px) !important;
+        }
+        .ant-modal-content {
+          border-radius: 14px !important;
+          overflow: hidden;
+        }
+      `}
+          </style>
+        </div>
+      </Modal>
 
       {/* FOOTER */}
       <footer className="w-full max-w-6xl mx-auto mt-10 mb-6 px-3">

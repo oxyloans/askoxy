@@ -100,25 +100,58 @@ async function getAssistants(
     params,
     headers: {
       "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}`
-        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
-        : {}),
+     Authorization: `Bearer ${process.env.AUTH_TOKEN}`
+       
     },
   });
 
   const normalized: Assistant[] = (res.data?.data ?? []).map(
-    (assistant: any) => ({
-      ...assistant,
-      assistantId: assistant.assistantId || assistant.id,
-      agentId: assistant.agentId || assistant.id,
-      hideAgent: assistant.hideAgent, // ⭐ added
-      imageUrl:
-        assistant.profileImagePath?.trim() ||
-        assistant.imageUrl?.trim() ||
-        assistant.image?.trim() ||
-        assistant.thumbUrl?.trim() ||
-        "",
-    })
+    (assistant: any) => {
+      // Properly handle agentId that might be "null", null, undefined, or empty string
+      const rawAgentId = assistant.agentId;
+      const rawAssistantId = assistant.assistantId;
+      const rawId = assistant.id;
+
+      // Convert "null" string to undefined, and filter out empty strings
+      const cleanAgentId =
+        rawAgentId === "null" ||
+        rawAgentId === null ||
+        rawAgentId === undefined ||
+        rawAgentId === ""
+          ? undefined
+          : String(rawAgentId).trim();
+      const cleanAssistantId =
+        rawAssistantId === "null" ||
+        rawAssistantId === null ||
+        rawAssistantId === undefined ||
+        rawAssistantId === ""
+          ? undefined
+          : String(rawAssistantId).trim();
+      const cleanId =
+        rawId === "null" ||
+        rawId === null ||
+        rawId === undefined ||
+        rawId === ""
+          ? undefined
+          : String(rawId).trim();
+
+      // Use fallback logic: agentId -> assistantId -> id
+      const finalAgentId = cleanAgentId || cleanAssistantId || cleanId;
+      const finalAssistantId = cleanAssistantId || cleanId || cleanAgentId;
+
+      return {
+        ...assistant,
+        assistantId: finalAssistantId,
+        agentId: finalAgentId,
+        hideAgent: assistant.hideAgent, // ⭐ added
+        imageUrl:
+          assistant.profileImagePath?.trim() ||
+          assistant.imageUrl?.trim() ||
+          assistant.image?.trim() ||
+          assistant.thumbUrl?.trim() ||
+          "",
+      };
+    }
   );
 
   return {
@@ -135,9 +168,7 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
     params: { message: query },
     headers: {
       "Content-Type": "application/json",
-      ...(`${process.env.AUTH_TOKEN}`
-        ? { Authorization: `Bearer ${process.env.AUTH_TOKEN}` }
-        : {}),
+     Authorization: `Bearer ${process.env.AUTH_TOKEN}` 
     },
   });
 
@@ -175,8 +206,9 @@ async function searchAssistants(query: string): Promise<Assistant[]> {
   // 🔁 Dedupe by assistant/agent id
   const seen = new Set<string>();
   const deduped: Assistant[] = filtered.filter((a) => {
-    const key = (a.assistantId || a.agentId || "").toLowerCase();
-    if (!key || seen.has(key)) return false;
+    const key = (a.assistantId || a.agentId || a.id || "").toLowerCase().trim();
+    if (!key || key === "undefined" || key === "null" || seen.has(key))
+      return false;
     seen.add(key);
     return true;
   });
@@ -279,15 +311,15 @@ const AssistantCard: React.FC<{
   index: number;
   q: string;
 }> = ({ assistant, onOpen, onShare, onCopy, index, q }) => {
- const badge = (() => {
-   const name = (assistant.name || "").trim();
-   if (!name) return "AI";
+  const badge = (() => {
+    const name = (assistant.name || "").trim();
+    if (!name) return "AI";
 
-   const words = name.split(/\s+/);
-   if (words.length === 1) return words[0][0]?.toUpperCase() || "AI";
+    const words = name.split(/\s+/);
+    if (words.length === 1) return words[0][0]?.toUpperCase() || "AI";
 
-   return (words[0][0] + words[1][0]).toUpperCase();
- })();
+    return (words[0][0] + words[1][0]).toUpperCase();
+  })();
 
   const fallbackSVG = makeInitialsSVG(assistant.name || "AI");
   const chosenThumb = (assistant.imageUrl || "").trim() || fallbackSVG;
@@ -488,7 +520,7 @@ const BharatAgentsStore: React.FC = () => {
 
   // ✅ Updated initial pagination state for dynamic loading with pageSize 100
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 50,
+    pageSize: 100,
     hasMore: true,
     total: 0,
   });
@@ -578,16 +610,16 @@ const BharatAgentsStore: React.FC = () => {
       .trim();
     const nameSlug = slugify(a.name || "agent");
 
-    if (!fullAssistantId || !fullAgentId) return;
+    if (!fullAssistantId && !fullAgentId) return;
 
-    // Shorten IDs to last 4 chars ONLY for URL (as per previous requirement)
-    const shortAssistantId = fullAssistantId;
-    const shortAgentId = fullAgentId;
+    // Use full IDs for URL (no shortening needed)
+    const urlAssistantId = fullAssistantId;
+    const urlAgentId = fullAgentId;
 
     // Generate root-level URL (as per latest route: /:id/:agentId/:agentname)
     const copyUrl = `${window.location.origin}/${encodeURIComponent(
-      shortAssistantId
-    )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+      urlAssistantId!
+    )}/${encodeURIComponent(urlAgentId!)}/${encodeURIComponent(nameSlug)}`;
 
     // Copy to clipboard
     navigator.clipboard
@@ -620,23 +652,22 @@ const BharatAgentsStore: React.FC = () => {
       .trim();
     const nameSlug = slugify(a.name || "agent");
 
-    if (!fullAssistantId || !fullAgentId) return;
+    if (!fullAssistantId && !fullAgentId) return;
 
-    // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept internally)
-    const shortAssistantId = fullAssistantId;
-    const shortAgentId = fullAgentId;
+    // Use full IDs for URL (no shortening needed)
+    const urlAssistantId = fullAssistantId;
+    const urlAgentId = fullAgentId;
 
-    // Debug log: Full vs short
-    console.log("FULL IDs (for APIs/state):", { fullAssistantId, fullAgentId });
-    console.log("SHORT IDs (for share URL only):", {
-      shortAssistantId,
-      shortAgentId,
+    // Debug log: Full IDs for both APIs and URLs
+    console.log("FULL IDs (for APIs/state and URLs):", {
+      fullAssistantId,
+      fullAgentId,
     });
 
     // UPDATED: Root-level URL without "/bharath-aistore/assistant" prefix
     const shareUrl = `${window.location.origin}/${encodeURIComponent(
-      shortAssistantId
-    )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+      urlAssistantId!
+    )}/${encodeURIComponent(urlAgentId!)}/${encodeURIComponent(nameSlug)}`;
 
     // 🌟 Static share content (uses full name, short root-level URL)
     const staticMessage = `
@@ -728,8 +759,10 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
           // ✅ Deduplicate by ID to avoid duplicates on load more
           const byId = new Map<string, Assistant>();
           for (const a of merged) {
-            const key = a.assistantId || a.id || a.agentId || "";
-            if (key) byId.set(key, a);
+            const key = a.assistantId || a.agentId || a.id || "";
+            if (key && key !== "undefined" && key !== "null") {
+              byId.set(key, a);
+            }
           }
           return Array.from(byId.values());
         });
@@ -885,7 +918,6 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     });
   }, [q, searchResults, approvedAssistants]);
 
-
   const myApprovedAssistants = useMemo(() => {
     if (!loggedInUserId) return [];
     return approvedAssistants.filter(
@@ -972,49 +1004,44 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     if (isHiddenAgent(a)) return;
 
     // Extract FULL IDs from API data (no truncation)
-    const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
-      .toString()
-      .trim();
-    const fullAgentId = (a.agentId || a.assistantId || a.id || "")
-      .toString()
-      .trim();
+    // Handle cases where IDs might be undefined/null
+    const fullAssistantId =
+      (a.assistantId || a.id || a.agentId || "").toString().trim() || undefined;
+    const fullAgentId =
+      (a.agentId || a.assistantId || a.id || "").toString().trim() || undefined;
     const nameSlug = slugify(a.name || "agent");
 
-    // NEW: Shorten IDs to last 4 chars ONLY for URL (full IDs kept for APIs/state)
-    const shortAssistantId = fullAssistantId;
-    const shortAgentId = fullAgentId;
+    // Use full IDs for URL (no shortening needed)
+    const urlAssistantId = fullAssistantId;
+    const urlAgentId = fullAgentId;
 
-    // Debug log: Check full vs short values in console
-    console.log("FULL IDs (for APIs/state):", {
+    // Debug log: Full IDs for both APIs and URLs
+    console.log("FULL IDs (for APIs/state and URLs):", {
       fullAssistantId,
       fullAgentId,
       nameSlug,
     });
-    console.log("SHORT IDs (for URL only):", {
-      shortAssistantId,
-      shortAgentId,
-    });
 
-    // 1) Guest redirect: Save SHORT path for URL (root-level), but FULL IDs in session for post-login APIs
+    // 1) Guest redirect: Save path for URL (root-level), but FULL IDs in session for post-login APIs
     const userId =
       typeof window !== "undefined" ? localStorage.getItem("userId") : null;
     if (!userId) {
       let intended = "";
       if (fullAssistantId && fullAgentId && nameSlug) {
         intended = `/${encodeURIComponent(
-          shortAssistantId
-        )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+          urlAssistantId!
+        )}/${encodeURIComponent(urlAgentId!)}/${encodeURIComponent(nameSlug)}`;
         // Save FULL IDs in session for restore after login (used in AssistantDetails APIs)
         sessionStorage.setItem("fullAssistantId", fullAssistantId);
         sessionStorage.setItem("fullAgentId", fullAgentId);
       } else if (fullAssistantId && fullAgentId) {
         intended = `/${encodeURIComponent(
-          shortAssistantId
-        )}/${encodeURIComponent(shortAgentId)}`;
+          urlAssistantId!
+        )}/${encodeURIComponent(urlAgentId!)}`;
         sessionStorage.setItem("fullAssistantId", fullAssistantId);
         sessionStorage.setItem("fullAgentId", fullAgentId);
       } else if (fullAssistantId) {
-        intended = `/${encodeURIComponent(shortAssistantId)}`;
+        intended = `/${encodeURIComponent(urlAssistantId!)}`;
         sessionStorage.setItem("fullAssistantId", fullAssistantId);
       } else {
         intended = `/by-name/${encodeURIComponent(nameSlug)}`;
@@ -1025,24 +1052,24 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
       return;
     }
 
-    // 2) Logged-in: Navigate with SHORT ENCODED path (root-level, no base/assistant prefix)
+    // 2) Logged-in: Navigate with encoded path (root-level, no base/assistant prefix)
     let targetPath = "";
     if (fullAssistantId && fullAgentId && nameSlug) {
       targetPath = `/${encodeURIComponent(
-        shortAssistantId
-      )}/${encodeURIComponent(shortAgentId)}/${encodeURIComponent(nameSlug)}`;
+        urlAssistantId!
+      )}/${encodeURIComponent(urlAgentId!)}/${encodeURIComponent(nameSlug)}`;
     } else if (fullAssistantId && fullAgentId) {
       targetPath = `/${encodeURIComponent(
-        shortAssistantId
-      )}/${encodeURIComponent(shortAgentId)}`;
+        urlAssistantId!
+      )}/${encodeURIComponent(urlAgentId!)}`;
     } else if (fullAssistantId) {
-      targetPath = `/${encodeURIComponent(shortAssistantId)}`;
+      targetPath = `/${encodeURIComponent(urlAssistantId!)}`;
     } else {
       targetPath = `/by-name/${encodeURIComponent(nameSlug)}`;
     }
 
-    // Final log: Generated URL (short IDs only, root-level)
-    console.log("Short URL target (4 chars only, no prefix):", targetPath);
+    // Final log: Generated URL (full IDs, root-level)
+    console.log("URL target (full IDs, no prefix):", targetPath);
     navigate(targetPath);
   };
   const isSearching = !!(q || "").trim();

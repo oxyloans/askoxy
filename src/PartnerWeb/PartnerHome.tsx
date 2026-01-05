@@ -30,7 +30,7 @@ const PartnerHome: React.FC = () => {
     localStorage.removeItem("partner_dbId");
     localStorage.removeItem("partner_Token");
     localStorage.removeItem("partner_scrollPosition");
-    navigate("/partnerLogin");
+    navigate("/partnerlogin");
   };
 
   const handleSidebarItemClick = () => {
@@ -42,12 +42,12 @@ const PartnerHome: React.FC = () => {
   useEffect(() => {
     const tokenString = localStorage.getItem("partner_Token");
     if (!tokenString) {
-      navigate("/partnerLogin");
+      navigate("/partnerlogin");
       return;
     }
     const tokenObj = JSON.parse(tokenString);
     if (!tokenObj || tokenObj.primaryType !== "SELLER") {
-      navigate("/partnerLogin");
+      navigate("/partnerlogin");
     }
   }, []);
 

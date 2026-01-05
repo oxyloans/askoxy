@@ -250,8 +250,8 @@ const ReferredData: React.FC = () => {
   // Format created_at date from number array with first 3 digits of month
   const formatCreatedDate = (dateArray: number[] | null) => {
     if (!dateArray || dateArray.length < 6) return "";
-    const [year, month, day, hour, minute, second] = dateArray;
-    const date = new Date(year, month - 1, day, hour, minute, second);
+    const [year, month, day] = dateArray;
+    const date = new Date(year, month - 1, day,);
 
     // Format to show first 3 letters of month
     const months = [
