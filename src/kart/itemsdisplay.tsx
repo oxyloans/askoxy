@@ -1170,7 +1170,7 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
 
-                  {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
+                 {/* {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
                     <div className="flex justify-center mt-4">
                       <button
                         onClick={handleComparePrices}
@@ -1179,7 +1179,7 @@ const ItemDisplayPage = () => {
                         <span>Compare Prices</span>
                       </button>
                     </div>
-                  )}
+                  )}*/}
                 </div>
                 <div className="space-y-4">
                   <div>

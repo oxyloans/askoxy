@@ -3,7 +3,7 @@ import { BookOpen, ArrowRight, MapPinIcon, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BASE_URL from "../Config";
-import aiImage from "../assets/img/book.png";
+import aiImage from "../assets/img/ChatGPT Image Sep 9, 2025, 11_29_20 AM.png";
 import { message, Modal } from "antd";
 import { motion } from "framer-motion";
 

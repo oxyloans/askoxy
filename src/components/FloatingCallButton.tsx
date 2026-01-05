@@ -55,9 +55,15 @@ const FloatingCallButton: React.FC = () => {
     <>
       <button
         onClick={handleCallClick}
-        className="fixed bottom-5 right-5 w-12 h-12 md:w-15 md:h-15 rounded-full bg-purple-600 text-white border-none text-xl md:text-2xl cursor-pointer shadow-lg hover:shadow-xl z-[9999] flex items-center justify-center transition-all duration-300 ease-in-out"
+        className="fixed top-1/2 right-0 -translate-y-1/2 bg-white rounded-l-full shadow-lg hover:shadow-xl z-[9999] flex items-center gap-2 px-4 py-3 transition-all duration-300 ease-in-out border-none cursor-pointer"
       >
-        <FaPhoneAlt className="text-sm" />
+        <div className="bg-green-500 rounded-full p-3 flex items-center justify-center">
+          <FaPhoneAlt className="text-white text-mb" />
+        </div>
+        {/* <div className="text-black text-sm font-medium">
+          <div>WE ARE</div>
+          <div className="text-xs text-gray-600">Join with the fu...</div>
+        </div> */}
       </button>
 
       {isModalOpen && (
@@ -104,7 +110,7 @@ const FloatingCallButton: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="p-2.5 bg-gray-50 rounded-lg">
+                {/* <div className="p-2.5 bg-gray-50 rounded-lg">
                   <div className="text-xs text-gray-600 mb-1">📧 Email</div>
                   <div className="flex justify-between items-center flex-wrap gap-2">
                     <span
@@ -120,7 +126,7 @@ const FloatingCallButton: React.FC = () => {
                       {copiedEmail ? '✓' : '📋'}
                     </button>
                   </div>
-                </div>
+                </div> */}
               </div>
             ) : (
               <div className="text-center py-3">
