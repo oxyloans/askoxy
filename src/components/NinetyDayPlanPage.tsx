@@ -30,6 +30,267 @@ type BookDayPlan = {
   topics: BookTopic[];
 };
 
+type DailyAIToolCategory =
+  | "Chat"
+  | "Research"
+  | "Writing"
+  | "Design"
+  | "Video"
+  | "Automation"
+  | "PM"
+  | "Coding";
+
+type DailyAITool = {
+  day: number;
+  tool: string;
+  content: string; // exactly 25 words
+  link: string;
+  category: DailyAIToolCategory;
+};
+
+const dailyAITools30: DailyAITool[] = [
+  {
+    day: 1,
+    tool: "ChatGPT",
+    content:
+      "Learn prompt fundamentals: ask clear questions, define roles, request formats, iterate responses, brainstorm ideas, summarize content, plan tasks, and improve everyday decision making efficiently.",
+    link: "https://chat.openai.com",
+    category: "Chat",
+  },
+  {
+    day: 2,
+    tool: "Perplexity AI",
+    content:
+      "Research faster using cited answers, compare multiple sources, extract facts, validate claims, build timelines, and save reliable insights for learning, presentations, and professional decision making.",
+    link: "https://www.perplexity.ai",
+    category: "Research",
+  },
+  {
+    day: 3,
+    tool: "Claude",
+    content:
+      "Analyze long documents by uploading files, generating structured summaries, identifying risks, extracting action items, rewriting content, and validating understanding through follow up questions.",
+    link: "https://claude.ai",
+    category: "Research",
+  },
+  {
+    day: 4,
+    tool: "Google Gemini",
+    content:
+      "Use multimodal AI to analyze images, write emails, answer questions, and integrate smoothly with Google Docs, Sheets, Gmail, and Drive for daily productivity tasks.",
+    link: "https://gemini.google.com",
+    category: "Chat",
+  },
+  {
+    day: 5,
+    tool: "Grok",
+    content:
+      "Track real time trends from X by summarizing conversations, identifying opinions, discovering breaking topics, collecting links, and gaining fast social media insights effectively.",
+    link: "https://x.ai",
+    category: "Research",
+  },
+  {
+    day: 6,
+    tool: "DeepL",
+    content:
+      "Translate text accurately while preserving tone, rewrite sentences professionally, suggest alternatives, and improve clarity for multilingual business communication, marketing content, and documentation.",
+    link: "https://www.deepl.com",
+    category: "Writing",
+  },
+  {
+    day: 7,
+    tool: "Grammarly",
+    content:
+      "Improve writing by correcting grammar, refining tone, reducing repetition, enhancing clarity, and adjusting style based on audience, intent, and professional communication goals.",
+    link: "https://www.grammarly.com",
+    category: "Writing",
+  },
+  {
+    day: 8,
+    tool: "Jasper",
+    content:
+      "Generate marketing content including blog outlines, advertisements, landing pages, and product descriptions, then refine outputs to match brand voice and compliance standards.",
+    link: "https://www.jasper.ai",
+    category: "Writing",
+  },
+  {
+    day: 9,
+    tool: "Copy.ai",
+    content:
+      "Create outreach content such as cold emails, LinkedIn messages, product descriptions, and taglines, test variations, personalize messaging, and optimize conversions effectively.",
+    link: "https://www.copy.ai",
+    category: "Writing",
+  },
+  {
+    day: 10,
+    tool: "Poe",
+    content:
+      "Compare multiple AI models using identical prompts, evaluate responses, select best outputs, and save winning prompts for research, writing, coding, and analysis tasks.",
+    link: "https://poe.com",
+    category: "Chat",
+  },
+  {
+    day: 11,
+    tool: "Midjourney",
+    content:
+      "Learn image prompt structure, style keywords, aspect ratios, and iterations to generate high quality brand visuals, thumbnails, concept art, and creative assets.",
+    link: "https://www.midjourney.com",
+    category: "Design",
+  },
+  {
+    day: 12,
+    tool: "DALL·E",
+    content:
+      "Generate images by describing scenes, styles, and edits, create variations, modify backgrounds, and produce visuals for social posts, presentations, and advertisements.",
+    link: "https://openai.com/dall-e",
+    category: "Design",
+  },
+  {
+    day: 13,
+    tool: "Adobe Firefly",
+    content:
+      "Create commercial safe visuals, text effects, and generative fills while maintaining brand consistency using Adobe templates, licensed assets, and professional design workflows.",
+    link: "https://firefly.adobe.com",
+    category: "Design",
+  },
+  {
+    day: 14,
+    tool: "Canva AI",
+    content:
+      "Design quickly using templates, auto generated layouts, platform resizing, and AI tools to create posters, presentations, carousels, and marketing materials efficiently.",
+    link: "https://www.canva.com",
+    category: "Design",
+  },
+  {
+    day: 15,
+    tool: "GPT Image",
+    content:
+      "Edit and enhance images by removing backgrounds, extending canvases, improving quality, creating mockups, and maintaining consistent branding across all visual assets.",
+    link: "https://chat.openai.com",
+    category: "Design",
+  },
+  {
+    day: 16,
+    tool: "Runway",
+    content:
+      "Generate videos from prompts, remove objects, add motion effects, and create short ads, reels, and explainers using AI powered video tools.",
+    link: "https://runwayml.com",
+    category: "Video",
+  },
+  {
+    day: 17,
+    tool: "Synthesia",
+    content:
+      "Create professional avatar videos by writing scripts, selecting presenters, adding captions, and exporting training or marketing videos without cameras or studios.",
+    link: "https://www.synthesia.io",
+    category: "Video",
+  },
+  {
+    day: 18,
+    tool: "Google Veo",
+    content:
+      "Experiment with cinematic video generation by defining scenes, camera angles, lighting, and motion, then refining prompts for consistent visual storytelling.",
+    link: "https://deepmind.google/technologies/veo",
+    category: "Video",
+  },
+  {
+    day: 19,
+    tool: "OpusClip",
+    content:
+      "Convert long videos into engaging shorts by detecting highlights automatically, adding captions, and publishing clips across platforms to grow audience reach.",
+    link: "https://www.opus.pro",
+    category: "Video",
+  },
+  {
+    day: 20,
+    tool: "Descript",
+    content:
+      "Edit audio and video through text by removing filler words, cutting scenes, enhancing sound quality, adding captions, and exporting professional content.",
+    link: "https://www.descript.com",
+    category: "Video",
+  },
+  {
+    day: 21,
+    tool: "Zapier",
+    content:
+      "Automate repetitive workflows by connecting apps, triggering actions, moving data, sending alerts, and scheduling tasks to save time and effort.",
+    link: "https://zapier.com",
+    category: "Automation",
+  },
+  {
+    day: 22,
+    tool: "Zapier Agents",
+    content:
+      "Build autonomous agents by defining goals, tools, and triggers to draft replies, update records, create tickets, and notify users automatically.",
+    link: "https://zapier.com/agents",
+    category: "Automation",
+  },
+  {
+    day: 23,
+    tool: "Notion AI",
+    content:
+      "Summarize notes, generate documents, extract tasks, and organize knowledge bases inside one workspace for projects, processes, documentation, and collaboration.",
+    link: "https://www.notion.so",
+    category: "PM",
+  },
+  {
+    day: 24,
+    tool: "ClickUp AI",
+    content:
+      "Plan projects by generating tasks, summarizing updates, writing SOPs, tracking progress, identifying blockers, and managing deadlines with smart dashboards.",
+    link: "https://clickup.com",
+    category: "PM",
+  },
+  {
+    day: 25,
+    tool: "Asana AI",
+    content:
+      "Create structured project plans, suggest next actions, identify risks, automate routing, and keep teams aligned with clear ownership and timelines.",
+    link: "https://asana.com",
+    category: "PM",
+  },
+{
+  day: 26,
+  tool: "GitHub Copilot",
+  content:
+    "Accelerate coding by generating functions, understanding APIs, writing tests, learning patterns, reviewing suggestions carefully, and committing clean maintainable code.",
+  link: "https://github.com/features/copilot",
+  category: "Coding",
+},
+{
+  day: 27,
+  tool: "Cursor",
+  content:
+    "Develop faster by chatting with your codebase, refactoring safely, generating files, fixing bugs, and learning concepts by asking contextual questions.",
+  link: "https://cursor.sh",
+  category: "Coding",
+},
+{
+  day: 28,
+  tool: "Tabnine",
+  content:
+    "Use secure AI autocomplete for private code suggestions, faster typing, reduced errors, and improved productivity across professional development teams.",
+  link: "https://www.tabnine.com",
+  category: "Coding",
+},
+{
+  day: 29,
+  tool: "Bolt.new",
+  content:
+    "Generate full stack applications directly in the browser using prompts, edit code live, preview instantly, and iterate rapidly without environment setup.",
+  link: "https://bolt.new",
+  category: "Coding",
+},
+{
+  day: 30,
+  tool: "Lovable",
+  content:
+    "Turn natural language into working applications, generate UI and backend instantly, customize logic, and ship products fast without complex setup.",
+  link: "https://lovable.dev",
+  category: "Coding",
+},
+];
+
 const C1 = "#364d69";
 const C2 = "#90b7d7";
 const C3 = "#173b63";
@@ -976,6 +1237,18 @@ export default function NinetyDayPlanPage() {
   /** ✅ Book plan state */
   const [bookDay, setBookDay] = useState<number>(1);
 
+  const [aiDay, setAiDay] = useState<number>(1);
+
+const aiDayChips = useMemo(() => {
+  const days: number[] = [];
+  for (let i = 1; i <= dailyAITools30.length; i += 1) days.push(i);
+  return days;
+}, []);
+
+const selectedAiTool = useMemo(() => {
+  return dailyAITools30.find((d) => d.day === aiDay) || dailyAITools30[0];
+}, [aiDay]);
+
   /** ✅ Book modal state */
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPage, setPreviewPage] = useState<number>(1);
@@ -1304,155 +1577,140 @@ export default function NinetyDayPlanPage() {
         </div>
       </header>
 
-      {/* ✅ AI BOOK DAILY PLAN (2 topics/day) */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 -mt-2 pb-6">
-        <SoftCard className="p-5 sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap gap-2">
-                <Pill text="ASKOXY.AI Book" />
-                <Pill text="2 Topics / Day" />
-                <Pill text={"Total Days: 33"} />
-              </div>
-              <h2 className="mt-3 text-xl sm:text-2xl font-extrabold text-slate-900">
-                Daily Book Learning Plan (Index Order)
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Every day: 2 topics in sequence.
-              </p>
-            </div>
+{/* ✅ 30-DAY AI TOOLS PLAN (UPDATED) */}
+<section className="mx-auto max-w-7xl px-4 sm:px-6 pb-10">
+  <SoftCard className="overflow-hidden">
+    {/* Top hero strip */}
+    <div
+      className="relative px-5 sm:px-7 py-6"
+      style={{
+        background: "linear-gradient(135deg, rgba(54,77,105,0.95), rgba(144,183,215,0.92), rgba(23,59,99,0.95))",
+      }}
+    >
+      <div
+        className="absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl opacity-40"
+        style={{ background: "rgba(255,255,255,0.35)" }}
+      />
+      <div
+        className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full blur-3xl opacity-30"
+        style={{ background: "rgba(255,255,255,0.28)" }}
+      />
 
-            <div className="flex gap-2">
-              <SecondaryBtn
-                label="Prev Book Day"
-                onClick={() => setBookDay((d) => Math.max(1, d - 1))}
-              />
-              <PrimaryBtn
-                label="Next Book Day"
-                onClick={() =>
-                  setBookDay((d) => Math.min(bookDailyPlan.length, d + 1))
-                }
-              />
-            </div>
+      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          {/* Badge row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-extrabold text-white border border-white/20">
+              ✅ Top 30 AI Tools
+            </span>
+            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white border border-white/15">
+              1 Tool / Day
+            </span>
+            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white border border-white/15">
+              Zero → Hero
+            </span>
           </div>
 
-          {/* Book day chips */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-slate-500">
-                Quick book day jump
-              </p>
-              <p className="text-xs text-slate-500">
-                Selected: Book Day {bookDay}
-              </p>
-            </div>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
-              {bookDayChips.map((d) => (
-                <DayChip
-                  key={d}
-                  day={d}
-                  prefix="Book Day"
-                  active={d === bookDay}
-                  onClick={() => setBookDay(d)}
-                />
-              ))}
-            </div>
-          </div>
+          <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+            Top 30 AI Tools <span className="opacity-95">that change your life</span>
+          </h2>
+          <p className="mt-1 text-sm sm:text-base text-white/90 leading-relaxed max-w-2xl">
+            From <b>Zero to Hero</b>: learn one tool daily, and open the tool to build real skills fast.
+          </p>
+        </div>
 
-          {/* Selected book day content */}
-          <div
-            className="mt-4 rounded-3xl border bg-white/80 p-5"
-            style={{ borderColor: `${C2}66` }}
+        {/* Controls */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setAiDay((d) => Math.max(1, d - 1))}
+            className="rounded-2xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold text-slate-500">
-                  Today’s Book Topics
-                </p>
-                <p className="text-lg font-extrabold text-slate-900">
-                  Book Day {bookDay}
-                </p>
-              </div>
+            ← Prev
+          </button>
+          <button
+            onClick={() => setAiDay((d) => Math.min(dailyAITools30.length, d + 1))}
+            className="rounded-2xl bg-white px-4 py-2.5 text-sm font-extrabold"
+            style={{ color: C3 }}
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Body */}
+    <div className="p-5 sm:p-6">
+      {/* Day chips */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-slate-500">Pick your tool day</p>
+        <p className="text-xs text-slate-500">
+          Selected: <span className="font-bold" style={{ color: C3 }}>Day {aiDay}</span>
+        </p>
+      </div>
+
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+        {aiDayChips.map((d) => (
+          <DayChip
+            key={d}
+            day={d}
+            prefix="Day"
+            active={d === aiDay}
+            onClick={() => setAiDay(d)}
+          />
+        ))}
+      </div>
+
+      {/* Selected day content */}
+      <div
+        className="mt-5 rounded-[28px] border bg-white/85 p-5 sm:p-6"
+        style={{
+          borderColor: `${C2}66`,
+          boxShadow: "0 18px 50px rgba(15,23,42,0.06)",
+        }}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          {/* Left */}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <span
-                className="inline-flex items-center rounded-2xl border bg-white px-3 py-2 text-xs font-semibold"
+                className="inline-flex items-center rounded-full border bg-white/70 px-3 py-1 text-xs font-extrabold"
                 style={{ borderColor: `${C2}66`, color: C3 }}
               >
-                {selectedBookDayPlan?.topics.length || 0} topics
+                Day {selectedAiTool.day}
+              </span>
+
+              <span
+                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                style={{ background: `${C3}14`, color: C3 }}
+              >
+                {selectedAiTool.category}
               </span>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {(selectedBookDayPlan?.topics || []).map((t) => {
-                const pageUrl = getBookPageImageUrl(t.page);
+            <h3 className="mt-3 text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
+              {selectedAiTool.tool}
+            </h3>
 
-                return (
-                  <div
-                    key={t.no}
-                    className="rounded-3xl border bg-white p-4"
-                    style={{
-                      borderColor: `${C2}66`,
-                      boxShadow: "0 12px 26px rgba(15,23,42,0.06)",
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-slate-500">
-                          Book Page
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* ✅ SHOW IMAGE DIRECTLY (inline) */}
-                    <div
-                      className="mt-3 rounded-2xl border bg-white overflow-hidden"
-                      style={{ borderColor: `${C2}66` }}
-                    >
-                      {pageUrl ? (
-                        <img
-                          src={pageUrl}
-                          alt={`Page ${t.page}`}
-                          className="w-full h-[240px] object-contain bg-white"
-                          loading="lazy"
-                          onError={(e) => {
-                            // If image fails to load, show fallback text
-                            (
-                              e.currentTarget as HTMLImageElement
-                            ).style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <div className="p-3 text-xs text-slate-600">
-                          Page image not available (out of image range).
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (!pageUrl) {
-                            alert(
-                              "Page image not mapped for this page number."
-                            );
-                            return;
-                          }
-                          openPreview(t.page);
-                        }}
-                        className="flex-1 rounded-2xl px-4 py-2 text-xs font-semibold text-white transition hover:opacity-95"
-                        style={{ background: GRAD, opacity: pageUrl ? 1 : 0.6 }}
-                        disabled={!pageUrl}
-                      >
-                        Preview (Full Screen)
-                      </button>
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
+            <p className="mt-2 text-sm sm:text-base text-slate-700 leading-relaxed">
+              {selectedAiTool.content}
+            </p>
           </div>
-        </SoftCard>
-      </section>
+
+          {/* Right */}
+          <div className="w-full lg:w-[260px] flex flex-col gap-2">
+            <button
+              onClick={() => window.open(selectedAiTool.link, "_blank")}
+              className="w-full rounded-2xl px-5 py-3 text-sm font-extrabold text-white transition hover:opacity-95 active:scale-[0.99]"
+              style={{ background: GRAD }}
+            >
+              Open Tool ↗
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </SoftCard>
+</section>
 
       {/* TOOLBAR */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">

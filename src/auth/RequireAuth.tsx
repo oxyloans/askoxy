@@ -14,6 +14,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   if (!token) {
     // ✅ Save FULL current path only if not already saved
     const fullPath = location.pathname + location.search + location.hash;
+    console.log("Saving redirect path:", fullPath);
 
     if (!sessionStorage.getItem("redirectPath")) {
       sessionStorage.setItem("redirectPath", fullPath);

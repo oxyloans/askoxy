@@ -3,14 +3,12 @@ import { motion } from "framer-motion";
 import aiImage from "../assets/img/gt.png";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-import { message, Modal } from "antd";
-
+import { message } from "antd";
 import axios from "axios";
 
 const FreeAiBook: React.FC = () => {
   const navigate = useNavigate();
-  const [showOfferModal, setShowOfferModal] = useState(false);
-  const [marketingLoading, setMarketingLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const userId = localStorage.getItem("userId");
   const mobileNumber = localStorage.getItem("mobileNumber");
@@ -19,12 +17,15 @@ const FreeAiBook: React.FC = () => {
 
   const jobPlanImageUrl = "https://i.ibb.co/twj7WCX3/90-dayl.png";
 
+  // ✅ Campaign Id you want to open on "View More"
+  const campaignId = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
+
   useEffect(() => {
     const sendMarketingRequest = async () => {
       if (!userId) return;
 
       try {
-        setMarketingLoading(true);
+        setIsLoading(true);
         const response = await axios.post(
           `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
           {
@@ -36,20 +37,34 @@ const FreeAiBook: React.FC = () => {
         );
 
         if (response.status === 200) {
-          message.success("Welcome to AI Book");
+          message.success("Welcome to Free AI Book");
         }
       } catch (error) {
         console.error(error);
       } finally {
-        setMarketingLoading(false);
+        setIsLoading(false);
       }
     };
 
     sendMarketingRequest();
   }, [userId, mobileNumber, whatsappNumber]);
 
-  const handleViewMore = () => {
-    setShowOfferModal(true);
+  // ✅ FIX: View More should open CampaignBlogPage route
+  const handleSignIn = () => {
+    setIsLoading(true);
+
+    const redirectPath = `/campaign/${campaignId}`;
+    const uid = localStorage.getItem("userId");
+
+    if (uid) {
+      navigate(redirectPath);
+      setIsLoading(false);
+      return;
+    }
+
+    sessionStorage.setItem("redirectPath", redirectPath);
+    window.location.href = LOGIN_URL;
+    // no setIsLoading(false) here because page redirects
   };
 
   const handleJobPlanViewMore = () => {
@@ -85,20 +100,24 @@ const FreeAiBook: React.FC = () => {
             Enter the AI & GenAI Universe is a beginner-friendly yet powerful
             guide for anyone who wants to understand and use Artificial
             Intelligence in real life. With 65 practical chapters, the book
-            explains AI, GenAI, Prompt Engineering, LLMs, AI Agents, and future
-            AI careers in a simple and easy way.
+            explains AI, Generative AI, Prompt Engineering, Large Language
+            Models (LLMs), AI Agents, and future AI careers in a simple and
+            easy-to-follow way.
           </p>
+
           <p className="text-gray-700 mb-6 text-justify">
-            Our Mission: To empower one million learners with AI skills and
-            unlock career opportunities of the future. Join the revolution,
-            master AI, and be part of the next wave of technological innovation.
+            Our Mission is to empower one million learners with real-world AI
+            skills and unlock career opportunities of the future. Join the AI
+            revolution, master practical AI use cases, and be part of the next
+            wave of technological innovation.
           </p>
 
           <motion.button
-            onClick={handleViewMore}
-            className="self-start px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-semibold hover:from-indigo-500 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            onClick={handleSignIn}
+            disabled={isLoading}
+            className="self-start px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            View More
+            {isLoading ? "Loading..." : "View More"}
           </motion.button>
         </div>
       </motion.div>
@@ -155,162 +174,6 @@ const FreeAiBook: React.FC = () => {
           </motion.button>
         </div>
       </motion.div>
-
-      <Modal
-        open={showOfferModal}
-        onCancel={() => setShowOfferModal(false)}
-        footer={null}
-        centered
-        destroyOnClose
-        title="Offer Information"
-        width={520}
-        styles={{
-          body: {
-            padding: 0,
-          },
-        }}
-      >
-        <div
-          style={{
-            padding: "16px",
-          }}
-        >
-          <div
-            style={{
-              borderRadius: 12,
-              border: "1px solid #f0f0f0",
-              overflow: "hidden",
-              background: "#fff",
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: "16px 16px 12px",
-                borderBottom: "1px solid #f0f0f0",
-                textAlign: "center",
-              }}
-            >
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
-                Offer Ended
-              </div>
-              <div style={{ marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                The offer ended on <b>31st December 2025</b>.
-              </div>
-            </div>
-
-            {/* Content */}
-            <div
-              style={{
-                padding: "14px 16px 16px",
-                display: "grid",
-                gap: 12,
-              }}
-            >
-              {/* Info card */}
-              <div
-                style={{
-                  borderRadius: 10,
-                  background: "#fafafa",
-                  border: "1px solid #f0f0f0",
-                  padding: 12,
-                }}
-              >
-                <div
-                  style={{ fontSize: 13, color: "#374151", lineHeight: 1.5 }}
-                >
-                  The book will be available again soon in our store.
-                </div>
-              </div>
-
-              {/* Bid card */}
-              <div
-                style={{
-                  borderRadius: 10,
-                  border: "1px solid #f0f0f0",
-                  padding: 14,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: "#111827",
-                    marginBottom: 6,
-                    textAlign: "center",
-                  }}
-                >
-                  Special Appreciation Bid
-                </div>
-
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "#6b7280",
-                    textAlign: "center",
-                    lineHeight: 1.5,
-                    marginBottom: 12,
-                  }}
-                >
-                  To appreciate our first copy buyer, we are hosting a special
-                  bid.
-                </div>
-
-                {/* Highlight */}
-                <div
-                  style={{
-                    borderRadius: 10,
-                    background: "#FFFBEB",
-                    border: "1px solid #FDE68A",
-                    padding: 12,
-                    textAlign: "center",
-                  }}
-                >
-                  <div
-                    style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}
-                  >
-                    The highest bidder wins the first copy
-                  </div>
-                  <div style={{ marginTop: 4, fontSize: 13, color: "#374151" }}>
-                    and an exclusive chit-chat session with our CEO.
-                  </div>
-                </div>
-
-                {/* Note */}
-                <div
-                  style={{
-                    marginTop: 12,
-                    borderRadius: 10,
-                    background: "#F9FAFB",
-                    border: "1px solid #f0f0f0",
-                    padding: 10,
-                    textAlign: "center",
-                    fontSize: 13,
-                    color: "#374151",
-                    fontWeight: 600,
-                  }}
-                >
-                  Stay tuned for updates!
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Responsive width helper */}
-          <style>
-            {`
-        /* Make modal fit nicely on small screens */
-        .ant-modal {
-          max-width: calc(100vw - 24px) !important;
-        }
-        .ant-modal-content {
-          border-radius: 14px !important;
-          overflow: hidden;
-        }
-      `}
-          </style>
-        </div>
-      </Modal>
     </section>
   );
 };

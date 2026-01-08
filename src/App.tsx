@@ -12,6 +12,7 @@ import CMSroutes1 from "./GLMS/CMS/Pages/CMSroutes1";
 import FreelancerForm from "./components/FreelancerForm";
 import FloatingCallButton from "./components/FloatingCallButton";
 import UserOrdersIntegration from "./AskoxyAdmin/UserOrdersIntegration";
+import CampaignBlogPage from "./FREEAIBOOK/CampaignBlogPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -476,6 +477,7 @@ const App: React.FC = () => {
               {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
               {/* ===================================================== */}
               <Route path="/shopretail" element={<HomePage />} />
+
               <Route path="/shop-form" element={<ShopFormPage />} />
               <Route path="/shop-list" element={<ShopListPage />} />
               <Route path="/shop-edit/:id" element={<ShopEditForm />} />
@@ -500,6 +502,7 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
+              <Route path="/campaign/:campaignId" element={<CampaignBlogPage />} />
 
               {/* NOTE: These are your existing relative routes (kept same) */}
               <Route path="dashboard/:tab" element={<DashboardMain />} />

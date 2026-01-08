@@ -308,7 +308,27 @@ const AllAIStores: React.FC = () => {
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId]);
+  const handleLogin1 = () => {
+    try {
+      setLoading(true);
 
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/usercreateaistore";
+
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        sessionStorage.setItem("primaryType", "AGENT"); // Set primary type for agents
+        // Pass primaryType as query parameter
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   /** ---------------------------------------------
    * ✅ Step-1 Check Company Contact
    * --------------------------------------------- */
@@ -400,6 +420,53 @@ const AllAIStores: React.FC = () => {
     [navigate, slugify]
   );
 
+  const openWhatsApp = useCallback((shareMessage: string, storeId: string) => {
+    try {
+      // Use wa.me for better compatibility (works on both mobile and desktop)
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+        shareMessage
+      )}`;
+
+      // Try to open in new window/tab
+      const newWindow = window.open(
+        whatsappUrl,
+        "_blank",
+        "noopener,noreferrer,width=600,height=600"
+      );
+
+      // Check if popup was blocked (simple check)
+      if (!newWindow) {
+        // Popup blocked or failed to open
+        // Copy to clipboard as fallback
+        if (navigator.clipboard) {
+          navigator.clipboard
+            .writeText(shareMessage)
+            .then(() => {
+              message.success(
+                "Link copied to clipboard! You can now share it manually."
+              );
+            })
+            .catch(() => {
+              message.warning(
+                "Please allow popups for this site to share via WhatsApp."
+              );
+            });
+        } else {
+          message.warning(
+            "Please allow popups for this site to share via WhatsApp."
+          );
+        }
+      } else {
+        // Successfully opened WhatsApp
+        setShareSuccess(storeId);
+        setTimeout(() => setShareSuccess(null), 1600);
+      }
+    } catch (error) {
+      console.error("Error opening WhatsApp:", error);
+      message.error("Unable to open WhatsApp. Please try again.");
+    }
+  }, []);
+
   const handleShareStore = useCallback(
     (store: AiStore, e: React.MouseEvent) => {
       e.stopPropagation();
@@ -418,31 +485,56 @@ ${publicUrl}
 Create your own AI Agent today on ASKOXY.AI! 🚀
       `.trim();
 
+      console.log("Sharing message:", staticMessage);
+      console.log("Public URL:", publicUrl);
+
+      // Try native share API first (mobile browsers)
+      // Some browsers prioritize URL over text, so we'll try both approaches
       if (typeof navigator !== "undefined" && (navigator as any).share) {
+        // First try with full message in text field only
         (navigator as any)
           .share({
             title: store.storeName || "AI Store - Bharat AI Store",
-            text: staticMessage,
+            text: staticMessage, // Full message with URL included
           })
           .then(() => {
+            console.log("Native share successful with full message");
             setShareSuccess(store.storeId);
             setTimeout(() => setShareSuccess(null), 1600);
           })
-          .catch(() => {});
+          .catch((error: any) => {
+            console.log(
+              "Native share failed with text only, trying with URL:",
+              error
+            );
+            // If that fails, try with URL only (some browsers work better this way)
+            (navigator as any)
+              .share({
+                title: store.storeName || "AI Store - Bharat AI Store",
+                text: staticMessage,
+                url: publicUrl,
+              })
+              .then(() => {
+                console.log("Native share successful with URL");
+                setShareSuccess(store.storeId);
+                setTimeout(() => setShareSuccess(null), 1600);
+              })
+              .catch((error2: any) => {
+                console.log(
+                  "All native share attempts failed, falling back to WhatsApp:",
+                  error2
+                );
+                // Fallback to WhatsApp if all native share attempts fail
+                openWhatsApp(staticMessage, store.storeId);
+              });
+          });
         return;
       }
 
-      const whatsappUrl =
-        "https://api.whatsapp.com/send?text=" +
-        encodeURIComponent(staticMessage);
-
-      if (typeof window !== "undefined") {
-        window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-        setShareSuccess(store.storeId);
-        setTimeout(() => setShareSuccess(null), 1600);
-      }
+      // Direct fallback to WhatsApp
+      openWhatsApp(staticMessage, store.storeId);
     },
-    [buildPublicStoreUrl]
+    [buildPublicStoreUrl, openWhatsApp]
   );
 
   const tabClass = (active: boolean) =>
@@ -481,8 +573,9 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         {/* Header */}
         <div className="mb-3 sm:mb-6">
+          {/* ✅ Row 1: Title/Desc (left) + Search (right) */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            {/* Left: Title + Desc + Tabs */}
+            {/* Left: Title + Desc */}
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
                 {headerTitle}
@@ -490,35 +583,6 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
               <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
                 {headerDesc}
               </p>
-
-              {/* ✅ Tabs (mobile scroll) */}
-              <div className="mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar">
-                <button
-                  type="button"
-                  className={tabClass(activeStoreTab === "ALL")}
-                  onClick={() => setActiveStoreTab("ALL")}
-                >
-                  All AI Stores
-                </button>
-                <button
-                  type="button"
-                  className={tabClass(activeStoreTab === "COMPANY")}
-                  onClick={() => setActiveStoreTab("COMPANY")}
-                >
-                  Company AI Stores
-                </button>
-
-                {stores.length > 0 && (
-                  <div className="ml-2 inline-flex items-center gap-2 rounded-full bg-violet-100 px-4 py-2 text-sm font-medium text-violet-700">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-violet-400 opacity-75" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
-                    </span>
-                    {filteredStores.length}{" "}
-                    {filteredStores.length === 1 ? "Store" : "Stores"}
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Right: Search (responsive) */}
@@ -568,6 +632,47 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
                 )}
               </div>
             )}
+          </div>
+
+          {/* ✅ Row 2: Tabs (left) + Create button (right end) */}
+          <div className="mt-4 flex w-full items-center justify-between gap-3">
+            {/* LEFT: Tabs row (scrollable only for tabs) */}
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto no-scrollbar">
+              <button
+                type="button"
+                className={tabClass(activeStoreTab === "ALL")}
+                onClick={() => setActiveStoreTab("ALL")}
+              >
+                All AI Stores
+              </button>
+
+              <button
+                type="button"
+                className={tabClass(activeStoreTab === "COMPANY")}
+                onClick={() => setActiveStoreTab("COMPANY")}
+              >
+                Company AI Stores
+              </button>
+
+              {stores.length > 0 && (
+                <div className="ml-2 inline-flex items-center gap-2 rounded-full bg-violet-100 px-4 py-2 text-sm font-medium text-violet-700 whitespace-nowrap">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-violet-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
+                  </span>
+                  {filteredStores.length}{" "}
+                  {filteredStores.length === 1 ? "Store" : "Stores"}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT: Create Button (ALWAYS at end) */}
+            <button
+              onClick={handleLogin1}
+              className="shrink-0 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 sm:px-4 sm:text-sm"
+            >
+              Create AI Store
+            </button>
           </div>
         </div>
 

@@ -132,6 +132,9 @@ const Content1: React.FC = () => {
       return;
     }
 
+    // Clear chat messages when opening AI chat
+    setChatMessages([]);
+
     setIsAiChatOpen(true);
     setTimeout(() => {
       setIsAiChatAnimating(true);
@@ -166,16 +169,12 @@ const Content1: React.FC = () => {
     };
   }, []);
 
-  // Decide width class: on mobile we always use w-64 so labels have space
   const widthClass = isMobile
     ? "w-64"
     : isCollapsed && !isHovering
     ? "w-20 overflow-visible"
     : "w-64 overflow-hidden";
 
-  // Tell Sidebar when to show labels:
-  // - Always on mobile
-  // - On desktop when expanded (hovering or not collapsed)
   const showLabels = isMobile || !isCollapsed || isHovering;
 
   return (
@@ -221,7 +220,7 @@ const Content1: React.FC = () => {
         <div
           className={`fixed z-50 transition-all duration-300 ease-in-out ${
             isMobile
-              ? "bottom-20 right-2 left-2"
+              ? "bottom-24 right-2 left-2 h-[60vh]"
               : `top-20 bottom-0 right-0 ${
                   isAiChatAnimating
                     ? "translate-x-0 opacity-100"
@@ -265,44 +264,68 @@ const Content1: React.FC = () => {
     .animate-glow {
       animation: glow 1.5s ease-in-out infinite;
     }
+    
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .animate-spin-slow {
+      animation: rotate 8s linear infinite;
+    }
   `}
       </style>
 
       <button
         onClick={toggleAiChat}
-        className={`fixed z-40 text-white transition-all duration-300 animate-glow
-    ${
-      isMobile
-        ? "bottom-6 right-6 bg-purple-600 rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_15px_rgba(192,132,252,0.9)]"
-        : isAiChatOpen && isAiChatAnimating
-        ? "top-1/2 right-[52rem] -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
-        : "top-1/2 right-0 -translate-y-1/2 bg-purple-600 p-2 rounded-l-lg shadow-[0_0_15px_rgba(192,132,252,0.9)]"
-    }
-  `}
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-300 animate-glow"
         title={isAiChatOpen ? "Close ASKOXY.AI" : "Open ASKOXY.AI"}
       >
-        <svg
-          className={`${isMobile ? "w-7 h-7" : "w-4 h-4"} ${
-            !isMobile && !isAiChatOpen ? "rotate-180" : ""
-          } transition-transform duration-300`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d={
-              isMobile
-                ? isAiChatOpen
-                  ? "M6 18L18 6M6 6l12 12"
-                  : "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                : "M9 5l7 7-7 7"
-            }
-          />
-        </svg>
+        {isAiChatOpen ? (
+          <svg
+            className="w-6 h-6 md:w-7 md:h-7"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        ) : (
+          <svg
+            className="w-8 h-8 md:w-9 md:h-9"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+          >
+            <rect
+              x="6"
+              y="8"
+              width="12"
+              height="10"
+              rx="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="9.5" cy="11.5" r="0.5" fill="currentColor" />
+            <circle cx="14.5" cy="11.5" r="0.5" fill="currentColor" />
+            <path strokeLinecap="round" d="M9 15c.5.5 1.5 1 3 1s2.5-.5 3-1" />
+            <line x1="12" y1="8" x2="12" y2="5" strokeLinecap="round" />
+            <circle cx="12" cy="4" r="1" fill="currentColor" />
+            <line x1="6" y1="12" x2="4" y2="12" strokeLinecap="round" />
+            <line x1="18" y1="12" x2="20" y2="12" strokeLinecap="round" />
+          </svg>
+        )}
       </button>
+
       <div
         className={`transition-all duration-300
           pt-16 md:pt-20

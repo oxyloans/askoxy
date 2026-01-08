@@ -406,6 +406,7 @@ const AgentStoreManager: React.FC = () => {
             storeName: values.storeName,
             description: values.description,
             storeCreatedBy: "USER",
+            userId: userId,
             storeImageUrl: values.storeImageUrl,
             isCompanyStore: !!values.isCompanyStore,
 
@@ -420,6 +421,7 @@ const AgentStoreManager: React.FC = () => {
             storeCreatedBy: "USER",
             storeImageUrl: values.storeImageUrl,
             isCompanyStore: !!values.isCompanyStore,
+            userId: userId,
 
             // ✅ ONLY send when Company Store
             ...(values.isCompanyStore && {
@@ -776,28 +778,30 @@ const AgentStoreManager: React.FC = () => {
     <div style={{ padding: "16px", background: "#fff", minHeight: "100vh" }}>
       {/* HEADER */}
       <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
+        className="flex flex-col gap-4 mb-5 sm:flex-row sm:justify-between sm:items-center"
+        style={{ marginBottom: "20px" }}
       >
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "600",
-            margin: 0,
-            color: "#1a1a1a",
-          }}
-        >
-          Agent AI Store Manager
-        </h1>
+        {/* Title - Left Side */}
+        <div className="flex-1 min-w-0">
+          <h1
+            className="text-xl font-semibold text-gray-900 m-0 sm:text-2xl"
+            style={{
+              fontSize: "20px",
+              fontWeight: "600",
+              margin: 0,
+              color: "#1a1a1a",
+            }}
+          >
+            Agent AI Store Manager
+          </h1>
+        </div>
 
-        <div style={{ display: "flex", gap: "12px" }}>
+        {/* Buttons - Right Side */}
+        <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto sm:gap-3">
           <Button
             type="primary"
             icon={<PlusOutlined />}
+            className="flex-1 h-10 font-medium sm:flex-none"
             style={{
               background: "#008cba",
               borderColor: "#008cba",
@@ -816,27 +820,29 @@ const AgentStoreManager: React.FC = () => {
           >
             Create AI Store
           </Button>
-{ storeData.length > 0 && (
-  
 
-          <Button
-            icon={<UsergroupAddOutlined />}
-            style={{
-              background: "#ba4d00ff",
-              borderColor: "#ba4d00ff",
-              height: "40px",
-              color: "#f7f7f7",
-              fontWeight: "500",
-            }}
-            type="default"
-            onClick={() => setIsBulkUploadModal(true)}
-          >
-            Bulk Upload Agents
-          </Button>
-)}
+          {storeData.length > 0 && (
+            <Button
+              icon={<UsergroupAddOutlined />}
+              className="flex-1 h-10 font-medium sm:flex-none"
+              style={{
+                background: "#ba4d00ff",
+                borderColor: "#ba4d00ff",
+                height: "40px",
+                color: "#f7f7f7",
+                fontWeight: "500",
+              }}
+              type="default"
+              onClick={() => setIsBulkUploadModal(true)}
+            >
+              Bulk Upload Agents
+            </Button>
+          )}
+
           <Button
             type="primary"
             icon={<FaShoppingCart />}
+            className="flex-1 h-10 font-medium sm:flex-none"
             style={{
               background: "#1ab394",
               borderColor: "#1ab394",

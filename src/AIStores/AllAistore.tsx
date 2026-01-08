@@ -94,6 +94,17 @@ const cleanText = (t?: string | null) =>
     .replace(/\s+/g, " ")
     .trim();
 
+const slugify = (text?: string | null): string =>
+  text
+    ? text
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w-]+/g, "")
+        .replace(/--+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60)
+    : "store";
+
 const AllAIStore: React.FC = () => {
   const { storeSlug } = useParams<{ storeSlug: string }>();
   const location = useLocation();
@@ -138,7 +149,9 @@ const AllAIStore: React.FC = () => {
   ];
 
   const storeIdFromState = (location.state as any)?.storeId || "";
-  const storeIdFromQuery = new URLSearchParams(location.search).get("storeId");
+  // keep query only for backward compatibility (old shared links), but we will REMOVE it from URL immediately
+  const storeIdFromQuery =
+    new URLSearchParams(location.search).get("storeId") || "";
   const effectiveStoreId = storeIdFromState || storeIdFromQuery || "";
 
   const [store, setStore] = useState<StoreDetail | null>(null);
@@ -171,6 +184,19 @@ const AllAIStore: React.FC = () => {
     setSearchResults(filtered);
     setSearchLoading(false);
   }, [q, visibleAgents]);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    if (sp.has("storeId")) {
+      sp.delete("storeId");
+      const qs = sp.toString();
+      navigate(`${location.pathname}${qs ? `?${qs}` : ""}`, {
+        replace: true,
+        state: location.state, // keep storeId in state if it came from listing page
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- Auto-scroll to agent list on search, and scroll to top when search is cleared ---
   useEffect(() => {
@@ -355,49 +381,28 @@ const AllAIStore: React.FC = () => {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
 
-const openWhatsappLoginWithRedirect = useCallback(() => {
-  // ✅ Build redirect path that ALWAYS includes storeId in query
-  const sp = new URLSearchParams(window.location.search);
-
-  // If storeId not present in URL, inject it (because location.state will be lost after login)
-  if (!sp.get("storeId") && effectiveStoreId) {
-    sp.set("storeId", effectiveStoreId);
-  }
-
-  const redirectPath =
-    window.location.pathname + (sp.toString() ? `?${sp.toString()}` : "");
-
-  // ✅ Persist redirect in sessionStorage (NOT localStorage)
-  sessionStorage.setItem("postLoginRedirectPath", redirectPath);
-
-  // ✅ After login, auto-open company verification once (also sessionStorage)
-  sessionStorage.setItem("openCompanyVerificationAfterLogin", "1");
-
-  // Also pass redirect in query
-  navigate(`/whatsapplogin?redirect=${encodeURIComponent(redirectPath)}`);
-}, [navigate, effectiveStoreId]);
-
-
   const openCompanyVerification = useCallback(async () => {
     if (!isCompanyStore) return;
 
-    if (!accessToken) {
-      openWhatsappLoginWithRedirect();
-      return;
-    }
+  if (!accessToken || !customerId) {
+  // ✅ Save current page so after login user returns to same AI Store
+  const fullPath = window.location.pathname + window.location.search + window.location.hash;
+  sessionStorage.setItem("redirectPath", fullPath);
 
-    if (!customerId) {
-      message.warning("User ID not found. Please login again.");
-      openWhatsappLoginWithRedirect();
-      return;
-    }
+  // ✅ Optional: auto-open the verification modal after login
+  sessionStorage.setItem("openCompanyVerificationAfterLogin", "1");
 
-    // ✅ If already verified, do nothing
+  window.location.href = `/whatsapplogin?redirect=${encodeURIComponent(fullPath)}`;
+  return;
+}
+
+    // ✅ Check employee info from API
     const existingId = await ensureCompanyContactId();
-    if (existingId) {
-      return;
-    }
 
+    // If API returned an existing contact record, we already have status (isEmployeeAllowed updated)
+    if (existingId) return;
+
+    // If 404 => details not submitted => open verification modal
     setCompanyEmailId("");
     setPersonRole("");
     setPersonRoleOther("");
@@ -406,37 +411,27 @@ const openWhatsappLoginWithRedirect = useCallback(() => {
     setEmailOtpSession("");
 
     setCompanyVerifyOpen(true);
-  }, [
-    isCompanyStore,
-    accessToken,
-    customerId,
-    ensureCompanyContactId,
-    openWhatsappLoginWithRedirect,
-  ]);
+  }, [isCompanyStore, accessToken, customerId, ensureCompanyContactId]);
 
-useEffect(() => {
-  if (!isCompanyStore) return;
-  if (!accessToken) return;
+  useEffect(() => {
+    if (!isCompanyStore) return;
+    if (!accessToken) return;
 
-  const flag = sessionStorage.getItem("openCompanyVerificationAfterLogin");
-  if (flag !== "1") return;
+    const flag = sessionStorage.getItem("openCompanyVerificationAfterLogin");
+    if (flag !== "1") return;
 
-  sessionStorage.removeItem("openCompanyVerificationAfterLogin");
+    sessionStorage.removeItem("openCompanyVerificationAfterLogin");
 
-  (async () => {
-    const existingId = await ensureCompanyContactId();
-    if (!existingId) setCompanyVerifyOpen(true);
-  })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [isCompanyStore, accessToken]);
+    (async () => {
+      const existingId = await ensureCompanyContactId();
+      if (!existingId) setCompanyVerifyOpen(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCompanyStore, accessToken]);
 
   const sendOtpForCompanyEmployee = useCallback(async () => {
     if (sendingOtp) return;
 
-    if (!accessToken) {
-      openWhatsappLoginWithRedirect();
-      return;
-    }
     if (!customerId) {
       message.warning("User ID not found. Please login again.");
       return;
@@ -504,16 +499,11 @@ useEffect(() => {
     personRole,
     personRoleOther,
     store?.companyName,
-    openWhatsappLoginWithRedirect,
   ]);
 
   const verifyCompanyOtp = useCallback(async () => {
     if (verifyingOtp) return;
 
-    if (!accessToken) {
-      openWhatsappLoginWithRedirect();
-      return;
-    }
     if (!customerId) {
       message.warning("User ID not found. Please login again.");
       return;
@@ -586,7 +576,6 @@ useEffect(() => {
     personRoleOther,
     store?.companyName,
     ensureCompanyContactId,
-    openWhatsappLoginWithRedirect,
   ]);
 
   const fetchCompanyJobs = async (companyName: string) => {
@@ -680,6 +669,18 @@ useEffect(() => {
     return blogs;
   }, [blogs, blogTab, customerId]);
 
+  // ✅ helper (keep inside component, above fetchStoreDetails)
+  const slugifyName = (text?: string | null): string =>
+    text
+      ? text
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]+/g, "")
+          .replace(/--+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 40) // keep SAME as listing page
+      : "store";
+
   const fetchStoreDetails = async (idOrSlug: string) => {
     setLoading(true);
     setError(null);
@@ -703,32 +704,21 @@ useEffect(() => {
         : [];
 
       const key = (idOrSlug || "").trim();
+      const slugFromUrl = (storeSlug || "").trim().toLowerCase();
 
-      // ✅ Find by storeId OR storeName/slug match
+      // ✅ Find by storeId OR by slugified storeName
       const found =
-        list.find((s: any) => s?.storeId === key) ||
+        list.find((s: any) => (s?.storeId || "").trim() === key) ||
         list.find(
-          (s: any) =>
-            (s?.storeName || "").trim().toLowerCase() === key.toLowerCase()
+          (s: any) => slugifyName(s?.storeName) === key.toLowerCase()
         ) ||
-        list.find(
-          (s: any) =>
-            (s?.storeName || "").trim().toLowerCase() ===
-            (storeSlug || "").trim().toLowerCase()
-        );
+        list.find((s: any) => slugifyName(s?.storeName) === slugFromUrl);
 
       if (!found) throw new Error("Store not found");
 
       setStore(found);
 
-      // ✅ If URL missing storeId, inject it (so redirect/refresh never breaks again)
-      const sp = new URLSearchParams(window.location.search);
-      if (!sp.get("storeId") && found?.storeId) {
-        sp.set("storeId", found.storeId);
-        navigate(`${window.location.pathname}?${sp.toString()}`, {
-          replace: true,
-        });
-      }
+      // ✅ DO NOT inject storeId into URL (you wanted storeId removed)
 
       if (found?.isCompanyStore && (found?.companyName || "").trim()) {
         fetchCompanyJobs(found.companyName as string);
@@ -887,17 +877,6 @@ useEffect(() => {
 
   // ---------- Add Job ----------
   const openAddJobModal = useCallback(async () => {
-    if (!accessToken) {
-      openWhatsappLoginWithRedirect();
-      return;
-    }
-
-    if (!customerId) {
-      message.warning("User ID not found. Please login again.");
-      openWhatsappLoginWithRedirect();
-      return;
-    }
-
     await ensureCompanyContactId();
 
     if (!isEmployeeAllowed) {
@@ -923,7 +902,6 @@ useEffect(() => {
     ensureCompanyContactId,
     isEmployeeAllowed,
     store?.companyName,
-    openWhatsappLoginWithRedirect,
   ]);
 
   const submitAddJob = useCallback(async () => {
@@ -1080,7 +1058,7 @@ useEffect(() => {
                 {!isEmployeeAllowed && (
                   <button
                     type="button"
-                    onClick={() => setCompanyVerifyOpen(true)}
+                    onClick={openCompanyVerification}
                     className="inline-flex items-center justify-center rounded-2xl bg-violet-700 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-violet-800"
                   >
                     Are you {store.companyName} Employee?
