@@ -221,8 +221,7 @@ const AgentStoreManager: React.FC = () => {
         : [result];
 
       const validStores: Store[] = data.filter(
-        (store: any) => store && store.storeId
-          // && store.userId === userId
+        (store: any) => store && store.storeId && store.userId === userId
       );
 
       // ✅ Sort: latest updated/created store first

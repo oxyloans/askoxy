@@ -37,6 +37,7 @@ import ProductImg1 from "../assets/img/ricecard1.png";
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 
 import O8 from "../assets/img/aitemplate.png";
+import aibook from "../assets/img/aibook.png";
 
 import O5 from "../assets/img/cashewoffer1.png";
 import O6 from "../assets/img/35kg1.png";
@@ -521,7 +522,14 @@ const Home: React.FC = () => {
           item.categoryType?.toLowerCase() === "silver" &&
           item.categoryName?.toLowerCase() === "silver"
       );
-      // Log filtered items to verify correct categorization
+      const booksTems = sortedUniqueItems.filter(
+        (item: Item) =>
+          item.categoryType?.toLowerCase() === "aibook" &&
+          (item.categoryName || "").toLowerCase().replace(/\s+/g, "") ===
+            "aibook"
+      );
+
+   
       console.log("All Items Count:", allItems.length);
       console.log("Grocery Items Count:", groceryItems.length);
       console.log(
@@ -542,6 +550,7 @@ const Home: React.FC = () => {
         Rice: rice,
         Gold: gold,
         Silver: festive,
+        "AI Book": aibook,
       };
 
       // Create fixed categories with images
@@ -574,6 +583,12 @@ const Home: React.FC = () => {
           categoryName: "Silver", // show "Silver" but fetches SILVER items
           categoryImage: defaultCategoryImages["Silver"],
           itemsResponseDtoList: rakhiItems,
+          subCategories: [],
+        },
+        {
+          categoryName: "AI BOOK", // show "AI Book" but fetches AI BOOK items
+          categoryImage: defaultCategoryImages["AI Book"],
+          itemsResponseDtoList: booksTems,
           subCategories: [],
         },
       ];
@@ -1356,6 +1371,7 @@ const Home: React.FC = () => {
       Rice: "RICE",
       Gold: "GOLD",
       Silver: "SILVER",
+      "AI BOOK": "AIBOOK",
     };
 
     // NEW: Get the category type based on the active category
@@ -1394,6 +1410,7 @@ const Home: React.FC = () => {
       Rice: "RICE",
       Gold: "GOLD",
       Silver: "SILVER",
+      "AI BOOK": "AIBOOK",
     };
 
     // NEW: Update the active category type based on the selected category
