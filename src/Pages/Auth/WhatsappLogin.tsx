@@ -46,22 +46,20 @@ const handleAuthError = (
   navigate: (path: string) => void
 ): boolean => {
   if (err.response?.status === 401) {
-    // ✅ FIXED: Do NOT overwrite existing redirectPath; preserve original assistant path
-    if (!sessionStorage.getItem("redirectPath")) {
-      sessionStorage.setItem(
-        "redirectPath",
-        window.location.pathname + window.location.search
-      );
+    const existing = sessionStorage.getItem("redirectPath");
+
+    // ✅ Never store auth pages as redirect target
+    const current = window.location.pathname + window.location.search;
+    const isAuthPage =
+      current.includes("whatsapplogin") || current.includes("whatsappregister");
+
+    // ✅ Only write redirectPath if missing AND current is not an auth page
+    if ((!existing || existing.trim() === "") && !isAuthPage) {
+      sessionStorage.setItem("redirectPath", current);
     }
-    if (!sessionStorage.getItem("fromAISTore")) {
-      sessionStorage.setItem("fromAISTore", "true");
-    }
-    // UPDATED: Handle primaryType for AGENT similar to STUDENT
+
     const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
-    sessionStorage.setItem("fromStudyAbroad", "true");
-    // ✅ FIXED: Toggle: login -> register, else -> login (but since this is login, go to register)
-    const isLoginPage = window.location.pathname.includes("whatsapplogin");
-    const targetPath = isLoginPage ? "/whatsappregister" : "/whatsapplogin";
+    const targetPath = "/whatsappregister";
     navigate(`${targetPath}?primaryType=${primaryType}`);
     return true;
   }
@@ -133,21 +131,21 @@ const WhatsappLogin: React.FC = () => {
     otpMethod === "whatsapp"
       ? credentials.otp.every((digit) => digit !== "")
       : credentials.mobileOTP.every((digit) => digit !== "");
-useEffect(() => {
-  if (!showOtp) return;
-  if (!isOtpComplete) return;
-  if (isLoading) return;
-  if (autoSubmitRef.current) return;
+  useEffect(() => {
+    if (!showOtp) return;
+    if (!isOtpComplete) return;
+    if (isLoading) return;
+    if (autoSubmitRef.current) return;
 
-  autoSubmitRef.current = true;
+    autoSubmitRef.current = true;
 
-  // small delay for better UX
-  setTimeout(() => {
-    handleOtpSubmit({
-      preventDefault: () => {},
-    } as React.FormEvent<HTMLFormElement>);
-  }, 300);
-}, [isOtpComplete, showOtp]);
+    // small delay for better UX
+    setTimeout(() => {
+      handleOtpSubmit({
+        preventDefault: () => {},
+      } as React.FormEvent<HTMLFormElement>);
+    }, 300);
+  }, [isOtpComplete, showOtp]);
 
   // Retrieve variables from localStorage and sessionStorage
   const userId = localStorage.getItem("userId");
@@ -206,10 +204,11 @@ useEffect(() => {
       fetchUserDetails(accessTokenGoogle).then((userData) => {
         if (userData && userData.userId) {
           // localStorage.setItem("userId", userData.userId); // Store userId (commented as per snippet)
+          console.log("redirectPath", sessionStorage.getItem("redirectPath"));
           const redirectPath =
             sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
           sessionStorage.removeItem("pendingGoogleAuth");
-          sessionStorage.removeItem("redirectPath");
+          // sessionStorage.removeItem("redirectPath");
           sessionStorage.removeItem("receiveNotifications");
           sessionStorage.removeItem("agreeToTerms");
           setShowSuccessPopup(true);
@@ -607,8 +606,14 @@ useEffect(() => {
           setTimeout(() => {
             const redirectPath =
               sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
-            sessionStorage.removeItem("redirectPath");
+
+            // ✅ navigate first
             navigate(redirectPath, { replace: true });
+
+            // ✅ remove after a tiny delay (prevents losing it if login page rerenders)
+            setTimeout(() => {
+              sessionStorage.removeItem("redirectPath");
+            }, 300);
           }, 1000);
         } else {
           setOtpError("Failed to fetch user details after login.");

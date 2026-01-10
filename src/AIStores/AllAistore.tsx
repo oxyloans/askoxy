@@ -384,17 +384,22 @@ const AllAIStore: React.FC = () => {
   const openCompanyVerification = useCallback(async () => {
     if (!isCompanyStore) return;
 
-  if (!accessToken || !customerId) {
-  // ✅ Save current page so after login user returns to same AI Store
-  const fullPath = window.location.pathname + window.location.search + window.location.hash;
-  sessionStorage.setItem("redirectPath", fullPath);
+    if (!accessToken || !customerId) {
+      // ✅ Save current page so after login user returns to same AI Store
+      const fullPath =
+        window.location.pathname +
+        window.location.search +
+        window.location.hash;
+      sessionStorage.setItem("redirectPath", fullPath);
 
-  // ✅ Optional: auto-open the verification modal after login
-  sessionStorage.setItem("openCompanyVerificationAfterLogin", "1");
+      // ✅ Optional: auto-open the verification modal after login
+      sessionStorage.setItem("openCompanyVerificationAfterLogin", "1");
 
-  window.location.href = `/whatsapplogin?redirect=${encodeURIComponent(fullPath)}`;
-  return;
-}
+      window.location.href = `/whatsapplogin?redirect=${encodeURIComponent(
+        fullPath
+      )}`;
+      return;
+    }
 
     // ✅ Check employee info from API
     const existingId = await ensureCompanyContactId();
@@ -838,7 +843,7 @@ const AllAIStore: React.FC = () => {
       const res = await fetch(
         `${BASE_URL}/marketing-service/campgin/addCampaignTypes`,
         {
-          method: "POST",
+          method: "PATCH", // ✅ changed from POST
           headers: getAuthHeaders(),
           body: JSON.stringify(payload),
         }
@@ -1004,8 +1009,8 @@ const AllAIStore: React.FC = () => {
     : "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50">
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-violet-50">
+      <div className="mx-auto w-full max-w-7xl px-4 pt-6 pb-24 sm:px-6 lg:px-8">
         {loading && <div className=" p-8 text-slate-700">Loading store…</div>}
 
         {!loading && error && (
@@ -1536,27 +1541,14 @@ const AllAIStore: React.FC = () => {
                                     </h3>
 
                                     <div className="mt-4 flex items-center gap-3">
-                                      {showLogo ? (
-                                        <img
-                                          src={job.companyLogo as string}
-                                          alt="logo"
-                                          className="h-10 w-10 rounded-full border border-slate-200 object-cover"
-                                          onError={(e) =>
-                                            ((
-                                              e.currentTarget as HTMLImageElement
-                                            ).style.display = "none")
-                                          }
-                                        />
-                                      ) : (
-                                        <div
-                                          className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center text-white font-bold"
-                                          style={{ background: banner }}
-                                        >
-                                          {getInitials(
-                                            job.companyName || store.companyName
-                                          )}
-                                        </div>
-                                      )}
+                                      <div
+                                        className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center text-white font-bold"
+                                        style={{ background: banner }}
+                                      >
+                                        {getInitials(
+                                          job.companyName || store.companyName
+                                        )}
+                                      </div>
 
                                       <span className="text-sm font-semibold text-slate-700 truncate">
                                         {job.companyName ||
@@ -2103,7 +2095,7 @@ const AllAIStore: React.FC = () => {
                 <input
                   value={companyEmailId}
                   onChange={(e) => setCompanyEmailId(e.target.value)}
-                  placeholder="name@company.com"
+                  placeholder="name@gmail.com"
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 />
               </div>

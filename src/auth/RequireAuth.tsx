@@ -1,8 +1,15 @@
+// RequireAuth.tsx
+import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 interface RequireAuthProps {
   children: JSX.Element;
 }
+
+const AUTH_PAGES = ["/whatsapplogin", "/whatsappregister"];
+
+const isAuthPage = (path: string) =>
+  AUTH_PAGES.some((p) => path === p || path.startsWith(p + "?") || path.startsWith(p + "#"));
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const accessToken = localStorage.getItem("accessToken");
@@ -12,15 +19,19 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
 
   if (!token) {
-    // ✅ Save FULL current path only if not already saved
     const fullPath = location.pathname + location.search + location.hash;
-    console.log("Saving redirect path:", fullPath);
 
-    if (!sessionStorage.getItem("redirectPath")) {
+    // ✅ Do NOT overwrite a valid redirectPath already stored
+    const existing = sessionStorage.getItem("redirectPath");
+
+    const shouldWrite =
+      !existing || existing.trim() === "" || isAuthPage(existing) || existing === "/";
+
+    // ✅ Also never store auth pages themselves as redirect target
+    if (!isAuthPage(fullPath) && shouldWrite) {
       sessionStorage.setItem("redirectPath", fullPath);
     }
 
-    // ✅ Redirect to WhatsApp Login
     return <Navigate to="/whatsapplogin" replace />;
   }
 
