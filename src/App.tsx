@@ -502,7 +502,10 @@ const App: React.FC = () => {
                   </RequireAuth>
                 }
               />
-              <Route path="/campaign/:campaignId" element={<CampaignBlogPage />} />
+              <Route
+                path="/campaign/:campaignId"
+                element={<CampaignBlogPage />}
+              />
 
               {/* NOTE: These are your existing relative routes (kept same) */}
               <Route path="dashboard/:tab" element={<DashboardMain />} />

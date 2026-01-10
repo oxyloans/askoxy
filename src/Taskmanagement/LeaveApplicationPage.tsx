@@ -12,7 +12,7 @@ import {
   Space,
   Divider,
   Avatar,
-  Badge,
+ 
   Tag,
 } from "antd";
 import {
@@ -26,7 +26,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 // Interface for the leave request payload
@@ -317,13 +317,13 @@ const LeaveApplicationPage: React.FC = () => {
                   padding: screenSize === "xs" ? "12px" : "16px",
                   borderRadius: "8px",
                   marginBottom: "24px",
-                  borderLeft: "4px solid #1890ff",
+                  borderLeft: "4px solid #008cba",
                   overflowX: "auto",
                   width: "100%",
                 }}
               >
                 <Space wrap={screenSize === "xs"}>
-                  <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                  <InfoCircleOutlined style={{ color: "#008cba" }} />
                   <Text strong>
                     Leave Duration: {leaveDays} day{leaveDays !== 1 ? "s" : ""}
                   </Text>
@@ -365,7 +365,7 @@ const LeaveApplicationPage: React.FC = () => {
               }}
             >
               <Button
-                type="primary"
+               
                 htmlType="submit"
                 loading={loading}
                 block
@@ -374,8 +374,9 @@ const LeaveApplicationPage: React.FC = () => {
                 style={{
                   height: screenSize === "xs" ? "40px" : "48px",
                   borderRadius: "8px",
-                  background: "#1890ff",
-                  boxShadow: "0 2px 8px rgba(24, 144, 255, 0.35)",
+                  background: "#008cba",
+                  color: "white",
+                  boxShadow: "0 2px 8px rgba(0, 140, 186, 0.2)",
                 }}
               >
                 Submit Leave Request

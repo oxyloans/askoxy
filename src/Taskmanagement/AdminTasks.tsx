@@ -13,7 +13,6 @@ import {
   Popconfirm,
   Tag,
   Modal,
- 
   Space,
 } from "antd";
 import {
@@ -51,76 +50,78 @@ const AdminTasks: React.FC = () => {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const accessToken = sessionStorage.getItem("accessToken");
+
   const userId = sessionStorage.getItem("userId") || "";
   const [searchText, setSearchText] = useState(""); // ✅ added missing state
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-    const [viewModalVisible, setViewModalVisible] = useState(false);
-    const [commentsModalVisible, setCommentsModalVisible] = useState(false);
-    const [commentsData, setCommentsData] = useState<CommentType[]>([]);
-    const [comments, setComments] = useState("");
-  // ✅ Fetch tasks
-  
-const formatDate = (dateString:string) => {
-  if (!dateString) return "N/A";
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [commentsModalVisible, setCommentsModalVisible] = useState(false);
+  const [commentsData, setCommentsData] = useState<CommentType[]>([]);
+  const [comments, setComments] = useState("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(20);
 
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date as any)) return dateString; // if not a valid date
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
 
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      weekday: "short",
-    };
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date as any)) return dateString; // if not a valid date
 
-    return date.toLocaleDateString("en-IN", options);
-  } catch (error) {
-    return dateString;
-  }
-};
+      const options: Intl.DateTimeFormatOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        weekday: "short",
+      };
 
-const fetchTasks = async () => {
-  setLoading(true);
-  try {
-    const response = await axios.get(
-      `${BASE_URL}/ai-service/agent/showingTaskBasedOnUserId?userId=${userId}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+      return date.toLocaleDateString("en-IN", options);
+    } catch (error) {
+      return dateString;
+    }
+  };
 
-    console.log("API Response:", response.data);
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        // `${BASE_URL}
+        // /ai-service/agent/showingTaskBasedOnUserId?userId=${userId}`,
+        `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
 
-    // normalize response
-    const tasksArray = Array.isArray(response.data)
-      ? response.data
-      : Array.isArray(response.data.data)
-      ? response.data.data
-      : [];
+      console.log("API Response:", response.data);
 
-    const reversedTasks = tasksArray.slice().reverse();
-
-    const validTasks = reversedTasks.filter((task: any) => {
-      const assignedArray = Array.isArray(task.taskAssignTo)
-        ? task.taskAssignTo
-        : task.taskAssignTo
-        ? [task.taskAssignTo]
+      // normalize response
+      const tasksArray = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data.data)
+        ? response.data.data
         : [];
-      const hasValidAssignee = assignedArray.length > 0;
-      const hasValidTaskName = task.taskName && task.taskName.trim() !== "";
-      return hasValidAssignee && hasValidTaskName;
-    });
 
-    setTasks(validTasks);
-    setFilteredTasks(validTasks);
-  } catch (error) {
-    message.error("Failed to fetch tasks");
-    console.error("Task Fetch Error:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+      const reversedTasks = tasksArray.slice().reverse();
 
+      const validTasks = reversedTasks.filter((task: any) => {
+        const assignedArray = Array.isArray(task.taskAssignTo)
+          ? task.taskAssignTo
+          : task.taskAssignTo
+          ? [task.taskAssignTo]
+          : [];
+        const hasValidAssignee = assignedArray.length > 0;
+        const hasValidTaskName = task.taskName && task.taskName.trim() !== "";
+        return hasValidAssignee && hasValidTaskName;
+      });
 
+      setTasks(validTasks);
+      setFilteredTasks(validTasks);
+    } catch (error) {
+      message.error("Failed to fetch tasks");
+      console.error("Task Fetch Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchTasks();
@@ -209,56 +210,56 @@ const fetchTasks = async () => {
       </Tag>
     );
   };
-const handleCommentsAdd = (task: Task) => {
-  setSelectedTask(task);
-  setCommentsModalVisible(true);
-};
-
-const handleCommentsUpdate = async () => {
-  if (!comments.trim()) {
-    message.warning("Please enter a comment before submitting.");
-    return;
-  }
-  try {
-    await axios.post(
-      `${BASE_URL}/ai-service/agent/userAndRadhaSirComments`,
-      {
-        taskId: selectedTask?.id,
-        comments,
-        commentsBy: "EMPLOYEE",
-      },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    message.success("Comments added successfully!");
-    setCommentsModalVisible(false);
-    setComments("");
-    fetchTasks();
-  } catch (error) {
-    console.error("Update Error:", error);
-    message.error("Failed to add comment");
-  }
-};
-
-const handleViewComments = async (task: Task) => {
-  try {
-    setLoading(true);
+  const handleCommentsAdd = (task: Task) => {
     setSelectedTask(task);
-    const response = await axios.get(
-      `${BASE_URL}/ai-service/agent/taskedIdBasedOnComments`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: { taskId: task.id },
-      }
-    );
-    setCommentsData(response.data || []);
-    setViewModalVisible(true);
-  } catch (error) {
-    console.error("View Comments Error:", error);
-    message.error("Failed to fetch comments");
-  } finally {
-    setLoading(false);
-  }
-};
+    setCommentsModalVisible(true);
+  };
+
+  const handleCommentsUpdate = async () => {
+    if (!comments.trim()) {
+      message.warning("Please enter a comment before submitting.");
+      return;
+    }
+    try {
+      await axios.post(
+        `${BASE_URL}/ai-service/agent/userAndRadhaSirComments`,
+        {
+          taskId: selectedTask?.id,
+          comments,
+          commentsBy: "EMPLOYEE",
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      message.success("Comments added successfully!");
+      setCommentsModalVisible(false);
+      setComments("");
+      fetchTasks();
+    } catch (error) {
+      console.error("Update Error:", error);
+      message.error("Failed to add comment");
+    }
+  };
+
+  const handleViewComments = async (task: Task) => {
+    try {
+      setLoading(true);
+      setSelectedTask(task);
+      const response = await axios.get(
+        `${BASE_URL}/ai-service/agent/taskedIdBasedOnComments`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { taskId: task.id },
+        }
+      );
+      setCommentsData(response.data || []);
+      setViewModalVisible(true);
+    } catch (error) {
+      console.error("View Comments Error:", error);
+      message.error("Failed to fetch comments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ✅ Table columns
   const columns = [
@@ -276,32 +277,45 @@ const handleViewComments = async (task: Task) => {
       align: "center" as const,
       render: (_: any, record: any) => {
         // Handle assignedTo array
-        
+        const hasValidAssignee =
+          Array.isArray(record.taskAssignTo) &&
+          record.taskAssignTo.length > 0 &&
+          record.taskAssignTo.some((a: any) => a && a.trim() !== "");
 
-       
+        const assignedToText = hasValidAssignee
+          ? Array.isArray(record.taskAssignTo)
+            ? record.taskAssignTo.join(", ")
+            : record.taskAssignTo
+          : "";
 
         return (
           <div
             style={{
               backgroundColor: "#f9f9f9",
-
+             
               borderRadius: 8,
               padding: "8px 12px",
               textAlign: "left",
               display: "inline-block",
-              minWidth: 200,
+              minWidth: 180,
             }}
           >
             <div style={{ fontWeight: 600, color: "#351664", fontSize: 15 }}>
               Task ID:{" "}
               <span style={{ color: "#008cba" }}>
-                {record.id ? `#${record.id.slice(-4)}` : "N/A"}
+                {record.id ? `#${record.id.slice(-4)}` : ""}
               </span>
             </div>
             <div style={{ color: "#555", fontSize: 13 }}>
               Assigned By:{" "}
               <span style={{ fontWeight: 500, color: "#1ab394" }}>
-                {record.taskAssignBy || "N/A"}
+                {record.taskAssignBy || ""}
+              </span>
+            </div>
+            <div style={{ color: "#555", fontSize: 13 }}>
+              Assigned To:{" "}
+              <span style={{ fontWeight: 500, color: "#008cba" }}>
+                {assignedToText}
               </span>
             </div>
           </div>
@@ -360,7 +374,7 @@ const handleViewComments = async (task: Task) => {
             <div style={{ color: "#555", fontSize: 13 }}>
               Assigned Date:{" "}
               <span style={{ color: "#008cba", fontWeight: 500 }}>
-                {taskAssignedDate ? formatDate(taskAssignedDate) : "N/A"}
+                {taskAssignedDate ? formatDate(taskAssignedDate) : ""}
               </span>
             </div>
 
@@ -372,7 +386,7 @@ const handleViewComments = async (task: Task) => {
                   fontWeight: 500,
                 }}
               >
-                {taskCompleteDate ? formatDate(taskCompleteDate) : "N/A"}
+                {taskCompleteDate ? formatDate(taskCompleteDate) : ""}
               </span>
             </div>
             <div style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
@@ -407,7 +421,7 @@ const handleViewComments = async (task: Task) => {
       title: "Actions",
       key: "actions",
       align: "center" as const,
-    
+
       width: 260,
       render: (_: any, record: Task) => (
         <Space wrap style={{ justifyContent: "center" }}>
@@ -513,8 +527,8 @@ const handleViewComments = async (task: Task) => {
           style={{ marginBottom: 20 }}
         >
           <Col xs={24} sm={12}>
-            <Text strong style={{ fontSize: 20, color: "#1e3a8a" }}>
-              Assigned Tasks Management
+            <Text strong style={{ fontSize: 20, color: "#008cba" }}>
+              Assigned Tasks Whatsapp
             </Text>
           </Col>
 
@@ -547,11 +561,25 @@ const handleViewComments = async (task: Task) => {
             dataSource={filteredTasks}
             rowKey={(record) => record.id}
             pagination={{
-              pageSize: 10,
+              current: currentPage,
+              pageSize: pageSize,
               responsive: true,
+              showSizeChanger: true, // ✅ enable size changer
+              pageSizeOptions: ["20", "30", "40", "50"], // ✅ options
+              size: "small", // ✅ pagination UI size
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} of ${total} tasks`, // ✅ optional
+              onChange: (page, size) => {
+                setCurrentPage(page);
+                if (size && size !== pageSize) setPageSize(size);
+              },
+              onShowSizeChange: (_page, size) => {
+                setCurrentPage(1); // ✅ reset to first page when size changes
+                setPageSize(size);
+              },
             }}
             bordered
-            scroll={{ x: "true" }}
+            scroll={{ x: true }}
             style={{ width: "100%" }}
           />
         )}
@@ -594,7 +622,7 @@ const handleViewComments = async (task: Task) => {
                     : "blue"
                 }
               >
-                {comment.status || "N/A"}
+                {comment.status || ""}
               </Tag>
             </div>
           ))

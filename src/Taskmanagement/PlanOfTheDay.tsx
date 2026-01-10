@@ -833,7 +833,7 @@ const PlanOfTheDay: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="sm:p-2 md:p-4 lg:p-6 min-h-screen">
+      <div className="sm:p-2 md:p-4 lg:p-6">
         <Card
           className="max-w-xl mx-auto shadow-lg rounded-xl overflow-hidden border-0 transition-all duration-300 hover:shadow-xl"
           bodyStyle={{ padding: 0 }}

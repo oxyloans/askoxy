@@ -1,28 +1,35 @@
 import React, { useState, useEffect, ReactNode } from "react";
-import { Layout, Menu, Row, Grid, Avatar, Tooltip, message } from "antd";
+import {
+  Layout,
+  Menu,
+  Row,
+  Grid,
+  Avatar,
+  Tooltip,
+  message,
+  Typography,
+} from "antd";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
-import { FaClipboardCheck, FaExchangeAlt } from "react-icons/fa";
-import { FaUserCircle, FaWhatsapp } from "react-icons/fa";
-import { MdChat } from "react-icons/md";
 
+import { FaUserCircle, FaWhatsapp } from "react-icons/fa";
 import {
   FaTachometerAlt,
-  FaUsers,
+ 
   FaSlideshare,
-  FaHistory,
+
   FaMobileAlt,
   FaCalendar,
   FaClipboard,
   FaEdit,
   FaListAlt
 } from "react-icons/fa";
-import type { MenuProps } from "antd";
+
 
 const { Header, Sider, Content, Footer } = Layout;
 const { useBreakpoint } = Grid;
-
+const { Text } = Typography;
 type MenuItem = {
   key: string;
   label: React.ReactNode;
@@ -57,7 +64,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     const storedUserName = sessionStorage.getItem("Name") || "";
     setUserName(storedUserName);
 
-    // Check if current path is under a submenu and open it
+    
     const pathParts = location.pathname.split("/");
     if (
       pathParts.includes("leaveapproval") ||
@@ -75,66 +82,92 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     }
   }, [screens]);
 
-  const getMenuItems = (): MenuItem[] => {
-    return [
-      {
-        key: "/planoftheday",
-        label: <Link to="/planoftheday">Daily Plan Of The Day</Link>,
-        icon: <FaTachometerAlt className="text-blue-500" />,
-      },
-      {
-        key: "/taskupdated",
-        label: <Link to="/taskupdated">End Of The Day Report</Link>,
-        icon: <FaHistory className="text-green-500" />,
-      },
-      {
-        key: "/assigned-task",
-        label: <Link to="/assigned-task">Assigned Tasks WhatsApp</Link>,
-        icon: <FaWhatsapp className="text-orange-500" />,
-      },
-      {
-        key: "/userinstructionsview",
-        label: <Link to="/userinstructionsview">Employee Interactions</Link>,
-        icon: <MdChat className="text-blue-500" />, // better chat icon
-      },
-
-      {
-        key: "Employee Leave Request",
-        label: "Employee Leave Request",
-        icon: <FaCalendar className="text-purple-500" />, // Calendar icon for overall leave management
-        children: [
-          {
-            key: "/leaveapproval",
-
-            label: <Link to="/leaveapproval">Apply for Leave</Link>,
-            icon: <FaEdit className="text-purple-500" />, // Document with pen icon for applying/requesting leave
-          },
-          {
-            key: "/leavestatus",
-            label: <Link to="/leavestatus">My Leave requests</Link>,
-            icon: <FaListAlt className="text-purple-500" />, // Clipboard with list icon for viewing leave statuses
-          },
-        ],
-      },
-      {
-        key: "/all-statuses",
-        label: <Link to="/all-statuses">Daily Activity Status</Link>,
-        icon: <FaSlideshare className="text-purple-500" />,
-      },
-      {
-        key: "/usermobilenumberupdate",
-        icon: <FaMobileAlt className="text-orange-500" />,
-
-        label: <Link to="/usermobilenumberupdate">Update Mobile Number</Link>,
-      },
-
-      // {
-      //   key: "/taskassigneduser",
-      //   label: <Link to="/taskassigneduser">My Tasks</Link>,
-      //   icon: <FaUsers className="text-red-500" />,
-      // },
-    ];
-  };
+    const getMenuItems = (): MenuItem[] => {
+      return [
+        {
+          key: "/planoftheday",
+          label: <Link to="/planoftheday">Daily Plan</Link>,
+          icon: (
+            <FaTachometerAlt
+              className="text-blue-600"
+              style={{ fontSize: "16px" }}
+            />
+          ),
+        },
+        {
+          key: "/taskupdated",
+          label: <Link to="/taskupdated">End of Day Report</Link>,
+          icon: (
+            <FaClipboard
+              className="text-green-600"
+              style={{ fontSize: "16px" }}
+            />
+          ),
+        },
+        {
+          key: "/assigned-task",
+          label: <Link to="/assigned-task">WhatsApp Tasks</Link>,
+          icon: (
+            <FaWhatsapp
+              className="text-green-500"
+              style={{ fontSize: "16px" }}
+            />
+          ),
+        },
+        {
+          key: "leave-management",
+          label: "Leave Management",
+          icon: (
+            <FaCalendar
+              className="text-purple-600"
+              style={{ fontSize: "16px" }}
+            />
+          ),
+          children: [
+            {
+              key: "/leaveapproval",
+              label: <Link to="/leaveapproval">Request Leave</Link>,
+              icon: (
+                <FaEdit
+                  className="text-purple-500"
+                  style={{ fontSize: "14px" }}
+                />
+              ),
+            },
+            {
+              key: "/leavestatus",
+              label: <Link to="/leavestatus">Leave Status</Link>,
+              icon: (
+                <FaListAlt
+                  className="text-purple-500"
+                  style={{ fontSize: "14px" }}
+                />
+              ),
+            },
+          ],
+        },
+        {
+          key: "/all-statuses",
+          label: <Link to="/all-statuses">Daily Activity</Link>,
+          icon: (
+            <FaSlideshare
+              className="text-indigo-600"
+              style={{ fontSize: "16px" }}
+            />
+          ),
+        },
+        {
+          key: "/usermobilenumberupdate",
+          label: <Link to="/usermobilenumberupdate">Mobile Number</Link>,
+          icon: (
+            <FaMobileAlt
+              className="text-orange-600"
+              style={{ fontSize: "16px" }}
+            />
+          ),
+        },
+      ];
+    };
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -158,7 +191,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   };
 
   const handleSignOut = (): void => {
-    // sessionStorage.clear();
+  
     sessionStorage.clear();
     window.location.href = "/userlogin";
   };
@@ -203,14 +236,14 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     marginLeft: screens.xs ? "0px" : collapsed ? "80px" : "250px",
     position: "fixed" as const,
     zIndex: 9,
-    height: "64px",
+    height: "54px",
     transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
   };
 
   const footerStyles = {
     width: screens.xs ? "100%" : `calc(100% - ${collapsed ? "80px" : "250px"})`,
     marginLeft: screens.xs ? "0px" : collapsed ? "80px" : "250px",
-    height: "64px",
+    height: "56px",
     transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
   };
 
@@ -305,7 +338,7 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
           <div className="flex items-center">
             <div className="flex items-center mr-4">
               <Avatar
-                style={{ backgroundColor: "#1890ff", color: "white" }}
+                style={{ backgroundColor: "#008cba", color: "white" }}
                 size="small"
               >
                 {getUserInitials()}
@@ -331,15 +364,21 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         </Content>
 
         <Footer
-          className="text-center bg-gray-50 shadow-inner text-gray-500 text-sm flex items-center justify-center"
-          style={footerStyles}
+          style={{
+            ...footerStyles, // ✅ important: makes footer move with sider
+            background: "#fafafa",
+            borderTop: "1px solid #e5e7eb",
+            textAlign: "center",
+            padding: "12px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          <div className="w-full flex justify-center items-center">
-            <div className="text-center">
-              <span className="font-medium mr-1">Task Management</span>
-              ©2025 Created by ASKOXY.AI Company
-            </div>
-          </div>
+          <Text style={{ fontSize: 13, color: "#6b7280" }}>
+            <strong>Task Management</strong> ©2025 Created by{" "}
+            <span style={{ fontWeight: 600 }}>ASKOXY.AI</span>
+          </Text>
         </Footer>
       </Layout>
     </Layout>
