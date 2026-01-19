@@ -199,7 +199,7 @@ const Home: React.FC = () => {
   const [activeCategoryType, setActiveCategoryType] = useState<string>("");
   const [isBmvModalVisible, setIsBmvModalVisible] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(
-    "All Items"
+    "All Items",
   );
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -239,7 +239,7 @@ const Home: React.FC = () => {
       setCartCount(count);
       setCount(count);
     },
-    [setCount]
+    [setCount],
   );
 
   const weightFilters = [
@@ -264,7 +264,7 @@ const Home: React.FC = () => {
 
       try {
         const response = await axios.get(
-          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`
+          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
         );
 
         const cartList = response.data?.customerCartResponseList || [];
@@ -275,14 +275,14 @@ const Home: React.FC = () => {
               acc[item.itemId] = Number(item.cartQuantity) || 0;
               return acc;
             },
-            {}
+            {},
           );
 
           const totalQuantity = Object.values(cartItemsMap).reduce(
             (sum: number, qty: unknown) => {
               return sum + (typeof qty === "number" ? qty : 0);
             },
-            0
+            0,
           );
 
           setCartItems(cartItemsMap);
@@ -308,7 +308,7 @@ const Home: React.FC = () => {
         }
       }
     },
-    [updateCartCount, setCount]
+    [updateCartCount, setCount],
   );
 
   const {
@@ -337,13 +337,13 @@ const Home: React.FC = () => {
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userEligibleOffer/${userId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       const normalizedOffers = (response.data || []).map(
         (offer: UserEligibleOffer) => ({
           ...offer,
           weight: normalizeWeight(offer.weight),
-        })
+        }),
       );
       setUserEligibleOffers(normalizedOffers);
       console.log("User eligible offers:", normalizedOffers);
@@ -361,7 +361,7 @@ const Home: React.FC = () => {
     try {
       const offersResponse = await axios.get(
         `${BASE_URL}/cart-service/cart/activeOffers`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       const activeOffers = offersResponse.data || [];
 
@@ -369,7 +369,7 @@ const Home: React.FC = () => {
         const offerMinQtyKg = normalizeWeight(offer.minQtyKg);
         if (offerMinQtyKg === null) {
           console.warn(
-            `Offer ${offer.offerName} has invalid minQtyKg: ${offer.minQtyKg}`
+            `Offer ${offer.offerName} has invalid minQtyKg: ${offer.minQtyKg}`,
           );
           return true;
         }
@@ -378,7 +378,7 @@ const Home: React.FC = () => {
           const eligibleWeight = normalizeWeight(eligibleOffer.weight);
           if (eligibleWeight === null) {
             console.warn(
-              `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`
+              `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`,
             );
             return false;
           }
@@ -447,7 +447,7 @@ const Home: React.FC = () => {
     setProductsLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/showGroupItemsForCustomrs`
+        `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
       );
       const data = response.data || [];
 
@@ -465,7 +465,7 @@ const Home: React.FC = () => {
                 if (
                   !Array.from(uniqueItemsMap.values()).some(
                     (existing: Item) =>
-                      existing.itemName.trim().toLowerCase() === normalizedName
+                      existing.itemName.trim().toLowerCase() === normalizedName,
                   )
                 ) {
                   uniqueItemsMap.set(item.itemId, {
@@ -477,7 +477,7 @@ const Home: React.FC = () => {
               }
             });
           });
-        }
+        },
       );
 
       const uniqueItemsList = Array.from(uniqueItemsMap.values());
@@ -492,7 +492,7 @@ const Home: React.FC = () => {
           categoryName: item.categoryName,
           categoryType: item.categoryType,
           quantity: item.quantity,
-        }))
+        })),
       );
 
       // Filter items by categoryType
@@ -512,24 +512,23 @@ const Home: React.FC = () => {
           return a.itemName.localeCompare(b.itemName);
         });
       const riceItems = sortedUniqueItems.filter(
-        (item: Item) => item.categoryType?.toLowerCase() === "rice"
+        (item: Item) => item.categoryType?.toLowerCase() === "rice",
       );
       const goldItems = sortedUniqueItems.filter(
-        (item: Item) => item.categoryType?.toLowerCase() === "gold"
+        (item: Item) => item.categoryType?.toLowerCase() === "gold",
       );
       const rakhiItems = sortedUniqueItems.filter(
         (item: Item) =>
           item.categoryType?.toLowerCase() === "silver" &&
-          item.categoryName?.toLowerCase() === "silver"
+          item.categoryName?.toLowerCase() === "silver",
       );
       const booksTems = sortedUniqueItems.filter(
         (item: Item) =>
           item.categoryType?.toLowerCase() === "aibook" &&
           (item.categoryName || "").toLowerCase().replace(/\s+/g, "") ===
-            "aibook"
+            "aibook",
       );
 
-   
       console.log("All Items Count:", allItems.length);
       console.log("Grocery Items Count:", groceryItems.length);
       console.log(
@@ -538,7 +537,7 @@ const Home: React.FC = () => {
           itemName: item.itemName,
           itemId: item.itemId,
           categoryName: item.categoryName,
-        }))
+        })),
       );
       console.log("Rice Items Count:", riceItems.length);
       console.log("Gold Items Count:", goldItems.length);
@@ -719,9 +718,9 @@ const Home: React.FC = () => {
       id: "Cashew Offer",
       src: Cashew,
       alt: "Cashew Offer",
-      path: "/main/dashboard/products?type=RICE&weight=1.0",
+      path: "/main/dashboard/products?type=AIBOOK",
       onClick: () => {
-        navigate("/main/dashboard/products?type=RICE&weight=1.0");
+        navigate("/main/dashboard/products?type=AIBOOK");
       },
     },
     {
@@ -881,7 +880,7 @@ const Home: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         requestBody,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       await fetchCartData(item.itemId);
@@ -915,7 +914,7 @@ const Home: React.FC = () => {
       if (!isCombo && !hasAddedComboAddOn) {
         try {
           const res = await axios.get(
-            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
+            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`,
           );
           const comboData = res.data;
 
@@ -961,12 +960,12 @@ const Home: React.FC = () => {
     comboAddOnModal.itemCount === 1
       ? "grid-cols-1"
       : comboAddOnModal.itemCount === 2
-      ? "grid-cols-2"
-      : "grid-cols-3";
+        ? "grid-cols-2"
+        : "grid-cols-3";
 
   const handleQuantityChange = async (
     item: DashboardItem,
-    increment: boolean
+    increment: boolean,
   ) => {
     if (!item.itemId) return;
 
@@ -1010,7 +1009,7 @@ const Home: React.FC = () => {
 
       if (!increment && cartItems[item.itemId] <= 1) {
         const targetCartId = cartData.find(
-          (cart) => cart.itemId === item.itemId
+          (cart) => cart.itemId === item.itemId,
         )?.cartId;
 
         const response = await axios.delete(
@@ -1018,7 +1017,7 @@ const Home: React.FC = () => {
           {
             data: { id: targetCartId },
             headers: { Authorization: `Bearer ${accessToken}` },
-          }
+          },
         );
 
         if (response) {
@@ -1185,10 +1184,10 @@ const Home: React.FC = () => {
               {item.units === "pcs"
                 ? "Pc"
                 : item.units === "gms" && item.weight === "1"
-                ? "Gm"
-                : item.weight === "1" && item.units === "kg"
-                ? "Kg"
-                : item.units}
+                  ? "Gm"
+                  : item.weight === "1" && item.units === "kg"
+                    ? "Kg"
+                    : item.units}
             </p>
 
             {item.bmvCoins !== undefined && item.bmvCoins > 0 && (
@@ -1311,10 +1310,10 @@ const Home: React.FC = () => {
                   handleAddToCart(item);
                   console.log(
                     "Add to cart clicked",
-                    localStorage.getItem("TypeLogin")
+                    localStorage.getItem("TypeLogin"),
                   );
                   console.log(
-                    item.itemId ? loadingItems.items[item.itemId] : false
+                    item.itemId ? loadingItems.items[item.itemId] : false,
                   );
                 }}
                 disabled={
@@ -1352,12 +1351,12 @@ const Home: React.FC = () => {
     if (selectedWeight && activeCategory === "Rice") {
       validProducts = validProducts.filter(
         (product) =>
-          parseFloat(product.weight ?? "0") === parseFloat(selectedWeight)
+          parseFloat(product.weight ?? "0") === parseFloat(selectedWeight),
       );
     }
 
     setDisplayProducts(
-      validProducts.slice(0, Math.min(displayCount, validProducts.length))
+      validProducts.slice(0, Math.min(displayCount, validProducts.length)),
     );
   }, [products, displayCount, searchTerm, selectedWeight, activeCategory]);
 
@@ -1401,7 +1400,7 @@ const Home: React.FC = () => {
     setProductsLoading(true);
 
     const category = categories.find(
-      (cat) => cat.categoryName === categoryName
+      (cat) => cat.categoryName === categoryName,
     );
     // NEW: Define a mapping of category names to their corresponding category types
     const categoryTypeMap: Record<string, string> = {
@@ -1538,7 +1537,7 @@ const Home: React.FC = () => {
   const renderDigitalServiceCard = (
     item: DashboardItem,
     index: number,
-    type: "gpt" | "crypto"
+    type: "gpt" | "crypto",
   ) => {
     const bgGradient =
       type === "gpt"
@@ -1811,7 +1810,7 @@ const Home: React.FC = () => {
                   .slice(
                     currentSet * (isMobile ? 1 : IMAGES_PER_SET),
                     currentSet * (isMobile ? 1 : IMAGES_PER_SET) +
-                      (isMobile ? 1 : IMAGES_PER_SET)
+                      (isMobile ? 1 : IMAGES_PER_SET),
                   )
 
                   .map((image, idx) => (
@@ -1937,7 +1936,7 @@ const Home: React.FC = () => {
                   key={filter.value}
                   onClick={() =>
                     setSelectedWeight(
-                      selectedWeight === filter.value ? null : filter.value
+                      selectedWeight === filter.value ? null : filter.value,
                     )
                   }
                   className={`px-3 py-1 rounded-full text-sm border transition ${
@@ -1961,7 +1960,7 @@ const Home: React.FC = () => {
                   ))
                 ) : displayProducts.length > 0 ? (
                   displayProducts.map((product, index) =>
-                    renderProductItem(product, index)
+                    renderProductItem(product, index),
                   )
                 ) : (
                   <div className="col-span-full py-8 text-center">
@@ -2099,7 +2098,7 @@ const Home: React.FC = () => {
                   ))
               ) : freeGPTs.length > 0 ? (
                 freeGPTs.map((item, index) =>
-                  renderDigitalServiceCard(item, index, "gpt")
+                  renderDigitalServiceCard(item, index, "gpt"),
                 )
               ) : (
                 <div className="text-center py-8 text-gray-500">
@@ -2146,7 +2145,7 @@ const Home: React.FC = () => {
                   ))
               ) : cryptocurrency.length > 0 ? (
                 cryptocurrency.map((item, index) =>
-                  renderDigitalServiceCard(item, index, "crypto")
+                  renderDigitalServiceCard(item, index, "crypto"),
                 )
               ) : (
                 <div className="text-center py-8 text-gray-500">
@@ -2197,8 +2196,8 @@ const Home: React.FC = () => {
           comboAddOnModal.itemCount === 1
             ? 300
             : comboAddOnModal.itemCount === 2
-            ? 500
-            : 700
+              ? 500
+              : 700
         }
       >
         <div className={`grid gap-4 ${gridCols}`}>
@@ -2208,7 +2207,7 @@ const Home: React.FC = () => {
               ? Math.round(
                   ((addonItem.itemMrp - addonItem.itemPrice) /
                     addonItem.itemMrp) *
-                    100
+                    100,
                 )
               : 0;
 
@@ -2355,7 +2354,7 @@ const Home: React.FC = () => {
                         }, 500);
                       } else {
                         message.warning(
-                          "You can only select one optional add-on."
+                          "You can only select one optional add-on.",
                         );
                       }
                     }}
