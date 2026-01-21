@@ -39,9 +39,9 @@ interface Task {
   image?: string | null;
   status: string;
   taskAssignBy: string;
-  taskAssignTo: string[];
+  taskAssignTo: string[] | string;
   taskName: string;
-  taskAssignedDate: string;
+  tastCreatedDate: string;
   taskCompleteDate: string;
 }
 
@@ -52,7 +52,7 @@ const AdminTasks: React.FC = () => {
   const accessToken = sessionStorage.getItem("accessToken");
 
   const userId = sessionStorage.getItem("userId") || "";
-  const [searchText, setSearchText] = useState(""); // ✅ added missing state
+  const [searchText, setSearchText] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [commentsModalVisible, setCommentsModalVisible] = useState(false);
@@ -66,7 +66,7 @@ const AdminTasks: React.FC = () => {
 
     try {
       const date = new Date(dateString);
-      if (isNaN(date as any)) return dateString; // if not a valid date
+      if (isNaN(date as any)) return dateString;
 
       const options: Intl.DateTimeFormatOptions = {
         year: "numeric",
@@ -85,20 +85,17 @@ const AdminTasks: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        // `${BASE_URL}
-        // /ai-service/agent/showingTaskBasedOnUserId?userId=${userId}`,
         `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       console.log("API Response:", response.data);
 
-      // normalize response
       const tasksArray = Array.isArray(response.data)
         ? response.data
         : Array.isArray(response.data.data)
-        ? response.data.data
-        : [];
+          ? response.data.data
+          : [];
 
       const reversedTasks = tasksArray.slice().reverse();
 
@@ -106,15 +103,14 @@ const AdminTasks: React.FC = () => {
         const assignedArray = Array.isArray(task.taskAssignTo)
           ? task.taskAssignTo
           : task.taskAssignTo
-          ? [task.taskAssignTo]
-          : [];
+            ? [task.taskAssignTo]
+            : [];
         const hasValidAssignee = assignedArray.length > 0;
         const hasValidTaskName = task.taskName && task.taskName.trim() !== "";
         return hasValidAssignee && hasValidTaskName;
       });
 
       setTasks(validTasks);
-      setFilteredTasks(validTasks);
     } catch (error) {
       message.error("Failed to fetch tasks");
       console.error("Task Fetch Error:", error);
@@ -127,28 +123,57 @@ const AdminTasks: React.FC = () => {
     fetchTasks();
   }, []);
 
-  // ✅ Search tasks
-  const handleSearch = (value: string) => {
-    setSearchText(value);
-    if (!value.trim()) {
+  // Filtering logic moved to useEffect
+  useEffect(() => {
+    const lowerSearch = searchText.trim().toLowerCase();
+
+    if (!lowerSearch) {
       setFilteredTasks(tasks);
       return;
     }
 
-    const filtered = tasks.filter(
-      (task) =>
-        task.taskAssignBy?.toLowerCase().includes(value.toLowerCase()) ||
-        task.taskAssignTo?.some((t) =>
-          t.toLowerCase().includes(value.toLowerCase())
-        ) ||
-        task.taskName?.toLowerCase().includes(value.toLowerCase()) ||
-        task.status?.toLowerCase().includes(value.toLowerCase())
-    );
+    const filtered = tasks.filter((task) => {
+      const assignByMatch = task.taskAssignBy
+        ?.toLowerCase()
+        .includes(lowerSearch);
+
+      const assignToArray = Array.isArray(task.taskAssignTo)
+        ? task.taskAssignTo
+        : task.taskAssignTo
+          ? [task.taskAssignTo]
+          : [];
+
+      const assignToMatch = assignToArray.some((t: string) =>
+        t?.toLowerCase().includes(lowerSearch),
+      );
+
+      const taskNameMatch = task.taskName?.toLowerCase().includes(lowerSearch);
+      const statusMatch = task.status?.toLowerCase().includes(lowerSearch);
+
+      return assignByMatch || assignToMatch || taskNameMatch || statusMatch;
+    });
 
     setFilteredTasks(filtered);
+  }, [tasks, searchText]);
+
+  // Reset to page 1 whenever search text changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText]);
+
+  // Clamp current page if data length changes and current page becomes invalid
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredTasks.length / pageSize) || 1;
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredTasks.length, pageSize]);
+
+  // Simplified search handler
+  const handleSearch = (value: string) => {
+    setSearchText(value);
   };
 
-  // ✅ Update task status
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     setLoading(true);
     try {
@@ -157,7 +182,7 @@ const AdminTasks: React.FC = () => {
         {},
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
       message.success(`Task marked as ${newStatus}`);
       fetchTasks();
@@ -169,7 +194,6 @@ const AdminTasks: React.FC = () => {
     }
   };
 
-  // ✅ Status Tag
   const getStatusTag = (status: string) => {
     let color: string;
     let text: string;
@@ -210,6 +234,7 @@ const AdminTasks: React.FC = () => {
       </Tag>
     );
   };
+
   const handleCommentsAdd = (task: Task) => {
     setSelectedTask(task);
     setCommentsModalVisible(true);
@@ -228,12 +253,17 @@ const AdminTasks: React.FC = () => {
           comments,
           commentsBy: "EMPLOYEE",
         },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       message.success("Comments added successfully!");
       setCommentsModalVisible(false);
       setComments("");
       fetchTasks();
+
+      // Automatically open view modal with refreshed comments
+      if (selectedTask) {
+        handleViewComments(selectedTask);
+      }
     } catch (error) {
       console.error("Update Error:", error);
       message.error("Failed to add comment");
@@ -249,7 +279,7 @@ const AdminTasks: React.FC = () => {
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: { taskId: task.id },
-        }
+        },
       );
       setCommentsData(response.data || []);
       setViewModalVisible(true);
@@ -261,14 +291,13 @@ const AdminTasks: React.FC = () => {
     }
   };
 
-  // ✅ Table columns
   const columns = [
     {
       title: "S.No",
       key: "serial",
       align: "center" as const,
-
-      render: (_: any, __: Task, index: number) => index + 1,
+      render: (_: any, __: Task, index: number) =>
+        index + 1 + (currentPage - 1) * pageSize,
     },
 
     {
@@ -276,7 +305,6 @@ const AdminTasks: React.FC = () => {
       key: "task_info",
       align: "center" as const,
       render: (_: any, record: any) => {
-        // Handle assignedTo array
         const hasValidAssignee =
           Array.isArray(record.taskAssignTo) &&
           record.taskAssignTo.length > 0 &&
@@ -291,9 +319,6 @@ const AdminTasks: React.FC = () => {
         return (
           <div
             style={{
-              backgroundColor: "#f9f9f9",
-             
-              borderRadius: 8,
               padding: "8px 12px",
               textAlign: "left",
               display: "inline-block",
@@ -302,7 +327,7 @@ const AdminTasks: React.FC = () => {
           >
             <div style={{ fontWeight: 600, color: "#351664", fontSize: 15 }}>
               Task ID:{" "}
-              <span style={{ color: "#008cba" }}>
+              <span style={{ color: "rgb(0, 140, 186)" }}>
                 {record.id ? `#${record.id.slice(-4)}` : ""}
               </span>
             </div>
@@ -331,17 +356,18 @@ const AdminTasks: React.FC = () => {
       render: (text: any) => (
         <div
           style={{
-            width: "320px", // enforce width
-            maxWidth: "320px",
-
+            width: "300px",
+            maxWidth: "300px",
             WebkitBoxOrient: "vertical",
             display: "-webkit-box",
             textAlign: "center",
             margin: "0 auto",
-            maxHeight: " 11em", // approx 3 lines
-            overflowX: "auto", // horizontal scroll
+            maxHeight: "11em",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            lineClamp: 3,
           }}
-          title={text} // show full text on hover
+          title={text}
         >
           {text}
         </div>
@@ -353,42 +379,24 @@ const AdminTasks: React.FC = () => {
       key: "task_timeline",
       align: "center" as const,
       render: (_: any, record: any) => {
-        const { taskAssignedDate, taskCompleteDate, status } = record;
+        const { tastCreatedDate, status } = record;
 
         return (
           <div
             style={{
-              backgroundColor: "#f9f9f9",
-
-              borderRadius: 8,
               padding: "8px 12px",
               textAlign: "left",
               display: "inline-block",
               minWidth: 170,
             }}
           >
-            <div style={{ fontWeight: 600, color: "#351664", fontSize: 15 }}>
-              Task Timeline
-            </div>
-
             <div style={{ color: "#555", fontSize: 13 }}>
               Assigned Date:{" "}
               <span style={{ color: "#008cba", fontWeight: 500 }}>
-                {taskAssignedDate ? formatDate(taskAssignedDate) : ""}
+                {tastCreatedDate ? formatDate(tastCreatedDate) : ""}
               </span>
             </div>
 
-            <div style={{ color: "#555", fontSize: 13 }}>
-              Completed Date:{" "}
-              <span
-                style={{
-                  color: taskCompleteDate ? "#1ab394" : "#faad14",
-                  fontWeight: 500,
-                }}
-              >
-                {taskCompleteDate ? formatDate(taskCompleteDate) : ""}
-              </span>
-            </div>
             <div style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
               Status: {getStatusTag(status)}
             </div>
@@ -421,11 +429,10 @@ const AdminTasks: React.FC = () => {
       title: "Actions",
       key: "actions",
       align: "center" as const,
-
       width: 260,
       render: (_: any, record: Task) => (
         <Space wrap style={{ justifyContent: "center" }}>
-          {record.status !== "completed" && (
+          {record.status?.toLowerCase() !== "completed" && (
             <Popconfirm
               title="Mark this task as completed?"
               onConfirm={() => handleStatusUpdate(record.id, "COMPLETED")}
@@ -447,43 +454,6 @@ const AdminTasks: React.FC = () => {
             </Popconfirm>
           )}
 
-          {record.status !== "rejected" && (
-            <Popconfirm
-              title="Reject this task?"
-              onConfirm={() => handleStatusUpdate(record.id, "REJECTED")}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button
-                danger
-                icon={<CloseOutlined />}
-                style={{ borderRadius: 6 }}
-                size="small"
-              >
-                Reject
-              </Button>
-            </Popconfirm>
-          )}
-
-          <Popconfirm
-            title="Are you sure you want to delete this task?"
-            onConfirm={() => handleStatusUpdate(record.id, "DELETED")}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              icon={<DeleteOutlined />}
-              style={{
-                backgroundColor: "#6b7280",
-                color: "#fff",
-                borderRadius: 6,
-              }}
-              size="small"
-            >
-              Delete
-            </Button>
-          </Popconfirm>
-
           <Button
             icon={<CommentOutlined />}
             style={{
@@ -495,7 +465,7 @@ const AdminTasks: React.FC = () => {
             size="small"
             onClick={() => handleCommentsAdd(record)}
           >
-            Add
+            Add Comments
           </Button>
 
           <Button
@@ -509,7 +479,7 @@ const AdminTasks: React.FC = () => {
             size="small"
             onClick={() => handleViewComments(record)}
           >
-            View
+            View Comments
           </Button>
         </Space>
       ),
@@ -519,7 +489,6 @@ const AdminTasks: React.FC = () => {
   return (
     <UserPanelLayout>
       <div style={{ padding: 20 }}>
-        {/* Header */}
         <Row
           justify="space-between"
           align="middle"
@@ -534,7 +503,7 @@ const AdminTasks: React.FC = () => {
 
           <Col xs={24} sm={8}>
             <Input
-              prefix={<SearchOutlined />} // icon color white
+              prefix={<SearchOutlined />}
               placeholder="Search tasks..."
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
@@ -543,7 +512,6 @@ const AdminTasks: React.FC = () => {
           </Col>
         </Row>
 
-        {/* Table */}
         {loading ? (
           <div
             style={{
@@ -564,17 +532,17 @@ const AdminTasks: React.FC = () => {
               current: currentPage,
               pageSize: pageSize,
               responsive: true,
-              showSizeChanger: true, // ✅ enable size changer
-              pageSizeOptions: ["20", "30", "40", "50"], // ✅ options
-              size: "small", // ✅ pagination UI size
+              showSizeChanger: true,
+              pageSizeOptions: ["20", "30", "40", "50"],
+              size: "small",
               showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} tasks`, // ✅ optional
+                `${range[0]}-${range[1]} of ${total} tasks`,
               onChange: (page, size) => {
                 setCurrentPage(page);
                 if (size && size !== pageSize) setPageSize(size);
               },
               onShowSizeChange: (_page, size) => {
-                setCurrentPage(1); // ✅ reset to first page when size changes
+                setCurrentPage(1);
                 setPageSize(size);
               },
             }}
@@ -584,6 +552,7 @@ const AdminTasks: React.FC = () => {
           />
         )}
       </div>
+
       {/* View Comments Modal */}
       <Modal
         title={`Task Comments - ${
@@ -618,8 +587,8 @@ const AdminTasks: React.FC = () => {
                   comment.status?.toLowerCase() === "completed"
                     ? "green"
                     : comment.status?.toLowerCase() === "rejected"
-                    ? "red"
-                    : "blue"
+                      ? "red"
+                      : "blue"
                 }
               >
                 {comment.status || ""}
@@ -633,7 +602,9 @@ const AdminTasks: React.FC = () => {
 
       {/* Add Comments Modal */}
       <Modal
-        title="Add Comments"
+        title={`Add Comments for Task ${
+          selectedTask ? `#${selectedTask.id.slice(-4)}` : ""
+        }`}
         open={commentsModalVisible}
         onCancel={() => setCommentsModalVisible(false)}
         onOk={handleCommentsUpdate}

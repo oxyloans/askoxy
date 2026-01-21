@@ -82,92 +82,90 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
     }
   }, [screens]);
 
-    const getMenuItems = (): MenuItem[] => {
-      return [
-        {
-          key: "/planoftheday",
-          label: <Link to="/planoftheday">Daily Plan</Link>,
-          icon: (
-            <FaTachometerAlt
-              className="text-blue-600"
-              style={{ fontSize: "16px" }}
-            />
-          ),
-        },
-        {
-          key: "/taskupdated",
-          label: <Link to="/taskupdated">End of Day Report</Link>,
-          icon: (
-            <FaClipboard
-              className="text-green-600"
-              style={{ fontSize: "16px" }}
-            />
-          ),
-        },
-        {
-          key: "/assigned-task",
-          label: <Link to="/assigned-task">WhatsApp Tasks</Link>,
-          icon: (
-            <FaWhatsapp
-              className="text-green-500"
-              style={{ fontSize: "16px" }}
-            />
-          ),
-        },
-        {
-          key: "leave-management",
-          label: "Leave Management",
-          icon: (
-            <FaCalendar
-              className="text-purple-600"
-              style={{ fontSize: "16px" }}
-            />
-          ),
-          children: [
-            {
-              key: "/leaveapproval",
-              label: <Link to="/leaveapproval">Request Leave</Link>,
-              icon: (
-                <FaEdit
-                  className="text-purple-500"
-                  style={{ fontSize: "14px" }}
-                />
-              ),
-            },
-            {
-              key: "/leavestatus",
-              label: <Link to="/leavestatus">Leave Status</Link>,
-              icon: (
-                <FaListAlt
-                  className="text-purple-500"
-                  style={{ fontSize: "14px" }}
-                />
-              ),
-            },
-          ],
-        },
-        {
-          key: "/all-statuses",
-          label: <Link to="/all-statuses">Daily Activity</Link>,
-          icon: (
-            <FaSlideshare
-              className="text-indigo-600"
-              style={{ fontSize: "16px" }}
-            />
-          ),
-        },
-        {
-          key: "/usermobilenumberupdate",
-          label: <Link to="/usermobilenumberupdate">Mobile Number</Link>,
-          icon: (
-            <FaMobileAlt
-              className="text-orange-600"
-              style={{ fontSize: "16px" }}
-            />
-          ),
-        },
-      ];
-    };
+  const getMenuItems = (): MenuItem[] => {
+    return [
+      {
+        key: "/planoftheday",
+        label: <Link to="/planoftheday">Plan of the Day</Link>,
+        icon: (
+          <FaTachometerAlt
+            className="text-blue-600"
+            style={{ fontSize: "16px" }}
+          />
+        ),
+      },
+      {
+        key: "/taskupdated",
+        label: <Link to="/taskupdated">End-of-Day Report</Link>,
+        icon: (
+          <FaClipboard
+            className="text-green-600"
+            style={{ fontSize: "16px" }}
+          />
+        ),
+      },
+      {
+        key: "/assigned-task",
+        label: <Link to="/assigned-task">Assigned WhatsApp Tasks</Link>,
+        icon: (
+          <FaWhatsapp className="text-green-500" style={{ fontSize: "16px" }} />
+        ),
+      },
+      {
+        key: "leave-management",
+        label: "Leave Management",
+        icon: (
+          <FaCalendar
+            className="text-purple-600"
+            style={{ fontSize: "16px" }}
+          />
+        ),
+        children: [
+          {
+            key: "/leaveapproval",
+            label: <Link to="/leaveapproval">Apply for Leave</Link>,
+            icon: (
+              <FaEdit
+                className="text-purple-500"
+                style={{ fontSize: "14px" }}
+              />
+            ),
+          },
+          {
+            key: "/leavestatus",
+            label: <Link to="/leavestatus">Leave Request Status</Link>,
+            icon: (
+              <FaListAlt
+                className="text-purple-500"
+                style={{ fontSize: "14px" }}
+              />
+            ),
+          },
+        ],
+      },
+      {
+        key: "/all-statuses",
+        label: <Link to="/all-statuses">Daily Work Activity</Link>,
+        icon: (
+          <FaSlideshare
+            className="text-indigo-600"
+            style={{ fontSize: "16px" }}
+          />
+        ),
+      },
+      {
+        key: "/usermobilenumberupdate",
+        label: <Link to="/usermobilenumberupdate">Update Mobile Number</Link>,
+        icon: (
+          <FaMobileAlt
+            className="text-orange-600"
+            style={{ fontSize: "16px" }}
+          />
+        ),
+      },
+    ];
+  };
+
   const navigate = useNavigate();
 
   useEffect(() => {
