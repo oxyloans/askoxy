@@ -552,7 +552,7 @@ const ModuleTag = ({ module }: { module: ModuleKey }) => {
 
 const WhatsAppJoinCard = () => {
   const WHATSAPP_GROUP_LINK =
-    "https://chat.whatsapp.com/EItom0BMte185NndsmGCXL";
+    "https://chat.whatsapp.com/CK4ZnnDCR7O1fEZ6O9LMp1";
 
   const copyLink = async () => {
     try {
@@ -1360,7 +1360,6 @@ const selectedAiTool = useMemo(() => {
                 <Pill text="90-Day Job Plan" />
                 <Pill text="Day 1–51: Use Cases" />
                 <Pill text="Day 52–90: Build + Deploy" />
-                <Pill text="AI Book: 2 Topics/Day" />
               </div>
 
               <button

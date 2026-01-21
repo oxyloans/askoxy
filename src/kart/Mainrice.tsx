@@ -13,6 +13,8 @@ import offer5 from "../assets/img/off5.png";
 import offer6 from "../assets/img/off6.png";
 import offer7 from "../assets/img/off7.png";
 import offer8 from "../assets/img/off8.png";
+import oxybricksBanner from "../assets/img/oxybricksbanner.png";
+import aiBookBanner from "../assets/img/aibookbanner.png";
 import RiceOfferFAQs from "../Dashboard/Faqs";
 import { CartContext } from "../until/CartContext";
 import VideoImage from "../assets/img/Videothumb.png";
@@ -162,6 +164,88 @@ const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   );
 };
 
+// OxyBricks Modal Component
+const OxyBricksModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
+  isOpen,
+  onClose,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-blue-700">OxyBricks.World</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label="Close modal"
+          >
+            <FaTimes className="w-5 h-5" />
+          </button>
+        </div>
+
+        <p className="text-gray-600 mb-6">
+          Explore OxyBricks.World via our app or website.
+        </p>
+
+        {/* App Store Buttons */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+          <a
+            href="https://play.google.com/store/apps/details?id=com.oxybricks.world&hl=en_IN"
+            className="transition-transform hover:scale-105 w-full sm:w-auto flex justify-center"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
+              alt="Google Play Store"
+              className="h-12"
+            />
+          </a>
+
+          <a
+            href="https://apps.apple.com/us/app/oxybricks-world/id6526489604"
+            className="transition-transform hover:scale-105 w-full sm:w-auto flex justify-center"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+              alt="App Store"
+              className="h-12"
+            />
+          </a>
+        </div>
+
+        {/* Website Button */}
+        <div className="flex justify-center">
+          <a
+            href="https://oxybricks.world/"
+            className="bg-white text-blue-600 font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-blue-600 flex items-center"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Go To OxyBricks <FaExternalLinkAlt className="ml-2 w-4 h-4" />
+          </a>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const SkeletonLoader: React.FC = () => (
   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 px-4 py-6">
     {Array.from({ length: 12 }).map((_, index) => (
@@ -187,10 +271,11 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<"container" | "referral">(
-    "container"
+    "container",
   );
   const [scrolledToTop, setScrolledToTop] = useState(true);
   const contentRef = React.useRef<HTMLDivElement>(null);
+  
 
   // Scroll to top when tab changes
   useEffect(() => {
@@ -528,6 +613,7 @@ const Ricebags: React.FC = () => {
   const [noResults, setNoResults] = useState(false);
   const [showAppModal, setShowAppModal] = useState(false);
   const [showOffersModal, setShowOffersModal] = useState(false);
+  const [showOxyBricksModal, setShowOxyBricksModal] = useState(false);
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [showOxyLoansModal, setShowOxyLoansModal] = useState(false);
   const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
@@ -553,14 +639,16 @@ const Ricebags: React.FC = () => {
   >([]);
 
   const bannerImages = [
-    offer1,
-    offer2,
-    offer3,
-    offer4,
-    offer5,
-    offer6,
-    offer7,
-    offer8,
+    offer1, // 0
+    offer2, // 1
+    offer3, // 2
+    offer4, // 3
+    offer5, // 4
+    offer6, // 5
+    offer7, // 6
+    offer8, // 7
+    oxybricksBanner, // 8 ✅
+    aiBookBanner, // 9 ✅
   ].map((src, i) => ({ src, alt: `Offer ${i + 1}` }));
 
   const extendedImages = [
@@ -574,13 +662,13 @@ const Ricebags: React.FC = () => {
 
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev >= maxIndex ? 0 : prev + imagesPerView
+      prev >= maxIndex ? 0 : prev + imagesPerView,
     );
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev <= 0 ? maxIndex : prev - imagesPerView
+      prev <= 0 ? maxIndex : prev - imagesPerView,
     );
   };
 
@@ -604,6 +692,13 @@ const Ricebags: React.FC = () => {
       state: { item },
     });
   };
+
+  useEffect(() => {
+  if (selectedType) {
+    setActiveCategoryType(selectedType.toUpperCase());
+    setActiveCategory(""); // reset category selection
+  }
+}, [selectedType]);
 
   // useEffect(() => {
   //   const fetchBannerImages = async () => {
@@ -684,32 +779,56 @@ const Ricebags: React.FC = () => {
         setActiveCategory("Essentials Mart");
         scrollToSection("Essentials Mart");
         break;
+
       case 1:
         setActiveCategory("GOLD");
         scrollToSection("GOLD");
         break;
+
       case 2:
         setActiveCategory("Kitchen Elixirs");
         scrollToSection("Kitchen Elixirs");
         break;
+
       case 3:
         setActiveCategory("Snacking");
         scrollToSection("Snacking");
         break;
+
       case 4:
         setShowAppModal(true);
         break;
+
       case 5:
-         setActiveCategory("Monsoon Magic");
+        setActiveCategory("Monsoon Magic");
         scrollToSection("Monsoon Magic");
         break;
+
       case 6:
         setActiveCategory("Kolam Rice");
         scrollToSection("Kolam Rice");
         break;
+
       case 7:
         setShowOxyLoansModal(true);
         break;
+
+      // ✅ OxyBricks banner (index 8)
+      case 8:
+        setShowOxyBricksModal(true);
+        break;
+
+      case 9: {
+        const newSearch = new URLSearchParams(location.search);
+        newSearch.set("type", "AIBOOK");
+        navigate({
+          pathname: location.pathname,
+          search: `?${newSearch.toString()}`,
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        break;
+      }
+
       default:
         break;
     }
@@ -765,7 +884,7 @@ const Ricebags: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          BASE_URL + "/product-service/showGroupItemsForCustomrs"
+          BASE_URL + "/product-service/showGroupItemsForCustomrs",
         );
         const data = response.data;
 
@@ -779,10 +898,10 @@ const Ricebags: React.FC = () => {
                 (item) => ({
                   ...item,
                   weight: item.weight.toString(),
-                })
+                }),
               ),
               subCategories: category.subCategories || [],
-            }))
+            })),
         );
 
         // Collect all unique items for "All Items" category
@@ -816,10 +935,10 @@ const Ricebags: React.FC = () => {
 
         // Separate rice categories and others
         const riceCategories = allCategories.filter((cat) =>
-          riceCategoryNames.includes(cat.categoryName)
+          riceCategoryNames.includes(cat.categoryName),
         );
         const otherCategories = allCategories.filter(
-          (cat) => !riceCategoryNames.includes(cat.categoryName)
+          (cat) => !riceCategoryNames.includes(cat.categoryName),
         );
 
         const finalCategories: Category[] = [
@@ -835,13 +954,13 @@ const Ricebags: React.FC = () => {
           ...riceCategories.map((category) => ({
             ...category,
             itemsResponseDtoList: sortItemsByStock(
-              category.itemsResponseDtoList
+              category.itemsResponseDtoList,
             ),
           })),
           ...otherCategories.map((category) => ({
             ...category,
             itemsResponseDtoList: sortItemsByStock(
-              category.itemsResponseDtoList
+              category.itemsResponseDtoList,
             ),
           })),
         ];
@@ -874,7 +993,7 @@ const Ricebags: React.FC = () => {
       const filteredItems = category.itemsResponseDtoList.filter(
         (item) =>
           item.itemName.toLowerCase().includes(term) ||
-          (item.weight && item.weight.toString().toLowerCase().includes(term))
+          (item.weight && item.weight.toString().toLowerCase().includes(term)),
       );
 
       // Sort filtered items by stock status
@@ -889,7 +1008,7 @@ const Ricebags: React.FC = () => {
     // Count total matching items
     const totalMatchingItems = filtered.reduce(
       (count, category) => count + category.itemsResponseDtoList.length,
-      0
+      0,
     );
 
     setNoResults(totalMatchingItems === 0);
@@ -899,7 +1018,7 @@ const Ricebags: React.FC = () => {
     if (totalMatchingItems > 0) {
       // Find the first category with matching items
       const firstCategoryWithItems = filtered.find(
-        (cat) => cat.itemsResponseDtoList.length > 0
+        (cat) => cat.itemsResponseDtoList.length > 0,
       );
 
       if (firstCategoryWithItems) {
@@ -928,7 +1047,7 @@ const Ricebags: React.FC = () => {
           customerId: customerId,
           itemId: item.itemId,
           quantity: 1,
-        }
+        },
       );
 
       if (response.status === 200) {
@@ -946,7 +1065,7 @@ const Ricebags: React.FC = () => {
   const BannerSkeletonLoader: React.FC = () => {
     const isSmallScreen = window.innerWidth < 768;
     const imagesPerView = isSmallScreen ? 1 : 2;
-    const totalBanners = 8;
+    const totalBanners = 10;
     const extendedBanners = totalBanners + imagesPerView;
 
     return (
@@ -1118,8 +1237,8 @@ const Ricebags: React.FC = () => {
           showAllCategories
             ? categories
             : filteredCategories.length > 0
-            ? filteredCategories
-            : categories
+              ? filteredCategories
+              : categories
         }
         activeCategory={activeCategory}
         selectedType={selectedType || "ALL"}
@@ -1155,6 +1274,12 @@ const Ricebags: React.FC = () => {
           <OxyLoansModal
             isOpen={showOxyLoansModal}
             onClose={() => setShowOxyLoansModal(false)}
+          />
+        )}
+        {showOxyBricksModal && (
+          <OxyBricksModal
+            isOpen={showOxyBricksModal}
+            onClose={() => setShowOxyBricksModal(false)}
           />
         )}
       </AnimatePresence>

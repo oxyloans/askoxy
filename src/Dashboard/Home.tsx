@@ -727,9 +727,9 @@ const Home: React.FC = () => {
       id: "Rice Offer",
       src: Riceoffers,
       alt: "Rice Offer",
-      path: "/main/dashboard/products?type=RICE&weight=5.0",
+      path: "/main/dashboard/products?type=GOLD",
       onClick: () => {
-        navigate("/main/dashboard/products?type=RICE&weight=5.0");
+        navigate("/main/dashboard/products?type=GOLD");
       },
     },
     {

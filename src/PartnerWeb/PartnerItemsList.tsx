@@ -91,7 +91,7 @@ const PartnerItemsList: React.FC = () => {
         `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${item.itemId}`,
         {
           headers: { accept: "*/*" },
-        }
+        },
       );
       setImageUpdateModal({
         visible: true,
@@ -120,7 +120,7 @@ const PartnerItemsList: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/ItemsGetTotal`
+        `${BASE_URL}/product-service/ItemsGetTotal`,
       );
 
       const transformedItems = response.data.map((item: Item) => ({
@@ -162,7 +162,7 @@ const PartnerItemsList: React.FC = () => {
     const { mrp, price, buyingPrice } = values;
     if (price > mrp) {
       message.error("Selling price cannot be higher than MRP");
-      return;
+      // return;
     }
     try {
       const data = {
@@ -179,7 +179,7 @@ const PartnerItemsList: React.FC = () => {
         data,
         {
           headers: { Authorization: `Bearer ${accessToken.token}` },
-        }
+        },
       );
 
       setPriceUpdateModal({ visible: false, item: null });
@@ -212,7 +212,7 @@ const PartnerItemsList: React.FC = () => {
             Authorization: `Bearer ${accessToken.token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       setImageUpdateModal({ visible: false, item: null, images: [] });
@@ -251,7 +251,7 @@ const PartnerItemsList: React.FC = () => {
 
       await axios.patch(
         `${BASE_URL}/product-service/itemActiveAndInActive`,
-        data
+        data,
       );
 
       message.success(`Item ${item.itemName} status updated`);
@@ -456,9 +456,12 @@ const PartnerItemsList: React.FC = () => {
                 { required: true, message: "Please input Selling Price" },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    if (value > getFieldValue("mrp")) {
+                    const mrp = Number(getFieldValue("mrp"));
+                    const price = Number(value);
+
+                    if (!isNaN(mrp) && !isNaN(price) && price > mrp) {
                       return Promise.reject(
-                        new Error("Selling price cannot be higher than MRP")
+                        new Error("Selling price cannot be higher than MRP"),
                       );
                     }
                     return Promise.resolve();
@@ -468,6 +471,7 @@ const PartnerItemsList: React.FC = () => {
             >
               <Input type="number" />
             </Form.Item>
+
             <Form.Item
               name="buyingPrice"
               label="Buying Price"
@@ -508,7 +512,7 @@ const PartnerItemsList: React.FC = () => {
                         alt={`Image ${index + 1}`}
                         className="w-full h-auto max-h-32 object-contain rounded border border-gray-300 shadow-sm"
                         onError={(
-                          e: React.SyntheticEvent<HTMLImageElement>
+                          e: React.SyntheticEvent<HTMLImageElement>,
                         ) => {
                           e.currentTarget.src =
                             "https://via.placeholder.com/150";

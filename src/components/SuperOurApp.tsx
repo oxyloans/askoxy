@@ -43,7 +43,7 @@ export default function SuperOurApp() {
       ([entry]) => {
         setShowFab(entry.isIntersecting && entry.intersectionRatio >= 0.1);
       },
-      { threshold: [0, 0.1, 0.5, 1] }
+      { threshold: [0, 0.1, 0.5, 1] },
     );
 
     observer.observe(gridRef.current);
@@ -150,7 +150,7 @@ export default function SuperOurApp() {
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
 
   return (
-    <div className="min-h-screen w-full overflow-hidden">
+    <div className="w-full overflow-hidden">
       {/* Background */}
       <div
         className="w-full"
@@ -159,20 +159,20 @@ export default function SuperOurApp() {
             "linear-gradient(180deg,#5C3391 0%,#5D4086 30%,#6F4386 65%,#312C74 100%)",
         }}
       >
-        <div className="mx-auto max-w-[1240px] px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+       <div className="mx-auto max-w-[1240px] px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-0">
           <div className="flex flex-col-reverse lg:flex-row items-center lg:items-end gap-6 sm:gap-8 lg:gap-12">
             {/* Left: phone mockup */}
-            <div className="w-full lg:w-[48%] flex justify-center lg:justify-start">
+            <div className="w-full lg:w-[48%] flex justify-center lg:justify-start items-end">
               <img
                 src={leftImage}
                 alt="ASKOXY.AI Super App"
-                className="max-w-[320px] sm:max-w-[380px] md:max-w-[440px] lg:max-w-[520px] w-full h-auto object-contain drop-shadow-2xl select-none"
+                className="max-w-[320px] sm:max-w-[380px] md:max-w-[440px] lg:max-w-[520px] w-full object-contain drop-shadow-2xl select-none block"
                 draggable={false}
               />
             </div>
 
             {/* Right: grid + crypto button */}
-            <div className="w-full lg:w-[52%]">
+            <div className="w-full lg:w-[52%] pb-6 sm:pb-8 lg:pb-10">
               <div className="mx-auto max-w-[780px]" ref={gridRef}>
                 {/* 12-tile grid */}
                 <div
@@ -244,9 +244,6 @@ export default function SuperOurApp() {
               </div>
             </div>
           </div>
-
-          {/* Bottom breathing space */}
-          <div className="h-4 sm:h-6 lg:h-8" />
         </div>
       </div>
 
