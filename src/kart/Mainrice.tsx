@@ -15,33 +15,17 @@ import offer7 from "../assets/img/off7.png";
 import offer8 from "../assets/img/off8.png";
 import oxybricksBanner from "../assets/img/oxybricksbanner.png";
 import aiBookBanner from "../assets/img/aibookbanner.png";
-import RiceOfferFAQs from "../Dashboard/Faqs";
+
 import { CartContext } from "../until/CartContext";
-import VideoImage from "../assets/img/Videothumb.png";
+
 import {
-  FaSearch,
-  FaUniversity,
-  FaMoneyBillWave,
+  
   FaTimes,
-  FaQuestionCircle,
+ 
   FaExternalLinkAlt,
-  FaChevronLeft,
-  FaChevronRight,
+  
 } from "react-icons/fa";
-import {
-  GraduationCap,
-  XIcon,
-  Award,
-  PlayCircle,
-  FileText,
-  Globe,
-  ArrowRight,
-  Gift,
-  Sparkles,
-  Package,
-  ShoppingBag,
-  Info,
-} from "lucide-react";
+
 import BASE_URL from "../Config";
 import { Modal } from "antd";
 
@@ -247,7 +231,7 @@ const OxyBricksModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 };
 
 const SkeletonLoader: React.FC = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 px-4 py-6">
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4 px-4 py-6">
     {Array.from({ length: 12 }).map((_, index) => (
       <div
         key={index}
@@ -275,7 +259,6 @@ const FAQModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   );
   const [scrolledToTop, setScrolledToTop] = useState(true);
   const contentRef = React.useRef<HTMLDivElement>(null);
-  
 
   // Scroll to top when tab changes
   useEffect(() => {
@@ -694,11 +677,11 @@ const Ricebags: React.FC = () => {
   };
 
   useEffect(() => {
-  if (selectedType) {
-    setActiveCategoryType(selectedType.toUpperCase());
-    setActiveCategory(""); // reset category selection
-  }
-}, [selectedType]);
+    if (selectedType) {
+      setActiveCategoryType(selectedType.toUpperCase());
+      setActiveCategory(""); // reset category selection
+    }
+  }, [selectedType]);
 
   // useEffect(() => {
   //   const fetchBannerImages = async () => {
@@ -894,12 +877,13 @@ const Ricebags: React.FC = () => {
               ...category,
               categoryType: group.categoryType?.toUpperCase() || "OTHERS", // ✅ Inject categoryType from group
               categoryImage: category.categoryImage || null,
-              itemsResponseDtoList: category.itemsResponseDtoList.map(
-                (item) => ({
+              // Filter out sold-out items (quantity === 0) and normalize weight
+              itemsResponseDtoList: category.itemsResponseDtoList
+                
+                .map((item) => ({
                   ...item,
                   weight: item.weight.toString(),
-                }),
-              ),
+                })),
               subCategories: category.subCategories || [],
             })),
         );
@@ -934,10 +918,16 @@ const Ricebags: React.FC = () => {
         ];
 
         // Separate rice categories and others
-        const riceCategories = allCategories.filter((cat) =>
+        // Remove categories that have no available items after filtering
+       const nonEmptyCategories = allCategories.filter((cat) =>
+         Array.isArray(cat.itemsResponseDtoList),
+       );
+
+
+        const riceCategories = nonEmptyCategories.filter((cat) =>
           riceCategoryNames.includes(cat.categoryName),
         );
-        const otherCategories = allCategories.filter(
+        const otherCategories = nonEmptyCategories.filter(
           (cat) => !riceCategoryNames.includes(cat.categoryName),
         );
 
@@ -1037,6 +1027,10 @@ const Ricebags: React.FC = () => {
     if (!customerId) {
       // Handle case when user is not logged in
       alert("Please login to add items to cart");
+      return;
+    }
+    if (item.quantity !== undefined && item.quantity <= 0) {
+      alert("Out of stock");
       return;
     }
 

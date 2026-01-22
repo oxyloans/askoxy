@@ -1,5 +1,5 @@
 // /src/AdminTasks.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Table,
   Spin,
@@ -10,6 +10,7 @@ import {
   Button,
   Row,
   Col,
+  Segmented,
   Popconfirm,
   Tag,
   Modal,
@@ -18,8 +19,6 @@ import {
 import {
   SearchOutlined,
   CheckOutlined,
-  CloseOutlined,
-  DeleteOutlined,
   CommentOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
@@ -44,7 +43,7 @@ interface Task {
   tastCreatedDate: string;
   taskCompleteDate: string;
 }
-
+type StatusFilter = "ALL" | "ASSIGNED" | "COMPLETED" | "REJECTED" | "DELETED";
 const AdminTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
@@ -60,6 +59,53 @@ const AdminTasks: React.FC = () => {
   const [comments, setComments] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const normalizeStatus = (s?: string): StatusFilter => {
+    const v = (s || "").trim().toUpperCase();
+    if (v === "ASSIGNED") return "ASSIGNED";
+    if (v === "COMPLETED") return "COMPLETED";
+
+    return "ASSIGNED";
+  };
+  const statusCounts = useMemo(() => {
+    // Filter by search text first
+    const q = searchText.trim().toLowerCase();
+    let searchFiltered = tasks;
+
+    if (q) {
+      searchFiltered = tasks.filter((task) => {
+        const taskName = (task.taskName || "").toLowerCase();
+        const taskAssignBy = (task.taskAssignBy || "").toLowerCase();
+        let assignToArr: string[] = [];
+        if (Array.isArray(task.taskAssignTo)) {
+          assignToArr = task.taskAssignTo.map((a) => (a || "").toLowerCase());
+        } else if (typeof task.taskAssignTo === "string") {
+          assignToArr = [task.taskAssignTo.toLowerCase()];
+        }
+
+        return (
+          taskName.includes(q) ||
+          taskAssignBy.includes(q) ||
+          assignToArr.some((name) => name.includes(q))
+        );
+      });
+    }
+
+    const counts: Record<StatusFilter, number> = {
+      ALL: searchFiltered.length,
+      ASSIGNED: 0,
+      COMPLETED: 0,
+      REJECTED: 0,
+      DELETED: 0,
+    };
+
+    searchFiltered.forEach((t) => {
+      const ns = normalizeStatus(t.status);
+      counts[ns] += 1;
+    });
+
+    return counts;
+  }, [tasks, searchText]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
@@ -86,31 +132,45 @@ const AdminTasks: React.FC = () => {
     try {
       const response = await axios.get(
         `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
       );
 
-      console.log("API Response:", response.data);
+      const reversedTasks = response.data.slice().reverse();
 
-      const tasksArray = Array.isArray(response.data)
-        ? response.data
-        : Array.isArray(response.data.data)
-          ? response.data.data
-          : [];
-
-      const reversedTasks = tasksArray.slice().reverse();
-
+      // ✅ Filter out invalid rows
       const validTasks = reversedTasks.filter((task: any) => {
-        const assignedArray = Array.isArray(task.taskAssignTo)
-          ? task.taskAssignTo
-          : task.taskAssignTo
-            ? [task.taskAssignTo]
-            : [];
-        const hasValidAssignee = assignedArray.length > 0;
-        const hasValidTaskName = task.taskName && task.taskName.trim() !== "";
+        const assigned = task.taskAssignTo;
+        const taskName = task.taskName;
+
+        // Check for valid taskAssignTo
+        const hasValidAssignee = (() => {
+          if (!assigned) return false;
+          if (Array.isArray(assigned))
+            return assigned.some((a) => a && a.trim() !== "");
+          if (typeof assigned === "string") return assigned.trim() !== "";
+          return false;
+        })();
+
+        // Check for valid taskName
+        const hasValidTaskName =
+          typeof taskName === "string" && taskName.trim() !== "";
+
+        // ✅ Keep only rows that have both valid taskAssignTo AND valid taskName
         return hasValidAssignee && hasValidTaskName;
+      });
+      validTasks.sort((a: Task, b: Task): number => {
+        const dateA: Date = new Date(a.tastCreatedDate || 0);
+        const dateB: Date = new Date(b.tastCreatedDate || 0);
+        return dateB.getTime() - dateA.getTime();
       });
 
       setTasks(validTasks);
+      setFilteredTasks(validTasks);
+      // ✅ Reset pagination to first page on initial load
+      setCurrentPage(1);
+      setPageSize(100);
     } catch (error) {
       message.error("Failed to fetch tasks");
       console.error("Task Fetch Error:", error);
@@ -122,39 +182,45 @@ const AdminTasks: React.FC = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
-
-  // Filtering logic moved to useEffect
-  useEffect(() => {
-    const lowerSearch = searchText.trim().toLowerCase();
-
-    if (!lowerSearch) {
-      setFilteredTasks(tasks);
-      return;
+  const getTaskAssignToText = (taskAssignTo: string | string[] | undefined) => {
+    if (!taskAssignTo) return "";
+    if (Array.isArray(taskAssignTo)) {
+      return taskAssignTo.filter(Boolean).join(", ");
     }
+    return taskAssignTo;
+  };
 
-    const filtered = tasks.filter((task) => {
-      const assignByMatch = task.taskAssignBy
-        ?.toLowerCase()
-        .includes(lowerSearch);
+  // Filtering logic with useMemo at component level
+  const filtered = useMemo(() => {
+    const statusFiltered =
+      statusFilter === "ALL"
+        ? tasks
+        : tasks.filter((t) => normalizeStatus(t.status) === statusFilter);
 
-      const assignToArray = Array.isArray(task.taskAssignTo)
-        ? task.taskAssignTo
-        : task.taskAssignTo
-          ? [task.taskAssignTo]
-          : [];
+    const q = searchText.trim().toLowerCase();
+    if (!q) return statusFiltered;
 
-      const assignToMatch = assignToArray.some((t: string) =>
-        t?.toLowerCase().includes(lowerSearch),
+    return statusFiltered.filter((task) => {
+      const taskName = (task.taskName || "").toLowerCase();
+      const taskAssignBy = (task.taskAssignBy || "").toLowerCase();
+      let assignToArr: string[] = [];
+      if (Array.isArray(task.taskAssignTo)) {
+        assignToArr = task.taskAssignTo.map((a) => (a || "").toLowerCase());
+      } else if (typeof task.taskAssignTo === "string") {
+        assignToArr = [task.taskAssignTo.toLowerCase()];
+      }
+
+      return (
+        taskName.includes(q) ||
+        taskAssignBy.includes(q) ||
+        assignToArr.some((name) => name.includes(q))
       );
-
-      const taskNameMatch = task.taskName?.toLowerCase().includes(lowerSearch);
-      const statusMatch = task.status?.toLowerCase().includes(lowerSearch);
-
-      return assignByMatch || assignToMatch || taskNameMatch || statusMatch;
     });
+  }, [tasks, searchText, statusFilter]);
 
+  useEffect(() => {
     setFilteredTasks(filtered);
-  }, [tasks, searchText]);
+  }, [filtered]);
 
   // Reset to page 1 whenever search text changes
   useEffect(() => {
@@ -504,13 +570,28 @@ const AdminTasks: React.FC = () => {
           <Col xs={24} sm={8}>
             <Input
               prefix={<SearchOutlined />}
-              placeholder="Search tasks..."
+              placeholder="Search names,tasks..."
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
               allowClear
             />
           </Col>
         </Row>
+        <Segmented
+          block
+          value={statusFilter}
+          onChange={(val: any) => setStatusFilter(val as StatusFilter)}
+          options={[
+            { label: `All (${statusCounts.ALL})`, value: "ALL" },
+            { label: `Assigned (${statusCounts.ASSIGNED})`, value: "ASSIGNED" },
+            {
+              label: `Completed (${statusCounts.COMPLETED})`,
+              value: "COMPLETED",
+            },
+            // { label: `Rejected (${statusCounts.REJECTED})`, value: "REJECTED" },
+            // { label: `Deleted (${statusCounts.DELETED})`, value: "DELETED" },
+          ]}
+        />
 
         {loading ? (
           <div
@@ -547,7 +628,7 @@ const AdminTasks: React.FC = () => {
               },
             }}
             bordered
-            scroll={{ x: true }}
+            scroll={{ x: true, y: 600 }}
             style={{ width: "100%" }}
           />
         )}

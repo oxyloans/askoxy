@@ -96,7 +96,7 @@ const ItemDisplayPage = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const [itemDetails, setItemDetails] = useState<Item | null>(
-    state?.item || null
+    state?.item || null,
   );
   const [itemImages, setItemImages] = useState<ItemImage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -157,7 +157,7 @@ const ItemDisplayPage = () => {
     images: [],
   });
   const [displayedOffers, setDisplayedOffers] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const context = useContext(CartContext);
@@ -180,7 +180,7 @@ const ItemDisplayPage = () => {
   const fetchItemImages = async (id: string) => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/ImagesViewBasedOnItemId?itemId=${id}`
+        `${BASE_URL}/product-service/ImagesViewBasedOnItemId?itemId=${id}`,
       );
       console.log("Item images response:", response.data);
       setItemImages(response.data || []);
@@ -206,20 +206,36 @@ const ItemDisplayPage = () => {
   const fetchItemDetails = async (id: string) => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/showGroupItemsForCustomrs`
+        `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
       );
       const allItems = response.data.flatMap((group: any) =>
         group.categories.flatMap((category: any) =>
           category.itemsResponseDtoList.map((item: any) => ({
             ...item,
             category: category.categoryName,
-          }))
-        )
+          })),
+        ),
       );
-      const item = allItems.find((item: Item) => item.itemId === id);
+
+      // Exclude sold-out items (quantity === 0)
+      const availableItems = allItems.filter(
+        (it: any) => it.quantity === undefined || it.quantity > 0,
+      );
+
+      const item = availableItems.find((item: Item) => item.itemId === id);
       if (item) {
         setItemDetails(item);
         await fetchItemImages(id);
+      } else {
+        // Item is sold out or unavailable
+        Modal.info({
+          title: "Item unavailable",
+          content: "This item is currently sold out or unavailable.",
+        });
+        // navigate back after short delay
+        setTimeout(() => {
+          navigate(-1);
+        }, 1200);
       }
     } catch (error) {
       console.error("Error fetching item details:", error);
@@ -229,7 +245,7 @@ const ItemDisplayPage = () => {
   const fetchComboAddOns = async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/combo-offers`
+        `${BASE_URL}/product-service/combo-offers`,
       );
       const comboItems = response.data?.content || [];
 
@@ -291,7 +307,7 @@ const ItemDisplayPage = () => {
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       const customerCart: CartItem[] =
@@ -305,12 +321,12 @@ const ItemDisplayPage = () => {
             const quantity = item.cartQuantity ?? 0;
             acc[item.itemId] = (acc[item.itemId] ?? 0) + quantity;
             console.log(
-              `Item ${item.itemId}: quantity=${quantity}, status=${item.status}`
+              `Item ${item.itemId}: quantity=${quantity}, status=${item.status}`,
             );
           }
           return acc;
         },
-        {}
+        {},
       );
 
       const totalQuantity: number = customerCart.reduce(
@@ -318,7 +334,7 @@ const ItemDisplayPage = () => {
           const quantity = item.cartQuantity ?? 0;
           return sum + quantity;
         },
-        0
+        0,
       );
 
       console.log("fetchCartData: ", {
@@ -330,7 +346,7 @@ const ItemDisplayPage = () => {
       const newDisplayedOffers = new Set(displayedOffers);
 
       const twoPlusOneItems = customerCart.filter(
-        (item) => item.status === "ADD" && item.cartQuantity >= 2
+        (item) => item.status === "ADD" && item.cartQuantity >= 2,
       );
       for (const addItem of twoPlusOneItems) {
         const freeItem = customerCart.find(
@@ -338,7 +354,7 @@ const ItemDisplayPage = () => {
             item.itemId === addItem.itemId &&
             item.status === "FREE" &&
             item.cartQuantity === 1 &&
-            normalizeWeight(item.weight) === 1.0
+            normalizeWeight(item.weight) === 1.0,
         );
         if (
           freeItem &&
@@ -352,7 +368,7 @@ const ItemDisplayPage = () => {
             } of ${normalizeWeight(addItem.weight)} Kg and get 1 Bag of ${
               freeItem.itemName
             } of ${normalizeWeight(
-              freeItem.weight
+              freeItem.weight,
             )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
           });
           newDisplayedOffers.add(`2+1_${addItem.itemId}`);
@@ -363,14 +379,14 @@ const ItemDisplayPage = () => {
         (item) =>
           item.status === "ADD" &&
           normalizeWeight(item.weight) === 5.0 &&
-          item.cartQuantity >= 1
+          item.cartQuantity >= 1,
       );
       for (const addItem of fivePlusTwoItems) {
         const freeItems = customerCart.find(
           (item) =>
             item.status === "FREE" &&
             normalizeWeight(item.weight) === 1.0 &&
-            item.cartQuantity === 2
+            item.cartQuantity === 2,
         );
         if (freeItems && !newDisplayedOffers.has(`5+2_${addItem.itemId}`)) {
           setOfferModal({
@@ -380,7 +396,7 @@ const ItemDisplayPage = () => {
             } of ${normalizeWeight(addItem.weight)} Kg and get 2 Bags of ${
               freeItems.itemName
             } of ${normalizeWeight(
-              freeItems.weight
+              freeItems.weight,
             )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
           });
           newDisplayedOffers.add(`5+2_${addItem.itemId}`);
@@ -392,14 +408,14 @@ const ItemDisplayPage = () => {
           item.status === "ADD" &&
           (normalizeWeight(item.weight) === 10.0 ||
             normalizeWeight(item.weight) === 26.0) &&
-          item.cartQuantity >= 1
+          item.cartQuantity >= 1,
       );
       for (const addItem of containerOfferItems) {
         const freeContainer = customerCart.find(
           (item) =>
             item.status === "FREE" &&
             item.cartQuantity === 1 &&
-            item.itemName.toLowerCase().includes("storage")
+            item.itemName.toLowerCase().includes("storage"),
         );
         if (
           freeContainer &&
@@ -448,7 +464,7 @@ const ItemDisplayPage = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/showGroupItemsForCustomrs`
+        `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
       );
 
       console.log("Fetched Categories:", response.data);
@@ -457,8 +473,8 @@ const ItemDisplayPage = () => {
         .flatMap((group: any) => group.categories)
         .find((category: any) =>
           category.itemsResponseDtoList.some(
-            (item: any) => item.itemId === itemDetails.itemId
-          )
+            (item: any) => item.itemId === itemDetails.itemId,
+          ),
         );
 
       if (
@@ -466,7 +482,11 @@ const ItemDisplayPage = () => {
         Array.isArray(matchingCategory.itemsResponseDtoList)
       ) {
         const categoryItems = matchingCategory.itemsResponseDtoList
-          .filter((item: any) => item.itemId !== itemDetails.itemId)
+          .filter(
+            (item: any) =>
+              item.itemId !== itemDetails.itemId &&
+              (item.quantity === undefined || item.quantity > 0),
+          )
           .slice(0, 4)
           .map((item: any) => ({
             ...item,
@@ -522,7 +542,7 @@ const ItemDisplayPage = () => {
       await axios.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         requestBody,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       await fetchCartData(item.itemId);
@@ -530,7 +550,7 @@ const ItemDisplayPage = () => {
       if (!isComboItem) {
         try {
           const res = await axios.get(
-            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
+            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`,
           );
           const comboItems = res.data?.items || [];
 
@@ -585,7 +605,7 @@ const ItemDisplayPage = () => {
 
     try {
       const cartItemToRemove = cartData.find(
-        (item) => item.itemId === itemId && item.status === "ADD"
+        (item) => item.itemId === itemId && item.status === "ADD",
       );
 
       if (!cartItemToRemove) {
@@ -596,7 +616,7 @@ const ItemDisplayPage = () => {
       await axios.patch(
         `${BASE_URL}/cart-service/cart/minusCartItem`,
         { customerId, itemId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       message.success("Item removed from cart successfully.");
@@ -632,7 +652,7 @@ const ItemDisplayPage = () => {
         await axios.patch(
           `${BASE_URL}/cart-service/cart/minusCartItem`,
           { customerId, itemId: item.itemId },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         message.success("Item removed from cart successfully.");
       } else {
@@ -648,7 +668,7 @@ const ItemDisplayPage = () => {
             const patchRes = await axios.patch(
               endpoint,
               requestData,
-              requestConfig
+              requestConfig,
             );
             console.log("PATCH success:", patchRes.status, patchRes.data);
           } catch (error) {
@@ -784,10 +804,10 @@ const ItemDisplayPage = () => {
     comboAddOnModal.itemCount === 1
       ? "grid-cols-1"
       : comboAddOnModal.itemCount === 2
-      ? "grid-cols-2"
-      : comboAddOnModal.itemCount <= 4
-      ? "grid-cols-2 md:grid-cols-3"
-      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
+        ? "grid-cols-2"
+        : comboAddOnModal.itemCount <= 4
+          ? "grid-cols-2 md:grid-cols-3"
+          : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
 
   const handleChatView = async (productName: string) => {
     // Save current scroll position
@@ -916,7 +936,7 @@ const ItemDisplayPage = () => {
   const getStockStatus = (quantity: number) => {
     if (quantity === 0)
       return {
-        text: "Out of Stock",
+        text: "Sold Out",
         color:
           "bg-red- Valuable insights from xAI team members, directly to your inbox 100 text-red-600",
       };
@@ -934,7 +954,7 @@ const ItemDisplayPage = () => {
 
   const isItemUserAdded = (itemId: string): boolean => {
     return cartData.some(
-      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
+      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD",
     );
   };
 
@@ -944,13 +964,13 @@ const ItemDisplayPage = () => {
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? getAllImages().length - 1 : prev - 1
+      prev === 0 ? getAllImages().length - 1 : prev - 1,
     );
   };
 
   const handleNextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === getAllImages().length - 1 ? 0 : prev + 1
+      prev === getAllImages().length - 1 ? 0 : prev + 1,
     );
   };
 
@@ -976,10 +996,10 @@ const ItemDisplayPage = () => {
     try {
       const [imagesResponse, urlsResponse] = await Promise.all([
         axios.get(
-          `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${id}`
+          `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${id}`,
         ),
         axios.get(
-          `${BASE_URL}/product-service/goldUrsBasedOnItemId?itemId=${id}`
+          `${BASE_URL}/product-service/goldUrsBasedOnItemId?itemId=${id}`,
         ),
       ]);
 
@@ -988,7 +1008,7 @@ const ItemDisplayPage = () => {
         (img: { images: string }, index: number) => ({
           id: `image-${index}`,
           imageUrl: img.images,
-        })
+        }),
       );
 
       const urlsRaw = urlsResponse.data?.goLdUrls || "";
@@ -1102,11 +1122,9 @@ const ItemDisplayPage = () => {
                             openFullscreen(
                               {
                                 ...getAllImages()[currentImageIndex],
-                                id:
-                                  getAllImages()[currentImageIndex].imageId
-                                 
+                                id: getAllImages()[currentImageIndex].imageId,
                               },
-                              currentImageIndex
+                              currentImageIndex,
                             )
                           }
                           onMouseMove={(e) => {
@@ -1170,7 +1188,7 @@ const ItemDisplayPage = () => {
                     </div>
                   )}
 
-                 {/* {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
+                  {/* {itemDetails && goldItemIds.includes(itemDetails.itemId) && (
                     <div className="flex justify-center mt-4">
                       <button
                         onClick={handleComparePrices}
@@ -1215,7 +1233,7 @@ const ItemDisplayPage = () => {
                             <span className="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
                               {calculateDiscount(
                                 itemDetails.itemMrp,
-                                itemDetails.itemPrice
+                                itemDetails.itemPrice,
                               )}
                               % OFF
                             </span>
@@ -1338,7 +1356,7 @@ const ItemDisplayPage = () => {
                             )}
                             <span>
                               {itemDetails.quantity === 0
-                                ? "Out of Stock"
+                                ? "Sold Out"
                                 : "Add to Cart"}
                             </span>
                           </button>
@@ -1413,8 +1431,8 @@ const ItemDisplayPage = () => {
                             message.type === "sent"
                               ? "bg-purple-600 text-white"
                               : message.type === "system"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-100 text-gray-800"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           <ReactMarkdown className="prose prose-sm max-w-none">
@@ -1723,8 +1741,8 @@ const ItemDisplayPage = () => {
           comboAddOnModal.itemCount === 1
             ? 300
             : comboAddOnModal.itemCount === 2
-            ? 500
-            : 700
+              ? 500
+              : 700
         }
       >
         <div className={`grid gap-4 ${gridCols}`}>
@@ -1734,7 +1752,7 @@ const ItemDisplayPage = () => {
               ? Math.round(
                   ((addonItem.itemMrp - addonItem.itemPrice) /
                     addonItem.itemMrp) *
-                    100
+                    100,
                 )
               : 0;
 
@@ -1860,7 +1878,7 @@ const ItemDisplayPage = () => {
                         });
                       } else {
                         message.warning(
-                          "You can only select one optional add-on."
+                          "You can only select one optional add-on.",
                         );
                       }
                     }}
@@ -1900,86 +1918,131 @@ const ItemDisplayPage = () => {
         </div>
       </Modal>
 
-     <Modal
-  title={
-    <span className="text-xl sm:text-2xl font-extrabold text-purple-700 flex items-center gap-2">
-      BMVCOINS Info
-    </span>
-  }
-  open={isBmvModalVisible}
-  onCancel={() => setIsBmvModalVisible(false)}
-  footer={null}
-  centered
->
-  <div className="text-gray-700 text-sm space-y-5 pb-2">
-    {/* MAIN: Show GET coins and INR conversion as BIG highlight */}
-    {typeof itemDetails?.bmvCoins === "number" && itemDetails.bmvCoins > 0 ? (
-      <div className="text-center mb-3">
-        {/* MAIN VALUE */}
-        <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
-          <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
-            Get <span className="text-purple-700">{itemDetails.bmvCoins}</span> coins
-            <span className="mx-2 text-purple-400 text-2xl font-semibold">=</span>
-            <span className="text-green-700 font-bold">
-              ₹{(itemDetails.bmvCoins * 0.02).toFixed(2)}
-            </span>
+      <Modal
+        title={
+          <span className="text-xl sm:text-2xl font-extrabold text-purple-700 flex items-center gap-2">
+            BMVCOINS Info
+          </span>
+        }
+        open={isBmvModalVisible}
+        onCancel={() => setIsBmvModalVisible(false)}
+        footer={null}
+        centered
+      >
+        <div className="text-gray-700 text-sm space-y-5 pb-2">
+          {/* MAIN: Show GET coins and INR conversion as BIG highlight */}
+          {typeof itemDetails?.bmvCoins === "number" &&
+          itemDetails.bmvCoins > 0 ? (
+            <div className="text-center mb-3">
+              {/* MAIN VALUE */}
+              <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+                <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+                  Get{" "}
+                  <span className="text-purple-700">
+                    {itemDetails.bmvCoins}
+                  </span>{" "}
+                  coins
+                  <span className="mx-2 text-purple-400 text-2xl font-semibold">
+                    =
+                  </span>
+                  <span className="text-green-700 font-bold">
+                    ₹{(itemDetails.bmvCoins * 0.02).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              {/* FUTURE VALUE */}
+              <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+                <span className="underline decoration-dotted">
+                  Future value :
+                </span>
+                <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">
+                  ₹{itemDetails.bmvCoins}
+                </span>
+                <span className="text-yellow-500 font-extrabold ml-1">*</span>
+              </div>
+              <div className="italic text-xs text-gray-400 mt-1">
+                (*No guarantee on future value)
+              </div>
+            </div>
+          ) : (
+            <div className="text-center mb-3">
+              <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+                <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+                  Get <span className="text-purple-700">1,000</span> coins
+                  <span className="mx-2 text-purple-400 text-2xl font-semibold">
+                    =
+                  </span>
+                  <span className="text-green-700 font-bold">₹20.00</span>
+                </div>
+              </div>
+              <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+                <span className="underline decoration-dotted">
+                  Future value :
+                </span>
+                <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">
+                  ₹1,000
+                </span>
+                <span className="text-yellow-500 font-extrabold ml-1">*</span>
+              </div>
+              <div className="italic text-xs text-gray-400 mt-1">
+                (*No guarantee on future value)
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-purple-200 my-4" />
+
+          <div className="font-medium text-purple-700 text-base mb-1">
+            Redemption & Usage
+          </div>
+          <ul className="list-none space-y-2 pl-0">
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Transfer to friends and family</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Share with other ASKOXY.AI users</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Use on non-GST items</span>
+            </li>
+          </ul>
+
+          <div className="mt-2 text-xs text-gray-500">
+            <span className="font-semibold text-purple-700">Note:</span> Minimum
+            redemption amount applies
           </div>
         </div>
-        {/* FUTURE VALUE */}
-        <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
-          <span className="underline decoration-dotted">Future value :</span>
-          <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">₹{itemDetails.bmvCoins}</span>
-          <span className="text-yellow-500 font-extrabold ml-1">*</span>
-        </div>
-        <div className="italic text-xs text-gray-400 mt-1">
-          (*No guarantee on future value)
-        </div>
-      </div>
-    ) : (
-      <div className="text-center mb-3">
-        <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
-          <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
-            Get <span className="text-purple-700">1,000</span> coins
-            <span className="mx-2 text-purple-400 text-2xl font-semibold">=</span>
-            <span className="text-green-700 font-bold">₹20.00</span>
-          </div>
-        </div>
-        <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
-          <span className="underline decoration-dotted">Future value :</span>
-          <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">₹1,000</span>
-          <span className="text-yellow-500 font-extrabold ml-1">*</span>
-        </div>
-        <div className="italic text-xs text-gray-400 mt-1">
-          (*No guarantee on future value)
-        </div>
-      </div>
-    )}
-
-    <div className="border-t border-purple-200 my-4" />
-
-    <div className="font-medium text-purple-700 text-base mb-1">
-      Redemption & Usage
-    </div>
-    <ul className="list-none space-y-2 pl-0">
-      <li className="flex items-center gap-2">
-        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
-        <span>Transfer to friends and family</span>
-      </li>
-      <li className="flex items-center gap-2">
-        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
-        <span>Share with other ASKOXY.AI users</span>
-      </li>
-      <li className="flex items-center gap-2">
-        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
-        <span>Use on non-GST items</span>
-      </li>
-    </ul>
-
-    <div className="mt-2 text-xs text-gray-500">
-      <span className="font-semibold text-purple-700">Note:</span> Minimum redemption amount applies
-    </div>
-  </div>
-</Modal>
+      </Modal>
 
       <Footer />
     </div>

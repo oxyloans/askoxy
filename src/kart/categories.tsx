@@ -114,7 +114,7 @@ const Categories: React.FC<CategoriesProps> = ({
   const [cartItems, setCartItems] = useState<Record<string, number>>({});
   const [cartData, setCartData] = useState<CartItem[]>([]);
   const [activeSubCategory, setActiveSubCategory] = useState<string | null>(
-    null
+    null,
   );
   const [offers, setOffers] = useState<Offer[]>([]);
   const [userEligibleOffers, setUserEligibleOffers] = useState<
@@ -170,12 +170,12 @@ const Categories: React.FC<CategoriesProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>("ALL");
   const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
-    "0"
+    "0",
   );
-  const categoryTypes = ["ALL", "RICE", "GOLD", "GROCERY","SILVER", "AIBOOK"];
+  const categoryTypes = ["ALL", "RICE", "GOLD", "GROCERY", "SILVER", "AIBOOK"];
   const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
-    null
+    null,
   );
   const [hasAddedComboAddOn, setHasAddedComboAddOn] = useState(false);
   const [disabledFilters, setDisabledFilters] = useState<{
@@ -302,7 +302,7 @@ const Categories: React.FC<CategoriesProps> = ({
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       const customerCart: CartItem[] =
         response.data?.customerCartResponseList || [];
@@ -313,19 +313,19 @@ const Categories: React.FC<CategoriesProps> = ({
             const quantity = item.cartQuantity ?? 0;
             acc[item.itemId] = (acc[item.itemId] ?? 0) + quantity;
             console.log(
-              `Item ${item.itemId}: quantity=${quantity}, status=${item.status}`
+              `Item ${item.itemId}: quantity=${quantity}, status=${item.status}`,
             );
           }
           return acc;
         },
-        {}
+        {},
       );
       const totalQuantity: number = customerCart.reduce(
         (sum: number, item: CartItem) => {
           const quantity = item.cartQuantity ?? 0;
           return sum + quantity;
         },
-        0
+        0,
       );
       console.log("fetchCartData: ", {
         cartItemsMap,
@@ -338,7 +338,7 @@ const Categories: React.FC<CategoriesProps> = ({
       ];
       const newDisplayedOffers = new Set(displayedOffers);
       const twoPlusOneItems = customerCart.filter(
-        (item) => item.status === "ADD" && item.cartQuantity >= 2
+        (item) => item.status === "ADD" && item.cartQuantity >= 2,
       );
       for (const addItem of twoPlusOneItems) {
         if (goldBarItemIds.includes(addItem.itemId)) {
@@ -349,7 +349,7 @@ const Categories: React.FC<CategoriesProps> = ({
             item.itemId === addItem.itemId &&
             item.status === "FREE" &&
             item.cartQuantity === 1 &&
-            normalizeWeight(item.weight) === 1.0
+            normalizeWeight(item.weight) === 1.0,
         );
         if (
           freeItem &&
@@ -363,7 +363,7 @@ const Categories: React.FC<CategoriesProps> = ({
             } of ${normalizeWeight(addItem.weight)} Kg and get One Bag of ${
               freeItem.itemName
             } of ${normalizeWeight(
-              freeItem.weight
+              freeItem.weight,
             )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is only applicable once.</i>`,
           });
           newDisplayedOffers.add(`2+1_${addItem.itemId}`);
@@ -373,7 +373,7 @@ const Categories: React.FC<CategoriesProps> = ({
         (item) =>
           item.status === "ADD" &&
           normalizeWeight(item.weight) === 5.0 &&
-          item.cartQuantity >= 1
+          item.cartQuantity >= 1,
       );
       for (const addItem of fivePlusTwoItems) {
         if (goldBarItemIds.includes(addItem.itemId)) {
@@ -383,7 +383,7 @@ const Categories: React.FC<CategoriesProps> = ({
           (item) =>
             item.status === "FREE" &&
             normalizeWeight(item.weight) === 1.0 &&
-            item.cartQuantity === 2
+            item.cartQuantity === 2,
         );
         if (freeItems && !newDisplayedOffers.has(`5+2_${addItem.itemId}`)) {
           setOfferModal({
@@ -393,7 +393,7 @@ const Categories: React.FC<CategoriesProps> = ({
             } of ${normalizeWeight(addItem.weight)} Kg and get Two Bags of ${
               freeItems.itemName
             } of ${normalizeWeight(
-              freeItems.weight
+              freeItems.weight,
             )} Kg for free offer has been applied.<br><br><i style="color: grey;"><strong>Note: </strong>This offer is applicable once.</i>`,
           });
           newDisplayedOffers.add(`5+2_${addItem.itemId}`);
@@ -404,7 +404,7 @@ const Categories: React.FC<CategoriesProps> = ({
           item.status === "ADD" &&
           (normalizeWeight(item.weight) === 10.0 ||
             normalizeWeight(item.weight) === 26.0) &&
-          item.cartQuantity >= 1
+          item.cartQuantity >= 1,
       );
       for (const addItem of containerOfferItems) {
         if (goldBarItemIds.includes(addItem.itemId)) {
@@ -414,7 +414,7 @@ const Categories: React.FC<CategoriesProps> = ({
           (item) =>
             item.status === "FREE" &&
             item.cartQuantity === 1 &&
-            item.itemName.toLowerCase().includes("storage")
+            item.itemName.toLowerCase().includes("storage"),
         );
         if (
           freeContainer &&
@@ -434,7 +434,7 @@ const Categories: React.FC<CategoriesProps> = ({
       localStorage.setItem("cartCount", totalQuantity.toString());
       localStorage.setItem(
         "displayedOffers",
-        JSON.stringify(Array.from(newDisplayedOffers))
+        JSON.stringify(Array.from(newDisplayedOffers)),
       );
       setDisplayedOffers(newDisplayedOffers);
       if (itemId) {
@@ -474,13 +474,13 @@ const Categories: React.FC<CategoriesProps> = ({
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userEligibleOffer/${userId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       const normalizedOffers = (response.data || []).map(
         (offer: UserEligibleOffer) => ({
           ...offer,
           weight: normalizeWeight(offer.weight),
-        })
+        }),
       );
       setUserEligibleOffers(normalizedOffers);
       console.log("User eligible offers:", normalizedOffers);
@@ -497,14 +497,14 @@ const Categories: React.FC<CategoriesProps> = ({
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/activeOffers`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       const activeOffers = response.data || [];
       const filteredOffers = activeOffers.filter((offer: Offer) => {
         const offerMinQtyKg = normalizeWeight(offer.minQtyKg);
         if (offerMinQtyKg === null) {
           console.warn(
-            `Offer ${offer.offerName} has invalid minQtyKg: ${offer.minQtyKg}`
+            `Offer ${offer.offerName} has invalid minQtyKg: ${offer.minQtyKg}`,
           );
           return true;
         }
@@ -513,7 +513,7 @@ const Categories: React.FC<CategoriesProps> = ({
             const eligibleWeight = normalizeWeight(eligibleOffer.weight);
             if (eligibleWeight === null) {
               console.warn(
-                `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`
+                `Invalid weight for eligible offer ${eligibleOffer.offerName}: ${eligibleOffer.weight}`,
               );
               return false;
             }
@@ -521,7 +521,7 @@ const Categories: React.FC<CategoriesProps> = ({
             const isWeightMatch =
               Math.abs(eligibleWeight - offerMinQtyKg) < 0.0001;
             return isEligible && isWeightMatch;
-          }
+          },
         );
         return !isExcluded;
       });
@@ -577,6 +577,10 @@ const Categories: React.FC<CategoriesProps> = ({
   const handleAddToCart = async (item: Item & { status?: string }) => {
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
+    if (item.quantity <= 0) {
+      message.warning("This item is currently out of stock");
+      return;
+    }
 
     if (!accessToken || !userId) {
       message.warning("Please login to add items to the cart.");
@@ -609,7 +613,7 @@ const Categories: React.FC<CategoriesProps> = ({
       await axios.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         requestBody,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       await fetchCartData(item.itemId);
@@ -617,7 +621,7 @@ const Categories: React.FC<CategoriesProps> = ({
       if (!isCombo) {
         try {
           const response = await axios.get(
-            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`
+            `${BASE_URL}/product-service/getComboInfo/${item.itemId}`,
           );
           const comboItems = response.data?.items || [];
 
@@ -676,7 +680,8 @@ const Categories: React.FC<CategoriesProps> = ({
     // 1️⃣ Category selected
     if (activeCategory && activeCategory !== "") {
       const categoryMatch = categories.find(
-        (cat) => cat.categoryName.toLowerCase() === activeCategory.toLowerCase()
+        (cat) =>
+          cat.categoryName.toLowerCase() === activeCategory.toLowerCase(),
       );
       if (categoryMatch) {
         items = categoryMatch.itemsResponseDtoList || [];
@@ -692,7 +697,7 @@ const Categories: React.FC<CategoriesProps> = ({
           .filter(
             (cat) =>
               cat.categoryType?.toUpperCase() ===
-              activeCategoryType.toUpperCase()
+              activeCategoryType.toUpperCase(),
           )
           .flatMap((cat) => cat.itemsResponseDtoList || []);
       }
@@ -713,7 +718,7 @@ const Categories: React.FC<CategoriesProps> = ({
   const handleQuantityChange = async (
     item: Item,
     increment: boolean,
-    status: string
+    status: string,
   ) => {
     if (cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");
@@ -756,15 +761,15 @@ const Categories: React.FC<CategoriesProps> = ({
 
       console.log(
         `handleQuantityChange: Item ${item.itemId}, increment: ${increment}, new cartItems: `,
-        cartItems
+        cartItems,
       );
 
       message.success(
         increment
           ? "Item quantity increased"
           : cartItems[item.itemId] <= 1
-          ? "Item removed from cart successfully."
-          : "Item quantity decreased"
+            ? "Item removed from cart successfully."
+            : "Item quantity decreased",
       );
     } catch (error) {
       console.error("Error updating quantity:", error);
@@ -780,7 +785,7 @@ const Categories: React.FC<CategoriesProps> = ({
   const getCurrentSubCategories = () => {
     if (!activeCategory) return [];
     const category = categories.find(
-      (cat) => cat.categoryName === activeCategory
+      (cat) => cat.categoryName === activeCategory,
     );
     return category?.subCategories || [];
   };
@@ -808,7 +813,7 @@ const Categories: React.FC<CategoriesProps> = ({
 
   const isItemUserAdded = (itemId: string): boolean => {
     return cartData.some(
-      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
+      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD",
     );
   };
 
@@ -818,12 +823,12 @@ const Categories: React.FC<CategoriesProps> = ({
     }
 
     return categories.filter(
-      (category) => category.categoryType?.toUpperCase() === activeCategoryType
+      (category) => category.categoryType?.toUpperCase() === activeCategoryType,
     );
   };
 
   const SkeletonLoader = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-4">
       {Array.from({ length: 12 }).map((_, index) => (
         <div
           key={index}
@@ -846,8 +851,8 @@ const Categories: React.FC<CategoriesProps> = ({
     comboAddOnModal.itemCount === 1
       ? "grid-cols-1"
       : comboAddOnModal.itemCount === 2
-      ? "grid-cols-2"
-      : "grid-cols-3";
+        ? "grid-cols-2"
+        : "grid-cols-3";
 
   return (
     <div className="bg-white shadow-lg px-2 sm:px-4 lg:px-6 py-2 sm:py-3">
@@ -1099,8 +1104,8 @@ const Categories: React.FC<CategoriesProps> = ({
                   activeWeightFilter === filter.value
                     ? "bg-purple-600 text-white shadow"
                     : disabledFilters[filter.value]
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-purple-600 border border-purple-300 hover:bg-purple-50"
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-purple-600 border border-purple-300 hover:bg-purple-50"
                 }`}
               >
                 {filter.label}
@@ -1124,7 +1129,7 @@ const Categories: React.FC<CategoriesProps> = ({
                     setActiveSubCategory(
                       activeSubCategory === subCategory.id
                         ? null
-                        : subCategory.id
+                        : subCategory.id,
                     )
                   }
                   className={`flex-shrink-0 px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap ${
@@ -1146,8 +1151,12 @@ const Categories: React.FC<CategoriesProps> = ({
         {loading ? (
           <SkeletonLoader />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 sm:gap-4 px-2 sm:px-0">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 sm:gap-4 px-2 sm:px-0">
             {getCurrentCategoryItems().map((item) => {
+              const qty = Number(item.quantity ?? 0);
+
+              const isSoldOut = qty <= 0;
+
               const discount = calculateDiscount(item.itemMrp, item.itemPrice);
               const isInCart = cartItems[item.itemId] > 0;
               const isLoading = loadingItems.items[item.itemId];
@@ -1162,6 +1171,12 @@ const Categories: React.FC<CategoriesProps> = ({
                     className="aspect-square relative overflow-hidden bg-gray-50 cursor-pointer"
                     onClick={() => onItemClick(item)}
                   >
+                    {isSoldOut && (
+                      <div className="absolute top-2 right-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                        SOLD OUT
+                      </div>
+                    )}
+
                     {item.itemImage ? (
                       <img
                         src={item.itemImage}
@@ -1170,7 +1185,7 @@ const Categories: React.FC<CategoriesProps> = ({
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            item.itemName
+                            item.itemName,
                           )}&background=f3f4f6&color=6b7280&size=200`;
                         }}
                       />
@@ -1238,11 +1253,13 @@ const Categories: React.FC<CategoriesProps> = ({
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => handleAddToCart(item)}
-                          disabled={isLoading}
+                          disabled={isSoldOut || isLoading}
                           className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm hover:from-purple-700 hover:to-purple-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1 sm:space-x-2"
                         >
                           {isLoading ? (
                             <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                          ) : isSoldOut ? (
+                            "Sold Out"
                           ) : (
                             <>
                               <svg
@@ -1375,8 +1392,8 @@ const Categories: React.FC<CategoriesProps> = ({
           comboAddOnModal.itemCount === 1
             ? "320px"
             : comboAddOnModal.itemCount === 2
-            ? "600px"
-            : "900px"
+              ? "600px"
+              : "900px"
         }
         style={{ maxWidth: "95vw" }}
       >
@@ -1385,10 +1402,10 @@ const Categories: React.FC<CategoriesProps> = ({
             comboAddOnModal.itemCount === 1
               ? "grid-cols-1 max-w-xs mx-auto"
               : comboAddOnModal.itemCount === 2
-              ? "grid-cols-1 sm:grid-cols-2"
-              : comboAddOnModal.itemCount <= 4
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
-              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                ? "grid-cols-1 sm:grid-cols-2"
+                : comboAddOnModal.itemCount <= 4
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
+                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           } justify-items-center`}
         >
           {comboAddOnModal.items.map((addonItem) => {
@@ -1396,7 +1413,7 @@ const Categories: React.FC<CategoriesProps> = ({
               ? Math.round(
                   ((addonItem.itemMrp - addonItem.itemPrice) /
                     addonItem.itemMrp) *
-                    100
+                    100,
                 )
               : 0;
 
@@ -1522,7 +1539,7 @@ const Categories: React.FC<CategoriesProps> = ({
                         });
                       } else {
                         message.warning(
-                          "You can only select one optional add-on."
+                          "You can only select one optional add-on.",
                         );
                       }
                     }}
@@ -1563,88 +1580,130 @@ const Categories: React.FC<CategoriesProps> = ({
       </Modal>
 
       <Modal
-  title={
-    <span className="text-xl sm:text-2xl font-extrabold text-purple-700 flex items-center gap-2">
-      BMVCOINS Info
-    </span>
-  }
-  open={isBmvModalVisible}
-  onCancel={() => setIsBmvModalVisible(false)}
-  footer={null}
-  centered
->
-  <div className="text-gray-700 text-sm space-y-5 pb-2">
+        title={
+          <span className="text-xl sm:text-2xl font-extrabold text-purple-700 flex items-center gap-2">
+            BMVCOINS Info
+          </span>
+        }
+        open={isBmvModalVisible}
+        onCancel={() => setIsBmvModalVisible(false)}
+        footer={null}
+        centered
+      >
+        <div className="text-gray-700 text-sm space-y-5 pb-2">
+          {/* MAIN: Show GET coins and INR conversion as BIG highlight */}
+          {typeof bmvModalItem?.bmvCoins === "number" &&
+          bmvModalItem.bmvCoins > 0 ? (
+            <div className="text-center mb-3">
+              {/* MAIN VALUE */}
+              <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+                <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+                  Get{" "}
+                  <span className="text-purple-700">
+                    {bmvModalItem.bmvCoins}
+                  </span>{" "}
+                  coins
+                  <span className="mx-2 text-purple-400 text-2xl font-semibold">
+                    =
+                  </span>
+                  <span className="text-green-700 font-bold">
+                    ₹{(bmvModalItem.bmvCoins * 0.02).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              {/* FUTURE VALUE */}
+              <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+                <span className="underline decoration-dotted">
+                  Future value :
+                </span>
+                <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">
+                  ₹{bmvModalItem.bmvCoins}
+                </span>
+                <span className="text-yellow-500 font-extrabold ml-1">*</span>
+              </div>
+              <div className="italic text-xs text-gray-400 mt-1">
+                (*No guarantee on future value)
+              </div>
+            </div>
+          ) : (
+            <div className="text-center mb-3">
+              <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
+                <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
+                  Get <span className="text-purple-700">1,000</span> coins
+                  <span className="mx-2 text-purple-400 text-2xl font-semibold">
+                    =
+                  </span>
+                  <span className="text-green-700 font-bold">₹20.00</span>
+                </div>
+              </div>
+              <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
+                <span className="underline decoration-dotted">
+                  Future value :
+                </span>
+                <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">
+                  ₹1,000
+                </span>
+                <span className="text-yellow-500 font-extrabold ml-1">*</span>
+              </div>
+              <div className="italic text-xs text-gray-400 mt-1">
+                (*No guarantee on future value)
+              </div>
+            </div>
+          )}
 
-    {/* MAIN: Show GET coins and INR conversion as BIG highlight */}
-    {typeof bmvModalItem?.bmvCoins === "number" && bmvModalItem.bmvCoins > 0 ? (
-  <div className="text-center mb-3">
-    {/* MAIN VALUE */}
-    <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
-      <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
-        Get <span className="text-purple-700">{bmvModalItem.bmvCoins}</span> coins
-        <span className="mx-2 text-purple-400 text-2xl font-semibold">=</span>
-        <span className="text-green-700 font-bold">
-          ₹{(bmvModalItem.bmvCoins * 0.02).toFixed(2)}
-        </span>
-      </div>
-    </div>
-    {/* FUTURE VALUE */}
-    <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
-      <span className="underline decoration-dotted">Future value :</span>
-      <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">₹{bmvModalItem.bmvCoins}</span>
-      <span className="text-yellow-500 font-extrabold ml-1">*</span>
-    </div>
-    <div className="italic text-xs text-gray-400 mt-1">
-      (*No guarantee on future value)
-    </div>
-  </div>
-) : (
-  <div className="text-center mb-3">
-    <div className="inline-block bg-gradient-to-br from-purple-100 via-purple-50 to-white border border-purple-300 rounded-2xl px-8 py-6 shadow-sm mb-2">
-      <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-800">
-        Get <span className="text-purple-700">1,000</span> coins
-        <span className="mx-2 text-purple-400 text-2xl font-semibold">=</span>
-        <span className="text-green-700 font-bold">₹20.00</span>
-      </div>
-    </div>
-    <div className="mt-2 text-xs sm:text-sm text-purple-800 bg-purple-50 rounded-lg py-2 px-4 inline-block shadow-sm font-medium">
-      <span className="underline decoration-dotted">Future value :</span>
-      <span className="text-base sm:text-lg font-bold text-purple-900 ml-1">₹1,000</span>
-      <span className="text-yellow-500 font-extrabold ml-1">*</span>
-    </div>
-    <div className="italic text-xs text-gray-400 mt-1">
-      (*No guarantee on future value)
-    </div>
-  </div>
-)}
+          <div className="border-t border-purple-200 my-4" />
 
+          <div className="font-medium text-purple-700 text-base mb-1">
+            Redemption & Usage
+          </div>
+          <ul className="list-none space-y-2 pl-0">
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Transfer to friends and family</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Share with other ASKOXY.AI users</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <span>Use on non-GST items</span>
+            </li>
+          </ul>
 
-    <div className="border-t border-purple-200 my-4" />
-
-    <div className="font-medium text-purple-700 text-base mb-1">
-      Redemption & Usage
-    </div>
-    <ul className="list-none space-y-2 pl-0">
-      <li className="flex items-center gap-2">
-        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
-        <span>Transfer to friends and family</span>
-      </li>
-      <li className="flex items-center gap-2">
-        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
-        <span>Share with other ASKOXY.AI users</span>
-      </li>
-      <li className="flex items-center gap-2">
-        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" /></svg>
-        <span>Use on non-GST items</span>
-      </li>
-    </ul>
-
-    <div className="mt-2 text-xs text-gray-500">
-      <span className="font-semibold text-purple-700">Note:</span> Minimum redemption amount applies
-    </div>
-  </div>
-</Modal>
-
+          <div className="mt-2 text-xs text-gray-500">
+            <span className="font-semibold text-purple-700">Note:</span> Minimum
+            redemption amount applies
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

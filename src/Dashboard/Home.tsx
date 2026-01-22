@@ -409,31 +409,27 @@ const Home: React.FC = () => {
   };
 
   const sortItemsByName = (items: Item[]): Item[] => {
-    return [...items]
-      .filter((item) => item.quantity > 0)
-      .sort((a, b) => a.itemName.localeCompare(b.itemName));
+    return [...items].sort((a, b) => a.itemName.localeCompare(b.itemName));
   };
 
   const updateProducts = (items: Item[]) => {
     setProductsLoading(true);
-    const productItems = items
-      .filter((item) => item.quantity > 0)
-      .map((item) => ({
-        itemId: item.itemId,
-        title: item.itemName,
-        image: item.itemImage || ProductImg1,
-        description: `₹${item.itemPrice || 0}`,
-        path: `/item/${item.itemId}`,
-        icon: <ShoppingBag className="text-purple-600" size={24} />,
-        itemPrice: item.itemPrice,
-        itemMrp: item.itemMrp,
-        quantity: item.quantity,
-        weight: item.weight,
-        units: item.units,
-        itemName: item.itemName,
-        itemImage: item.itemImage,
-        bmvCoins: item.bmvCoins,
-      }));
+    const productItems = items.map((item) => ({
+      itemId: item.itemId,
+      title: item.itemName,
+      image: item.itemImage || ProductImg1,
+      description: `₹${item.itemPrice || 0}`,
+      path: `/item/${item.itemId}`,
+      icon: <ShoppingBag className="text-purple-600" size={24} />,
+      itemPrice: item.itemPrice,
+      itemMrp: item.itemMrp,
+      quantity: item.quantity,
+      weight: item.weight,
+      units: item.units,
+      itemName: item.itemName,
+      itemImage: item.itemImage,
+      bmvCoins: item.bmvCoins,
+    }));
 
     setProducts(productItems);
     setTimeout(() => {
@@ -460,20 +456,18 @@ const Home: React.FC = () => {
         (categoryGroup: { categoryType: string; categories: Category[] }) => {
           categoryGroup.categories.forEach((category: Category) => {
             category.itemsResponseDtoList.forEach((item: Item) => {
-              if (item.quantity > 0) {
-                const normalizedName = item.itemName.trim().toLowerCase();
-                if (
-                  !Array.from(uniqueItemsMap.values()).some(
-                    (existing: Item) =>
-                      existing.itemName.trim().toLowerCase() === normalizedName,
-                  )
-                ) {
-                  uniqueItemsMap.set(item.itemId, {
-                    ...item,
-                    categoryName: category.categoryName || "Uncategorized",
-                    categoryType: categoryGroup.categoryType,
-                  });
-                }
+              const normalizedName = item.itemName.trim().toLowerCase();
+              if (
+                !Array.from(uniqueItemsMap.values()).some(
+                  (existing: Item) =>
+                    existing.itemName.trim().toLowerCase() === normalizedName,
+                )
+              ) {
+                uniqueItemsMap.set(item.itemId, {
+                  ...item,
+                  categoryName: category.categoryName || "Uncategorized",
+                  categoryType: categoryGroup.categoryType,
+                });
               }
             });
           });
@@ -552,7 +546,7 @@ const Home: React.FC = () => {
         "AI Book": aibook,
       };
 
-      // Create fixed categories with images
+      // Create fixed categories with images (filter out quantity: 0 items)
       const allCategories: Category[] = [
         {
           categoryName: "All Items",
@@ -1099,9 +1093,10 @@ const Home: React.FC = () => {
   };
 
   const renderProductItem = (item: DashboardItem, index: number) => {
-    if (item.quantity === 0) {
-      return null;
-    }
+    // if (item.quantity === 0) {
+    //   return null;
+    // }
+    const isSoldOut = item.quantity === 0;
 
     const weight = parseFloat(item.weight || "0");
     const hasOffer = weight === 1 || weight === 5;
@@ -1129,6 +1124,11 @@ const Home: React.FC = () => {
               </span>
             </div>
             <div className="absolute bottom-0 right-0 transform translate-y border-t-4 border-r-4 sm:border-t-8 sm:border-r-8 border-t-purple-600 border-r-transparent"></div>
+          </div>
+        )}
+        {isSoldOut && (
+          <div className="absolute top-2 right-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+            SOLD OUT
           </div>
         )}
 
@@ -1235,9 +1235,9 @@ const Home: React.FC = () => {
                     handleQuantityChange(item, false);
                   }}
                   disabled={
-                    item.itemId
-                      ? loadingItems.items[item.itemId]
-                      : false || localStorage.getItem("TypeLogin") === "Caller"
+                    isSoldOut ||
+                    (item.itemId && loadingItems.items[item.itemId]) ||
+                    localStorage.getItem("TypeLogin") === "Caller"
                   }
                 >
                   {item.itemId &&
@@ -1302,21 +1302,22 @@ const Home: React.FC = () => {
               </motion.div>
             ) : (
               <motion.button
-                whileHover={{ scale: 1.01, backgroundColor: "#8b5cf6" }}
+                whileHover={isSoldOut ? undefined : { scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-2 mt-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg transition-all duration-300 hover:shadow-md text-sm"
+                className={`w-full py-2 mt-2 text-white rounded-lg transition-all duration-300 text-sm flex items-center justify-center
+    ${
+      isSoldOut
+        ? "bg-purple-500 cursor-not-allowed"
+        : "bg-gradient-to-r from-purple-600 to-purple-800 hover:shadow-md"
+    }
+  `}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (isSoldOut) return; // extra safety
                   handleAddToCart(item);
-                  console.log(
-                    "Add to cart clicked",
-                    localStorage.getItem("TypeLogin"),
-                  );
-                  console.log(
-                    item.itemId ? loadingItems.items[item.itemId] : false,
-                  );
                 }}
                 disabled={
+                  isSoldOut ||
                   (item.itemId && loadingItems.items[item.itemId]) ||
                   localStorage.getItem("TypeLogin") === "Caller"
                 }
@@ -1326,6 +1327,8 @@ const Home: React.FC = () => {
                     className="mr-2 animate-spin inline-block"
                     size={16}
                   />
+                ) : isSoldOut ? (
+                  "Sold Out"
                 ) : (
                   "Add to Cart"
                 )}
@@ -1339,7 +1342,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     let validProducts = products.filter((product) => {
-      if (product.quantity === undefined || product.quantity <= 0) return false;
+      if (product.quantity === undefined) return false;
 
       if (searchTerm.trim() !== "") {
         return product.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1416,23 +1419,21 @@ const Home: React.FC = () => {
     setActiveCategoryType(categoryTypeMap[categoryName] || "ALL");
 
     if (category) {
-      const productItems = category.itemsResponseDtoList
-        .filter((item) => item.quantity > 0)
-        .map((item) => ({
-          itemId: item.itemId,
-          title: item.itemName,
-          image: item.itemImage || ProductImg1,
-          description: `₹${item.itemPrice || 0}`,
-          path: `/item/${item.itemId}`,
-          icon: <ShoppingBag className="text-purple-600" size={24} />,
-          itemPrice: item.itemPrice,
-          itemMrp: item.itemMrp,
-          quantity: item.quantity,
-          weight: item.weight,
-          units: item.units,
-          itemName: item.itemName,
-          itemImage: item.itemImage,
-        }));
+      const productItems = category.itemsResponseDtoList.map((item) => ({
+        itemId: item.itemId,
+        title: item.itemName,
+        image: item.itemImage || ProductImg1,
+        description: `₹${item.itemPrice || 0}`,
+        path: `/item/${item.itemId}`,
+        icon: <ShoppingBag className="text-purple-600" size={24} />,
+        itemPrice: item.itemPrice,
+        itemMrp: item.itemMrp,
+        quantity: item.quantity,
+        weight: item.weight,
+        units: item.units,
+        itemName: item.itemName,
+        itemImage: item.itemImage,
+      }));
 
       console.log(`Products for category ${categoryName}:`, productItems);
       setProducts(productItems);

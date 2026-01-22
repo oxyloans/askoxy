@@ -18,11 +18,10 @@ import {
   Result,
   Spin,
   Space,
+  Alert,
 } from "antd";
 import {
-  CalendarOutlined,
-  TeamOutlined,
-  UserOutlined,
+  WhatsAppOutlined,
   SendOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -120,7 +119,7 @@ const PlanOfTheDay: React.FC = () => {
       const closeTimeInMinutes = 21 * 60 + 25;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
-          currentTimeInMinutes < closeTimeInMinutes
+          currentTimeInMinutes < closeTimeInMinutes,
       );
     };
 
@@ -136,7 +135,7 @@ const PlanOfTheDay: React.FC = () => {
       // Strip the " - Plan by [username]" suffix when editing
       const originalPlan = todayTask.planOftheDay.replace(
         /\s*-\s*Plan by\s+.*$/,
-        ""
+        "",
       );
       form.setFieldsValue({
         planOftheDay: originalPlan,
@@ -162,7 +161,7 @@ const PlanOfTheDay: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       const tasks: Task[] = response.data;
       console.log("tasks", tasks);
@@ -232,7 +231,7 @@ const PlanOfTheDay: React.FC = () => {
 
   const savePlanToDatabase = async (
     values: TaskFormValues,
-    isEditMode: boolean = false
+    isEditMode: boolean = false,
   ) => {
     try {
       // Include username with the plan text
@@ -260,11 +259,11 @@ const PlanOfTheDay: React.FC = () => {
       const response = isEditMode
         ? await axios.patch<TaskResponse>(
             `${BASE_URL}/user-service/write/userTaskUpdate`,
-            payload
+            payload,
           )
         : await axios.patch<TaskResponse>(
             `${BASE_URL}/user-service/write/userTaskUpdate`,
-            payload
+            payload,
           );
 
       if (response.data.success) {
@@ -345,7 +344,7 @@ const PlanOfTheDay: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.data.assistant_reply) {
@@ -686,12 +685,12 @@ const PlanOfTheDay: React.FC = () => {
         ? "Plan Updated!"
         : "Plan Submitted!"
       : loading
-      ? isEditMode
-        ? "Updating..."
-        : "Submitting..."
-      : isEditMode
-      ? "Update Daily Plan"
-      : "Submit Daily Plan";
+        ? isEditMode
+          ? "Updating..."
+          : "Submitting..."
+        : isEditMode
+          ? "Update Daily Plan"
+          : "Submit Daily Plan";
     const icon = submissionSuccess ? <CheckCircleOutlined /> : <SendOutlined />;
     const buttonClass = `h-8 rounded-md shadow-md hover:shadow-lg font-medium text-base transition-all ${
       submissionSuccess
@@ -763,8 +762,8 @@ const PlanOfTheDay: React.FC = () => {
             {isEditing
               ? "Edit your plan for today:"
               : showAiResponse
-              ? "Modify your plan (AI response shown below):"
-              : "What's your plan for today?"}
+                ? "Modify your plan (AI response shown below):"
+                : "What's your plan for today?"}
           </span>
         }
         rules={[
@@ -830,10 +829,150 @@ const PlanOfTheDay: React.FC = () => {
       <Form.Item className="mb-0">{renderSubmitButtons()}</Form.Item>
     </Form>
   );
+ // ✅ Fully responsive, professional, user-friendly across mobile/tablet/desktop
+// ✅ Better spacing, readable typography, safe overflow handling, consistent CTA
+// ✅ WhatsApp styled button + icon + hover + focus accessibility
+
+const renderWhatsappNoticeOnly = () => (
+  <Card
+    className="mx-auto w-full max-w-7xl shadow-md rounded-xl overflow-hidden"
+    bodyStyle={{ padding: 0 }}
+  >
+    {/* Header */}
+    <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-slate-200 bg-slate-50">
+      <div className="flex flex-col gap-1">
+        <Title level={4} className="!mb-0 !text-base sm:!text-lg">
+          Team Communication — WhatsApp Updates
+        </Title>
+        <Text type="secondary" className="text-xs sm:text-sm">
+          Official channel for daily task communication and attendance tracking.
+        </Text>
+      </div>
+    </div>
+
+    {/* Body */}
+    <div className="px-4 sm:px-6 lg:px-8 py-5">
+      <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        {/* WhatsApp Alert */}
+        <Alert
+          type="info"
+          showIcon
+          icon={<WhatsAppOutlined style={{ color: "#25D366", fontSize: 18 }} />}
+          message={
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-900 text-sm sm:text-base">
+                Join the Official WhatsApp Group
+              </span>
+            </div>
+          }
+          description={
+            <div className="mt-1">
+              <Text className="block text-xs sm:text-sm text-gray-700">
+                All team members must join the official WhatsApp group for daily
+                communication, task updates, and attendance tracking.
+              </Text>
+
+              {/* CTA + Link Row (Responsive) */}
+              <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                <a
+                  href="https://chat.whatsapp.com/K9r4w7vcsrIEzTsdiFdQSW"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+                    inline-flex items-center justify-center gap-2
+                    w-full sm:w-auto
+                    px-4 py-2
+                    rounded-xl
+                    text-sm font-semibold
+                    text-white
+                    bg-[#25D366]
+                    hover:bg-[#1EBE57]
+                    active:bg-[#128C7E]
+                    transition-colors duration-200
+                    focus:outline-none focus:ring-2 focus:ring-[#25D366]/40
+                  "
+                >
+                  <WhatsAppOutlined style={{ fontSize: 16 }} />
+                  Join WhatsApp Group
+                </a>
+
+                {/* Copy-safe link box */}
+                <div className="w-full sm:flex-1">
+                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                    <Text type="secondary" className="block text-[11px] sm:text-xs">
+                      If the button doesn’t open, copy this link and open it in WhatsApp:
+                    </Text>
+                    <div className="mt-1 break-all text-xs sm:text-sm font-medium text-[#25D366]">
+                      https://chat.whatsapp.com/K9r4w7vcsrIEzTsdiFdQSW
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+          className="rounded-2xl"
+        />
+
+        {/* Requirements + Guidelines (Responsive Layout) */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 lg:p-6">
+          {/* Grid: stacks on mobile, 2 columns on large screens */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
+            {/* Left: Daily Updates */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4">
+              <Title level={5} className="!mb-2 !text-sm sm:!text-base">
+                Daily Update Requirements
+              </Title>
+
+              <Text className="block text-xs sm:text-sm text-gray-700">
+                Each team member must submit the following updates every working day:
+              </Text>
+
+              <ul className="mt-3 list-disc pl-5 text-xs sm:text-sm text-gray-700 space-y-2">
+                <li>
+                  <strong>Plan of the Day (POD)</strong> — share in the morning
+                </li>
+                <li>
+                  <strong>End of Day (EOD) Update</strong> — share at the end of the day
+                </li>
+              </ul>
+            </div>
+
+            {/* Right: Important Guidelines */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4">
+              <Title level={5} className="!mb-2 !text-sm sm:!text-base">
+                Important Guidelines
+              </Title>
+
+              <ul className="mt-1 list-disc pl-5 text-xs sm:text-sm text-gray-700 space-y-2">
+                <li>
+                  If you are unable to submit your <strong>Plan of the Day</strong> in the
+                  Task Management Portal, you may post it in the WhatsApp group so it is
+                  automatically recorded.
+                </li>
+                <li>
+                  Submitting only the <strong>Plan of the Day</strong> without the{" "}
+                  <strong>End of Day update</strong> will result in attendance not being
+                  marked for that day.
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Footer Note */}
+          <div className="mt-5 rounded-xl bg-slate-100 px-4 py-3 text-xs sm:text-sm text-gray-800">
+            <strong className="text-slate-900">Note:</strong> Adherence to this process is
+            mandatory for accurate tracking and compliance. Thank you for your cooperation.
+          </div>
+        </div>
+      </Space>
+    </div>
+  </Card>
+);
+
 
   return (
     <UserPanelLayout>
-      <div className="sm:p-2 md:p-4 lg:p-6">
+      {/* <div className="sm:p-2 md:p-4 lg:p-6">
         <Card
           className="max-w-xl mx-auto shadow-lg rounded-xl overflow-hidden border-0 transition-all duration-300 hover:shadow-xl"
           bodyStyle={{ padding: 0 }}
@@ -891,7 +1030,8 @@ const PlanOfTheDay: React.FC = () => {
               : renderClosedState()}
           </div>
         </Card>
-      </div>
+      </div> */}
+      <div className="p-4">{renderWhatsappNoticeOnly()}</div>
     </UserPanelLayout>
   );
 };
