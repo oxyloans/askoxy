@@ -184,14 +184,15 @@ interface DetailedOrderData {
 const DEFAULT_PAGE_SIZE = 1500;
 
 // Order status mapping
-const orderStatusMap: { [key: number]: string } = {
-  1: "Pending",
-  2: "Confirmed",
-  3: "Preparing",
-  4: "Delivered",
-  5: "Cancelled",
-  6: "Rejected",
-  7: "Out for Delivery",
+const orderStatusMap: { [key: string]: string } = {
+  "0": "Incomplete",
+  "1": "Order Placed",
+  "2": "Order Accepted",
+  "3": "Order Assigned",
+  PickedUp: "Order Picked Up",
+  "4": "Order Delivered",
+  "5": "Order Rejected",
+  "6": "Order Canceled",
 };
 
 // Payment type mapping
@@ -215,7 +216,7 @@ const UserOrdersIntegration: React.FC = () => {
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<DetailedOrderData | null>(
-    null
+    null,
   );
   const [orderDetailsLoading, setOrderDetailsLoading] =
     useState<boolean>(false);
@@ -234,7 +235,7 @@ const UserOrdersIntegration: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/user-service/assigned-users/${userId}`,
         { pageNo: currentPage, pageSize },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       setUsers(response.data?.activeUsersResponse || []);
@@ -249,7 +250,7 @@ const UserOrdersIntegration: React.FC = () => {
   // ✅ Fetch Orders
   const fetchOrders = useCallback(async () => {
     try {
-      const url = `${BASE_URL}/order-service/cancelled-incomplete?page=${
+      const url = `${BASE_URL}/order-service/getAllOrdersOnStatus?page=${
         currentPage - 1
       }&size=${pageSize}`;
 
@@ -271,7 +272,7 @@ const UserOrdersIntegration: React.FC = () => {
     try {
       const response = await axios.get(
         `${BASE_URL}/order-service/getOrdersByOrderId/${orderId}`,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       if (response.data && response.data.length > 0) {
@@ -303,7 +304,7 @@ const UserOrdersIntegration: React.FC = () => {
 
       setMatchedData(matched);
     },
-    []
+    [],
   );
 
   const loadData = useCallback(async () => {
@@ -320,14 +321,14 @@ const UserOrdersIntegration: React.FC = () => {
       const usersReq = axios.post(
         `${BASE_URL}/user-service/assigned-users/${userId}`,
         { pageNo: currentPage, pageSize },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       const ordersReq = axios.get(
-        `${BASE_URL}/order-service/cancelled-incomplete?page=${
+        `${BASE_URL}/order-service/getAllOrdersOnStatus?page=${
           currentPage - 1
         }&size=${pageSize}`,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       const [usersRes, ordersRes] = await Promise.all([usersReq, ordersReq]);
@@ -366,6 +367,14 @@ const UserOrdersIntegration: React.FC = () => {
   const columns = useMemo(
     () => [
       {
+        title: "Serial Number",
+        key: "serialNumber",
+        width: 80,
+        align: "center" as const,
+        render: (_: any, __: any, index: number) =>
+          index + 1 + (currentPage - 1) * pageSize,
+      },
+      {
         title: "User ID",
         dataIndex: ["user", "userId"],
         key: "userId",
@@ -375,11 +384,18 @@ const UserOrdersIntegration: React.FC = () => {
       },
       {
         title: "WhatsApp Number",
-        dataIndex: ["user", "whastappNumber"],
         key: "whastappNumber",
         width: 160,
         align: "center" as const,
-        render: (value: string) => value || "-",
+        render: (_: any, record: MatchedUserOrder) => {
+          const whatsappNumber = record.user.whastappNumber;
+          const mobileNumber = record.user.mobileNumber;
+          return whatsappNumber
+            ? whatsappNumber
+            : mobileNumber
+              ? mobileNumber
+              : "-";
+        },
       },
       {
         title: "Order ID",
@@ -408,6 +424,31 @@ const UserOrdersIntegration: React.FC = () => {
           value ? dayjs(value).format("DD-MM-YYYY HH:mm:ss") : "-",
       },
       {
+        title: "Order Status",
+        dataIndex: ["order", "orderStatus"],
+        key: "orderStatus",
+        width: 140,
+        align: "center" as const,
+        render: (status: string) => {
+          const statusMap: { [key: string]: { color: string; label: string } } =
+            {
+              "0": { color: "default", label: "Incomplete" },
+              "1": { color: "blue", label: "Order Placed" },
+              "2": { color: "cyan", label: "Order Accepted" },
+              "3": { color: "orange", label: "Order Assigned" },
+              PickedUp: { color: "volcano", label: "Order Picked Up" },
+              "4": { color: "green", label: "Order Delivered" },
+              "5": { color: "magenta", label: "Order Rejected" },
+              "6": { color: "red", label: "Order Canceled" },
+            };
+          const statusObj = statusMap[String(status)] || {
+            color: "default",
+            label: "Unknown",
+          };
+          return <Tag color={statusObj.color}>{statusObj.label}</Tag>;
+        },
+      },
+      {
         title: "Actions",
         key: "actions",
         width: 100,
@@ -433,23 +474,23 @@ const UserOrdersIntegration: React.FC = () => {
         ),
       },
     ],
-    [fetchOrderDetails, orderDetailsLoading, selectedOrder]
+    [fetchOrderDetails, orderDetailsLoading, selectedOrder],
   );
 
   const totalRevenue = useMemo(
     () =>
       matchedData.reduce(
         (sum, item) => sum + Number(item.order.grandTotal || 0),
-        0
+        0,
       ),
-    [matchedData]
+    [matchedData],
   );
 
   const totalOrders = matchedData.length;
 
   const uniqueUsers = useMemo(
     () => new Set(matchedData.map((item) => item.user.userId)).size,
-    [matchedData]
+    [matchedData],
   );
 
   // Modal handlers
@@ -497,8 +538,6 @@ const UserOrdersIntegration: React.FC = () => {
             />
           </Card>
         </Col>
-
-       
       </Row>
 
       {/* Table */}
@@ -608,8 +647,16 @@ const UserOrdersIntegration: React.FC = () => {
                           selectedOrder?.orderStatus === 4
                             ? "green"
                             : selectedOrder?.orderStatus === 6
-                            ? "red"
-                            : "orange"
+                              ? "red"
+                              : selectedOrder?.orderStatus === 0
+                                ? "default"
+                                : selectedOrder?.orderStatus === 1
+                                  ? "blue"
+                                  : selectedOrder?.orderStatus === 2
+                                    ? "cyan"
+                                    : selectedOrder?.orderStatus === 3
+                                      ? "orange"
+                                      : "default"
                         }
                       >
                         {selectedOrder?.orderStatus
@@ -709,6 +756,13 @@ const UserOrdersIntegration: React.FC = () => {
               </h3>
               <Table
                 columns={[
+                  {
+                    title: "Serial Number",
+                    key: "serialNumber",
+                    align: "center",
+                    width: 80,
+                    render: (_: any, __: any, index: number) => index + 1,
+                  },
                   {
                     title: "Item Name",
                     dataIndex: "itemName",

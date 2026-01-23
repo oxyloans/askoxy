@@ -1831,7 +1831,7 @@ const Home: React.FC = () => {
                       onMouseEnter={() => setIsHovered(true)}
                       onMouseLeave={() => setIsHovered(false)}
                       whileHover={{
-                        scale: 1.2,
+                        scale: 1.05,
                         rotateY: 0,
                         transition: { duration: 0.3 },
                       }}

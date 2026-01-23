@@ -582,15 +582,27 @@ const AdminTasks: React.FC = () => {
           value={statusFilter}
           onChange={(val: any) => setStatusFilter(val as StatusFilter)}
           options={[
-            { label: `All (${statusCounts.ALL})`, value: "ALL" },
-            { label: `Assigned (${statusCounts.ASSIGNED})`, value: "ASSIGNED" },
+            {
+              label: `All (${statusCounts.ALL})`,
+              value: "ALL",
+            },
+            {
+              label: `Assigned (${statusCounts.ASSIGNED})`,
+              value: "ASSIGNED",
+            },
             {
               label: `Completed (${statusCounts.COMPLETED})`,
               value: "COMPLETED",
             },
-            // { label: `Rejected (${statusCounts.REJECTED})`, value: "REJECTED" },
-            // { label: `Deleted (${statusCounts.DELETED})`, value: "DELETED" },
           ]}
+          style={{
+            marginBottom: 20,
+            padding: "6px",
+            backgroundColor: "#f0f0f0",
+            borderRadius: "8px",
+            display: "flex",
+            gap: "8px",
+          }}
         />
 
         {loading ? (
@@ -707,6 +719,48 @@ const AdminTasks: React.FC = () => {
           placeholder="Enter your comments"
         />
       </Modal>
+
+      <style>{`
+        .ant-segmented-item {
+          flex: 1 !important;
+          border-radius: 6px !important;
+          font-weight: 600 !important;
+          transition: all 0.3s ease !important;
+        }
+
+        /* All option - Gray background */
+        .ant-segmented-item:nth-child(1) {
+          background-color: #e8e8e8 !important;
+          color: #555 !important;
+        }
+
+        .ant-segmented-item:nth-child(1).ant-segmented-item-selected {
+          background-color: #808080 !important;
+          color: white !important;
+        }
+
+        /* Assigned option - Blue background */
+        .ant-segmented-item:nth-child(2) {
+          background-color: #d4ebf7 !important;
+          color: #0088cc !important;
+        }
+
+        .ant-segmented-item:nth-child(2).ant-segmented-item-selected {
+          background-color: #008cba !important;
+          color: white !important;
+        }
+
+        /* Completed option - Green background */
+        .ant-segmented-item:nth-child(3) {
+          background-color: #d4edda !important;
+          color: #1ab394 !important;
+        }
+
+        .ant-segmented-item:nth-child(3).ant-segmented-item-selected {
+          background-color: #1ab394 !important;
+          color: white !important;
+        }
+      `}</style>
     </UserPanelLayout>
   );
 };
