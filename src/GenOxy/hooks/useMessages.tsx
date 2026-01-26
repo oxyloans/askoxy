@@ -338,40 +338,8 @@ class VoiceSessionService {
   private micStream: MediaStream | null = null;
   private recognition: any = null;
   private dataChannel: RTCDataChannel | null = null;
-  private sessionTimeoutId: number | null = null;
 
-  private fileUrl: string | null = null;
-  private fileContent: Record<string, any[]> = {}; // brand → data
-  private sheetMap: Record<string, string | string[]> = {
-    lenovo: "0",
-    acer: "1427934623",
-    hp: "1411153632",
-    dell: "1170071782",
-    asus: "1461294814",
-    motorola: "374851585",
-    iphone: "1266860599",
-    samsung: "868260221",
-    oppo: "1286876298",
-    Realme:"1601014869",
-    vivo: "1244878989",
-    others: [
-      "1244878989",
-      "1286876298",
-      "1266860599",
-      "868260221",
-      "0",
-      "1427934623",
-      "1170071782",
-      "1411153632",
-      "374851585",
-    ], // multiple GIDs
-  };
-
-  constructor(fileUrl?: string) {
-    if (fileUrl) this.fileUrl = fileUrl;
-  }
-
-  async getEphemeralToken(
+ async getEphemeralToken(
     instructions: string,
     assistantId: string,
     voicemode: string
@@ -396,51 +364,6 @@ class VoiceSessionService {
     }
   }
 
-  private async fetchSheetByBrand(brand: string): Promise<any[]> {
-    const lowerBrand = brand.toLowerCase();
-    let gids = this.sheetMap[lowerBrand] || this.sheetMap["others"];
-    if (!this.fileUrl) return [];
-
-    // Convert single GID to array
-    if (!Array.isArray(gids)) gids = [gids];
-
-    // Return cached data if available
-    if (this.fileContent[lowerBrand]) {
-      console.log(`⚡ Using cached data for ${lowerBrand}`);
-      return this.fileContent[lowerBrand];
-    }
-
-    const mergedData: any[] = [];
-
-    try {
-      const spreadsheetIdMatch = this.fileUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-      if (!spreadsheetIdMatch) throw new Error("Invalid Google Sheet URL");
-      const spreadsheetId = spreadsheetIdMatch[1];
-
-      for (const gid of gids) {
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-        const res = await fetch(csvUrl);
-
-        if (!res.ok) {
-          console.warn(`⚠️ Failed to fetch sheet for GID: ${gid}`);
-          continue;
-        }
-
-        const text = await res.text();
-        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-        mergedData.push(...(parsed.data as any[]));
-      }
-
-      this.fileContent[lowerBrand] = mergedData;
-      console.log(
-        `📄 Fetched "${lowerBrand}" sheets, total rows: ${mergedData.length}`
-      );
-      return mergedData;
-    } catch (error) {
-      console.error("❌ Error fetching sheet:", error);
-      return [];
-    }
-  }
 
   // ------------------ Start voice session ------------------
   async startSession(
@@ -477,14 +400,13 @@ class VoiceSessionService {
 
       dc.addEventListener("open", () => {
         console.log("🟢 Data channel opened");
-        this.configureSessionTools();
+      
       });
 
       this.setupDataChannelHandlers(
         dc,
         onMessage,
-        onAssistantSpeaking,
-        assistantId
+        onAssistantSpeaking
       );
       this.setupSpeechRecognition(selectedLanguage, onMessage);
 
@@ -517,195 +439,115 @@ class VoiceSessionService {
     }
   }
 
-  private configureSessionTools() {
-    if (!this.dataChannel) return;
-    const event = {
-      type: "session.update",
-      session: {
-        modalities: ["text", "audio"],
-        tools: [
-          {
-            type: "function",
-            name: "getProductDetails",
-            description:
-              "Fetches the relevant sheet based on user query (brand, model, etc.)",
-            parameters: {
-              type: "object",
-              properties: {
-                query: {
-                  type: "string",
-                  description:
-                    "User query mentioning brand, price, color, etc.",
-                },
-              },
-              required: ["query"],
-            },
-          },
-        ],
-      },
-    };
-    this.dataChannel.send(JSON.stringify(event));
-    console.log("🧩 Registered tool: getProductDetails");
-  }
 
-  private async handleToolCall(query: string) {
-    console.log("🔹 Tool call triggered with query:", query);
-
-    const lowerQuery = query.toLowerCase();
-
-    // Detect brand from query
-    const brands = Object.keys(this.sheetMap);
-    const matchedBrand = brands.find((b) => lowerQuery.includes(b)) || "others";
-
-    console.log("🏷️ Matched brand:", matchedBrand);
-
-    // Fetch only that sheet
-    const brandData = await this.fetchSheetByBrand(matchedBrand);
-
-    if (!brandData || brandData.length === 0) {
-      return { text: `No data found for ${matchedBrand}` };
-    }
-
-    // Return full sheet data to assistant
-    return { brand: matchedBrand, fullData: brandData };
-  }
-
-  // ------------------ Speech recognition ------------------
   private setupSpeechRecognition(
     selectedLanguage: LanguageConfig,
     onMessage: (message: ChatMessage) => void
   ) {
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = selectedLanguage.speechLang;
-    recognition.continuous = true;
-    recognition.interimResults = false;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = selectedLanguage.speechLang;
+      recognition.continuous = true;
+      recognition.interimResults = false;
 
-    recognition.onresult = (event: any) => {
-      const transcript =
-        event.results[event.results.length - 1][0].transcript.trim();
-      if (transcript) {
-        onMessage({
-          role: "user",
-          text: transcript,
-          timestamp: new Date().toLocaleTimeString(),
-        });
-      }
-    };
+      recognition.onresult = (event: any) => {
+        const transcript =
+          event.results[event.results.length - 1][0].transcript.trim();
+        if (transcript) {
+          const msg: ChatMessage = {
+            role: "user",
+            text: transcript,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          onMessage(msg);
+          this.sendMessage(transcript);
+        }
+      };
 
-    recognition.onerror = (e: any) =>
-      console.error("Speech recognition error:", e);
-    recognition.onend = () => recognition.start();
+      recognition.onerror = (e: any) =>
+        console.error("Speech recognition error:", e);
 
-    recognition.start();
-    this.recognition = recognition;
+      recognition.onend = () => {
+        if (this.dataChannel) recognition.start();
+      };
+
+      recognition.start();
+      this.recognition = recognition;
+    }
   }
 
-  // ------------------ Data channel handlers ------------------
   private setupDataChannelHandlers(
     dc: RTCDataChannel,
     onMessage: (message: ChatMessage) => void,
-    onAssistantSpeaking: (speaking: boolean) => void,
-    assistantId: string
+    onAssistantSpeaking: (speaking: boolean) => void
   ) {
-    let pendingArgs: Record<string, string> = {};
+    let buffer = "";
 
-    dc.onmessage = async (e) => {
+    dc.onmessage = (e) => {
       try {
         const event = JSON.parse(e.data);
+        onAssistantSpeaking(true);
 
-        if (event.type === "response.function_call_arguments.delta") {
-          if (!pendingArgs[event.call_id]) pendingArgs[event.call_id] = "";
-          pendingArgs[event.call_id] += event.delta;
+        if (event.type === "response.output_text.delta" && event.delta) {
+          buffer += event.delta;
+          onAssistantSpeaking(true);
+
+          const msg: ChatMessage = {
+            role: "assistant",
+            text: buffer,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          onMessage(msg);
         }
 
-        if (event.type === "response.function_call_arguments.done") {
-          const callId = event.call_id;
-          const args = JSON.parse(pendingArgs[callId] || "{}");
-          const result = await this.handleToolCall(args.query);
+        if (event.type === "response.audio.delta") {
+          onAssistantSpeaking(true);
+        }
 
-          dc.send(
-            JSON.stringify({
-              type: "conversation.item.create",
-              item: {
-                type: "function_call_output",
-                call_id: callId,
-                output: JSON.stringify(result),
-              },
-            })
-          );
-          dc.send(JSON.stringify({ type: "response.create" }));
-          delete pendingArgs[callId];
+        if (event.type === "response.stop") {
+          onAssistantSpeaking(false);
+          buffer = "";
         }
       } catch (err) {
-        console.error("Failed to parse assistant message:", err, e.data);
+        console.error("Failed to parse assistant event:", err);
       }
+    };
+
+    dc.onopen = () => {
+      console.log("Data channel opened");
     };
   }
 
   sendMessage(text: string) {
     if (!this.dataChannel) return;
-    this.dataChannel.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text }],
-        },
-      })
-    );
+
+    const event = {
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
+    };
+
+    this.dataChannel.send(JSON.stringify(event));
     this.dataChannel.send(JSON.stringify({ type: "response.create" }));
   }
 
   stopSession() {
-    console.log("🛑 Stopping voice session...");
-    if (this.sessionTimeoutId !== null) {
-      clearTimeout(this.sessionTimeoutId);
-      this.sessionTimeoutId = null;
-    }
-    if (this.recognition) {
-      this.recognition.onend = null; // prevent auto-restart
-      this.recognition.stop();
-      this.recognition = null;
-      console.log("🎙️ Speech recognition stopped");
-    }
-    if (this.micStream) {
-      this.micStream.getTracks().forEach((track) => {
-        track.stop();
-        this.peerConnection?.removeTrack(
-          this.peerConnection
-            .getSenders()
-            .find((sender) => sender.track === track)!
-        );
-      });
-      this.micStream = null;
-      console.log("🎧 Microphone stream stopped");
-    }
-    if (this.dataChannel) {
-      if (this.dataChannel.readyState !== "closed") {
-        this.dataChannel.close();
-        console.log("📡 Data channel closed");
-      }
-      this.dataChannel = null;
-    }
-    if (this.peerConnection) {
-      this.peerConnection.ontrack = null;
-      this.peerConnection.onicecandidate = null;
-      this.peerConnection.close();
-      this.peerConnection = null;
-      console.log("🔌 Peer connection closed");
-    }
-    this.fileContent = {};
+    this.dataChannel?.close();
+    this.micStream?.getTracks().forEach((t) => t.stop());
+    this.peerConnection?.close();
+    this.recognition?.stop();
 
-    console.log("✅ Voice session fully stopped and cleaned up");
+    this.dataChannel = null;
+    this.micStream = null;
+    this.peerConnection = null;
+    this.recognition = null;
   }
 }
 
-export const voiceSessionService = new VoiceSessionService(
-  "https://docs.google.com/spreadsheets/d/1LOPzkaogUk3VenBt0A3-OiMHNzO8oXoodLkbXgpOeoE"
-);
+export const voiceSessionService = new VoiceSessionService();

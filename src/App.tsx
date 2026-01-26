@@ -13,6 +13,7 @@ import FreelancerForm from "./components/FreelancerForm";
 import FloatingCallButton from "./components/FloatingCallButton";
 import UserOrdersIntegration from "./AskoxyAdmin/UserOrdersIntegration";
 import CampaignBlogPage from "./FREEAIBOOK/CampaignBlogPage";
+import InvoiceGenerator from "./components/InvoiceGenerator";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -494,6 +495,7 @@ const App: React.FC = () => {
               <Route path="/interview" element={<InterviewPage />} />
               <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
+              <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route
                 path="/ninetydayplan"
                 element={

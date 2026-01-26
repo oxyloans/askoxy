@@ -171,7 +171,7 @@ const SearchMain: React.FC = () => {
         {
           params: { q },
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setData(response.data);
       const firstValid = (response.data?.items || []).find((cat) => {
@@ -180,7 +180,7 @@ const SearchMain: React.FC = () => {
           ? cat.itemsResponseDtoList
           : [];
         const hasValidItems = list.some(
-          (p) => isValidNumber(p.itemPrice) && isValidNumber(p.itemMrp)
+          (p) => isValidNumber(p.itemPrice) && isValidNumber(p.itemMrp),
         );
         return hasValidName && hasValidItems;
       });
@@ -200,7 +200,7 @@ const SearchMain: React.FC = () => {
       try {
         const response = await axios.get(
           `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         if (response.data.customerCartResponseList) {
           const cartItemsMap = response.data.customerCartResponseList.reduce(
@@ -211,7 +211,7 @@ const SearchMain: React.FC = () => {
               }
               return acc;
             },
-            {}
+            {},
           );
           setCartItems(cartItemsMap);
           setCartData(response.data.customerCartResponseList);
@@ -251,13 +251,13 @@ const SearchMain: React.FC = () => {
       await axios.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         { customerId, itemId: item.itemId, quantity: 1 },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       message.success("Item added to cart successfully.");
 
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const cartItemsMap = response.data.customerCartResponseList.reduce(
         (acc: Record<string, number>, cartItem: CartItem) => {
@@ -267,15 +267,15 @@ const SearchMain: React.FC = () => {
           }
           return acc;
         },
-        {}
+        {},
       );
       setCartItems(cartItemsMap);
       setCartData(response.data.customerCartResponseList);
       setCount(
         (Object.values(cartItemsMap) as number[]).reduce(
           (acc, quantity) => acc + quantity,
-          0
-        )
+          0,
+        ),
       );
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -308,7 +308,7 @@ const SearchMain: React.FC = () => {
 
       if (!increment && cartItems[item.itemId] <= 1) {
         const targetCartId = cartData.find(
-          (cart) => cart.itemId === item.itemId
+          (cart) => cart.itemId === item.itemId,
         )?.cartId;
         if (targetCartId) {
           await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
@@ -321,13 +321,13 @@ const SearchMain: React.FC = () => {
         await axios[method](
           endpoint,
           { customerId, itemId: item.itemId },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
       }
 
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const cartItemsMap = response.data.customerCartResponseList.reduce(
         (acc: Record<string, number>, cartItem: CartItem) => {
@@ -337,15 +337,15 @@ const SearchMain: React.FC = () => {
           }
           return acc;
         },
-        {}
+        {},
       );
       setCartItems(cartItemsMap);
       setCartData(response.data.customerCartResponseList);
       setCount(
         (Object.values(cartItemsMap) as number[]).reduce(
           (acc, quantity) => acc + quantity,
-          0
-        )
+          0,
+        ),
       );
     } catch (error) {
       console.error("Error updating quantity:", error);
@@ -368,7 +368,7 @@ const SearchMain: React.FC = () => {
 
   const isItemUserAdded = (itemId: string): boolean => {
     return cartData.some(
-      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD"
+      (cartItem) => cartItem.itemId === itemId && cartItem.status === "ADD",
     );
   };
 
@@ -401,10 +401,10 @@ const SearchMain: React.FC = () => {
 
         // Filter and prioritize ASKOXY items first within each category
         const askoxyItems = cleanedItems.filter((item) =>
-          item.itemName?.toLowerCase().includes("askoxy")
+          item.itemName?.toLowerCase().includes("askoxy"),
         );
         const otherItems = cleanedItems.filter(
-          (item) => !item.itemName?.toLowerCase().includes("askoxy")
+          (item) => !item.itemName?.toLowerCase().includes("askoxy"),
         );
         const sortedItems = [...askoxyItems, ...otherItems];
         return {
@@ -421,14 +421,14 @@ const SearchMain: React.FC = () => {
       // remove categories that have no valid name OR no valid items
       .filter(
         (cat) =>
-          isValidText(cat.categoryName) && cat.itemsResponseDtoList.length > 0
+          isValidText(cat.categoryName) && cat.itemsResponseDtoList.length > 0,
       );
 
     let finalCategories: Category[] = cleanedCategories;
 
     // 3) Filter agents minimal safety (optional)
     const cleanedAgents: Agent[] = (data.agents || []).filter((a) =>
-      isValidText(a?.name)
+      isValidText(a?.name),
     );
 
     return {
@@ -441,7 +441,7 @@ const SearchMain: React.FC = () => {
   const allProducts = useMemo(() => {
     if (!filteredData?.items) return [];
     return filteredData.items.flatMap((cat) =>
-      Array.isArray(cat.itemsResponseDtoList) ? cat.itemsResponseDtoList : []
+      Array.isArray(cat.itemsResponseDtoList) ? cat.itemsResponseDtoList : [],
     );
   }, [filteredData]);
 
@@ -700,14 +700,15 @@ const SearchMain: React.FC = () => {
 
                         const discount = calculateDiscount(
                           product.itemMrp,
-                          product.itemPrice
+                          product.itemPrice,
                         );
                         const showWeight = isValidNumber(product.weight);
                         const unitDisplay = isValidText(product.units)
                           ? product.units
                           : "";
                         const showCoins = isValidNumber(product.bmvCoins);
-
+                        const availableQty = Number(product.quantity ?? 0);
+                        const isOutOfStock = availableQty <= 0;
                         return (
                           <div
                             key={product.itemId}
@@ -873,7 +874,7 @@ const SearchMain: React.FC = () => {
                                       >
                                         ₹
                                         {Number(
-                                          product.itemPrice
+                                          product.itemPrice,
                                         ).toLocaleString()}
                                       </Text>
                                       <Text
@@ -883,7 +884,7 @@ const SearchMain: React.FC = () => {
                                       >
                                         ₹
                                         {Number(
-                                          product.itemMrp
+                                          product.itemMrp,
                                         ).toLocaleString()}
                                       </Text>
                                     </div>
@@ -949,21 +950,27 @@ const SearchMain: React.FC = () => {
                                         type="primary"
                                         block
                                         onClick={() => handleAddToCart(product)}
-                                        loading={
-                                          loadingItems.items[product.itemId]
-                                        }
+                                        disabled={isOutOfStock}
                                         style={{
                                           height: 44,
-                                          background:
-                                            "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
+                                          background: isOutOfStock
+                                            ? "#d9d9d9"
+                                            : "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
                                           border: "none",
                                           fontWeight: 700,
                                           fontSize: 15,
                                           borderRadius: 8,
-                                          marginTop: "auto",
+                                          color: isOutOfStock
+                                            ? "#666"
+                                            : "white",
+                                          cursor: isOutOfStock
+                                            ? "not-allowed"
+                                            : "pointer",
                                         }}
                                       >
-                                        🛒 Add to Cart
+                                        {isOutOfStock
+                                          ? "SOLD OUT"
+                                          : "🛒 Add to Cart"}
                                       </Button>
                                     )}
                                   </div>
@@ -991,14 +998,15 @@ const SearchMain: React.FC = () => {
 
                           const discount = calculateDiscount(
                             product.itemMrp,
-                            product.itemPrice
+                            product.itemPrice,
                           );
                           const showWeight = isValidNumber(product.weight);
                           const unitDisplay = isValidText(product.units)
                             ? product.units
                             : "";
                           const showCoins = isValidNumber(product.bmvCoins);
-
+                          const availableQty = Number(product.quantity ?? 0);
+                          const isOutOfStock = availableQty <= 0;
                           // ✅ SAME CARD UI (copy-pasted exactly like above)
                           return (
                             <div
@@ -1165,7 +1173,7 @@ const SearchMain: React.FC = () => {
                                         >
                                           ₹
                                           {Number(
-                                            product.itemPrice
+                                            product.itemPrice,
                                           ).toLocaleString()}
                                         </Text>
                                         <Text
@@ -1178,7 +1186,7 @@ const SearchMain: React.FC = () => {
                                         >
                                           ₹
                                           {Number(
-                                            product.itemMrp
+                                            product.itemMrp,
                                           ).toLocaleString()}
                                         </Text>
                                       </div>
@@ -1194,7 +1202,7 @@ const SearchMain: React.FC = () => {
                                             onClick={() =>
                                               handleQuantityChange(
                                                 product,
-                                                false
+                                                false,
                                               )
                                             }
                                             loading={
@@ -1227,7 +1235,7 @@ const SearchMain: React.FC = () => {
                                             onClick={() =>
                                               handleQuantityChange(
                                                 product,
-                                                true
+                                                true,
                                               )
                                             }
                                             disabled={
@@ -1255,21 +1263,27 @@ const SearchMain: React.FC = () => {
                                           onClick={() =>
                                             handleAddToCart(product)
                                           }
-                                          loading={
-                                            loadingItems.items[product.itemId]
-                                          }
+                                          disabled={isOutOfStock}
                                           style={{
                                             height: 44,
-                                            background:
-                                              "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
+                                            background: isOutOfStock
+                                              ? "#d9d9d9"
+                                              : "linear-gradient(135deg, #5c3391 0%, #7b3fb8 100%)",
                                             border: "none",
                                             fontWeight: 700,
                                             fontSize: 15,
                                             borderRadius: 8,
-                                            marginTop: "auto",
+                                            color: isOutOfStock
+                                              ? "#666"
+                                              : "white",
+                                            cursor: isOutOfStock
+                                              ? "not-allowed"
+                                              : "pointer",
                                           }}
                                         >
-                                          🛒 Add to Cart
+                                          {isOutOfStock
+                                            ? "SOLD OUT"
+                                            : "🛒 Add to Cart"}
                                         </Button>
                                       )}
                                     </div>
