@@ -147,7 +147,21 @@ const OxyLoansModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     </motion.div>
   );
 };
-
+// Enhanced sort: higher quantity first (e.g., 2 > 1 > 0), then alphabetically by name
+const sortItemsByQuantityAndStock = (items: Item[]): Item[] => {
+  return [...items].sort((a, b) => {
+    // Primary sort: quantity descending (higher first, e.g., 2 > 0)
+    if (a.quantity !== b.quantity) {
+      return b.quantity - a.quantity; // Descending order
+    }
+    // Secondary sort: itemName ascending (alphabetical)
+    return a.itemName.localeCompare(b.itemName);
+  }).map((item) => {
+    // Set inStock property for UI (e.g., sold-out styling)
+    item.inStock = item.quantity > 0;
+    return item;
+  });
+};
 // OxyBricks Modal Component
 const OxyBricksModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
@@ -878,12 +892,12 @@ const Ricebags: React.FC = () => {
               categoryType: group.categoryType?.toUpperCase() || "OTHERS", // ✅ Inject categoryType from group
               categoryImage: category.categoryImage || null,
               // Filter out sold-out items (quantity === 0) and normalize weight
-              itemsResponseDtoList: category.itemsResponseDtoList
-                
-                .map((item) => ({
+              itemsResponseDtoList: category.itemsResponseDtoList.map(
+                (item) => ({
                   ...item,
                   weight: item.weight.toString(),
-                })),
+                }),
+              ),
               subCategories: category.subCategories || [],
             })),
         );
@@ -901,8 +915,8 @@ const Ricebags: React.FC = () => {
         // Convert map values to array for "All Items" category
         const uniqueItemsList = Array.from(uniqueItemsMap.values());
 
-        // Sort all items by stock status
-        const sortedUniqueItems = sortItemsByStock(uniqueItemsList);
+        // Sort all unique items: quantity descending, then name ascending
+        const sortedUniqueItems = sortItemsByQuantityAndStock(uniqueItemsList);
 
         const riceCategoryNames = [
           "Combo Offers",
@@ -919,10 +933,9 @@ const Ricebags: React.FC = () => {
 
         // Separate rice categories and others
         // Remove categories that have no available items after filtering
-       const nonEmptyCategories = allCategories.filter((cat) =>
-         Array.isArray(cat.itemsResponseDtoList),
-       );
-
+        const nonEmptyCategories = allCategories.filter((cat) =>
+          Array.isArray(cat.itemsResponseDtoList) && cat.itemsResponseDtoList.length > 0,
+        );
 
         const riceCategories = nonEmptyCategories.filter((cat) =>
           riceCategoryNames.includes(cat.categoryName),
@@ -943,13 +956,13 @@ const Ricebags: React.FC = () => {
 
           ...riceCategories.map((category) => ({
             ...category,
-            itemsResponseDtoList: sortItemsByStock(
+            itemsResponseDtoList: sortItemsByQuantityAndStock(
               category.itemsResponseDtoList,
             ),
           })),
           ...otherCategories.map((category) => ({
             ...category,
-            itemsResponseDtoList: sortItemsByStock(
+            itemsResponseDtoList: sortItemsByQuantityAndStock(
               category.itemsResponseDtoList,
             ),
           })),
@@ -978,43 +991,43 @@ const Ricebags: React.FC = () => {
 
     const term = searchTerm.toLowerCase().trim();
 
-    // Create filtered categories with only matching items
-    const filtered = categories.map((category) => {
-      const filteredItems = category.itemsResponseDtoList.filter(
-        (item) =>
-          item.itemName.toLowerCase().includes(term) ||
-          (item.weight && item.weight.toString().toLowerCase().includes(term)),
-      );
+  
+const filtered = categories.map((category) => {
+  const filteredItems = category.itemsResponseDtoList.filter(
+    (item) =>
+      item.itemName.toLowerCase().includes(term) ||
+      (item.weight && item.weight.toString().toLowerCase().includes(term)),
+  );
 
-      // Sort filtered items by stock status
-      const sortedFilteredItems = sortItemsByStock(filteredItems);
+  // Apply new sort to filtered items: quantity descending, then name ascending
+  const sortedFilteredItems = sortItemsByQuantityAndStock(filteredItems);
 
-      return {
-        ...category,
-        itemsResponseDtoList: sortedFilteredItems,
-      };
-    });
+  return {
+    ...category,
+    itemsResponseDtoList: sortedFilteredItems,
+  };
+});
 
-    // Count total matching items
-    const totalMatchingItems = filtered.reduce(
-      (count, category) => count + category.itemsResponseDtoList.length,
-      0,
-    );
+// Count total matching items
+const totalMatchingItems = filtered.reduce(
+  (count, category) => count + category.itemsResponseDtoList.length,
+  0,
+);
 
-    setNoResults(totalMatchingItems === 0);
-    setFilteredCategories(filtered);
+setNoResults(totalMatchingItems === 0);
+setFilteredCategories(filtered);
 
-    // If there are matching items, set the active category to show results
-    if (totalMatchingItems > 0) {
-      // Find the first category with matching items
-      const firstCategoryWithItems = filtered.find(
-        (cat) => cat.itemsResponseDtoList.length > 0,
-      );
+// If there are matching items, set the active category to show results
+if (totalMatchingItems > 0) {
+  // Find the first category with matching items
+  const firstCategoryWithItems = filtered.find(
+    (cat) => cat.itemsResponseDtoList.length > 0,
+  );
 
-      if (firstCategoryWithItems) {
-        setActiveCategory(firstCategoryWithItems.categoryName);
-      }
-    }
+  if (firstCategoryWithItems) {
+    setActiveCategory(firstCategoryWithItems.categoryName);
+  }
+}
   }, [searchTerm, categories]);
 
   // This function will be passed to the Header component to update search term

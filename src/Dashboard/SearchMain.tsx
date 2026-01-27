@@ -145,6 +145,17 @@ const SearchMain: React.FC = () => {
       setError("Search query too short (min 3 characters)");
     }
   }, [query, searchParams]);
+  // Helper function to sort products: higher quantity first, then alphabetically by name
+const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
+  return [...items].sort((a, b) => {
+    // Primary sort: quantity descending (higher quantity first, e.g., 2 > 0)
+    if (a.quantity !== b.quantity) {
+      return b.quantity - a.quantity; // Descending order
+    }
+    // Secondary sort: itemName ascending (alphabetical)
+    return a.itemName.localeCompare(b.itemName);
+  });
+};
   const handleCategorySelect = (categoryName: string | null) => {
     setSelectedCategory(categoryName);
 
@@ -386,27 +397,28 @@ const SearchMain: React.FC = () => {
           ? cat.itemsResponseDtoList
           : [];
 
-        const cleanedItems = items.filter((prod) => {
-          // ✅ don’t show if price/mrp is 0.0 or null or undefined
-          if (!isValidNumber(prod.itemPrice)) return false;
-          if (!isValidNumber(prod.itemMrp)) return false;
-          if (!isValidText(prod.itemName)) return false; // ✅ show even if price is 0
+       const cleanedItems = items.filter((prod) => {
+         // ✅ don’t show if price/mrp is 0.0 or null or undefined
+         if (!isValidNumber(prod.itemPrice)) return false;
+         if (!isValidNumber(prod.itemMrp)) return false;
+         if (!isValidText(prod.itemName)) return false; // ✅ show even if price is 0
 
-          // quantity filter? keep it OPTIONAL. Many times quantity can be 0 but still show.
-          // If you want to hide out-of-stock, enable this:
-          // if (!isValidNumber(prod.quantity)) return false;
+         // quantity filter? keep it OPTIONAL. Many times quantity can be 0 but still show.
+         // If you want to hide out-of-stock, enable this:
+         // if (!isValidNumber(prod.quantity)) return false;
 
-          return true;
-        });
-
+         return true;
+       });
+const sortedCleanedItems = sortItemsByQuantityAndName(cleanedItems);
         // Filter and prioritize ASKOXY items first within each category
-        const askoxyItems = cleanedItems.filter((item) =>
-          item.itemName?.toLowerCase().includes("askoxy"),
-        );
-        const otherItems = cleanedItems.filter(
-          (item) => !item.itemName?.toLowerCase().includes("askoxy"),
-        );
-        const sortedItems = [...askoxyItems, ...otherItems];
+       // Prioritize ASKOXY items first within the sorted list
+const askoxyItems = sortedCleanedItems.filter((item) =>
+  item.itemName?.toLowerCase().includes("askoxy"),
+);
+const otherItems = sortedCleanedItems.filter(
+  (item) => !item.itemName?.toLowerCase().includes("askoxy"),
+);
+const finalSortedItems = [...askoxyItems, ...otherItems];
         return {
           ...cat,
           // ✅ hide logo if invalid (we’ll also hide while rendering)
@@ -415,7 +427,7 @@ const SearchMain: React.FC = () => {
             : "",
           // ✅ hide name if invalid
           categoryName: isValidText(cat.categoryName) ? cat.categoryName : "",
-          itemsResponseDtoList: sortedItems,
+          itemsResponseDtoList: finalSortedItems, // Use the newly sorted list
         };
       })
       // remove categories that have no valid name OR no valid items

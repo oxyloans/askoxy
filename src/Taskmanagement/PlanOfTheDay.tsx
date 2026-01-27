@@ -832,44 +832,43 @@ const PlanOfTheDay: React.FC = () => {
     </Form>
   );
 
- const renderWhatsappNoticeOnly = () => (
-  <div className="px-3 sm:px-4 py-3 sm:py-4 flex justify-center">
-    <div
-      className="
+  const renderWhatsappNoticeOnly = () => (
+    <div className="px-3 sm:px-4 py-3 sm:py-4 flex justify-center">
+      <div
+        className="
         w-full max-w-xl
         rounded-2xl
         border border-slate-200
         bg-white
         shadow-sm
       "
-    >
-      <div className="p-3 sm:p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          
-          {/* Text */}
-          <div className="min-w-0 flex-1 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-              <div className="font-semibold text-slate-900 text-sm sm:text-base">
-                Join the Official WhatsApp Group
+      >
+        <div className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            {/* Text */}
+            <div className="min-w-0 flex-1 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                <div className="font-semibold text-slate-900 text-sm sm:text-base">
+                  Join the Official WhatsApp Group
+                </div>
+                <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                  POD / EOD
+                </span>
               </div>
-              <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                POD / EOD
-              </span>
+
+              <div className="text-[11px] sm:text-sm text-slate-600 leading-snug mt-1">
+                Share POD & EOD updates via WhatsApp. If you post there, please
+                join the group.
+              </div>
             </div>
 
-            <div className="text-[11px] sm:text-sm text-slate-600 leading-snug mt-1">
-              Share POD & EOD updates via WhatsApp.  
-              If you post there, please join the group.
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="flex justify-center sm:justify-end">
-            <a
-              href="https://chat.whatsapp.com/K9r4w7vcsrIEzTsdiFdQSW"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="
+            {/* CTA */}
+            <div className="flex justify-center sm:justify-end">
+              <a
+                href="https://chat.whatsapp.com/K9r4w7vcsrIEzTsdiFdQSW"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
                 inline-flex items-center justify-center gap-2
                 px-4 py-2.5
                 rounded-xl
@@ -882,19 +881,16 @@ const PlanOfTheDay: React.FC = () => {
                 focus:outline-none focus:ring-2 focus:ring-[#25D366]/40
                 whitespace-nowrap
               "
-            >
-              <WhatsAppOutlined style={{ fontSize: 16 }} />
-              Join WhatsApp
-            </a>
+              >
+                <WhatsAppOutlined style={{ fontSize: 16 }} />
+                Join WhatsApp
+              </a>
+            </div>
           </div>
-
         </div>
       </div>
     </div>
-  </div>
-);
-
-
+  );
 
   return (
     <UserPanelLayout>
@@ -937,7 +933,7 @@ const PlanOfTheDay: React.FC = () => {
               </Tooltip>
             </div>
           </div>
-          <div className="p-4">{renderWhatsappNoticeOnly()}</div>
+          {/* <div className="p-4">{renderWhatsappNoticeOnly()}</div> */}
           <div className="p-5 md:p-6 lg:p-8">
             {fetchingStatus
               ? renderLoadingState()

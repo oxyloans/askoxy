@@ -33,7 +33,7 @@ import { CartContext } from "../until/CartContext";
 import ProductOfferModals from "./ProductOffermodals";
 import RiceOfferFAQs from "./Faqs";
 import ProductImg1 from "../assets/img/ricecard1.png";
-
+import ricecontainer1 from "../assets/img/steelcontainer.png"
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 
 import O8 from "../assets/img/aitemplate.png";
@@ -414,7 +414,8 @@ const Home: React.FC = () => {
 
   const updateProducts = (items: Item[]) => {
     setProductsLoading(true);
-    const productItems = items.map((item) => ({
+    const sortedItems = sortItemsByQuantityAndName(items);
+    const productItems = sortedItems.map((item) => ({
       itemId: item.itemId,
       title: item.itemName,
       image: item.itemImage || ProductImg1,
@@ -490,9 +491,11 @@ const Home: React.FC = () => {
       );
 
       // Filter items by categoryType
-      const allItems = sortedUniqueItems;
+     // Apply new sort: quantity descending, then name ascending
+const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
       // Prioritize "Cashew nuts upto ₹40 cashback" in Groceries filter
-      const groceryItems = sortedUniqueItems
+    const groceryItems = sortItemsByQuantityAndName(
+      sortedUniqueItems
         .filter((item: Item) => item.categoryType?.toLowerCase() === "grocery")
         .sort((a, b) => {
           const aIsCashew = a.categoryName
@@ -504,25 +507,42 @@ const Home: React.FC = () => {
           if (aIsCashew && !bIsCashew) return -1;
           if (!aIsCashew && bIsCashew) return 1;
           return a.itemName.localeCompare(b.itemName);
-        });
-      const riceItems = sortedUniqueItems.filter(
+        }),
+    );
+
+    const riceItems = sortItemsByQuantityAndName(
+      sortedUniqueItems.filter(
         (item: Item) => item.categoryType?.toLowerCase() === "rice",
-      );
-      const goldItems = sortedUniqueItems.filter(
+      ),
+    );
+     const riceContainer = sortItemsByQuantityAndName(
+      sortedUniqueItems.filter(
+        (item: Item) => item.categoryType?.toLowerCase() === "containers",
+      ),
+    );
+
+    const goldItems = sortItemsByQuantityAndName(
+      sortedUniqueItems.filter(
         (item: Item) => item.categoryType?.toLowerCase() === "gold",
-      );
-      const rakhiItems = sortedUniqueItems.filter(
+      ),
+    );
+
+    const rakhiItems = sortItemsByQuantityAndName(
+      sortedUniqueItems.filter(
         (item: Item) =>
           item.categoryType?.toLowerCase() === "silver" &&
           item.categoryName?.toLowerCase() === "silver",
-      );
-      const booksTems = sortedUniqueItems.filter(
+      ),
+    );
+
+    const booksTems = sortItemsByQuantityAndName(
+      sortedUniqueItems.filter(
         (item: Item) =>
           item.categoryType?.toLowerCase() === "aibook" &&
           (item.categoryName || "").toLowerCase().replace(/\s+/g, "") ===
             "aibook",
-      );
-
+      ),
+    );
       console.log("All Items Count:", allItems.length);
       console.log("Grocery Items Count:", groceryItems.length);
       console.log(
@@ -543,6 +563,7 @@ const Home: React.FC = () => {
         Rice: rice,
         Gold: gold,
         Silver: festive,
+        "Rice Container": ricecontainer1,
         "AI Book": aibook,
       };
 
@@ -558,6 +579,12 @@ const Home: React.FC = () => {
           categoryName: "Groceries",
           categoryImage: defaultCategoryImages["Groceries"],
           itemsResponseDtoList: groceryItems,
+          subCategories: [],
+        },
+        {
+          categoryName: "Rice Container",
+          categoryImage: defaultCategoryImages["Rice Container"],
+          itemsResponseDtoList: riceContainer,
           subCategories: [],
         },
         {
@@ -1373,6 +1400,7 @@ const Home: React.FC = () => {
       Rice: "RICE",
       Gold: "GOLD",
       Silver: "SILVER",
+      "Rice Container": "RICECONTAINERS",
       "AI BOOK": "AIBOOK",
     };
 
@@ -1412,6 +1440,7 @@ const Home: React.FC = () => {
       Rice: "RICE",
       Gold: "GOLD",
       Silver: "SILVER",
+      "Rice Container": "RICECONTAINERS",
       "AI BOOK": "AIBOOK",
     };
 
@@ -1419,7 +1448,10 @@ const Home: React.FC = () => {
     setActiveCategoryType(categoryTypeMap[categoryName] || "ALL");
 
     if (category) {
-      const productItems = category.itemsResponseDtoList.map((item) => ({
+      const sortedItems = sortItemsByQuantityAndName(
+        category.itemsResponseDtoList,
+      );
+      const productItems = sortedItems.map((item) => ({
         itemId: item.itemId,
         title: item.itemName,
         image: item.itemImage || ProductImg1,
@@ -1603,7 +1635,17 @@ const Home: React.FC = () => {
   const handleOffersModalClose = () => {
     setIsOffersModalVisible(false);
   };
-
+// Helper function to sort items: higher quantity first, then alphabetically by name
+const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
+  return [...items].sort((a, b) => {
+    // Primary sort: quantity descending (higher quantity first, e.g., 2 > 0)
+    if (a.quantity !== b.quantity) {
+      return b.quantity - a.quantity; // Descending order
+    }
+    // Secondary sort: itemName ascending (alphabetical)
+    return a.itemName.localeCompare(b.itemName);
+  });
+};
   return (
     <div className="min-h-screen">
       {/* New styles for offers modal scrollbar */}
@@ -1874,7 +1916,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* Filter Tabs as Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2 sm:gap-3 mb-6">
             <AnimatePresence>
               {categories.map((category, index) => (
                 <motion.div
