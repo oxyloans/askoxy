@@ -1348,8 +1348,8 @@ const AdminMyAgentsPage: React.FC = () => {
   const tabs = useMemo(
     () => [
       { key: "my" as const, label: "Radha Agents" },
-      { key: "insurance" as const, label: "Insurance Agents" },
-      { key: "healthcare" as const, label: "Healthcare Agents" },
+      // { key: "insurance" as const, label: "Insurance Agents" },
+      // { key: "healthcare" as const, label: "Healthcare Agents" },
       { key: "other" as const, label: "GPT Store Agents" },
     ],
     []

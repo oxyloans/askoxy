@@ -49,7 +49,7 @@ const ServicesSlider: React.FC = () => {
           headers: {
             accept: "*/*",
           },
-        }
+        },
       );
       const jobsData = await response.json();
       if (Array.isArray(jobsData)) {
@@ -74,8 +74,14 @@ const ServicesSlider: React.FC = () => {
     },
     {
       image: "https://iili.io/FENcMAb.md.png",
-      title: "Invest & Earn",
+      title: "Invest & Earn up to 1.75% monthly — 24% p.a.",
       path: "/service/oxyloans-service",
+    },
+    {
+      image: "https://i.ibb.co/ZzyBDnm9/oxybricks.png",
+      title: "Fractional Ownership in Lands & Buildings",
+      external: true,
+      url: "https://oxybricks.world/",
     },
     {
       image: "https://i.ibb.co/8LhJDQTn/study-abroad1.png",
@@ -98,11 +104,11 @@ const ServicesSlider: React.FC = () => {
       title: "My Rotary",
       path: "/services/myrotary",
     },
-    {
-      image: "https://iili.io/FGxUkKX.md.png",
-      title: "Machines Manufacturing Services",
-      path: "/services/machines-manufacturing",
-    },
+    // {
+    //   image: "https://iili.io/FGxUkKX.md.png",
+    //   title: "Machines Manufacturing Services",
+    //   path: "/services/machines-manufacturing",
+    // },
     {
       image: "https://iili.io/FGxPrnR.md.png",
       title: "Career Guidance",
@@ -114,12 +120,12 @@ const ServicesSlider: React.FC = () => {
 
   const blogCampaigns = campaigns.filter(
     (campaign) =>
-      campaign.campaignStatus !== false && campaign.campainInputType === "BLOG"
+      campaign.campaignStatus !== false && campaign.campainInputType === "BLOG",
   );
 
   const nonBlogCampaigns = campaigns.filter(
     (campaign) =>
-      campaign.campaignStatus !== false && campaign.campainInputType !== "BLOG"
+      campaign.campaignStatus !== false && campaign.campainInputType !== "BLOG",
   );
 
   const displayedBlogs = showAllBlogs
@@ -140,7 +146,7 @@ const ServicesSlider: React.FC = () => {
           .filter(
             (campaign) =>
               campaign.campaignType.trim() !==
-              "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS"
+              "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
           )
           .map((campaign) => ({
             image: campaign.imageUrls?.[0]?.imageUrl || "",
@@ -181,11 +187,25 @@ const ServicesSlider: React.FC = () => {
   }, []);
 
   const handleServiceClick = (service: any) => {
-    if (service.campaign) {
+    // 1) Campaign click
+    if (service?.campaign) {
       handleCampaignClick(service.campaign);
-    } else {
-      navigate(service.path);
+      return;
     }
+
+    // 2) External link
+    if (service?.external && service?.url) {
+      window.open(service.url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // 3) Internal route
+    if (service?.path) {
+      navigate(service.path);
+      return;
+    }
+
+    console.warn("No valid navigation for service:", service);
   };
 
   const slugify = (text: string) =>
@@ -207,14 +227,14 @@ const ServicesSlider: React.FC = () => {
       ) {
         navigate(
           `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType
-          )}`
+            campaign.campaignType,
+          )}`,
         );
       } else {
         navigate(
           `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType
-          )}`
+            campaign.campaignType,
+          )}`,
         );
       }
     } else {
@@ -224,14 +244,14 @@ const ServicesSlider: React.FC = () => {
       ) {
         navigate(
           `/services/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType
-          )}`
+            campaign.campaignType,
+          )}`,
         );
       } else {
         navigate(
           `/blog/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType
-          )}`
+            campaign.campaignType,
+          )}`,
         );
       }
     }
@@ -331,13 +351,15 @@ const ServicesSlider: React.FC = () => {
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="group flex flex-col items-center p-4 transition-all duration-300 transform hover:-translate-y-2"
+                className="group flex flex-col items-center p-4 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
                 onClick={() => handleServiceClick(service)}
                 role="button"
                 tabIndex={0}
-                onKeyPress={(e) =>
-                  e.key === "Enter" && handleServiceClick(service)
-                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleServiceClick(service);
+                  }
+                }}
               >
                 <div className="w-full h-48 flex items-center justify-center mb-3">
                   <div className="relative w-full h-full flex items-center justify-center">

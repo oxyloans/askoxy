@@ -8,7 +8,7 @@ import {
   Briefcase,
   Search,
   GraduationCap,
-  Award,
+  Award,Building,
   FileText,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -75,6 +75,15 @@ const ServicesPage: React.FC = () => {
         category: "Finance",
       },
       {
+        title: "OXYBRICKS.WORLD - Fractional Ownership ", 
+        image: "https://i.ibb.co/ZzyBDnm9/oxybricks.png", 
+        description:
+          "Fractional Ownership in Lands & Buildings", 
+        path: `https://oxybricks.world/`,
+        icon: <Building className="text-purple-600" size={24} />, 
+        category: "RealEstate", 
+      },
+      {
         title: "Free AI & Gen AI Training",
         image: "https://iili.io/FGCrmbV.md.png",
         description:
@@ -110,15 +119,15 @@ const ServicesPage: React.FC = () => {
         icon: <Users className="text-purple-600" size={24} />,
         category: "Community",
       },
-      {
-        title: "Manufacturing Services",
-        image: "https://iili.io/FGxUkKX.md.png",
-        description:
-          "Explore advanced machinery and manufacturing services for industrial growth.",
-        path: `${accessToken ? "/main" : ""}/services/machines-manufacturing`,
-        icon: <Factory className="text-purple-600" size={24} />,
-        category: "Industrial",
-      },
+      // {
+      //   title: "Manufacturing Services",
+      //   image: "https://iili.io/FGxUkKX.md.png",
+      //   description:
+      //     "Explore advanced machinery and manufacturing services for industrial growth.",
+      //   path: `${accessToken ? "/main" : ""}/services/machines-manufacturing`,
+      //   icon: <Factory className="text-purple-600" size={24} />,
+      //   category: "Industrial",
+      // },
       // Note: “We Are Hiring” static card is moved under the hiring tab via campaigns, so we keep static services clean.
     ],
     [accessToken]
@@ -292,7 +301,7 @@ const ServicesPage: React.FC = () => {
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="w-80 h-48 object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                        className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
                       />
                     </div>
                     <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
@@ -313,7 +322,7 @@ const ServicesPage: React.FC = () => {
                         <img
                           src={campaign.imageUrls[0].imageUrl}
                           alt={`${campaign.campaignType}`}
-                          className="w-80 h-48 object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                          className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
                         />
                       )}
                     </div>
@@ -343,7 +352,7 @@ const ServicesPage: React.FC = () => {
                         <img
                           src={campaign.imageUrls[0].imageUrl}
                           alt={`${campaign.campaignType}`}
-                          className="w-80 h-48 object-contain transition-all duration-300 border-2 border-gray-200 group-hover:border-purple-300 rounded-lg"
+                          className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
                         />
                       )}
                     </div>

@@ -49,7 +49,7 @@ const CampaignDetails: React.FC = () => {
 
   const [isprofileOpen, setIsprofileOpen] = useState(false);
   const [commentsError, setCommentsError] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [comments, setComments] = useState("");
 
@@ -75,7 +75,7 @@ const CampaignDetails: React.FC = () => {
       try {
         const allCampaigns = await fetchCampaigns();
         const foundCampaign = allCampaigns.find(
-          (c: Campaign) => c.campaignId.slice(-4) === campaignId
+          (c: Campaign) => c.campaignId.slice(-4) === campaignId,
         );
         if (
           foundCampaign &&
@@ -169,7 +169,7 @@ const CampaignDetails: React.FC = () => {
     if (!el) return;
     const idx = Math.round(el.scrollLeft / el.clientWidth);
     setCurrentIdx(
-      Math.max(0, Math.min(idx, (campaign?.imageUrls?.length || 1) - 1))
+      Math.max(0, Math.min(idx, (campaign?.imageUrls?.length || 1) - 1)),
     );
   };
 
@@ -180,7 +180,7 @@ const CampaignDetails: React.FC = () => {
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/services/${c.campaignId.slice(-4)}/${slugify(c.campaignType)}`
+        `/main/services/${c.campaignId.slice(-4)}/${slugify(c.campaignType)}`,
       );
       return;
     }
@@ -206,7 +206,7 @@ const CampaignDetails: React.FC = () => {
       finalMobileNumber,
       comments,
       "SERVICES",
-      userId
+      userId,
     );
     if (success) {
       setSuccessOpen(true);
@@ -236,10 +236,10 @@ const CampaignDetails: React.FC = () => {
       const redirect =
         campaign?.campainInputType === "BLOG"
           ? `/main/blog/${campaign?.campaignId.slice(-4)}/${slugify(
-              campaign?.campaignType || ""
+              campaign?.campaignType || "",
             )}`
           : `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
-              campaign?.campaignType || ""
+              campaign?.campaignType || "",
             )}`;
       sessionStorage.setItem("redirectPath", redirect);
       return;
@@ -261,14 +261,14 @@ const CampaignDetails: React.FC = () => {
       campaignType,
       finalMobileNumber,
       userId,
-      userRoleParam
+      userRoleParam,
     );
 
     if (success) {
       message.success(
         `Thank you for joining as ${userRoleParam || "no role"} in our ${
           campaign?.campaignType
-        } campaign!`
+        } campaign!`,
       );
       setInterested(true);
       setIsButtonDisabled(true);
@@ -287,8 +287,8 @@ const CampaignDetails: React.FC = () => {
       sessionStorage.setItem(
         "redirectPath",
         `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
-          campaign?.campaignType || ""
-        )}`
+          campaign?.campaignType || "",
+        )}`,
       );
       return;
     }
@@ -343,10 +343,9 @@ const CampaignDetails: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Header (for logged-out) */}
-    <div className={`px-4 ${!userId ? "pt-8 pb-4" : ""}`}>
-  {!userId ? <Header1 /> : null}
-</div>
-
+      <div className={`px-4 ${!userId ? "pt-8 pb-4" : ""}`}>
+        {!userId ? <Header1 /> : null}
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 w-full px-4 pb-6">
@@ -419,10 +418,14 @@ const CampaignDetails: React.FC = () => {
                 <button
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                   onClick={handleSubmitClick}
-                  aria-label="I'm Interested"
+                  aria-label="Join as Rotarian Member"
                   disabled={isButtonDisabled || interested}
                 >
-                  {!interested ? "I'm Interested" : "Already Participated"}
+                  {!interested
+                    ? campaign?.campaignType?.toLowerCase().includes("rotary")
+                      ? "Join as Rotarian Member"
+                      : "I'm Interested"
+                    : "Already Participated"}
                 </button>
 
                 <button
@@ -551,7 +554,7 @@ const CampaignDetails: React.FC = () => {
                                 navigate("/whatsapplogin");
                                 sessionStorage.setItem(
                                   "redirectPath",
-                                  "/main/caserviceitems"
+                                  "/main/caserviceitems",
                                 );
                               }
                             }}
@@ -704,18 +707,18 @@ const CampaignDetails: React.FC = () => {
       {/* Role selection modal */}
       {isRoleModalOpen && (
         <div className="fixed inset-0 bg-black/75 flex justify-center items-center z-50">
-       <div className="bg-white relative rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
+          <div className="bg-white relative rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
             <button
-  className="absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700"
-  onClick={() => {
-    setIsRoleModalOpen(false);
-    sessionStorage.removeItem("submitclicks");
-    setSelectedRole("");
-  }}
-  aria-label="Close"
->
-  ×
-</button>
+              className="absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700"
+              onClick={() => {
+                setIsRoleModalOpen(false);
+                sessionStorage.removeItem("submitclicks");
+                setSelectedRole("");
+              }}
+              aria-label="Close"
+            >
+              ×
+            </button>
             <div className="text-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">
                 {campaign?.addServiceType === "WEAREHIRING"
@@ -859,7 +862,7 @@ const Article: React.FC<{ description: string }> = ({ description }) => {
                 </a>
               ) : (
                 <span key={i}>{part}</span>
-              )
+              ),
             )}
           </p>
         );

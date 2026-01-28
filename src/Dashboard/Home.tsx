@@ -2070,13 +2070,16 @@ const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
                     animate="visible"
                     whileHover="hover"
                     variants={serviceCardVariants}
-                    className="rounded-xl overflow-hidden bg-transparent cursor-pointer transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+                    className="overflow-hidden cursor-pointer 
+             transition-transform duration-300 
+             "
                     onClick={() => navigate(service.path)}
                   >
                     <div className="aspect-video overflow-hidden">
                       <img
                         src={service.image}
                         alt={service.title}
+                        
                         className="w-full h-full object-contain transition-transform duration-300"
                       />
                     </div>

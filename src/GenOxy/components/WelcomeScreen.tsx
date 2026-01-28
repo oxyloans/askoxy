@@ -760,7 +760,7 @@ const tiles: Tile[] = [
     title: "AI Agents Earn Money",
   },
   { id: "s7", src: s7, route: "/genoxy/chat", title: "AI LLMs" },
-  { id: "s11", src: s14, title: "AI Book", showModal: true },
+  { id: "s11", src: s14, route: "/campaign/6972eb83",title: "AI Book"},
   { id: "s12", src: s12, route: "/ai-videos", title: "AI Videos" },
   { id: "s4", src: s4, route: "/ai-masterclasses", title: "AI Masterclasses" },
   {
