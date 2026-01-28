@@ -172,7 +172,7 @@ const Home: React.FC = () => {
   const { count, setCount } = context;
   const [products, setProducts] = useState<DashboardItem[]>([]);
   const [displayProducts, setDisplayProducts] = useState<DashboardItem[]>([]);
-  const [displayCount, setDisplayCount] = useState(20);
+  const [displayCount, setDisplayCount] = useState(24);
   const [services, setServices] = useState<DashboardItem[]>([]);
   const [freeGPTs, setFreeGPTs] = useState<DashboardItem[]>([]);
   const [cryptocurrency, setCryptocurrency] = useState<DashboardItem[]>([]);
@@ -581,12 +581,12 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
           itemsResponseDtoList: groceryItems,
           subCategories: [],
         },
-        {
-          categoryName: "Rice Container",
-          categoryImage: defaultCategoryImages["Rice Container"],
-          itemsResponseDtoList: riceContainer,
-          subCategories: [],
-        },
+        // {
+        //   categoryName: "Rice Container",
+        //   categoryImage: defaultCategoryImages["Rice Container"],
+        //   itemsResponseDtoList: riceContainer,
+        //   subCategories: [],
+        // },
         {
           categoryName: "Rice",
           categoryImage: defaultCategoryImages["Rice"],
@@ -606,7 +606,7 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
           subCategories: [],
         },
         {
-          categoryName: "AI BOOK", // show "AI Book" but fetches AI BOOK items
+          categoryName: "AI Books", // show "AI Book" but fetches AI BOOK items
           categoryImage: defaultCategoryImages["AI Book"],
           itemsResponseDtoList: booksTems,
           subCategories: [],
@@ -1469,7 +1469,7 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
 
       console.log(`Products for category ${categoryName}:`, productItems);
       setProducts(productItems);
-      setDisplayCount(20); // Changed from 5 to 20 to show 20 items initially
+      setDisplayCount(24); // Changed from 5 to 20 to show 20 items initially
       setSearchTerm("");
       setSelectedWeight(null);
       // NEW: Scroll to the products section smoothly after category change
@@ -1514,20 +1514,7 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
     }
   };
 
-  const categoryVariants = {
-    inactive: {
-      color: "#6B7280",
-      backgroundColor: "#F9FAFB",
-      border: "1px solid #E5E7EB",
-      boxShadow: "none",
-    },
-    active: {
-      color: "#FFFFFF",
-      backgroundColor: "#8B5CF6",
-      border: "1px solid #7C3AED",
-      boxShadow: "0 4px 6px -1px rgba(139, 92, 246, 0.3)",
-    },
-  };
+
 
   const serviceCardVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -1624,7 +1611,7 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
   };
 
   const loadMoreProducts = () => {
-    setDisplayCount((prevCount) => prevCount + 5);
+    setDisplayCount((prevCount) => prevCount + 6);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1916,7 +1903,7 @@ const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
           </div>
 
           {/* Filter Tabs as Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2 sm:gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 mb-6">
             <AnimatePresence>
               {categories.map((category, index) => (
                 <motion.div
@@ -1995,7 +1982,7 @@ const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
           )}
           {/* Product Items (Shown when a category is selected) */}
           {activeCategory && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
               <AnimatePresence>
                 {productsLoading ? (
                   Array.from({ length: 5 }).map((_, index) => (

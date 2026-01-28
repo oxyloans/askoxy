@@ -828,7 +828,7 @@ const Categories: React.FC<CategoriesProps> = ({
   };
 
   const SkeletonLoader = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
       {Array.from({ length: 12 }).map((_, index) => (
         <div
           key={index}
@@ -1151,7 +1151,7 @@ const Categories: React.FC<CategoriesProps> = ({
         {loading ? (
           <SkeletonLoader />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 sm:gap-4 px-2 sm:px-0">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 sm:gap-4 px-2 sm:px-0">
             {getCurrentCategoryItems().map((item) => {
               const qty = Number(item.quantity ?? 0);
 
