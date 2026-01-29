@@ -42,6 +42,7 @@ interface AdminComment {
   customerBehaviour: string | null;
   isActive: boolean | null;
   customerExpectedOrderDate: string | null;
+  callingType?: string | null;
 }
 
 type VHState = "idle" | "loading" | "ready" | "error";
@@ -177,6 +178,7 @@ const TalwarDataPage: React.FC = () => {
                 customerBehaviour: "UNDERSTANDING",
                 customerExpectedOrderDate: null,
                 isActive: value === "true",
+                callingType: "", // ✅ keep default
               };
 
         return {
@@ -425,6 +427,8 @@ const TalwarDataPage: React.FC = () => {
         const color = getColorForName(name.toUpperCase());
         const when = formatWhen(typedInfo.commentsCreatedDate);
 
+        // ✅ callingType can be "" or null, show only if non-empty
+      const callingType = (info.callingType ?? "").trim(); // "" if null/undefined
         return (
           <div
             style={{
@@ -473,6 +477,8 @@ const TalwarDataPage: React.FC = () => {
               {typedInfo.customerBehaviour && (
                 <span>• {typedInfo.customerBehaviour}</span>
               )}
+
+              {callingType && <span>• CallingType: {callingType}</span>}
             </div>
           </div>
         );

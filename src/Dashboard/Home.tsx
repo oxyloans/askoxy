@@ -609,15 +609,7 @@ const Home: React.FC = () => {
         },
       ];
 
-      // // Log final categories
-      // console.log(
-      //   "Final Categories:",
-      //   allCategories.map((cat) => ({
-      //     categoryName: cat.categoryName,
-      //     itemCount: cat.itemsResponseDtoList.length,
-      //   }))
-      // );
-
+    
       setCategories(allCategories);
       updateProducts(allItems);
       setActiveCategory("All Items"); // Set default category
