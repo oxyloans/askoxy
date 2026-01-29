@@ -47,6 +47,7 @@ interface AdminComment {
   customerBehaviour: string | null;
   isActive: boolean;
   customerExpectedOrderDate: string | null;
+  callingType?: string | null;
 }
 
 type VHState = "idle" | "loading" | "ready" | "error";
@@ -178,10 +179,12 @@ const AllKukatpallyDataPage: React.FC = () => {
                 adminComments: "—",
                 commentsCreatedDate: new Date().toISOString(),
                 commentsUpdateBy,
+
                 adminUserId: String(storedUniqueId || ""),
                 customerBehaviour: "UNDERSTANDING",
                 customerExpectedOrderDate: null,
                 isActive: value === "true",
+                callingType: "", // ✅ keep default
               };
         return {
           ...prev,
@@ -375,6 +378,7 @@ const AllKukatpallyDataPage: React.FC = () => {
         const info = commentsMap[record.id];
         if (info === "loading" || info === undefined)
           return <Spin size="small" />;
+
         if (info === "error" || info === null)
           return (
             <div className="text-gray-500 text-sm" style={{ lineHeight: 1.2 }}>
@@ -427,6 +431,10 @@ const AllKukatpallyDataPage: React.FC = () => {
         const color = getColorForName(name.toUpperCase());
         const when = formatWhen(info.commentsCreatedDate);
 
+        // ✅ callingType can be "" or null, show only if non-empty
+      const callingType = (info.callingType ?? "").trim(); // "" if null/undefined
+
+
         return (
           <div
             style={{
@@ -458,6 +466,7 @@ const AllKukatpallyDataPage: React.FC = () => {
                 {info.adminComments || "—"}
               </span>
             </div>
+
             <div
               style={{
                 display: "flex",
@@ -471,10 +480,14 @@ const AllKukatpallyDataPage: React.FC = () => {
               <Tag color={color} style={{ margin: 0 }}>
                 <strong>{name}</strong>
               </Tag>
+
               <span>at {when || "—"}</span>
+
               {info.customerBehaviour && (
                 <span>• {info.customerBehaviour}</span>
               )}
+
+              {callingType && <span>• CallingType: {callingType}</span>}
             </div>
           </div>
         );
@@ -490,9 +503,7 @@ const AllKukatpallyDataPage: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-800 m-0">
               All Kukatpally Data
             </h2>
-            <p className="text-sm text-gray-500 mt-1 mb-0">
-              🗓️ Data uploaded on <strong>Oct 17, 2025</strong>
-            </p>
+            
           </Col>
           <Col flex="360px">
             <div className="flex gap-2">

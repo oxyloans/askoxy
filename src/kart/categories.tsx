@@ -172,7 +172,15 @@ const Categories: React.FC<CategoriesProps> = ({
   const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
     "0",
   );
-  const categoryTypes = ["ALL", "RICE", "GOLD", "GROCERY", "SILVER", "AIBOOK"];
+  const categoryTypes = [
+    "ALL",
+    "RICE",
+    "GOLD",
+    "GROCERY",
+    "SILVER",
+    "AIBOOK",
+    "CONTAINERS",
+  ];
   const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
     null,

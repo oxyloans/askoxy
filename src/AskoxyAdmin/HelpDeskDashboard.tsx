@@ -576,6 +576,17 @@ const handleUserDetailsClick = async (userId: string) => {
         </div>
       ),
     },
+      {
+      title: "Calling Type",
+      dataIndex: "callingType",
+      key: "callingType",
+      width: 220,
+      render: (text: string) => (
+        <div className="max-h-16 overflow-y-auto">
+          <strong className="text-sm">{text}</strong>
+        </div>
+      ),
+    },
     {
       title: "SuperAdmin Comments",
       dataIndex: "comments",

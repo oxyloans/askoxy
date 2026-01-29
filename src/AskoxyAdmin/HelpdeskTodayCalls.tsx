@@ -229,7 +229,7 @@ const CallerHistoryPage: React.FC = () => {
         );
       },
     },
-   {
+    {
       title: "Caller Name",
       dataIndex: "caller",
       key: "caller",
@@ -262,12 +262,28 @@ const CallerHistoryPage: React.FC = () => {
       dataIndex: "comments",
       key: "comments",
       width: "35%",
-      render: (text: string) => (
-        <span className="block truncate" title={text}>
-          {text}
-        </span>
-      ),
+      render: (_: string, record: any) => {
+        const comments = record.comments ?? "—";
+        const callingType = (record.callingType ?? "").trim();
+
+        return (
+          <div className="flex flex-col gap-1">
+            {/* Main comment */}
+            <span className="block truncate" title={comments}>
+          {comments}
+            </span>
+
+            {/* Calling Type (only if exists) */}
+            {callingType && (
+              <span className="text-xs text-gray-500">
+                CallingType: {callingType}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
+
     {
       title: "Date",
       dataIndex: "createdDate",

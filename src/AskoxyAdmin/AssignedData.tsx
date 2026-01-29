@@ -19,13 +19,11 @@ import {
   SelectProps,
 } from "antd";
 import {
-  CommentOutlined,
+ 
   SearchOutlined,
   UserOutlined,
   PhoneOutlined,
-  MailOutlined,
-  HomeOutlined,
-  CalendarOutlined,
+ 
   WhatsAppOutlined,
 } from "@ant-design/icons";
 import axios from "axios";

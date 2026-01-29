@@ -33,7 +33,7 @@ import { CartContext } from "../until/CartContext";
 import ProductOfferModals from "./ProductOffermodals";
 import RiceOfferFAQs from "./Faqs";
 import ProductImg1 from "../assets/img/ricecard1.png";
-import ricecontainer1 from "../assets/img/steelcontainer.png"
+import ricecontainer1 from "../assets/img/steelcontainer.png";
 import CryptoImg1 from "../assets/img/bmvcoin.png";
 
 import O8 from "../assets/img/aitemplate.png";
@@ -314,9 +314,7 @@ const Home: React.FC = () => {
   const {
     handleItemAddedToCart,
     freeItemsMap,
-    movieOfferMap,
-    setFreeItemsMap,
-    setMovieOfferMap,
+  
   } = ProductOfferModals({
     fetchCartData,
     cartData,
@@ -453,27 +451,22 @@ const Home: React.FC = () => {
 
       // Collect all unique items grouped by categoryType
       const uniqueItemsMap = new Map<string, Item>();
-      data.forEach(
-        (categoryGroup: { categoryType: string; categories: Category[] }) => {
-          categoryGroup.categories.forEach((category: Category) => {
-            category.itemsResponseDtoList.forEach((item: Item) => {
-              const normalizedName = item.itemName.trim().toLowerCase();
-              if (
-                !Array.from(uniqueItemsMap.values()).some(
-                  (existing: Item) =>
-                    existing.itemName.trim().toLowerCase() === normalizedName,
-                )
-              ) {
-                uniqueItemsMap.set(item.itemId, {
-                  ...item,
-                  categoryName: category.categoryName || "Uncategorized",
-                  categoryType: categoryGroup.categoryType,
-                });
-              }
-            });
+    data.forEach(
+      (categoryGroup: { categoryType: string; categories: Category[] }) => {
+        categoryGroup.categories.forEach((category: Category) => {
+          category.itemsResponseDtoList.forEach((item: Item) => {
+            // ✅ Keep unique by itemId only
+            if (!uniqueItemsMap.has(item.itemId)) {
+              uniqueItemsMap.set(item.itemId, {
+                ...item,
+                categoryName: category.categoryName || "Uncategorized",
+                categoryType: categoryGroup.categoryType,
+              });
+            }
           });
-        },
-      );
+        });
+      },
+    );
 
       const uniqueItemsList = Array.from(uniqueItemsMap.values());
       const sortedUniqueItems = sortItemsByName(uniqueItemsList);
@@ -491,58 +484,60 @@ const Home: React.FC = () => {
       );
 
       // Filter items by categoryType
-     // Apply new sort: quantity descending, then name ascending
-const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
+      // Apply new sort: quantity descending, then name ascending
+      const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
       // Prioritize "Cashew nuts upto ₹40 cashback" in Groceries filter
-    const groceryItems = sortItemsByQuantityAndName(
-      sortedUniqueItems
-        .filter((item: Item) => item.categoryType?.toLowerCase() === "grocery")
-        .sort((a, b) => {
-          const aIsCashew = a.categoryName
-            ?.toLowerCase()
-            .includes("cashew nuts");
-          const bIsCashew = b.categoryName
-            ?.toLowerCase()
-            .includes("cashew nuts");
-          if (aIsCashew && !bIsCashew) return -1;
-          if (!aIsCashew && bIsCashew) return 1;
-          return a.itemName.localeCompare(b.itemName);
-        }),
-    );
+      const groceryItems = sortItemsByQuantityAndName(
+        sortedUniqueItems
+          .filter(
+            (item: Item) => item.categoryType?.toLowerCase() === "grocery",
+          )
+          .sort((a, b) => {
+            const aIsCashew = a.categoryName
+              ?.toLowerCase()
+              .includes("cashew nuts");
+            const bIsCashew = b.categoryName
+              ?.toLowerCase()
+              .includes("cashew nuts");
+            if (aIsCashew && !bIsCashew) return -1;
+            if (!aIsCashew && bIsCashew) return 1;
+            return a.itemName.localeCompare(b.itemName);
+          }),
+      );
 
-    const riceItems = sortItemsByQuantityAndName(
-      sortedUniqueItems.filter(
-        (item: Item) => item.categoryType?.toLowerCase() === "rice",
-      ),
-    );
-     const riceContainer = sortItemsByQuantityAndName(
-      sortedUniqueItems.filter(
-        (item: Item) => item.categoryType?.toLowerCase() === "containers",
-      ),
-    );
+      const riceItems = sortItemsByQuantityAndName(
+        sortedUniqueItems.filter(
+          (item: Item) => item.categoryType?.toLowerCase() === "rice",
+        ),
+      );
+      const riceContainer = sortItemsByQuantityAndName(
+        sortedUniqueItems.filter(
+          (item: Item) => item.categoryType?.toLowerCase() === "containers",
+        ),
+      );
 
-    const goldItems = sortItemsByQuantityAndName(
-      sortedUniqueItems.filter(
-        (item: Item) => item.categoryType?.toLowerCase() === "gold",
-      ),
-    );
+      const goldItems = sortItemsByQuantityAndName(
+        sortedUniqueItems.filter(
+          (item: Item) => item.categoryType?.toLowerCase() === "gold",
+        ),
+      );
 
-    const rakhiItems = sortItemsByQuantityAndName(
-      sortedUniqueItems.filter(
-        (item: Item) =>
-          item.categoryType?.toLowerCase() === "silver" &&
-          item.categoryName?.toLowerCase() === "silver",
-      ),
-    );
+      const rakhiItems = sortItemsByQuantityAndName(
+        sortedUniqueItems.filter(
+          (item: Item) =>
+            item.categoryType?.toLowerCase() === "silver" &&
+            item.categoryName?.toLowerCase() === "silver",
+        ),
+      );
 
-    const booksTems = sortItemsByQuantityAndName(
-      sortedUniqueItems.filter(
-        (item: Item) =>
-          item.categoryType?.toLowerCase() === "aibook" &&
-          (item.categoryName || "").toLowerCase().replace(/\s+/g, "") ===
-            "aibook",
-      ),
-    );
+      const booksTems = sortItemsByQuantityAndName(
+        sortedUniqueItems.filter(
+          (item: Item) =>
+            item.categoryType?.toLowerCase() === "aibook" &&
+            (item.categoryName || "").toLowerCase().replace(/\s+/g, "") ===
+              "aibook",
+        ),
+      );
       console.log("All Items Count:", allItems.length);
       console.log("Grocery Items Count:", groceryItems.length);
       console.log(
@@ -563,7 +558,7 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
         Rice: rice,
         Gold: gold,
         Silver: festive,
-        "Rice Container": ricecontainer1,
+        "Rice Containers": ricecontainer1,
         "AI Book": aibook,
       };
 
@@ -581,16 +576,17 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
           itemsResponseDtoList: groceryItems,
           subCategories: [],
         },
-        // {
-        //   categoryName: "Rice Container",
-        //   categoryImage: defaultCategoryImages["Rice Container"],
-        //   itemsResponseDtoList: riceContainer,
-        //   subCategories: [],
-        // },
+
         {
           categoryName: "Rice",
           categoryImage: defaultCategoryImages["Rice"],
           itemsResponseDtoList: riceItems,
+          subCategories: [],
+        },
+        {
+          categoryName: "Rice Containers",
+          categoryImage: defaultCategoryImages["Rice Containers"],
+          itemsResponseDtoList: riceContainer,
           subCategories: [],
         },
         {
@@ -1393,33 +1389,34 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
   // *** Updated viewAllProducts function ***
   const viewAllProducts = () => {
     const selectedCategory = activeCategory || "All Items";
-    // NEW: Define a mapping of category names to their corresponding category types
-    const categoryTypeMap: Record<string, string> = {
-      "All Items": "ALL",
-      Groceries: "GROCERY",
-      Rice: "RICE",
-      Gold: "GOLD",
-      Silver: "SILVER",
-      "Rice Container": "RICECONTAINERS",
-      "AI BOOK": "AIBOOK",
-    };
+   const CATEGORY_TYPE_MAP: Record<string, string> = {
+     "All Items": "ALL",
+     Groceries: "GROCERY",
+     Rice: "RICE",
+     Gold: "GOLD",
+     Silver: "SILVER",
+     "Rice Containers": "CONTAINERS",
+
+     "AI Books": "AIBOOK",
+   };
+
 
     // NEW: Get the category type based on the active category
-    const selectedType = categoryTypeMap[selectedCategory] || "ALL";
+  const selectedType = CATEGORY_TYPE_MAP[selectedCategory] || "ALL";
+
 
     // NEW: Construct query parameters to include type and weight (if applicable)
-    const queryParams = new URLSearchParams();
-    queryParams.append("type", selectedType.toUpperCase());
-    if (selectedWeight && selectedCategory === "Rice") {
-      queryParams.append("weight", selectedWeight);
-    }
+   const queryParams = new URLSearchParams();
+  queryParams.append("type", selectedType.toUpperCase());
 
-    // NEW: Navigate to the products page with the correct query parameters
-    navigate(`/main/dashboard/products?${queryParams.toString()}`, {
-      state: { selectedCategory },
-    });
-  };
+  if (selectedWeight && selectedCategory === "Rice") {
+    queryParams.append("weight", selectedWeight);
+  }
 
+  navigate(`/main/dashboard/products?${queryParams.toString()}`, {
+    state: { selectedCategory },
+  });
+};
   const viewAllServices = () => {
     navigate("/main/dashboard/myservices");
   };
@@ -1440,8 +1437,12 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
       Rice: "RICE",
       Gold: "GOLD",
       Silver: "SILVER",
-      "Rice Container": "RICECONTAINERS",
-      "AI BOOK": "AIBOOK",
+
+      // ✅ correct
+      "Rice Containers": "CONTAINERS",
+
+      // ✅ keep your actual category name key
+      "AI Books": "AIBOOK",
     };
 
     // NEW: Update the active category type based on the selected category
@@ -1513,8 +1514,6 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
       setProductsLoading(false);
     }
   };
-
-
 
   const serviceCardVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -1622,17 +1621,17 @@ const allItems = sortItemsByQuantityAndName(sortedUniqueItems);
   const handleOffersModalClose = () => {
     setIsOffersModalVisible(false);
   };
-// Helper function to sort items: higher quantity first, then alphabetically by name
-const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
-  return [...items].sort((a, b) => {
-    // Primary sort: quantity descending (higher quantity first, e.g., 2 > 0)
-    if (a.quantity !== b.quantity) {
-      return b.quantity - a.quantity; // Descending order
-    }
-    // Secondary sort: itemName ascending (alphabetical)
-    return a.itemName.localeCompare(b.itemName);
-  });
-};
+  // Helper function to sort items: higher quantity first, then alphabetically by name
+  const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
+    return [...items].sort((a, b) => {
+      // Primary sort: quantity descending (higher quantity first, e.g., 2 > 0)
+      if (a.quantity !== b.quantity) {
+        return b.quantity - a.quantity; // Descending order
+      }
+      // Secondary sort: itemName ascending (alphabetical)
+      return a.itemName.localeCompare(b.itemName);
+    });
+  };
   return (
     <div className="min-h-screen">
       {/* New styles for offers modal scrollbar */}
@@ -1903,7 +1902,7 @@ const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
           </div>
 
           {/* Filter Tabs as Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2 sm:gap-3 mb-6">
             <AnimatePresence>
               {categories.map((category, index) => (
                 <motion.div
@@ -1982,7 +1981,7 @@ const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
           )}
           {/* Product Items (Shown when a category is selected) */}
           {activeCategory && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-3 sm:gap-4">
               <AnimatePresence>
                 {productsLoading ? (
                   Array.from({ length: 5 }).map((_, index) => (
@@ -2079,7 +2078,6 @@ const sortItemsByQuantityAndName = (items: Item[]): Item[] => {
                       <img
                         src={service.image}
                         alt={service.title}
-                        
                         className="w-full h-full object-contain transition-transform duration-300"
                       />
                     </div>

@@ -157,17 +157,35 @@ const SuperAdminComments = () => {
         </div>
       ),
     },
-    {
-    title: "Helpdesk Comments",
-    dataIndex: "adminComments",
-    key: "adminComments",
-    width: 180,
-    render: (text: string) => (
-      <div className="max-h-24 overflow-auto whitespace-pre-wrap break-words rounded">
-        {text}
-      </div>
-    ),
-  },
+   {
+  title: "Helpdesk Comments",
+  dataIndex: "adminComments",
+  key: "adminComments",
+  width: 180,
+  render: (_: string, record: any) => (
+    <div className="max-h-24 overflow-auto whitespace-pre-wrap break-words rounded space-y-1">
+      {/* Admin Comments */}
+      {record.adminComments && (
+        <div>
+          {record.adminComments}
+        </div>
+      )}
+
+      {/* Calling Type */}
+      {record.callingType && (
+        <div className="text-xs text-gray-500">
+          Calling Type: {record.callingType}
+        </div>
+      )}
+
+      {/* Fallback */}
+      {!record.adminComments && !record.callingType && (
+        <span>-</span>
+      )}
+    </div>
+  ),
+},
+
     {
       title: "Updated By",
       dataIndex: "commentsUpdateBy",

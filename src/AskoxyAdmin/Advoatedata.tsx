@@ -41,6 +41,7 @@ interface AdminComment {
   customerBehaviour: string | null;
   isActive: boolean;
   customerExpectedOrderDate: string | null;
+callingType?: string | null;
 }
 
 type VHState = "idle" | "loading" | "ready" | "error";
@@ -361,6 +362,7 @@ const statusTag =
         const name = info.commentsUpdateBy || "—";
         const color = getColorForName(name.toUpperCase());
         const when = formatWhen(info.commentsCreatedDate);
+const callingType = (info.callingType ?? "").trim(); // "" if null/undefined
 
         return (
           <div
@@ -410,6 +412,7 @@ const statusTag =
               {info.customerBehaviour && (
                 <span>• {info.customerBehaviour}</span>
               )}
+              {callingType && <span>• CallingType: {callingType}</span>}
             </div>
           </div>
         );
