@@ -118,6 +118,7 @@ const MyRotaryServices: React.FC = () => {
       sessionStorage.setItem("redirectPath", "/main/services/myrotary");
       message.warning("Please login to open/join the Rotary platform.");
       return;
+
     }
 
     if (isAlreadyJoined) {
@@ -168,6 +169,7 @@ const MyRotaryServices: React.FC = () => {
 
     try {
       setIsButtonDisabled(true);
+
 
       const success = await submitInterest(
         formData.askOxyOfers,
@@ -405,11 +407,10 @@ const MyRotaryServices: React.FC = () => {
                 {/* Action Buttons - Compact & Responsive */}
                 <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
-                    className={`group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 ${
-                      interested
+                    className={`group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 ${interested
                         ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:opacity-90"
                         : "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:opacity-90"
-                    }`}
+                      }`}
                     onClick={() => handlePlatformClick(interested)}
                   >
                     <span className="flex items-center justify-center gap-2">
@@ -988,3 +989,4 @@ const MyRotaryServices: React.FC = () => {
 };
 
 export default MyRotaryServices;
+

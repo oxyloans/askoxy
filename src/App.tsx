@@ -14,6 +14,8 @@ import FloatingCallButton from "./components/FloatingCallButton";
 import UserOrdersIntegration from "./AskoxyAdmin/UserOrdersIntegration";
 import CampaignBlogPage from "./FREEAIBOOK/CampaignBlogPage";
 import InvoiceGenerator from "./components/InvoiceGenerator";
+import ChatApp from "./ChatScreen/ChatApp";
+import VideoCreationPage from "./BharathAIStore/pages/VideoCreation";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -496,6 +498,7 @@ const App: React.FC = () => {
               <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
+              <Route path="/chat" element={<ChatApp />} />
               <Route
                 path="/ninetydayplan"
                 element={
@@ -608,6 +611,10 @@ const App: React.FC = () => {
                   element={<AiResources />}
                 />
               </Route>
+              <Route
+                path="/video-creator"
+                element={<VideoCreationPage />}
+              />
 
               {/* ===================================================== */}
               {/* ✅ MORE PUBLIC ROUTES */}

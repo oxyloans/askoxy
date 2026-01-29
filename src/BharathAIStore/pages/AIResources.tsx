@@ -15,6 +15,7 @@ import Logo5 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_29_20 AM.png";
 import Logo6 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_14 AM.png";
 import Logo7 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_50 AM.png";
 import Logo8 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_34_01 AM.png";
+import Logo9 from "../../assets/img/VideoImage.png";
 
 // ---------- Types ----------
 interface Assistant {
@@ -208,6 +209,25 @@ const STATIC_ASSISTANTS: Assistant[] = [
     response_format: "video",
     image: Logo8,
     link: "/freeaibook",
+  },
+  {
+    id: "10",
+    object: "assistant",
+    created_at: 1697318400000,
+    name: "Create Your Own AI Video",
+    description:
+      "A cinematic video creation using Sora, showcasing AI-powered video creation from simple text prompts.Futuristic digital visuals, smooth camera motion, and a modern professional tech aesthetic.",
+    model: "gpt-4",
+    instructions: "Assist with AI video creation and generation",
+    tools: [],
+    top_p: 1,
+    temperature: 0.7,
+    reasoning_effort: null,
+    tool_resources: {},
+    metadata: { category: "Media", timeAgo: "18h" },
+    response_format: "video",
+    image: Logo9,
+    link: "/video-creator",
   },
 ];
 
@@ -655,7 +675,7 @@ const AiResources: React.FC = () => {
           </div>
         ) : (
           <div className="edgeGrid">
-            {filteredAssistants.slice(0, 9).map((assistant) => (
+            {filteredAssistants.slice(0, 10).map((assistant) => (
               <AssistantCard
                 key={assistant.id}
                 assistant={assistant}
