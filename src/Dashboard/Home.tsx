@@ -1552,14 +1552,14 @@ const Home: React.FC = () => {
   ) => {
     const bgGradient =
       type === "gpt"
-        ? "from-blue-600 to-indigo-700"
-        : "from-yellow-500 to-amber-600";
+        ? "from-purple-600 to-indigo-700"
+        : "from-green-500 to-emerald-600";
     const iconBg =
       type === "gpt"
-        ? "from-blue-600 to-indigo-700"
-        : "from-yellow-500 to-amber-600";
+        ? "from-purple-600 to-indigo-700"
+        : "from-green-500 to-emerald-600";
 
-    const iconColor = type === "gpt" ? "text-blue-200" : "text-amber-200";
+    const iconColor = type === "gpt" ? "text-purple-200" : "text-green-200";
 
     return (
       <motion.div
@@ -1876,7 +1876,7 @@ const Home: React.FC = () => {
         <section ref={productsRef} className="mb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
             {/* Heading - Left Side */}
-            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+            <h2 className="text-xl font-bold text-purple-800 flex items-center">
               <ShoppingBag className="text-purple-600 mr-2" size={20} />
               Our Products
             </h2>
@@ -1941,7 +1941,7 @@ const Home: React.FC = () => {
                     )}
                   </div>
                   <div className="p-2 text-center">
-                    <h3 className="font-bold text-gray-800 text-md hover:text-purple-600 transition-colors">
+                    <h3 className="font-bold text-purple-700 text-md hover:text-purple-600 transition-colors">
                       {category.categoryName}
                     </h3>
                   </div>
@@ -1973,10 +1973,10 @@ const Home: React.FC = () => {
           )}
           {/* Product Items (Shown when a category is selected) */}
           {activeCategory && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
               <AnimatePresence>
                 {productsLoading ? (
-                  Array.from({ length: 5 }).map((_, index) => (
+                  Array.from({ length: 6 }).map((_, index) => (
                     <ProductSkeleton key={`skeleton-${index}`} index={index} />
                   ))
                 ) : displayProducts.length > 0 ? (
@@ -2025,7 +2025,7 @@ const Home: React.FC = () => {
         {/* Services Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+            <h2 className="text-xl font-bold text-purple-800 flex items-center">
               <Settings className="text-purple-600 mr-2" size={20} />
               Our Services
             </h2>
@@ -2059,24 +2059,19 @@ const Home: React.FC = () => {
                     custom={index}
                     initial="hidden"
                     animate="visible"
-                    whileHover="hover"
                     variants={serviceCardVariants}
-                    className="overflow-hidden cursor-pointer 
-             transition-transform duration-300 
-             "
-                    
+                    className="overflow-hidden cursor-pointer"
                     onClick={() => navigate(service.path)}
                   >
                     <div className="aspect-video overflow-hidden">
                       <img
                         src={service.image}
                         alt={service.title}
-                        
-                        className="w-full h-full object-contain transition-transform duration-300"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                     <div className="p-4 text-center">
-                      <h3 className="text-gray-900 font-bold text-lg">
+                      <h3 className="text-green-600 font-bold text-lg">
                         {service.title}
                       </h3>
                     </div>
@@ -2088,16 +2083,16 @@ const Home: React.FC = () => {
         {/* Digital Services Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
           {/* Free GPTs Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+          <div className="p-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <h2 className="text-xl font-bold text-purple-800 flex items-center">
                 <Bot className="mr-2 text-purple-600" size={24} />
                 OXYGPT
               </h2>
               <button
                 onClick={() => navigate("/genoxy")}
-                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full font-medium flex items-center text-sm transition"
+                className="px-4 py-2 text-purple-600 font-medium flex items-center text-sm"
                 aria-label="Explore OXYGpt"
               >
                 Explore <ArrowRight size={16} className="ml-2" />
@@ -2112,12 +2107,12 @@ const Home: React.FC = () => {
                   .map((_, i) => (
                     <div
                       key={i}
-                      className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl animate-pulse h-24 flex items-center px-4"
+                      className="bg-gradient-to-r from-blue-100 to-indigo-100 h-24 flex items-center px-4"
                     >
-                      <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse mr-4"></div>
+                      <div className="w-12 h-12 bg-blue-200 mr-4"></div>
                       <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-blue-200 rounded w-3/4"></div>
-                        <div className="h-3 bg-blue-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-blue-200 w-3/4"></div>
+                        <div className="h-3 bg-blue-200 w-1/2"></div>
                       </div>
                     </div>
                   ))
@@ -2135,16 +2130,16 @@ const Home: React.FC = () => {
           </div>
 
           {/* Cryptocurrency Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+          <div className="p-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-3">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                <Coins className="mr-2 text-purple-600" size={24} />
+            <div className="flex flex-col sm:flex-row  from-green-500 to-emerald-600 sm:items-center sm:justify-between mb-5 gap-3">
+              <h2 className="text-xl font-bold text-green-800 flex items-center">
+                <Coins className="mr-2 text-green-600" size={24} />
                 Cryptocurrency
               </h2>
               <button
                 onClick={() => navigate("/main/crypto")}
-                className="px-4 py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-full font-medium flex items-center text-sm transition"
+                className="px-4 py-2 text-green-600 font-medium flex items-center text-sm"
                 aria-label="Explore Cryptocurrency"
               >
                 Explore <ArrowRight size={16} className="ml-2" />
@@ -2159,12 +2154,12 @@ const Home: React.FC = () => {
                   .map((_, i) => (
                     <div
                       key={i}
-                      className="bg-gradient-to-r from-yellow-50 to-amber-100 rounded-xl animate-pulse h-24 flex items-center px-4"
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 h-24 flex items-center px-4"
                     >
-                      <div className="w-12 h-12 bg-amber-200 rounded-full animate-pulse mr-4"></div>
+                      <div className="w-12 h-12 bg-amber-200 mr-4"></div>
                       <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-amber-200 rounded w-3/4"></div>
-                        <div className="h-3 bg-amber-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-amber-200 w-3/4"></div>
+                        <div className="h-3 bg-amber-200 w-1/2"></div>
                       </div>
                     </div>
                   ))

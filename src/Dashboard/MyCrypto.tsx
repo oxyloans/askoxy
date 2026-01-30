@@ -4,7 +4,7 @@ import {
   Coins,
   Copy,
   Sparkles,
-  ChevronRight,
+  
   Info,
   SendHorizonal,
   ExternalLink,

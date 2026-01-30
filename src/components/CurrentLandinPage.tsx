@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import Header from "./Header";
 import ServicesSlider from "./ServicesSlider";
 import FreeGPTs from "./FreeGPTs";
-import BMVCoinPromo from "./BMVCoinPromo";
+
 import OXYGroupCompanies from "./OXYGroupCompanies";
 import Footer from "./Footer";
 import OurPeople from "./OurTeam";
@@ -13,6 +13,7 @@ import UnicornGrid from "./SuperOurApp";
 import AwardPage from "./Award";
 import FreeAiBook from "./FreeAiBook";
 import ScrollToTop from "./ScrollToTop";
+import BMVCoinPromo from "./BMVCoinPromo";
 
 // Import the background (still exported from SuperOurApp.tsx)
 // import { AnimatedDiwaliBackground } from "./SuperOurApp";

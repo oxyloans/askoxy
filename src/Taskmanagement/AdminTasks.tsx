@@ -15,18 +15,22 @@ import {
   Tag,
   Modal,
   Space,
+  Radio,
 } from "antd";
 import {
   SearchOutlined,
   CheckOutlined,
   CommentOutlined,
   EyeOutlined,
+  SortAscendingOutlined,
+  SortDescendingOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 
 const { Text } = Typography;
+const { Search } = Input;
 interface CommentType {
   commentsBy: string;
   comments: string;
@@ -40,10 +44,10 @@ interface Task {
   taskAssignBy: string;
   taskAssignTo: string[] | string;
   taskName: string;
-  tastCreatedDate: string;
+ taskAssignedDate: string;
   taskCompleteDate: string;
 }
-type StatusFilter = "ALL" | "ASSIGNED" | "COMPLETED" | "REJECTED" | "DELETED";
+type StatusFilter =   "ASSIGNED" | "COMPLETED" | "REJECTED" | "DELETED";
 const AdminTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
@@ -59,7 +63,8 @@ const AdminTasks: React.FC = () => {
   const [comments, setComments] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ASSIGNED");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const normalizeStatus = (s?: string): StatusFilter => {
     const v = (s || "").trim().toUpperCase();
     if (v === "ASSIGNED") return "ASSIGNED";
@@ -92,7 +97,7 @@ const AdminTasks: React.FC = () => {
     }
 
     const counts: Record<StatusFilter, number> = {
-      ALL: searchFiltered.length,
+  
       ASSIGNED: 0,
       COMPLETED: 0,
       REJECTED: 0,
@@ -161,9 +166,10 @@ const AdminTasks: React.FC = () => {
         return hasValidAssignee && hasValidTaskName;
       });
       validTasks.sort((a: Task, b: Task): number => {
-        const dateA: Date = new Date(a.tastCreatedDate || 0);
-        const dateB: Date = new Date(b.tastCreatedDate || 0);
-        return dateB.getTime() - dateA.getTime();
+       const dateA: Date = new Date(a.taskAssignedDate || 0);
+       const dateB: Date = new Date(b.taskAssignedDate || 0);
+
+        return sortOrder === "desc" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
       });
 
       setTasks(validTasks);
@@ -192,10 +198,7 @@ const AdminTasks: React.FC = () => {
 
   // Filtering logic with useMemo at component level
   const filtered = useMemo(() => {
-    const statusFiltered =
-      statusFilter === "ALL"
-        ? tasks
-        : tasks.filter((t) => normalizeStatus(t.status) === statusFilter);
+    const statusFiltered = tasks.filter((t) => normalizeStatus(t.status) === statusFilter);
 
     const q = searchText.trim().toLowerCase();
     if (!q) return statusFiltered;
@@ -238,6 +241,10 @@ const AdminTasks: React.FC = () => {
   // Simplified search handler
   const handleSearch = (value: string) => {
     setSearchText(value);
+  };
+
+  const handleSortOrderChange = (order: "asc" | "desc") => {
+    setSortOrder(order);
   };
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
@@ -359,7 +366,7 @@ const AdminTasks: React.FC = () => {
 
   const columns = [
     {
-      title: "S.No",
+      title: "S.NO",
       key: "serial",
       align: "center" as const,
       render: (_: any, __: Task, index: number) =>
@@ -445,7 +452,7 @@ const AdminTasks: React.FC = () => {
       key: "task_timeline",
       align: "center" as const,
       render: (_: any, record: any) => {
-        const { tastCreatedDate, status } = record;
+        const { taskAssignedDate, status } = record;
 
         return (
           <div
@@ -459,7 +466,7 @@ const AdminTasks: React.FC = () => {
             <div style={{ color: "#555", fontSize: 13 }}>
               Assigned Date:{" "}
               <span style={{ color: "#008cba", fontWeight: 500 }}>
-                {tastCreatedDate ? formatDate(tastCreatedDate) : ""}
+                {taskAssignedDate ? formatDate(taskAssignedDate) : ""}
               </span>
             </div>
 
@@ -471,25 +478,64 @@ const AdminTasks: React.FC = () => {
       },
     },
     {
-      title: "Image",
+      title: "Image & Files",
       dataIndex: "image",
       key: "image",
+      width: 150,
       align: "center" as const,
-      render: (url: any) =>
-        url ? (
-          <Image
-            width={80}
-            height={80}
-            src={url}
+      render: (url?: string) => {
+        if (!url) {
+          return <Text type="secondary">No File</Text>;
+        }
+
+        const fileUrl = url.toLowerCase();
+
+        const isImage =
+          fileUrl.endsWith(".jpg") ||
+          fileUrl.endsWith(".jpeg") ||
+          fileUrl.endsWith(".png") ||
+          fileUrl.endsWith(".webp") ||
+          fileUrl.endsWith(".gif");
+
+        const isPdf = fileUrl.endsWith(".pdf");
+
+        const isExcel = fileUrl.endsWith(".xls") || fileUrl.endsWith(".xlsx");
+
+        if (isImage) {
+          return (
+            <Image
+              width={80}
+              height={80}
+              src={url}
+              preview
+              style={{
+                borderRadius: "6px",
+                objectFit: "cover",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+              }}
+            />
+          );
+        }
+
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              borderRadius: "4px",
-              objectFit: "cover",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontWeight: 600,
+              color: "#2563EB",
             }}
-          />
-        ) : (
-          <Text type="secondary">No Image</Text>
-        ),
+          >
+            {isPdf && "📄 View PDF"}
+            {isExcel && "📊 View Excel"}
+            {!isPdf && !isExcel && "View File"}
+          </a>
+        );
+      },
     },
     {
       title: "Actions",
@@ -555,55 +601,66 @@ const AdminTasks: React.FC = () => {
   return (
     <UserPanelLayout>
       <div style={{ padding: 20 }}>
-        <Row
-          justify="space-between"
-          align="middle"
-          gutter={[16, 16]}
-          style={{ marginBottom: 20 }}
-        >
-          <Col xs={24} sm={12}>
-            <Text strong style={{ fontSize: 20, color: "#008cba" }}>
-              Assigned Tasks Whatsapp
-            </Text>
-          </Col>
+       <Row
+  justify="space-between"
+  align="middle"
+  gutter={[16, 16]}
+  style={{ marginBottom: 20 }}
+>
+  <Col xs={24} sm={24} md={12} lg={12}>
+    <Text strong style={{ fontSize: 20, color: "#008cba" }}>
+      Assigned Tasks Whatsapp
+    </Text>
+  </Col>
 
-          <Col xs={24} sm={8}>
-            <Input
-              prefix={<SearchOutlined />}
-              placeholder="Search names,tasks..."
-              value={searchText}
-              onChange={(e) => handleSearch(e.target.value)}
-              allowClear
-            />
-          </Col>
-        </Row>
-        <Segmented
-          block
-          value={statusFilter}
-          onChange={(val: any) => setStatusFilter(val as StatusFilter)}
-          options={[
-            {
-              label: `All (${statusCounts.ALL})`,
-              value: "ALL",
-            },
-            {
-              label: `Assigned (${statusCounts.ASSIGNED})`,
-              value: "ASSIGNED",
-            },
-            {
-              label: `Completed (${statusCounts.COMPLETED})`,
-              value: "COMPLETED",
-            },
-          ]}
-          style={{
-            marginBottom: 20,
-            padding: "6px",
-            backgroundColor: "#f0f0f0",
-            borderRadius: "8px",
-            display: "flex",
-            gap: "8px",
-          }}
-        />
+  <Col xs={24} sm={24} md={12} lg={8}>
+    <Input
+      prefix={<SearchOutlined />}
+      placeholder="Search names, tasks..."
+      value={searchText}
+      onChange={(e) => handleSearch(e.target.value)}
+      allowClear
+      size="middle"
+      style={{ width: "100%" }}
+    />
+  </Col>
+</Row>
+
+<Row style={{ marginBottom: 20 }}>
+  <Col span={24}>
+    <Space size="middle">
+      <Button
+        type={statusFilter === "ASSIGNED" ? "primary" : "default"}
+        onClick={() => setStatusFilter("ASSIGNED")}
+        style={{
+          backgroundColor: statusFilter === "ASSIGNED" ? "#008cba" : "#f0f0f0",
+          borderColor: statusFilter === "ASSIGNED" ? "#008cba" : "#d9d9d9",
+          color: statusFilter === "ASSIGNED" ? "white" : "#333",
+          fontWeight: 500,
+          borderRadius: 8,
+        }}
+      >
+        Assigned ({statusCounts.ASSIGNED})
+      </Button>
+      <Button
+        type={statusFilter === "COMPLETED" ? "primary" : "default"}
+        onClick={() => setStatusFilter("COMPLETED")}
+        style={{
+          backgroundColor: statusFilter === "COMPLETED" ? "#1ab394" : "#f0f0f0",
+          borderColor: statusFilter === "COMPLETED" ? "#1ab394" : "#d9d9d9",
+          color: statusFilter === "COMPLETED" ? "white" : "#333",
+          fontWeight: 500,
+          borderRadius: 8,
+        }}
+      >
+        Completed ({statusCounts.COMPLETED})
+      </Button>
+    </Space>
+  </Col>
+</Row>
+
+
+
 
         {loading ? (
           <div
@@ -720,47 +777,7 @@ const AdminTasks: React.FC = () => {
         />
       </Modal>
 
-      <style>{`
-        .ant-segmented-item {
-          flex: 1 !important;
-          border-radius: 6px !important;
-          font-weight: 600 !important;
-          transition: all 0.3s ease !important;
-        }
 
-        /* All option - Gray background */
-        .ant-segmented-item:nth-child(1) {
-          background-color: #e8e8e8 !important;
-          color: #555 !important;
-        }
-
-        .ant-segmented-item:nth-child(1).ant-segmented-item-selected {
-          background-color: #808080 !important;
-          color: white !important;
-        }
-
-        /* Assigned option - Blue background */
-        .ant-segmented-item:nth-child(2) {
-          background-color: #d4ebf7 !important;
-          color: #0088cc !important;
-        }
-
-        .ant-segmented-item:nth-child(2).ant-segmented-item-selected {
-          background-color: #008cba !important;
-          color: white !important;
-        }
-
-        /* Completed option - Green background */
-        .ant-segmented-item:nth-child(3) {
-          background-color: #d4edda !important;
-          color: #1ab394 !important;
-        }
-
-        .ant-segmented-item:nth-child(3).ant-segmented-item-selected {
-          background-color: #1ab394 !important;
-          color: white !important;
-        }
-      `}</style>
     </UserPanelLayout>
   );
 };

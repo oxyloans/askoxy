@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import { message } from "antd";
 import axios from "axios";
+import { BookOpen, Clock, Trophy, Zap, Users, Target } from "lucide-react";
 
 const FreeAiBook: React.FC = () => {
   const navigate = useNavigate();
