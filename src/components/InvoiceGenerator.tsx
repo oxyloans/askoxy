@@ -44,6 +44,7 @@ const InvoiceGenerator: React.FC = () => {
   const [sgstPercent, setSgstPercent] = useState<number>(1.5);
   const [cgstPercent, setCgstPercent] = useState<number>(1.5);
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [charges, setCharges] = useState<number>(0);
   const [discount, setDiscount] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -53,7 +54,7 @@ const InvoiceGenerator: React.FC = () => {
   const totalGst = sgstAmount + cgstAmount;
   const itemTotalInclGst = subtotal + totalGst;
   const grandTotal = Number(
-    (subtotal + totalGst + deliveryFee - discount).toFixed(2),
+    (subtotal + totalGst + deliveryFee + charges - discount).toFixed(2),
   );
 
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -353,6 +354,16 @@ const InvoiceGenerator: React.FC = () => {
                 />
               </div>
               <div>
+                <label>Charges (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={charges}
+                  onChange={(e) => setCharges(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              <div>
                 <label>Discount (₹)</label>
                 <input
                   type="number"
@@ -492,6 +503,10 @@ const InvoiceGenerator: React.FC = () => {
                     Total GST Amount
                   </td>
                   <td className="inv-right">{formatIndianRupee(totalGst)}</td>
+                </tr>
+                <tr>
+                  <td className="inv-bold">Charges</td>
+                  <td className="inv-right">{formatIndianRupee(charges)}</td>
                 </tr>
                 <tr>
                   <td className="inv-bold">Delivery Fee</td>

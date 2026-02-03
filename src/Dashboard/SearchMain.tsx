@@ -727,12 +727,13 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
                             className="search-grid-item"
                           >
                             <Badge.Ribbon
-                              text={`${discount}% Off`}
-                              color="#8b3eea"
+                              text={isOutOfStock ? "SOLD OUT" : `${discount}% Off`}
+                              color={isOutOfStock ? "#d4a574" : "#8b3eea"}
                               style={{
-                                display: discount > 0 ? "block" : "none",
+                                display: discount > 0 || isOutOfStock ? "block" : "none",
                                 fontSize: 13,
                                 fontWeight: 600,
+                                color: isOutOfStock ? "#fff" : "white",
                               }}
                             >
                               <Card
@@ -1026,12 +1027,13 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
                               className="search-grid-item"
                             >
                               <Badge.Ribbon
-                                text={`${discount}% Off`}
-                                color="#8b3eea"
+                                text={isOutOfStock ? "SOLD OUT" : `${discount}% Off`}
+                                color={isOutOfStock ? "#d4a574" : "#8b3eea"}
                                 style={{
-                                  display: discount > 0 ? "block" : "none",
+                                  display: discount > 0 || isOutOfStock ? "block" : "none",
                                   fontSize: 13,
                                   fontWeight: 600,
+                                  color: isOutOfStock ? "#fff" : "white",
                                 }}
                               >
                                 <Card

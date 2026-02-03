@@ -11,7 +11,7 @@ import Logo1 from "../../assets/img/ChatGPT Image Sep 9, 2025, 10_57_29 AM.png";
 import Logo2 from "../../assets/img/ChatGPT Image Sep 9, 2025, 10_57_35 AM.png";
 import Logo3 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_03_17 AM.png";
 import Logo4 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_07_33 AM.png";
-import Logo5 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_29_20 AM.png";
+
 import Logo6 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_14 AM.png";
 import Logo7 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_32_50 AM.png";
 import Logo8 from "../../assets/img/ChatGPT Image Sep 9, 2025, 11_34_01 AM.png";
@@ -43,6 +43,25 @@ const STATIC_ASSISTANTS: Assistant[] = [
     id: "1",
     object: "assistant",
     created_at: 1697059200000,
+    name: "AI & GENAI UNIVERSE",
+    description:
+      "AI & GenAI Universe is a beginner-friendly yet powerful guide for students, professionals, and entrepreneurs who want to understand Artificial Intelligence and use it in real life. With 65+ practical chapters, it clearly explains AI fundamentals, Generative AI, Prompt Engineering, LLMs, AI Agents, real-world tools and use cases, and future AI career opportunities. Build the future with Agentic AI.",
+    model: "gpt-4",
+    instructions: "Provide conversational AI chat support",
+    tools: [],
+    top_p: 1,
+    temperature: 0.7,
+    reasoning_effort: null,
+    tool_resources: {},
+    metadata: { category: "AI&GENAI", timeAgo: "1d" },
+    response_format: "",
+    image: "https://i.ibb.co/TDbh09NT/gt-faabf5888a4cb8cb7d81.png",
+    link: "https://amzn.in/d/2Ie3hEg",
+  },
+  {
+    id: "2",
+    object: "assistant",
+    created_at: 1697059200000,
     name: "Askoxy.AI",
     description:
       "Askoxy.AI is an AI-powered marketplace designed to help users discover products, services, and intelligent tools in one place. It enables unlimited AI interactions, smart recommendations, and productivity use cases for individuals, businesses, and entrepreneurs across multiple domains.",
@@ -53,13 +72,13 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Chat", timeAgo: "1d" },
+    metadata: { category: "Marketplace", timeAgo: "1d" },
     response_format: "text",
     image: "https://i.ibb.co/SXsSVTXn/ask1.png",
     link: "/",
   },
   {
-    id: "2",
+    id: "3",
     object: "assistant",
     created_at: 1697059200000,
     name: "OXYGPT Chat",
@@ -78,7 +97,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/genoxy",
   },
   {
-    id: "3",
+    id: "4",
     object: "assistant",
     created_at: 1697145600000,
     name: "OXYGPT Voice Assistant",
@@ -97,7 +116,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/voiceAssistant/welcome",
   },
   {
-    id: "4",
+    id: "5",
     object: "assistant",
     created_at: 1697232000000,
     name: "AI LLMs",
@@ -116,7 +135,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     link: "/genoxy/chat",
   },
   {
-    id: "5",
+    id: "6",
     object: "assistant",
     created_at: 1697318400000,
     name: "AI Video Generation",
@@ -134,25 +153,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     image: Logo3,
     link: "/ai-videos",
   },
-  {
-    id: "6",
-    object: "assistant",
-    created_at: 1697059200000,
-    name: "AI Book",
-    description:
-      "AI Book is a learning resource designed to help users understand modern artificial intelligence tools and concepts. It provides easy explanations, practical examples, and guided knowledge for beginners, students, and professionals.",
-    model: "gpt-4",
-    instructions: "Provide conversational AI chat support",
-    tools: [],
-    top_p: 1,
-    temperature: 0.7,
-    reasoning_effort: null,
-    tool_resources: {},
-    metadata: { category: "Resources", timeAgo: "1w" },
-    response_format: "text",
-    image: Logo5,
-    link: "/freeaibook",
-  },
+
   {
     id: "7",
     object: "assistant",
@@ -471,11 +472,19 @@ const AssistantCard: React.FC<{
   const source = assistant?.metadata?.category || "AI Initiatives";
 
   const onOpen = () => {
-    if (assistant.id === "6") {
-      // Free AI Book
+    // Show the special offer modal for the Free AI Book entry
+    // Historically this checked for a hard-coded id ("6"), which was incorrect.
+    if (assistant.link === "/freeaibook") {
       onShowOfferModal();
-    } else {
+      return;
+    }
+
+    // Route internal links via react-router, otherwise navigate the browser for external links
+    if (assistant.link && assistant.link.startsWith("/")) {
       navigate(assistant.link);
+    } else if (assistant.link) {
+      // external URL (e.g., amazon link)
+      window.location.href = assistant.link;
     }
   };
 
@@ -610,7 +619,7 @@ const AiResources: React.FC = () => {
     return STATIC_ASSISTANTS.filter(
       (a) =>
         a.name.toLowerCase().includes(term) ||
-        a.description.toLowerCase().includes(term)
+        a.description.toLowerCase().includes(term),
     );
   }, [q]);
 

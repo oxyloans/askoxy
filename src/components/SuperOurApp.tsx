@@ -159,16 +159,24 @@ export default function SuperOurApp() {
             "linear-gradient(180deg,#5C3391 0%,#5D4086 30%,#6F4386 65%,#312C74 100%)",
         }}
       >
-       <div className="mx-auto max-w-[1240px] px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-0">
+        <div className="mx-auto max-w-[1240px] px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-0">
           <div className="flex flex-col-reverse lg:flex-row items-center lg:items-end gap-6 sm:gap-8 lg:gap-12">
             {/* Left: phone mockup */}
             <div className="w-full lg:w-[48%] flex justify-center lg:justify-start items-end">
-              <img
-                src={leftImage}
-                alt="ASKOXY.AI Super App"
-                className="max-w-[320px] sm:max-w-[380px] md:max-w-[440px] lg:max-w-[520px] w-full object-contain drop-shadow-2xl select-none block"
-                draggable={false}
-              />
+              <a
+                href="https://amzn.in/d/2Ie3hEg"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open AI book on Amazon"
+                className="w-full block"
+              >
+                <img
+                  src={leftImage}
+                  alt="ASKOXY.AI Super App"
+                  className="max-w-[320px] sm:max-w-[380px] md:max-w-[440px] lg:max-w-[520px] w-full object-contain drop-shadow-2xl select-none block cursor-pointer"
+                  draggable={false}
+                />
+              </a>
             </div>
 
             {/* Right: grid + crypto button */}

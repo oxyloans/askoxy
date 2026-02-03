@@ -4,6 +4,7 @@ import aiImage from "../assets/img/gt.png";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import { message } from "antd";
+import { FaAmazon } from "react-icons/fa";
 import axios from "axios";
 import { BookOpen, Clock, Trophy, Zap, Users, Target } from "lucide-react";
 
@@ -19,6 +20,10 @@ const FreeAiBook: React.FC = () => {
   const jobPlanImageUrl = "https://i.ibb.co/twj7WCX3/90-dayl.png";
   const campaignId = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
 
+  const openAmazon = () => {
+    window.open("https://amzn.in/d/2Ie3hEg", "_blank");
+  };
+
   useEffect(() => {
     const sendMarketingRequest = async () => {
       if (!userId) return;
@@ -32,7 +37,7 @@ const FreeAiBook: React.FC = () => {
             mobileNumber: mobileNumber || whatsappNumber,
             userId,
             projectType: "ASKOXY",
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -135,9 +140,9 @@ const FreeAiBook: React.FC = () => {
                   Special First Copy Winner Benefit
                 </p>
                 <p className="text-gray-700 mt-1 leading-relaxed">
-                  Permanent training until placement • Direct
-                  interaction with Team & CEO • Daily interview & project
-                  guidance • Continuous support until you get the job
+                  Permanent training until placement • Direct interaction with
+                  Team & CEO • Daily interview & project guidance • Continuous
+                  support until you get the job
                 </p>
               </div>
 
@@ -149,6 +154,16 @@ const FreeAiBook: React.FC = () => {
                   className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isLoading ? "Loading..." : "Bid Now"}
+                </motion.button>
+
+                {/* ✅ Buy on Amazon */}
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={openAmazon}
+                  className="px-5 py-3 rounded-2xl font-extrabold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg flex items-center justify-center gap-2 transition"
+                >
+                  <FaAmazon size={20} color="#FFFFFF" />
+                  <span>Buy on Amazon</span>
                 </motion.button>
               </div>
             </div>

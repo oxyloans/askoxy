@@ -20,6 +20,7 @@ import {
   UpOutlined,
   QuestionCircleOutlined,
 } from "@ant-design/icons";
+import { FaAmazon } from "react-icons/fa";
 import BASE_URL from "../Config";
 import Logo from "../assets/img/askoxylogonew.png";
 
@@ -50,6 +51,10 @@ type Comment = {
 };
 
 const DEFAULT_CAMPAIGN_ID = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
+
+// ✅ Amazon listing (updated)
+const AMAZON_BOOK_PRICE_INR = 399;
+const AMAZON_BOOK_URL = "https://amzn.in/d/2Ie3hEg";
 
 // ✅ hero book image (no crop)
 const HERO_IMG = "https://i.ibb.co/xt5tZN4K/book1.png";
@@ -230,10 +235,14 @@ export default function CampaignBlogPage() {
 
   const [openAuthorFaqId, setOpenAuthorFaqId] = useState<string>("who");
 
+  const openAmazon = () => {
+    window.open(AMAZON_BOOK_URL, "_blank", "noopener,noreferrer");
+  };
+
   const shareUrl = useMemo(() => {
     const title = campaignData?.campaignType || STATIC.title;
     return `${window.location.origin}/blog/${campaignId.slice(-4)}/${slugify(
-      title
+      title,
     )}`;
   }, [campaignData?.campaignType, campaignId]);
 
@@ -274,7 +283,7 @@ export default function CampaignBlogPage() {
       setLoading(true);
       try {
         const res = await fetch(
-          `${BASE_URL}/marketing-service/campgin/getCampaignDatadetailsById/${campaignId}`
+          `${BASE_URL}/marketing-service/campgin/getCampaignDatadetailsById/${campaignId}`,
         );
         const data: CampaignData = await res.json();
         setCampaignData(data);
@@ -404,7 +413,7 @@ export default function CampaignBlogPage() {
         const ok = await submitSubComment(
           activeReplyCommentId,
           commentText,
-          userId
+          userId,
         );
         if (!ok) return message.error("Failed to submit reply.");
       } else {
@@ -580,6 +589,30 @@ export default function CampaignBlogPage() {
                 {STATIC.intro.map((p, idx) => (
                   <p key={idx}>{p}</p>
                 ))}
+              </div>
+
+              {/* ✅ Amazon buy section (₹399) */}
+              <div className="mt-6 bg-white rounded-2xl border border-purple-200 shadow-sm p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                      <BookOutlined /> Also available on Amazon
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700">
+                      Amazon Price: <b>₹{AMAZON_BOOK_PRICE_INR}</b>
+                    </div>
+                  </div>
+
+                  <div className="sm:ml-auto flex gap-2 flex-wrap">
+                    <button
+                      onClick={openAmazon}
+                      className="px-5 py-3 rounded-2xl font-extrabold bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition flex items-center gap-2"
+                    >
+                      <FaAmazon size={20} color="#FFFFFF" />
+                      <span>Buy on Amazon</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -785,92 +818,99 @@ export default function CampaignBlogPage() {
           </div>
         </section>
 
-   {/* AUTHORS SECTION */}
-<section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-6 pb-6">
-  <div className="bg-white rounded-3xl border border-purple-200 shadow-sm p-4 sm:p-5">
-    <div className="text-lg sm:text-xl font-extrabold text-purple-800 flex items-center gap-2">
-      <BookOutlined /> About the Authors
-    </div>
+        {/* AUTHORS SECTION */}
+        <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-6 pb-6">
+          <div className="bg-white rounded-3xl border border-purple-200 shadow-sm p-4 sm:p-5">
+            <div className="text-lg sm:text-xl font-extrabold text-purple-800 flex items-center gap-2">
+              <BookOutlined /> About the Authors
+            </div>
 
-    <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-      <div className="bg-slate-50 border border-purple-100 rounded-2xl p-4">
-        <div className="font-extrabold text-slate-900 mb-1">Author Summary</div>
-        <pre className="m-0 whitespace-pre-wrap break-words text-slate-700 text-sm leading-relaxed">
-          {STATIC.authorsText}
-        </pre>
-      </div>
+            <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              <div className="bg-slate-50 border border-purple-100 rounded-2xl p-4">
+                <div className="font-extrabold text-slate-900 mb-1">
+                  Author Summary
+                </div>
+                <pre className="m-0 whitespace-pre-wrap break-words text-slate-700 text-sm leading-relaxed">
+                  {STATIC.authorsText}
+                </pre>
+              </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="bg-white border border-purple-200 rounded-2xl p-3">
-          <img
-            src={AUTHOR_1_IMG}
-            alt="Radhakrishna Thatavarti"
-            className="w-full h-[150px] object-contain"
-            loading="lazy"
-          />
-          <div className="mt-2 font-extrabold text-slate-900">
-            Radhakrishna Thatavarti
-          </div>
-          <div className="text-sm text-slate-600">
-            Founder & CEO, ASKOXY.AI | ET Excellence Award Winner
-          </div>
-        </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-white border border-purple-200 rounded-2xl p-3">
+                  <img
+                    src={AUTHOR_1_IMG}
+                    alt="Radhakrishna Thatavarti"
+                    className="w-full h-[150px] object-contain"
+                    loading="lazy"
+                  />
+                  <div className="mt-2 font-extrabold text-slate-900">
+                    Radhakrishna Thatavarti
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    Founder & CEO, ASKOXY.AI | ET Excellence Award Winner
+                  </div>
+                </div>
 
-        <div className="bg-white border border-purple-200 rounded-2xl p-3">
-          <img
-            src={AUTHOR_2_IMG}
-            alt="Ramadevi Thatavarti"
-            className="w-full h-[150px] object-contain"
-            loading="lazy"
-          />
-          <div className="mt-2 font-extrabold text-slate-900">
-            Ramadevi Thatavarti
-          </div>
-          <div className="text-sm text-slate-600">
-            CTO, ASKOXY.AI | ET Excellence Award Winner
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Authors FAQ */}
-    <div className="mt-5">
-      <div className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-        <QuestionCircleOutlined style={{ color: "#6d28d9" }} /> Authors FAQ
-      </div>
-
-      <div className="mt-3 space-y-2">
-        {STATIC.authorsFaq.map((f) => {
-          const open = openAuthorFaqId === f.id;
-          return (
-            <div
-              key={f.id}
-              className="bg-slate-50 border border-purple-100 rounded-2xl p-4 cursor-pointer"
-              onClick={() => setOpenAuthorFaqId(open ? "" : f.id)}
-              role="button"
-              tabIndex={0}
-            >
-              <div className="flex justify-between items-start gap-3">
-                <div className="font-extrabold text-slate-900">{f.q}</div>
-                <div className="w-8 h-8 rounded-full bg-white border border-purple-200 flex items-center justify-center">
-                  {open ? <UpOutlined /> : <DownOutlined />}
+                <div className="bg-white border border-purple-200 rounded-2xl p-3">
+                  <img
+                    src={AUTHOR_2_IMG}
+                    alt="Ramadevi Thatavarti"
+                    className="w-full h-[150px] object-contain"
+                    loading="lazy"
+                  />
+                  <div className="mt-2 font-extrabold text-slate-900">
+                    Ramadevi Thatavarti
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    CTO, ASKOXY.AI | ET Excellence Award Winner
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div
-                className={`overflow-hidden transition-all duration-300 ${
-                  open ? "max-h-96 mt-2" : "max-h-0"
-                }`}
-              >
-                <div className="text-slate-700 leading-relaxed">{f.a}</div>
+            {/* Authors FAQ */}
+            <div className="mt-5">
+              <div className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <QuestionCircleOutlined style={{ color: "#6d28d9" }} /> Authors
+                FAQ
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {STATIC.authorsFaq.map((f) => {
+                  const open = openAuthorFaqId === f.id;
+                  return (
+                    <div
+                      key={f.id}
+                      className="bg-slate-50 border border-purple-100 rounded-2xl p-4 cursor-pointer"
+                      onClick={() => setOpenAuthorFaqId(open ? "" : f.id)}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="font-extrabold text-slate-900">
+                          {f.q}
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white border border-purple-200 flex items-center justify-center">
+                          {open ? <UpOutlined /> : <DownOutlined />}
+                        </div>
+                      </div>
+
+                      <div
+                        className={`overflow-hidden transition-all duration-300 ${
+                          open ? "max-h-96 mt-2" : "max-h-0"
+                        }`}
+                      >
+                        <div className="text-slate-700 leading-relaxed">
+                          {f.a}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  </div>
-</section>
+          </div>
+        </section>
 
         {/* Learn grid */}
         <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-6 pb-14">

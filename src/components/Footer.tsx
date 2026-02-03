@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
 
-const LOGIN_URL = "/whatsapplogin";
+  const LOGIN_URL = "/whatsapplogin";
 
   // ✅ Login-check navigation
   const handleProtectedNavigation = (redirectPath: string) => {
@@ -47,31 +47,37 @@ const LOGIN_URL = "/whatsapplogin";
       icon: <Facebook className="h-4 w-4" />,
       href: "https://www.facebook.com/profile.php?id=61572388385568",
       label: "Facebook",
+      iconColor: "#1877F2",
     },
     {
       icon: <Instagram className="h-4 w-4" />,
       href: "https://www.instagram.com/askoxy.ai/",
       label: "Instagram",
+      iconColor: "#E4405F",
     },
     {
       icon: <Linkedin className="h-4 w-4" />,
       href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
       label: "LinkedIn",
+      iconColor: "#0A66C2",
     },
     {
       icon: <FaXTwitter className="h-4 w-4" />,
       href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
       label: "FaXTwitter",
+      iconColor: "#000000",
     },
     {
       icon: <Youtube className="h-4 w-4" />,
       href: "https://www.youtube.com/@askoxyDOTai",
       label: "YouTube",
+      iconColor: "#FF0000",
     },
     {
       icon: <SiThreads className="h-4 w-4" />,
       href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
       label: "SiThreads",
+      iconColor: "#000000",
     },
   ];
 
@@ -138,10 +144,9 @@ const LOGIN_URL = "/whatsapplogin";
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
+                  className="inline-flex items-center justify-center rounded-full w-8 h-8 transition-transform hover:scale-110 bg-gray-100"
                   style={{
-                    display: "inline-block",
-                    animation: "pulseColor 5s infinite ease-in-out",
-                    color:"#6b21a8",
+                    color: social.iconColor,
                   }}
                 >
                   {social.icon}
@@ -178,7 +183,7 @@ const LOGIN_URL = "/whatsapplogin";
                   >
                     {service.name}
                   </button>
-                )
+                ),
               )}
             </nav>
           </div>
@@ -191,7 +196,11 @@ const LOGIN_URL = "/whatsapplogin";
             <div className="space-y-2">
               {contactInfo.map((info, index) => (
                 <div key={index} className="flex items-start space-x-2">
-                  <div className="text-purple-600 mt-0.5">{info.icon}</div>
+                  <div className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-gray-100 flex-shrink-0 mt-0.5" style={{
+                    color: info.type === "map" ? "#10B981" : info.type === "email" ? "#F59E0B" : info.type === "phone" ? "#3B82F6" : "#6B7280"
+                  }}>
+                    {info.icon}
+                  </div>
                   {info.type === "map" ? (
                     <a
                       href={info.link}
