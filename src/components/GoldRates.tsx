@@ -32,7 +32,7 @@ type IBJAResponse = {
 
 
 const API_URL_CAPS_GOLD = "https://bcast.capsgold.net:4768/VOTSBroadcastStreaming/Services/xml/GetLiveRateByTemplateID/capsgoldTelangana";
-const API_URL_IBJA = "http://65.0.147.157:9024/api/user-service/get-ibja-rates";
+const API_URL_IBJA = "https://meta.oxyloans.com/api/user-service/get-ibja-rates";
 const WS_URL = "wss://www.manokamanagold.com/ws.ashx?key=bced91dd-9f18-4f40-b6e6-49250434be38";
 
 const PID_MAP: Record<string, keyof PriceState> = {
@@ -351,75 +351,142 @@ const GoldRates: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-2 sm:p-4 flex items-center justify-center">
+      <div className="w-full max-w-4xl">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+          <div className="px-3 py-2 sm:px-4 sm:py-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 text-center">
+              💰 Gold Prices Comparison Table
+            </h2>
+          </div>
 
-      <div className="mt-4 bg-white rounded-xl shadow-md border border-gray-200">
-        <div className="px-5 py-4 border-b bg-gray-50 rounded-t-xl">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Gold Price Comparison Table
-          </h2>
-        </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
+                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-700 whitespace-nowrap">
+                    Type
+                  </th>
+                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-red-600 whitespace-nowrap">
+                    Manokamana
+                  </th>
+                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-indigo-600 whitespace-nowrap">
+                    Caps Gold
+                  </th>
+                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-green-600 whitespace-nowrap">
+                    IBJA
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="hover:bg-blue-50 transition-colors">
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 font-semibold text-gray-700 text-center whitespace-nowrap align-middle">
+                    Gold Spot Price
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {prices.GOLD_SPOT ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {rowsCaps[0]?.price ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center text-gray-400 align-middle">
+                    --
+                  </td>
+                </tr>
 
-        <div className="p-5 overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">Type</th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-red-600">Manokamana</th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-indigo-600">Caps Gold</th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-green-600">IBJA</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Row 1: Gold Spot Price */}
-              <tr className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium text-gray-700">Gold Spot Price</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{prices.GOLD_SPOT ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{rowsCaps[0]?.price ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">--</td>
-              </tr>
+                <tr className="hover:bg-blue-50 transition-colors">
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 font-semibold text-gray-700 text-center whitespace-nowrap align-middle">
+                    Silver Spot Price
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {prices.SILVER_SPOT ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {rowsCaps[1]?.price ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center text-gray-400 align-middle">
+                    --
+                  </td>
+                </tr>
 
-              {/* Row 2: Silver Spot Price */}
-              <tr className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium text-gray-700">Silver Spot Price</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{prices.SILVER_SPOT ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{rowsCaps[1]?.price ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">--</td>
-              </tr>
+                <tr className="hover:bg-blue-50 transition-colors">
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 font-semibold text-gray-700 text-center whitespace-nowrap align-middle">
+                    USD to INR
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {prices.USDINR ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {rowsCaps[2]?.price ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center text-gray-400 align-middle">
+                    --
+                  </td>
+                </tr>
 
-              {/* Row 3: USD to INR */}
-              <tr className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium text-gray-700">USD to INR</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{prices.USDINR ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{rowsCaps[2]?.price ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">--</td>
-              </tr>
+                <tr className="hover:bg-blue-50 transition-colors bg-amber-50">
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 font-semibold text-gray-700 text-center whitespace-nowrap align-middle">
+                    Gold Price (Hyderabad)
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {prices.GOLD_HYD ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {rowsCaps[3]?.price ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {ibjaLoading ? (
+                      <span className="inline-flex gap-1">
+                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      </span>
+                    ) : (
+                      ibjaRates["999"] ?? "--"
+                    )}
+                  </td>
+                </tr>
 
-              {/* Row 4: Gold Price (Hyderabad) */}
-              <tr className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium text-gray-700">Gold Price (Hyderabad)</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{prices.GOLD_HYD ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{rowsCaps[3]?.price ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{ibjaRates["999"] ?? "loading..."}</td>
-              </tr>
+                <tr className="hover:bg-blue-50 transition-colors">
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 font-semibold text-gray-700 text-center whitespace-nowrap align-middle">
+                   Silver Price (Hyderabad)
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {prices.SILVER_HYD ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {rowsCaps[6]?.price ?? "--"}
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center text-gray-400 align-middle">
+                    --
+                  </td>
+                </tr>
 
-              {/* Row 5: Silver Price (Hyderabad) */}
-              <tr className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium text-gray-700">Silver Price (Hyderabad)</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{prices.SILVER_HYD ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{rowsCaps[6]?.price ?? "--"}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">--</td>
-              </tr>
-
-              {/* Row 6: Gold 916 (22K) */}
-              <tr className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium text-gray-700">Gold 916 (22K)</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">--</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">--</td>
-                <td className="border border-gray-300 px-4 py-2 text-center font-semibold">{ibjaRates["916"] ?? "loading..."}</td>
-              </tr>
-            </tbody>
-          </table>
+                <tr className="hover:bg-blue-50 transition-colors bg-amber-50">
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 font-semibold text-gray-700 text-center whitespace-nowrap align-middle">
+                    Gold 916 (22K)
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center text-gray-400 align-middle">
+                    --
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center text-gray-400 align-middle">
+                    --
+                  </td>
+                  <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
+                    {ibjaLoading ? (
+                      <span className="inline-flex gap-1">
+                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      </span>
+                    ) : (
+                      ibjaRates["916"] ?? "--"
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

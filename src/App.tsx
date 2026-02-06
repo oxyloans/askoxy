@@ -447,6 +447,7 @@ const App: React.FC = () => {
       currentPath === "/userlogin" ||
       // Employee/Internal routes
       currentPath.startsWith("/userPanelLayout") ||
+      currentPath.startsWith("/goldrates") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
