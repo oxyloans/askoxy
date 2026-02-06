@@ -16,6 +16,7 @@ import CampaignBlogPage from "./FREEAIBOOK/CampaignBlogPage";
 import InvoiceGenerator from "./components/InvoiceGenerator";
 import ChatApp from "./ChatScreen/ChatApp";
 import VideoCreationPage from "./BharathAIStore/pages/VideoCreation";
+import GoldRates from "./components/GoldRates";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -499,6 +500,7 @@ const App: React.FC = () => {
               <Route path="/tripplanner" element={<TripPlanner />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/chat" element={<ChatApp />} />
+              <Route path="/goldrates" element={<GoldRates />} />
               <Route
                 path="/ninetydayplan"
                 element={
