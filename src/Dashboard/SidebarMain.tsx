@@ -150,8 +150,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     {
       type: "dropdown",
       key: "account_menu",
-      icon: <FaCog size={18} />,
-      label: "Account Settings",
+      icon: <FaUser size={18} />,
+      label: "My Account",
       items: [
         {
           to: "/main/profile",
@@ -160,7 +160,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           to: "/main/freelanceform",
-          label: "Freelancer Account",
+          label:"Freelancer Skills Profile",
           icon: <FaPlusCircle size={16} />,
         },
         {
@@ -457,7 +457,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             {item.icon}
                           </span>
                         )}
-                        <span className="truncate">{item.label}</span>
+                        <span >{item.label}</span>
                       </Link>
                     );
                   })}

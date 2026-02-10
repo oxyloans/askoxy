@@ -17,6 +17,8 @@ import InvoiceGenerator from "./components/InvoiceGenerator";
 import ChatApp from "./ChatScreen/ChatApp";
 import VideoCreationPage from "./BharathAIStore/pages/VideoCreation";
 import GoldRates from "./components/GoldRates";
+import GoldRatesPage from "./components/GoldRatesPage";
+import FreelancerList from "./components/FreelancerList";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -448,6 +450,7 @@ const App: React.FC = () => {
       // Employee/Internal routes
       currentPath.startsWith("/userPanelLayout") ||
       currentPath.startsWith("/goldrates") ||
+       currentPath.startsWith("/all-different-gold-rates") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
@@ -493,7 +496,7 @@ const App: React.FC = () => {
                 path="/carnivals/edit/:id"
                 element={<CarnivalEditPage />}
               />
-
+<Route path="/freelancers" element={<FreelancerList />} />
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
@@ -502,6 +505,8 @@ const App: React.FC = () => {
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/chat" element={<ChatApp />} />
               <Route path="/goldrates" element={<GoldRates />} />
+           
+              <Route path="/all-different-gold-rates" element={<GoldRatesPage />} />
               <Route
                 path="/ninetydayplan"
                 element={

@@ -1111,10 +1111,13 @@ const renderDeliveryTimelineModal = () => {
 
     const isRiceCart = isRiceOnlyCart(cartData);
     if (isRiceCart && !exchangePolicyAccepted) {
-      Modal.warning({
-        title: "Confirmation Required",
-        content:
-          "Please confirm that the exchange can be taken within 10 days after delivery.",
+      const Swal = require('sweetalert2');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Confirmation Required',
+        text: 'Please confirm that the exchange can be taken within 10 days after delivery.',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#f59e0b',
       });
       return;
     }
@@ -1147,7 +1150,14 @@ const renderDeliveryTimelineModal = () => {
       }
 
       if (!selectedTimeSlot) {
-        Modal.error({ title: "Error", content: "Please select a time slot." });
+        const Swal = require('sweetalert2');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Time Slot Required',
+          text: 'Please select a delivery time slot.',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#f59e0b',
+        });
         return;
       }
 
@@ -1214,6 +1224,22 @@ const renderDeliveryTimelineModal = () => {
       );
 
       if (response.status === 200 && response.data) {
+        // Check if order placement failed due to minimum amount
+        if (!response.data.paymentId && response.data.status) {
+          setLoading(false);
+          const Swal = require('sweetalert2');
+          Swal.fire({
+            icon: 'error',
+            title: 'Order Cannot Be Placed',
+            text: response.data.status,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#d33',
+          }).then(() => {
+            navigate("/main/mycart");
+          });
+          return;
+        }
+
         await fetchCartData();
 
         if (typeof window !== "undefined" && window.gtag) {
@@ -1240,12 +1266,16 @@ const renderDeliveryTimelineModal = () => {
 
         if (selectedPayment === "COD") {
           applyBmvCashBack();
-          Modal.success({
-            content: "Order placed successfully! You'll pay on delivery.",
-            onOk: () => {
-              navigate("/main/myorders");
-              fetchCartData();
-            },
+          const Swal = require('sweetalert2');
+          Swal.fire({
+            icon: 'success',
+            title: 'Order Placed Successfully!',
+            text: "You'll pay on delivery.",
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#10b981',
+          }).then(() => {
+            navigate("/main/myorders");
+            fetchCartData();
           });
         } else {
           if (response.data.paymentId) {
@@ -2018,7 +2048,7 @@ const renderCouponsModal = (): JSX.Element => {
                           onChange={(e) =>
                             setExchangePolicyAccepted(e.target.checked)
                           }
-                          className="mt-1"
+                          className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
                         />
                         <label
                           htmlFor="exchangePolicy"

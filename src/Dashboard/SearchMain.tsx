@@ -403,9 +403,8 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
          if (!isValidNumber(prod.itemMrp)) return false;
          if (!isValidText(prod.itemName)) return false; // ✅ show even if price is 0
 
-         // quantity filter? keep it OPTIONAL. Many times quantity can be 0 but still show.
          // If you want to hide out-of-stock, enable this:
-         // if (!isValidNumber(prod.quantity)) return false;
+         if (!isValidNumber(prod.quantity)) return false;
 
          return true;
        });
