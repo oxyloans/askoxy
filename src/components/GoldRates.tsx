@@ -35,25 +35,13 @@ type IBJAResponse = {
   status: string;
 };
 
-// ========== TARGETS TYPES ==========
-type TargetData = {
-  id: string;
-  metalType: string;
-  minPrice: number;
-  maxPrice: number | null;
-  isActive: boolean;
-  createdAt: number;
-  updatedAt: number;
-};
+
 
 const API_URL_CAPS_GOLD =
   "https://bcast.capsgold.net:4768/VOTSBroadcastStreaming/Services/xml/GetLiveRateByTemplateID/capsgoldTelangana";
 const API_URL_IBJA =
   "https://meta.oxyloans.com/api/user-service/get-ibja-rates";
-const API_URL_TARGETS =
-  "https://meta.oxyloans.com/api/marketing-service/campgin/gold-silver-targets";
-const API_URL_SAVE_TARGET =
-  "https://meta.oxyloans.com/api/marketing-service/campgin/save-or-update-gold";
+
 const WS_URL =
   "wss://www.manokamanagold.com/ws.ashx?key=bced91dd-9f18-4f40-b6e6-49250434be38";
 const API_URL_DP_GOLD =
@@ -85,18 +73,7 @@ const GoldRates: React.FC = () => {
   const [ibjaError, setIbjaError] = useState<string | null>(null);
   const ibjaIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ========== TARGETS STATE ==========
-  const [targetsData, setTargetsData] = useState<TargetData[]>([]);
-  const [targetsLoading, setTargetsLoading] = useState<boolean>(true);
-  const [targetsError, setTargetsError] = useState<string | null>(null);
 
-  // ========== EDIT MODAL STATE ==========
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
-  const [editingTarget, setEditingTarget] = useState<TargetData | null>(null);
-  const [editMinPrice, setEditMinPrice] = useState<string>("");
-  const [editMaxPrice, setEditMaxPrice] = useState<string>("");
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   // ========== MANOKAMANA STATE ==========
   const [prices, setPrices] = useState<PriceState>({});
@@ -313,96 +290,7 @@ const GoldRates: React.FC = () => {
     }
   };
 
-  // ========== TARGETS FETCH ==========
-  const fetchTargets = async () => {
-    try {
-      const res = await fetch(API_URL_TARGETS);
-      if (!res.ok) throw new Error("Targets API request failed");
 
-      const data: TargetData[] = await res.json();
-
-      console.log("===== TARGETS RESPONSE =====", data);
-
-      setTargetsData(data);
-      setTargetsLoading(false);
-      setTargetsError(null);
-    } catch (err: any) {
-      console.error("Targets API Error:", err);
-      setTargetsError(err.message);
-      setTargetsLoading(false);
-    }
-  };
-
-  // ========== OPEN EDIT MODAL ==========
-  const handleEdit = (target: TargetData) => {
-    setEditingTarget(target);
-    setEditMinPrice(target.minPrice.toString());
-    setEditMaxPrice(target.maxPrice ? target.maxPrice.toString() : "0");
-    setIsEditModalOpen(true);
-    setSaveError(null);
-  };
-
-  // ========== CLOSE EDIT MODAL ==========
-  const handleCloseModal = () => {
-    setIsEditModalOpen(false);
-    setEditingTarget(null);
-    setEditMinPrice("");
-    setEditMaxPrice("");
-    setSaveError(null);
-  };
-
-  // ========== SAVE TARGET ==========
-  const handleSave = async () => {
-    if (!editingTarget) return;
-
-    const minPriceNum = parseFloat(editMinPrice);
-    const maxPriceNum = parseFloat(editMaxPrice);
-
-    // Validation: minPrice should not be zero
-    if (minPriceNum === 0 || isNaN(minPriceNum)) {
-      setSaveError("Min Price cannot be zero or empty");
-      return;
-    }
-
-    setIsSaving(true);
-    setSaveError(null);
-
-    try {
-      const payload = {
-        id: editingTarget.id,
-        metalType: editingTarget.metalType,
-        minPrice: minPriceNum,
-        maxPrice: maxPriceNum === 0 || isNaN(maxPriceNum) ? null : maxPriceNum,
-        isActive: editingTarget.isActive,
-      };
-
-      console.log("===== SAVE PAYLOAD =====", payload);
-
-      const res = await fetch(API_URL_SAVE_TARGET, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error("Failed to save target");
-
-      const result = await res.json();
-      console.log("===== SAVE RESPONSE =====", result);
-
-      // Refresh the targets data
-      await fetchTargets();
-
-      // Close modal
-      handleCloseModal();
-    } catch (err: any) {
-      console.error("Save Error:", err);
-      setSaveError(err.message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   // ========== CAPS GOLD EFFECT - CONTINUOUS POLLING ==========
   useEffect(() => {
@@ -440,10 +328,7 @@ const GoldRates: React.FC = () => {
     };
   }, []);
 
-  // ========== TARGETS EFFECT ==========
-  useEffect(() => {
-    fetchTargets();
-  }, []);
+
 
   // ========== MANOKAMANA WEBSOCKET EFFECT ==========
   useEffect(() => {
@@ -760,200 +645,7 @@ const GoldRates: React.FC = () => {
           </div>
         </div>
 
-        {/* Targets Table */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden mt-4">
-          <div className="px-3 py-2 sm:px-4 sm:py-3 border-b bg-gradient-to-r from-purple-50 to-pink-50">
-            <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 text-center">
-             Gold & Silver Targets
-            </h2>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs sm:text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
-                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-700 whitespace-nowrap">
-                    Metal Type
-                  </th>
-                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-700 whitespace-nowrap">
-                    Min Price
-                  </th>
-                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-700 whitespace-nowrap">
-                    Max Price
-                  </th>
-                  <th className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-700 whitespace-nowrap">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {targetsLoading ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="border border-gray-200 px-2 py-6 text-center"
-                    >
-                      <span className="inline-flex gap-1">
-                        <span
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        ></span>
-                        <span
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        ></span>
-                        <span
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        ></span>
-                      </span>
-                    </td>
-                  </tr>
-                ) : targetsError ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="border border-gray-200 px-2 py-4 text-center text-red-500"
-                    >
-                      Error loading targets: {targetsError}
-                    </td>
-                  </tr>
-                ) : targetsData.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="border border-gray-200 px-2 py-4 text-center text-gray-500"
-                    >
-                      No targets available
-                    </td>
-                  </tr>
-                ) : (
-                  targetsData.map((target) => (
-                    <tr
-                      key={target.id}
-                      className={`hover:bg-blue-50 transition-colors ${
-                        target.metalType === "GOLD"
-                          ? "bg-amber-50"
-                          : "bg-slate-50"
-                      }`}
-                    >
-                      <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 font-semibold text-gray-700 text-center align-middle">
-                        {target.metalType}
-                      </td>
-                      <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
-                        {target.minPrice.toLocaleString("en-IN")}
-                      </td>
-                      <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
-                        {target.maxPrice
-                          ? target.maxPrice.toLocaleString("en-IN")
-                          : "--"}
-                      </td>
-                      <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center align-middle">
-                        <button
-                          onClick={() => handleEdit(target)}
-                          className="px-3 py-1 bg-[#008cba] hover:bg-[#008cba] text-white text-xs sm:text-sm rounded transition-colors"
-                        >
-                        Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
-
-      {/* Edit Modal */}
-      {isEditModalOpen && editingTarget && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
-            <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-              <h3 className="text-lg font-bold text-gray-800">
-                Edit {editingTarget.metalType} Target
-              </h3>
-            </div>
-
-            <div className="p-4 space-y-4">
-              {saveError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
-                  {saveError}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Min Price <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={editMinPrice}
-                  onChange={(e) => setEditMinPrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter min price"
-                  disabled={isSaving}
-                />
-                <p className="text-xs text-gray-500 mt-1">Cannot be zero</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Max Price
-                </label>
-                <input
-                  type="number"
-                  value={editMaxPrice}
-                  onChange={(e) => setEditMaxPrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter max price (0 = no max)"
-                  disabled={isSaving}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Enter 0 or leave empty for no maximum
-                </p>
-              </div>
-            </div>
-
-            <div className="px-4 py-3 border-t bg-gray-50 flex justify-end gap-2">
-              <button
-                onClick={handleCloseModal}
-                disabled={isSaving}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="inline-flex gap-1">
-                      <span
-                        className="w-1 h-1 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      ></span>
-                      <span
-                        className="w-1 h-1 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      ></span>
-                      <span
-                        className="w-1 h-1 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      ></span>
-                    </span>
-                    Saving...
-                  </>
-                ) : (
-                  "Save"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

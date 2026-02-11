@@ -18,6 +18,7 @@ import ChatApp from "./ChatScreen/ChatApp";
 import VideoCreationPage from "./BharathAIStore/pages/VideoCreation";
 import GoldRates from "./components/GoldRates";
 import GoldRatesPage from "./components/GoldRatesPage";
+import GoldSilverTargets from "./components/GoldSilverTargets";
 import FreelancerList from "./components/FreelancerList";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
@@ -376,6 +377,7 @@ const AgentCreationSteps = lazy(
   () => import("./components/AgentCreationSteps")
 );
 const TripPlanner = lazy(() => import("./AITripPlanner/TripPlanner"));
+const TaxInvoice = lazy(() => import("./components/TaxInvoice"));
 // Simple centered loader component
 const LoadingSpinner = React.memo(() => (
   <div
@@ -451,6 +453,8 @@ const App: React.FC = () => {
       currentPath.startsWith("/userPanelLayout") ||
       currentPath.startsWith("/goldrates") ||
        currentPath.startsWith("/all-different-gold-rates") ||
+       currentPath.startsWith("/allgoldrates") ||
+       currentPath.startsWith("/smartlock")||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
@@ -503,10 +507,11 @@ const App: React.FC = () => {
               <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
+              <Route path="/tax-invoice" element={<TaxInvoice />} />
               <Route path="/chat" element={<ChatApp />} />
               <Route path="/goldrates" element={<GoldRates />} />
-           
-              <Route path="/all-different-gold-rates" element={<GoldRatesPage />} />
+              <Route path="/smartlock" element={<GoldSilverTargets />} />
+              <Route path="/allgoldrates" element={<GoldRatesPage />} />
               <Route
                 path="/ninetydayplan"
                 element={
