@@ -164,6 +164,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaPlusCircle size={16} />,
         },
         {
+          to: "/main/freelanceform",
+          label:"Freelancer Skills Profile",
+          icon: <FaPlusCircle size={16} />,
+        },
+        {
+          to:"/main/freelanceappliedlist",
+          label:"Freelancer Applied List",
+          icon:<FaRegCheckCircle size={16} />
+        },
+        {
           to: "/main/wallet",
           label: "Wallet",
           icon: <FaWallet size={16} />,
@@ -468,7 +478,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
-      {/* Sign Out */}
       <div className="p-3 border-t border-gray-100 flex-shrink-0">
         <button
           onClick={handleSignout}

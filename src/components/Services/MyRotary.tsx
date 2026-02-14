@@ -71,6 +71,10 @@ const MyRotaryServices: React.FC = () => {
   const WHATSAPP_GROUP_LINK =
     "https://chat.whatsapp.com/DiwjVdXb7p60ywRlgrSFDp?mode=gi_t";
 
+  // Rotary Identity (display)
+  const ROTARY_DISTRICT = "RI DISTRICT 3150";
+  const ROTARY_HOME_CLUB = "Secunderanbad West";
+
   const [formData] = useState({
     askOxyOfers: "ROTARIAN",
     userId: userId,
@@ -118,7 +122,6 @@ const MyRotaryServices: React.FC = () => {
       sessionStorage.setItem("redirectPath", "/main/services/myrotary");
       message.warning("Please login to open/join the Rotary platform.");
       return;
-
     }
 
     if (isAlreadyJoined) {
@@ -169,7 +172,6 @@ const MyRotaryServices: React.FC = () => {
 
     try {
       setIsButtonDisabled(true);
-
 
       const success = await submitInterest(
         formData.askOxyOfers,
@@ -294,11 +296,11 @@ const MyRotaryServices: React.FC = () => {
       </div>
 
       <div className="relative z-10">
-        {!userId ? (
+        {/* {!userId ? (
           <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
             <Header1 />
           </div>
-        ) : null}
+        ) : null} */}
 
         {/* Enhanced Back Button with better mobile handling */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
@@ -339,6 +341,22 @@ const MyRotaryServices: React.FC = () => {
                       Rtn. Thatavarti Venkata RadhaKrishna Gupta
                     </span>
                   </h1>
+
+                  {/* District + Home Club */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs sm:text-sm font-semibold text-blue-800">
+                      <Globe className="h-4 w-4" />
+                      <span className="whitespace-nowrap">
+                        {ROTARY_DISTRICT}
+                      </span>
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs sm:text-sm font-semibold text-emerald-800">
+                      <Users2 className="h-4 w-4" />
+                      <span className="whitespace-nowrap">
+                        Home Club : {ROTARY_HOME_CLUB}
+                      </span>
+                    </span>
+                  </div>
 
                   <div className="mt-6 space-y-3 text-gray-700">
                     <div className="flex items-center gap-3">
@@ -407,10 +425,11 @@ const MyRotaryServices: React.FC = () => {
                 {/* Action Buttons - Compact & Responsive */}
                 <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
-                    className={`group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 ${interested
+                    className={`group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 ${
+                      interested
                         ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:opacity-90"
                         : "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:opacity-90"
-                      }`}
+                    }`}
                     onClick={() => handlePlatformClick(interested)}
                   >
                     <span className="flex items-center justify-center gap-2">
@@ -989,4 +1008,3 @@ const MyRotaryServices: React.FC = () => {
 };
 
 export default MyRotaryServices;
-

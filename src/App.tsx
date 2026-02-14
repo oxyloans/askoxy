@@ -20,6 +20,7 @@ import GoldRates from "./components/GoldRates";
 import GoldRatesPage from "./components/GoldRatesPage";
 import GoldSilverTargets from "./components/GoldSilverTargets";
 import FreelancerList from "./components/FreelancerList";
+import FreelancersByUserId from "./components/FreelancersByUserId";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -500,7 +501,8 @@ const App: React.FC = () => {
                 path="/carnivals/edit/:id"
                 element={<CarnivalEditPage />}
               />
-<Route path="/freelancers" element={<FreelancerList />} />
+              <Route path="/freelancers" element={<FreelancerList />} />
+
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
@@ -624,10 +626,7 @@ const App: React.FC = () => {
                   element={<AiResources />}
                 />
               </Route>
-              <Route
-                path="/video-creator"
-                element={<VideoCreationPage />}
-              />
+              <Route path="/video-creator" element={<VideoCreationPage />} />
 
               {/* ===================================================== */}
               {/* ✅ MORE PUBLIC ROUTES */}
@@ -961,6 +960,10 @@ const App: React.FC = () => {
                 {/* Wallet / Orders / Profile etc (already protected by /main) */}
                 <Route path="wallet" element={<MyWalletPage />} />
                 <Route path="myorders" element={<MyOrders />} />
+                <Route
+                  path="/main/freelanceappliedlist"
+                  element={<FreelancersByUserId />}
+                />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="referral" element={<ReferralPage />} />
                 <Route path="bulkinvite" element={<BulkInvite />} />

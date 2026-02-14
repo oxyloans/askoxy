@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Form, Input, InputNumber, Button, Card, message, Row, Col, Modal, Select } from "antd";
-import { Briefcase, DollarSign, FileUp, CheckCircle2, XCircle } from "lucide-react";
+import { Form, Button,  message,  Modal, } from "antd";
+import { Briefcase, FileUp, CheckCircle2} from "lucide-react";
 import axios from "axios";
+import {useNavigate} from "react-router-dom";
 import BASE_URL from "../Config";
 
 type RatePeriod = 'hour' | 'day' | 'week' | 'month' | 'year';
@@ -15,6 +16,7 @@ const rateOptions = {
 };
 
 const FreelancerForm: React.FC = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -220,6 +222,7 @@ const FreelancerForm: React.FC = () => {
       });
       
       setShowSuccessModal(true);
+       navigate("/main/freelanceappliedlist");
       fetchFreelancerData();
     } catch (err: any) {
       console.error(err);
