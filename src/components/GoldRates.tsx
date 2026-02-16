@@ -205,7 +205,7 @@ const GoldRates: React.FC = () => {
       if (index === 2 || index === 3 || index === 4) {
         name = `${arr[1]} ${arr[2]}`;
         price = arr[3];
-      } else if (index === 1 || index === 6) {
+      } else if (index === 1) {
         name = `${arr[1]} ${arr[2]}`;
         price = arr[3];
       } else if (index === 5) {
@@ -214,6 +214,9 @@ const GoldRates: React.FC = () => {
       } else if (index === 0) {
         name = `${arr[1]} ${arr[2]} ${arr[3]} ${arr[4]} ${arr[5]}`;
         price = arr[7];
+      } else if(index === 6) {
+        name = `${arr[1]} ${arr[2]}`;
+        price = arr[4];
       }
 
       if (name && price) {

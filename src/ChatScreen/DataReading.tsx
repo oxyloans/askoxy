@@ -7,20 +7,21 @@ import {
   Spin,
   Card,
   Steps,
-
+  Image,
   Input,
-
+  Form,
 } from "antd";
-// import drivingLicenseImage from "./Driving_License.jpeg";
+
 import {
   UploadOutlined,
   CheckCircleOutlined,
   LoadingOutlined,
   FileTextOutlined,
-  
+  MailOutlined,
   EyeOutlined,
   DeleteOutlined,
-  
+  PlusOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import type { UploadFile, RcFile } from "antd/es/upload/interface";
 import axios from "axios";
@@ -38,6 +39,7 @@ interface FormData {
   email: string;
   phone: string;
   address: string;
+  priorityTask: string;
   dateOfBirth: string;
   policyNumber?: string;
   vehicleNumber?: string;
@@ -47,8 +49,8 @@ interface FormData {
   panNumber?: string;
   fatherName?: string;
   gender?: string;
-  state?: string;
   vehicleType?: string;
+  state?: string;
   registrationNumber?: string;
   engineNumber?: string;
   chassisNo?: string;
@@ -71,16 +73,17 @@ const DataReading: React.FC = () => {
   const [extractedTextData, setExtractedTextData] = useState<ExtractedData[]>(
     [],
   );
-  const drivingLicenseImage = "/Driving_License.jpeg";
+
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
-  const [showStaticImage, setShowStaticImage] = useState(false);
+
   const [extractedTextModal, setExtractedTextModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
     phone: "",
     address: "",
+    priorityTask: "",
     dateOfBirth: "",
   });
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
@@ -115,7 +118,6 @@ const DataReading: React.FC = () => {
 
   const handleInsuranceTypeSelect = (value: string) => {
     setInsuranceType(value);
-    setShowStaticImage(value === "general"); // Add this line
   };
 
   const handleNext = async () => {
@@ -126,6 +128,7 @@ const DataReading: React.FC = () => {
           description: "Please select an insurance type to proceed.",
         });
         return;
+
       }
       setCurrentStep(1);
     } else if (currentStep === 1) {
@@ -144,7 +147,6 @@ const DataReading: React.FC = () => {
         });
         return;
       }
-      setShowStaticImage(insuranceSubType === "motor");
 
       setCurrentStep(2);
     } else if (currentStep === 2) {
@@ -157,17 +159,100 @@ const DataReading: React.FC = () => {
       }
       setConfirmationModal(true);
     } else if (currentStep === 3) {
-      // Review all documents step - call API here
+      // Add validation before processing
+      if (fileList.length === 0) {
+        notification.error({
+          message: "No Documents Available",
+          description:
+            "Please go back and upload at least one document before proceeding to form filling.",
+          placement: "topRight",
+          duration: 5,
+        });
+        return;
+      }
+
       setLoading(true);
       const taskId = "741d320a-aa83-4a6a-8358-6fdf6cf070c5";
+      setCurrentStep(4);
       await uploadFileToTask(taskId);
       setLoading(false);
-      setCurrentStep(4);
     } else if (currentStep === 4) {
-      // Preview and edit form
+      // Common required fields
+      const commonFieldsValid =
+        formData.fullName &&
+        formData.dateOfBirth &&
+        formData.phone &&
+        formData.email &&
+        formData.address &&
+        formData.insurancePeriod &&
+        formData.termsAccepted;
+
+      // Motor-specific validation
+      if (insuranceSubType === "motor") {
+        if (
+          !commonFieldsValid ||
+          !formData.fatherName ||
+          !formData.gender ||
+          !formData.aadharNumber ||
+          !formData.panNumber ||
+          !formData.state ||
+          !formData.licenseNumber ||
+          !formData.licenseIssueDate ||
+          !formData.licenseValidUpto ||
+          !formData.vehicleType ||
+          !formData.registrationNumber ||
+          !formData.engineNumber ||
+          !formData.chassisNo ||
+          !formData.registrationDate
+        ) {
+          notification.warning({
+            message: "Required Fields Missing",
+            description:
+              "Please fill in all required fields for motor insurance.",
+            placement: "topRight",
+          });
+          return;
+        }
+      }
+
+      // Travel-specific validation
+      else if (insuranceSubType === "travel") {
+        if (
+          !commonFieldsValid ||
+          !formData.panNumber ||
+          !formData.travelDestination
+          // Add other travel-specific required fields
+        ) {
+          notification.warning({
+            message: "Required Fields Missing",
+            description:
+              "Please fill in all required fields for travel insurance.",
+            placement: "topRight",
+          });
+          return;
+        }
+      }
+
+      // Commercial-specific validation
+      else if (insuranceSubType === "commercial") {
+        if (
+          !commonFieldsValid ||
+          !formData.businessName ||
+          !formData.panNumber
+          // Add other commercial-specific required fields
+        ) {
+          notification.warning({
+            message: "Required Fields Missing",
+            description:
+              "Please fill in all required fields for commercial insurance.",
+            placement: "topRight",
+          });
+          return;
+        }
+      }
+
       setCurrentStep(5);
     } else if (currentStep === 5) {
-      // Submit application
       if (
         !formData.fullName ||
         !formData.email ||
@@ -232,23 +317,6 @@ const DataReading: React.FC = () => {
         }
       });
 
-      // Add static driving license image for motor insurance
-      if (showStaticImage && insuranceSubType === "motor") {
-        const response = await fetch(drivingLicenseImage);
-
-        if (!response.ok) {
-          throw new Error("Failed to load static DL image");
-        }
-
-        const blob = await response.blob();
-
-        const file = new File([blob], "Driving_License.jpeg", {
-          type: "image/jpeg",
-        });
-
-        formDataToSend.append("file", file);
-      }
-
       formDataToSend.append("userId", userId);
       formDataToSend.append("taskId", taskId);
       formDataToSend.append("fileType", "kyc");
@@ -278,6 +346,7 @@ const DataReading: React.FC = () => {
           // Call group-by-person API with ALL extracted data
           await callGroupByPersonApi(extractedData);
 
+          // Generate random policy number
           const randomPolicyNumber = Math.floor(
             10000 + Math.random() * 90000,
           ).toString();
@@ -304,159 +373,177 @@ const DataReading: React.FC = () => {
     }
   };
 
-const callGroupByPersonApi = async (extractedData: any[]) => {
-  try {
-    const token = sessionStorage.getItem("accessToken") || "";
+  const callGroupByPersonApi = async (extractedData: any[]) => {
+    try {
+      const token = sessionStorage.getItem("accessToken") || "";
 
-    const payload = extractedData.map((item) => ({
-      extractAiText: item.extractAiText,
-      id: item.id,
-    }));
-
-    const response = await axios.post(
-      `${BASE_URL}/user-service/write/group-by-person`,
-      payload,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.data && response.data.length > 0) {
-      const extracted: Partial<FormData> = {};
-
-      // Process each group to extract information
-      for (const group of response.data) {
-        for (const doc of group.documents || []) {
-          const text = doc.extractAiText;
-          
-          // Extract Name
-          const nameMatch = text.match(/(?:Name|Owner Name)(?:\sis)?\s*:?\s*([A-Za-z\s]+)/i);
-          if (nameMatch?.[1] && !extracted.fullName) {
-            extracted.fullName = nameMatch[1].trim();
-          }
-
-          // Extract Date of Birth
-          const dobMatch = text.match(/Date of Birth(?:\sis)?\s*:?\s*([\d\/\-]+)/i);
-          if (dobMatch?.[1] && !extracted.dateOfBirth) {
-            extracted.dateOfBirth = dobMatch[1].trim();
-          }
-
-          // Extract Father Name
-          const fatherMatch = text.match(/FatherName\s*:?\s*([A-Za-z\s]+)/i);
-          if (fatherMatch?.[1] && !extracted.fatherName) {
-            extracted.fatherName = fatherMatch[1].trim();
-          }
-
-          // Extract Gender
-          const genderMatch = text.match(/Gender\s*:?\s*(Male|Female|Other)/i);
-          if (genderMatch?.[1] && !extracted.gender) {
-            extracted.gender = genderMatch[1].toLowerCase();
-          }
-
-          // Extract Aadhaar
-          const aadharMatch = text.match(/Aadhaar\s*:?\s*(\d{12})/i);
-          if (aadharMatch?.[1] && !extracted.aadharNumber) {
-            extracted.aadharNumber = aadharMatch[1];
-          }
-
-          // Extract PAN
-          const panMatch = text.match(/PAN\s*:?\s*([A-Z]{5}\d{4}[A-Z])/i);
-          if (panMatch?.[1] && !extracted.panNumber) {
-            extracted.panNumber = panMatch[1];
-          }
-
-          // Extract State
-          const stateMatch = text.match(/State(?:\sis)?\s*:?\s*([A-Za-z\s]+)/i);
-          if (stateMatch?.[1] && !extracted.state) {
-            extracted.state = stateMatch[1].trim();
-          }
-
-          // Extract Vehicle Details
-          const vehicleTypeMatch = text.match(/Vehicle Type(?:\sis)?\s*:?\s*([A-Za-z\s]+)/i);
-          if (vehicleTypeMatch?.[1] && !extracted.vehicleType) {
-            extracted.vehicleType = vehicleTypeMatch[1].trim();
-          }
-
-          const regNoMatch = text.match(/Registration No(?:\sis)?\s*:?\s*([A-Z0-9\s]+)/i);
-          if (regNoMatch?.[1] && !extracted.registrationNumber) {
-            extracted.registrationNumber = regNoMatch[1].trim();
-          }
-
-          const engineNoMatch = text.match(/Engine No(?:\sis)?\s*:?\s*([A-Z0-9]+)/i);
-          if (engineNoMatch?.[1] && !extracted.engineNumber) {
-            extracted.engineNumber = engineNoMatch[1].trim();
-          }
-
-          const chassisNoMatch = text.match(/Chassis No(?:\sis)?\s*:?\s*([A-Z0-9]+)/i);
-          if (chassisNoMatch?.[1] && !extracted.chassisNo) {
-            extracted.chassisNo = chassisNoMatch[1].trim();
-          }
-
-          const regDateMatch = text.match(/Registration Date(?:\sis)?\s*:?\s*([\d\/\-]+)/i);
-          if (regDateMatch?.[1] && !extracted.registrationDate) {
-            extracted.registrationDate = regDateMatch[1].trim();
-          }
-
-          const colorMatch = text.match(/Color(?:\sis)?\s*:?\s*([A-Za-z\s]+)/i);
-          if (colorMatch?.[1] && !extracted.color) {
-            extracted.color = colorMatch[1].trim();
-          }
-
-          // Extract License Details
-          const licenseNoMatch = text.match(/license number(?:\sis)?\s*:?\s*([A-Z0-9\-]+)/i);
-          if (licenseNoMatch?.[1] && !extracted.licenseNumber) {
-            extracted.licenseNumber = licenseNoMatch[1].trim();
-          }
-
-          const issueDateMatch = text.match(/issue date(?:\sis)?\s*:?\s*([\d\/\-]+)/i);
-          if (issueDateMatch?.[1] && !extracted.licenseIssueDate) {
-            extracted.licenseIssueDate = issueDateMatch[1].trim();
-          }
-
-          const validTillMatch = text.match(/valid till\s*:?\s*([\d\/\-]+)/i);
-          if (validTillMatch?.[1] && !extracted.licenseValidUpto) {
-            extracted.licenseValidUpto = validTillMatch[1].trim();
-          }
-        }
-      }
-
-      // Generate random policy number
-      const randomPolicyNumber = Math.floor(10000 + Math.random() * 90000).toString();
-      extracted.policyNumber = randomPolicyNumber;
-
-      // Apply extracted data to form
-      setFormData((prev) => ({
-        ...prev,
-        ...extracted,
+      const payload = extractedData.map((item) => ({
+        extractAiText: item.extractAiText,
+        id: item.id,
       }));
 
-      // Count filled fields
-      const filledCount = Object.values(extracted).filter(Boolean).length;
-      
-      notification.success({
-        message: "Auto-fill Successful",
-        description: `${filledCount} fields auto-filled from documents. Please review and complete remaining fields.`,
+      console.log("Sending to group-by-person API:", payload);
+
+      const response = await axios.post(
+        `${BASE_URL}/user-service/write/group-by-person`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.data && response.data.length > 0) {
+        console.log("Grouped response:", response.data);
+
+        const firstGroup = response.data[0];
+        const extractedText = firstGroup.documents?.[0]?.extractAiText || "";
+
+        const parseField = (
+          text: string,
+          variations: string[],
+          isAddress = false,
+        ) => {
+          for (const field of variations) {
+            let regex;
+            if (isAddress) {
+              regex = new RegExp(
+                `${field}:\\s*([^,]+(?:,\\s*[^,]+){0,5})(?=\\s*,(?:From Document|Name:|Date of Birth:|Gender:|Mobile Number:|Phone Number:|Email:|PAN|Aadhaar|License|Vehicle|Registration|Engine|Chassis|State:|Color:|Issue Date:|Valid Till:)|$)`,
+                "i",
+              );
+            } else {
+              regex = new RegExp(`${field}:\\s*([^,]+)`, "i");
+            }
+            const match = text.match(regex);
+            if (match) return match[1].trim();
+          }
+          return "";
+        };
+
+        const convertDate = (dateStr: string) => {
+          if (!dateStr) return "";
+          const parts = dateStr.split("/");
+          if (parts.length === 3) {
+            const day = parts[0].padStart(2, "0");
+            const month = parts[1].padStart(2, "0");
+            const year = parts[2];
+            return `${year}-${month}-${day}`;
+          }
+          return dateStr;
+        };
+
+        const mapVehicleType = (type: string) => {
+          const typeMap: { [key: string]: string } = {
+            motorcycle: "bike",
+            scooter: "bike",
+            bike: "bike",
+          };
+          return typeMap[type.toLowerCase()] || type.toLowerCase();
+        };
+
+        setFormData((prev) => ({
+          ...prev,
+          fullName: parseField(extractedText, ["Name"]),
+          fatherName: parseField(extractedText, [
+            "Father's Name",
+            "Father Name",
+            "FatherName",
+          ]),
+          dateOfBirth: convertDate(
+            parseField(extractedText, ["Date of Birth", "DOB"]),
+          ),
+          gender: parseField(extractedText, ["Gender"]).toLowerCase(),
+          phone: parseField(extractedText, [
+            "Phone Number",
+            "Phone No",
+            "Mobile Number",
+            "Mobile No",
+          ]),
+          email: parseField(extractedText, ["email", "email Address"]),
+          aadharNumber: parseField(extractedText, [
+            "Aadhaar Number",
+            "Aadhar Card Number",
+            "Aadhar Number",
+            "Aadhaar No",
+            "Aadhar No",
+          ]),
+          panNumber: parseField(extractedText, ["PAN Number", "PAN No", "PAN"]),
+          address: parseField(
+            extractedText,
+            ["Address Detailed", "Address"],
+            true,
+          ),
+          priorityTask: parseField(
+            extractedText,
+            ["priorityTask", "priority Task", "priority Text", "priority"],
+            true,
+          ),
+          state: parseField(extractedText, ["State"]),
+          vehicleType: mapVehicleType(
+            parseField(extractedText, ["Vehicle Type"]),
+          ),
+          registrationNumber: parseField(extractedText, [
+            "Registration Number",
+            "Registration No",
+            "Registration NO",
+          ]),
+          engineNumber: parseField(extractedText, [
+            "Engine Number",
+            "Engine No",
+            "Engine NO",
+          ]),
+          chassisNo: parseField(extractedText, [
+            "Chassis Number",
+            "Chassis No",
+            "Chassis NO",
+          ]),
+          registrationDate: convertDate(
+            parseField(extractedText, ["Registration Date"]),
+          ),
+          color: parseField(extractedText, [
+            "Color",
+            "Colour",
+            "Color of Vehicle",
+            "Vehicle Color",
+          ]),
+          licenseNumber: parseField(extractedText, [
+            "License Number",
+            "License No",
+            "Licence Number",
+            "Licence No",
+          ]),
+          licenseIssueDate: convertDate(
+            parseField(extractedText, ["Issue Date", "Issued Date"]),
+          ),
+          licenseValidUpto: convertDate(
+            parseField(extractedText, [
+              "License Valid Till",
+              "Valid Till",
+              "Valid Upto",
+              "License Validity",
+            ]),
+          ),
+        }));
+
+        notification.success({
+          message: "Data Extracted Successfully",
+          description: `Information extracted from ${extractedData.length} document(s) and auto-filled in the form.`,
+          placement: "topRight",
+          duration: 4,
+        });
+      }
+    } catch (error) {
+      console.error("Error calling group-by-person API:", error);
+      notification.error({
+        message: "Data Processing Failed",
+        description:
+          "Could not process document data. Please fill the form manually.",
         placement: "topRight",
-        duration: 6,
-      });
-    } else {
-      notification.warning({
-        message: "No Data Extracted",
-        description: "Could not extract any useful information from documents.",
       });
     }
-  } catch (error) {
-    console.error("Group-by-person error:", error);
-    notification.error({
-      message: "Auto-fill Failed",
-      description: "Document processing failed. Please enter details manually in Step 5.",
-    });
-  }
-};
-
+  };
 
   const handleConfirmDocuments = () => {
     setConfirmationModal(false);
@@ -489,7 +576,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                     : "border-slate-200 hover:border-navy-300 hover:shadow-lg hover:transform hover:scale-101"
                 }`}
                 onClick={() => handleInsuranceTypeSelect("life")}
-              
+                bodyStyle={{ padding: "20px 16px" }}
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🛡️</div>
@@ -509,7 +596,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                     : "border-slate-200 hover:border-navy-300 hover:shadow-lg hover:transform hover:scale-101"
                 }`}
                 onClick={() => handleInsuranceTypeSelect("general")}
-                
+                bodyStyle={{ padding: "20px 16px" }}
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🏠</div>
@@ -546,7 +633,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                       : "border-slate-200 hover:border-navy-300 hover:shadow-lg hover:transform hover:scale-101"
                   }`}
                   onClick={() => setInsuranceSubType("motor")}
-                
+                  bodyStyle={{ padding: "16px 12px" }}
                 >
                   <div className="text-center">
                     <div className="text-3xl mb-2">🚗</div>
@@ -566,7 +653,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                       : "border-slate-200 hover:border-navy-300 hover:shadow-lg hover:transform hover:scale-101"
                   }`}
                   onClick={() => setInsuranceSubType("travel")}
-                 
+                  bodyStyle={{ padding: "16px 12px" }}
                 >
                   <div className="text-center">
                     <div className="text-3xl mb-2">✈️</div>
@@ -586,7 +673,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                       : "border-slate-200 hover:border-navy-300 hover:shadow-lg hover:transform hover:scale-101"
                   }`}
                   onClick={() => setInsuranceSubType("commercial")}
-                 
+                  bodyStyle={{ padding: "16px 12px" }}
                 >
                   <div className="text-center">
                     <div className="text-3xl mb-2">🏭</div>
@@ -628,7 +715,6 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                 insurance application
               </p>
             </div>
-
             <div className="max-w-3xl mx-auto mb-6">
               <div className="bg-gradient-to-r from-purple-50 to-gold-50 border-l-4 border-black rounded-xl p-4 shadow-md">
                 <h3 className="font-bold text-lg mb-3 text-purple-700 flex items-center">
@@ -636,56 +722,122 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                   Required Documents
                 </h3>
                 <ul className="space-y-2 text-slate-700">
-                  <li className="flex items-start">
-                    <span className="text-gold-600 mr-2 text-sm font-bold">
-                      •
-                    </span>
-                    <span className="text-sm">
-                      Government-issued ID (PAN, Driver's License, etc.)
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-gold-600 mr-2 text-sm font-bold">
-                      •
-                    </span>
-                    <span className="text-sm">
-                      Proof of Address (Utility Bill, Bank Statement)
-                    </span>
-                  </li>
                   {insuranceSubType === "motor" && (
-                    <li className="flex items-start">
-                      <span className="text-gold-600 mr-2 text-sm font-bold">
-                        •
-                      </span>
-                      <span className="text-sm">
-                        Vehicle Registration Certificate
-                      </span>
-                    </li>
+                    <>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          Vehicle Registration Certificate
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          Government-issued ID (Driver's License)
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">Aadhar & PAN Card</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">Address Proof</span>
+                      </li>
+                    </>
                   )}
+
                   {insuranceSubType === "travel" && (
-                    <li className="flex items-start">
-                      <span className="text-gold-600 mr-2 text-sm font-bold">
-                        •
-                      </span>
-                      <span className="text-sm">Passport Copy</span>
-                    </li>
+                    <>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">Passport Copy</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          Government-issued ID (Aadhar/Driver's License)
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">PAN Card</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">Address Proof</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          Travel Itinerary/Booking Confirmation
+                        </span>
+                      </li>
+                    </>
                   )}
+
                   {insuranceSubType === "commercial" && (
-                    <li className="flex items-start">
-                      <span className="text-gold-600 mr-2 text-sm font-bold">
-                        •
-                      </span>
-                      <span className="text-sm">
-                        Business Registration Documents
-                      </span>
-                    </li>
+                    <>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          Business Registration Documents
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          GST Registration Certificate
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          Government-issued ID of Business Owner
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          PAN Card (Business & Owner)
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-gold-600 mr-2 text-sm font-bold">
+                          •
+                        </span>
+                        <span className="text-sm">
+                          Address Proof (Business Premises)
+                        </span>
+                      </li>
+                    </>
                   )}
-                  <li className="flex items-start">
-                    <span className="text-gold-600 mr-2 text-sm font-bold">
-                      •
-                    </span>
-                    <span className="text-sm">Aadhar Documents</span>
-                  </li>
                 </ul>
               </div>
             </div>
@@ -710,7 +862,6 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                 </Upload>
               </div>
 
-              {/* Uploaded Files (Simple Inline List) */}
               {fileList.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {fileList.map((file, index) => (
@@ -767,36 +918,6 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
         );
 
       case 3:
-        if (loading) {
-          return (
-            <div className="step-content text-center py-12">
-              <Spin
-                size="large"
-                indicator={
-                  <LoadingOutlined
-                    style={{ fontSize: 48, color: "#475569" }}
-                    spin
-                  />
-                }
-              />
-              <h3 className="mt-6 text-2xl font-bold text-purple-700">
-                Processing Your Documents
-              </h3>
-              <p className="mt-2 text-lg text-slate-600">
-                Please wait while we analyze and verify your files...
-              </p>
-              <div className="mt-6 max-w-md mx-auto">
-                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-navy-500 to-navy-600 animate-pulse"
-                    style={{ width: "70%" }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
         return (
           <div className="step-content px-4 py-8">
             <div className="text-center mb-6">
@@ -812,67 +933,52 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
               <div className="mb-5">
                 <h3 className="text-base font-semibold text-navy-800 mb-3 flex items-center">
                   <FileTextOutlined className="mr-2 text-navy-600 text-lg" />
-                  All Documents (
-                  {(showStaticImage && insuranceSubType === "motor" ? 1 : 0) +
-                    fileList.length}
-                  )
+                  All Documents ({fileList.length})
                 </h3>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {showStaticImage && insuranceSubType === "motor" && (
-                    <div
-                      onClick={() => {
-                        setPreviewImage(drivingLicenseImage);
-                        setPreviewVisible(true);
-                      }}
-                      className="border-2 border-slate-200 rounded-lg bg-white 
-         hover:border-navy-400 hover:shadow-md 
-         transition-all duration-200 cursor-pointer group relative"
-                    >
-                      <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                          Email
-                        </span>
-                      </div>
-                      <div className="h-36 bg-slate-50 flex items-center justify-center overflow-hidden">
-                        <img
-                          src={drivingLicenseImage}
-                          alt="Driving License Template"
-                          className="max-h-full max-w-full object-contain 
-             group-hover:scale-105 transition-transform duration-200"
-                        />
-                      </div>
-                      <div className="px-3 py-2 border-t border-slate-200">
-                        <p className="text-xs font-medium text-navy-800 truncate">
-                          Driving_licence.jpeg
-                        </p>
-                      </div>
-                    </div>
-                  )}
                   {fileList.map((file, index) => (
                     <div
                       key={index}
-                      onClick={() => handlePreview(file)}
-                      className="border border-slate-200 rounded-lg bg-white 
-                 hover:border-navy-400 hover:shadow-md 
-                 transition-all duration-200 cursor-pointer group"
+                      className="relative border border-slate-200 rounded-lg bg-white 
+      hover:border-navy-400 hover:shadow-md 
+      transition-all duration-200 group"
                     >
-                      <div className="h-36 bg-slate-50 flex items-center justify-center overflow-hidden">
-                        {file.type?.startsWith("image/") ? (
-                          <img
-                            src={file.thumbUrl || file.url}
-                            alt={file.name}
-                            className="max-h-full max-w-full object-contain 
-                       group-hover:scale-105 transition-transform duration-200"
-                          />
-                        ) : (
-                          <FileTextOutlined className="text-4xl text-navy-500" />
-                        )}
-                      </div>
-                      <div className="px-3 py-2 border-t border-slate-200">
-                        <p className="text-xs font-medium text-navy-800 truncate">
-                          {file.name}
-                        </p>
+                      {/* Delete Button */}
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering preview
+                          handleRemoveFile(file);
+                        }}
+                        className="absolute top-2 right-2 z-10 bg-white/90 shadow-md hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      />
+
+                      {/* Clickable Preview Area */}
+                      <div
+                        onClick={() => handlePreview(file)}
+                        className="cursor-pointer"
+                      >
+                        <div className="h-36 bg-slate-50 flex items-center justify-center overflow-hidden">
+                          {file.type?.startsWith("image/") ? (
+                            <img
+                              src={file.thumbUrl || file.url}
+                              alt={file.name}
+                              className="max-h-full max-w-full object-contain 
+              group-hover:scale-105 transition-transform duration-200"
+                            />
+                          ) : (
+                            <FileTextOutlined className="text-4xl text-navy-500" />
+                          )}
+                        </div>
+                        <div className="px-3 py-2 border-t border-slate-200">
+                          <p className="text-xs font-medium text-navy-800 truncate">
+                            {file.name}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -903,14 +1009,21 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
             <div className="text-center mb-8">
               <div className="bg-navy-600 text-white py-6 px-8 rounded-xl shadow-lg mb-6">
                 <h1 className="text-3xl font-bold mb-2">
-                  🚗 MOTOR INSURANCE APPLICATION FORM
+                  {insuranceSubType === "motor" &&
+                    "🚗 MOTOR INSURANCE APPLICATION FORM"}
+                  {insuranceSubType === "travel" &&
+                    "✈️ TRAVEL INSURANCE APPLICATION FORM"}
+                  {insuranceSubType === "commercial" &&
+                    "🏭 COMMERCIAL INSURANCE APPLICATION FORM"}
                 </h1>
                 <p className="text-lg opacity-90">
-                  ICICOXY Insurance Company Ltd.
+                  BMVOXY Insurance Company Ltd.
                 </p>
                 <div className="mt-3 bg-white/20 rounded-lg px-4 py-2 inline-block">
                   <span className="text-sm font-medium">
-                    Policy No: MI-
+                    Policy No: {insuranceSubType === "motor" && "MI-"}
+                    {insuranceSubType === "travel" && "TI-"}
+                    {insuranceSubType === "commercial" && "CI-"}
                     {formData.policyNumber ||
                       Math.floor(10000 + Math.random() * 90000)}
                   </span>
@@ -918,319 +1031,663 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
               </div>
             </div>
 
+            {loading && (
+              <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-xl p-4 shadow-lg">
+                <div className="flex items-center justify-center">
+                  <Spin
+                    indicator={
+                      <LoadingOutlined
+                        style={{ fontSize: 24, color: "#475569" }}
+                        spin
+                      />
+                    }
+                  />
+                  <span className="ml-3 text-lg font-semibold text-navy-700">
+                    Analyzing documents to verify details…
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="max-w-6xl mx-auto">
               <div className="bg-white rounded-xl shadow-lg border border-slate-200">
-                {/* Personal Details Section */}
-                <div className="border-b border-slate-200 p-6">
-                  <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
-                    <span className="bg-blue-100 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
-                      1
-                    </span>
-                    Personal Details
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Full Name <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.fullName}
-                        onChange={(e) =>
-                          handleFormChange("fullName", e.target.value)
-                        }
-                        placeholder="Enter your full name"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
+                {/* MOTOR INSURANCE FORM */}
+                {insuranceSubType === "motor" && (
+                  <>
+                    {/* Personal Details Section */}
+                    <div className="border-b border-slate-200 p-6">
+                      <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                        <span className="bg-blue-100 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
+                          1
+                        </span>
+                        Personal Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Full Name <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.fullName}
+                            onChange={(e) =>
+                              handleFormChange("fullName", e.target.value)
+                            }
+                            placeholder="Enter your full name"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Father's Name{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.fatherName || ""}
+                            onChange={(e) =>
+                              handleFormChange("fatherName", e.target.value)
+                            }
+                            placeholder="Enter father's name"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Date of Birth{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={(e) =>
+                              handleFormChange("dateOfBirth", e.target.value)
+                            }
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Gender <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            aria-label="gender"
+                            value={formData.gender || ""}
+                            onChange={(e) =>
+                              handleFormChange("gender", e.target.value)
+                            }
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Phone Number <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) =>
+                              handleFormChange("phone", e.target.value)
+                            }
+                            placeholder="+91 XXXXX XXXXX"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Email Address{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) =>
+                              handleFormChange("email", e.target.value)
+                            }
+                            placeholder="your.email@example.com"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Aadhar Number{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.aadharNumber || ""}
+                            onChange={(e) =>
+                              handleFormChange("aadharNumber", e.target.value)
+                            }
+                            placeholder="XXXX XXXX XXXX"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            PAN Number <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.panNumber || ""}
+                            onChange={(e) =>
+                              handleFormChange("panNumber", e.target.value)
+                            }
+                            placeholder="ABCDE1234F"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            State <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.state || ""}
+                            onChange={(e) =>
+                              handleFormChange("state", e.target.value)
+                            }
+                            placeholder="Enter state"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            License Number{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.licenseNumber || ""}
+                            onChange={(e) =>
+                              handleFormChange("licenseNumber", e.target.value)
+                            }
+                            placeholder="Enter driving license number"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            License Issue Date{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="date"
+                            value={formData.licenseIssueDate || ""}
+                            onChange={(e) =>
+                              handleFormChange(
+                                "licenseIssueDate",
+                                e.target.value,
+                              )
+                            }
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            License Valid Up To{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="date"
+                            value={formData.licenseValidUpto || ""}
+                            onChange={(e) =>
+                              handleFormChange(
+                                "licenseValidUpto",
+                                e.target.value,
+                              )
+                            }
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div className="md:col-span-3">
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Complete Address{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <TextArea
+                            size="middle"
+                            value={formData.address}
+                            onChange={(e) =>
+                              handleFormChange("address", e.target.value)
+                            }
+                            rows={2}
+                            placeholder="Enter your complete address with pincode"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Father's Name <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.fatherName || ""}
-                        onChange={(e) =>
-                          handleFormChange("fatherName", e.target.value)
-                        }
-                        placeholder="Enter father's name"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Date of Birth <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={(e) =>
-                          handleFormChange("dateOfBirth", e.target.value)
-                        }
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Gender <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={formData.gender || ""}
-                        onChange={(e) =>
-                          handleFormChange("gender", e.target.value)
-                        }
-                        className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Phone Number <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) =>
-                          handleFormChange("phone", e.target.value)
-                        }
-                        placeholder="+91 XXXXX XXXXX"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Email Address <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          handleFormChange("email", e.target.value)
-                        }
-                        placeholder="your.email@example.com"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Aadhar Number <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.aadharNumber || ""}
-                        onChange={(e) =>
-                          handleFormChange("aadharNumber", e.target.value)
-                        }
-                        placeholder="XXXX XXXX XXXX"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        PAN Number <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.panNumber || ""}
-                        onChange={(e) =>
-                          handleFormChange("panNumber", e.target.value)
-                        }
-                        placeholder="ABCDE1234F"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        State <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.state || ""}
-                        onChange={(e) =>
-                          handleFormChange("state", e.target.value)
-                        }
-                        placeholder="Enter state"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        License Number <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.licenseNumber || ""}
-                        onChange={(e) =>
-                          handleFormChange("licenseNumber", e.target.value)
-                        }
-                        placeholder="Enter driving license number"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        License Issue Date{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        type="date"
-                        value={formData.licenseIssueDate || ""}
-                        onChange={(e) =>
-                          handleFormChange("licenseIssueDate", e.target.value)
-                        }
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        License Valid Up To{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        type="date"
-                        value={formData.licenseValidUpto || ""}
-                        onChange={(e) =>
-                          handleFormChange("licenseValidUpto", e.target.value)
-                        }
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div className="md:col-span-3">
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Complete Address <span className="text-red-500">*</span>
-                      </label>
-                      <TextArea
-                        size="middle"
-                        value={formData.address}
-                        onChange={(e) =>
-                          handleFormChange("address", e.target.value)
-                        }
-                        rows={2}
-                        placeholder="Enter your complete address with pincode"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
 
-                {/* Vehicle Details Section */}
-                <div className="border-b border-slate-200 p-6">
-                  <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
-                    <span className="bg-green-100 text-green-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
-                      2
-                    </span>
-                    Vehicle Details
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Vehicle Type <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={formData.vehicleType || ""}
-                        onChange={(e) =>
-                          handleFormChange("vehicleType", e.target.value)
-                        }
-                        className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      >
-                        <option value="">Select Vehicle Type</option>
-                        <option value="car">Car</option>
-                        <option value="bike">Motorcycle/Scooter</option>
-                        <option value="truck">Truck</option>
-                        <option value="bus">Bus</option>
-                        <option value="auto">Auto Rickshaw</option>
-                        <option value="other">Other</option>
-                      </select>
+                    {/* Vehicle Details Section */}
+                    <div className="border-b border-slate-200 p-6">
+                      <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                        <span className="bg-green-100 text-green-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
+                          2
+                        </span>
+                        Vehicle Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Vehicle Type <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={formData.vehicleType || ""}
+                            aria-label="vehicle Type"
+                            onChange={(e) =>
+                              handleFormChange("vehicleType", e.target.value)
+                            }
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          >
+                            <option value="">Select Vehicle Type</option>
+                            <option value="car">Car</option>
+                            <option value="bike">Motorcycle/Scooter</option>
+                            <option value="truck">Truck</option>
+                            <option value="bus">Bus</option>
+                            <option value="auto">Auto Rickshaw</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Registration Number{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.registrationNumber || ""}
+                            onChange={(e) =>
+                              handleFormChange(
+                                "registrationNumber",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="MH 01 AB 1234"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Engine Number{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.engineNumber || ""}
+                            onChange={(e) =>
+                              handleFormChange("engineNumber", e.target.value)
+                            }
+                            placeholder="Enter engine number"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Chassis Number{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.chassisNo || ""}
+                            onChange={(e) =>
+                              handleFormChange("chassisNo", e.target.value)
+                            }
+                            placeholder="Enter chassis number"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Registration Date{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="date"
+                            value={formData.registrationDate || ""}
+                            onChange={(e) =>
+                              handleFormChange(
+                                "registrationDate",
+                                e.target.value,
+                              )
+                            }
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Vehicle Color
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.color || ""}
+                            onChange={(e) =>
+                              handleFormChange("color", e.target.value)
+                            }
+                            placeholder="Enter vehicle color"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Registration Number{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.registrationNumber || ""}
-                        onChange={(e) =>
-                          handleFormChange("registrationNumber", e.target.value)
-                        }
-                        placeholder="MH 01 AB 1234"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Engine Number <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.engineNumber || ""}
-                        onChange={(e) =>
-                          handleFormChange("engineNumber", e.target.value)
-                        }
-                        placeholder="Enter engine number"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Chassis Number <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.chassisNo || ""}
-                        onChange={(e) =>
-                          handleFormChange("chassisNo", e.target.value)
-                        }
-                        placeholder="Enter chassis number"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Registration Date{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        size="middle"
-                        type="date"
-                        value={formData.registrationDate || ""}
-                        onChange={(e) =>
-                          handleFormChange("registrationDate", e.target.value)
-                        }
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">
-                        Vehicle Color
-                      </label>
-                      <Input
-                        size="middle"
-                        value={formData.color || ""}
-                        onChange={(e) =>
-                          handleFormChange("color", e.target.value)
-                        }
-                        placeholder="Enter vehicle color"
-                        className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
-                {/* Insurance Details Section */}
+                {/* TRAVEL INSURANCE FORM */}
+                {insuranceSubType === "travel" && (
+                  <>
+                    {/* Personal Details Section */}
+                    <div className="border-b border-slate-200 p-6">
+                      <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                        <span className="bg-blue-100 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
+                          1
+                        </span>
+                        Personal Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Full Name <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.fullName}
+                            onChange={(e) =>
+                              handleFormChange("fullName", e.target.value)
+                            }
+                            placeholder="Enter your full name"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Date of Birth{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={(e) =>
+                              handleFormChange("dateOfBirth", e.target.value)
+                            }
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Phone Number <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) =>
+                              handleFormChange("phone", e.target.value)
+                            }
+                            placeholder="+91 XXXXX XXXXX"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Email Address{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) =>
+                              handleFormChange("email", e.target.value)
+                            }
+                            placeholder="your.email@example.com"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            PAN Number <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.panNumber || ""}
+                            onChange={(e) =>
+                              handleFormChange("panNumber", e.target.value)
+                            }
+                            placeholder="ABCDE1234F"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div className="md:col-span-3">
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Complete Address{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <TextArea
+                            size="middle"
+                            value={formData.address}
+                            onChange={(e) =>
+                              handleFormChange("address", e.target.value)
+                            }
+                            rows={2}
+                            placeholder="Enter your complete address with pincode"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Travel Details Section */}
+                    <div className="border-b border-slate-200 p-6">
+                      <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                        <span className="bg-green-100 text-green-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
+                          2
+                        </span>
+                        Travel Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Travel Destination{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.travelDestination || ""}
+                            onChange={(e) =>
+                              handleFormChange(
+                                "travelDestination",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Enter destination country/countries"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Trip Duration
+                          </label>
+                          <Input
+                            size="middle"
+                            placeholder="e.g., 7 days, 2 weeks"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* COMMERCIAL INSURANCE FORM */}
+                {insuranceSubType === "commercial" && (
+                  <>
+                    {/* Business Details Section */}
+                    <div className="border-b border-slate-200 p-6">
+                      <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                        <span className="bg-blue-100 text-blue-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
+                          1
+                        </span>
+                        Business Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Business Name{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.businessName || ""}
+                            onChange={(e) =>
+                              handleFormChange("businessName", e.target.value)
+                            }
+                            placeholder="Enter registered business name"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Business PAN <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.panNumber || ""}
+                            onChange={(e) =>
+                              handleFormChange("panNumber", e.target.value)
+                            }
+                            placeholder="Business PAN Number"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Business Type
+                          </label>
+                          <select className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-navy-500 text-sm" 
+                          aria-label="Business Type">
+                            <option value="">Select Business Type</option>
+                            <option value="retail">Retail</option>
+                            <option value="manufacturing">Manufacturing</option>
+                            <option value="services">Services</option>
+                            <option value="wholesale">Wholesale</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div className="md:col-span-3">
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Business Address{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <TextArea
+                            size="middle"
+                            value={formData.address}
+                            onChange={(e) =>
+                              handleFormChange("address", e.target.value)
+                            }
+                            rows={2}
+                            placeholder="Enter business premises address"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Owner Details Section */}
+                    <div className="border-b border-slate-200 p-6">
+                      <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                        <span className="bg-green-100 text-green-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
+                          2
+                        </span>
+                        Business Owner Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Owner Name <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            value={formData.fullName}
+                            onChange={(e) =>
+                              handleFormChange("fullName", e.target.value)
+                            }
+                            placeholder="Enter owner's full name"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Date of Birth{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={(e) =>
+                              handleFormChange("dateOfBirth", e.target.value)
+                            }
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Phone Number <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) =>
+                              handleFormChange("phone", e.target.value)
+                            }
+                            placeholder="+91 XXXXX XXXXX"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">
+                            Email Address{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            size="middle"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) =>
+                              handleFormChange("email", e.target.value)
+                            }
+                            placeholder="owner.email@example.com"
+                            className="rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Insurance Coverage Details - Common for all */}
                 <div className="border-b border-slate-200 p-6">
                   <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
                     <span className="bg-purple-100 text-purple-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
-                      3
+                      {insuranceSubType === "motor"
+                        ? "3"
+                        : insuranceSubType === "travel"
+                          ? "3"
+                          : "3"}
                     </span>
                     Insurance Coverage Details
                   </h3>
@@ -1244,6 +1701,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                         onChange={(e) =>
                           handleFormChange("insurancePeriod", e.target.value)
                         }
+                        aria-label="Insurance Period"
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-navy-500 text-sm"
                       >
                         <option value="">Select Insurance Period</option>
@@ -1261,7 +1719,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                       </label>
                       <Input
                         size="middle"
-                        value={`MI-${formData.policyNumber || Math.floor(10000 + Math.random() * 90000)}`}
+                        value={`${insuranceSubType === "motor" ? "MI" : insuranceSubType === "travel" ? "TI" : "CI"}-${formData.policyNumber || Math.floor(10000 + Math.random() * 90000)}`}
                         disabled
                         className="rounded-lg border border-slate-300 bg-slate-50 text-sm"
                       />
@@ -1269,20 +1727,20 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                   </div>
                 </div>
 
-                {/* Terms and Conditions */}
+                {/* Terms and Conditions - Common for all */}
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
                     <span className="bg-orange-100 text-orange-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">
-                      4
+                      {insuranceSubType === "motor" ? "4" : "4"}
                     </span>
                     Terms & Conditions
                   </h3>
                   <div className="bg-slate-50 rounded-lg p-4 mb-4 max-h-40 overflow-y-auto">
                     <div className="text-sm text-slate-700 space-y-2">
                       <p>
-                        <strong>1. Policy Coverage:</strong> This motor
-                        insurance policy covers third-party liability, own
-                        damage, and personal accident as per IRDAI guidelines.
+                        <strong>1. Policy Coverage:</strong> This{" "}
+                        {insuranceSubType} insurance policy covers as per IRDAI
+                        guidelines and terms mentioned in the policy document.
                       </p>
                       <p>
                         <strong>2. Premium Payment:</strong> Premium must be
@@ -1296,26 +1754,21 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                       </p>
                       <p>
                         <strong>4. Policy Validity:</strong> Policy is valid
-                        only for the selected period and registered vehicle
-                        mentioned in the application.
+                        only for the selected period mentioned in the
+                        application.
                       </p>
                       <p>
-                        <strong>5. Exclusions:</strong> Damage due to war,
-                        nuclear risks, driving under influence, and unlicensed
-                        driving are not covered.
-                      </p>
-                      <p>
-                        <strong>6. Renewal:</strong> Policy can be renewed
+                        <strong>5. Renewal:</strong> Policy can be renewed
                         before expiry date. Late renewal may attract additional
                         charges.
                       </p>
                       <p>
-                        <strong>7. Cancellation:</strong> Policy can be
+                        <strong>6. Cancellation:</strong> Policy can be
                         cancelled as per IRDAI guidelines with applicable refund
                         terms.
                       </p>
                       <p>
-                        <strong>8. Dispute Resolution:</strong> Any disputes
+                        <strong>7. Dispute Resolution:</strong> Any disputes
                         will be subject to jurisdiction of courts in Mumbai,
                         Maharashtra.
                       </p>
@@ -1325,7 +1778,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
                     <input
                       type="checkbox"
                       id="termsAccepted"
-                      checked={formData.termsAccepted || true}
+                      checked={formData.termsAccepted || false}
                       onChange={(e) =>
                         handleFormChange(
                           "termsAccepted",
@@ -1349,7 +1802,6 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
             </div>
           </div>
         );
-
       case 5:
         if (applicationSubmitted) {
           return (
@@ -1422,57 +1874,246 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
               </p>
             </div>
 
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <div className="bg-white rounded-xl shadow-lg p-8 border border-slate-200">
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1 font-medium">
-                        Full Name
-                      </p>
-                      <p className="font-medium text-navy-800 text-lg">
-                        {formData.fullName}
-                      </p>
+                  <div className="border-b border-slate-200 pb-4">
+                    <h3 className="text-lg font-bold text-navy-800 mb-3">
+                      Personal Details
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Full Name
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.fullName}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Father's Name
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.fatherName}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Date of Birth
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.dateOfBirth}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Gender
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.gender
+                            ? formData.gender.charAt(0).toUpperCase() +
+                              formData.gender.slice(1)
+                            : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Phone
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.phone}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Email
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.email}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Aadhar Number
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.aadharNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          PAN Number
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.panNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          State
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.state}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          License Number
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.licenseNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          License Issue Date
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.licenseIssueDate}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          License Valid Till
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.licenseValidUpto}
+                        </p>
+                      </div>
+                      <div className="col-span-2 md:col-span-3">
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Address
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.address}
+                        </p>
+                      </div>
+                      {formData.priorityTask && (
+                        <div className="col-span-2 md:col-span-3">
+                          <p className="text-sm text-slate-500 mb-1 font-medium">
+                            Priority Task
+                          </p>
+                          <p className="font-medium text-navy-800">
+                            {formData.priorityTask}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1 font-medium">
-                        Email
-                      </p>
-                      <p className="font-medium text-navy-800 text-lg">
-                        {formData.email}
-                      </p>
+                  </div>
+
+                  <div className="border-b border-slate-200 pb-4">
+                    <h3 className="text-lg font-bold text-navy-800 mb-3">
+                      Vehicle Details
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Vehicle Type
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.vehicleType
+                            ? formData.vehicleType.charAt(0).toUpperCase() +
+                              formData.vehicleType.slice(1)
+                            : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Registration Number
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.registrationNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Engine Number
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.engineNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Chassis Number
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.chassisNo}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Registration Date
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.registrationDate}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Vehicle Color
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.color || "N/A"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1 font-medium">
-                        Phone
-                      </p>
-                      <p className="font-medium text-navy-800 text-lg">
-                        {formData.phone}
-                      </p>
+                  </div>
+
+                  <div className="border-b border-slate-200 pb-4">
+                    <h3 className="text-lg font-bold text-navy-800 mb-3">
+                      Insurance Details
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Insurance Type
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {insuranceSubType.charAt(0).toUpperCase() +
+                            insuranceSubType.slice(1)}{" "}
+                          Insurance
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Insurance Period
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {formData.insurancePeriod
+                            ? formData.insurancePeriod.charAt(0).toUpperCase() +
+                              formData.insurancePeriod.slice(1)
+                            : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Policy Number
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          MI-{formData.policyNumber}
+                        </p>
+                      </div>
+                      <div className="col-span-2 md:col-span-3">
+                        <p className="text-sm text-slate-500 mb-1 font-medium">
+                          Documents Uploaded
+                        </p>
+                        <p className="font-medium text-navy-800">
+                          {fileList.length} files
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1 font-medium">
-                        Insurance Type
-                      </p>
-                      <p className="font-medium text-navy-800 text-lg">
-                        {insuranceSubType.charAt(0).toUpperCase() +
-                          insuranceSubType.slice(1)}
-                      </p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-sm text-slate-500 mb-1 font-medium">
-                        Address
-                      </p>
-                      <p className="font-medium text-navy-800 text-lg">
-                        {formData.address}
-                      </p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-sm text-slate-500 mb-1 font-medium">
-                        Documents Uploaded
-                      </p>
-                      <p className="font-medium text-navy-800 text-lg">
-                        {fileList.length} files
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-navy-800 mb-3">
+                      Terms & Conditions
+                    </h3>
+                    <div className="flex items-center">
+                      <CheckCircleOutlined className="text-green-500 text-xl mr-2" />
+                      <p className="font-medium text-navy-800">
+                        Terms and conditions accepted
                       </p>
                     </div>
                   </div>
@@ -1500,7 +2141,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-navy-800 mb-2">
-            Welcome ICICOXY Insurance
+            Welcome OXY Insurance
           </h1>
           <p className="text-teal-700 text-lg font-medium">
             Your Trusted Insurance Partner
@@ -1555,7 +2196,7 @@ const callGroupByPersonApi = async (extractedData: any[]) => {
               {currentStep === 6 ? "Submit Application" : "Next →"}
             </Button>
           </div>
-        )}
+        )}``
 
         {/* Confirmation Modal */}
         <Modal

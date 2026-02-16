@@ -21,6 +21,8 @@ import GoldRatesPage from "./components/GoldRatesPage";
 import GoldSilverTargets from "./components/GoldSilverTargets";
 import FreelancerList from "./components/FreelancerList";
 import FreelancersByUserId from "./components/FreelancersByUserId";
+import DataReading from "./ChatScreen/DataReading";
+
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -514,6 +516,7 @@ const App: React.FC = () => {
               <Route path="/goldrates" element={<GoldRates />} />
               <Route path="/smartlock" element={<GoldSilverTargets />} />
               <Route path="/allgoldrates" element={<GoldRatesPage />} />
+              <Route path="/oxyinsurance" element={<DataReading />} />
               <Route
                 path="/ninetydayplan"
                 element={
