@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ExternalLink } from "lucide-react";
+
 import { fetchCampaigns, Campaign } from "./servicesapi";
 import BASE_URL from "../Config";
-
+type Freelancer = {
+  id: string;
+  email: string;
+  userId: string;
+  perHour: number;
+  perDay: number;
+  perWeek: number;
+  perMonth: number;
+  perYear: number;
+  openForFreeLancing: "YES" | "NO" | string;
+  amountNegotiable: "YES" | "NO" | string;
+  resumeUrl: string;
+};
 interface Job {
   companyLogo: string;
   jobDesignation: string;
@@ -37,6 +49,8 @@ const ServicesSlider: React.FC = () => {
 
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
+  const [showAllFreelancers, setShowAllFreelancers] = useState(false);
 
   const accessToken = localStorage.getItem("accessToken");
 
@@ -47,7 +61,7 @@ const ServicesSlider: React.FC = () => {
         {
           method: "GET",
           headers: {
-            accept: "*/*",
+            authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -64,7 +78,76 @@ const ServicesSlider: React.FC = () => {
     }
   };
 
-  // ✅ Updated services with new #4 and Legal kept as #5
+  const isGoodFreelancerRow = (f: Freelancer) => {
+    // ✅ must have userId
+    if (!f?.userId) return false;
+
+    // ✅ show only if they are open for freelancing
+    if ((f.openForFreeLancing || "").toUpperCase() !== "YES") return false;
+
+    // ✅ must have at least one valid rate
+    const hasRate =
+      Number(f.perHour) > 0 ||
+      Number(f.perDay) > 0 ||
+      Number(f.perWeek) > 0 ||
+      Number(f.perMonth) > 0 ||
+      Number(f.perYear) > 0;
+
+    if (!hasRate) return false;
+
+    return true;
+  };
+  const fetchFreelancers = async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/ai-service/agent/getAllFreeLancers`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
+          },
+        },
+      );
+
+      const freelancersData = await response.json();
+
+      if (Array.isArray(freelancersData)) {
+        // ✅ filter junk + keep only clean rows
+        const cleaned: Freelancer[] = freelancersData
+          .filter(Boolean)
+          .filter((row: any) => typeof row === "object")
+          .map((row: any) => ({
+            id: String(row.id || ""),
+            email: String(row.email || ""),
+            userId: String(row.userId || ""),
+            perHour: Number(row.perHour || 0),
+            perDay: Number(row.perDay || 0),
+            perWeek: Number(row.perWeek || 0),
+            perMonth: Number(row.perMonth || 0),
+            perYear: Number(row.perYear || 0),
+            openForFreeLancing: String(row.openForFreeLancing || ""),
+            amountNegotiable: String(row.amountNegotiable || ""),
+            resumeUrl: String(row.resumeUrl || ""),
+          }))
+          .filter(isGoodFreelancerRow)
+          // ✅ nice sorting: highest perHour first
+          .sort((a, b) => (b.perHour || 0) - (a.perHour || 0));
+
+        setFreelancers(cleaned);
+      } else {
+        console.warn(
+          "Freelancers API did not return an array:",
+          freelancersData,
+        );
+        setFreelancers([]);
+      }
+    } catch (error) {
+      console.error("Error fetching freelancers:", error);
+      setFreelancers([]);
+    }
+  };
+
   const services = [
     {
       // You can replace this image with your preferred AI Agents artwork later
@@ -182,8 +265,13 @@ const ServicesSlider: React.FC = () => {
       await fetchJobs();
     };
 
+    const loadFreelancers = async () => {
+      await fetchFreelancers();
+    };
+
     loadCampaigns();
     loadJobs();
+    loadFreelancers();
   }, []);
 
   const handleServiceClick = (service: any) => {
@@ -294,6 +382,9 @@ const ServicesSlider: React.FC = () => {
       transition: { duration: 0.5 },
     },
   };
+  const displayedFreelancers = showAllFreelancers
+    ? freelancers
+    : freelancers.slice(0, 5);
 
   return (
     <section className="py-10 bg-purple-50  min-h-screen  px-4 sm:px-6 lg:px-8 bg-white">
@@ -655,6 +746,178 @@ flex flex-col border border-gray-100 m-2"
           <div className="text-center py-5">
             <p className="text-gray-500 text-lg">
               No jobs available at the moment.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <hr className="p-2 mt-12"></hr>
+
+      <div className="relative z-10">
+        <div className="flex flex-col gap-6 sm:flex-row sm:justify-between sm:items-center mb-10">
+          <div className="text-center sm:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+            >
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
+                Our <span className="text-yellow-500">Freelancers</span>
+              </h2>
+              <div className="w-28 sm:w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full" />
+            </motion.div>
+          </div>
+
+          {freelancers.length > 3 && (
+            <motion.button
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.35)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full sm:w-auto bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-6 sm:px-8 py-3.5 rounded-full
+             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => navigate("/freelancers")}
+            >
+              View All Freelancers
+              <span className="ml-2 inline-block">→</span>
+            </motion.button>
+          )}
+        </div>
+
+        {freelancers.length > 0 ? (
+          <motion.div
+            className="
+        w-full
+        px-0
+        grid grid-cols-1
+        gap-4
+        sm:grid-cols-2 sm:gap-5
+        lg:grid-cols-3 lg:gap-6
+        xl:grid-cols-5
+      "
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {displayedFreelancers.map((f, index) => {
+              const lightBackgroundColors = [
+                "bg-slate-50",
+                "bg-emerald-50",
+                "bg-violet-50",
+                "bg-rose-50",
+                "bg-amber-50",
+                "bg-cyan-50",
+                "bg-orange-50",
+                "bg-stone-50",
+              ];
+
+              const bgColor =
+                lightBackgroundColors[index % lightBackgroundColors.length];
+              const displayEmail = f.email?.trim()
+                ? f.email
+                : "Email not provided";
+
+              const isNegotiable =
+                String(f.amountNegotiable).toUpperCase() === "YES";
+
+              return (
+                <motion.div
+                  key={f.id}
+                  variants={itemVariants}
+                  className="
+              group
+              w-full min-w-0
+              bg-white rounded-2xl overflow-hidden
+              border border-gray-100
+              shadow-sm hover:shadow-2xl
+              transition-all duration-300
+              transform hover:-translate-y-1
+              flex flex-col
+            "
+                >
+                  {/* Top icon block */}
+                  <div className="pt-6 pb-4 flex justify-center">
+                    <div className="w-28 sm:w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
+                      <div className="text-3xl">🧑‍💻</div>
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="flex justify-center px-4 pb-3">
+                    <div className={`${bgColor} py-2 px-4 rounded-xl w-full`}>
+                      <span
+                        className="
+                    block text-sm font-semibold text-gray-700 text-center
+                    break-words
+                    line-clamp-2
+                  "
+                        title={displayEmail}
+                      >
+                        {displayEmail}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Rates */}
+                  <div className="px-4 pb-2 text-center space-y-1">
+                    <div className="text-sm font-bold text-gray-700 bg-gray-50 py-2 px-3 rounded-lg">
+                      ₹ {f.perHour}/Hr
+                      {Number(f.perDay) > 0 ? ` • ₹ ${f.perDay}/Day` : ""}
+                    </div>
+
+                    <div className="text-xs text-gray-600">
+                      {Number(f.perWeek) > 0
+                        ? `Week: ₹${f.perWeek}${Number(f.perMonth) > 0 ? " • " : ""}`
+                        : ""}
+                      {Number(f.perMonth) > 0 ? `Month: ₹${f.perMonth}` : ""}
+                    </div>
+
+                    <div className="text-xs text-gray-600">
+                      Negotiable:{" "}
+                      <span
+                        className={`font-semibold ${isNegotiable ? "text-green-600" : "text-red-600"}`}
+                      >
+                        {isNegotiable ? "YES" : "NO"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Resume Button */}
+                  <div className="px-4 pb-5 mt-auto flex justify-center">
+                    <a
+                      href={f.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
+                  w-full
+                  sm:w-auto
+                  justify-center
+                  bg-blue-100 text-blue-700 hover:bg-blue-200
+                  py-3 px-6 rounded-full
+                  font-semibold text-sm
+                  transition-all duration-200
+                  inline-flex items-center gap-2
+                  focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+                "
+                      onClick={(e) => {
+                        if (!f.resumeUrl) {
+                          e.preventDefault();
+                          alert("Resume file is invalid or not available.");
+                        }
+                      }}
+                    >
+                      View Resume
+                    </a>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-gray-500 text-lg">
+              No freelancers available at the moment.
             </p>
           </div>
         )}

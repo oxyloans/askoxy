@@ -239,19 +239,19 @@ const Footer: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             <Link
-              to="/bharath-aistore"
+              to="/termsandconditions"
               className="text-gray-600 hover:text-gray-900"
             >
               Terms &amp; Conditions
             </Link>
             <Link
-              to="/bharath-aistore"
+              to="/privacypolicy"
               className="text-gray-600 hover:text-gray-900"
             >
               Privacy Policy
             </Link>
             <Link
-              to="/bharath-aistore"
+              to="/contactus"
               className="text-gray-600 hover:text-gray-900"
             >
               Contact Us

@@ -272,7 +272,7 @@ const Footer: React.FC = () => {
         {/* Footer Bottom */}
         <div className="border-t border-gray-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm text-gray-600">
           <span>
-            © {currentYear} <span className="font-medium">ASKOXY.AI</span>. All
+            © 2024-{currentYear} <span className="font-medium">ASKOXY.AI</span>. All
             rights reserved.
           </span>
           <span>CIN: U72900TG2020PTC142391</span>

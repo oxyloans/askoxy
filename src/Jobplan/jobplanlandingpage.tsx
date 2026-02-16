@@ -3,6 +3,7 @@ import DayPlan from "../assets/img/90dayplanflow.png";
 import { useNavigate } from "react-router-dom";
 import Logo1 from "../assets/img/oxy1.png";
 import Logo2 from "../assets/img/oxybrick.png";
+import Logo from "../assets/img/askoxylogonew.png"
 type CTAConfig = {
   primaryLabel?: string;
   primaryHref?: string;
@@ -727,106 +728,116 @@ export default function JobTraining90DaysPage({
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-3"
-          >
-            <GradientIconBadge size={40}>
-              <IconSpark className="h-5 w-5" />
-            </GradientIconBadge>
+  <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
+    <button onClick={() => navigate("/")} className="flex items-center gap-3">
+      {/* ✅ ASKOXY Logo (responsive) */}
+      <img
+        src={Logo} // import Logo from "../assets/img/askoxylogonew.png";
+        alt="ASKOXY.AI"
+        className="
+          h-10 w-auto
+          sm:h-11
+          md:h-12
+          object-contain
+          rounded-md
+        "
+      />
 
-            <div className="leading-tight">
-              <p className="text-sm font-bold text-slate-900">{brandName}</p>
-              <p className="text-xs text-slate-600">90 days to job-ready</p>
-            </div>
-          </button>
+      {/* ✅ Keep your gradient icon next to logo (optional) */}
+      <GradientIconBadge size={40} >
+        <IconSpark className="h-5 w-5" />
+      </GradientIconBadge>
 
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-8 text-sm text-slate-700 md:flex">
-            <a href="#what-you-get" className="transition hover:text-slate-900">
-              Benefits
-            </a>
-            <a href="#outcomes" className="transition hover:text-slate-900">
-              Results
-            </a>
-            <a href="#faq" className="transition hover:text-slate-900">
-              FAQ
-            </a>
-          </nav>
+      <div className="leading-tight">
+        <p className="text-sm font-bold text-slate-900">{brandName}</p>
+        <p className="text-xs text-slate-600">90 days to job-ready</p>
+      </div>
+    </button>
 
-          <div className="flex items-center gap-2">
-            {/* Desktop CTA */}
-            <div className="hidden md:flex items-center gap-2">
-              {/* ✅ Join button now routes based on login */}
-              <PrimaryBtn href={joinProgramHref} label={cta.primaryLabel} />
-            </div>
+    {/* Desktop nav */}
+    <nav className="hidden items-center gap-8 text-sm text-slate-700 md:flex">
+      <a href="#what-you-get" className="transition hover:text-slate-900">
+        Benefits
+      </a>
+      <a href="#outcomes" className="transition hover:text-slate-900">
+        Results
+      </a>
+      <a href="#faq" className="transition hover:text-slate-900">
+        FAQ
+      </a>
+    </nav>
 
-            {/* Mobile menu button */}
-            <button
-              type="button"
-              onClick={() => setMobileNavOpen((v) => !v)}
-              className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-2xl border bg-white"
-              style={{ borderColor: `${C2}66` }}
-              aria-label="Open menu"
-            >
-              {mobileNavOpen ? (
-                <IconX className="h-5 w-5" style={{ color: C3 }} />
-              ) : (
-                <IconMenu className="h-5 w-5" style={{ color: C3 }} />
-              )}
-            </button>
-          </div>
-        </div>
+    <div className="flex items-center gap-2">
+      {/* Desktop CTA */}
+      <div className="hidden md:flex items-center gap-2">
+        <PrimaryBtn href={joinProgramHref} label={cta.primaryLabel} />
+      </div>
 
-        {/* Mobile nav panel */}
+      {/* Mobile menu button */}
+      <button
+        type="button"
+        onClick={() => setMobileNavOpen((v) => !v)}
+        className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-2xl border bg-white"
+        style={{ borderColor: `${C2}66` }}
+        aria-label="Open menu"
+      >
         {mobileNavOpen ? (
-          <div className="md:hidden border-t border-slate-200 bg-white/95">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 grid gap-2 text-sm">
-              <a
-                onClick={() => setMobileNavOpen(false)}
-                href="#what-you-get"
-                className="rounded-xl px-3 py-2 hover:bg-slate-50"
-              >
-                Benefits
-              </a>
-              <a
-                onClick={() => setMobileNavOpen(false)}
-                href="#how-it-works"
-                className="rounded-xl px-3 py-2 hover:bg-slate-50"
-              >
-                Process
-              </a>
-              <a
-                onClick={() => setMobileNavOpen(false)}
-                href="#outcomes"
-                className="rounded-xl px-3 py-2 hover:bg-slate-50"
-              >
-                Results
-              </a>
-              <a
-                onClick={() => setMobileNavOpen(false)}
-                href="#faq"
-                className="rounded-xl px-3 py-2 hover:bg-slate-50"
-              >
-                FAQ
-              </a>
-              <a
-                onClick={() => setMobileNavOpen(false)}
-                href="#partners"
-                className="rounded-xl px-3 py-2 hover:bg-slate-50"
-              >
-                Partners
-              </a>
+          <IconX className="h-5 w-5" style={{ color: C3 }} />
+        ) : (
+          <IconMenu className="h-5 w-5" style={{ color: C3 }} />
+        )}
+      </button>
+    </div>
+  </div>
 
-              <div className="pt-2 flex gap-2">
-                {/* ✅ Join button now routes based on login */}
-                <PrimaryBtn href={joinProgramHref} label={cta.primaryLabel} />
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </header>
+  {/* Mobile nav panel */}
+  {mobileNavOpen ? (
+    <div className="md:hidden border-t border-slate-200 bg-white/95">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 grid gap-2 text-sm">
+        <a
+          onClick={() => setMobileNavOpen(false)}
+          href="#what-you-get"
+          className="rounded-xl px-3 py-2 hover:bg-slate-50"
+        >
+          Benefits
+        </a>
+        <a
+          onClick={() => setMobileNavOpen(false)}
+          href="#how-it-works"
+          className="rounded-xl px-3 py-2 hover:bg-slate-50"
+        >
+          Process
+        </a>
+        <a
+          onClick={() => setMobileNavOpen(false)}
+          href="#outcomes"
+          className="rounded-xl px-3 py-2 hover:bg-slate-50"
+        >
+          Results
+        </a>
+        <a
+          onClick={() => setMobileNavOpen(false)}
+          href="#faq"
+          className="rounded-xl px-3 py-2 hover:bg-slate-50"
+        >
+          FAQ
+        </a>
+        <a
+          onClick={() => setMobileNavOpen(false)}
+          href="#partners"
+          className="rounded-xl px-3 py-2 hover:bg-slate-50"
+        >
+          Partners
+        </a>
+
+        <div className="pt-2 flex gap-2">
+          <PrimaryBtn href={joinProgramHref} label={cta.primaryLabel} />
+        </div>
+      </div>
+    </div>
+  ) : null}
+</header>
+
 
       {/* Hero */}
       <section

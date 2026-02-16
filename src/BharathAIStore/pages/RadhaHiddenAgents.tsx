@@ -165,6 +165,28 @@ const staticAgents: Assistant[] = [
     hideAgent: true,
     link: "/asst_V41gWq69vrfVyCc4rTMScxIE/d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0/oxygroup-task-management",
   },
+  {
+    id: "AI SkillPulse",
+    assistantId: "AI SkillPulse",
+    agentId: "AI SkillPulse",
+    name: "AI SkillPulse",
+    description:
+      "As an AI Digital Marketing Specialist, I am dedicated to enhancing skill sets while streamlining marketing processes. My goal is to automate and optimize digital strategies, ensuring creative and data-driven solutions for a more efficient and impactful marketing journey. — for AI Digital Marketing Specialist, to Automate, aimed at Upskilling.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/asst_98JoVhODSw0lZ85v9UsnQMGh/b650b8a5-e1a5-49ed-b236-d6ef6cf8d6c4/AI%20SkillPulse",
+  },
+  {
+    id: "Rotary District 3150 AI Agent",
+    assistantId: "Rotary District 3150 AI Agent",
+    agentId: "Rotary District 3150 AI Agent",
+    name: "Rotary District 3150 AI Agent",
+    description:
+      "Expertly organizing projects with precision, this Project Manager ensures flawless documentation accuracy. By streamlining processes and maintaining meticulous records, they elevate project success, ensuring all details are captured for seamless execution and accountability. — for Project Manager, to Documentation Accuracy, aimed at Organizing.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/asst_Sfq4w0aKDtLKXMVFfZxhb6mJ/1b9efd8e-b77a-4d2c-976e-c29697ca3b0c/Rotary%20District5203150",
+  },
 ];
 
 // ------------------ Page ------------------

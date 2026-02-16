@@ -15,7 +15,7 @@ import s10 from "../assets/img/s10.png";
 import s11 from "../assets/img/s11.png";
 import s12 from "../assets/img/s12.png";
 import s13 from "../assets/img/s13.png";
-import s14 from "../assets/img/freelancer.png";
+import s16 from "../assets/img/s16.png";
 
 import leftImage from "../assets/img/megahero.png";
 
@@ -95,13 +95,13 @@ export default function SuperOurApp() {
   // Row-3: Nyaya GPT, GLMS, CA&CS, Study Abroad
   // ❌ Crypto removed from grid (now separate button below)
   const tiles: Tile[] = [
-    { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
-    // {
-    //   id: "s14",
-    //   src: s14,
-    //   route: "/freelancers",
-    //   title: "Freelance Marketplace",
-    // },
+    // { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
+    {
+      id: "s16",
+      src: s16,
+      route: "/freelancers",
+      title: "Freelance Marketplace",
+    },
     {
       id: "s7",
       src: s7,
