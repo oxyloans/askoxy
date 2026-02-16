@@ -453,10 +453,9 @@ const App: React.FC = () => {
       // Employee/Internal routes
       currentPath.startsWith("/userPanelLayout") ||
       currentPath.startsWith("/goldrates") ||
-      currentPath.startsWith("/all-different-gold-rates") ||
-      currentPath.startsWith("/allgoldrates") ||
-      currentPath.startsWith("/smartlock") ||
-      currentPath.startsWith("/freelancers") ||
+       currentPath.startsWith("/all-different-gold-rates") ||
+       currentPath.startsWith("/allgoldrates") ||
+       currentPath.startsWith("/smartlock")||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
