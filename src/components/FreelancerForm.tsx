@@ -323,8 +323,8 @@ const FreelancerForm: React.FC = () => {
                     <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#7e22ce", margin: 0 }}>How much would you like to charge (in INR)?</h3>
                   </div>
 
-                  {/* Rate Inputs - All in one line */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "12px" }}>
+                  {/* Rate Inputs - Mobile responsive */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
                     {(['hour', 'day', 'week', 'month', 'year'] as RatePeriod[]).map(period => (
                       <div key={period} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                         <label style={{ fontSize: "12px", fontWeight: "500", color: "#6b7280" }}>

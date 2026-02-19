@@ -344,6 +344,23 @@ const ServicesSlider: React.FC = () => {
       }
     }
   };
+  const getNameFromEmail = (email?: string) => {
+    if (!email) return "--";
+
+    const cleanEmail = email.replace("mailto:", "").trim();
+    const namePart = cleanEmail.split("@")[0] || "";
+
+    const noNumbers = namePart.replace(/[0-9]/g, "");
+    const onlyLettersSpace = noNumbers.replace(/[^a-zA-Z]/g, " ");
+
+    const formatted = onlyLettersSpace
+      .split(" ")
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+
+    return formatted || "Freelancer";
+  };
 
   // Animation variants
   const containerVariants = {
@@ -385,6 +402,15 @@ const ServicesSlider: React.FC = () => {
   const displayedFreelancers = showAllFreelancers
     ? freelancers
     : freelancers.slice(0, 5);
+const fmtMoney = (n: number) =>
+  new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(
+    Number(n || 0),
+  );
+
+const rateLabel = (n: number) => {
+  const val = Number(n || 0);
+  return val > 0 ? `₹${fmtMoney(val)}` : "Not Selected";
+};
 
   return (
     <section className="py-10 bg-purple-50  min-h-screen  px-4 sm:px-6 lg:px-8 bg-white">
@@ -820,6 +846,10 @@ flex flex-col border border-gray-100 m-2"
 
               const isNegotiable =
                 String(f.amountNegotiable).toUpperCase() === "YES";
+              const isOpenForFreelancer =
+                String(f.openForFreeLancing).toUpperCase() === "YES";
+              const displayName = getNameFromEmail(f.email);
+              const hasValue = (n: number) => n && n > 0;
 
               return (
                 <motion.div
@@ -843,37 +873,62 @@ flex flex-col border border-gray-100 m-2"
                     </div>
                   </div>
 
-                  {/* Email */}
-                  <div className="flex justify-center px-4 pb-3">
-                    <div className={`${bgColor} py-2 px-4 rounded-xl w-full`}>
+                  {/* Name & Status */}
+                  <div className="px-4 pb-3 space-y-2">
+                    <div className="text-center">
                       <span
-                        className="
-                    block text-sm font-semibold text-gray-700 text-center
-                    break-words
-                    line-clamp-2
-                  "
-                        title={displayEmail}
+                        className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${isOpenForFreelancer ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
                       >
-                        {displayEmail}
+                        {isOpenForFreelancer
+                          ? "Open for freelance work"
+                          : "Not available for freelance work"}
                       </span>
                     </div>
                   </div>
 
                   {/* Rates */}
-                  <div className="px-4 pb-2 text-center space-y-1">
-                    <div className="text-sm font-bold text-gray-700 bg-gray-50 py-2 px-3 rounded-lg">
-                      ₹ {f.perHour}/Hr
-                      {Number(f.perDay) > 0 ? ` • ₹ ${f.perDay}/Day` : ""}
+                  {/* Rates */}
+                  <div className="px-4 pb-3 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-slate-50 rounded-lg p-2 text-center">
+                        <div className="text-xs text-gray-600">Hourly</div>
+                        <div className="text-sm font-bold text-gray-900">
+                          {rateLabel(f.perHour)}
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-50 rounded-lg p-2 text-center">
+                        <div className="text-xs text-gray-600">Daily</div>
+                        <div className="text-sm font-bold text-gray-900">
+                          {rateLabel(f.perDay)}
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-50 rounded-lg p-2 text-center">
+                        <div className="text-xs text-gray-600">Weekly</div>
+                        <div className="text-sm font-bold text-gray-900">
+                          {rateLabel(f.perWeek)}
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-50 rounded-lg p-2 text-center">
+                        <div className="text-xs text-gray-600">Monthly</div>
+                        <div className="text-sm font-bold text-gray-900">
+                          {rateLabel(f.perMonth)}
+                        </div>
+                      </div>
+
+                      {/* Yearly - centered full width */}
+                      <div className="bg-slate-50 rounded-lg p-2 text-center col-span-2">
+                        <div className="text-xs text-gray-600">Yearly</div>
+                        <div className="text-sm font-bold text-gray-900">
+                          {rateLabel(f.perYear)}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="text-xs text-gray-600">
-                      {Number(f.perWeek) > 0
-                        ? `Week: ₹${f.perWeek}${Number(f.perMonth) > 0 ? " • " : ""}`
-                        : ""}
-                      {Number(f.perMonth) > 0 ? `Month: ₹${f.perMonth}` : ""}
-                    </div>
-
-                    <div className="text-xs text-gray-600">
+                    {/* Negotiable */}
+                    <div className="text-center text-xs text-gray-600">
                       Negotiable:{" "}
                       <span
                         className={`font-semibold ${isNegotiable ? "text-green-600" : "text-red-600"}`}

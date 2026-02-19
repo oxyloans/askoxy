@@ -202,19 +202,7 @@ function Rice2RoboEcommersHeroSection() {
                 <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
 
-              <button
-                onClick={handleSignIn}
-                disabled={isLoading}
-                aria-label="Get Support"
-                className={`group bg-white/10 backdrop-blur-sm text-white font-semibold py-2.5 sm:py-3 lg:py-4 px-5 sm:px-6 lg:px-8 rounded-full
-                  hover:bg-white/20 flex items-center justify-center gap-2 sm:gap-3
-                  shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-white/20
-                  text-sm sm:text-base
-                  ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 group-hover:rotate-12 transition-transform" />
-                Get Support
-              </button>
+             
             </div>
           </div>
 

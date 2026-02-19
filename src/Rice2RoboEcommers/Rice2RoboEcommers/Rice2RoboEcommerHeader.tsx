@@ -180,10 +180,9 @@ const handleHome = () =>{navigate("/")};
               </div>
               <div className="ml-2 sm:ml-3">
                 <div className="text-base sm:text-lg md:text-xl font-bold">
-                  <span className="text-purple-800">Rice2Robo{" "} </span>
-                  <span className="text-blue-600">Ecommers</span>
+                  <span className="text-purple-800">Rice2Robo </span>
+                  <span className="text-blue-600">E-commerce</span>
                 </div>
-                
               </div>
             </div>
 
@@ -203,7 +202,6 @@ const handleHome = () =>{navigate("/")};
                         }`}
                         aria-label={`Navigate to ${link.label}`}
                       >
-                       
                         <span className="hidden lg:inline">{link.label}</span>
                         <span className="lg:hidden">{link.label}</span>
                       </button>
@@ -304,7 +302,7 @@ const handleHome = () =>{navigate("/")};
                 </button>
               );
             })}
-            
+
             {/* Mobile CTA */}
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button

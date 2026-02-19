@@ -1104,7 +1104,7 @@ const App: React.FC = () => {
                 <Route path="createassistant" element={<CreateAssistant />} />
               </Route>
 
-              {/* ===================================================== */}
+            
               {/* ✅ LANDING */}
               {/* ===================================================== */}
               <Route path="/" element={<CurrentLandingPage />} />

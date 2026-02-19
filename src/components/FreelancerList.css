@@ -5,16 +5,41 @@
   box-sizing: border-box;
 }
 
-/* Stop horizontal scroll on mobile */
+/* Prevent horizontal scroll globally */
 html,
 body {
+  width: 100%;
   max-width: 100%;
   overflow-x: hidden;
 }
 
-/* email can be long, so allow wrapping instead of pushing the card */
+/* Prevent elements from overflowing container */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Email safe wrapping (long emails / URLs) */
 .freelancer-email {
   overflow-wrap: anywhere;
   word-break: break-word;
+  white-space: normal;
   max-width: 100%;
+}
+
+/* Prevent card overflow issues */
+.freelancer-card {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Prevent long text from pushing layout */
+.truncate-safe {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

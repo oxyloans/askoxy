@@ -165,17 +165,17 @@ const staticAgents: Assistant[] = [
     hideAgent: true,
     link: "/asst_V41gWq69vrfVyCc4rTMScxIE/d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0/oxygroup-task-management",
   },
-  {
-    id: "AI SkillPulse",
-    assistantId: "AI SkillPulse",
-    agentId: "AI SkillPulse",
-    name: "AI SkillPulse",
-    description:
-      "As an AI Digital Marketing Specialist, I am dedicated to enhancing skill sets while streamlining marketing processes. My goal is to automate and optimize digital strategies, ensuring creative and data-driven solutions for a more efficient and impactful marketing journey. — for AI Digital Marketing Specialist, to Automate, aimed at Upskilling.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/asst_98JoVhODSw0lZ85v9UsnQMGh/b650b8a5-e1a5-49ed-b236-d6ef6cf8d6c4/AI%20SkillPulse",
-  },
+  // {
+  //   id: "AI SkillPulse",
+  //   assistantId: "AI SkillPulse",
+  //   agentId: "AI SkillPulse",
+  //   name: "AI SkillPulse",
+  //   description:
+  //     "As an AI Digital Marketing Specialist, I am dedicated to enhancing skill sets while streamlining marketing processes. My goal is to automate and optimize digital strategies, ensuring creative and data-driven solutions for a more efficient and impactful marketing journey. — for AI Digital Marketing Specialist, to Automate, aimed at Upskilling.",
+  //   imageUrl: "",
+  //   hideAgent: true,
+  //   link: "/asst_98JoVhODSw0lZ85v9UsnQMGh/b650b8a5-e1a5-49ed-b236-d6ef6cf8d6c4/AI%20SkillPulse",
+  // },
   {
     id: "Rotary District 3150 AI Agent",
     assistantId: "Rotary District 3150 AI Agent",

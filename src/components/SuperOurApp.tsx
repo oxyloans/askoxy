@@ -106,7 +106,7 @@ export default function SuperOurApp() {
       id: "s7",
       src: s7,
       route: "/rice2roboecommers",
-      title: "Rice 2 Robo\nECommerce",
+      title: "Rice 2 Robo\nE-Commerce",
     },
     {
       id: "s2",

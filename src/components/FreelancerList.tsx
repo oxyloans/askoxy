@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/img/askoxylogonew.png";
-import Footer from "./Footer";
 import BASE_URL from "../Config";
 import "./FreelancerList.css";
 import { FiArrowRight } from "react-icons/fi";
@@ -48,10 +47,25 @@ const FreelancerList: React.FC = () => {
       });
   }, []);
 
+  const normalizeEmail = (email?: string) => {
+    const e = (email || "").trim();
+    return e.toLowerCase().startsWith("mailto:") ? e.slice(7) : e;
+  };
+
+  const isZero = (n?: number) => !n || Number(n) === 0;
+
+  const fmt = (n?: number) =>
+    new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(
+      Number(n || 0),
+    );
+
+  const priceText = (n?: number) => (isZero(n) ? "Not selected" : `₹${fmt(n)}`);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return freelancers.filter((f) => {
-      const matchesQuery = !q || (f.email || "").toLowerCase().includes(q);
+      const email = normalizeEmail(f.email);
+      const matchesQuery = !q || email.toLowerCase().includes(q);
       const matchesAvail =
         availability === "ALL"
           ? true
@@ -63,28 +77,34 @@ const FreelancerList: React.FC = () => {
   const handleJoinNow = () => {
     window.location.href = "/main/freelanceform";
   };
+  const getNameFromEmail = (email?: string) => {
+    if (!email) return "--";
 
-  const openResumeInNewTab = (url: string) => {
-    if (!url) {
-      alert("Resume not available for this freelancer.");
-      return;
-    }
+    // Remove mailto:
+    const cleanEmail = email.replace("mailto:", "").trim();
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    // Get part before @
+    const namePart = cleanEmail.split("@")[0];
+
+    // Remove numbers
+    const noNumbers = namePart.replace(/[0-9]/g, "");
+
+    // Replace special symbols with space
+    const cleanName = noNumbers.replace(/[^a-zA-Z]/g, " ");
+
+    // Convert to Proper Case
+    const formatted = cleanName
+      .split(" ")
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
+    return formatted || "--";
   };
 
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n || 0);
 
   return (
     <>
-      {/* IMPORTANT: overflow-x-hidden prevents horizontal scroll on mobile */}
       <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50">
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur">
@@ -107,20 +127,19 @@ const FreelancerList: React.FC = () => {
                 type="button"
                 onClick={handleJoinNow}
                 className="
-      group relative overflow-hidden
-      rounded-xl
-      bg-gradient-to-r from-slate-900 to-slate-700
-      px-4 py-2.5 sm:px-5
-      text-sm font-semibold text-white
-      shadow-md
-      transition-all duration-300
-      hover:shadow-[0_0_25px_rgba(99,102,241,0.6)]
-      focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2
-    "
+                  group relative overflow-hidden
+                  rounded-xl
+                  bg-gradient-to-r from-slate-900 to-slate-700
+                  px-4 py-2.5 sm:px-5 sm:py-3
+                  text-base sm:text-lg font-bold text-white
+                  shadow-md
+                  transition-all duration-300
+                  hover:shadow-[0_0_25px_rgba(99,102,241,0.6)]
+                  hover:scale-[1.03]
+                  focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2
+                "
               >
-                {/* Glow background animation layer */}
-                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-600 to-blue-500 opacity-0 group-hover:opacity-20 blur-xl transition duration-500"></span>
-
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-600 to-blue-500 opacity-0 group-hover:opacity-20 blur-xl transition duration-500" />
                 <span className="relative flex items-center gap-2">
                   Join Now
                   <FiArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -132,8 +151,8 @@ const FreelancerList: React.FC = () => {
 
         {/* Hero */}
         <section className="mx-auto w-full max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                   Find Top Freelancers
@@ -148,7 +167,7 @@ const FreelancerList: React.FC = () => {
                     Total: {filtered.length}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    Available:{" "}
+                    Open:{" "}
                     {
                       filtered.filter((f) => f.openForFreeLancing === "YES")
                         .length
@@ -167,7 +186,7 @@ const FreelancerList: React.FC = () => {
                     <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search by email…"
+                      placeholder="Search by Open for freelancers work.."
                       className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
                     />
                   </div>
@@ -177,9 +196,9 @@ const FreelancerList: React.FC = () => {
                     onChange={(e) => setAvailability(e.target.value as any)}
                     className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
                   >
-                    <option value="ALL">All</option>
-                    <option value="YES">Available</option>
-                    <option value="NO">Unavailable</option>
+                    <option value="ALL">All Status</option>
+                    <option value="YES">Open for freelance work</option>
+                    <option value="NO">Not available for freelance work</option>
                   </select>
                 </div>
               </div>
@@ -188,7 +207,7 @@ const FreelancerList: React.FC = () => {
         </section>
 
         {/* Content */}
-        <main className="mx-auto w-full max-w-7xl px-4 pb-14 pt-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-7xl px-4 pb-14 pt-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -241,11 +260,12 @@ const FreelancerList: React.FC = () => {
               {filtered.map((freelancer) => {
                 const isAvailable = freelancer.openForFreeLancing === "YES";
                 const isNegotiable = freelancer.amountNegotiable === "YES";
+               
 
                 return (
                   <div
                     key={freelancer.id}
-                    className="group w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    className="group w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     {/* Top */}
                     <div className="flex min-w-0 items-start justify-between gap-3">
@@ -259,22 +279,24 @@ const FreelancerList: React.FC = () => {
                             Freelancer
                           </div>
 
-                          {/* Important: this prevents overflow */}
-                          <div className="freelancer-email text-xs text-slate-600">
-                            {freelancer.email}
-                          </div>
+                          {/* Show email (mobile-safe) */}
+                          {/* <div className="text-sm font-semibold text-slate-900 truncate">
+                            {getNameFromEmail(freelancer.email)}
+                          </div> */}
                         </div>
                       </div>
 
                       <span
                         className={[
-                          "shrink-0 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+                          "shrink-0 inline-flex items-center rounded-full px-3 py-1 text-[11px] sm:text-xs font-semibold",
                           isAvailable
                             ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
                             : "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
                         ].join(" ")}
                       >
-                        {isAvailable ? "Available" : "Unavailable"}
+                        {isAvailable
+                          ? "Open for freelance work"
+                          : "Not available"}
                       </span>
                     </div>
 
@@ -284,52 +306,55 @@ const FreelancerList: React.FC = () => {
                         Pricing
                       </div>
 
-                      <div className="mt-3 grid grid-cols-2 gap-3">
+                      {/* On mobile: 1 column, on sm+: 2 columns (better readability) */}
+                      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                           <div className="text-xs text-slate-600">Hourly</div>
                           <div className="mt-1 text-sm font-bold text-slate-900">
-                            ₹{fmt(freelancer.perHour)}
+                            {priceText(freelancer.perHour)}
                           </div>
                         </div>
 
                         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                           <div className="text-xs text-slate-600">Daily</div>
                           <div className="mt-1 text-sm font-bold text-slate-900">
-                            ₹{fmt(freelancer.perDay)}
+                            {priceText(freelancer.perDay)}
                           </div>
                         </div>
 
                         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                           <div className="text-xs text-slate-600">Weekly</div>
                           <div className="mt-1 text-sm font-bold text-slate-900">
-                            ₹{fmt(freelancer.perWeek)}
+                            {priceText(freelancer.perWeek)}
                           </div>
                         </div>
 
                         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                           <div className="text-xs text-slate-600">Monthly</div>
                           <div className="mt-1 text-sm font-bold text-slate-900">
-                            ₹{fmt(freelancer.perMonth)}
+                            {priceText(freelancer.perMonth)}
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-xs font-semibold text-slate-700">
-                          {isNegotiable ? "💬 Negotiable" : "Fixed Rate"}
+                          {isNegotiable ? "Negotiable" : "Fixed Rate"}
                         </span>
 
                         <span className="text-xs text-slate-500">
                           Yearly:{" "}
                           <span className="font-semibold text-slate-700">
-                            ₹{fmt(freelancer.perYear)}
+                            {isZero(freelancer.perYear)
+                              ? "Not selected"
+                              : `₹${fmt(freelancer.perYear)}`}
                           </span>
                         </span>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-5 flex w-full min-w-0 items-center gap-2">
+                    <div className="mt-5 flex w-full min-w-0 flex-col gap-2 sm:flex-row">
                       <a
                         href={freelancer.resumeUrl || "#"}
                         target="_blank"
@@ -345,12 +370,13 @@ const FreelancerList: React.FC = () => {
                         View Resume
                       </a>
 
-                      <button
+                      {/* <button
                         type="button"
-                        className="shrink-0 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                        onClick={() => navigate(`/main/freelanceappliedlist`)}
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
                       >
-                        Details
-                      </button>
+                        View Applicants
+                      </button> */}
                     </div>
                   </div>
                 );
@@ -359,16 +385,14 @@ const FreelancerList: React.FC = () => {
           )}
         </main>
 
-        {/* Simple Footer */}
+        {/* Footer */}
         <footer className="border-t border-slate-200 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-              {/* Left */}
               <div className="text-sm text-slate-600">
                 © {new Date().getFullYear()} ASKOXY.AI — Freelancers Platform
               </div>
 
-              {/* Right Links */}
               <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
                 <button
                   onClick={() => navigate("/")}

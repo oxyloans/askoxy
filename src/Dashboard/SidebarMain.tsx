@@ -163,11 +163,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           label:"Freelancer Skills Profile",
           icon: <FaPlusCircle size={16} />,
         },
-        {
-          to: "/main/freelanceform",
-          label:"Freelancer Skills Profile",
-          icon: <FaPlusCircle size={16} />,
-        },
+       
         {
           to:"/main/freelanceappliedlist",
           label:"Freelancer Applied List",

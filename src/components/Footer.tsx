@@ -89,7 +89,7 @@ const Footer: React.FC = () => {
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" }, // direct link
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
-    { name: "We Are Hiring", redirectPath: "/main/services/we-are-hiring" },
+    { name: "We Are Hiring", redirectPath: "/wearehiring" },
   ];
 
   const contactInfo = [
@@ -196,9 +196,19 @@ const Footer: React.FC = () => {
             <div className="space-y-2">
               {contactInfo.map((info, index) => (
                 <div key={index} className="flex items-start space-x-2">
-                  <div className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-gray-100 flex-shrink-0 mt-0.5" style={{
-                    color: info.type === "map" ? "#10B981" : info.type === "email" ? "#F59E0B" : info.type === "phone" ? "#3B82F6" : "#6B7280"
-                  }}>
+                  <div
+                    className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-gray-100 flex-shrink-0 mt-0.5"
+                    style={{
+                      color:
+                        info.type === "map"
+                          ? "#10B981"
+                          : info.type === "email"
+                            ? "#F59E0B"
+                            : info.type === "phone"
+                              ? "#3B82F6"
+                              : "#6B7280",
+                    }}
+                  >
                     {info.icon}
                   </div>
                   {info.type === "map" ? (
@@ -272,8 +282,8 @@ const Footer: React.FC = () => {
         {/* Footer Bottom */}
         <div className="border-t border-gray-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm text-gray-600">
           <span>
-            © 2024-{currentYear} <span className="font-medium">ASKOXY.AI</span>. All
-            rights reserved.
+            © 2024-{currentYear} <span className="font-medium">ASKOXY.AI</span>.
+            All rights reserved.
           </span>
           <span>CIN: U72900TG2020PTC142391</span>
           <div className="flex flex-wrap justify-center sm:justify-start gap-2">

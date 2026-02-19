@@ -8,7 +8,7 @@ import {
   Linkedin,
   Instagram,
 } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaPhoneAlt } from "react-icons/fa";
 import { FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { SiThreads } from "react-icons/si";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,20 +17,20 @@ const AIBlockchainFooter = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const LOGIN_URL = "/whatsapplogin";
-const solutions = [
-  { label: "AI Blockchain & IT services", path: "/aiblockchainanditservices" },
-  { label: "CA | CS Services", path: "/caandcsservices" },
-  { label: "Gold, Silver & Diamonds", path: "/goldandsilveranddiamonds" },
-  { label: "Loans & Investments", path: "/loansinvestments" },
-  { label: "Nyaya GPT", path: "/nyayagpt" },
-  { label: "Real Estate", path: "/realestate" },
-  { label: "Rice 2 Robo Ecommerce", path: "/rice2roboecommers" },
-  {
-    label: "Software Training - 100% job placement",
-    path: "/glms",
-  },
-  { label: "Study Abroad", path: "/studyabroad" },
-];
+  const solutions = [
+    {
+      label: "AI Blockchain & IT services",
+      path: "/aiblockchainanditservices",
+    },
+    { label: "CA | CS Services", path: "/caandcsservices" },
+    { label: "Gold, Silver & Diamonds", path: "/goldandsilveranddiamonds" },
+    { label: "Loans & Investments", path: "/loansinvestments" },
+    { label: "Nyaya GPT", path: "/nyayagpt" },
+    { label: "Real Estate", path: "/realestate" },
+    { label: "Rice 2 Robo Ecommerce", path: "/rice2roboecommers" },
+      { label: "90 days plan", path: "/90dayjobplan" },
+    { label: "Study Abroad", path: "/studyabroad" },
+  ];
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -70,11 +70,14 @@ const solutions = [
   ];
 
   const services = [
-    { name: "AI & GEN AI Training", redirectPath: "/main/services/freeai-genai" },
+    {
+      name: "AI & GEN AI Training",
+      redirectPath: "/main/services/freeai-genai",
+    },
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" }, // direct link
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
-    { name: "We Are Hiring", redirectPath: "/main/services/we-are-hiring" },
+   { name: "We Are Hiring", path: "/wearehiring" },
   ];
 
   const handleProtectedNavigation = (redirectPath: string) => {
@@ -110,7 +113,7 @@ const solutions = [
             <div className="flex items-center mb-3">
               <Cpu className="h-7 w-7 text-cyan-500 mr-2" />
               <span className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-                AI Blockchain & IT Services
+                AI Blockchain, Crypto & IT Services
               </span>
             </div>
             <p className="text-xs sm:text-sm leading-relaxed mb-5">
@@ -158,7 +161,7 @@ const solutions = [
                   >
                     {service.name}
                   </button>
-                )
+                ),
               )}
             </nav>
           </div>
@@ -189,13 +192,27 @@ const solutions = [
                   KPHB, Hyderabad, Telangana - 500085
                 </p>
               </div>
+              <div className="flex items-start gap-2">
+                <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+                <p>
+                  AI Research Center, Entrance D, SE02 Concourse, Miyapur Metro
+                  Station, Hyderabad, Telangana 500049
+                </p>
+              </div>
               <div className="flex items-center gap-2">
-                <FaWhatsapp className="text-cyan-500 w-5 h-5 flex-shrink-0" />
+                <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0" />
                 <a
-                  href="tel:+919876543210"
-                  className="hover:text-cyan-400 transition-colors"
+                  href="tel:+918143271103"
+                  className="hover:text-cyan-400 transition"
                 >
-                  +91 98765 43210
+                  +91 81432 71103
+                </a>
+                {","}
+                <a
+                  href="tel:+919110564106"
+                  className="hover:text-cyan-400 transition"
+                >
+                  +91 91105 64106
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -217,8 +234,8 @@ const solutions = [
         {/* Bottom Row */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-white">
           <p className="text-center md:text-left">
-            &copy; {new Date().getFullYear()} AIBlockchain IT Solutions. All
-            rights reserved.
+            &copy; {new Date().getFullYear()} AI Blockchain, Crypto & IT
+            Services. All rights reserved.
           </p>
           <button
             onClick={scrollToTop}

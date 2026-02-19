@@ -1,14 +1,6 @@
 import React, { useState } from "react";
-import {
-  Cpu,
-  Mail,
-  MapPin,
-  ArrowUp,
-  Facebook,
-  Linkedin,
-  Instagram,
-} from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
+import { Cpu, Mail, MapPin, ArrowUp, Facebook, Linkedin, Instagram } from "lucide-react";
+import { FaPhoneAlt } from "react-icons/fa";
 import { FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { SiThreads } from "react-icons/si";
 import { Link, useNavigate } from "react-router-dom";
@@ -21,17 +13,12 @@ const solutions = [
   { label: "Nyaya GPT", path: "/nyayagpt" },
   { label: "Real Estate", path: "/realestate" },
   { label: "Rice 2 Robo Ecommerce", path: "/rice2roboecommers" },
-  {
-    label: "Software Training - 100% job placement",
-    path: "/glms",
-  },
+  { label: "90 days plan", path: "/90dayjobplan" },
   { label: "Study Abroad", path: "/studyabroad" },
 ];
 
 const RealEstateFooter = () => {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -65,20 +52,17 @@ const RealEstateFooter = () => {
     },
     {
       icon: <SiThreads className="h-4 w-4" />,
-      href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
+      href: "https://www.threads.net/@askoxy.ai", // TODO: replace with your correct Threads link
       label: "Threads",
     },
   ];
 
   const services = [
-    {
-      name: "AI & GEN AI Training",
-      redirectPath: "/main/services/freeai-genai",
-    },
+    { name: "AI & GEN AI Training", redirectPath: "/main/services/freeai-genai" },
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
-    { name: "Study Abroad", path: "/studyabroad" }, // direct link
+    { name: "Study Abroad", path: "/studyabroad" },
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
-    { name: "We Are Hiring", redirectPath: "/main/services/we-are-hiring" },
+    { name: "We Are Hiring", redirectPath: "/wearehiring" },
   ];
 
   const handleProtectedNavigation = (redirectPath: string) => {
@@ -108,16 +92,16 @@ const RealEstateFooter = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Main footer grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-3">
               <Cpu className="h-6 w-6 text-cyan-500 mr-2" />
               <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-500">
-                Real Estate Pro
+                Real Estate
               </span>
             </div>
+
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
               Your trusted partner in finding the perfect property. From luxury
               homes to commercial spaces, we provide expert guidance and
@@ -131,7 +115,7 @@ const RealEstateFooter = () => {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white p-2 rounded-full shadow-sm border border-gray-200 text-gray-600 hover:text-cyan-500 transition-colors duration-300"
+                  className="bg-white/10 p-2 rounded-full shadow-sm border border-white/10 text-gray-200 hover:text-cyan-400 transition-colors duration-300"
                   aria-label={label}
                 >
                   {icon}
@@ -140,6 +124,7 @@ const RealEstateFooter = () => {
             </div>
           </div>
 
+          {/* Our Services */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Our Services</h3>
             <nav className="space-y-2">
@@ -163,7 +148,7 @@ const RealEstateFooter = () => {
                   >
                     {service.name}
                   </button>
-                )
+                ),
               )}
             </nav>
           </div>
@@ -174,58 +159,69 @@ const RealEstateFooter = () => {
             <ul className="space-y-1 text-sm">
               {solutions.map(({ label, path }, index) => (
                 <li key={index}>
-                  <a
-                    href={path}
-                    className="text-white hover:text-cyan-400 transition-colors"
+                  <Link
+                    to={path}
+                    className="text-gray-300 hover:text-cyan-400 transition-colors"
                   >
                     {label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Our Services */}
-
           {/* Contact Info */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
-            <div className="space-y-3 text-sm">
+            <address className="not-italic text-sm space-y-3">
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-cyan-500 mt-0.5" />
-                <span>
-                  OXYKART TECHNOLOGIES PVT LTD, CC-02, Ground Floor, Indu
-                  Fortune Fields, KPHB Colony, Hyderabad, Telangana - 500085
-                </span>
+                <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+                <p>
+                  OXYKART TECHNOLOGIES PVT LTD, CC-02, Indu Fortune Fields,
+                  KPHB, Hyderabad, Telangana - 500085
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+                <p>
+                  AI Research Center, Entrance D, SE02 Concourse, Miyapur Metro
+                  Station, Hyderabad, Telangana 500049
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                <FaWhatsapp className="w-4 h-4 text-cyan-500" />
-                <a href="tel:+919876543210" className="hover:text-cyan-400">
-                  +91 98765 43210
+                <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0" />
+                <a
+                  href="tel:+918143271103"
+                  className="hover:text-cyan-400 transition"
+                >
+                  +91 81432 71103
+                </a>
+                {","}
+                <a
+                  href="tel:+919110564106"
+                  className="hover:text-cyan-400 transition"
+                >
+                  +91 91105 64106
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-cyan-500" />
+                <Mail className="text-cyan-500 w-5 h-5 flex-shrink-0" />
                 <a
                   href="mailto:support@askoxy.ai"
-                  className="hover:text-cyan-400"
+                  className="hover:text-cyan-400 transition-colors"
                 >
                   support@askoxy.ai
                 </a>
               </div>
-            </div>
+            </address>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-700 my-4"></div>
+        <div className="border-t border-white/10 my-4"></div>
 
-        {/* Bottom bar */}
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-          <p>
-            © {new Date().getFullYear()} AIBlockchain IT Solutions. All rights
-            reserved.
-          </p>
+          <p>© {new Date().getFullYear()} Real Estate. All rights reserved.</p>
+
           <button
             onClick={scrollToTop}
             className="flex items-center mt-3 md:mt-0 hover:text-cyan-400 transition"
