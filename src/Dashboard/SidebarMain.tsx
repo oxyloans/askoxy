@@ -293,6 +293,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
       ],
     },
+    {
+      type: "item",
+      to: "/interview",
+      icon: <AiFillFileText size={18} />,
+      label: "Interview",
+    },
   ];
 
   const isActive = (to: string) => {

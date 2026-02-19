@@ -21,6 +21,10 @@ import GoldRatesPage from "./components/GoldRatesPage";
 import GoldSilverTargets from "./components/GoldSilverTargets";
 import FreelancerList from "./components/FreelancerList";
 import FreelancersByUserId from "./components/FreelancersByUserId";
+import DataReading from "./ChatScreen/DataReading";
+import RotaryLandingPage from "./components/RotaryLanding";
+import { CandidatesList } from "./AIMockInterview/admin/CandidatesList";
+import { CandidateDetail } from "./AIMockInterview/admin/CandidateDetail";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -506,6 +510,8 @@ const App: React.FC = () => {
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
+              <Route path="/admin/candidates" element={<CandidatesList />} />
+              <Route path="/admin/candidate/:userId" element={<CandidateDetail />} />
               <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
@@ -514,6 +520,8 @@ const App: React.FC = () => {
               <Route path="/goldrates" element={<GoldRates />} />
               <Route path="/smartlock" element={<GoldSilverTargets />} />
               <Route path="/allgoldrates" element={<GoldRatesPage />} />
+              <Route path="/oxyinsurance" element={<DataReading />} />
+              <Route path="/rotarydistrict3150AiAgent" element={<RotaryLandingPage />} />
               <Route
                 path="/ninetydayplan"
                 element={

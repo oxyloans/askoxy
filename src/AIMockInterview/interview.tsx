@@ -240,6 +240,7 @@ export default function InterviewPage() {
      
     if (!phone) {
         Modal.warning({ title: "Login Required", content: "Please login to continue." });
+        sessionStorage.setItem("redirectPath","/interview")
        window.location.href = "/whatsapplogin";
       return;
     }

@@ -1017,7 +1017,7 @@ const DataReading: React.FC = () => {
                     "🏭 COMMERCIAL INSURANCE APPLICATION FORM"}
                 </h1>
                 <p className="text-lg opacity-90">
-                  BMVOXY Insurance Company Ltd.
+                  OXY Insurance Company Ltd.
                 </p>
                 <div className="mt-3 bg-white/20 rounded-lg px-4 py-2 inline-block">
                   <span className="text-sm font-medium">
@@ -2141,7 +2141,7 @@ const DataReading: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-navy-800 mb-2">
-            Welcome OXY Insurance
+            OXY INSURANCE
           </h1>
           <p className="text-teal-700 text-lg font-medium">
             Your Trusted Insurance Partner
