@@ -75,8 +75,8 @@ const FreeAiBook: React.FC = () => {
     window.location.href = "/whatsappregister";
   };
 
-  const handleJobPlanViewMore = () => {
-    navigate("/90dayjobplan");
+  const handleJobPlanViewMore1 = () => {
+    navigate("/celebshield");
   };
 
   return (
@@ -217,7 +217,7 @@ const FreeAiBook: React.FC = () => {
 
               <motion.button
                 whileTap={{ scale: 0.98 }}
-                onClick={handleJobPlanViewMore}
+                onClick={() => navigate('/90daysjobplan')}
                 className="mt-6 self-start px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg"
               >
                 View More
@@ -232,6 +232,70 @@ const FreeAiBook: React.FC = () => {
                   alt="90 Days Job Plan"
                   className="w-full max-w-xl md:max-w-2xl h-auto object-contain"
                   loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="text-center mt-10 mb-8">
+          <h3 className="text-3xl md:text-4xl font-extrabold text-purple-900">
+            CelebShield
+          </h3>
+          <p className="mt-2 text-sm md:text-base text-gray-600">
+            Protect your fame. Secure your identity.
+          </p>
+          <div className="w-28 h-1.5 mt-4 mx-auto rounded-full bg-gradient-to-r from-purple-300 via-indigo-300 to-pink-300" />
+        </div>
+        <motion.div
+          className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(17,24,39,0.10)]"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+        >
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-50/70 via-white/30 to-purple-50/70" />
+
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 sm:p-8 md:p-10">
+            {/* Content */}
+            <div className="flex flex-col justify-center order-2 md:order-1">
+              <div className="inline-flex items-center gap-2 self-start rounded-full bg-indigo-100 px-4 py-1 text-sm font-semibold text-indigo-800">
+                celebshield
+              </div>
+
+              <p className="mt-4 text-gray-900 text-lg font-semibold">
+               PROTECT YOUR FAME. SECURE YOUR IDENTITY
+              </p>
+
+              <p className="mt-3 text-gray-700 text-justify leading-relaxed">
+                We file a Writ / Civil Suit seeking protection of Personality Rights.
+              </p>
+
+              <p className="mt-3 text-gray-700 text-justify leading-relaxed">
+               AI-powered legal protection against deepfakes, voice cloning, false endorsements, impersonation, deceptive ads, GIF misuse, domain squatting, and unauthorized food branding. Backed by India's top advocates with 24/7 monitoring and High Court verification.
+              </p>
+
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleJobPlanViewMore1}
+                className="mt-6 self-start px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg"
+              >
+                View More
+              </motion.button>
+            </div>
+
+            {/* YouTube Video */}
+            <div className="flex items-center justify-center order-1 md:order-2">
+              <div className="w-full flex justify-center">
+                <iframe
+                  width="100%"
+                  height="315"
+                  src="https://www.youtube.com/embed/FR0y9kmy2eY"
+                  title="CelebShield"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="rounded-2xl shadow-lg max-w-xl md:max-w-2xl"
                 />
               </div>
             </div>

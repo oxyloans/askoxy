@@ -102,7 +102,6 @@ const FreelancerList: React.FC = () => {
     return formatted || "--";
   };
 
-
   return (
     <>
       <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50">
@@ -260,7 +259,6 @@ const FreelancerList: React.FC = () => {
               {filtered.map((freelancer) => {
                 const isAvailable = freelancer.openForFreeLancing === "YES";
                 const isNegotiable = freelancer.amountNegotiable === "YES";
-               
 
                 return (
                   <div

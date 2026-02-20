@@ -89,6 +89,8 @@ const Footer: React.FC = () => {
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" }, // direct link
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
+    { name: "90 Days Plan", redirectPath: "/90dayjobplan" },
+    { name: "Bharat AI Store", redirectPath: "/bharath-aistore" },
     { name: "We Are Hiring", redirectPath: "/wearehiring" },
   ];
 
@@ -96,8 +98,15 @@ const Footer: React.FC = () => {
     {
       icon: <MapPin className="h-4 w-4" />,
       content:
-        "OXYKART TECHNOLOGIES PVT LTD, Miyapur Metro ASKOXY.AI, Hyderabad, Telangana - 500049",
-      link: "https://www.google.com/maps/search/ASKOXY.AI/@17.4964402,78.3733327,17z",
+        "OXYKART TECHNOLOGIES PVT LTD, CC-02, Indu Fortune Fields, KPHB, Hyderabad, Telangana - 500085",
+
+      type: "map",
+    },
+    {
+      icon: <MapPin className="h-4 w-4" />,
+      content:
+        "AI Research Center, Entrance D, SE02 Concourse, Miyapur Metro Station, Hyderabad, Telangana 500049",
+
       type: "map",
     },
     {
@@ -188,59 +197,72 @@ const Footer: React.FC = () => {
             </nav>
           </div>
 
-          {/* Contact Info */}
+       
           <div className="space-y-2">
             <h3 className="text-base font-semibold text-gray-900">
               Contact Us
             </h3>
-            <div className="space-y-2">
-              {contactInfo.map((info, index) => (
-                <div key={index} className="flex items-start space-x-2">
+
+            <div className="space-y-3">
+          
+              {contactInfo
+                .filter((info) => info.type !== "phone")
+                .map((info, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <div
+                      className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-gray-100 flex-shrink-0 mt-0.5"
+                      style={{
+                        color:
+                          info.type === "map"
+                            ? "#10B981"
+                            : info.type === "email"
+                              ? "#F59E0B"
+                              : "#6B7280",
+                      }}
+                    >
+                      {info.icon}
+                    </div>
+
+                    {info.type === "map" ? (
+                      <a className="text-xs sm:text-sm text-gray-600 leading-tight">
+                        {info.content}
+                      </a>
+                    ) : (
+                      <a
+                        href={`mailto:${info.content}`}
+                        className="text-xs sm:text-sm pt-2 text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                      >
+                        {info.content}
+                      </a>
+                    )}
+                  </div>
+                ))}
+
+              {/* ✅ Phones (side-by-side + single icon) */}
+              {contactInfo.some((info) => info.type === "phone") && (
+                <div className="flex items-start gap-2">
                   <div
                     className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-gray-100 flex-shrink-0 mt-0.5"
-                    style={{
-                      color:
-                        info.type === "map"
-                          ? "#10B981"
-                          : info.type === "email"
-                            ? "#F59E0B"
-                            : info.type === "phone"
-                              ? "#3B82F6"
-                              : "#6B7280",
-                    }}
+                    style={{ color: "#3B82F6" }}
                   >
-                    {info.icon}
+                    <Phone className="h-4 w-4 mb-1" />
                   </div>
-                  {info.type === "map" ? (
-                    <a
-                      href={info.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
-                    >
-                      {info.content}
-                    </a>
-                  ) : info.type === "email" ? (
-                    <a
-                      href={`mailto:${info.content}`}
-                      className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
-                    >
-                      {info.content}
-                    </a>
-                  ) : info.type === "phone" ? (
-                    <a
-                      href={`tel:${info.content}`}
-                      className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200"
-                    >
-                      {info.content}
-                    </a>
-                  ) : (
-                    <p className="text-xs sm:text-sm text-gray-600 leading-tight">
-                      {info.content}
-                    </p>
-                  )}
+
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    {contactInfo
+                      .filter((info) => info.type === "phone")
+                      .map((phone, index) => (
+                        <a
+                          key={index}
+                          href={`tel:${phone.content}`}
+                          className="text-xs sm:text-sm text-gray-600 hover:text-purple-600 transition-colors duration-200 whitespace-nowrap"
+                        >
+                          {phone.content}
+                        </a>
+                      ))}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

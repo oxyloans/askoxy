@@ -286,6 +286,25 @@ const LegalService: React.FC = () => {
                   collaboration.
                 </li>
               </ul>
+              <div className="flex flex-col md:flex-row justify-start gap-4 items-start px-4 mt-8">
+                <button
+                  className="bg-[#6A1B9A] w-full md:w-auto px-4 py-2 text-white rounded-lg shadow-md hover:bg-[#5a1580] text-sm md:text-base lg:text-lg transition duration-300"
+                  aria-label="NyayaGpt"
+                  onClick={() =>
+                    (window.location.href =
+                      "/asst_Zhd4SUuUw3c9EWeFvx0YmY0Q/b5a37e56-5070-430a-9740-789d4d9afdf1/nyaya-gpt")
+                  }
+                >
+                  NyayaGpt
+                </button>
+                <button
+                  className="bg-[#FF6B6B] w-full md:w-auto px-4 py-2 text-white rounded-lg shadow-md hover:bg-[#ee5a5a] text-sm md:text-base lg:text-lg transition duration-300"
+                  aria-label="CelebShield"
+                  onClick={() => (window.location.href = "/celebshield")}
+                >
+                  CelebShield
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -1,29 +1,17 @@
-
+import React, { useEffect, useState } from "react";
 import { ArrowRight, Home, Building, Key } from "lucide-react";
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  memo,
-  useRef,
-  useMemo,
-} from "react";
-import { Phone, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 function NyayagptHeroSection() {
   const [typedText, setTypedText] = useState("");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
- const scrollRef = useRef(isScrolled);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const LOGIN_URL = "/whatsapplogin";
- const navigate = useNavigate();
-  const rotatingWords = [
-    "Legal Clarity",
-    "Property Insights",
-    "Smarter Investments",
-  ];
+  const navigate = useNavigate();
+
+  const rotatingWords = ["Legal Clarity", "Property Insights", "Smarter Investments"];
   const fullHeadingText = "Empower Your Journey with ";
 
   useEffect(() => {
@@ -39,6 +27,7 @@ function NyayagptHeroSection() {
       } else {
         clearInterval(interval);
         setIsTypingComplete(true);
+
         setTimeout(() => {
           setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
         }, 2000);
@@ -48,27 +37,46 @@ function NyayagptHeroSection() {
     return () => clearInterval(interval);
   }, [currentWordIndex]);
 
- const handleSignIn = () => {
-   try {
-     setIsLoading(true);
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
 
-     const userId = localStorage.getItem("userId");
-     const redirectPath = "/main/services/legalservice"; // your desired path
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/services/legalservice";
 
-     if (userId) {
-       // User is already logged in
-       navigate(redirectPath);
-     } else {
-       // Save redirect path before redirecting to login
-       sessionStorage.setItem("redirectPath", redirectPath);
-       window.location.href = LOGIN_URL;
-     }
-   } catch (error) {
-     console.error("Sign in error:", error);
-   } finally {
-     setIsLoading(false);
-   }
- };
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignIn1 = () => {
+    try {
+      setIsLoading(true);
+
+      const userId = localStorage.getItem("userId");
+      const redirectPath =
+        "/asst_Zhd4SUuUw3c9EWeFvx0YmY0Q/b5a37e56-5070-430a-9740-789d4d9afdf1/nyaya-gpt";
+
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section className="relative bg-gradient-to-br from-amber-900 via-yellow-800 to-yellow-900 py-14 overflow-hidden">
@@ -83,13 +91,13 @@ function NyayagptHeroSection() {
                 className={`inline-block w-1 h-8 bg-yellow-300 ml-1 ${
                   isTypingComplete ? "animate-pulse" : ""
                 }`}
-              ></span>
+              />
             </span>
           </h1>
+
           <p className="text-amber-100 text-lg sm:text-xl mt-6 max-w-2xl mx-auto lg:mx-0">
             NyayaGPT combines AI-driven property insights with legal clarity.
-            Get expert guidance for smarter real estate decisions — all in one
-            platform.
+            Get expert guidance for smarter real estate decisions — all in one platform.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
@@ -117,9 +125,7 @@ function NyayagptHeroSection() {
                 key={idx}
                 className="bg-white/10 border border-amber-200/20 p-5 rounded-2xl hover:bg-white/15 transition duration-300 hover:scale-105 shadow-md text-center backdrop-blur-sm"
               >
-                <div
-                  className={`mb-3 p-3 rounded-full ${color} bg-amber-900/30 inline-block`}
-                >
+                <div className={`mb-3 p-3 rounded-full ${color} bg-amber-900/30 inline-block`}>
                   <Icon className="w-6 h-6" />
                 </div>
                 <h3 className={`text-lg font-semibold ${color}`}>{title}</h3>
@@ -128,13 +134,40 @@ function NyayagptHeroSection() {
             ))}
           </div>
 
-          <button
-            onClick={handleSignIn}
-            className="mt-10 inline-flex items-center gap-3 bg-gradient-to-r from-amber-600 to-yellow-500 text-white font-bold px-6 py-3 rounded-full hover:from-amber-700 hover:to-yellow-600 shadow-xl hover:shadow-amber-400/40 transition-all transform hover:scale-105"
-          >
-            Get Started
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {/* ✅ Buttons Responsive */}
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            {/* Button 1 */}
+            <button
+              onClick={handleSignIn}
+              disabled={isLoading}
+              className="inline-flex items-center justify-center gap-3 
+                bg-gradient-to-r from-amber-600 to-yellow-500 
+                text-white font-bold px-6 py-3 rounded-full 
+                hover:from-amber-700 hover:to-yellow-600 
+                shadow-xl hover:shadow-amber-400/40 
+                transition-all transform hover:scale-105
+                disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Get Started
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            {/* Button 2 */}
+            <button
+              onClick={handleSignIn1}
+              disabled={isLoading}
+              className="inline-flex items-center justify-center gap-3 
+                bg-gradient-to-r from-indigo-600 to-purple-600 
+                text-white font-bold px-6 py-3 rounded-full 
+                hover:from-indigo-700 hover:to-purple-700 
+                shadow-xl hover:shadow-purple-400/40 
+                transition-all transform hover:scale-105
+                disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Our NyayaGPT
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Image */}
