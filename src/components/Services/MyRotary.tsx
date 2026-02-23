@@ -50,8 +50,7 @@ const MyRotaryServices: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  // Grand Launch Top Banner Image
-  const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
+const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
 
   // We have 2 WhatsApp groups:
   // 1) Grand Launch group (join + confirm attendance)
@@ -196,7 +195,7 @@ const MyRotaryServices: React.FC = () => {
           <p className="text-gray-700 mb-4">
             Are you ready to join this exclusive Rotary AI initiative platform?
           </p>
-          <div className="bg-gradient-to-r from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100">
+          {/* <div className="bg-gradient-to-r from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                 <Sparkles className="h-5 w-5 text-blue-600" />
@@ -211,7 +210,7 @@ const MyRotaryServices: React.FC = () => {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       ),
       onOk: () => submitInterestHandler(ROTARY_ROLE),
@@ -648,20 +647,18 @@ const MyRotaryServices: React.FC = () => {
                 {/* Rotary AI Hub Section */}
                 <div className="mt-8">
                   <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                    Rotary <span className="text-blue-700">AI Hub</span> &{" "}
-                    <span className="text-emerald-600">AI Commerce</span>
+                    Rotary <span className="text-blue-700">AI Hub</span>
+                    {/* <span className="text-emerald-600">AI Commerce</span> */}
                   </h2>
                   <p className="mt-3 text-gray-700 leading-relaxed text-sm sm:text-base">
                     With deep respect for Rotary's legacy of leadership and
-                    service, I've launched a AI initiative —{" "}
-                    <b>Rotary Double Engine</b> — comprising the{" "}
-                    <b className="text-blue-700">Rotary AI Hub</b> and{" "}
-                    <b className="text-emerald-600">Rotary AI Commerce</b>.
+                    service, I've launched a AI initiative — comprising the{" "}
+                    <b className="text-blue-700">Rotary AI Hub</b>
                   </p>
                 </div>
 
                 {/* Note Card */}
-                <div className="mt-6 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/60 to-green-50/60 p-5 shadow-sm">
+                {/* <div className="mt-6 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/60 to-green-50/60 p-5 shadow-sm">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
                       <Lightbulb className="h-5 w-5 text-emerald-700" />
@@ -676,7 +673,7 @@ const MyRotaryServices: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Action Buttons - Compact & Responsive */}
                 <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -734,11 +731,11 @@ const MyRotaryServices: React.FC = () => {
                     text="AI Mentorship"
                     variant="premium"
                   />
-                  <Pill
+                  {/* <Pill
                     icon={<ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />}
                     text="Community Commerce"
                     variant="success"
-                  />
+                  /> */}
                   <Pill
                     icon={<Users2 className="h-3 w-3 sm:h-4 sm:w-4" />}
                     text="Rotary Network"
@@ -768,7 +765,7 @@ const MyRotaryServices: React.FC = () => {
                   </div>
 
                   {/* Platform Overview Card */}
-                  <div className="bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden">
+                  {/* <div className="bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden">
                     <div className="p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-white">
                       <div className="flex items-center justify-between">
                         <div>
@@ -795,7 +792,7 @@ const MyRotaryServices: React.FC = () => {
                         />
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
@@ -804,96 +801,98 @@ const MyRotaryServices: React.FC = () => {
 
         {/* ENHANCED DOUBLE ENGINE SECTION */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 mt-8">
-          <section className="rounded-3xl bg-gradient-to-br from-white to-blue-50/30 border border-gray-100 shadow-xl p-6 sm:p-8 lg:p-10">
-            <div className="text-center mb-8 lg:mb-10">
-             
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-4">
+          <section className="rounded-3xl bg-gradient-to-br from-white to-blue-50/30 border border-gray-100 shadow-xl p-6 sm:p-8 lg:p-12">
+            {/* Header */}
+            <div className="text-center mb-8 sm:mb-10">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
                 <span className="bg-gradient-to-r from-blue-700 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
-                  Double Engine Initiatives
+                  Rotary AI Hub - AI Initiative
                 </span>
               </h1>
-              <p className="mt-4 text-gray-700 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
-                Two complementary engines driving <span className="font-semibold text-blue-700">Rotary's transformation</span>: 
-                <span className="font-semibold text-purple-700"> AI education</span> for capability building and 
-                <span className="font-semibold text-emerald-700"> AI-powered commerce</span> for economic empowerment.
+
+              <p className="mt-3 sm:mt-4 text-gray-700 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
+                Driving{" "}
+                <span className="font-semibold text-blue-700">
+                  Rotary&apos;s transformation
+                </span>{" "}
+                through structured{" "}
+                <span className="font-semibold text-purple-700">
+                  AI education
+                </span>{" "}
+                and hands-on
+                <span className="font-semibold text-emerald-700">
+                  {" "}
+                  mentorship
+                </span>
+                .
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {/* Rotary AI Hub Card */}
-              <div className="group rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50/50 to-white p-5 sm:p-6 lg:p-7 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 active:scale-95">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-4">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg flex-shrink-0">
-                      <Sparkles className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                        Rotary AI Hub
-                      </h2>
-                      <p className="text-xs sm:text-sm text-gray-600">
-                        Complimentary AI mentorship for Rotarians
-                      </p>
-                    </div>
+            {/* Points in Both Sides */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+              {/* LEFT POINTS */}
+              <div className="rounded-3xl border border-blue-200 bg-white/70 backdrop-blur p-5 sm:p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
+                    <Sparkles className="h-6 w-6 text-white" />
                   </div>
-                  <span className="self-start px-3 py-1.5 rounded-full bg-white border border-blue-200 text-blue-700 text-xs font-bold">
-                    AI + Mentorship
-                  </span>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                      AI Learning
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-600">
+                      Build AI capability step-by-step
+                    </p>
+                  </div>
                 </div>
 
-                <ul className="space-y-2 sm:space-y-3">
+                <ul className="space-y-3">
                   {[
                     "Encourage Rotarians to learn AI and increase revenue",
-                    "Live demos + practical use cases",
+                    "Live demos + practical real-world use cases",
                     "Learning through real usage (not just theory)",
-                    "Weekly mentorship sessions",
-                    "Hands-on project guidance",
                   ].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2 sm:gap-3">
-                      <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <CheckCircle2 className="h-2 w-2 sm:h-3 sm:w-3 text-blue-600" />
+                    <li key={idx} className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-blue-600" />
                       </div>
-                      <span className="text-sm text-gray-700">{item}</span>
+                      <span className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                        {item}
+                      </span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Rotary AI Commerce Card */}
-              <div className="group rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white p-5 sm:p-6 lg:p-7 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 active:scale-95">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-4">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center shadow-lg flex-shrink-0">
-                      <ShoppingCart className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                        Rotary AI Commerce
-                      </h2>
-                      <p className="text-xs sm:text-sm text-gray-600">
-                        Complimentary AI Trusted community commerce platform to
-                        increase sales
-                      </p>
-                    </div>
+              {/* RIGHT POINTS */}
+              <div className="rounded-3xl border border-purple-200 bg-white/70 backdrop-blur p-5 sm:p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
+                    <CheckCircle2 className="h-6 w-6 text-white" />
                   </div>
-                  <span className="self-start px-3 py-1.5 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs font-bold">
-                    Sales + Growth
-                  </span>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                      AI Mentorship
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-600">
+                      Support to implement and execute
+                    </p>
+                  </div>
                 </div>
 
-                <ul className="space-y-2 sm:space-y-3">
+                <ul className="space-y-3">
                   {[
-                    "Add your products & services into a trusted network",
-                    "Support bulk-buy / recurring orders",
-                    "Community-first commerce enablement",
-                    "AI-powered sales optimization",
-                    "Secure payment gateway integration",
+                    "Weekly mentorship sessions",
+                    "Hands-on project guidance",
+                    "Implementation support and follow-ups",
                   ].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2 sm:gap-3">
-                      <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <CheckCircle2 className="h-2 w-2 sm:h-3 sm:w-3 text-emerald-600" />
+                    <li key={idx} className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-purple-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-purple-600" />
                       </div>
-                      <span className="text-sm text-gray-700">{item}</span>
+                      <span className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                        {item}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -905,7 +904,6 @@ const MyRotaryServices: React.FC = () => {
           <section className="mt-6 sm:mt-8 rounded-3xl bg-gradient-to-br from-white to-gray-50/50 border border-gray-100 shadow-xl p-6 sm:p-8 lg:p-10">
             <div className="mb-6 sm:mb-8 text-center">
               <div className="flex flex-col items-center gap-3 mb-4">
-                
                 <div>
                   <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">
                     <span className="bg-gradient-to-r from-purple-700 via-blue-700 to-emerald-700 bg-clip-text text-transparent">
@@ -913,7 +911,10 @@ const MyRotaryServices: React.FC = () => {
                     </span>
                   </h2>
                   <p className="text-gray-600 mt-2 text-sm sm:text-base font-medium">
-                    Building capacity through <span className="text-purple-600">practical AI adoption</span>
+                    Building capacity through{" "}
+                    <span className="text-purple-600">
+                      practical AI adoption
+                    </span>
                   </p>
                 </div>
               </div>
@@ -922,10 +923,18 @@ const MyRotaryServices: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-200 via-blue-200 to-emerald-200 opacity-20 blur-xl"></div>
                 <p className="relative text-gray-800 leading-relaxed text-sm sm:text-base">
                   Our objective is to build{" "}
-                  <span className="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">practical awareness</span>,{" "}
-                  <span className="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">confidence</span>, and{" "}
-                  <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">hands-on capability</span>
-                  {" "}in Artificial Intelligence and Generative AI, enabling
+                  <span className="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">
+                    practical awareness
+                  </span>
+                  ,{" "}
+                  <span className="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                    confidence
+                  </span>
+                  , and{" "}
+                  <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                    hands-on capability
+                  </span>{" "}
+                  in Artificial Intelligence and Generative AI, enabling
                   Rotarians to apply AI effectively across all dimensions of
                   professional and community life.
                 </p>
@@ -947,14 +956,16 @@ const MyRotaryServices: React.FC = () => {
                   title: "Entrepreneurship",
                   color: "from-emerald-100 to-emerald-200",
                   textColor: "text-emerald-800",
-                  bgHover: "group-hover:from-emerald-200 group-hover:to-emerald-300",
+                  bgHover:
+                    "group-hover:from-emerald-200 group-hover:to-emerald-300",
                 },
                 {
                   icon: <HeartHandshake className="h-5 w-5 sm:h-6 sm:w-6" />,
                   title: "Community",
                   color: "from-purple-100 to-purple-200",
                   textColor: "text-purple-800",
-                  bgHover: "group-hover:from-purple-200 group-hover:to-purple-300",
+                  bgHover:
+                    "group-hover:from-purple-200 group-hover:to-purple-300",
                 },
                 {
                   icon: <Users2 className="h-5 w-5 sm:h-6 sm:w-6" />,
