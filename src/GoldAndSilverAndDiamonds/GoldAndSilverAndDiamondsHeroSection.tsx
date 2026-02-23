@@ -6,7 +6,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { Cpu, X, ArrowRight } from "lucide-react";
+import { Cpu, X, ArrowRight, Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const rotatingWords = [
@@ -22,12 +22,20 @@ function GoldSilverDiamondHeroSection() {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
-    const scrollRef = useRef(isScrolled);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const LOGIN_URL = "/whatsapplogin";
-    const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 50);
+  const scrollRef = useRef(isScrolled);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"video" | "image" | null>(null);
+  const [formData, setFormData] = useState({
+    gender: "",
+    age: "",
+    skinTone: "",
+    event: "",
+  });
+  const LOGIN_URL = "/whatsapplogin";
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsVisible(true);
@@ -53,34 +61,63 @@ function GoldSilverDiamondHeroSection() {
     return () => clearInterval(interval);
   }, [currentWordIndex]);
 
- const handleSignIn = () => {
-   try {
-     setIsLoading(true);
-     const userId = localStorage.getItem("userId");
-     const redirectPath = "/main/dashboard/products?type=GOLD";
-     if (userId) {
-       navigate(redirectPath);
-     } else {
-       sessionStorage.setItem("redirectPath", redirectPath);
-       window.location.href = LOGIN_URL;
-     }
-   } catch (error) {
-     console.error("Sign in error:", error);
-   } finally {
-     setIsLoading(false);
-   }
- };
+  const handleSignIn = () => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/dashboard/products?type=GOLD";
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const videoCreator = () => {
+    const existingContext = sessionStorage.getItem("userJewelryContext");
+    if (existingContext) {
+      window.location.href = "/video-creator";
+    } else {
+      setModalType("video");
+      setShowModal(true);
+    }
+  };
+
+  const imageCreator = () => {
+    const existingContext = sessionStorage.getItem("userJewelryContext");
+    if (existingContext) {
+      window.location.href = "/image-creator";
+    } else {
+      setModalType("image");
+      setShowModal(true);
+    }
+  };
+
+  const handleModalSubmit = () => {
+    const userContext = `Gender: ${formData.gender}, Age: ${formData.age}, Skin Tone: ${formData.skinTone}, Event: ${formData.event}`;
+    sessionStorage.setItem("userJewelryContext", userContext);
+
+    setShowModal(false);
+    if (modalType === "video") {
+      window.location.href = "/video-creator";
+    } else {
+      window.location.href = "/image-creator";
+    }
+  };
 
   return (
     <section className="relative min-h-screen flex items-center bg-gradient-to-br from-gray-100 via-slate-50 to-gray-200 px-6 py-16">
-      {/* Subtle pattern overlay */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-slate-400/20"></div>
       </div>
 
-      {/* Hero Container */}
       <div className="relative max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
-        {/* Left Content */}
         <div
           className={`space-y-6 transition-all duration-700 ${
             isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-6"
@@ -104,9 +141,6 @@ function GoldSilverDiamondHeroSection() {
             special moment.
           </p>
 
-          {/* CTA */}
-
-          {/* Features */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
             {[
               {
@@ -135,20 +169,47 @@ function GoldSilverDiamondHeroSection() {
               </div>
             ))}
           </div>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 justify-center items-center">
+            {/* Explore Collection - Primary */}
             <button
               onClick={handleSignIn}
-              className="bg-gradient-to-r from-gray-600 to-slate-700 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+              className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-6 py-3 rounded-full text-base font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap"
             >
               Explore Collection
-              <ArrowRight size={18} />
+              <ArrowRight size={16} />
+            </button>
+
+            {/* Jewellery Videos */}
+            <button
+              onClick={videoCreator}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full text-base font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              Design Jewellery Videos
+              <ArrowRight size={16} />
+            </button>
+
+            {/* Jewellery Images */}
+            <button
+              onClick={imageCreator}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-full text-base font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              Design Jewellery Images
+              <ArrowRight size={16} />
+            </button>
+
+            {/* Voice AI */}
+            <button
+              onClick={() => navigate("/voiceAssistant")}
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-full text-base font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              Talk with Gold Voice AI
+              <Mic size={16} />
             </button>
           </div>
         </div>
 
-        {/* Right Image */}
         <div
-          className={`flex justify-center transition-all duration-700 delay-200 ${
+          className={`flex justify-center transition-all mt-16 duration-700 delay-200 ${
             isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
           }`}
         >
@@ -163,6 +224,112 @@ function GoldSilverDiamondHeroSection() {
         </div>
       </div>
 
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative animate-slide-up">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Personalize Your Design
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gender
+                </label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) =>
+                    setFormData({ ...formData, gender: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Unisex">Unisex</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Age
+                </label>
+                <input
+                  type="number"
+                  value={formData.age}
+                  onChange={(e) =>
+                    setFormData({ ...formData, age: e.target.value })
+                  }
+                  placeholder="Enter age"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Skin Tone
+                </label>
+                <select
+                  value={formData.skinTone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, skinTone: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select Skin Tone</option>
+                  <option value="Fair">Fair</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Olive">Olive</option>
+                  <option value="Brown">Brown</option>
+                  <option value="Dark">Dark</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Event/Celebration
+                </label>
+                <select
+                  value={formData.event}
+                  onChange={(e) =>
+                    setFormData({ ...formData, event: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select Event</option>
+                  <option value="Wedding">Wedding</option>
+                  <option value="Party">Party</option>
+                  <option value="Official/Formal">Official/Formal</option>
+                  <option value="Ethnic/Traditional">Ethnic/Traditional</option>
+                  <option value="Casual">Casual</option>
+                  <option value="Festival">Festival</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={handleModalSubmit}
+              disabled={
+                !formData.gender ||
+                !formData.age ||
+                !formData.skinTone ||
+                !formData.event
+              }
+              className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Continue to Design
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
@@ -170,6 +337,13 @@ function GoldSilverDiamondHeroSection() {
         }
         .animate-pulse {
           animation: pulse 1s infinite;
+        }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
         }
       `}</style>
     </section>

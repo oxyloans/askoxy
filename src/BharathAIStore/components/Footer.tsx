@@ -29,41 +29,41 @@ const Footer: React.FC = () => {
     color: string;
   }[] = [
     {
-      icon: <Facebook className="h-5 w-5" aria-hidden="true" />,
-      href: "https://www.facebook.com/profile.php?id=61572388385568",
-      label: "Facebook",
-      color: "text-blue-600 hover:text-blue-700",
-    },
-    {
-      icon: <Instagram className="h-5 w-5" aria-hidden="true" />,
-      href: "https://www.instagram.com/askoxy.ai/",
-      label: "Instagram",
-      color: "text-pink-500 hover:text-pink-600",
-    },
-    {
-      icon: <Linkedin className="h-5 w-5" aria-hidden="true" />,
-      href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
-      label: "LinkedIn",
-      color: "text-blue-700 hover:text-blue-800",
-    },
-    {
-      icon: <FaXTwitter className="h-5 w-5" aria-hidden="true" />,
-      href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
-      label: "FaXTwitter",
-      color: "text-black hover:text-gray-700",
-    },
-    {
-      icon: <Youtube className="h-5 w-5" aria-hidden="true" />,
-      href: "https://www.youtube.com/@askoxyDOTai",
-      label: "YouTube",
-      color: "text-red-600 hover:text-red-700",
-    },
-    {
-      icon: <SiThreads className="h-5 w-5" aria-hidden="true" />,
-      href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
-      label: "SiThreads",
-      color: "text-black hover:text-gray-700",
-    },
+         icon: <Facebook className="h-4 w-4" />,
+         href: "https://www.facebook.com/profile.php?id=61572388385568",
+         label: "Facebook",
+         color: "#1877F2",
+       },
+       {
+         icon: <Instagram className="h-4 w-4" />,
+         href: "https://www.instagram.com/askoxy.ai/",
+         label: "Instagram",
+         color: "#E4405F",
+       },
+       {
+         icon: <Linkedin className="h-4 w-4" />,
+         href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
+         label: "LinkedIn",
+         color: "#0A66C2",
+       },
+       {
+         icon: <FaXTwitter className="h-4 w-4" />,
+         href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
+         label: "FaXTwitter",
+         color: "#000000",
+       },
+       {
+         icon: <Youtube className="h-4 w-4" />,
+         href: "https://www.youtube.com/@askoxyDOTai",
+         label: "YouTube",
+         color: "#FF0000",
+       },
+       {
+         icon: <SiThreads className="h-4 w-4" />,
+         href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
+         label: "SiThreads",
+         color: "#000000",
+       },
   ];
 
   return (
@@ -148,6 +148,14 @@ const Footer: React.FC = () => {
                   Awards & Rewards
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/all-ai-stores"
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Explore AI Stores
+                </Link>
+              </li>
             </ul>
           </nav>
 
@@ -222,13 +230,13 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Divider */}
-        <hr className="my-8 border-gray-200" />
+        <hr className="my-4 border-gray-200" />
 
-        {/* Bottom Bar */}
-        <div className="py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          {/* 👇 Copyright + Secret Dot */}
+       
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+         
           <div className="text-sm text-gray-600 flex items-center gap-2">
-            <span>© {year} ASKOXY.AI. All rights reserved.</span>
+            <span>© 2024 - {year} ASKOXY.AI. All rights reserved.</span>
             <Link
               to="/bharath-aistore/hiddenagents"
               aria-label="Hidden Agents"

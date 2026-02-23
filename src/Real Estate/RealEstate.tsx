@@ -5,9 +5,6 @@ import RealEstateHeroSection from "./RealEstateHeroSection";
 import OurServices from "./RealEstateOurServices";
 import RealEstateFooter from "./RealEstatefooter";
 
-
-
-// Add type definition for window.gtag if using analytics
 declare global {
   interface Window {
     gtag?: (
@@ -35,9 +32,8 @@ export default function RealEstate() {
   const homeRef = useRef<HTMLDivElement | null>(null);
   const servicesRef = useRef<HTMLDivElement | null>(null);
   const contactRef = useRef<HTMLDivElement | null>(null);
-  const headerRef = useRef<HTMLElement | null>(null); // 🆕 Header ref for dynamic height
+  const headerRef = useRef<HTMLElement | null>(null);
 
-  // Track session ID
   useEffect(() => {
     const sessionId = `${Date.now()}-${Math.random()
       .toString(36)
@@ -73,7 +69,7 @@ export default function RealEstate() {
     };
 
     const targetRef = sectionRefs[sectionId];
-    const headerHeight = headerRef.current?.offsetHeight || 80; // 🧠 Get header height dynamically
+    const headerHeight = headerRef.current?.offsetHeight || 80;
     const yOffset = -headerHeight;
     const y = targetRef.current
       ? targetRef.current.getBoundingClientRect().top +

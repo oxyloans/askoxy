@@ -472,15 +472,20 @@ const ToggleBtn = ({
   <button
     onClick={onClick}
     className={cx(
-      "flex-1 rounded-2xl border px-4 py-2 text-sm font-semibold transition",
+      "flex-1 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition-all duration-300",
       "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-      active ? "bg-white" : "bg-white/60"
+      "active:scale-95",
+      active 
+        ? "bg-white shadow-lg scale-105" 
+        : "bg-white/60 hover:bg-white/80 hover:shadow-md"
     )}
     style={{
-      borderColor: `${C2}66`,
+      borderColor: active ? `${C3}88` : `${C2}66`,
       color: active ? C3 : "#64748b",
+      fontWeight: active ? 700 : 600,
     }}
   >
+    {active && <span className="mr-1.5">✓</span>}
     {label}
   </button>
 );
@@ -810,7 +815,6 @@ function BookPreviewModal({
 export default function NinetyDayPlanPage() {
   const navigate = useNavigate();
 
-  // ✅ Your 51 use cases (LOS + FMS + CMS)
   const useCases: UseCase[] = useMemo(() => {
     const base: Array<
       Pick<UseCase, "useCaseId" | "title" | "description" | "module">
@@ -1236,18 +1240,11 @@ export default function NinetyDayPlanPage() {
 
   /** ✅ Book plan state */
   const [bookDay, setBookDay] = useState<number>(1);
-
   const [aiDay, setAiDay] = useState<number>(1);
 
-const aiDayChips = useMemo(() => {
-  const days: number[] = [];
-  for (let i = 1; i <= dailyAITools30.length; i += 1) days.push(i);
-  return days;
-}, []);
+  const aiDayChips = useMemo(() => Array.from({ length: dailyAITools30.length }, (_, i) => i + 1), []);
 
-const selectedAiTool = useMemo(() => {
-  return dailyAITools30.find((d) => d.day === aiDay) || dailyAITools30[0];
-}, [aiDay]);
+  const selectedAiTool = useMemo(() => dailyAITools30.find((d) => d.day === aiDay) || dailyAITools30[0], [aiDay]);
 
   /** ✅ Book modal state */
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -1576,59 +1573,62 @@ const selectedAiTool = useMemo(() => {
         </div>
       </header>
 
-{/* ✅ 30-DAY AI TOOLS PLAN (UPDATED) */}
+{/* ✅ 30-DAY AI TOOLS PLAN - ENHANCED UI/UX */}
 <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-10">
   <SoftCard className="overflow-hidden">
-    {/* Top hero strip */}
+    {/* Top hero strip with animated gradient */}
     <div
-      className="relative px-5 sm:px-7 py-6"
+      className="relative px-5 sm:px-7 py-8"
       style={{
-        background: "linear-gradient(135deg, rgba(54,77,105,0.95), rgba(144,183,215,0.92), rgba(23,59,99,0.95))",
+        background: "linear-gradient(135deg, rgba(54,77,105,0.98), rgba(144,183,215,0.95), rgba(23,59,99,0.98))",
       }}
     >
+      {/* Animated background orbs */}
       <div
-        className="absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl opacity-40"
-        style={{ background: "rgba(255,255,255,0.35)" }}
+        className="absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl opacity-40 animate-pulse"
+        style={{ background: "rgba(255,255,255,0.4)", animationDuration: "3s" }}
       />
       <div
-        className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full blur-3xl opacity-30"
-        style={{ background: "rgba(255,255,255,0.28)" }}
+        className="absolute -left-24 -bottom-24 h-72 w-72 rounded-full blur-3xl opacity-35 animate-pulse"
+        style={{ background: "rgba(255,255,255,0.35)", animationDuration: "4s", animationDelay: "1s" }}
       />
 
-      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          {/* Badge row */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-extrabold text-white border border-white/20">
-              ✅ Top 30 AI Tools
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          {/* Enhanced badge row */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-xs font-extrabold text-white border border-white/30 shadow-lg backdrop-blur-sm">
+              <span className="text-base">✨</span> Top 30 AI Tools
             </span>
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white border border-white/15">
-              1 Tool / Day
+            <span className="inline-flex items-center rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white border border-white/20">
+              📅 1 Tool / Day
             </span>
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white border border-white/15">
-              Zero → Hero
+            <span className="inline-flex items-center rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white border border-white/20">
+              🚀 Zero → Hero
             </span>
           </div>
 
-          <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-            Top 30 AI Tools <span className="opacity-95">that change your life</span>
+          <h2 className="mt-4 text-2xl sm:text-4xl font-extrabold text-white leading-tight drop-shadow-sm">
+            Master 30 AI Tools <span className="opacity-90">That Transform Your Career</span>
           </h2>
-          <p className="mt-1 text-sm sm:text-base text-white/90 leading-relaxed max-w-2xl">
-            From <b>Zero to Hero</b>: learn one tool daily, and open the tool to build real skills fast.
+          <p className="mt-2 text-sm sm:text-base text-white/95 leading-relaxed max-w-2xl">
+            From <span className="font-bold">Zero to Hero</span>: Learn one powerful tool daily. Click, explore, and build real-world AI skills fast.
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex gap-2">
+        {/* Enhanced navigation controls */}
+        <div className="flex gap-2.5 shrink-0">
           <button
             onClick={() => setAiDay((d) => Math.max(1, d - 1))}
-            className="rounded-2xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white border border-white/20 hover:bg-white/20 transition"
+            disabled={aiDay === 1}
+            className="rounded-2xl bg-white/20 px-5 py-3 text-sm font-semibold text-white border border-white/30 hover:bg-white/30 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed backdrop-blur-sm shadow-lg"
           >
             ← Prev
           </button>
           <button
             onClick={() => setAiDay((d) => Math.min(dailyAITools30.length, d + 1))}
-            className="rounded-2xl bg-white px-4 py-2.5 text-sm font-extrabold"
+            disabled={aiDay === dailyAITools30.length}
+            className="rounded-2xl bg-white px-5 py-3 text-sm font-extrabold hover:shadow-xl active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
             style={{ color: C3 }}
           >
             Next →
@@ -1637,74 +1637,121 @@ const selectedAiTool = useMemo(() => {
       </div>
     </div>
 
-    {/* Body */}
-    <div className="p-5 sm:p-6">
-      {/* Day chips */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-slate-500">Pick your tool day</p>
-        <p className="text-xs text-slate-500">
-          Selected: <span className="font-bold" style={{ color: C3 }}>Day {aiDay}</span>
-        </p>
+    {/* Enhanced body section */}
+    <div className="p-6 sm:p-8">
+      {/* Day chips with better spacing */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm font-bold text-slate-700">📌 Select Your Learning Day</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">Current:</span>
+          <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-extrabold" style={{ background: `${C3}15`, color: C3 }}>
+            Day {aiDay}
+          </span>
+        </div>
       </div>
 
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
-        {aiDayChips.map((d) => (
-          <DayChip
-            key={d}
-            day={d}
-            prefix="Day"
-            active={d === aiDay}
-            onClick={() => setAiDay(d)}
-          />
-        ))}
+      {/* Scrollable day chips with shadow indicators */}
+      <div className="relative">
+        <div className="flex gap-2.5 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+          {aiDayChips.map((d) => (
+            <DayChip
+              key={d}
+              day={d}
+              prefix="Day"
+              active={d === aiDay}
+              onClick={() => setAiDay(d)}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Selected day content */}
+      {/* Enhanced selected day content card */}
       <div
-        className="mt-5 rounded-[28px] border bg-white/85 p-5 sm:p-6"
+        className="mt-6 rounded-[32px] border bg-gradient-to-br from-white via-white to-slate-50/50 p-6 sm:p-8 shadow-xl"
         style={{
-          borderColor: `${C2}66`,
-          boxShadow: "0 18px 50px rgba(15,23,42,0.06)",
+          borderColor: `${C2}88`,
         }}
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          {/* Left */}
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          {/* Left content */}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
               <span
-                className="inline-flex items-center rounded-full border bg-white/70 px-3 py-1 text-xs font-extrabold"
-                style={{ borderColor: `${C2}66`, color: C3 }}
+                className="inline-flex items-center rounded-full border bg-white px-4 py-2 text-sm font-extrabold shadow-sm"
+                style={{ borderColor: `${C2}88`, color: C3 }}
               >
-                Day {selectedAiTool.day}
+                📅 Day {selectedAiTool.day}
               </span>
 
               <span
-                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
-                style={{ background: `${C3}14`, color: C3 }}
+                className="inline-flex items-center rounded-full px-4 py-2 text-sm font-bold shadow-sm"
+                style={{ background: `${C3}18`, color: C3 }}
               >
                 {selectedAiTool.category}
               </span>
             </div>
 
-            <h3 className="mt-3 text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
+            <h3 className="mt-4 text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
               {selectedAiTool.tool}
             </h3>
 
-            <p className="mt-2 text-sm sm:text-base text-slate-700 leading-relaxed">
+            <p className="mt-3 text-base sm:text-lg text-slate-700 leading-relaxed">
               {selectedAiTool.content}
             </p>
+
+            {/* Progress indicator */}
+            <div className="mt-5 flex items-center gap-3">
+              <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${(aiDay / dailyAITools30.length) * 100}%`,
+                    background: GRAD 
+                  }}
+                />
+              </div>
+              <span className="text-xs font-bold text-slate-600 whitespace-nowrap">
+                {aiDay}/{dailyAITools30.length}
+              </span>
+            </div>
           </div>
 
-          {/* Right */}
-          <div className="w-full lg:w-[260px] flex flex-col gap-2">
+          {/* Right action button */}
+          <div className="w-full lg:w-[280px] flex flex-col gap-3">
             <button
               onClick={() => window.open(selectedAiTool.link, "_blank")}
-              className="w-full rounded-2xl px-5 py-3 text-sm font-extrabold text-white transition hover:opacity-95 active:scale-[0.99]"
+              className="group w-full rounded-2xl px-6 py-4 text-base font-extrabold text-white transition-all hover:shadow-2xl active:scale-[0.98] relative overflow-hidden"
               style={{ background: GRAD }}
             >
-              Open Tool ↗
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                🚀 Open Tool
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </span>
+              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
+            
+            <div className="text-center text-xs text-slate-500">
+              💡 Click to explore and learn
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Quick stats footer */}
+      <div className="mt-6 grid grid-cols-3 gap-4">
+        <div className="text-center p-4 rounded-2xl bg-slate-50 border border-slate-200">
+          <div className="text-2xl font-extrabold" style={{ color: C3 }}>{aiDay}</div>
+          <div className="text-xs text-slate-600 mt-1">Current Day</div>
+        </div>
+        <div className="text-center p-4 rounded-2xl bg-slate-50 border border-slate-200">
+          <div className="text-2xl font-extrabold" style={{ color: C3 }}>{dailyAITools30.length - aiDay}</div>
+          <div className="text-xs text-slate-600 mt-1">Days Left</div>
+        </div>
+        <div className="text-center p-4 rounded-2xl bg-slate-50 border border-slate-200">
+          <div className="text-2xl font-extrabold" style={{ color: C3 }}>{Math.round((aiDay / dailyAITools30.length) * 100)}%</div>
+          <div className="text-xs text-slate-600 mt-1">Complete</div>
         </div>
       </div>
     </div>
@@ -1817,23 +1864,49 @@ const selectedAiTool = useMemo(() => {
                       <button
                         onClick={() => {
                           setSelectedDay(u.day);
+                          setViewType("business");
                           navigate(`/${u.module}/${u.useCaseId}/business`);
                         }}
-                        className="rounded-2xl border bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white"
-                        style={{ borderColor: `${C2}66`, color: C3 }}
+                        className={cx(
+                          "rounded-2xl border px-4 py-2.5 text-sm font-semibold transition-all duration-300",
+                          "hover:shadow-lg active:scale-95",
+                          viewType === "business" && selectedDay === u.day
+                            ? "bg-white shadow-md scale-105"
+                            : "bg-white/80 hover:bg-white"
+                        )}
+                        style={{ 
+                          borderColor: viewType === "business" && selectedDay === u.day ? `${C3}88` : `${C2}66`, 
+                          color: viewType === "business" && selectedDay === u.day ? C3 : "#475569",
+                          fontWeight: viewType === "business" && selectedDay === u.day ? 700 : 600,
+                        }}
                       >
-                        Business
+                        {viewType === "business" && selectedDay === u.day && <span className="mr-1">✓</span>}
+                        💼 Business
                       </button>
 
                       <button
                         onClick={() => {
                           setSelectedDay(u.day);
+                          setViewType("system");
                           navigate(`/${u.module}/${u.useCaseId}/system`);
                         }}
-                        className="rounded-2xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-95"
-                        style={{ background: GRAD }}
+                        className={cx(
+                          "rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-300",
+                          "hover:shadow-xl active:scale-95",
+                          viewType === "system" && selectedDay === u.day
+                            ? "shadow-lg scale-105"
+                            : "hover:opacity-90"
+                        )}
+                        style={{ 
+                          background: viewType === "system" && selectedDay === u.day 
+                            ? GRAD 
+                            : "linear-gradient(135deg, rgba(54,77,105,0.85), rgba(144,183,215,0.85), rgba(23,59,99,0.85))",
+                          color: "white",
+                          fontWeight: viewType === "system" && selectedDay === u.day ? 700 : 600,
+                        }}
                       >
-                        System
+                        {viewType === "system" && selectedDay === u.day && <span className="mr-1">✓</span>}
+                        ⚙️ System
                       </button>
                     </div>
 

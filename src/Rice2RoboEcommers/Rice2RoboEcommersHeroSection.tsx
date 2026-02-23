@@ -75,7 +75,6 @@ function Rice2RoboEcommersHeroSection() {
                  py-6 sm:py-8 lg:py-16 pb-16 sm:pb-20 overflow-hidden min-h-screen
                  flex items-center"
     >
-      {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-60 sm:w-80 h-60 sm:h-80 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-60 sm:w-80 h-60 sm:h-80 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -85,7 +84,6 @@ function Rice2RoboEcommersHeroSection() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
-          {/* Left Content */}
           <div
             className={`lg:col-span-7 space-y-4 sm:space-y-6 lg:space-y-8
               text-center lg:text-left
@@ -117,7 +115,6 @@ function Rice2RoboEcommersHeroSection() {
                 deliver quality and convenience right to your doorstep.
               </p>
 
-              {/* Service Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mt-6 sm:mt-8 lg:mt-10">
                 {[
                   {
@@ -185,7 +182,6 @@ function Rice2RoboEcommersHeroSection() {
               </div>
             </div>
 
-            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start mt-6 sm:mt-8">
               <button
                 onClick={handleSignIn}
@@ -201,12 +197,9 @@ function Rice2RoboEcommersHeroSection() {
                 Shop Now
                 <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-
-             
             </div>
           </div>
 
-          {/* Right Content - Hero Image */}
           <div
             className={`lg:col-span-5 transition-all duration-700 transform flex justify-center mt-8 lg:mt-0
               ${
@@ -216,7 +209,6 @@ function Rice2RoboEcommersHeroSection() {
               }`}
           >
             <div className="relative group max-w-sm sm:max-w-md lg:max-w-full">
-              {/* Image Glow Effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-300 opacity-75 group-hover:opacity-100 pointer-events-none"></div>
 
               <img
@@ -226,13 +218,6 @@ function Rice2RoboEcommersHeroSection() {
                 loading="lazy"
                 decoding="async"
               />
-
-              {/* Floating Badge */}
-              {/* <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-full shadow-lg animate-bounce pointer-events-none select-none">
-                <span className="text-xs sm:text-sm font-bold">
-                  Trusted Experts
-                </span>
-              </div> */}
             </div>
           </div>
         </div>

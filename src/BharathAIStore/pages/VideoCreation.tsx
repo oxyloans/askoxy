@@ -1,7 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { notification } from "antd";
-import { Video, Send, Loader2, ArrowLeft, Sparkles, Plus, Download } from "lucide-react";
+import {
+  Video,
+  Send,
+  Loader2,
+  ArrowLeft,
+  Sparkles,
+  Plus,
+  Download,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../Config";
 
@@ -20,26 +28,27 @@ const VideoCreationPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [canSend, setCanSend] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [referrer] = useState(() => document.referrer);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const createVideo = async (prompt: string) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
-      throw new Error('No access token');
+      throw new Error("No access token");
     }
 
     try {
       const response = await axios.post(
         `${BASE_URL}/ai-service/agent/createVideo`,
         { prompt },
-        { 
-          headers: { 
+        {
+          headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`
-          } 
+            Authorization: `Bearer ${accessToken}`,
+          },
         },
       );
       return response.data;
@@ -50,9 +59,9 @@ const VideoCreationPage: React.FC = () => {
   };
 
   const getVideoStatus = async (videoId: string) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
-      throw new Error('No access token');
+      throw new Error("No access token");
     }
 
     try {
@@ -60,9 +69,9 @@ const VideoCreationPage: React.FC = () => {
         `${BASE_URL}/ai-service/agent/getVideoStatus/${videoId}`,
         {
           headers: {
-            "Authorization": `Bearer ${accessToken}`
-          }
-        }
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
       );
       return response.data;
     } catch (error) {
@@ -72,9 +81,9 @@ const VideoCreationPage: React.FC = () => {
   };
 
   const getVideoContent = async (videoId: string) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
-      throw new Error('No access token');
+      throw new Error("No access token");
     }
 
     try {
@@ -84,7 +93,7 @@ const VideoCreationPage: React.FC = () => {
           responseType: "blob",
           headers: {
             Accept: "video/mp4,video/webm,video/*",
-            "Authorization": `Bearer ${accessToken}`
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -112,13 +121,30 @@ const VideoCreationPage: React.FC = () => {
   const handleVideoCreation = async (prompt: string) => {
     if (!prompt.trim()) return;
 
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       notification.error({
-        message: 'Authentication Required',
-        description: 'Please login to create videos'
+        message: "Authentication Required",
+        description: "Please login to create videos",
       });
       return;
+    }
+
+    const userContextRaw = sessionStorage.getItem("userJewelryContext");
+    let enhancedPrompt = prompt;
+
+    if (userContextRaw) {
+      const gender = userContextRaw.match(/Gender:\s*([^,]+)/)?.[1]?.trim();
+      const age = userContextRaw.match(/Age:\s*([^,]+)/)?.[1]?.trim();
+      const skinTone = userContextRaw
+        .match(/Skin Tone:\s*([^,]+)/)?.[1]
+        ?.trim();
+      const event = userContextRaw.match(/Event:\s*([^,]+)/)?.[1]?.trim();
+
+      enhancedPrompt = `
+${prompt}
+The user details are: ${age}, ${gender}, ${skinTone}, ${event}.
+    `;
     }
 
     const userMessage: ChatMessage = { role: "user", content: prompt };
@@ -135,7 +161,7 @@ const VideoCreationPage: React.FC = () => {
     setMessages((prev) => [...prev, loadingMessage]);
 
     try {
-      const createResponse = await createVideo(prompt);
+      const createResponse = await createVideo(enhancedPrompt);
       const { videoId } = createResponse;
 
       // Update message to show video ID
@@ -218,8 +244,8 @@ const VideoCreationPage: React.FC = () => {
       setTimeout(pollStatus, 5000);
     } catch (error) {
       notification.error({
-        message: 'Video Creation Failed',
-        description: 'Failed to create video. Please try again.'
+        message: "Video Creation Failed",
+        description: "Failed to create video. Please try again.",
       });
       setMessages((prev) =>
         prev.map((msg, index) =>
@@ -283,7 +309,13 @@ const VideoCreationPage: React.FC = () => {
             {/* Right side - Navigation buttons */}
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate("/bharath-aistore/ai-initiatives")}
+                onClick={() => {
+                  if (referrer.includes('/goldandsilveranddiamonds')) {
+                    navigate('/goldandsilveranddiamonds');
+                  } else {
+                    navigate(-1);
+                  }
+                }}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -392,7 +424,9 @@ const VideoCreationPage: React.FC = () => {
                     {msg.videoUrl && (
                       <div className="mt-4 relative">
                         <button
-                          onClick={() => downloadVideo(msg.videoUrl!, msg.videoId!)}
+                          onClick={() =>
+                            downloadVideo(msg.videoUrl!, msg.videoId!)
+                          }
                           className="absolute top-2 right-2 z-10 p-2 bg-black/50 text-white hover:bg-black/70 rounded-lg transition-all"
                           title="Download video"
                         >

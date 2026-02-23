@@ -25,6 +25,7 @@ import DataReading from "./ChatScreen/DataReading";
 import RotaryLandingPage from "./components/RotaryLanding";
 import { CandidatesList } from "./AIMockInterview/admin/CandidatesList";
 import { CandidateDetail } from "./AIMockInterview/admin/CandidateDetail";
+import ImageCreation from "./BharathAIStore/pages/ImageCreation";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -220,11 +221,11 @@ const GoldAndSilverAndDiamond = lazy(
 const LoansInvestmentsLandingPage = lazy(
   () => import("./LoansInvestments/LoanInvestmentsLandingPage")
 );
-const RealEstate = lazy(() => import("./Real Estate/Real Estate/RealEstate"));
+const RealEstate = lazy(() => import("./Real Estate/RealEstate"));
 const Nyayagpt = lazy(() => import("./Nyayagpt/Nyayagpt/Nyayagpt"));
 const MetroLogin = lazy(() => import("./Pages/Auth/MetroLogin"));
 const Rice2RoboEcommers = lazy(
-  () => import("./Rice2RoboEcommers/Rice2RoboEcommers/Rice2RoboEcommers")
+  () => import("./Rice2RoboEcommers/Rice2RoboEcommers")
 );
 
 const HomePage = lazy(() => import("./Retailshop/Pages/Home"));
@@ -384,32 +385,59 @@ const AgentCreationSteps = lazy(
 const TripPlanner = lazy(() => import("./AITripPlanner/TripPlanner"));
 const TaxInvoice = lazy(() => import("./components/TaxInvoice"));
 // Simple centered loader component
-const LoadingSpinner = React.memo(() => (
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100vh",
-      backgroundColor: "#f8f9fa", // Light background for better visibility
-      fontFamily: "Arial, sans-serif",
-    }}
-  >
+const LoadingSpinner = React.memo(() => {
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .loader {
+        width: 50px;
+        aspect-ratio: 1;
+        display: grid;
+        border: 4px solid #0000;
+        border-radius: 50%;
+        border-right-color: #5c3391;
+        animation: l15 1s infinite linear;
+      }
+      .loader::before,
+      .loader::after {
+        content: "";
+        grid-area: 1/1;
+        margin: 2px;
+        border: inherit;
+        border-radius: 50%;
+        animation: l15 2s infinite;
+      }
+      .loader::after {
+        margin: 8px;
+        animation-duration: 3s;
+      }
+      @keyframes l15 {
+        100% { transform: rotate(1turn); }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  return (
     <div
       style={{
-        border: "4px solid #f3f3f3",
-        borderTop: "4px solid #3498db",
-        borderRadius: "50%",
-        width: "40px",
-        height: "40px",
-        animation: "spin 1s linear infinite",
-        marginBottom: "16px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        backgroundColor: "#f8f9fa",
+        fontFamily: "Arial, sans-serif",
       }}
-    />
-    <div style={{ fontSize: "18px", color: "#333" }}>Loading...</div>
-  </div>
-));
+    >
+      <div className="loader" />
+      <div style={{ fontSize: "18px", color: "#333", marginTop: "16px" }}>Loading...</div>
+    </div>
+  );
+});
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -511,7 +539,10 @@ const App: React.FC = () => {
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
               <Route path="/admin/candidates" element={<CandidatesList />} />
-              <Route path="/admin/candidate/:userId" element={<CandidateDetail />} />
+              <Route
+                path="/admin/candidate/:userId"
+                element={<CandidateDetail />}
+              />
               <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
@@ -521,7 +552,10 @@ const App: React.FC = () => {
               <Route path="/smartlock" element={<GoldSilverTargets />} />
               <Route path="/allgoldrates" element={<GoldRatesPage />} />
               <Route path="/oxyinsurance" element={<DataReading />} />
-              <Route path="/rotarydistrict3150AiAgent" element={<RotaryLandingPage />} />
+              <Route
+                path="/rotarydistrict3150AiAgent"
+                element={<RotaryLandingPage />}
+              />
               <Route
                 path="/ninetydayplan"
                 element={
@@ -634,6 +668,7 @@ const App: React.FC = () => {
                   element={<AiResources />}
                 />
               </Route>
+              <Route path="/image-creator" element={<ImageCreation />} />
               <Route path="/video-creator" element={<VideoCreationPage />} />
 
               {/* ===================================================== */}
@@ -1112,7 +1147,6 @@ const App: React.FC = () => {
                 <Route path="createassistant" element={<CreateAssistant />} />
               </Route>
 
-            
               {/* ✅ LANDING */}
               {/* ===================================================== */}
               <Route path="/" element={<CurrentLandingPage />} />

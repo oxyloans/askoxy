@@ -8,6 +8,7 @@ import Header1 from "../Header";
 import {
   ArrowLeft,
   Sparkles,
+  Copy,
   ShoppingCart,
   CheckCircle2,
   MessageCircle,
@@ -49,6 +50,20 @@ const MyRotaryServices: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  // Grand Launch Top Banner Image
+  const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
+
+  // We have 2 WhatsApp groups:
+  // 1) Grand Launch group (join + confirm attendance)
+  const WHATSAPP_GROUP_GRAND_LAUNCH =
+    "https://chat.whatsapp.com/FRIPgqC1cYaGwQ5VbSXBPL?mode=gi_t";
+
+  // 2) Other-purpose group (general Rotary AI Hub group)
+  const WHATSAPP_GROUP_PLATFORM =
+    "https://chat.whatsapp.com/DiwjVdXb7p60ywRlgrSFDp?mode=gi_t";
+
+  const EXPLORE_AI_AGENT_LINK =
+    "https://www.askoxy.ai/rotarydistrict3150AiAgent";
 
   const ROTARY_ROLE = "ROTARIAN_MEMBER";
   const navigate = useNavigate();
@@ -67,9 +82,6 @@ const MyRotaryServices: React.FC = () => {
     "https://i.ibb.co/sLg7zcB/Chat-GPT-Image-Jan-26-2026-03-49-38-PM.png";
   const PATTERN_BG =
     "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=2070&auto=format&fit=crop";
-
-  const WHATSAPP_GROUP_LINK =
-    "https://chat.whatsapp.com/DiwjVdXb7p60ywRlgrSFDp?mode=gi_t";
 
   // Rotary Identity (display)
   const ROTARY_DISTRICT = "RI DISTRICT 3150";
@@ -112,8 +124,48 @@ const MyRotaryServices: React.FC = () => {
     }
   };
 
-  const openWhatsAppGroup = () => {
-    window.open(WHATSAPP_GROUP_LINK, "_blank", "noopener,noreferrer");
+  const openWhatsAppGroupPlatform = () => {
+    window.open(WHATSAPP_GROUP_PLATFORM, "_blank", "noopener,noreferrer");
+  };
+
+  const openWhatsAppGroupGrandLaunch = () => {
+    window.open(WHATSAPP_GROUP_GRAND_LAUNCH, "_blank", "noopener,noreferrer");
+  };
+
+  const openWhatsAppGroupAndConfirm = () => {
+    openWhatsAppGroupGrandLaunch(); // ✅ Grand Launch group
+
+    const confirmLink =
+      "https://wa.me/?text=" + encodeURIComponent("I am attending.");
+
+    Modal.info({
+      title: (
+        <div className="flex items-center gap-2">
+          <MessageCircle className="h-5 w-5 text-emerald-600" />
+          <span>Confirm Your Attendance</span>
+        </div>
+      ),
+      okText: "Send Message",
+      okButtonProps: { className: "bg-emerald-600 hover:bg-emerald-700" },
+      content: (
+        <div className="py-3">
+          <p className="text-gray-700">
+            After joining the WhatsApp group, please confirm by sending this
+            message:
+          </p>
+
+          <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            I am attending.
+          </div>
+
+          <p className="mt-3 text-xs text-gray-500">
+            Clicking <b>Send Message</b> will open WhatsApp with the message
+            pre-filled. Copy/paste it into the group and send.
+          </p>
+        </div>
+      ),
+      onOk: () => window.open(confirmLink, "_blank", "noopener,noreferrer"),
+    });
   };
 
   const handlePlatformClick = (isAlreadyJoined: boolean) => {
@@ -125,7 +177,7 @@ const MyRotaryServices: React.FC = () => {
     }
 
     if (isAlreadyJoined) {
-      navigate("/main/dashboard/home");
+      navigate("/main/services/myrotary");
       return;
     }
 
@@ -142,8 +194,7 @@ const MyRotaryServices: React.FC = () => {
       content: (
         <div className="py-4">
           <p className="text-gray-700 mb-4">
-            Are you ready to join this exclusive Rotary private initiative
-            platform?
+            Are you ready to join this exclusive Rotary AI initiative platform?
           </p>
           <div className="bg-gradient-to-r from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100">
             <div className="flex items-start gap-3">
@@ -165,6 +216,19 @@ const MyRotaryServices: React.FC = () => {
       ),
       onOk: () => submitInterestHandler(ROTARY_ROLE),
     });
+  };
+
+  const copyAttendingText = async () => {
+    try {
+      await navigator.clipboard.writeText("I am attending.");
+      message.success("Copied: I am attending.");
+    } catch (e) {
+      message.error("Copy failed. Please copy manually.");
+    }
+  };
+
+  const openExploreAIAgent = () => {
+    window.open(EXPLORE_AI_AGENT_LINK, "_blank", "noopener,noreferrer");
   };
 
   const submitInterestHandler = async (role: string) => {
@@ -296,23 +360,215 @@ const MyRotaryServices: React.FC = () => {
       </div>
 
       <div className="relative z-10">
-        {/* {!userId ? (
-          <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-            <Header1 />
-          </div>
-        ) : null} */}
+        {/* Professional Header - Only show if user is not logged in */}
+        {!userId && (
+          <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16 sm:h-20">
+                {/* Left: Logo */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center shadow-lg">
+                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 leading-tight">
+                      Rotary AI Hub
+                    </h1>
+                    <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+                      District 3150
+                    </p>
+                  </div>
+                </div>
 
-        {/* Enhanced Back Button with better mobile handling */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-300 group active:scale-95"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-            <span className="text-sm font-semibold">Back</span>
-          </button>
-        </div>
+                {/* Right: Sign In Button */}
+                <button
+                  onClick={() => {
+                    navigate("/whatsappregister");
+                    sessionStorage.setItem(
+                      "redirectPath",
+                      "/main/services/myrotary",
+                    );
+                  }}
+                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-semibold hover:shadow-lg transition-all active:scale-95 text-sm sm:text-base"
+                  type="button"
+                >
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span>Sign In</span>
+                </button>
+              </div>
+            </div>
+          </header>
+        )}
+
+        {/* Enhanced Hero Banner Section */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+          {/* Grand Launch Banner - Hero Style */}
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30 shadow-2xl">
+            {/* Decorative Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-emerald-500 to-purple-600" />
+              <div className="absolute -top-20 -right-20 h-40 w-40 sm:h-64 sm:w-64 rounded-full bg-blue-200/20 blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 h-40 w-40 sm:h-64 sm:w-64 rounded-full bg-emerald-200/20 blur-3xl" />
+            </div>
+
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              {/* Left: Event Details */}
+              <div className="p-5 sm:p-7 lg:p-10 flex flex-col justify-center">
+                <h3 className="text-1xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight mb-5">
+                  <span className="bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">
+                    Grand Launch of Rotary AI Hub
+                  </span>
+                </h3>
+
+                <div className="space-y-4 mb-5">
+                  <div className="flex items-start gap-3">
+                    <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0">
+                      <Clock className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-blue-700" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-600">
+                        Date & Time
+                      </p>
+                      <p className="text-base sm:text-lg font-bold text-gray-900">
+                        25 Feb 2026, 6:00 PM IST
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center flex-shrink-0">
+                      <Globe className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-emerald-700" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-600 mb-1">
+                        Location
+                      </p>
+                      <a
+                        href="https://maps.app.goo.gl/YFfUQNZZf32LdTVG7"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-base font-bold text-emerald-600 hover:text-emerald-700 underline decoration-2 underline-offset-2 transition-colors inline-flex items-center gap-1 flex-wrap"
+                      >
+                        <span>View on Google Maps</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                      <p className="text-sm font-bold text-gray-900 mt-2">
+                        Pillar No. 635, 1st Floor, Entrance D, SE02 Concourse
+                      </p>
+                      <p className="text-xs sm:text-sm text-gray-700 mt-1">
+                        Miyapur Metro Station, Hyderabad, Telangana
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-700">
+                      After joining, please confirm by sending a message in the
+                      group:
+                    </p>
+                    <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-emerald-300 px-3 py-2 font-semibold text-emerald-800 w-fit">
+                      <span className="text-xs sm:text-sm">
+                        I am attending.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyAttendingText}
+                        className="inline-flex items-center justify-center rounded-md p-1 hover:bg-emerald-100 active:scale-95 transition"
+                        aria-label="Copy"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 mt-5">
+                  <button
+                    onClick={openWhatsAppGroupGrandLaunch}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-green-700 transition-all active:scale-95"
+                    type="button"
+                  >
+                    <Users className="h-5 w-5" />
+                    <span>Join Group</span>
+                    <ExternalLink className="h-4 w-4 opacity-90" />
+                  </button>
+
+                  <button
+                    onClick={openExploreAIAgent}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-95"
+                    type="button"
+                  >
+                    <Rocket className="h-5 w-5" />
+                    <span>Explore AI Agent</span>
+                    <ExternalLink className="h-4 w-4 opacity-90" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Right: Event Image */}
+              <div className="p-5 sm:p-7 lg:p-10 flex items-center">
+                <div className="rounded-2xl overflow-hidden bg-white/80 backdrop-blur-sm border border-gray-200 shadow-xl w-full">
+                  <img
+                    src={GRAND_LAUNCH_TOP_IMAGE}
+                    alt="Rotary AI Hub Grand Launch"
+                    className="w-full h-auto object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Poster Launch Event - Enhanced */}
+          <div className="mt-4 sm:mt-6 rounded-2xl sm:rounded-3xl border border-gray-200 bg-white shadow-xl overflow-hidden">
+            <div className="p-3 sm:p-4 lg:p-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0">
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
+                      Poster Launch Event
+                    </h3>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      22 Feb 2026 • Rotary Leadership Training
+                    </p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold">
+                  <Clock className="h-3 w-3" />
+                  Event Highlights
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 sm:p-4 lg:p-5 bg-gradient-to-b from-gray-50/50 to-white">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="group relative overflow-hidden rounded-lg sm:rounded-xl border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                  <img
+                    src="https://i.ibb.co/CpnDjvm0/pl1.png"
+                    alt="Poster Launch Photo 1"
+                    className="w-full h-auto object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                  <img
+                    src="https://i.ibb.co/bMTVvMyn/pl2.png"
+                    alt="Poster Launch Photo 2"
+                    className="w-full h-auto object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ENHANCED HERO SECTION - Fully Responsive */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -397,7 +653,7 @@ const MyRotaryServices: React.FC = () => {
                   </h2>
                   <p className="mt-3 text-gray-700 leading-relaxed text-sm sm:text-base">
                     With deep respect for Rotary's legacy of leadership and
-                    service, I've launched a private initiative —{" "}
+                    service, I've launched a AI initiative —{" "}
                     <b>Rotary Double Engine</b> — comprising the{" "}
                     <b className="text-blue-700">Rotary AI Hub</b> and{" "}
                     <b className="text-emerald-600">Rotary AI Commerce</b>.
@@ -450,7 +706,7 @@ const MyRotaryServices: React.FC = () => {
 
                   <button
                     className="group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white hover:opacity-90 active:scale-95"
-                    onClick={openWhatsAppGroup}
+                    onClick={openWhatsAppGroupPlatform}
                     type="button"
                   >
                     <span className="flex items-center justify-center gap-2">
@@ -520,7 +776,7 @@ const MyRotaryServices: React.FC = () => {
                             Platform Overview
                           </h3>
                           <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                            Simple, private, and Rotary-focused
+                            Simple, powerful, and Rotary-focused
                           </p>
                         </div>
                         <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-blue-100 flex items-center justify-center">
@@ -550,13 +806,16 @@ const MyRotaryServices: React.FC = () => {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 mt-8">
           <section className="rounded-3xl bg-gradient-to-br from-white to-blue-50/30 border border-gray-100 shadow-xl p-6 sm:p-8 lg:p-10">
             <div className="text-center mb-8 lg:mb-10">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mt-4">
-                Double Engine Initiatives
+             
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-4">
+                <span className="bg-gradient-to-r from-blue-700 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
+                  Double Engine Initiatives
+                </span>
               </h1>
-              <p className="mt-3 text-gray-700 max-w-3xl mx-auto text-sm sm:text-base">
-                Two complementary engines driving Rotary's transformation: AI
-                education for capability building and AI-powered commerce for
-                economic empowerment.
+              <p className="mt-4 text-gray-700 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
+                Two complementary engines driving <span className="font-semibold text-blue-700">Rotary's transformation</span>: 
+                <span className="font-semibold text-purple-700"> AI education</span> for capability building and 
+                <span className="font-semibold text-emerald-700"> AI-powered commerce</span> for economic empowerment.
               </p>
             </div>
 
@@ -644,28 +903,29 @@ const MyRotaryServices: React.FC = () => {
 
           {/* ENHANCED OBJECTIVE SECTION */}
           <section className="mt-6 sm:mt-8 rounded-3xl bg-gradient-to-br from-white to-gray-50/50 border border-gray-100 shadow-xl p-6 sm:p-8 lg:p-10">
-            <div className="mb-6 sm:mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0">
-                  <Target className="h-5 w-5 sm:h-6 sm:w-6 text-purple-700" />
-                </div>
+            <div className="mb-6 sm:mb-8 text-center">
+              <div className="flex flex-col items-center gap-3 mb-4">
+                
                 <div>
-                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                    Our Mission & Vision
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">
+                    <span className="bg-gradient-to-r from-purple-700 via-blue-700 to-emerald-700 bg-clip-text text-transparent">
+                      Our Mission & Vision
+                    </span>
                   </h2>
-                  <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                    Building capacity through practical AI adoption
+                  <p className="text-gray-600 mt-2 text-sm sm:text-base font-medium">
+                    Building capacity through <span className="text-purple-600">practical AI adoption</span>
                   </p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-purple-50/50 to-blue-50/50 rounded-2xl p-4 sm:p-6 border border-purple-100">
-                <p className="text-gray-800 leading-relaxed text-sm sm:text-base">
+              <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-emerald-50 rounded-2xl p-5 sm:p-7 border-2 border-transparent bg-clip-padding relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-200 via-blue-200 to-emerald-200 opacity-20 blur-xl"></div>
+                <p className="relative text-gray-800 leading-relaxed text-sm sm:text-base">
                   Our objective is to build{" "}
-                  <b className="text-purple-700">practical awareness</b>,{" "}
-                  <b className="text-blue-700">confidence</b>, and{" "}
-                  <b className="text-emerald-700">hands-on capability</b>
-                  in Artificial Intelligence and Generative AI, enabling
+                  <span className="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">practical awareness</span>,{" "}
+                  <span className="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">confidence</span>, and{" "}
+                  <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">hands-on capability</span>
+                  {" "}in Artificial Intelligence and Generative AI, enabling
                   Rotarians to apply AI effectively across all dimensions of
                   professional and community life.
                 </p>
@@ -673,43 +933,47 @@ const MyRotaryServices: React.FC = () => {
             </div>
 
             {/* Application Areas */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-6 sm:mb-8">
               {[
                 {
-                  icon: <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />,
+                  icon: <Briefcase className="h-5 w-5 sm:h-6 sm:w-6" />,
                   title: "Professional Growth",
                   color: "from-blue-100 to-blue-200",
                   textColor: "text-blue-800",
+                  bgHover: "group-hover:from-blue-200 group-hover:to-blue-300",
                 },
                 {
-                  icon: <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />,
+                  icon: <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />,
                   title: "Entrepreneurship",
                   color: "from-emerald-100 to-emerald-200",
                   textColor: "text-emerald-800",
+                  bgHover: "group-hover:from-emerald-200 group-hover:to-emerald-300",
                 },
                 {
-                  icon: <HeartHandshake className="h-4 w-4 sm:h-5 sm:w-5" />,
+                  icon: <HeartHandshake className="h-5 w-5 sm:h-6 sm:w-6" />,
                   title: "Community",
                   color: "from-purple-100 to-purple-200",
                   textColor: "text-purple-800",
+                  bgHover: "group-hover:from-purple-200 group-hover:to-purple-300",
                 },
                 {
-                  icon: <Users2 className="h-4 w-4 sm:h-5 sm:w-5" />,
+                  icon: <Users2 className="h-5 w-5 sm:h-6 sm:w-6" />,
                   title: "Youth Empowerment",
                   color: "from-pink-100 to-pink-200",
                   textColor: "text-pink-800",
+                  bgHover: "group-hover:from-pink-200 group-hover:to-pink-300",
                 },
               ].map((area, idx) => (
                 <div
                   key={idx}
-                  className="group bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95"
+                  className="group bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 hover:shadow-2xl hover:border-gray-300 transition-all duration-300 hover:-translate-y-2 active:scale-95 cursor-pointer"
                 >
                   <div
-                    className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br ${area.color} flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform`}
+                    className={`h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-gradient-to-br ${area.color} ${area.bgHover} flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-md`}
                   >
                     <div className={area.textColor}>{area.icon}</div>
                   </div>
-                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-gray-700 transition-colors">
                     {area.title}
                   </h3>
                 </div>

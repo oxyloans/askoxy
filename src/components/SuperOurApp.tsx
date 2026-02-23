@@ -131,7 +131,7 @@ export default function SuperOurApp() {
       id: "s10",
       src: s10,
       route: "/aiblockchainanditservices",
-      title: "BlockChain & \nCrypto",
+      title: "BlockChain & \ncrypto",
     },
     { id: "s6", src: s6, route: "/realestate", title: "Real Estate" },
     {

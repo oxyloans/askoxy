@@ -3,17 +3,6 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-import s1 from "../../assets/img/s1.png";
-import s2 from "../../assets/img/s2.png";
-import s3 from "../../assets/img/s3.png";
-import s4 from "../../assets/img/s4.png";
-import s5 from "../../assets/img/s5.png";
-import s6 from "../../assets/img/s6.png";
-import s7 from "../../assets/img/s7.png";
-import s8 from "../../assets/img/s8.png";
-import s9 from "../../assets/img/s9.png";
-
-// Company data
 const companies = [
   {
     logo: "https://i.ibb.co/0yGwYp5n/a1.png",
@@ -120,7 +109,6 @@ const Rice2RoboEcommersOurServicesCarousel = () => {
   return (
     <section className="min-screen bg-gradient-to-br from-purple-100 via-gray-100 to-blue-100 py-8 lg:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Header Section */}
         <div className="text-center mb-12 lg:mb-16">
           <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-extrabold mb-4 leading-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600">
