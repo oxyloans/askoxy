@@ -4,12 +4,13 @@ import "../DiwaliPage.css";
 import { message, Modal } from "antd";
 import Footer from "../Footer";
 import { useNavigate } from "react-router-dom";
-import Header1 from "../Header";
+
+import { motion } from "framer-motion";
 import {
-  ArrowLeft,
+
   Sparkles,
   Copy,
-  ShoppingCart,
+  
   CheckCircle2,
   MessageCircle,
   Mail,
@@ -22,7 +23,7 @@ import {
   Send,
   Info,
   User,
-  Target,
+  
   Zap,
   Globe,
   Award,
@@ -61,8 +62,8 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
   const WHATSAPP_GROUP_PLATFORM =
     "https://chat.whatsapp.com/DiwjVdXb7p60ywRlgrSFDp?mode=gi_t";
 
-  const EXPLORE_AI_AGENT_LINK =
-    "https://www.askoxy.ai/rotarydistrict3150AiAgent";
+  const EXPLORE_AI_AGENT_LINK = "/rotarydistrict3150AiAgent";
+    
 
   const ROTARY_ROLE = "ROTARIAN_MEMBER";
   const navigate = useNavigate();
@@ -227,7 +228,7 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
   };
 
   const openExploreAIAgent = () => {
-    window.open(EXPLORE_AI_AGENT_LINK, "_blank", "noopener,noreferrer");
+    window.location.href = EXPLORE_AI_AGENT_LINK;
   };
 
   const submitInterestHandler = async (role: string) => {
@@ -400,7 +401,12 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
         )}
 
         {/* Enhanced Hero Banner Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6"
+        >
           {/* Grand Launch Banner - Hero Style */}
           <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30 shadow-2xl">
             {/* Decorative Elements */}
@@ -486,22 +492,25 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
                 <div className="flex flex-col sm:flex-row gap-3 mt-5">
                   <button
                     onClick={openWhatsAppGroupGrandLaunch}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-green-700 transition-all active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-green-700 transition-all active:scale-95 whitespace-nowrap"
                     type="button"
                   >
-                    <Users className="h-5 w-5" />
-                    <span>Join Group</span>
-                    <ExternalLink className="h-4 w-4 opacity-90" />
+                    <Users className="h-7 w-7" />
+                    <span className="hidden sm:inline">Join Group</span>
+                    <span className="sm:hidden">Join</span>
+                   
                   </button>
 
                   <button
                     onClick={openExploreAIAgent}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-95 whitespace-nowrap"
                     type="button"
                   >
-                    <Rocket className="h-5 w-5" />
-                    <span>Explore AI Agent</span>
-                    <ExternalLink className="h-4 w-4 opacity-90" />
+                    <Rocket className="h-7 w-7" />
+                    <span className="hidden sm:inline">Explore Rotary District 3150 AI Agent</span>
+                    
+                    <span className="sm:hidden">Explore AI Agent</span>
+                   
                   </button>
                 </div>
               </div>
@@ -567,10 +576,15 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ENHANCED HERO SECTION - Fully Responsive */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6"
+        >
           <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-white via-white to-blue-50/30 shadow-2xl">
             {/* Advanced background effects */}
             <div className="absolute inset-0">
@@ -797,10 +811,15 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ENHANCED DOUBLE ENGINE SECTION */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 mt-8">
+        <motion.main 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 mt-8"
+        >
           <section className="rounded-3xl bg-gradient-to-br from-white to-blue-50/30 border border-gray-100 shadow-xl p-6 sm:p-8 lg:p-12">
             {/* Header */}
             <div className="text-center mb-8 sm:mb-10">
@@ -1061,7 +1080,7 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
               </div>
             </div>
           </section>
-        </main>
+        </motion.main>
 
         {/* Enhanced Modals - Mobile Responsive */}
         {isOpen && (
@@ -1278,6 +1297,23 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
       </div>
 
       <Footer />
+
+      {/* Animations */}
+      <style>{`
+        @keyframes scale-in {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-scale-in {
+          animation: scale-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

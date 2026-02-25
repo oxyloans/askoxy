@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { candidateApi } from './api';
 import { Candidate } from './types';
 import { SkillBadge, LoadingSpinner, EmptyState, ErrorState } from './components';
+import { AdvancedFilter } from './AdvancedFilter';
 
 type SortField = 'name' | 'avgScore' | 'createdAt';
 
@@ -94,25 +95,25 @@ export const CandidatesList: React.FC = () => {
   if (error) return <ErrorState message={error} onRetry={fetchCandidates} />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="min-h-screen bg-gray-900 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Interview Candidates</h1>
-            <p className="text-gray-600">Manage and review candidate performance</p>
+            <h1 className="text-4xl font-bold text-white mb-2">Interview Candidates</h1>
+            <p className="text-gray-400">Manage and review candidate performance</p>
           </div>
-          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm">
-            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-700">
+            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             <div>
-              <div className="text-2xl font-bold text-gray-900">{filteredAndSorted.length}</div>
-              <div className="text-xs text-gray-500">Total: {candidates.length}</div>
+              <div className="text-2xl font-bold text-white">{filteredAndSorted.length}</div>
+              <div className="text-xs text-gray-400">Total: {candidates.length}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg mb-6 p-6">
+        <div className="bg-gray-800 rounded-xl shadow-lg mb-6 p-6 border border-gray-700">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +124,7 @@ export const CandidatesList: React.FC = () => {
                 placeholder="Search by name or skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className="w-full pl-10 pr-10 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-gray-900 text-white placeholder-gray-500"
               />
               {searchTerm && (
                 <button
@@ -138,11 +139,38 @@ export const CandidatesList: React.FC = () => {
               )}
             </div>
             <div className="flex gap-2">
+              <AdvancedFilter onFilter={async (filters) => {
+                if (Object.keys(filters).length === 0) {
+                  fetchCandidates();
+                  return;
+                }
+                try {
+                  const res = await fetch('/api/admin/candidates/filter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filters)
+                  });
+                  const data = await res.json();
+                  setCandidates(data.map((c: any) => ({
+                    userId: c.user_id,
+                    name: c.name,
+                    skills: typeof c.skills === 'string' ? JSON.parse(c.skills) : c.skills,
+                    domains: typeof c.domains === 'string' ? JSON.parse(c.domains) : c.domains,
+                    experience: c.experience,
+                    avgScore: parseFloat(c.avg_score || 0).toFixed(2),
+                    statistics: { roundScores: [] },
+                    interviewResults: [],
+                    createdAt: c.created_at
+                  })));
+                } catch (err) {
+                  console.error('Filter error:', err);
+                }
+              }} />
               <select
                 aria-label="Sort"
                 value={sortField}
                 onChange={(e) => setSortField(e.target.value as SortField)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer bg-white transition"
+                className="px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer bg-gray-900 text-white transition"
               >
                 <option value="createdAt">Date</option>
                 <option value="avgScore">Score</option>
@@ -150,7 +178,7 @@ export const CandidatesList: React.FC = () => {
               </select>
               <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                className="px-4 py-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition text-white"
                 aria-label="Toggle sort order"
               >
                 <svg className={`w-5 h-5 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,8 +188,8 @@ export const CandidatesList: React.FC = () => {
             </div>
           </div>
           {searchTerm && (
-            <div className="mt-3 text-sm text-gray-600">
-              Showing <span className="font-semibold text-blue-600">{filteredAndSorted.length}</span> result{filteredAndSorted.length !== 1 ? 's' : ''} for &quot;{searchTerm}&quot;
+            <div className="mt-3 text-sm text-gray-400">
+              Showing <span className="font-semibold text-emerald-400">{filteredAndSorted.length}</span> result{filteredAndSorted.length !== 1 ? 's' : ''} for &quot;{searchTerm}&quot;
             </div>
           )}
         </div>
@@ -169,33 +197,33 @@ export const CandidatesList: React.FC = () => {
         {filteredAndSorted.length === 0 ? (
           <EmptyState message={searchTerm ? "No candidates match your search" : "No candidates found"} />
         ) : (
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                <thead className="bg-gray-900">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Candidate</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Skills</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Experience</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Score</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Progress</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Candidate</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Skills</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Experience</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Score</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Progress</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className="bg-gray-800 divide-y divide-gray-700">
                   {filteredAndSorted.map((candidate) => (
                     <tr
                       key={candidate.userId}
                       onClick={() => navigate(`/admin/candidate/${candidate.userId}`)}
-                      className="hover:bg-blue-50 cursor-pointer transition-colors group"
+                      className="hover:bg-gray-700 cursor-pointer transition-colors group"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-semibold">
                             {candidate.name?.charAt(0).toUpperCase() || '?'}
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition">{candidate.name || 'N/A'}</div>
-                            <div className="text-xs text-gray-500">{candidate.userId}</div>
+                            <div className="text-sm font-semibold text-white group-hover:text-emerald-400 transition">{candidate.name || 'N/A'}</div>
+                            <div className="text-xs text-gray-400">{candidate.userId}</div>
                           </div>
                         </div>
                       </td>
@@ -206,10 +234,10 @@ export const CandidatesList: React.FC = () => {
                               <SkillBadge key={idx} skill={skill} />
                             ))
                           ) : (
-                            <span className="text-sm text-gray-400">No skills</span>
+                            <span className="text-sm text-gray-500">No skills</span>
                           )}
                           {candidate.skills?.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                            <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded-full text-xs font-medium">
                               +{candidate.skills.length - 3}
                             </span>
                           )}
@@ -220,7 +248,7 @@ export const CandidatesList: React.FC = () => {
                           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
-                          <span className="text-sm font-medium text-gray-700">{candidate.experience || 0} years</span>
+                          <span className="text-sm font-medium text-gray-300">{candidate.experience || 0} years</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -236,13 +264,13 @@ export const CandidatesList: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[80px]">
+                          <div className="flex-1 bg-gray-700 rounded-full h-2 max-w-[80px]">
                             <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all"
+                              className="bg-emerald-600 h-2 rounded-full transition-all"
                               style={{ width: `${((candidate.statistics?.roundScores?.length || 0) / 3) * 100}%` }}
                             />
                           </div>
-                          <span className="text-sm font-medium text-gray-700">{getRoundProgress(candidate)}</span>
+                          <span className="text-sm font-medium text-gray-300">{getRoundProgress(candidate)}</span>
                         </div>
                       </td>
                     </tr>

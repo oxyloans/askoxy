@@ -1936,7 +1936,7 @@ const CartPage: React.FC = () => {
 
                                 <p className="text-sm sm:text-base font-bold text-purple-700 mt-4">
                                   ₹
-                                  {(
+                                  {Number(
                                     Number(item.itemPrice) *
                                     (regularCartItems[item.itemId] || 0)
                                   ).toFixed(2)}
@@ -1975,7 +1975,7 @@ const CartPage: React.FC = () => {
 
                                 <p className="text-sm sm:text-base font-bold text-purple-700">
                                   ₹
-                                  {(
+                                  {Number(
                                     Number(item.itemPrice) * item.cartQuantity
                                   ).toFixed(2)}
                                 </p>
@@ -1993,7 +1993,7 @@ const CartPage: React.FC = () => {
                           {typeof item.saveAmount === "number" &&
                           item.saveAmount > 0 ? (
                             <p className="text-[12px] text-green-600 font-medium truncate">
-                              Save ₹{item.saveAmount.toFixed(2)} (
+                              Save ₹{Number(item.saveAmount || 0).toFixed(2)} (
                               {item.savePercentage ?? 0}% OFF)
                             </p>
                           ) : (
@@ -2092,7 +2092,7 @@ const CartPage: React.FC = () => {
                       </div>
                       <span>
                         ₹
-                        {(
+                        {Number(
                           (cartData
                             ?.filter((item) => item.status !== "FREE")
                             .reduce(
@@ -2104,8 +2104,7 @@ const CartPage: React.FC = () => {
                             ) || 0) +
                           totalGstAmount +
                           (cartData.length > 0 ? handlingFee || 0 : 0)
-                        ) // Only include handlingFee if cart has items
-                          .toFixed(2)}
+                        ).toFixed(2)}
                       </span>
                     </button>
                     {isItemTotalDropdownOpen && (
@@ -2127,7 +2126,7 @@ const CartPage: React.FC = () => {
                                     (regularCartItems[item.itemId] || 0),
                                 0
                               )
-                              .toFixed(2) || "0.00"}
+                              .toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-gray-700 text-sm mt-1">
@@ -2183,7 +2182,7 @@ const CartPage: React.FC = () => {
                       <span className="font-semibold">
                         {deliveryFee === null
                           ? "N/A"
-                          : `₹${deliveryFee.toFixed(2)}`}
+                          : `₹${Number(deliveryFee || 0).toFixed(2)}`}
                       </span>
                     </div>
                   )}
@@ -2215,7 +2214,7 @@ const CartPage: React.FC = () => {
                           const handlingFeeTotal =
                             cartData?.length > 0 ? handlingFee || 0 : 0; // Only include handlingFee if cart has items
 
-                          return (
+                          return Number(
                             itemTotal +
                             totalGstAmount +
                             deliveryFeeTotal +

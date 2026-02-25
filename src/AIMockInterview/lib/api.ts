@@ -1,4 +1,4 @@
-let user = "local";
+let user = "production";
 let API_BASE_URL = "";
 if (user==="production") {
   API_BASE_URL = "https://interviews-zadn.onrender.com";
@@ -105,6 +105,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  async getAttemptStatus(userId: string) {
+    const response = await fetch(`${API_BASE_URL}/api/interview/attempts/status?userId=${userId}`, {
+      credentials: 'include',
     });
     return response.json();
   }

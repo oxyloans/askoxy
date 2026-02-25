@@ -1070,8 +1070,8 @@ const renderDeliveryTimelineModal = () => {
     Modal.confirm({
       title: newUseWallet ? "Apply Wallet?" : "Remove Wallet?",
       content: newUseWallet
-        ? `Use ₹${walletToApply.toFixed(2)} from your wallet?`
-        : `Remove wallet usage of ₹${usedWalletAmount.toFixed(2)}?`,
+        ? `Use ₹${Number(walletToApply || 0).toFixed(2)} from your wallet?`
+        : `Remove wallet usage of ₹${Number(usedWalletAmount || 0).toFixed(2)}?`,
       okText: "Yes",
       cancelText: "No",
       onOk: () => {
@@ -1709,10 +1709,10 @@ const renderCouponsModal = (): JSX.Element => {
                 {coupon.couponCode}
               </h4>
               <p className="text-sm text-gray-600 mb-1">
-                Save ₹{coupon.couponValue?.toFixed(2) || "0.00"}
+                Save ₹{Number(coupon.couponValue || 0).toFixed(2)}
               </p>
               <p className="text-xs text-gray-500 mb-2">
-                Min. Order ₹{coupon.minOrder?.toFixed(2) || "0.00"}
+                Min. Order ₹{Number(coupon.minOrder || 0).toFixed(2)}
               </p>
               {coupon.couponDesc && (
                 <p className="text-xs text-gray-400 mb-3">
@@ -1841,25 +1841,25 @@ const renderCouponsModal = (): JSX.Element => {
                     <div className="space-y-3">
                       <div className="flex justify-between py-2">
                         <span className="text-gray-600">Subtotal</span>
-                        <span>₹{grandTotal.toFixed(2)}</span>
+                        <span>₹{Number(grandTotal || 0).toFixed(2)}</span>
                       </div>
                       {goldMakingCharges > 0 && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">
                             Gold Making Charges
                           </span>
-                          <span>₹{goldMakingCharges.toFixed(2)}</span>
+                          <span>₹{Number(goldMakingCharges || 0).toFixed(2)}</span>
                         </div>
                       )}
 
                       <div className="flex justify-between py-2">
                         <span className="text-gray-600">GST</span>
-                        <span>₹{(subGst - goldMakingCharges).toFixed(2)}</span>
+                        <span>₹{((subGst || 0) - (goldMakingCharges || 0)).toFixed(2)}</span>
                       </div>
                       {cartData.length > 0 && deliveryFee !== null && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">Delivery Fee</span>
-                          <span>₹{deliveryFee.toFixed(2)}</span>
+                          <span>₹{(deliveryFee ?? 0).toFixed(2)}</span>
                         </div>
                       )}
                       {cartData.length > 0 &&
@@ -1867,25 +1867,25 @@ const renderCouponsModal = (): JSX.Element => {
                         handlingFee > 0 && (
                           <div className="flex justify-between py-2">
                             <span className="text-gray-600">Handling Fee</span>
-                            <span>₹{handlingFee.toFixed(2)}</span>
+                            <span>₹{(handlingFee ?? 0).toFixed(2)}</span>
                           </div>
                         )}
                       {cartData.length > 0 && smallCartFee > 0 && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">Small Cart Fee</span>
-                          <span>₹{smallCartFee.toFixed(2)}</span>
+                          <span>₹{Number(smallCartFee || 0).toFixed(2)}</span>
                         </div>
                       )}
                       {cartData.length > 0 && serviceFee > 0 && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">Service Fee</span>
-                          <span>₹{serviceFee.toFixed(2)}</span>
+                          <span>₹{Number(serviceFee || 0).toFixed(2)}</span>
                         </div>
                       )}
                       {coupenApplied && coupenDetails && (
                         <div className="flex justify-between py-2 text-green-600">
                           <span>Coupon Discount</span>
-                          <span>-₹{coupenDetails.toFixed(2)}</span>
+                          <span>-₹{Number(coupenDetails || 0).toFixed(2)}</span>
                         </div>
                       )}
                       {totalAmount < 500 && (
@@ -1897,13 +1897,13 @@ const renderCouponsModal = (): JSX.Element => {
                       {useWallet && usedWalletAmount > 0 && (
                         <div className="flex justify-between py-2 text-green-600">
                           <span>Wallet Amount</span>
-                          <span>-₹{usedWalletAmount.toFixed(2)}</span>
+                          <span>-₹{Number(usedWalletAmount || 0).toFixed(2)}</span>
                         </div>
                       )}
                       <div className="border-t pt-2 mt-2">
                         <div className="flex justify-between font-medium text-lg">
                           <strong className="text-lg">Total</strong>
-                          <strong>₹{grandTotalAmount.toFixed(2)}</strong>
+                          <strong>₹{Number(grandTotalAmount || 0).toFixed(2)}</strong>
                         </div>
                       </div>
                     </div>
@@ -1959,7 +1959,7 @@ const renderCouponsModal = (): JSX.Element => {
                                     Min: ₹
                                     <span className="font-semibold text-gray-800">
                                       {coupon.minOrder !== undefined
-                                        ? coupon.minOrder.toFixed(0)
+                                        ? Number(coupon.minOrder).toFixed(0)
                                         : "0"}
                                     </span>
                                   </div>
@@ -1967,7 +1967,7 @@ const renderCouponsModal = (): JSX.Element => {
                                     Save: ₹
                                     <span className="font-semibold text-gray-800">
                                       {coupon.couponValue !== undefined
-                                        ? coupon.couponValue.toFixed(0)
+                                        ? Number(coupon.couponValue).toFixed(0)
                                         : "0"}
                                     </span>
                                   </div>
@@ -2065,7 +2065,7 @@ const renderCouponsModal = (): JSX.Element => {
                       walletAmount > 0 && (
                         <p className="text-sm text-green-600 mt-1">
                           Wallet applicable! You can use ₹
-                          {walletAmount.toFixed(2)}.
+                          {Number(walletAmount || 0).toFixed(2)}.
                         </p>
                       )}
 
@@ -2081,7 +2081,7 @@ const renderCouponsModal = (): JSX.Element => {
                         htmlFor="useWallet"
                         className="text-sm text-gray-700"
                       >
-                        Use Wallet Balance (₹{walletAmount.toFixed(2)})
+                        Use Wallet Balance (₹{Number(walletAmount || 0).toFixed(2)})
                       </label>
                     </div>
                     <div className="mt-3">
@@ -2119,7 +2119,7 @@ const renderCouponsModal = (): JSX.Element => {
                             ? "Proceed to Payment"
                             : "Place Order"}
                           <span className="ml-2">
-                            ₹{grandTotalAmount.toFixed(2)}
+                            ₹{Number(grandTotalAmount || 0).toFixed(2)}
                           </span>
                         </>
                       )}

@@ -26,6 +26,8 @@ import RotaryLandingPage from "./components/RotaryLanding";
 import { CandidatesList } from "./AIMockInterview/admin/CandidatesList";
 import { CandidateDetail } from "./AIMockInterview/admin/CandidateDetail";
 import ImageCreation from "./BharathAIStore/pages/ImageCreation";
+import { AdminDashboard } from "./AIMockInterview/admin/AdminDashboard";
+import { FeedbackForm, MultiLevelSelection, ProctoredInterview } from "./AIMockInterview";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -538,11 +540,11 @@ const App: React.FC = () => {
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
-              <Route path="/admin/candidates" element={<CandidatesList />} />
-              <Route
-                path="/admin/candidate/:userId"
-                element={<CandidateDetail />}
-              />
+              <Route path="/admin/candidate/:userId" element={<CandidateDetail />} />
+              <Route path="/admin/interviewdashboard" element={<AdminDashboard />}/>
+              <Route path="/multi-level-select" element={<MultiLevelSelection />} />
+              <Route path="/multi-interview" element={<ProctoredInterview />} />
+              <Route path="/feedback" element={<FeedbackForm />} />
               <Route path="/offer" element={<OfferScreen />} />
               <Route path="/tripplanner" element={<TripPlanner />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />

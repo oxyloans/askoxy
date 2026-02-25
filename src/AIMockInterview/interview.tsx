@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { api } from "./lib/api";
 import { Modal } from "antd";
 import  logo from '../assets/img/ask oxy white.png';
+import { AttemptStatus } from './AttemptStatus';
 
 export default function InterviewPage() {
   function cryptoRandom() {
@@ -82,6 +83,7 @@ export default function InterviewPage() {
   const [feedbackTimer, setFeedbackTimer] = useState(10);
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [nextQuestionData, setNextQuestionData] = useState<any>(null);
+  const [canStartInterview, setCanStartInterview] = useState(true);
 
   // Helper function to handle next question
   const handleNextQuestion = useCallback(async (feedbackData: any) => {
@@ -105,7 +107,7 @@ export default function InterviewPage() {
           show: true, 
           type: 'success', 
           title: `Round ${data.doneRound} - ${roundNames[data.doneRound]} Completed`, 
-          message: `Your Score: ${data.average}%\nPass Criteria: ${data.doneRound === 1 ? '70%' : data.doneRound === 2 ? '60%' : '70%'}\n\nStatus: Qualified\n\nCongratulations!\nYou have met the eligibility criteria and can proceed to the next round.\n\nClick Continue to move forward.`,
+          message: `Pass Criteria: ${data.doneRound === 1 ? '70%' : data.doneRound === 2 ? '60%' : '70%'}\n\nStatus: Qualified\n\nCongratulations!\nYou have met the eligibility criteria and can proceed to the next round.\n\nClick Continue to move forward.`,
           onClose: () => {
             if (data.nextQuestion) {
               setRound(data.advancedTo);
@@ -416,6 +418,11 @@ export default function InterviewPage() {
       return; 
     }
 
+    if (!canStartInterview) {
+      alert("Maximum attempt limit reached. You have used all your attempts.");
+      return;
+    }
+
     if (round === 3) {
       alert("You have already completed all 3 rounds");
       return;
@@ -716,7 +723,7 @@ else:
           show: true, 
           type: 'success', 
           title: `Round ${data.doneRound} - ${roundNames[data.doneRound]} Completed`, 
-          message: `Your Score: ${data.average}%\nPass Criteria: ${data.doneRound === 1 ? '70%' : data.doneRound === 2 ? '60%' : '70%'}\n\nStatus: Qualified\n\nCongratulations!\nYou have met the eligibility criteria and can proceed to the next round.\n\nClick Continue to move forward.`,
+          message: `Pass Criteria: ${data.doneRound === 1 ? '70%' : data.doneRound === 2 ? '60%' : '70%'}\n\nStatus: Qualified\n\nCongratulations!\nYou have met the eligibility criteria and can proceed to the next round.\n\nClick Continue to move forward.`,
           onClose: () => {
             if (data.nextQuestion) {
               setRound(data.advancedTo);
@@ -1451,12 +1458,20 @@ else:
 
                   {/* Start Button - Fixed at bottom */}
                   <div className="mt-4 pt-4 border-t border-gray-700 flex-shrink-0">
+                    {parsed && user && (
+                      <div className="mb-4">
+                        <AttemptStatus 
+                          userId={user.id} 
+                          onStatusChange={(canAttempt) => setCanStartInterview(canAttempt)}
+                        />
+                      </div>
+                    )}
                     {parsed ? (
                       <button
                         onClick={startInterview}
-                        disabled={loading || round === 3}
+                        disabled={loading || round === 3 || !canStartInterview}
                         className={`w-full px-5 py-3 rounded-lg font-semibold text-white text-sm transition-all ${
-                          round === 3
+                          round === 3 || !canStartInterview
                             ? "bg-gray-600 cursor-not-allowed"
                             : "bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow-md"
                         }`}
@@ -1469,6 +1484,8 @@ else:
                             </svg>
                             Starting...
                           </span>
+                        ) : !canStartInterview ? (
+                          "Attempt Limit Reached"
                         ) : round === 3 ? (
                           "Assessment Completed"
                         ) : (

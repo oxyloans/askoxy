@@ -18,5 +18,20 @@ export const candidateApi = {
   getCandidateById: async (userId: string): Promise<Candidate> => {
     const { data } = await axios.get(`${API_BASE}/candidate/${userId}`);
     return data;
+  },
+
+  getAttemptLimit: async (): Promise<{ maxAttempts: number }> => {
+    const { data } = await axios.get(`${API_BASE}/attempts/limit`);
+    return data;
+  },
+
+  updateAttemptLimit: async (maxAttempts: number): Promise<{ success: boolean; maxAttempts: number }> => {
+    const { data } = await axios.post(`${API_BASE}/attempts/limit`, { maxAttempts });
+    return data;
+  },
+
+  getUserAttempts: async (userId: string) => {
+    const { data } = await axios.get(`${API_BASE}/attempts/${userId}`);
+    return data;
   }
 };
