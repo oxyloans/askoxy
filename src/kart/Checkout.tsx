@@ -104,10 +104,10 @@ const CheckoutPage: React.FC = () => {
   const [walletTotal, setWalletTotal] = useState<number>(0);
   const [coupenApplied, setCoupenApplied] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<"ONLINE" | "COD">(
-    "ONLINE"
+    "ONLINE",
   );
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
-    state?.selectedAddress || null
+    state?.selectedAddress || null,
   );
   const [grandTotalAmount, setGrandTotalAmount] = useState<number>(0);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
@@ -182,7 +182,7 @@ const CheckoutPage: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/user-service/bmvCashBack`,
         requestBody,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       // Show how many coins were earned, if returned by backend
       if (response.data?.bmvCoinsEarned) {
@@ -243,7 +243,7 @@ const CheckoutPage: React.FC = () => {
   const handleSelectTimeSlot = (
     date: string,
     timeSlot: string,
-    day: string
+    day: string,
   ): void => {
     setSelectedDate(date);
     setSelectedTimeSlot(timeSlot);
@@ -256,7 +256,7 @@ const CheckoutPage: React.FC = () => {
     try {
       const result = await checkEligibilityForActiveZones(
         selectedAddress?.latitude || 0,
-        selectedAddress?.longitude || 0
+        selectedAddress?.longitude || 0,
       );
       if (result.eligible) {
         setIsEligibleToday(true);
@@ -277,10 +277,10 @@ const CheckoutPage: React.FC = () => {
       const todayDate = new Date();
       const formattedToday = `${String(todayDate.getDate()).padStart(
         2,
-        "0"
+        "0",
       )}-${String(todayDate.getMonth() + 1).padStart(
         2,
-        "0"
+        "0",
       )}-${todayDate.getFullYear()}`;
 
       // Find today's slot from already fetched timeSlots
@@ -298,7 +298,7 @@ const CheckoutPage: React.FC = () => {
           handleSelectTimeSlot(
             todaySlot.date,
             availableTimeSlot,
-            todaySlot.dayOfWeek
+            todaySlot.dayOfWeek,
           );
         }
       }
@@ -310,110 +310,108 @@ const CheckoutPage: React.FC = () => {
     openTimeSlotModal();
   };
 
-// ✅ DELIVERY TIMELINE MODAL (updated)
-const renderDeliveryTimelineModal = () => {
-  return (
-    <Modal
-      open={isDeliveryTimelineModalVisible}
-      onCancel={() => setIsDeliveryTimelineModalVisible(false)}
-      footer={null}
-      centered
-      destroyOnClose
-      maskClosable
-      width="90%"
-      style={{ maxWidth: 600 }}
-      bodyStyle={{
-        maxHeight: "75vh",
-        overflowY: "auto",
-        padding: 24,
-        background: "#fafafa",
-      }}
-      title={
-        <div className="flex items-center justify-between">
-          <div className="text-lg font-semibold text-purple-700 flex items-center">
-            <Truck className="w-5 h-5 mr-2 text-purple-500" />
-            Delivery Information
+  // ✅ DELIVERY TIMELINE MODAL (updated)
+  const renderDeliveryTimelineModal = () => {
+    return (
+      <Modal
+        open={isDeliveryTimelineModalVisible}
+        onCancel={() => setIsDeliveryTimelineModalVisible(false)}
+        footer={null}
+        centered
+        destroyOnClose
+        maskClosable
+        width="90%"
+        style={{ maxWidth: 600 }}
+        bodyStyle={{
+          maxHeight: "75vh",
+          overflowY: "auto",
+          padding: 24,
+          background: "#fafafa",
+        }}
+        title={
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold text-purple-700 flex items-center">
+              <Truck className="w-5 h-5 mr-2 text-purple-500" />
+              Delivery Information
+            </div>
           </div>
-         
-        </div>
-      }
-    >
-      <div className="text-center">
-        <div className="mb-5 flex justify-center">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/1554/1554574.png"
-            alt="delivery"
-            className="w-20 h-20 opacity-90"
-          />
-        </div>
+        }
+      >
+        <div className="text-center">
+          <div className="mb-5 flex justify-center">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/1554/1554574.png"
+              alt="delivery"
+              className="w-20 h-20 opacity-90"
+            />
+          </div>
 
-        <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-4">
+            <Button
+              type={language === "english" ? "primary" : "default"}
+              onClick={() => setLanguage("english")}
+              className="rounded-l-md"
+            >
+              English
+            </Button>
+            <Button
+              type={language === "telugu" ? "primary" : "default"}
+              onClick={() => setLanguage("telugu")}
+              className="rounded-r-md"
+            >
+              తెలుగు
+            </Button>
+          </div>
+
+          <div className="text-left bg-white shadow-sm border border-gray-100 p-5 rounded-lg">
+            {language === "english" ? (
+              <>
+                <p className="mb-3 leading-relaxed">
+                  📦 <strong>Delivery Timeline:</strong> Your order will be
+                  delivered within <b>4 hours to 4 days</b> depending on order
+                  volume and location. We optimize routes to ensure faster,
+                  eco-friendly deliveries. 🚚
+                </p>
+                <p className="mb-3">
+                  We appreciate your patience and continued support. 🙏
+                </p>
+                <p>
+                  Spread the word! More nearby orders = faster and more
+                  efficient service for everyone. 💜
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mb-3">
+                  📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్ 4 గంటల నుండి 4
+                  రోజుల్లోపు డెలివరీ అవుతుంది. మీ ప్రాంతంలోని ఆర్డర్ల ఆధారంగా
+                  సమర్థవంతంగా డెలివరీ జరుగుతుంది. 🚚
+                </p>
+                <p className="mb-3">
+                  మీ సహకారం మాకు చాలా ముఖ్యమైనది. మీరు మమ్మల్ని షేర్ చేస్తే,
+                  మేము మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
+                </p>
+                <p>మా పై మీ విశ్వాసానికి ధన్యవాదాలు! 💜</p>
+              </>
+            )}
+          </div>
+
           <Button
-            type={language === "english" ? "primary" : "default"}
-            onClick={() => setLanguage("english")}
-            className="rounded-l-md"
+            onClick={() => setIsDeliveryTimelineModalVisible(false)}
+            type="primary"
+            size="large"
+            className="mt-5 bg-purple-600 hover:bg-purple-700"
           >
-            English
-          </Button>
-          <Button
-            type={language === "telugu" ? "primary" : "default"}
-            onClick={() => setLanguage("telugu")}
-            className="rounded-r-md"
-          >
-            తెలుగు
+            {language === "english" ? "Close" : "మూసివేయి"}
           </Button>
         </div>
-
-        <div className="text-left bg-white shadow-sm border border-gray-100 p-5 rounded-lg">
-          {language === "english" ? (
-            <>
-              <p className="mb-3 leading-relaxed">
-                📦 <strong>Delivery Timeline:</strong> Your order will be
-                delivered within <b>4 hours to 4 days</b> depending on order
-                volume and location. We optimize routes to ensure faster,
-                eco-friendly deliveries. 🚚
-              </p>
-              <p className="mb-3">
-                We appreciate your patience and continued support. 🙏
-              </p>
-              <p>
-                Spread the word! More nearby orders = faster and more efficient
-                service for everyone. 💜
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="mb-3">
-                📦 <strong>డెలివరీ సమయం:</strong> మీ ఆర్డర్ 4 గంటల నుండి 4
-                రోజుల్లోపు డెలివరీ అవుతుంది. మీ ప్రాంతంలోని ఆర్డర్ల ఆధారంగా
-                సమర్థవంతంగా డెలివరీ జరుగుతుంది. 🚚
-              </p>
-              <p className="mb-3">
-                మీ సహకారం మాకు చాలా ముఖ్యమైనది. మీరు మమ్మల్ని షేర్ చేస్తే, మేము
-                మరింత మందికి త్వరగా సేవలందించగలుగుతాం. 🙏
-              </p>
-              <p>మా పై మీ విశ్వాసానికి ధన్యవాదాలు! 💜</p>
-            </>
-          )}
-        </div>
-
-        <Button
-          onClick={() => setIsDeliveryTimelineModalVisible(false)}
-          type="primary"
-          size="large"
-          className="mt-5 bg-purple-600 hover:bg-purple-700"
-        >
-          {language === "english" ? "Close" : "మూసివేయి"}
-        </Button>
-      </div>
-    </Modal>
-  );
-};
-
+      </Modal>
+    );
+  };
 
   const getAvailableDays = (
     maxDays: number = 14,
-    includeToday: boolean
+    includeToday: boolean,
   ): DayInfo[] => {
     const today = new Date();
     const tomorrow = new Date(today);
@@ -468,7 +466,7 @@ const renderDeliveryTimelineModal = () => {
         `${BASE_URL}/order-service/fetchTimeSlotlist`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response.data && Array.isArray(response.data)) {
@@ -490,7 +488,8 @@ const renderDeliveryTimelineModal = () => {
         for (const dayInfo of nextDays) {
           const matchingSlot = response.data.find(
             (slot: ApiTimeSlot) =>
-              slot.dayOfWeek === dayInfo.dayOfWeek && slot.isAvailable === false
+              slot.dayOfWeek === dayInfo.dayOfWeek &&
+              slot.isAvailable === false,
           );
 
           if (matchingSlot) {
@@ -543,7 +542,7 @@ const renderDeliveryTimelineModal = () => {
         `${BASE_URL}/order-service/getAllCoupons`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response.data && Array.isArray(response.data)) {
@@ -553,7 +552,7 @@ const renderDeliveryTimelineModal = () => {
               coupon.isActive === true &&
               coupon.status === "PUBLIC" &&
               typeof coupon.couponValue === "number" &&
-              coupon.couponValue >= 0
+              coupon.couponValue >= 0,
           )
           .map((coupon: any) => ({
             couponCode: coupon.couponCode,
@@ -599,7 +598,7 @@ const renderDeliveryTimelineModal = () => {
     grandTotalAmount: number,
     grandTotal: number,
     subGst: number,
-    token: string
+    token: string,
   ) => {
     try {
       const requestBody = {
@@ -615,7 +614,7 @@ const renderDeliveryTimelineModal = () => {
         walletAmount: usedWalletAmount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         couponValue: couponCode !== null ? coupenDetails : 0,
-        deliveryBoyFee: cartData.length > 0 ? deliveryFee ?? 0 : 0,
+        deliveryBoyFee: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
         smallCartFee: cartData.length > 0 ? smallCartFee : 0,
         serviceFee: cartData.length > 0 ? serviceFee : 0,
         amount: grandTotalAmount,
@@ -628,7 +627,7 @@ const renderDeliveryTimelineModal = () => {
         requestBody,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response.data?.status) {
@@ -648,7 +647,7 @@ const renderDeliveryTimelineModal = () => {
     try {
       const response = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data.customerCartResponseList) {
@@ -658,7 +657,7 @@ const renderDeliveryTimelineModal = () => {
         const totalQuantity = cartItems.reduce(
           (sum: number, item: CartItem) =>
             sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0),
-          0
+          0,
         );
         setCount(totalQuantity);
 
@@ -667,7 +666,7 @@ const renderDeliveryTimelineModal = () => {
           .reduce(
             (sum: number, item: CartItem) =>
               sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
-            0
+            0,
           );
 
         const gstAmount = parseFloat(response.data.totalGstAmountToPay || "0");
@@ -701,7 +700,7 @@ const renderDeliveryTimelineModal = () => {
           } = await calculateDeliveryFee(
             selectedAddress.latitude,
             selectedAddress.longitude,
-            amountToPay
+            amountToPay,
           );
           setWalletApplicable(!!walletFlag);
           setCanPlaceOrder(canPlace);
@@ -719,7 +718,7 @@ const renderDeliveryTimelineModal = () => {
             "Min Order For Wallet:",
             minWallet,
             "Min Order For place order:",
-            minOrderamnt
+            minOrderamnt,
           );
         } else if (cartItems.length > 0) {
           console.error("Latitude or Longitude is undefined");
@@ -761,7 +760,7 @@ const renderDeliveryTimelineModal = () => {
 
       const cartResponse = await axios.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (cartResponse.data.customerCartResponseList) {
@@ -771,7 +770,7 @@ const renderDeliveryTimelineModal = () => {
         const totalQuantity = cartItems.reduce(
           (sum: number, item: CartItem) =>
             sum + (item.cartQuantity ? parseInt(item.cartQuantity) : 0),
-          0
+          0,
         );
         setCount(totalQuantity);
 
@@ -780,11 +779,11 @@ const renderDeliveryTimelineModal = () => {
           .reduce(
             (sum: number, item: CartItem) =>
               sum + parseFloat(item.itemPrice) * parseInt(item.cartQuantity),
-            0
+            0,
           );
 
         const gstAmount = parseFloat(
-          cartResponse.data.totalGstAmountToPay || "0"
+          cartResponse.data.totalGstAmountToPay || "0",
         );
 
         let deliveryFee = 0;
@@ -798,13 +797,13 @@ const renderDeliveryTimelineModal = () => {
             "Calculating delivery fee for coordinates:",
             selectedAddress.latitude,
             selectedAddress.longitude,
-            totalAmount
+            totalAmount,
           );
           const { fee, handlingFee: calculatedHandlingFee } =
             await calculateDeliveryFee(
               selectedAddress.latitude,
               selectedAddress.longitude,
-              amountToPay
+              amountToPay,
             );
           deliveryFee = fee ?? 0;
           handlingFee = calculatedHandlingFee;
@@ -830,7 +829,7 @@ const renderDeliveryTimelineModal = () => {
           const walletResponse = await axios.post(
             `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
             { customerId },
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: { Authorization: `Bearer ${token}` } },
           );
 
           const usableAmount =
@@ -867,7 +866,7 @@ const renderDeliveryTimelineModal = () => {
 
   const handlingFeeCalculation = (
     fee: number | null,
-    handlingFee: number | null
+    handlingFee: number | null,
   ) => {
     if (fee === null || handlingFee === null) {
       console.error("Invalid fee or handling fee received:", {
@@ -895,7 +894,7 @@ const renderDeliveryTimelineModal = () => {
 
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-        formData
+        formData,
       );
       localStorage.setItem("askOxyOfers", response.data.askData);
 
@@ -963,7 +962,7 @@ const renderDeliveryTimelineModal = () => {
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const { discount, grandTotal } = response.data;
@@ -994,7 +993,7 @@ const renderDeliveryTimelineModal = () => {
       const response = await axios.post(
         `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
         { customerId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
@@ -1023,8 +1022,8 @@ const renderDeliveryTimelineModal = () => {
   };
 
   function grandTotalfunc() {
-    const effectiveDeliveryFee = cartData.length > 0 ? deliveryFee ?? 0 : 0;
-    const effectiveHandlingFee = cartData.length > 0 ? handlingFee ?? 0 : 0;
+    const effectiveDeliveryFee = cartData.length > 0 ? (deliveryFee ?? 0) : 0;
+    const effectiveHandlingFee = cartData.length > 0 ? (handlingFee ?? 0) : 0;
     const baseTotal =
       totalAmount + effectiveDeliveryFee + effectiveHandlingFee + subGst;
     let discountedTotal = baseTotal;
@@ -1051,7 +1050,7 @@ const renderDeliveryTimelineModal = () => {
 
     if (totalAmount < minOrderForWallet) {
       message.warning(
-        `Wallet requires a minimum cart of ₹${minOrderForWallet}`
+        `Wallet requires a minimum cart of ₹${minOrderForWallet}`,
       );
       return;
     }
@@ -1060,8 +1059,8 @@ const renderDeliveryTimelineModal = () => {
 
     const baseAmount =
       totalAmount +
-      (cartData.length > 0 ? deliveryFee ?? 0 : 0) +
-      (cartData.length > 0 ? handlingFee ?? 0 : 0) +
+      (cartData.length > 0 ? (deliveryFee ?? 0) : 0) +
+      (cartData.length > 0 ? (handlingFee ?? 0) : 0) +
       subGst -
       (coupenApplied && coupenDetails ? coupenDetails : 0);
 
@@ -1111,13 +1110,13 @@ const renderDeliveryTimelineModal = () => {
 
     const isRiceCart = isRiceOnlyCart(cartData);
     if (isRiceCart && !exchangePolicyAccepted) {
-      const Swal = require('sweetalert2');
+      const Swal = require("sweetalert2");
       Swal.fire({
-        icon: 'warning',
-        title: 'Confirmation Required',
-        text: 'Please confirm that the exchange can be taken within 10 days after delivery.',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#f59e0b',
+        icon: "warning",
+        title: "Confirmation Required",
+        text: "Please confirm that the exchange can be taken within 10 days after delivery.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#f59e0b",
       });
       return;
     }
@@ -1135,7 +1134,7 @@ const renderDeliveryTimelineModal = () => {
 
       const hasStockIssues = cartData.some(
         (item) =>
-          parseInt(item.cartQuantity) > item.quantity || item.quantity === 0
+          parseInt(item.cartQuantity) > item.quantity || item.quantity === 0,
       );
 
       if (hasStockIssues) {
@@ -1150,13 +1149,13 @@ const renderDeliveryTimelineModal = () => {
       }
 
       if (!selectedTimeSlot) {
-        const Swal = require('sweetalert2');
+        const Swal = require("sweetalert2");
         Swal.fire({
-          icon: 'warning',
-          title: 'Time Slot Required',
-          text: 'Please select a delivery time slot.',
-          confirmButtonText: 'OK',
-          confirmButtonColor: '#f59e0b',
+          icon: "warning",
+          title: "Time Slot Required",
+          text: "Please select a delivery time slot.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#f59e0b",
         });
         return;
       }
@@ -1193,7 +1192,7 @@ const renderDeliveryTimelineModal = () => {
         "handlingFee:",
         handlingFee,
         "grandTotalAmount:",
-        grandTotalAmount
+        grandTotalAmount,
       );
       const response = await axios.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
@@ -1207,7 +1206,7 @@ const renderDeliveryTimelineModal = () => {
           walletAmount: finalWalletAmount,
           couponCode: coupenApplied ? couponCode.toUpperCase() : null,
           couponValue: coupenDetails || 0,
-          deliveryBoyFee: cartData.length > 0 ? deliveryFee ?? 0 : 0,
+          deliveryBoyFee: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
           amount: grandTotalAmount,
           subTotal: grandTotal,
           gstAmount: subGst,
@@ -1220,20 +1219,19 @@ const renderDeliveryTimelineModal = () => {
           paymentType: selectedPayment === "COD" ? 0 : 1,
           handlingFee: handlingFee,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.status === 200 && response.data) {
-        // Check if order placement failed due to minimum amount
         if (!response.data.paymentId && response.data.status) {
           setLoading(false);
-          const Swal = require('sweetalert2');
+          const Swal = require("sweetalert2");
           Swal.fire({
-            icon: 'error',
-            title: 'Order Cannot Be Placed',
+            icon: "error",
+            title: "Order Cannot Be Placed",
             text: response.data.status,
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#d33',
+            confirmButtonText: "OK",
+            confirmButtonColor: "#d33",
           }).then(() => {
             navigate("/main/mycart");
           });
@@ -1250,7 +1248,7 @@ const renderDeliveryTimelineModal = () => {
             value: grandTotalAmount,
             currency: "INR",
             tax: subGst,
-            shipping: cartData.length > 0 ? deliveryFee ?? 0 : 0,
+            shipping: cartData.length > 0 ? (deliveryFee ?? 0) : 0,
             coupon: coupenApplied ? couponCode.toUpperCase() : "",
             payment_type: selectedPayment,
             items: cartData.map((item) => ({
@@ -1266,13 +1264,13 @@ const renderDeliveryTimelineModal = () => {
 
         if (selectedPayment === "COD") {
           applyBmvCashBack();
-          const Swal = require('sweetalert2');
+          const Swal = require("sweetalert2");
           Swal.fire({
-            icon: 'success',
-            title: 'Order Placed Successfully!',
+            icon: "success",
+            title: "Order Placed Successfully!",
             text: "You'll pay on delivery.",
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#10b981',
+            confirmButtonText: "OK",
+            confirmButtonColor: "#10b981",
           }).then(() => {
             navigate("/main/myorders");
             fetchCartData();
@@ -1400,7 +1398,7 @@ const renderDeliveryTimelineModal = () => {
           headers: myHeaders,
           body: raw,
           redirect: "follow",
-        }
+        },
       );
       const result = await response.text();
       const resultobj = JSON.parse(result);
@@ -1443,7 +1441,7 @@ const renderDeliveryTimelineModal = () => {
       const ciphertext = encryptEas(
         JSON.stringify(JsonData),
         Config["Getepay Key"],
-        Config["Getepay IV"]
+        Config["Getepay IV"],
       );
       const newCipher = ciphertext.toUpperCase();
 
@@ -1451,7 +1449,7 @@ const renderDeliveryTimelineModal = () => {
       myHeaders.append("Content-Type", "application/json");
       myHeaders.append(
         "Cookie",
-        "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove"
+        "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove",
       );
 
       const raw = JSON.stringify({
@@ -1489,14 +1487,14 @@ const renderDeliveryTimelineModal = () => {
                 axios
                   .get(
                     `${BASE_URL}/order-service/api/download/invoice?paymentId=${localStorage.getItem(
-                      "merchantTransactionId"
+                      "merchantTransactionId",
                     )}&userId=${customerId}`,
                     {
                       headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                       },
-                    }
+                    },
                   )
                   .then((response) => {
                     console.log(response.data);
@@ -1518,7 +1516,7 @@ const renderDeliveryTimelineModal = () => {
                       "Content-Type": "application/json",
                       Authorization: `Bearer ${token}`,
                     },
-                  }
+                  },
                 )
                 .then((secondResponse) => {
                   localStorage.removeItem("paymentId");
@@ -1545,197 +1543,203 @@ const renderDeliveryTimelineModal = () => {
     }
     setLoading(false);
   };
-const renderTimeSlotModal = (): JSX.Element => {
-  return (
-    <Modal
-      open={showTimeSlotModal}
-      onCancel={() => setShowTimeSlotModal(false)}
-      centered
-      destroyOnClose
-      maskClosable
-      width="90%"
-      style={{ maxWidth: 650 }}
-      bodyStyle={{
-        maxHeight: "75vh",
-        overflowY: "auto",
-        background: "#fafafa",
-        padding: 20,
-      }}
-      title={
-        <div className="flex items-center justify-between">
-          <div className="text-lg font-semibold text-purple-700 flex items-center">
-            <Clock className="w-5 h-5 mr-2 text-purple-500" />
-            Choose Delivery Time
-          </div>
-         
-        </div>
-      }
-      footer={[
-        <Button
-          key="info"
-          type="default"
-          icon={<Truck className="w-4 h-4" />}
-          onClick={() => {
-            setShowTimeSlotModal(false);
-            setTimeout(() => setIsDeliveryTimelineModalVisible(true), 200);
-          }}
-        >
-          Delivery Info
-        </Button>,
-        <Button key="close" onClick={() => setShowTimeSlotModal(false)}>
-          Close
-        </Button>,
-      ]}
-      className="responsive-modal"
-    >
-      {timeSlots.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center py-10">
-          <Clock className="w-14 h-14 text-gray-300 mb-4" />
-          <h3 className="text-gray-600 text-lg mb-2">
-            No available delivery slots
-          </h3>
-          <p className="text-gray-500 text-sm">Please check back later</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {timeSlots.map((slot: TimeSlot, index: number) => {
-            const formattedDay =
-              (slot as any).formattedDay || slot.dayOfWeek.toLowerCase();
-            const availableSlots = [
-              slot.timeSlot1,
-              slot.timeSlot2,
-              slot.timeSlot3,
-              slot.timeSlot4,
-            ].filter(Boolean);
-
-            return (
-              <div key={slot.id || index} className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h4 className="text-base font-semibold text-purple-700">
-                      {formattedDay}
-                    </h4>
-                    <p className="text-gray-500 text-sm">{slot.date}</p>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {availableSlots.length} slots
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {availableSlots.map((slotTime, i) => (
-                    <Button
-                      key={i}
-                      block
-                      type={
-                        selectedTimeSlot === slotTime && selectedDate === slot.date
-                          ? "primary"
-                          : "default"
-                      }
-                      className={`rounded-md ${
-                        selectedTimeSlot === slotTime
-                          ? "bg-green-600 border-none text-white"
-                          : "bg-white hover:bg-purple-50 border-gray-200"
-                      }`}
-                      onClick={() =>
-                        handleSelectTimeSlot(slot.date, slotTime!, slot.dayOfWeek)
-                      }
-                    >
-                      {slotTime}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </Modal>
-  );
-};
-
-const renderCouponsModal = (): JSX.Element => {
-  return (
-    <Modal
-      open={showCouponsModal}
-      onCancel={() => setShowCouponsModal(false)}
-      centered
-      destroyOnClose
-      maskClosable
-      width="90%"
-      style={{ maxWidth: 600 }}
-      bodyStyle={{
-        maxHeight: "75vh",
-        overflowY: "auto",
-        background: "#fafafa",
-        padding: 20,
-      }}
-      title={
-        <div className="flex items-center justify-between">
-          <div className="text-lg font-semibold text-purple-700 flex items-center">
-            <Tag className="w-5 h-5 mr-2 text-purple-500" />
-            Available Coupons
-          </div>
-         
-        </div>
-      }
-      footer={[
-        <Button key="close" onClick={() => setShowCouponsModal(false)}>
-          Close
-        </Button>,
-      ]}
-      className="responsive-modal"
-    >
-      {couponsLoading ? (
-        <div className="text-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
-          <p className="text-gray-500 mt-2">Loading coupons...</p>
-        </div>
-      ) : availableCoupons.length === 0 ? (
-        <div className="flex flex-col items-center text-center py-2">
-          <Tag className="w-12 h-12 text-gray-300 mb-3" />
-          <h3 className="text-gray-600 font-medium mb-1">
-            No available coupons
-          </h3>
-          <p className="text-sm text-gray-500">Check back later for offers</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {availableCoupons.map((coupon: Coupon) => (
-            <div
-              key={coupon.couponCode}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-purple-300 transition-all"
-            >
-              <h4 className="font-semibold text-purple-700 text-sm mb-1">
-                {coupon.couponCode}
-              </h4>
-              <p className="text-sm text-gray-600 mb-1">
-                Save ₹{Number(coupon.couponValue || 0).toFixed(2)}
-              </p>
-              <p className="text-xs text-gray-500 mb-2">
-                Min. Order ₹{Number(coupon.minOrder || 0).toFixed(2)}
-              </p>
-              {coupon.couponDesc && (
-                <p className="text-xs text-gray-400 mb-3">
-                  {coupon.couponDesc}
-                </p>
-              )}
-              <Button
-                type="primary"
-                block
-                size="small"
-                loading={coupenLoading}
-                onClick={() => handleSelectCoupon(coupon)}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                Apply Coupon
-              </Button>
+  const renderTimeSlotModal = (): JSX.Element => {
+    return (
+      <Modal
+        open={showTimeSlotModal}
+        onCancel={() => setShowTimeSlotModal(false)}
+        centered
+        destroyOnClose
+        maskClosable
+        width="90%"
+        style={{ maxWidth: 650 }}
+        bodyStyle={{
+          maxHeight: "75vh",
+          overflowY: "auto",
+          background: "#fafafa",
+          padding: 20,
+        }}
+        title={
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold text-purple-700 flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-purple-500" />
+              Choose Delivery Time
             </div>
-          ))}
-        </div>
-      )}
-    </Modal>
-  );
-};
+          </div>
+        }
+        footer={[
+          <Button
+            key="info"
+            type="default"
+            icon={<Truck className="w-4 h-4" />}
+            onClick={() => {
+              setShowTimeSlotModal(false);
+              setTimeout(() => setIsDeliveryTimelineModalVisible(true), 200);
+            }}
+          >
+            Delivery Info
+          </Button>,
+          <Button key="close" onClick={() => setShowTimeSlotModal(false)}>
+            Close
+          </Button>,
+        ]}
+        className="responsive-modal"
+      >
+        {timeSlots.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center py-10">
+            <Clock className="w-14 h-14 text-gray-300 mb-4" />
+            <h3 className="text-gray-600 text-lg mb-2">
+              No available delivery slots
+            </h3>
+            <p className="text-gray-500 text-sm">Please check back later</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {timeSlots.map((slot: TimeSlot, index: number) => {
+              const formattedDay =
+                (slot as any).formattedDay || slot.dayOfWeek.toLowerCase();
+              const availableSlots = [
+                slot.timeSlot1,
+                slot.timeSlot2,
+                slot.timeSlot3,
+                slot.timeSlot4,
+              ].filter(Boolean);
+
+              return (
+                <div
+                  key={slot.id || index}
+                  className="bg-white rounded-lg p-4 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 className="text-base font-semibold text-purple-700">
+                        {formattedDay}
+                      </h4>
+                      <p className="text-gray-500 text-sm">{slot.date}</p>
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {availableSlots.length} slots
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {availableSlots.map((slotTime, i) => (
+                      <Button
+                        key={i}
+                        block
+                        type={
+                          selectedTimeSlot === slotTime &&
+                          selectedDate === slot.date
+                            ? "primary"
+                            : "default"
+                        }
+                        className={`rounded-md ${
+                          selectedTimeSlot === slotTime
+                            ? "bg-green-600 border-none text-white"
+                            : "bg-white hover:bg-purple-50 border-gray-200"
+                        }`}
+                        onClick={() =>
+                          handleSelectTimeSlot(
+                            slot.date,
+                            slotTime!,
+                            slot.dayOfWeek,
+                          )
+                        }
+                      >
+                        {slotTime}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Modal>
+    );
+  };
+
+  const renderCouponsModal = (): JSX.Element => {
+    return (
+      <Modal
+        open={showCouponsModal}
+        onCancel={() => setShowCouponsModal(false)}
+        centered
+        destroyOnClose
+        maskClosable
+        width="90%"
+        style={{ maxWidth: 600 }}
+        bodyStyle={{
+          maxHeight: "75vh",
+          overflowY: "auto",
+          background: "#fafafa",
+          padding: 20,
+        }}
+        title={
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold text-purple-700 flex items-center">
+              <Tag className="w-5 h-5 mr-2 text-purple-500" />
+              Available Coupons
+            </div>
+          </div>
+        }
+        footer={[
+          <Button key="close" onClick={() => setShowCouponsModal(false)}>
+            Close
+          </Button>,
+        ]}
+        className="responsive-modal"
+      >
+        {couponsLoading ? (
+          <div className="text-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
+            <p className="text-gray-500 mt-2">Loading coupons...</p>
+          </div>
+        ) : availableCoupons.length === 0 ? (
+          <div className="flex flex-col items-center text-center py-2">
+            <Tag className="w-12 h-12 text-gray-300 mb-3" />
+            <h3 className="text-gray-600 font-medium mb-1">
+              No available coupons
+            </h3>
+            <p className="text-sm text-gray-500">Check back later for offers</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {availableCoupons.map((coupon: Coupon) => (
+              <div
+                key={coupon.couponCode}
+                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-purple-300 transition-all"
+              >
+                <h4 className="font-semibold text-purple-700 text-sm mb-1">
+                  {coupon.couponCode}
+                </h4>
+                <p className="text-sm text-gray-600 mb-1">
+                  Save ₹{Number(coupon.couponValue || 0).toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 mb-2">
+                  Min. Order ₹{Number(coupon.minOrder || 0).toFixed(2)}
+                </p>
+                {coupon.couponDesc && (
+                  <p className="text-xs text-gray-400 mb-3">
+                    {coupon.couponDesc}
+                  </p>
+                )}
+                <Button
+                  type="primary"
+                  block
+                  size="small"
+                  loading={coupenLoading}
+                  onClick={() => handleSelectCoupon(coupon)}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Apply Coupon
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -1848,13 +1852,20 @@ const renderCouponsModal = (): JSX.Element => {
                           <span className="text-gray-600">
                             Gold Making Charges
                           </span>
-                          <span>₹{Number(goldMakingCharges || 0).toFixed(2)}</span>
+                          <span>
+                            ₹{Number(goldMakingCharges || 0).toFixed(2)}
+                          </span>
                         </div>
                       )}
 
                       <div className="flex justify-between py-2">
                         <span className="text-gray-600">GST</span>
-                        <span>₹{((subGst || 0) - (goldMakingCharges || 0)).toFixed(2)}</span>
+                        <span>
+                          ₹
+                          {((subGst || 0) - (goldMakingCharges || 0)).toFixed(
+                            2,
+                          )}
+                        </span>
                       </div>
                       {cartData.length > 0 && deliveryFee !== null && (
                         <div className="flex justify-between py-2">
@@ -1897,13 +1908,17 @@ const renderCouponsModal = (): JSX.Element => {
                       {useWallet && usedWalletAmount > 0 && (
                         <div className="flex justify-between py-2 text-green-600">
                           <span>Wallet Amount</span>
-                          <span>-₹{Number(usedWalletAmount || 0).toFixed(2)}</span>
+                          <span>
+                            -₹{Number(usedWalletAmount || 0).toFixed(2)}
+                          </span>
                         </div>
                       )}
                       <div className="border-t pt-2 mt-2">
                         <div className="flex justify-between font-medium text-lg">
                           <strong className="text-lg">Total</strong>
-                          <strong>₹{Number(grandTotalAmount || 0).toFixed(2)}</strong>
+                          <strong>
+                            ₹{Number(grandTotalAmount || 0).toFixed(2)}
+                          </strong>
                         </div>
                       </div>
                     </div>
@@ -2081,20 +2096,9 @@ const renderCouponsModal = (): JSX.Element => {
                         htmlFor="useWallet"
                         className="text-sm text-gray-700"
                       >
-                        Use Wallet Balance (₹{Number(walletAmount || 0).toFixed(2)})
+                        Use Wallet Balance (₹
+                        {Number(walletAmount || 0).toFixed(2)})
                       </label>
-                    </div>
-                    <div className="mt-3">
-                      {grandTotal < minOrderAmount && (
-                        <label
-                          htmlFor="exchangePolicy"
-                          className="text-sm text-red-500"
-                        >
-                          We kindly request you to add few more items, as the
-                          minimum order amount is ₹{minOrderAmount} to place
-                          order.
-                        </label>
-                      )}
                     </div>
 
                     <motion.button

@@ -6,7 +6,7 @@ import BASE_URL from "../Config";
 import { message } from "antd";
 import { FaAmazon } from "react-icons/fa";
 import axios from "axios";
-import { BookOpen, Clock, Trophy, Zap, Users, Target } from "lucide-react";
+
 
 const FreeAiBook: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const FreeAiBook: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const mobileNumber = localStorage.getItem("mobileNumber");
   const whatsappNumber = localStorage.getItem("whatsappNumber");
-  const LOGIN_URL = "/whatsappregister";
+
 
   const jobPlanImageUrl = "https://i.ibb.co/twj7WCX3/90-dayl.png";
   const campaignId = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
@@ -59,10 +59,9 @@ const FreeAiBook: React.FC = () => {
     const slicedCampaignId = campaignId.slice(0, 8);
     const redirectPath = `/campaign/${slicedCampaignId}`; // ✅ SHORT ONLY
 
-    // ✅ store mapping for CampaignBlogPage fetch
+   
     sessionStorage.setItem(`campaignFull:${slicedCampaignId}`, campaignId);
 
-    // ✅ always store redirectPath (don’t depend on old values)
     sessionStorage.setItem("redirectPath", redirectPath);
 
     const uid = localStorage.getItem("userId");

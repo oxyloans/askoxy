@@ -51,14 +51,12 @@ const MyRotaryServices: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
+const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
 
-  // We have 2 WhatsApp groups:
-  // 1) Grand Launch group (join + confirm attendance)
   const WHATSAPP_GROUP_GRAND_LAUNCH =
     "https://chat.whatsapp.com/FRIPgqC1cYaGwQ5VbSXBPL?mode=gi_t";
 
-  // 2) Other-purpose group (general Rotary AI Hub group)
+
   const WHATSAPP_GROUP_PLATFORM =
     "https://chat.whatsapp.com/DiwjVdXb7p60ywRlgrSFDp?mode=gi_t";
 
@@ -78,10 +76,8 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
 
   // Updated high-quality images with better optimization
   const GREETINGS_IMAGE = "https://i.ibb.co/wFzHbgh3/RTN-RADHA1.png";
-  const HERO_IMAGE =
-    "https://i.ibb.co/sLg7zcB/Chat-GPT-Image-Jan-26-2026-03-49-38-PM.png";
-  const PATTERN_BG =
-    "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=2070&auto=format&fit=crop";
+ 
+
 
   // Rotary Identity (display)
   const ROTARY_DISTRICT = "RI DISTRICT 3150";
@@ -435,7 +431,7 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/B2FLJ00H/rotary-img1.png";
                         Date & Time
                       </p>
                       <p className="text-base sm:text-lg font-bold text-gray-900">
-                        25 Feb 2026, 6:00 PM IST
+                        03 March 2026, 6:00 PM IST
                       </p>
                     </div>
                   </div>
