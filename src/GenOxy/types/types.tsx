@@ -31,14 +31,14 @@ export interface LanguageConfig {
 
 export const LANGUAGES: LanguageConfig[] = [
   {
-    code: "te",
-    name: "Telugu",
-    nativeName: "తెలుగు",
+    code: "mr",
+    name: "Marathi",
+    nativeName: "मराठी",
     flag: "🇮🇳",
-    speechLang: "te-IN",
+    speechLang: "mr-IN",
     imageUrl:
-      "https://i.ibb.co/p6XPMZdn/Chat-GPT-Image-Aug-13-2025-05-42-43-PM.png",
-    assistantName: "Priya",
+      "https://th.bing.com/th/id/OIP.-ixiQp5esJ7JRIHJdHf-jgHaEc?w=202&h=121&c=7&r=0&o=7&dpr=1.5&pid=1.7&rm=3",
+    assistantName: "Vedika",
   },
   {
     code: "en",

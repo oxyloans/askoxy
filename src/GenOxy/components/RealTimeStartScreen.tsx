@@ -49,13 +49,13 @@ export default function StartScreen({
             {selectedLanguage.flag}
           </div>
           <h2 className="text-3xl font-bold text-white">
-            {selectedLanguage.code === "te" && "తెలుగు వాయిస్ అసిస్టెంట్"}
+            {selectedLanguage.code === "mr" && "मराठी गोल्ड व्हॉइस असिस्टंट"}
             {selectedLanguage.code === "en" && "English Voice Assistant"}
             {selectedLanguage.code === "hi" && "हिन्दी वॉयस असिस्टेंट"}
           </h2>
           <p className="text-gray-300 text-lg max-w-md mx-auto">
-            {selectedLanguage.code === "te" &&
-              "మీ వాయిస్ అసిస్టెంట్‌తో సంభాషణ ప్రారంభించండి"}
+            {selectedLanguage.code === "mr" &&
+              "आपल्या गोल्ड व्हॉइस असिस्टंटसोबत संवाद सुरू करा"}
             {selectedLanguage.code === "en" &&
               "Start your conversation with the voice assistant"}
             {selectedLanguage.code === "hi" &&
@@ -70,7 +70,7 @@ export default function StartScreen({
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 <span>
-                  {selectedLanguage.code === "te" && "కనెక్ట్ అవుతోంది..."}
+                  {selectedLanguage.code === "mr" && "कनेक्ट होत आहे..."}
                   {selectedLanguage.code === "en" && "Connecting..."}
                   {selectedLanguage.code === "hi" && "कनेक्ट हो रहा है..."}
                 </span>
@@ -79,7 +79,7 @@ export default function StartScreen({
               <div className="flex items-center gap-2">
                 <Play size={20} />
                 <span>
-                  {selectedLanguage.code === "te" && "సంభాషణ ప్రారంభించు"}
+                  {selectedLanguage.code === "mr" && "संवाद सुरू करा"}
                   {selectedLanguage.code === "en" && "Start Conversation"}
                   {selectedLanguage.code === "hi" && "बातचीत शुरू करें"}
                 </span>
@@ -93,7 +93,7 @@ export default function StartScreen({
             Disclaimer
           </h4>
           <p className="text-gray-400 text-sm leading-relaxed">
-            ASKOXY.AI is a real-time AI assistant. While you can select your
+            OXYGOLD.AI is a real-time AI assistant. While you can select your
             preferred language above, we cannot guarantee 100% adherence to the
             selected language throughout the conversation. The AI may occasionally
             respond in English or mix languages based on context and system

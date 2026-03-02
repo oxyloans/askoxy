@@ -8,6 +8,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const rotatingWords = [
   "District 3150",
@@ -24,6 +25,7 @@ export default function RotaryLandingPage() {
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
@@ -53,8 +55,10 @@ export default function RotaryLandingPage() {
   }, [currentWordIndex]);
 
   const handleStartChat = () => {
-    window.location.href =
-      "https://www.askoxy.ai/asst_Sfq4w0aKDtLKXMVFfZxhb6mJ/1b9efd8e-b77a-4d2c-976e-c29697ca3b0c/Rotary%20District5203150";
+    sessionStorage.setItem("backoption", "/rotarydistrict3150AiAgent");
+    navigate(
+      "/asst_Sfq4w0aKDtLKXMVFfZxhb6mJ/1b9efd8e-b77a-4d2c-976e-c29697ca3b0c/Rotary%20District5203150",
+    );
   };
 
   const handleFAQClick = () => {

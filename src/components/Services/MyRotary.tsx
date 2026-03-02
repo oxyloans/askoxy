@@ -7,10 +7,8 @@ import { useNavigate } from "react-router-dom";
 
 import { motion } from "framer-motion";
 import {
-
   Sparkles,
   Copy,
-  
   CheckCircle2,
   MessageCircle,
   Mail,
@@ -23,7 +21,6 @@ import {
   Send,
   Info,
   User,
-  
   Zap,
   Globe,
   Award,
@@ -34,6 +31,11 @@ import {
   Briefcase,
   ExternalLink,
   HelpCircle,
+  Building2,
+  Video,
+  MessageSquareQuote,
+  Tv2,
+  LandmarkIcon,
 } from "lucide-react";
 import {
   checkUserInterest,
@@ -51,19 +53,18 @@ const MyRotaryServices: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
+  const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
 
   const WHATSAPP_GROUP_GRAND_LAUNCH =
     "https://chat.whatsapp.com/FRIPgqC1cYaGwQ5VbSXBPL?mode=gi_t";
-
 
   const WHATSAPP_GROUP_PLATFORM =
     "https://chat.whatsapp.com/DiwjVdXb7p60ywRlgrSFDp?mode=gi_t";
 
   const EXPLORE_AI_AGENT_LINK = "/rotarydistrict3150AiAgent";
-    
 
   const ROTARY_ROLE = "ROTARIAN_MEMBER";
+
   const navigate = useNavigate();
 
   const userId = localStorage.getItem("userId");
@@ -76,8 +77,6 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
 
   // Updated high-quality images with better optimization
   const GREETINGS_IMAGE = "https://i.ibb.co/wFzHbgh3/RTN-RADHA1.png";
- 
-
 
   // Rotary Identity (display)
   const ROTARY_DISTRICT = "RI DISTRICT 3150";
@@ -397,7 +396,7 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
         )}
 
         {/* Enhanced Hero Banner Section */}
-        <motion.section 
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -494,7 +493,6 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
                     <Users className="h-7 w-7" />
                     <span className="hidden sm:inline">Join Group</span>
                     <span className="sm:hidden">Join</span>
-                   
                   </button>
 
                   <button
@@ -503,10 +501,11 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
                     type="button"
                   >
                     <Rocket className="h-7 w-7" />
-                    <span className="hidden sm:inline">Explore Rotary District 3150 AI Agent</span>
-                    
+                    <span className="hidden sm:inline">
+                      Explore Rotary District 3150 AI Agent
+                    </span>
+
                     <span className="sm:hidden">Explore AI Agent</span>
-                   
                   </button>
                 </div>
               </div>
@@ -524,7 +523,143 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
               </div>
             </div>
           </div>
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30 shadow-2xl mt-8">
+            {/* Decorative Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-emerald-500 to-purple-600" />
+              <div className="absolute -top-20 -left-20 h-40 w-40 sm:h-64 sm:w-64 rounded-full bg-blue-200/20 blur-3xl" />
+              <div className="absolute -bottom-20 -right-20 h-40 w-40 sm:h-64 sm:w-64 rounded-full bg-emerald-200/20 blur-3xl" />
+            </div>
 
+            <div className="relative flex flex-col">
+              <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-10 px-7 sm:px-9 lg:px-11 pt-10 pb-10">
+                {/* LEFT: Video — narrower */}
+                <div className="flex items-stretch">
+                  <div className="rounded-2xl overflow-hidden bg-black border border-gray-200 shadow-xl w-full">
+                    <div className="relative w-full h-full min-h-[470px] lg:min-h-[520px]">
+                      <iframe
+                        src="https://drive.google.com/file/d/19xrKXbjAAQr7hSwxyJ0w6uUG7ixiKw0a/preview"
+                        title="Minister's Message – Rotary AI Hub"
+                        allow="autoplay; fullscreen"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                        style={{ border: "none" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT: Heading + Divider + Content — wider */}
+                <div className="flex flex-col">
+                  {/* Top spacing */}
+                  <div className="pt-3" />
+
+                  {/* Heading */}
+                  <h3 className="text-xl sm:text-2xl font-bold leading-tight flex items-center gap-2">
+                    <MessageCircle className="h-6 w-6 text-blue-600 flex-shrink-0" />
+                    <span className="bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">
+                      Minister's Message – Rotary AI Hub
+                    </span>
+                  </h3>
+
+                  {/* Colored separator below heading */}
+                  <div className="mt-4 mb-5 h-1 w-full rounded-full bg-gradient-to-r from-blue-500 via-emerald-400 to-purple-500 opacity-70" />
+
+                  {/* Mission Block */}
+                  <div className="flex items-start gap-3 mb-6">
+                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Tv2 className="h-5 w-5 text-blue-700" />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm sm:text-base fot  text-gray-800 leading-relaxed">
+                        At the Rotary AI Hub Grand Launch, we shared our
+                        mission:
+                      </p>
+                      <p className="text-sm sm:text-base text-gray-800 leading-relaxed">
+                        We are providing{" "}
+                        <span className="font-semibold text-blue-700">
+                          Free AI services and free AI training
+                        </span>{" "}
+                        to Rotaractors aged 18–30 and to interested citizens.
+                      </p>
+                      <p className="text-sm text-gray-600 italic">
+                        We seek your blessings and support for this initiative.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Thin inner divider between sections */}
+                  <div className="mb-6 h-px w-full bg-gradient-to-r from-emerald-200 via-blue-100 to-transparent" />
+
+                  {/* Minister Appreciation Block */}
+                  <div className="flex items-start gap-3 mb-6">
+                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <LandmarkIcon className="h-5 w-5 text-emerald-700" />
+                    </div>
+                    <div className="flex flex-col gap-2.5 w-full">
+                      <p className="text-sm sm:text-base font-semibold text-gray-900">
+                        Appreciation from Hon'ble Minister
+                      </p>
+                      <p className="text-sm sm:text-base text-gray-800">
+                        The Hon'ble Telangana{" "}
+                        <span className="text-yellow-600 font-bold">
+                          IT Minister Sridhar Babu
+                        </span>{" "}
+                        appreciated the initiative and said:
+                      </p>
+                      <div className="flex flex-col gap-3.5 pl-1">
+                        <div className="flex items-start gap-2 text-sm text-gray-700">
+                          <span className="text-emerald-500 mt-0.5 flex-shrink-0 font-bold">
+                            ✦
+                          </span>
+                          <span>
+                            He congratulated{" "}
+                            <span className="font-semibold text-gray-900">
+                              Radhakrishna Thatavarti
+                            </span>{" "}
+                            and the team for educating people about AI and its
+                            impact.
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2 text-sm text-gray-700">
+                          <span className="text-emerald-500 mt-0.5 flex-shrink-0 font-bold">
+                            ✦
+                          </span>
+                          <span>
+                            He said it is commendable that the team is working{" "}
+                            <span className="font-semibold text-gray-900">
+                              pro bono
+                            </span>{" "}
+                            to empower the citizens of Telangana and across
+                            India.
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2 text-sm text-gray-700">
+                          <span className="text-emerald-500 mt-0.5 flex-shrink-0 font-bold">
+                            ✦
+                          </span>
+                          <span>
+                            He wished the team all the best for their future
+                            efforts.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto pt-3">
+                    <div className="flex items-start gap-2 rounded-2xl lg:rounded-full bg-gradient-to-r from-blue-50 to-emerald-50 border border-blue-200 px-4 py-2.5 w-full">
+                      <Sparkles className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-blue-800 lg:whitespace-nowrap">
+                        This encouragement strengthens our commitment to empower
+                        society through AI.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           {/* Poster Launch Event - Enhanced */}
           <div className="mt-4 sm:mt-6 rounded-2xl sm:rounded-3xl border border-gray-200 bg-white shadow-xl overflow-hidden">
             <div className="p-3 sm:p-4 lg:p-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
@@ -575,7 +710,7 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
         </motion.section>
 
         {/* ENHANCED HERO SECTION - Fully Responsive */}
-        <motion.section 
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -687,29 +822,17 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
 
                 {/* Action Buttons - Compact & Responsive */}
                 <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <button
-                    className={`group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 ${
-                      interested
-                        ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:opacity-90"
-                        : "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:opacity-90"
-                    }`}
-                    onClick={() => handlePlatformClick(interested)}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      {interested ? (
-                        <>
-                          <Rocket className="h-4 w-4" />
-                          <span>Open Platform</span>
-                          <ChevronRight className="h-4 w-4" />
-                        </>
-                      ) : (
-                        <>
-                          <Users className="h-4 w-4" />
-                          <span>Join Platform</span>
-                        </>
-                      )}
-                    </span>
-                  </button>
+                  {!userId && (
+  <button
+    className="group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:opacity-90"
+    onClick={() => handlePlatformClick(false)}
+  >
+    <span className="flex items-center justify-center gap-2">
+      <Users className="h-4 w-4" />
+      <span>Join Platform</span>
+    </span>
+  </button>
+)}
 
                   <button
                     className="group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white hover:opacity-90 active:scale-95"
@@ -810,7 +933,7 @@ const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
         </motion.section>
 
         {/* ENHANCED DOUBLE ENGINE SECTION */}
-        <motion.main 
+        <motion.main
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
