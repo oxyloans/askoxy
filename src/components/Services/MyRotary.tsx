@@ -508,7 +508,24 @@ const MyRotaryServices: React.FC = () => {
                     <span className="sm:hidden">Explore AI Agent</span>
                   </button>
                 </div>
+
+                <div className="mt-6">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
+                    Design your own <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Rotary Poster</span>
+                  </h3>
+                  <button
+                    onClick={() => navigate("/dynamic-rotaryposter")}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-pink-700 transition-all active:scale-95"
+                    type="button"
+                  >
+                    <Sparkles className="h-5 w-5" />
+                    Create Poster
+                  </button>
+                </div>
+                
               </div>
+
+
 
               {/* Right: Event Image */}
               <div className="p-5 sm:p-7 lg:p-10 flex items-center">

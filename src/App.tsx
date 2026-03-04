@@ -22,6 +22,7 @@ import GoldSilverTargets from "./components/GoldSilverTargets";
 import FreelancerList from "./components/FreelancerList";
 import FreelancersByUserId from "./components/FreelancersByUserId";
 import DataReading from "./ChatScreen/DataReading";
+import RotaryPosterStudio from "./components/DynamicPosterDesignforRotary"
 import RotaryLandingPage from "./components/RotaryLanding";
 import { CandidatesList } from "./AIMockInterview/admin/CandidatesList";
 import { CandidateDetail } from "./AIMockInterview/admin/CandidateDetail";
@@ -558,6 +559,7 @@ const App: React.FC = () => {
                 path="/rotarydistrict3150AiAgent"
                 element={<RotaryLandingPage />}
               />
+              <Route path="/dynamic-rotaryposter" element={<RotaryPosterStudio />} />
               <Route
                 path="/ninetydayplan"
                 element={

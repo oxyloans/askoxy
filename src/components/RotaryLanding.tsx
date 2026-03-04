@@ -26,6 +26,7 @@ export default function RotaryLandingPage() {
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem("userId");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
@@ -55,7 +56,7 @@ export default function RotaryLandingPage() {
   }, [currentWordIndex]);
 
   const handleStartChat = () => {
-    sessionStorage.setItem("backoption", "/rotarydistrict3150AiAgent");
+    // sessionStorage.setItem("backoption", "/rotarydistrict3150AiAgent");
     navigate(
       "/asst_Sfq4w0aKDtLKXMVFfZxhb6mJ/1b9efd8e-b77a-4d2c-976e-c29697ca3b0c/Rotary%20District5203150",
     );
@@ -112,12 +113,12 @@ export default function RotaryLandingPage() {
   ];
 
   return (
-    <div className="w-full h-screen bg-[#0c1a35] flex flex-col overflow-hidden">
+    <div className="w-full min-h-screen bg-[#0c1a35] flex flex-col">
       {/* Top gold accent bar */}
       <div className="h-1 w-full bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-600 shrink-0" />
 
       {/* Main content */}
-      <div className="relative flex-1 flex items-stretch overflow-hidden">
+      <div className="relative flex-1 flex items-stretch">
         {/* Background decoration */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-blue-900/40 blur-3xl" />
@@ -240,6 +241,16 @@ export default function RotaryLandingPage() {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
+                <hr className="border-white/10" />
+                <div>
+                  <p className="text-xs text-slate-200 mb-2 tracking-wide text-center">
+                    ✦ Design Your Rotary Posters
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => navigate(isLoggedIn ? "/main/services/myrotary" : "/services/myrotary")} className="flex-1 bg-transparent border-2 border-white hover:bg-white/10 text-white font-bold py-2.5 px-4 rounded-full transition-all text-xs hover:scale-105">🏠 Home</button>
+                    <button onClick={() => navigate("/dynamic-rotaryposter")} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-full transition-all text-xs shadow-lg">🎨 Design Poster</button>
+                  </div>
+                </div>
               </div>
 
               {/* Service cards */}
@@ -273,9 +284,11 @@ export default function RotaryLandingPage() {
             </div>
           </div>
         </div>
-
-        {/* ── DESKTOP layout (≥ lg) — COMPLETELY UNCHANGED ── */}
-        <div className="hidden lg:grid lg:grid-cols-12 gap-0 w-full max-w-[90rem] mx-auto px-12 xl:px-16 items-center self-center">
+        
+        <div className="hidden lg:grid lg:grid-cols-12 gap-0 w-full max-w-[90rem] mx-auto px-12 xl:px-16 items-center self-center relative py-12">
+          {/* Home Button - Top Right */}
+          <button onClick={() => navigate(isLoggedIn ? "/main/services/myrotary" : "/services/myrotary")} className="absolute top-6 right-12 xl:right-16 bg-transparent border-2 border-white hover:bg-white/10 text-white font-bold py-2.5 px-8 rounded-full transition-all text-sm hover:scale-105 z-10 shadow-lg">🏠 Rotary Home</button>
+          
           {/* LEFT — Content (8 cols) */}
           <div
             className={`lg:col-span-8 flex flex-col justify-center text-left transition-all duration-700 ease-out gap-y-6 xl:gap-y-8 ${
@@ -358,8 +371,15 @@ export default function RotaryLandingPage() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
-            </div>
 
+              <hr className="border-white/10" />
+              <div>
+                <p className="text-sm xl:text-base text-slate-200 mb-2 tracking-wide">
+                  ✦ Design Your Rotary Posters
+                </p>
+                <button onClick={() => navigate("/dynamic-rotaryposter")} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-6 rounded-full transition-all text-sm shadow-lg hover:scale-105">🎨 Design Poster</button>
+              </div>
+            </div>
             {/* Service cards */}
             <div className="grid grid-cols-3 gap-3 max-w-xl">
               {serviceCards.map(
