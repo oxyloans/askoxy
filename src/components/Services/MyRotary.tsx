@@ -53,7 +53,8 @@ const MyRotaryServices: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const GRAND_LAUNCH_TOP_IMAGE = "https://i.ibb.co/G4pYnSWX/rotary-img0.jpg";
+  const GRAND_LAUNCH_TOP_IMAGE =
+    "https://i.ibb.co/VcwCmLRN/rotarycomplitel.png";
 
   const WHATSAPP_GROUP_GRAND_LAUNCH =
     "https://chat.whatsapp.com/FRIPgqC1cYaGwQ5VbSXBPL?mode=gi_t";
@@ -77,6 +78,24 @@ const MyRotaryServices: React.FC = () => {
 
   // Updated high-quality images with better optimization
   const GREETINGS_IMAGE = "https://i.ibb.co/wFzHbgh3/RTN-RADHA1.png";
+  {
+    /* RESPONSIVE VIDEO COMPONENT */
+  }
+  const ResponsiveVideo = ({ src, title }: { src: string; title: string }) => (
+    <div className="w-full rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-black">
+      <div className="relative w-full aspect-video">
+        <iframe
+          src={src}
+          title={title}
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+          loading="lazy"
+          className="absolute inset-0 w-full h-full"
+          style={{ border: "none" }}
+        />
+      </div>
+    </div>
+  );
 
   // Rotary Identity (display)
   const ROTARY_DISTRICT = "RI DISTRICT 3150";
@@ -411,88 +430,83 @@ const MyRotaryServices: React.FC = () => {
               <div className="absolute -bottom-20 -left-20 h-40 w-40 sm:h-64 sm:w-64 rounded-full bg-emerald-200/20 blur-3xl" />
             </div>
 
-            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-              {/* Left: Event Details */}
-              <div className="p-5 sm:p-7 lg:p-10 flex flex-col justify-center">
-                <h3 className="text-1xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight mb-5">
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8 p-5 sm:p-7 lg:p-10">
+              {/* LEFT: Updated content (compact) */}
+              <div className="flex flex-col justify-center">
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 leading-tight">
                   <span className="bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">
-                    Grand Launch of Rotary AI Hub
+                    Rotary AI Hub
+                  </span>{" "}
+                  <span className="text-gray-900">&</span>{" "}
+                  <span className="bg-gradient-to-r from-indigo-700 to-violet-700 bg-clip-text text-transparent">
+                    District 3150 AI Agent
                   </span>
                 </h3>
 
-                <div className="space-y-4 mb-5">
-                  <div className="flex items-start gap-3">
-                    <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0">
-                      <Clock className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-blue-700" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600">
-                        Date & Time
-                      </p>
-                      <p className="text-base sm:text-lg font-bold text-gray-900">
-                        03 March 2026, 6:00 PM IST
-                      </p>
-                    </div>
-                  </div>
+                <p className="mt-2 text-sm sm:text-base font-semibold text-gray-800">
+                  Successfully launched on <b>3rd March 2026</b> • Miyapur Metro
+                  Station, Hyderabad
+                </p>
 
-                  <div className="flex items-start gap-3">
-                    <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center flex-shrink-0">
-                      <Globe className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-emerald-700" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-600 mb-1">
-                        Location
-                      </p>
-                      <a
-                        href="https://maps.app.goo.gl/YFfUQNZZf32LdTVG7"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-base font-bold text-emerald-600 hover:text-emerald-700 underline decoration-2 underline-offset-2 transition-colors inline-flex items-center gap-1 flex-wrap"
-                      >
-                        <span>View on Google Maps</span>
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                      <p className="text-sm font-bold text-gray-900 mt-2">
-                        Pillar No. 635, 1st Floor, Entrance D, SE02 Concourse
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-700 mt-1">
-                        Miyapur Metro Station, Hyderabad, Telangana
-                      </p>
-                    </div>
-                  </div>
+                <a
+                  href="https://maps.app.goo.gl/YFfUQNZZf32LdTVG7"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-emerald-700 hover:text-emerald-800 underline decoration-2 underline-offset-2 transition"
+                >
+                  View on Google Maps <ExternalLink className="h-4 w-4" />
+                </a>
+
+                {/* User provided content (compact) */}
+                <div className="mt-4 space-y-2 text-sm sm:text-base text-gray-800">
+                  <p>
+                    Grateful to{" "}
+                    <b>District Governor Rtn. S. V. Raamprasad Garu</b> for
+                    inaugurating the <b>Rotary AI Hub</b>.
+                  </p>
+                  <p>
+                    Special thanks to the{" "}
+                    <b>Rotary Club of Secunderabad West</b> and{" "}
+                    <b>Rotary District 3150 members</b> for their encouragement
+                    and support.
+                  </p>
+                  <p>
+                    The <b>Rotary AI Hub</b> is now open to all Rotary members
+                    to <b>learn AI</b>, <b>share knowledge</b>, and create{" "}
+                    <b>technology-driven service initiatives</b>.
+                  </p>
+                  <p className="font-extrabold text-gray-900">
+                    Together, let’s strengthen Rotary’s impact through
+                    innovation.
+                  </p>
                 </div>
 
-                <div className="mt-5">
-                  <div className="flex flex-col gap-2">
-                    <p className="text-xs sm:text-sm font-semibold text-gray-700">
-                      After joining, please confirm by sending a message in the
-                      group:
+                {/* Double engines (small) */}
+                <div className="mt-5 rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="h-5 w-5 text-indigo-700" />
+                    <p className="text-sm sm:text-base font-extrabold text-gray-900">
+                      Double Engines: AI Hub & AI Commerce
                     </p>
-                    <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-emerald-300 px-3 py-2 font-semibold text-emerald-800 w-fit">
-                      <span className="text-xs sm:text-sm">
-                        I am attending.
-                      </span>
-                      <button
-                        type="button"
-                        onClick={copyAttendingText}
-                        className="inline-flex items-center justify-center rounded-md p-1 hover:bg-emerald-100 active:scale-95 transition"
-                        aria-label="Copy"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
                   </div>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    AI Hub enables learning & collaboration. AI Commerce enables
+                    trusted buying/selling within Rotary circles.
+                  </p>
                 </div>
 
+                {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-3 mt-5">
                   <button
-                    onClick={openWhatsAppGroupGrandLaunch}
+                    onClick={openWhatsAppGroupPlatform}
                     className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-green-700 transition-all active:scale-95 whitespace-nowrap"
                     type="button"
                   >
-                    <Users className="h-7 w-7" />
-                    <span className="hidden sm:inline">Join Group</span>
-                    <span className="sm:hidden">Join</span>
+                    <Users2 className="h-6 w-6" />
+                    <span className="hidden sm:inline">
+                      Join Official AI Hub Group
+                    </span>
+                    <span className="sm:hidden">Join AI Hub</span>
                   </button>
 
                   <button
@@ -500,32 +514,34 @@ const MyRotaryServices: React.FC = () => {
                     className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-95 whitespace-nowrap"
                     type="button"
                   >
-                    <Rocket className="h-7 w-7" />
+                    <Rocket className="h-6 w-6" />
                     <span className="hidden sm:inline">
-                      Explore Rotary District 3150 AI Agent
+                      Explore District 3150 AI Agent
                     </span>
-
                     <span className="sm:hidden">Explore AI Agent</span>
                   </button>
                 </div>
 
-                <div className="mt-6">
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
-                    Design your own <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Rotary Poster</span>
-                  </h3>
+                <div className="mt-5 rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm sm:text-base font-extrabold text-gray-900">
+                      Design your own Rotary Poster
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
+                      Create and share in minutes
+                    </p>
+                  </div>
+
                   <button
                     onClick={() => navigate("/dynamic-rotaryposter")}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-pink-700 transition-all active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-pink-700 transition-all active:scale-95 w-full sm:w-auto"
                     type="button"
                   >
                     <Sparkles className="h-5 w-5" />
                     Create Poster
                   </button>
                 </div>
-                
               </div>
-
-
 
               {/* Right: Event Image */}
               <div className="p-5 sm:p-7 lg:p-10 flex items-center">
@@ -540,6 +556,7 @@ const MyRotaryServices: React.FC = () => {
               </div>
             </div>
           </div>
+
           <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30 shadow-2xl mt-8">
             {/* Decorative Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -814,8 +831,10 @@ const MyRotaryServices: React.FC = () => {
                   </h2>
                   <p className="mt-3 text-gray-700 leading-relaxed text-sm sm:text-base">
                     With deep respect for Rotary's legacy of leadership and
-                    service, I've launched a AI initiative — comprising the{" "}
-                    <b className="text-blue-700">Rotary AI Hub</b>
+                    service, I've launched Rotary’s{" "}
+                    <b className="text-purple-700">Double Engine Initiatives</b>{" "}
+                    — the <b className="text-blue-700">Rotary AI Hub</b> and{" "}
+                    <b className="text-emerald-700">Rotary AI Commerce</b>
                   </p>
                 </div>
 
@@ -840,16 +859,16 @@ const MyRotaryServices: React.FC = () => {
                 {/* Action Buttons - Compact & Responsive */}
                 <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
                   {!userId && (
-  <button
-    className="group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:opacity-90"
-    onClick={() => handlePlatformClick(false)}
-  >
-    <span className="flex items-center justify-center gap-2">
-      <Users className="h-4 w-4" />
-      <span>Join Platform</span>
-    </span>
-  </button>
-)}
+                    <button
+                      className="group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm active:scale-95 bg-gradient-to-r from-blue-700 to-blue-800 text-white hover:opacity-90"
+                      onClick={() => handlePlatformClick(false)}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span>Join Platform</span>
+                      </span>
+                    </button>
+                  )}
 
                   <button
                     className="group flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 border shadow-sm bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white hover:opacity-90 active:scale-95"
@@ -878,14 +897,14 @@ const MyRotaryServices: React.FC = () => {
                 <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
                   <Pill
                     icon={<Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />}
-                    text="AI Mentorship"
+                    text="AI Hub"
                     variant="premium"
                   />
-                  {/* <Pill
-                    icon={<ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />}
-                    text="Community Commerce"
+                  <Pill
+                    icon={<Briefcase className="h-3 w-3 sm:h-4 sm:w-4" />}
+                    text="AI Commerce"
                     variant="success"
-                  /> */}
+                  />
                   <Pill
                     icon={<Users2 className="h-3 w-3 sm:h-4 sm:w-4" />}
                     text="Rotary Network"
@@ -961,7 +980,7 @@ const MyRotaryServices: React.FC = () => {
             <div className="text-center mb-8 sm:mb-10">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
                 <span className="bg-gradient-to-r from-blue-700 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
-                  Rotary AI Hub - AI Initiative
+                  Double Engine Initiatives
                 </span>
               </h1>
 
@@ -985,27 +1004,33 @@ const MyRotaryServices: React.FC = () => {
 
             {/* Points in Both Sides */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-              {/* LEFT POINTS */}
+              {/* LEFT: ROTARY AI HUB */}
               <div className="rounded-3xl border border-blue-200 bg-white/70 backdrop-blur p-5 sm:p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
-                    <Sparkles className="h-6 w-6 text-white" />
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg">
+                      <Sparkles className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                        Rotary AI Hub
+                      </h2>
+                      <p className="text-xs sm:text-sm text-gray-600">
+                        AI innovation for Rotarians
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                      AI Learning
-                    </h2>
-                    <p className="text-xs sm:text-sm text-gray-600">
-                      Build AI capability step-by-step
-                    </p>
-                  </div>
+
+                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold bg-blue-50 border border-blue-200 text-blue-700">
+                    AI Innovation
+                  </span>
                 </div>
 
                 <ul className="space-y-3">
                   {[
-                    "Encourage Rotarians to learn AI and increase revenue",
-                    "Live demos + practical real-world use cases",
-                    "Learning through real usage (not just theory)",
+                    "Learn practical AI tools for daily work",
+                    "Explore AI agents and automation",
+                    "Collaborate on tech-driven service projects",
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
@@ -1019,31 +1044,37 @@ const MyRotaryServices: React.FC = () => {
                 </ul>
               </div>
 
-              {/* RIGHT POINTS */}
-              <div className="rounded-3xl border border-purple-200 bg-white/70 backdrop-blur p-5 sm:p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg">
-                    <CheckCircle2 className="h-6 w-6 text-white" />
+              {/* RIGHT: ROTARY AI COMMERCE */}
+              <div className="rounded-3xl border border-emerald-200 bg-white/70 backdrop-blur p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-green-700 flex items-center justify-center shadow-lg">
+                      <Briefcase className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                        Rotary AI Commerce
+                      </h2>
+                      <p className="text-xs sm:text-sm text-gray-600">
+                        Trusted business network for Rotarians
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                      AI Mentorship
-                    </h2>
-                    <p className="text-xs sm:text-sm text-gray-600">
-                      Support to implement and execute
-                    </p>
-                  </div>
+
+                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                    Sales + Growth
+                  </span>
                 </div>
 
                 <ul className="space-y-3">
                   {[
-                    "Weekly mentorship sessions",
-                    "Hands-on project guidance",
-                    "Implementation support and follow-ups",
+                    "List your products & services in a trusted network",
+                    "Connect with buyers within Rotary community",
+                    "Enable bulk and recurring orders",
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <div className="h-6 w-6 rounded-full bg-purple-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                        <CheckCircle2 className="h-4 w-4 text-purple-600" />
+                      <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                       </div>
                       <span className="text-sm sm:text-base text-gray-700 leading-relaxed">
                         {item}
@@ -1090,8 +1121,12 @@ const MyRotaryServices: React.FC = () => {
                     hands-on capability
                   </span>{" "}
                   in Artificial Intelligence and Generative AI, enabling
-                  Rotarians to apply AI effectively across all dimensions of
-                  professional and community life.
+                  Rotarians to apply AI in professional life, community service,
+                  and{" "}
+                  <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                    trusted commerce
+                  </span>{" "}
+                  through Rotary AI Commerce.
                 </p>
               </div>
             </div>

@@ -144,6 +144,17 @@ const HiddenAssistantCard: React.FC<{
 // ------------------ Static Agents ------------------
 const staticAgents: Assistant[] = [
   {
+    id: "TCS 360*",
+    assistantId: "TCS 360*",
+    agentId: "TCS 360*",
+    name: "TCS 360*",
+    description:
+      "As a Hiring Manager, you seamlessly onboard new talent, ensuring a welcoming transition into our team. Your goal is to foster lasting relationships, cultivate a collaborative environment, and support each individual's growth, strengthening our organization from the inside out. — for Hiring Manager, to Relationship Building, aimed at Onboard.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/asst_EMGqe1uGtWU0IQDsxmjqA3Ps/a6f777a5-1ebd-41a4-be40-d76f101086e9/TCS%20360*",
+  },
+  {
     id: "ftcci-agent-static",
     assistantId: "ftcci-agent-static",
     agentId: "ftcci-agent-static",

@@ -53,15 +53,15 @@ interface Assistant {
   response_format?: string;
   status?: string;
   agentStatus?: string;
-  imageUrl?: string; // ✅ new
-  activeStatus?: boolean; // ✅ NEW: Add activeStatus field
+  imageUrl?: string;
+  activeStatus?: boolean;
   hideAgent?: boolean;
 }
 
 interface AssistantsResponse {
   object: string;
   data: Assistant[];
-  hasMore: boolean; // ✅ FIXED: Changed from 'has_more' to 'hasMore' to match API response format
+  hasMore: boolean; 
   firstId?: string;
   lastId?: string;
 }
@@ -76,7 +76,6 @@ interface PaginationState {
 // ---------- api ----------
 const apiClient = axios.create({ baseURL: BASE_URL });
 
-// ==== Hidden Agent Filter (add once, near top) ===============================
 type AssistantBase = {
   agentId?: string | number;
   assistantId?: string | number;
@@ -107,12 +106,12 @@ async function getAssistants(
 
   const normalized: Assistant[] = (res.data?.data ?? []).map(
     (assistant: any) => {
-      // Properly handle agentId that might be "null", null, undefined, or empty string
+      
       const rawAgentId = assistant.agentId;
       const rawAssistantId = assistant.assistantId;
       const rawId = assistant.id;
 
-      // Convert "null" string to undefined, and filter out empty strings
+    
       const cleanAgentId =
         rawAgentId === "null" ||
         rawAgentId === null ||
@@ -135,7 +134,7 @@ async function getAssistants(
           ? undefined
           : String(rawId).trim();
 
-      // Use fallback logic: agentId -> assistantId -> id
+     
       const finalAgentId = cleanAgentId || cleanAssistantId || cleanId;
       const finalAssistantId = cleanAssistantId || cleanId || cleanAgentId;
 
@@ -162,7 +161,7 @@ async function getAssistants(
     lastId: res.data?.lastId,
   };
 }
-// /ai-service/agent/webSearchForAgent?message=...
+
 async function searchAssistants(query: string): Promise<Assistant[]> {
   const res = await apiClient.get("/ai-service/agent/webSearchForAgent", {
     params: { message: query },
@@ -514,13 +513,11 @@ const BharatAgentsStore: React.FC = () => {
   const isApproved = (a: any) =>
     ((a.status || a.agentStatus || "") + "").toUpperCase() === "APPROVED";
 
-  const toggleHero = () => {
-    setShowHero((prev) => !prev);
-  };
 
-  // ✅ Updated initial pagination state for dynamic loading with pageSize 100
+
+
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 100,
+    pageSize: 16,
     hasMore: true,
     total: 0,
   });
@@ -847,7 +844,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [
     tab,
     loggedInUserId,
