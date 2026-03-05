@@ -6,8 +6,8 @@ import "slick-carousel/slick/slick-theme.css";
 // Importing the logos
 import oxyloansLogo from "../assets/img/image1.png";
 import oxybricksLogo from "../assets/img/image2.png";
-import AskoxyLogo from "../assets/img/askoxy_logo_1200x600 (1).png"
-
+import oxygold from "../assets/img/oxygoldlogo.png"
+import globaltechlogo from "../assets/img/global logo.png"
 // CustomPrevArrow
 const CustomPrevArrow = (props: any) => {
   const { className, style, onClick } = props; // take only needed props
@@ -44,13 +44,18 @@ const OXYGroupCompanies = () => {
     { logo: oxyloansLogo, name: "OXY Loans", link: "https://oxyloans.com/" },
     {
       logo: oxybricksLogo,
-      name: "OXY Bricks",
+      name: "OXYBRICKS.WORLD",
       link: "https://oxybricks.world/",
     },
     {
-      logo: AskoxyLogo,
-      name: "ASKOXY.AI",
-      link: "https://www.askoxy.ai/",
+      logo: oxygold,
+      name: "OXYGOLD.AI",
+      link: "https://www.oxygold.ai/",
+    },
+    {
+      logo: globaltechlogo,
+      name: "OXYGLOBAL.TECH",
+      link: "https://www.oxyglobal.tech/",
     },
   ];
 
@@ -61,7 +66,7 @@ const OXYGroupCompanies = () => {
     slidesToShow: 3,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 2000,
+    autoplaySpeed: 9000,
     cssEase: "linear",
     pauseOnHover: false,
     nextArrow: <CustomNextArrow />,
@@ -69,17 +74,19 @@ const OXYGroupCompanies = () => {
     responsive: [
       {
         breakpoint: 1024,
-        settings: { slidesToShow: 3 },
+        settings: { slidesToShow: 3, centerMode: true, centerPadding: '0px' },
       },
       {
         breakpoint: 768,
-        settings: { slidesToShow: 2 },
+        settings: { slidesToShow: 2, centerMode: true, centerPadding: '0px' },
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 1,
-          arrows: false, // disable arrows on mobile
+          arrows: false,
+          centerMode: true,
+          centerPadding: '0px',
         },
       },
     ],
@@ -97,17 +104,17 @@ const OXYGroupCompanies = () => {
       <div className="max-w-7xl mx-auto relative">
         <Slider {...settings}>
           {companies.map((company, index) => (
-            <div key={index} className="flex flex-col items-center px-4">
+            <div key={index} className="flex flex-col items-center justify-center px-4">
               <a
                 href={company.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-transform transform hover:scale-105"
+                className="transition-transform transform hover:scale-105 outline-none"
               >
                 <img
                   src={company.logo}
                   alt={company.name}
-                  className="mb-3 w-full h-auto max-w-full object-contain"
+                  className="mb-3 w-48 h-32 sm:w-56 sm:h-36 md:w-64 md:h-40 lg:w-72 lg:h-44 object-contain"
                 />
               </a>
             </div>

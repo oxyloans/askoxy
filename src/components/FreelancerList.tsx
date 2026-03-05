@@ -24,6 +24,7 @@ const FreelancerList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [availability, setAvailability] = useState<"ALL" | "YES" | "NO">("ALL");
+  const [displayCount, setDisplayCount] = useState(12);
 
   const navigate = useNavigate();
 
@@ -73,6 +74,13 @@ const FreelancerList: React.FC = () => {
       return matchesQuery && matchesAvail;
     });
   }, [freelancers, query, availability]);
+
+  const displayedFreelancers = filtered.slice(0, displayCount);
+  const hasMore = displayCount < filtered.length;
+
+  const handleLoadMore = () => {
+    setDisplayCount(prev => prev + 12);
+  };
 
   const handleJoinNow = () => {
     window.location.href = "/main/freelanceform";
@@ -163,7 +171,7 @@ const FreelancerList: React.FC = () => {
 
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    Total: {filtered.length}
+                    Showing: {displayedFreelancers.length} of {filtered.length}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                     Open:{" "}
@@ -256,7 +264,7 @@ const FreelancerList: React.FC = () => {
             </div>
           ) : (
             <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((freelancer) => {
+              {displayedFreelancers.map((freelancer) => {
                 const isAvailable = freelancer.openForFreeLancing === "YES";
                 const isNegotiable = freelancer.amountNegotiable === "YES";
 
@@ -266,7 +274,7 @@ const FreelancerList: React.FC = () => {
                     className="group w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     {/* Top */}
-                    <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg">
                           👤
@@ -276,85 +284,86 @@ const FreelancerList: React.FC = () => {
                           <div className="text-sm font-semibold text-slate-900">
                             Freelancer
                           </div>
-
-                          {/* Show email (mobile-safe) */}
-                          {/* <div className="text-sm font-semibold text-slate-900 truncate">
-                            {getNameFromEmail(freelancer.email)}
-                          </div> */}
                         </div>
                       </div>
 
                       <span
                         className={[
-                          "shrink-0 inline-flex items-center rounded-full px-3 py-1 text-[11px] sm:text-xs font-semibold",
+                          "shrink-0 inline-flex items-center rounded-full px-2 py-1 text-[10px] sm:px-3 sm:text-xs font-semibold h-10",
                           isAvailable
-                            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                            : "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
+                            ? "text-emerald-700 "
+                            : " text-rose-700",
                         ].join(" ")}
                       >
-                        {isAvailable
-                          ? "Open for freelance work"
-                          : "Not available"}
+                        <span className="hidden sm:inline">
+                          {isAvailable
+                            ? "Open for freelance work"
+                            : "Not available"}
+                        </span>
+                        <span className="sm:hidden">
+                          {isAvailable ? "Open" : "Closed"}
+                        </span>
                       </span>
                     </div>
 
-                    {/* Pricing */}
-                    <div className="mt-5">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Pricing
-                      </div>
+                   {/* Pricing */}
+<div className="mt-5">
+  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">
+    Pricing
+  </div>
 
-                      {/* On mobile: 1 column, on sm+: 2 columns (better readability) */}
-                      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                          <div className="text-xs text-slate-600">Hourly</div>
-                          <div className="mt-1 text-sm font-bold text-slate-900">
-                            {priceText(freelancer.perHour)}
-                          </div>
-                        </div>
+  <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3 text-center">
+      <div className="text-[10px] sm:text-xs text-slate-600">Hourly</div>
+      <div className="mt-1 text-xs sm:text-sm font-bold text-slate-900">
+        {priceText(freelancer.perHour)}
+      </div>
+    </div>
 
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                          <div className="text-xs text-slate-600">Daily</div>
-                          <div className="mt-1 text-sm font-bold text-slate-900">
-                            {priceText(freelancer.perDay)}
-                          </div>
-                        </div>
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3 text-center">
+      <div className="text-[10px] sm:text-xs text-slate-600">Daily</div>
+      <div className="mt-1 text-xs sm:text-sm font-bold text-slate-900">
+        {priceText(freelancer.perDay)}
+      </div>
+    </div>
 
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                          <div className="text-xs text-slate-600">Weekly</div>
-                          <div className="mt-1 text-sm font-bold text-slate-900">
-                            {priceText(freelancer.perWeek)}
-                          </div>
-                        </div>
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3 text-center">
+      <div className="text-[10px] sm:text-xs text-slate-600">Weekly</div>
+      <div className="mt-1 text-xs sm:text-sm font-bold text-slate-900">
+        {priceText(freelancer.perWeek)}
+      </div>
+    </div>
 
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                          <div className="text-xs text-slate-600">Monthly</div>
-                          <div className="mt-1 text-sm font-bold text-slate-900">
-                            {priceText(freelancer.perMonth)}
-                          </div>
-                        </div>
-                      </div>
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3 text-center">
+      <div className="text-[10px] sm:text-xs text-slate-600">Monthly</div>
+      <div className="mt-1 text-xs sm:text-sm font-bold text-slate-900">
+        {priceText(freelancer.perMonth)}
+      </div>
+    </div>
+  </div>
 
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <span className="text-xs font-semibold text-slate-700">
-                          {isNegotiable ? "Negotiable" : "Fixed Rate"}
-                        </span>
+  {/* Yearly - centered below the 2x2 grid */}
+  <div className="mt-2 sm:mt-3 flex justify-center">
+    <div className="w-1/2 sm:w-full sm:max-w-[200px] rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3 text-center">
+      <div className="text-[10px] sm:text-xs text-slate-600">Yearly</div>
+      <div className="mt-1 text-xs sm:text-sm font-bold text-slate-900">
+        {priceText(freelancer.perYear)}
+      </div>
+    </div>
+  </div>
 
-                        <span className="text-xs text-slate-500">
-                          Yearly:{" "}
-                          <span className="font-semibold text-slate-700">
-                            {isZero(freelancer.perYear)
-                              ? "Not selected"
-                              : `₹${fmt(freelancer.perYear)}`}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
+  {/* Negotiable status */}
+  {/* <div className="mt-3 text-center">
+    <span className="text-xs font-semibold text-slate-700">
+      {isNegotiable ? "💰 Negotiable" : "🔒 Fixed Rate"}
+    </span>
+  </div> */}
+</div>
 
                     {/* Actions */}
                     <div className="mt-5 flex w-full min-w-0 flex-col gap-2 sm:flex-row">
                       <a
-                        href={freelancer.resumeUrl || "#"}
+                        href={freelancer.resumeUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
@@ -379,6 +388,34 @@ const FreelancerList: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Load More Button */}
+          {!loading && filtered.length > 0 && hasMore && (
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                className="
+                  group relative overflow-hidden
+                  rounded-xl
+                  bg-gradient-to-r from-slate-900 to-slate-700
+                  px-6 py-3
+                  text-base font-semibold text-white
+                  shadow-md
+                  transition-all duration-300
+                  hover:shadow-[0_0_25px_rgba(99,102,241,0.6)]
+                  hover:scale-[1.03]
+                  focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2
+                "
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-600 to-blue-500 opacity-0 group-hover:opacity-20 blur-xl transition duration-500" />
+                <span className="relative flex items-center gap-2">
+                  Load More ({filtered.length - displayCount} remaining)
+                  <FiArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </button>
             </div>
           )}
         </main>

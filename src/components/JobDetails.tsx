@@ -31,6 +31,7 @@ interface Job {
   workMode: string;
   contactNumber: string;
   countryCode: string;
+  payRateFrequencyType: string;
 }
 
 type FilterKey =
@@ -77,6 +78,7 @@ const JobDetails: React.FC = () => {
     jobDesignation: string;
     companyName: string;
   } | null>(null);
+  const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
 
   // 🔐 Read auth token (same format as other pages)
   const readAuth = () => {
@@ -241,6 +243,7 @@ const JobDetails: React.FC = () => {
 
   useEffect(() => {
     filterJobs();
+    setDisplayedJobsCount(20); // Reset pagination when filters change
   }, [jobs, searchTerm, filters]);
 
   const fetchJobs = async () => {
@@ -359,7 +362,6 @@ const JobDetails: React.FC = () => {
       return;
     }
 
-    // ✅ Only use real API
     const hasAgent = await checkUserHasAgent();
 
     // ❌ hasAgentCreated = false → ask for Agent creation
@@ -454,8 +456,9 @@ const JobDetails: React.FC = () => {
     }
   };
 
-  const formatSalary = (min: number, max: number) => {
-    return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+  const formatSalary = (min: number, max: number, payRateFrequencyType?: string) => {
+    const salaryRange = `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+    return payRateFrequencyType ? `${salaryRange} ${payRateFrequencyType}` : salaryRange;
   };
 
   const formatDate = (timestamp: number) => {
@@ -690,7 +693,7 @@ const hasArrayContent = (value: any): boolean => {
               icon: "💰",
               label: "Salary",
               value: hasValidSalary(job.salaryMin, job.salaryMax)
-                ? formatSalary(job.salaryMin, job.salaryMax)
+                ? formatSalary(job.salaryMin, job.salaryMax, job.payRateFrequencyType)
                 : null,
             },
           ].filter((info) => !isEmpty(info.value));
@@ -910,111 +913,112 @@ const hasArrayContent = (value: any): boolean => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading jobs...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-10 py-6 px-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl shadow-sm">
-          <div className="mb-2 text-4xl sm:text-5xl">🎓</div>
-          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
-            Find Your Dream Job
-          </h1>
+        {/* Hero Section */}
+        <div className="text-center mb-6 py-6 px-4 ">
+          <div className="mb-3">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-gray-800">
+              Find Your Dream Job
+            </h1>
+            <p className="text-lg text-gray-600">Discover opportunities that match your skills and aspirations</p>
+          </div>
           <div className="flex flex-wrap justify-center gap-3 mt-4">
-            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm">
+            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
               <span className="text-xl">🚀</span>
-              <span className="text-sm font-medium text-gray-700">
-                Fast Apply
-              </span>
+              <span className="font-medium text-gray-700">Quick Apply</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm">
-              <span className="text-xl">✨</span>
-              <span className="text-sm font-medium text-gray-700">
-                Top Companies
-              </span>
+            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
+              <span className="text-xl">🏢</span>
+              <span className="font-medium text-gray-700">Top Companies</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm">
-              <span className="text-xl">💝</span>
-              <span className="text-sm font-medium text-gray-700">
-                Great Benefits
-              </span>
+            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
+              <span className="text-xl">💼</span>
+              <span className="font-medium text-gray-700">Remote Jobs</span>
             </div>
           </div>
         </div>
-        <div className="mb-6 relative">
-          <div className="max-w-3xl mx-auto">
+
+        {/* Search Section */}
+        <div className="mb-6">
+          <div className="max-w-4xl mx-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="🔍 Search your dream job by title, company, skills, or location..."
+                placeholder="Search jobs by title, company, or keywords..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none shadow-sm transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200"
               />
             </div>
           </div>
         </div>
-        <div className="mb-2">
-          <style>{`
-        .ant-select-selection-placeholder {
-          color: #374151 !important;
-          font-weight: 500 !important;
-        }
-        .ant-select-selection-item {
-          color: #374151 !important;
-        }
-      `}</style>
+
+        {/* Filters Section */}
+        <div className="mb-6  p-4">
+          <h3 className="text-base font-semibold text-gray-800 mb-3">Filter Jobs</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-3">
             {(
               [
                 {
                   key: "industry",
-                  label: "🏢 Industry",
+                  label: "Industry",
+                  icon: "🏢",
                   values: getUniqueValues("industry"),
                 },
                 {
                   key: "jobType",
-                  label: "💼 Job Type",
+                  label: "Job Type",
+                  icon: "💼",
                   values: getUniqueValues("jobType"),
                 },
                 {
                   key: "location",
-                  label: "📍 Location",
+                  label: "Location",
+                  icon: "📍",
                   values: getUniqueValues("jobLocations"),
                 },
                 {
                   key: "experience",
-                  label: "🎯 Experience",
+                  label: "Experience",
+                  icon: "🎯",
                   values: getUniqueValues("experience"),
                 },
                 {
                   key: "salaryRange",
-                  label: "💰 Salary",
+                  label: "Salary Range",
+                  icon: "💰",
                   values: getSalaryRanges().map((r) => r.label),
                 },
                 {
                   key: "skills",
-                  label: "🛠 Skills",
+                  label: "Skills",
+                  icon: "🛠",
                   values: getUniqueSkills(),
                 },
-              ] as { key: FilterKey; label: string; values: string[] }[]
-            ).map(({ key, label, values }) => (
-              <div key={key} className="w-full">
+              ] as { key: FilterKey; label: string; icon: string; values: string[] }[]
+            ).map(({ key, label, icon, values }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {icon} {label}
+                </label>
                 <Select
                   value={filters[key] || undefined}
                   onChange={(value) => handleFilterChange(key, value)}
-                  placeholder={label}
-                  className="w-full rounded-lg"
-                  style={{
-                    width: "100%",
-                    color: "#374151",
-                  }}
-                  size="middle"
+                  placeholder={`Select ${label.toLowerCase()}`}
+                  className="w-full"
+                  size="large"
                   allowClear
                 >
                   {values.map((val, idx) => (
@@ -1028,79 +1032,98 @@ const hasArrayContent = (value: any): boolean => {
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-            <Button
-              onClick={clearFilters}
-              danger
-              className="w-full sm:w-auto color"
-              style={{
-                background: "linear-gradient(to right, #ef4444, #ec4899)",
-                border: "none",
-                color: "white",
-              }}
-            >
-              🗑 Clear Filters
-            </Button>
-
-            <Button
-              onClick={handleWriteToUs}
-              type="primary"
-              className="w-full sm:w-auto flex items-center justify-center gap-2"
-              style={{
-                background: "linear-gradient(to right, #3b82f6, #9333ea)",
-                border: "none",
-              }}
-            >
-              <MailIcon className="w-4 h-4" />
-              Write to Us
-            </Button>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="font-medium">{filteredJobs.length}</span>
+              <span>jobs found</span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={clearFilters}
+                className="px-4 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg"
+              >
+                Clear All
+              </Button>
+              <Button
+                onClick={handleWriteToUs}
+                className="px-4 py-1.5 text-white rounded-lg flex items-center gap-2 hover:text-white"
+                style={{ backgroundColor: "#1ab394", borderColor: "#1ab394" }}
+              >
+                <MailIcon className="w-4 h-4" />
+                Contact Us
+              </Button>
+            </div>
           </div>
         </div>
+        {/* Job Listings */}
         {selectedJob ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <div className="mt-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-gray-800">
-                      Other Opportunities
-                    </h3>
-                    <button
-                      onClick={() => setSelectedJob(null)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                    >
-                      🔍 View All
-                    </button>
-                  </div>
-                  <div className="space-y-2 max-h-100 overflow-y-auto">
-                    {filteredJobs
-                      .filter(
-                        (job) =>
-                          job.id !== selectedJob.id &&
-                          job.industry === selectedJob.industry
-                      )
-                      .slice(0, 9)
-                      .map((job) => (
-                        <JobCard key={job.id} job={job} isCompact />
-                      ))}
-                  </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border sticky top-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Similar Jobs
+                  </h3>
+                  <button
+                    onClick={() => setSelectedJob(null)}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    ← Back to all
+                  </button>
+                </div>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {filteredJobs
+                    .filter(
+                      (job) =>
+                        job.id !== selectedJob.id &&
+                        job.industry === selectedJob.industry
+                    )
+                    .slice(0, 8)
+                    .map((job) => (
+                      <JobCard key={job.id} job={job} isCompact />
+                    ))}
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
               <JobDetailsComponent job={selectedJob} />
             </div>
           </div>
         ) : (
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {filteredJobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </motion.div>
+          <>
+            <div className="mb-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-800">
+                  Available Positions
+                </h2>
+                <div className="text-sm text-gray-600">
+                  Showing {Math.min(displayedJobsCount, filteredJobs.length)} of {filteredJobs.length} jobs
+                </div>
+              </div>
+            </div>
+            
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {filteredJobs.slice(0, displayedJobsCount).map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </motion.div>
+            
+            {filteredJobs.length > displayedJobsCount && (
+              <div className="text-center mt-6">
+                <button
+                  onClick={() => setDisplayedJobsCount(prev => prev + 20)}
+                  className="text-white px-6 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                  style={{ backgroundColor: "#008cba" }}
+                >
+                  Load More Jobs ({filteredJobs.length - displayedJobsCount} remaining)
+                </button>
+              </div>
+            )}
+          </>
         )}
         {selectedJob &&
           (() => {
@@ -1119,13 +1142,13 @@ const hasArrayContent = (value: any): boolean => {
             );
 
             return remainingJobs.length > 0 ? (
-              <div className="mt-12">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2 relative">
+              <div className="mt-8">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2 relative">
                     More Job Opportunities
-                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gray-400 rounded-full"></div>
                   </h2>
-                  <p className="text-gray-600 mt-4">
+                  <p className="text-gray-600 mt-3">
                     Discover exciting career opportunities tailored for you
                   </p>
                 </div>
@@ -1135,28 +1158,29 @@ const hasArrayContent = (value: any): boolean => {
                   initial="hidden"
                   animate="visible"
                 >
-                  {remainingJobs.map((job) => (
+                  {remainingJobs.slice(0, displayedJobsCount).map((job) => (
                     <JobCard key={job.id} job={job} />
                   ))}
                 </motion.div>
               </div>
             ) : null;
           })()}
+        {/* No Jobs Found */}
         {filteredJobs.length === 0 && (
-          <div className="text-center py-16 bg-white/60 backdrop-blur-sm rounded-3xl shadow-sm">
-            <div className="text-8xl mb-6">🎯</div>
-            <h3 className="text-2xl font-bold text-gray-700 mb-3">
-              No Jobs Found
+          <div className="text-center py-16 bg-white rounded-xl shadow-sm border">
+            <div className="text-5xl mb-3">🔍</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              No jobs found
             </h3>
-            <p className="text-gray-500 text-lg mb-6">
-              Try adjusting your filters or search terms to discover more
-              opportunities
+            <p className="text-gray-600 mb-4">
+              Try adjusting your search criteria or filters
             </p>
             <button
               onClick={clearFilters}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 rounded-xl px-8 py-3 font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+              className="text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              style={{ backgroundColor: "#008cba" }}
             >
-              🔄 Reset Filters
+              Clear Filters
             </button>
           </div>
         )}
@@ -1223,6 +1247,7 @@ const hasArrayContent = (value: any): boolean => {
               <button
                 onClick={handleWriteToUsSubmitButton}
                 className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow hover:shadow-lg hover:scale-105 transition-all"
+                style={{ backgroundColor: "#1ab394", backgroundImage: "none" }}
               >
                 Submit Query
               </button>
@@ -1249,6 +1274,7 @@ const hasArrayContent = (value: any): boolean => {
             <div className="flex justify-center">
               <button
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                style={{ backgroundColor: "#008cba", borderColor: "#008cba" }}
                 onClick={handlePopUOk}
               >
                 OK

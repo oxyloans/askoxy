@@ -88,7 +88,7 @@ const GoldAndSilverAndDiamondHeader = memo(function CaCsHeader({
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/services/71e3/gold-silver-diamonds";
+      const redirectPath = "/main/dashboard/products?type=GOLD";
       if (userId) {
         navigate(redirectPath);
       } else {

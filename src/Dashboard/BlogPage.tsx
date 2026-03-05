@@ -6,10 +6,8 @@ import {
   FileTextOutlined,
   UserOutlined,
   PlusOutlined,
-  ExportOutlined,
+  ArrowRightOutlined,
   ShareAltOutlined,
-  CopyOutlined,
-  StarOutlined,
 } from "@ant-design/icons";
 
 const Header1 = React.lazy(() => import("../components/Header"));
@@ -20,6 +18,7 @@ type TabKey = "ALL" | "MY" | "ADD";
 const BlogsPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("ALL");
+  const [displayCount, setDisplayCount] = useState(20);
 
   const navigate = useNavigate();
   const prevTabRef = useRef<TabKey>("ALL");
@@ -55,6 +54,14 @@ const BlogsPage: React.FC = () => {
       .replace(/^-+|-+$/g, "")
       .slice(0, 60);
 
+  const formatTitle = (title: string) => {
+    return (title || "")
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const handleCampaignClick = (campaign: any) => {
     const url = !userId
       ? `/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`
@@ -76,9 +83,13 @@ const BlogsPage: React.FC = () => {
   const isVideo = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
 
   const blogCampaigns = useMemo(() => {
-    return (campaigns as any[]).filter(
-      (c: any) => c.campaignStatus !== false && c.campainInputType === "BLOG"
-    );
+    return (campaigns as any[])
+      .filter((c: any) => c.campaignStatus !== false && c.campainInputType === "BLOG")
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // Latest first
+      });
   }, [campaigns]);
 
   const myBlogs = useMemo(() => {
@@ -88,9 +99,18 @@ const BlogsPage: React.FC = () => {
   }, [blogCampaigns, userId]);
 
   const visibleBlogs = useMemo(() => {
-    if (activeTab === "MY") return myBlogs;
-    return blogCampaigns;
-  }, [activeTab, blogCampaigns, myBlogs]);
+    const blogs = activeTab === "MY" ? myBlogs : blogCampaigns;
+    return blogs.slice(0, displayCount);
+  }, [activeTab, blogCampaigns, myBlogs, displayCount]);
+
+  const hasMoreBlogs = useMemo(() => {
+    const totalBlogs = activeTab === "MY" ? myBlogs.length : blogCampaigns.length;
+    return displayCount < totalBlogs;
+  }, [activeTab, blogCampaigns.length, myBlogs.length, displayCount]);
+
+  const handleLoadMore = () => {
+    setDisplayCount(prev => prev + 20);
+  };
 
   // ✅ Tabs like screenshot: Add Blog is action-tab
   const onTabClick = (tab: TabKey) => {
@@ -167,7 +187,7 @@ const BlogsPage: React.FC = () => {
 
                 <div className="blogBody">
                   <h3 className="blogTitle" onClick={() => handleCampaignClick(campaign)}>
-                    {campaign.campaignType}
+                    {formatTitle(campaign.campaignType)}
                   </h3>
 
                   <p className="blogDesc" onClick={() => handleCampaignClick(campaign)}>
@@ -178,10 +198,10 @@ const BlogsPage: React.FC = () => {
                   <div className="blogActions">
                     <Button
                       className="btnOpen"
-                      icon={<ExportOutlined />}
+                      icon={<ArrowRightOutlined />}
                       onClick={() => handleCampaignClick(campaign)}
                     >
-                      Open
+                      Read More
                     </Button>
 
                     <Tooltip title="Share">
@@ -194,9 +214,7 @@ const BlogsPage: React.FC = () => {
                     </Tooltip>
                   </div>
 
-                  {activeTab === "ALL" && (
-                    <div className="blogAuthor">Author: {campaign.campaignTypeAddBy || "-"}</div>
-                  )}
+
                 </div>
               </div>
             );
@@ -208,13 +226,9 @@ const BlogsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="mb-3 p-2">
-        {!userId ? (
-          <Suspense fallback={<div className="p-2" />}>
-            <Header1 />
-          </Suspense>
-        ) : null}
-      </div>
+      <Suspense fallback={<div className="p-2" />}>
+        <Header1 />
+      </Suspense>
 
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-4">
@@ -260,209 +274,328 @@ const BlogsPage: React.FC = () => {
 
           <div className="mt-4">
             <BlogsGrid list={visibleBlogs} />
+            {hasMoreBlogs && (
+              <div className="loadMoreSection">
+                <Button 
+                  className="loadMoreBtn" 
+                  onClick={handleLoadMore}
+                  size="large"
+                >
+                  Load More Blogs
+                </Button>
+              </div>
+            )}
           </div>
 
-          <Suspense fallback={<div className="py-8" />}>
-            <Footer />
-          </Suspense>
+          <div className="footerSection">
+            <Suspense fallback={<div className="py-8" />}>
+              <Footer />
+            </Suspense>
+          </div>
 
-          {/* ✅ Styles to match screenshot-like tabs + colorful buttons */}
+          {/* ✅ Professional Blog UI/UX Styles */}
           <style>{`
-            .topSection{
-              background: #fff;
-              border: 1px solid #EEF2FF;
-              border-radius: 16px;
-              padding: 14px;
-              box-shadow: 0 10px 24px rgba(2,6,23,.05);
-              display:flex;
-              flex-direction: column;
-              gap: 12px;
+            /* Clean Container */
+            .topSection {
+              background: #ffffff;
+            
+              padding: 24px;
+              margin-bottom: 28px;
+              
             }
-            .topHeading .h1{
-              font-size: 28px;
-              font-weight: 900;
-              color:#0F172A;
-              line-height: 1.1;
+            
+            .topHeading {
+              text-align: center;
+              margin-bottom: 24px;
             }
-            .topHeading .h2{
-              margin-top: 6px;
-              font-size: 14px;
-              color:#475569;
-              font-weight: 600;
-            }
-            .coin{ color:#6D28D9; font-weight: 900; }
-
-            /* Tabs like image: active purple pill, others simple */
-            .tabRow{
-              display:flex;
-              align-items:center;
-              justify-content:flex-start;
-              gap: 10px;
-              overflow-x:auto;
-              -webkit-overflow-scrolling: touch;
-              padding-bottom: 2px;
-            }
-            .tabRow::-webkit-scrollbar{ height: 6px; }
-            .tabRow::-webkit-scrollbar-thumb{ background:#E5E7EB; border-radius:999px; }
-
-            .tabItem{
-              border: 1px solid transparent;
-              background: transparent;
-              padding: 9px 12px;
-              border-radius: 10px;
+            .topHeading .h1 {
+              font-size: clamp(16px, 5vw, 32px);
               font-weight: 800;
-              color:#0F172A;
-              cursor:pointer;
-              display:flex;
-              align-items:center;
+              color: #1e293b;
+              line-height: 1.2;
+              margin-bottom: 12px;
+            }
+            .topHeading .h2 {
+              font-size: clamp(16px, 3vw, 18px);
+              color: #64748b;
+              font-weight: 500;
+              line-height: 1.5;
+            }
+            .coin {
+              color: #7c3aed;
+              font-weight: 700;
+            }
+
+            /* Professional Tab Navigation */
+            .tabRow {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+            
+              padding: 6px;
+            }
+            
+            .tabItem {
+              border: none;
+              background: transparent;
+              padding: 12px 20px;
+              border-radius: 8px;
+              font-weight: 600;
+              color: #64748b;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
               gap: 8px;
               white-space: nowrap;
-              transition: all .16s ease;
+              transition: all 0.2s ease;
+              font-size: 14px;
             }
-            .tabItem:hover{
-              background:#F8FAFC;
-              border-color:#E2E8F0;
+            .tabItem:hover {
+              background: #e2e8f0;
+              color: #1e293b;
             }
-            .tabItem.active{
-              background:#7C3AED; /* purple */
-              color:#fff;
-              border-color:#7C3AED;
-              box-shadow: 0 10px 20px rgba(124,58,237,.22);
+            .tabItem.active {
+              background: #4f46e5;
+              color: #ffffff;
+              box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
             }
-            .tabItem :where(svg){
+            .tabItem svg {
               font-size: 16px;
             }
 
-            /* Grid */
-            .blogsGridWrap{
-              background:#F8FAFC;
-              border: 1px solid #EEF2FF;
-              border-radius: 16px;
-              padding: 12px;
+            /* Modern Grid Layout */
+            .blogsGridWrap {
+              background: #f8fafc;
+              border-radius: 20px;
+              padding: 24px;
+              margin-top: 24px;
             }
-            .blogsGrid{
-              display:grid;
+            .blogsGrid {
+              display: grid;
               grid-template-columns: 1fr;
-              gap: 14px;
+              gap: 24px;
             }
 
-            /* Card */
-            .blogCard{
-              background:#fff;
-              border: 1px solid #F1F5F9;
-              border-radius: 16px;
-              overflow:hidden;
-              display:flex;
-              flex-direction:column;
-              box-shadow: 0 10px 24px rgba(2,6,23,.06);
+            /* Professional Blog Cards */
+            .blogCard {
+              background: #ffffff;
+              border-radius: 20px;
+              overflow: hidden;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              border: 1px solid #e2e8f0;
+              position: relative;
             }
-            .blogMedia{
-              height: 170px;
-              background:#F1F5F9;
-              overflow:hidden;
-              cursor:pointer;
+            .blogCard:hover {
+              transform: translateY(-8px);
+              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+              border-color: #c7d2fe;
             }
-            .blogMediaImg{
-              width:100%;
-              height:100%;
-              object-fit:cover;
-              transition: transform .2s ease;
+            
+            .blogMedia {
+              height: 240px;
+              background: #f8fafc;
+              overflow: hidden;
+              cursor: pointer;
+              position: relative;
             }
-            .blogMedia:hover .blogMediaImg{ transform: scale(1.03); }
-            .blogMediaFallback{
-              height:100%;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              color:#94A3B8;
-              font-weight:800;
+            .blogMediaImg {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+              transition: transform 0.3s ease;
             }
-            .blogBody{
-              padding: 14px;
-              display:flex;
-              flex-direction:column;
-              gap: 10px;
-              flex: 1;
+            .blogCard:hover .blogMediaImg {
+              transform: scale(1.02);
             }
-            .blogTitle{
-              margin:0;
-              font-size: 18px;
-              font-weight: 900;
-              color:#0F172A;
-              line-height: 1.2;
-              cursor:pointer;
-              display:-webkit-box;
-              -webkit-line-clamp:2;
-              -webkit-box-orient:vertical;
-              overflow:hidden;
+            .blogMediaFallback {
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #94a3b8;
+              font-weight: 600;
+              font-size: 16px;
             }
-            .blogDesc{
-              margin:0;
-              color:#475569;
-              line-height: 1.5;
-              cursor:pointer;
-              display:-webkit-box;
-              -webkit-line-clamp:3;
-              -webkit-box-orient:vertical;
-              overflow:hidden;
-              flex:1;
+            
+            .blogBody {
+              padding: 24px;
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
             }
-
-            /* 4 colorful buttons */
-            .blogActions{
-              display:flex;
-              align-items:center;
-              gap: 10px;
-              margin-top: 2px;
+            .blogTitle {
+              margin: 0;
+              font-size: 20px;
+              font-weight: 700;
+              color: #1e293b;
+              line-height: 1.3;
+              cursor: pointer;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              transition: color 0.2s ease;
             }
-            .btnOpen{
-              border-radius: 999px !important;
-              font-weight: 900 !important;
-              background:#7C3AED !important;
-              border-color:#7C3AED !important;
-              color:#fff !important;
-              box-shadow: 0 10px 18px rgba(124,58,237,.22);
+            .blogTitle:hover {
+              color: #4f46e5;
             }
-            .btnShare{
-              border-radius: 999px !important;
-              background:#3B82F6 !important; /* blue */
-              border-color:#3B82F6 !important;
-              color:#fff !important;
-            }
-            .btnCopy{
-              border-radius: 999px !important;
-              background:#22C55E !important; /* green */
-              border-color:#22C55E !important;
-              color:#fff !important;
-            }
-            .btnSave{
-              border-radius: 999px !important;
-              background:#F59E0B !important; /* orange */
-              border-color:#F59E0B !important;
-              color:#fff !important;
+            .blogDesc {
+              margin: 0;
+              color: #64748b;
+              line-height: 1.6;
+              cursor: pointer;
+              display: -webkit-box;
+              -webkit-line-clamp: 3;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              font-size: 15px;
             }
 
-            .blogAuthor{
-              margin-top: 4px;
-              font-size: 12px;
-              font-weight: 800;
-              color:#64748B;
+            /* Action Buttons */
+            .blogActions {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-top: 8px;
+            }
+            .btnOpen {
+              border-radius: 12px !important;
+              font-weight: 600 !important;
+              background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+              border: none !important;
+              color: #ffffff !important;
+              box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+              padding: 8px 16px !important;
+              height: auto !important;
+              transition: all 0.2s ease !important;
+            }
+            .btnOpen:hover {
+              transform: translateY(-1px) !important;
+              box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4) !important;
+            }
+            .btnShare {
+              border-radius: 12px !important;
+              background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+              border: none !important;
+              color: #ffffff !important;
+              box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3) !important;
+              transition: all 0.2s ease !important;
+            }
+            .btnShare:hover {
+              transform: translateY(-1px) !important;
+              box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4) !important;
+            }
+            
+            /* Load More Section */
+            .loadMoreSection {
+              display: flex;
+              justify-content: center;
+              padding: 32px 0;
+            }
+            .loadMoreBtn {
+              background: #4f46e5 !important;
+              border-color: #4f46e5 !important;
+              color: #ffffff !important;
+              border-radius: 12px !important;
+              font-weight: 600 !important;
+              padding: 12px 32px !important;
+              height: auto !important;
+              box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+              transition: all 0.2s ease !important;
+            }
+            .loadMoreBtn:hover {
+              transform: translateY(-2px) !important;
+              box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4) !important;
             }
 
-            @media (min-width: 640px){
-              .blogsGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-              .blogMedia{ height: 190px; }
+            /* Responsive Design */
+            @media (min-width: 640px) {
+              .blogsGrid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+              }
+              .blogMedia {
+                height: 220px;
+              }
             }
-            @media (min-width: 1280px){
-              .blogsGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
-              .blogMedia{ height: 200px; }
+            
+            @media (min-width: 1024px) {
+              .blogsGrid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+              }
+              .blogMedia {
+                height: 240px;
+              }
+            }
+            
+            @media (min-width: 1280px) {
+              .blogsGrid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+              }
             }
 
-            @media (max-width: 767px){
-              .topHeading .h1{ font-size: 24px; }
-              .topHeading .h2{ font-size: 13px; }
-              .blogMedia{ height: 165px; }
-              .tabItem{ padding: 8px 11px; }
+            /* Mobile Optimizations */
+            @media (max-width: 639px) {
+              .topSection {
+                padding: 20px 16px;
+                margin-bottom: 16px;
+              }
+              .tabRow {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 4px;
+              }
+              .tabItem {
+                padding: 10px 16px;
+                font-size: 13px;
+              }
+              .blogsGridWrap {
+                padding: 16px;
+              }
+              .blogBody {
+                padding: 20px;
+              }
+              .blogMedia {
+                height: 200px;
+              }
+              .blogTitle {
+                font-size: 18px;
+              }
+              .loadMoreBtn {
+                padding: 10px 24px !important;
+                font-size: 14px !important;
+              }
+            }
+
+            /* Loading States */
+            .blogCard {
+              animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
+            @keyframes fadeInUp {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            /* Focus States for Accessibility */
+            .tabItem:focus,
+            .btnOpen:focus,
+            .btnShare:focus {
+              outline: 2px solid #4f46e5;
+              outline-offset: 2px;
+            }
+            
+            .blogTitle:focus,
+            .blogDesc:focus {
+              outline: 2px solid #4f46e5;
+              outline-offset: 2px;
+              border-radius: 4px;
             }
           `}</style>
         </div>

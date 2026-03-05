@@ -43,3 +43,22 @@ canvas {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  /* Ensure cards don't overflow on small screens */
+  .freelancer-card {
+    padding: 12px !important;
+  }
+  
+  /* Better spacing for mobile pricing grid */
+  .pricing-grid {
+    gap: 8px;
+  }
+  
+  /* Compact mobile layout */
+  .mobile-compact {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+}

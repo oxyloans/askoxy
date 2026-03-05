@@ -2063,7 +2063,7 @@ const CheckoutPage: React.FC = () => {
                           onChange={(e) =>
                             setExchangePolicyAccepted(e.target.checked)
                           }
-                          className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                          className="mt-3 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
                         />
                         <label
                           htmlFor="exchangePolicy"
