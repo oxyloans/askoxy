@@ -29,41 +29,41 @@ const Footer: React.FC = () => {
     color: string;
   }[] = [
     {
-         icon: <Facebook className="h-4 w-4" />,
-         href: "https://www.facebook.com/profile.php?id=61572388385568",
-         label: "Facebook",
-         color: "#1877F2",
-       },
-       {
-         icon: <Instagram className="h-4 w-4" />,
-         href: "https://www.instagram.com/askoxy.ai/",
-         label: "Instagram",
-         color: "#E4405F",
-       },
-       {
-         icon: <Linkedin className="h-4 w-4" />,
-         href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
-         label: "LinkedIn",
-         color: "#0A66C2",
-       },
-       {
-         icon: <FaXTwitter className="h-4 w-4" />,
-         href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
-         label: "FaXTwitter",
-         color: "#000000",
-       },
-       {
-         icon: <Youtube className="h-4 w-4" />,
-         href: "https://www.youtube.com/@askoxyDOTai",
-         label: "YouTube",
-         color: "#FF0000",
-       },
-       {
-         icon: <SiThreads className="h-4 w-4" />,
-         href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
-         label: "SiThreads",
-         color: "#000000",
-       },
+      icon: <Facebook className="h-4 w-4" />,
+      href: "https://www.facebook.com/profile.php?id=61572388385568",
+      label: "Facebook",
+      color: "#1877F2",
+    },
+    {
+      icon: <Instagram className="h-4 w-4" />,
+      href: "https://www.instagram.com/askoxy.ai/",
+      label: "Instagram",
+      color: "#E4405F",
+    },
+    {
+      icon: <Linkedin className="h-4 w-4" />,
+      href: "https://www.linkedin.com/in/askoxy-ai-5a2157349/",
+      label: "LinkedIn",
+      color: "#0A66C2",
+    },
+    {
+      icon: <FaXTwitter className="h-4 w-4" />,
+      href: "https://x.com/RadhakrishnaIND/status/1951525686373421101",
+      label: "FaXTwitter",
+      color: "#000000",
+    },
+    {
+      icon: <Youtube className="h-4 w-4" />,
+      href: "https://www.youtube.com/@askoxyDOTai",
+      label: "YouTube",
+      color: "#FF0000",
+    },
+    {
+      icon: <SiThreads className="h-4 w-4" />,
+      href: "https://www.threads.com/settings/privacy?xmt=AQF02yNlcF0wi_nY3YiPVrIwoiDNSbMz5GuUGncZYLVu87A",
+      label: "SiThreads",
+      color: "#000000",
+    },
   ];
 
   return (
@@ -177,7 +177,7 @@ const Footer: React.FC = () => {
                   support@askoxy.ai
                 </a>
               </p>
-              {["+91 81432 71103", "+91 91105 64106"].map((phone) => (
+              {["+91 81432 71103", "+91 89196 36330"].map((phone) => (
                 <p key={phone} className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-500" aria-hidden="true" />
                   <a
@@ -232,9 +232,7 @@ const Footer: React.FC = () => {
         {/* Divider */}
         <hr className="my-4 border-gray-200" />
 
-       
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-         
           <div className="text-sm text-gray-600 flex items-center gap-2">
             <span>© 2024 - {year} ASKOXY.AI. All rights reserved.</span>
             <Link
@@ -258,10 +256,7 @@ const Footer: React.FC = () => {
             >
               Privacy Policy
             </Link>
-            <Link
-              to="/contactus"
-              className="text-gray-600 hover:text-gray-900"
-            >
+            <Link to="/contactus" className="text-gray-600 hover:text-gray-900">
               Contact Us
             </Link>
             <a

@@ -74,28 +74,26 @@ const OXYGroupCompanies = () => {
     responsive: [
       {
         breakpoint: 1024,
-        settings: { slidesToShow: 3, centerMode: true, centerPadding: '0px' },
+        settings: { slidesToShow: 3 },
       },
       {
         breakpoint: 768,
-        settings: { slidesToShow: 2, centerMode: true, centerPadding: '0px' },
+        settings: { slidesToShow: 2 },
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 1,
           arrows: false,
-          centerMode: true,
-          centerPadding: '0px',
         },
       },
     ],
   };
 
   return (
-    <section className="py-10 px-6 bg-white text-center">
+    <section className="py-8 px-6 bg-white text-center">
       {/* Gradient Colored Heading */}
-      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-10">
+      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-12">
         <span className="text-blue-800">OXY</span>
         <span className="text-green-600">GROUP</span>{" "}
         <span className="text-gray-800">COMPANIES</span>
@@ -104,17 +102,17 @@ const OXYGroupCompanies = () => {
       <div className="max-w-7xl mx-auto relative">
         <Slider {...settings}>
           {companies.map((company, index) => (
-            <div key={index} className="flex flex-col items-center justify-center px-4">
+            <div key={index} className="flex flex-col items-center justify-center px-2">
               <a
                 href={company.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-transform transform hover:scale-105 outline-none"
+                className="transition-transform transform hover:scale-105 outline-none w-full flex justify-center"
               >
                 <img
                   src={company.logo}
                   alt={company.name}
-                  className="mb-3 w-48 h-32 sm:w-56 sm:h-36 md:w-64 md:h-40 lg:w-72 lg:h-44 object-contain"
+                  className="mb-3 w-full max-w-[280px] h-40 sm:h-44 md:h-48 lg:h-52 object-contain"
                 />
               </a>
             </div>

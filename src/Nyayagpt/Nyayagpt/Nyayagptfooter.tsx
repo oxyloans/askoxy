@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Cpu, Mail, MapPin, ArrowUp, Facebook, Linkedin, Instagram } from "lucide-react";
+import {
+  Cpu,
+  Mail,
+  MapPin,
+  ArrowUp,
+  Facebook,
+  Linkedin,
+  Instagram,
+} from "lucide-react";
 import { FaPhoneAlt } from "react-icons/fa";
 import { FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { SiThreads } from "react-icons/si";
@@ -13,7 +21,10 @@ const Nyayagptfooter = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const solutions = [
-    { label: "AI Blockchain & IT services", path: "/aiblockchainanditservices" },
+    {
+      label: "AI Blockchain & IT services",
+      path: "/aiblockchainanditservices",
+    },
     { label: "CA | CS Services", path: "/caandcsservices" },
     { label: "Gold, Silver & Diamonds", path: "/goldandsilveranddiamonds" },
     { label: "Loans & Investments", path: "/loansinvestments" },
@@ -58,7 +69,10 @@ const Nyayagptfooter = () => {
   ];
 
   const services = [
-    { name: "AI & GEN AI Training", redirectPath: "/main/services/freeai-genai" },
+    {
+      name: "AI & GEN AI Training",
+      redirectPath: "/main/services/freeai-genai",
+    },
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" },
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
@@ -199,10 +213,10 @@ const Nyayagptfooter = () => {
                 </a>
                 {","}
                 <a
-                  href="tel:+919110564106"
+                  href="tel:+91+91 89196 36330"
                   className="hover:text-cyan-400 transition"
                 >
-                  +91 91105 64106
+                  +91 89196 36330
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -223,7 +237,9 @@ const Nyayagptfooter = () => {
 
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
-          <p>&copy; {new Date().getFullYear()} NyayaGPT. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} NyayaGPT. All rights reserved.
+          </p>
 
           <button
             onClick={scrollToTop}

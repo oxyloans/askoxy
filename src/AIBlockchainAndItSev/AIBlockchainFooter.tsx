@@ -28,7 +28,7 @@ const AIBlockchainFooter = () => {
     { label: "Nyaya GPT", path: "/nyayagpt" },
     { label: "Real Estate", path: "/realestate" },
     { label: "Rice 2 Robo Ecommerce", path: "/rice2roboecommers" },
-      { label: "90 days plan", path: "/90dayjobplan" },
+    { label: "90 days plan", path: "/90dayjobplan" },
     { label: "Study Abroad", path: "/studyabroad" },
   ];
 
@@ -77,7 +77,7 @@ const AIBlockchainFooter = () => {
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" }, // direct link
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
-   { name: "We Are Hiring", path: "/wearehiring" },
+    { name: "We Are Hiring", path: "/wearehiring" },
   ];
 
   const handleProtectedNavigation = (redirectPath: string) => {
@@ -209,10 +209,10 @@ const AIBlockchainFooter = () => {
                 </a>
                 {","}
                 <a
-                  href="tel:+919110564106"
+                  href="tel:+91+91 89196 36330"
                   className="hover:text-cyan-400 transition"
                 >
-                  +91 91105 64106
+                  +91 89196 36330
                 </a>
               </div>
               <div className="flex items-center gap-2">

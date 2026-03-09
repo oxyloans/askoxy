@@ -17,10 +17,12 @@ type SectionKey = "destinations" | "contact";
 
 const StudyAbroadFooter = () => {
   const navigate = useNavigate();
-  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
-    destinations: false,
-    contact: false,
-  });
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>(
+    {
+      destinations: false,
+      contact: false,
+    },
+  );
 
   const toggleSection = (section: SectionKey) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -63,8 +65,8 @@ const StudyAbroadFooter = () => {
               </span>
             </div>
             <p className="text-sm text-gray-600 mb-5">
-              Simplifies global university admissions with AI-matching, 
-              alumni connections, and personalized academic recommendations.
+              Simplifies global university admissions with AI-matching, alumni
+              connections, and personalized academic recommendations.
             </p>
             <div className="flex gap-3 mb-6">
               <a
@@ -179,7 +181,10 @@ const StudyAbroadFooter = () => {
               </div>
               <div className="flex items-center gap-2">
                 <FaWhatsapp className="text-purple-600" />
-                <a href="tel:+918919636330" className="hover:text-purple-600">
+                <a
+                  href="tel:+91+91 89196 36330"
+                  className="hover:text-purple-600"
+                >
                   +91 89196 36330
                 </a>
               </div>

@@ -121,7 +121,7 @@ const Footer: React.FC = () => {
     },
     {
       icon: <Phone className="h-4 w-4 mb-1" />,
-      content: "+91 91105 64106",
+      content: "+91 89196 36330",
       type: "phone",
     },
   ];
@@ -197,14 +197,12 @@ const Footer: React.FC = () => {
             </nav>
           </div>
 
-       
           <div className="space-y-2">
             <h3 className="text-base font-semibold text-gray-900">
               Contact Us
             </h3>
 
             <div className="space-y-3">
-          
               {contactInfo
                 .filter((info) => info.type !== "phone")
                 .map((info, index) => (

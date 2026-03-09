@@ -53,7 +53,7 @@ type Comment = {
 const DEFAULT_CAMPAIGN_ID = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
 
 // ✅ Amazon listing (updated)
-const AMAZON_BOOK_PRICE_INR = 399;
+const AMAZON_BOOK_PRICE_INR = 299;
 const AMAZON_BOOK_URL = "https://amzn.in/d/2Ie3hEg";
 
 // ✅ hero book image (no crop)
@@ -591,7 +591,7 @@ export default function CampaignBlogPage() {
                 ))}
               </div>
 
-              {/* ✅ Amazon buy section (₹399) */}
+              {/* ✅ Amazon buy section (₹299) */}
               <div className="mt-6 bg-white rounded-2xl border border-purple-200 shadow-sm p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="min-w-0">

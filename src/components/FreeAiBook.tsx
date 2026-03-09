@@ -89,7 +89,7 @@ const FreeAiBook: React.FC = () => {
         {/* ===== Heading ===== */}
         <div className="text-center mb-8">
           <h3 className="text-3xl md:text-4xl font-extrabold text-purple-900">
-            Bid The Book
+            Buy The Book
           </h3>
           <p className="mt-2 text-sm md:text-base text-gray-600">
             Learn AI simply. Win exciting rewards. Build your future.
@@ -108,21 +108,27 @@ const FreeAiBook: React.FC = () => {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-50/80 via-white/30 to-indigo-50/80" />
 
           <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 sm:p-8 md:p-10">
-            {/* Image */}
-            <div className="flex items-center justify-center">
-              <div className="w-full flex justify-center">
-                <img
-                  src={aiImage}
-                  alt="AI Book"
-                  className="w-full max-w-xl md:max-w-2xl h-auto object-contain"
-                />
-              </div>
-            </div>
+            
+{/* Image */}
+<div className="flex items-center justify-center">
+  <div className="w-full flex justify-center">
+    <img
+      src={aiImage}
+      alt="AI Book"
+      onClick={openAmazon}
+      className="w-full max-w-xl md:max-w-2xl h-auto object-contain cursor-pointer"
+    />
+  </div>
+</div>
 
             {/* Content */}
             <div className="flex flex-col justify-center">
-              <div className="inline-flex items-center gap-2 self-start rounded-full bg-purple-100 px-4 py-1 text-sm font-semibold text-purple-800">
-                AI Book • First Copy Winner Benefit
+              <h3 className="text-2xl md:text-3xl font-extrabold text-purple-900 leading-snug">
+                Enter the AI &amp; GEN AI UNIVERSE
+              </h3>
+
+              <div className="mt-3 inline-flex items-center gap-2 self-start rounded-full bg-purple-100 px-4 py-1 text-sm font-semibold text-purple-800">
+                AI Book • 65 Chapters
               </div>
 
               <p className="mt-4 text-gray-700 text-justify leading-relaxed">
@@ -134,7 +140,7 @@ const FreeAiBook: React.FC = () => {
                 the future with agentic AI, and future AI careers.
               </p>
 
-              <div className="mt-4 rounded-2xl border bg-white p-4 sm:p-5">
+              {/* <div className="mt-4 rounded-2xl border bg-white p-4 sm:p-5">
                 <p className="text-gray-800 font-semibold">
                   Special First Copy Winner Benefit
                 </p>
@@ -143,17 +149,17 @@ const FreeAiBook: React.FC = () => {
                   Team & CEO • Daily interview & project guidance • Continuous
                   support until you get the job
                 </p>
-              </div>
+              </div> */}
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <motion.button
+                {/* <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSignIn}
                   disabled={isLoading}
                   className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isLoading ? "Loading..." : "Bid Now"}
-                </motion.button>
+                </motion.button> */}
 
                 {/* ✅ Buy on Amazon */}
                 <motion.button

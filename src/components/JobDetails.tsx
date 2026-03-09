@@ -115,50 +115,32 @@ const JobDetails: React.FC = () => {
     };
   };
 
-  // ✅ Check from new API if user already created an Agent for Job flow
+  // ✅ Check if user has any assistants
   const checkUserHasAgent = async (): Promise<boolean> => {
     if (!userId) return false;
 
     try {
       const res = await fetch(
-        `${BASE_URL}/ai-service/agent/user-created-agent-for-job?userId=${encodeURIComponent(
-          userId
-        )}`,
+        `${BASE_URL}/ai-service/agent/allAgentDataList?userId=${encodeURIComponent(userId)}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            ...buildAuthHeaders(), // 🔐 Authorization: Bearer <accessToken>
+            ...buildAuthHeaders(),
           },
         }
       );
 
-      const text = await res.text().catch(() => "");
-      if (!res.ok || !text) {
-        // API failed / empty → treat as "no agent"
-        return false;
-      }
-
-      let raw: any = {};
-      try {
-        raw = JSON.parse(text);
-      } catch {
-        // Not valid JSON → treat as "no agent"
-        return false;
-      }
-
-      // 🔹 Backend response: { "hasAgentCreated": false/true }
-      const hasAgent = !!raw.hasAgentCreated;
-
-      // (Optional) you can log to verify once in console
-      console.log("user-created-agent-for-job →", raw, "hasAgent =", hasAgent);
-
-      // ✅ We now trust ONLY backend value
-      return hasAgent;
+      if (!res.ok) return false;
+      
+      const data = await res.json();
+      const hasAssistants = data?.assistants && Array.isArray(data.assistants) && data.assistants.length > 0;
+      
+      console.log("allAgentDataList →", data, "hasAssistants =", hasAssistants);
+      return hasAssistants;
     } catch (err) {
-      console.error("Error checking user-created-agent-for-job:", err);
-      // On error → consider as "no agent"
+      console.error("Error checking allAgentDataList:", err);
       return false;
     }
   };
@@ -169,6 +151,16 @@ const JobDetails: React.FC = () => {
     if (id) {
       const job = jobs.find((job) => job.id === id);
       setSelectedJob(job || null);
+    }
+  
+
+    const redirectJobId = sessionStorage.getItem("redirectJobId");
+    if (redirectJobId && jobs.length > 0) {
+      const job = jobs.find((job) => job.id === redirectJobId);
+      if (job) {
+        setSelectedJob(job);
+        sessionStorage.removeItem("redirectJobId");
+      }
     }
   }, [id, jobs]);
 
@@ -364,32 +356,12 @@ const JobDetails: React.FC = () => {
 
     const hasAgent = await checkUserHasAgent();
 
-    // ❌ hasAgentCreated = false → ask for Agent creation
     if (!hasAgent) {
       setShowNoAgentPopup(true);
-
-      setTimeout(() => {
-        setShowNoAgentPopup(false);
-
-        // store job context for Agentcreation
-        try {
-          localStorage.setItem(
-            "agentJobContext",
-            JSON.stringify({ fromJobId: jobId, jobDesignation, companyName })
-          );
-        } catch (e) {
-          console.warn("Could not set agentJobContext in localStorage", e);
-        }
-
-        navigate("/main/agentcreate", {
-          state: { fromJobId: jobId, jobDesignation, companyName },
-        });
-      }, 3500);
-
       return;
     }
 
-    // ✅ hasAgentCreated = true → open Apply modal directly
+    // ✅ Has agent → open Apply modal directly
     setApplySelectedJob({ jobDesignation, companyName });
     setIsModalOpen(true);
     setShowNoAgentPopup(false);
@@ -487,6 +459,13 @@ const JobDetails: React.FC = () => {
   };
 
   const handleJobSelect = (job: Job) => {
+    if (!userId) {
+      message.warning("Please login to view job details.");
+      navigate("/whatsapplogin");
+      sessionStorage.setItem("redirectPath", "/main/jobdetails");
+      sessionStorage.setItem("redirectJobId", job.id);
+      return;
+    }
     setSelectedJob(job);
     window.scrollTo({
       top: 400,
@@ -1300,18 +1279,62 @@ const hasArrayContent = (value: any): boolean => {
           onClick={() => setShowNoAgentPopup(false)}
         >
           <div
-            className="bg-white rounded-2xl w-[85%] max-w-sm px-6 py-5 shadow-2xl border border-black/10"
+            className="bg-white rounded-2xl w-[85%] max-w-sm px-6 py-5 shadow-2xl border border-black/10 relative"
             onClick={(e) => e.stopPropagation()}
           >
+            <button
+              onClick={() => setShowNoAgentPopup(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-red-600 text-xl leading-none transition-colors duration-200"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+            
             <div className="font-extrabold text-xl mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-amber-400 bg-clip-text text-transparent text-center">
               🎉 Congratulations!
             </div>
 
             <div className="text-sm leading-relaxed text-gray-800 text-center font-medium mb-4">
-              You’ll be launching your AI Agent with your profile.
+              You'll be launching your AI Agent with your profile.
               <br />
-              Upload once — and your AI Agent will apply for all relevant
-              positions!
+              Upload once and your AI Agent will apply for all relevant positions!
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowNoAgentPopup(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowNoAgentPopup(false);
+                  try {
+                    localStorage.setItem(
+                      "agentJobContext",
+                      JSON.stringify({ 
+                        fromJobId: selectedJob?.id, 
+                        jobDesignation: selectedJob?.jobDesignation, 
+                        companyName: selectedJob?.companyName,
+                        returnPath: location.pathname + location.search
+                      })
+                    );
+                  } catch (e) {
+                    console.warn("Could not set agentJobContext in localStorage", e);
+                  }
+                  navigate("/main/agentcreate", {
+                    state: { 
+                      fromJobId: selectedJob?.id, 
+                      jobDesignation: selectedJob?.jobDesignation, 
+                      companyName: selectedJob?.companyName,
+                      returnPath: location.pathname + location.search
+                    },
+                  });
+                }}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors font-medium"
+              >
+                Create AI Agent
+              </button>
             </div>
           </div>
         </div>
@@ -1321,3 +1344,9 @@ const hasArrayContent = (value: any): boolean => {
 };
 
 export default JobDetails;
+
+
+
+
+
+

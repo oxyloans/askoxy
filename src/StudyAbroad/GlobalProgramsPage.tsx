@@ -814,7 +814,7 @@ const GlobalProgramsPage: React.FC<GlobalProgramsPageProps> = ({
                     </button>
 
                     <a
-                      href="tel:+918919636330"
+                      href="tel:+91+91 89196 36330"
                       className="inline-flex items-center text-sm font-semibold text-purple-700 hover:text-purple-900"
                     >
                       📲 +91&nbsp;89196&nbsp;36330

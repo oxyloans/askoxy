@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Cpu, Mail, MapPin, ArrowUp, Facebook, Linkedin, Instagram } from "lucide-react";
+import {
+  Cpu,
+  Mail,
+  MapPin,
+  ArrowUp,
+  Facebook,
+  Linkedin,
+  Instagram,
+} from "lucide-react";
 import { FaPhoneAlt } from "react-icons/fa";
 import { FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { SiThreads } from "react-icons/si";
-
 
 const solutions = [
   { label: "AI Blockchain & IT services", path: "/aiblockchainanditservices" },
@@ -60,7 +67,10 @@ const Rice2RoboEcommersFooter: React.FC = () => {
   ];
 
   const services = [
-    { name: "AI & GEN AI Training", redirectPath: "/main/services/freeai-genai" },
+    {
+      name: "AI & GEN AI Training",
+      redirectPath: "/main/services/freeai-genai",
+    },
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" }, // public route
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
@@ -99,8 +109,8 @@ const Rice2RoboEcommersFooter: React.FC = () => {
             </div>
 
             <p className="text-slate-300 text-sm leading-relaxed mb-5">
-              Your smart shopping destination powered by AI technology. We bring you intelligent
-              recommendations and seamless shopping.
+              Your smart shopping destination powered by AI technology. We bring
+              you intelligent recommendations and seamless shopping.
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -136,13 +146,15 @@ const Rice2RoboEcommersFooter: React.FC = () => {
                 ) : (
                   <button
                     key={service.name}
-                    onClick={() => handleProtectedNavigation(service.redirectPath!)}
+                    onClick={() =>
+                      handleProtectedNavigation(service.redirectPath!)
+                    }
                     className="block text-left text-sm text-slate-300 hover:text-cyan-300 transition w-full disabled:opacity-60"
                     disabled={isLoading}
                   >
                     {service.name}
                   </button>
-                )
+                ),
               )}
             </nav>
           </div>
@@ -153,7 +165,10 @@ const Rice2RoboEcommersFooter: React.FC = () => {
             <ul className="space-y-2 text-sm">
               {solutions.map(({ label, path }, i) => (
                 <li key={i}>
-                  <Link to={path} className="text-slate-300 hover:text-cyan-300 transition">
+                  <Link
+                    to={path}
+                    className="text-slate-300 hover:text-cyan-300 transition"
+                  >
                     {label}
                   </Link>
                 </li>
@@ -162,55 +177,58 @@ const Rice2RoboEcommersFooter: React.FC = () => {
           </div>
 
           {/* Contact */}
-           <div>
-                     <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
-                     <address className="not-italic text-sm space-y-3">
-                       <div className="flex items-start gap-2">
-                         <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
-                         <p>
-                           OXYKART TECHNOLOGIES PVT LTD, CC-02, Indu Fortune Fields,
-                           KPHB, Hyderabad, Telangana - 500085
-                         </p>
-                       </div>
-                       <div className="flex items-start gap-2">
-                         <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
-                         <p>
-                           AI Research Center, Entrance D, SE02 Concourse, Miyapur Metro
-                           Station, Hyderabad, Telangana 500049
-                         </p>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0" />
-                         <a
-                           href="tel:+918143271103"
-                           className="hover:text-cyan-400 transition"
-                         >
-                           +91 81432 71103
-                         </a>
-                         {","}
-                         <a
-                           href="tel:+919110564106"
-                           className="hover:text-cyan-400 transition"
-                         >
-                           +91 91105 64106
-                         </a>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <Mail className="text-cyan-500 w-5 h-5 flex-shrink-0" />
-                         <a
-                           href="mailto:support@askoxy.ai"
-                           className="hover:text-cyan-400 transition-colors"
-                         >
-                           support@askoxy.ai
-                         </a>
-                       </div>
-                     </address>
-                   </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
+            <address className="not-italic text-sm space-y-3">
+              <div className="flex items-start gap-2">
+                <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+                <p>
+                  OXYKART TECHNOLOGIES PVT LTD, CC-02, Indu Fortune Fields,
+                  KPHB, Hyderabad, Telangana - 500085
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+                <p>
+                  AI Research Center, Entrance D, SE02 Concourse, Miyapur Metro
+                  Station, Hyderabad, Telangana 500049
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0" />
+                <a
+                  href="tel:+918143271103"
+                  className="hover:text-cyan-400 transition"
+                >
+                  +91 81432 71103
+                </a>
+                {","}
+                <a
+                  href="tel:+91+91 89196 36330"
+                  className="hover:text-cyan-400 transition"
+                >
+                  +91 89196 36330
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="text-cyan-500 w-5 h-5 flex-shrink-0" />
+                <a
+                  href="mailto:support@askoxy.ai"
+                  className="hover:text-cyan-400 transition-colors"
+                >
+                  support@askoxy.ai
+                </a>
+              </div>
+            </address>
+          </div>
         </div>
 
         {/* Bottom */}
         <div className="border-t border-white/10 mt-10 pt-5 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 gap-3">
-          <p>© {new Date().getFullYear()} Rice2Robo E-commerce. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} Rice2Robo E-commerce. All rights
+            reserved.
+          </p>
 
           <button
             onClick={scrollToTop}

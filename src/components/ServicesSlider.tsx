@@ -417,7 +417,7 @@ const rateLabel = (n: number) => {
       <div className="relative z-10">
         {/* SERVICES SECTION */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
-          <div className="mb-8 sm:mb-0 text-center sm:text-left">
+          <div className="mb-4 sm:mb-0 text-center sm:text-left">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}

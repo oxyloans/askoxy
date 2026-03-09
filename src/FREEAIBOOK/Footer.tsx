@@ -39,7 +39,7 @@ const Footer: React.FC = () => {
     },
     {
       icon: <Phone className="h-5 w-5" />,
-      content: "+91 91105 64106",
+      content: "+91 89196 36330",
       type: "phone",
     },
   ];

@@ -51,7 +51,10 @@ const CacsFooter = () => {
   };
 
   const platforms = [
-    { label: "AI Blockchain & IT services", path: "/aiblockchainanditservices" },
+    {
+      label: "AI Blockchain & IT services",
+      path: "/aiblockchainanditservices",
+    },
     { label: "CA | CS Services", path: "/caandcsservices" },
     { label: "Gold, Silver & Diamonds", path: "/goldandsilveranddiamonds" },
     { label: "Loans & Investments", path: "/loansinvestments" },
@@ -64,7 +67,10 @@ const CacsFooter = () => {
 
   const services = [
     { name: "Free Rudraksha", path: "/freerudraksha" },
-    { name: "AI & GEN AI Training", redirectPath: "/main/services/freeai-genai" },
+    {
+      name: "AI & GEN AI Training",
+      redirectPath: "/main/services/freeai-genai",
+    },
     { name: "Legal Knowledge", redirectPath: "/main/services/legalservice" },
     { name: "Study Abroad", path: "/studyabroad" },
     { name: "My Rotary", redirectPath: "/main/services/myrotary" },
@@ -119,13 +125,15 @@ const CacsFooter = () => {
             <div className="flex items-center mb-4">
               <Cpu className="h-8 w-8 text-cyan-500 mr-2" />
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-500">
-               CA & CS Services
+                CA & CS Services
               </span>
             </div>
 
             <p className="text-gray-300 text-sm leading-relaxed mb-6">
-              Professional Chartered Accountancy and Company Secretary services to streamline your business operations.
-              From compliance to strategic advisory, we ensure your business stays ahead with expert financial and legal guidance.
+              Professional Chartered Accountancy and Company Secretary services
+              to streamline your business operations. From compliance to
+              strategic advisory, we ensure your business stays ahead with
+              expert financial and legal guidance.
             </p>
 
             <div className="flex gap-3">
@@ -167,7 +175,10 @@ const CacsFooter = () => {
             >
               {platforms.map((p, idx) => (
                 <li key={idx}>
-                  <Link to={p.path} className="text-gray-300 hover:text-cyan-400 hover:underline transition">
+                  <Link
+                    to={p.path}
+                    className="text-gray-300 hover:text-cyan-400 hover:underline transition"
+                  >
                     {p.label}
                   </Link>
                 </li>
@@ -199,7 +210,10 @@ const CacsFooter = () => {
               {services.map((s, idx) => (
                 <li key={idx}>
                   {s.path ? (
-                    <Link to={s.path} className="text-gray-300 hover:text-cyan-400 hover:underline transition">
+                    <Link
+                      to={s.path}
+                      className="text-gray-300 hover:text-cyan-400 hover:underline transition"
+                    >
                       {s.name}
                     </Link>
                   ) : (
@@ -219,56 +233,57 @@ const CacsFooter = () => {
 
           {/* Contact */}
           <div>
-                    <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
-                    <address className="not-italic text-sm space-y-3">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
-                        <p>
-                          OXYKART TECHNOLOGIES PVT LTD, CC-02, Indu Fortune Fields,
-                          KPHB, Hyderabad, Telangana - 500085
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
-                        <p>
-                          AI Research Center, Entrance D, SE02 Concourse, Miyapur Metro
-                          Station, Hyderabad, Telangana 500049
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0" />
-                        <a
-                          href="tel:+918143271103"
-                          className="hover:text-cyan-400 transition"
-                        >
-                          +91 81432 71103
-                        </a>
-                        {","}
-                        <a
-                          href="tel:+919110564106"
-                          className="hover:text-cyan-400 transition"
-                        >
-                          +91 91105 64106
-                        </a>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="text-cyan-500 w-5 h-5 flex-shrink-0" />
-                        <a
-                          href="mailto:support@askoxy.ai"
-                          className="hover:text-cyan-400 transition-colors"
-                        >
-                          support@askoxy.ai
-                        </a>
-                      </div>
-                    </address>
-                  </div>
+            <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
+            <address className="not-italic text-sm space-y-3">
+              <div className="flex items-start gap-2">
+                <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+                <p>
+                  OXYKART TECHNOLOGIES PVT LTD, CC-02, Indu Fortune Fields,
+                  KPHB, Hyderabad, Telangana - 500085
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <MapPin className="text-cyan-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+                <p>
+                  AI Research Center, Entrance D, SE02 Concourse, Miyapur Metro
+                  Station, Hyderabad, Telangana 500049
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaPhoneAlt className="text-cyan-500 w-5 h-5 flex-shrink-0" />
+                <a
+                  href="tel:+918143271103"
+                  className="hover:text-cyan-400 transition"
+                >
+                  +91 81432 71103
+                </a>
+                {","}
+                <a
+                  href="tel:+91+91 89196 36330"
+                  className="hover:text-cyan-400 transition"
+                >
+                  +91 89196 36330
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="text-cyan-500 w-5 h-5 flex-shrink-0" />
+                <a
+                  href="mailto:support@askoxy.ai"
+                  className="hover:text-cyan-400 transition-colors"
+                >
+                  support@askoxy.ai
+                </a>
+              </div>
+            </address>
+          </div>
         </div>
 
         <div className="border-t border-white/10 my-6"></div>
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
           <p className="text-center md:text-left text-gray-400">
-            &copy; {new Date().getFullYear()} CA & CS Services Centre. All rights reserved.
+            &copy; {new Date().getFullYear()} CA & CS Services Centre. All
+            rights reserved.
           </p>
 
           <button

@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Cpu, Mail, MapPin, ArrowUp, Facebook, Linkedin, Instagram } from "lucide-react";
+import {
+  Cpu,
+  Mail,
+  MapPin,
+  ArrowUp,
+  Facebook,
+  Linkedin,
+  Instagram,
+} from "lucide-react";
 import { FaPhoneAlt } from "react-icons/fa";
 import { FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { SiThreads } from "react-icons/si";
@@ -192,10 +200,10 @@ const Footer = () => {
                 </a>
                 {","}
                 <a
-                  href="tel:+919110564106"
+                  href="tel:+91+91 89196 36330"
                   className="hover:text-cyan-400 transition"
                 >
-                  +91 91105 64106
+                  +91 89196 36330
                 </a>
               </div>
               <div className="flex items-center gap-2">
