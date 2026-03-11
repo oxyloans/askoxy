@@ -108,18 +108,17 @@ const FreeAiBook: React.FC = () => {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-50/80 via-white/30 to-indigo-50/80" />
 
           <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 sm:p-8 md:p-10">
-            
-{/* Image */}
-<div className="flex items-center justify-center">
-  <div className="w-full flex justify-center">
-    <img
-      src={aiImage}
-      alt="AI Book"
-      onClick={openAmazon}
-      className="w-full max-w-xl md:max-w-2xl h-auto object-contain cursor-pointer"
-    />
-  </div>
-</div>
+            {/* Image */}
+            <div className="flex items-center justify-center">
+              <div className="w-full flex justify-center">
+                <img
+                  src={aiImage}
+                  alt="AI Book"
+                  onClick={openAmazon}
+                  className="w-full max-w-xl md:max-w-2xl h-auto object-contain cursor-pointer"
+                />
+              </div>
+            </div>
 
             {/* Content */}
             <div className="flex flex-col justify-center">
@@ -222,7 +221,7 @@ const FreeAiBook: React.FC = () => {
 
               <motion.button
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/90daysjobplan')}
+                onClick={() => navigate("/ninetydayplan")}
                 className="mt-6 self-start px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg"
               >
                 View More
@@ -269,15 +268,20 @@ const FreeAiBook: React.FC = () => {
               </div>
 
               <p className="mt-4 text-gray-900 text-lg font-semibold">
-               PROTECT YOUR FAME. SECURE YOUR IDENTITY
+                PROTECT YOUR FAME. SECURE YOUR IDENTITY
               </p>
 
               <p className="mt-3 text-gray-700 text-justify leading-relaxed">
-                We file a Writ / Civil Suit seeking protection of Personality Rights.
+                We file a Writ / Civil Suit seeking protection of Personality
+                Rights.
               </p>
 
               <p className="mt-3 text-gray-700 text-justify leading-relaxed">
-               AI-powered legal protection against deepfakes, voice cloning, false endorsements, impersonation, deceptive ads, GIF misuse, domain squatting, and unauthorized food branding. Backed by India's top advocates with 24/7 monitoring and High Court verification.
+                AI-powered legal protection against deepfakes, voice cloning,
+                false endorsements, impersonation, deceptive ads, GIF misuse,
+                domain squatting, and unauthorized food branding. Backed by
+                India's top advocates with 24/7 monitoring and High Court
+                verification.
               </p>
 
               <motion.button

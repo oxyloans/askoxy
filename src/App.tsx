@@ -97,6 +97,7 @@ const ScholarshipGpt = lazy(() => import("./components/GPT's/ScholarshipGpt"));
 const UniversityAgents = lazy(
   () => import("./components/GPT's/UniversityAgents")
 );
+
 const University = lazy(() => import("./components/GPT's/UniversityGpt"));
 // const RiceSalePage = lazy(() => import("./components/Communities"));
 const Admin = lazy(() => import("./AskoxyAdmin/Admin"));
