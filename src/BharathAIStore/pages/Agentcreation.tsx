@@ -2289,12 +2289,17 @@ const Agentcreation: React.FC = () => {
       message.error("You're not signed in. Please log in and try again.");
       return;
     }
-    const baseUrl = `${BASE_URL}/ai-service/agent/classifyInstruct`;
+    const baseUrl = `${BASE_URL}/ai-service/agent/generateAgentInstructions`;
     const descClean = cleanForTransport(description);
 
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 20000);
-    const qs = new URLSearchParams({ description: descClean });
+    const qs = new URLSearchParams({
+      description: descClean,
+      role: roleSelect,
+      goal: goalSelect,
+      purpose: purposeSelect,
+    });
 
     try {
       setGenLoading(true);

@@ -171,63 +171,79 @@ const GoldRates: React.FC = () => {
   };
 
   const parseResponsecapsgold = (response: string): ParsedRowcapsgold[] => {
-    const lines = response.split("\n");
-    const parsed: ParsedRowcapsgold[] = [];
+  const lines = response.split("\n");
+  const parsed: ParsedRowcapsgold[] = [];
 
-    const allLines = lines
-      .map((line, index) => {
-        const cleanLine = line.trim();
-        if (!cleanLine) return null;
 
-        return {
-          index,
-          arr: cleanLine.split(/\s+/),
-        };
-      })
-      .filter(Boolean) as { index: number; arr: string[] }[];
 
-    const orderedLines = [
-      ...allLines.filter(
-        (l) => l.index === 2 || l.index === 3 || l.index === 4,
-      ),
-      ...allLines.filter((l) => l.index === 0 || l.index === 1),
-      ...allLines.filter((l) => ![0, 1, 2, 3, 4].includes(l.index)),
-    ];
 
-    console.log("===== CAPS GOLD REORDERED ARRAYS =====");
+  const allLines = lines
+    .map((line, index) => {
+      const cleanLine = line.trim();
+      if (!cleanLine) return null;
 
-    orderedLines.forEach(({ index, arr }) => {
-      console.log(`Original Line ${index} ARRAY:`, arr);
+      return {
+        index,
+        arr: cleanLine.split(/\s+/),
+      };
+    })
+    .filter(Boolean) as { index: number; arr: string[] }[];
 
-      let name = "";
-      let price = "";
+  const orderedLines = [
+    ...allLines.filter(l => l.index === 2 || l.index === 3 || l.index === 4),
+    ...allLines.filter(l => l.index === 0 || l.index === 1),
+    ...allLines.filter(
+      l => ![0, 1, 2, 3, 4].includes(l.index)
+    ),
+  ];
 
-      if (index === 2 || index === 3 || index === 4) {
-        name = `${arr[1]} ${arr[2]}`;
-        price = arr[3];
-      } else if (index === 1) {
-        name = `${arr[1]} ${arr[2]}`;
-        price = arr[3];
-      } else if (index === 5) {
-        name = `${arr[1]} ${arr[2]} ${arr[3]}`;
-        price = arr[4];
-      } else if (index === 0) {
-        name = `${arr[1]} ${arr[2]} ${arr[3]} ${arr[4]} ${arr[5]}`;
-        price = arr[7];
-      } else if(index === 6) {
-        name = `${arr[1]} ${arr[2]}`;
-        price = arr[4];
-      }
+  console.log("===== CAPS GOLD final LINES =====");
 
-      if (name && price) {
-        parsed.push({ name, price });
-      }
-    });
+  orderedLines.forEach((line, index) => {
+    console.log(`Line ${index}:`, line);
+  });
 
-    console.log("===== CAPS GOLD PARSED (ORDERED) =====", parsed);
+  console.log("===== CAPS GOLD REORDERED ARRAYS =====");
 
-    return parsed;
-  };
+  // 🔹 Step 3: Print + keep old logic
+  orderedLines.forEach(({ index, arr }) => {
+    console.log(`Original Line ${index} ARRAY:`, arr);
+
+    let name = "";
+    let price = "";
+
+    if (index === 2 || index === 3 || index === 4) {
+      name = `${arr[1]} ${arr[2]}`;
+      price = arr[3];
+    }
+
+    else if (index === 1 ) {
+      name = `${arr[1]} ${arr[2]}`;
+      price = arr[4];
+    }
+
+    else if(index===6){
+      name = `${arr[1]} ${arr[2]}`;
+      price = arr[4];
+    }
+    else if(index==5){
+      name=`${arr[1]} ${arr[2]} ${arr[3]}`;
+      price=arr[4];
+    }
+    else if (index === 0) {
+      name = `${arr[1]} ${arr[2]} ${arr[3]} ${arr[4]} ${arr[5]}`;
+      price = arr[8];
+    }
+
+    if (name && price) {
+      parsed.push({ name, price });
+    }
+  });
+
+  console.log("===== CAPS GOLD PARSED (ORDERED) =====", parsed);
+
+  return parsed;
+};
 
   // ========== CAPS GOLD FETCH ==========
   const fetchDatacapsgold = async () => {
