@@ -823,7 +823,7 @@ const App: React.FC = () => {
               <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
 
               {/* Auth / Help */}
-              <Route path="/hiddenlogin" element={<HiddenLogin />} />
+              <Route path="/secure-login" element={<HiddenLogin />} />
               <Route path="/forgot" element={<ForgotPasswordPage />} />
               <Route path="/contactus" element={<ContactUs />} />
               <Route path="/faqs" element={<RiceOfferFAQs />} />

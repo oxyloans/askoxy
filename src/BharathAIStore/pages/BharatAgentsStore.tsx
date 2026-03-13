@@ -56,6 +56,7 @@ interface Assistant {
   imageUrl?: string;
   activeStatus?: boolean;
   hideAgent?: boolean;
+  url?: string | null; // ✅ resume/document URL
 }
 
 interface AssistantsResponse {
@@ -149,6 +150,7 @@ async function getAssistants(
           assistant.image?.trim() ||
           assistant.thumbUrl?.trim() ||
           "",
+        url: assistant.url || null, // ✅ preserve resume URL
       };
     }
   );
@@ -519,7 +521,7 @@ const [loadingMyAgents, setLoadingMyAgents] = useState(false);  // better name t
 
 
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 16,
+    pageSize: 20,
     hasMore: true,
     total: 0,
   });
@@ -853,16 +855,24 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
 }, [tab, loggedInUserId]);
 
   const approvedAssistants = useMemo(() => {
+    console.log("Total assistants loaded:", assistants.length);
     return assistants.filter((a) => {
       if (a.hideAgent === true) return false; // ❌ hide
-      const s = (a.status || a.agentStatus || "").toString().toUpperCase();
+      
+      // ✅ FIXED: API response doesn't include status/agentStatus, so allow all non-hidden agents
+      // Only filter by hideAgent and activeStatus
+      const isActive = a.activeStatus !== false;
       const name = (a.name || "").trim().toLowerCase();
-      const isApproved = s === "APPROVED";
       const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
         (n) => n.toLowerCase() === name
       );
-      const isActive = a.activeStatus !== false;
-      return (isApproved || isWhitelisted) && isActive;
+      
+      // Show if: not hidden AND (active OR whitelisted)
+      const shouldShow = isActive || isWhitelisted;
+      
+      console.log(`Agent: ${a.name}, hideAgent: ${a.hideAgent}, activeStatus: ${a.activeStatus}, shouldShow: ${shouldShow}`);
+      
+      return shouldShow;
     });
   }, [assistants]);
 
