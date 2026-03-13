@@ -941,29 +941,33 @@ flex flex-col border border-gray-100 m-2"
                   {/* Resume Button */}
                   <div className="px-4 pb-5 mt-auto flex justify-center">
                     <a
-                      href={f.resumeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="
-                  w-full
-                  sm:w-auto
-                  justify-center
-                  bg-blue-100 text-blue-700 hover:bg-blue-200
-                  py-3 px-6 rounded-full
-                  font-semibold text-sm
-                  transition-all duration-200
-                  inline-flex items-center gap-2
-                  focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
-                "
-                      onClick={(e) => {
-                        if (!f.resumeUrl) {
-                          e.preventDefault();
-                          alert("Resume file is invalid or not available.");
-                        }
-                      }}
-                    >
-                      View Resume
-                    </a>
+  href={
+    f.resumeUrl
+      ? `https://docs.google.com/gview?url=${encodeURIComponent(f.resumeUrl)}&embedded=true`
+      : "#"
+  }
+  target="_blank"
+  rel="noopener noreferrer"
+  className="
+    w-full
+    sm:w-auto
+    justify-center
+    bg-blue-100 text-blue-700 hover:bg-blue-200
+    py-3 px-6 rounded-full
+    font-semibold text-sm
+    transition-all duration-200
+    inline-flex items-center gap-2
+    focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+  "
+  onClick={(e) => {
+    if (!f.resumeUrl) {
+      e.preventDefault();
+      alert("Resume file is invalid or not available.");
+    }
+  }}
+>
+  View Resume
+</a>
                   </div>
                 </motion.div>
               );

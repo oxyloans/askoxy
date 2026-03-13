@@ -339,7 +339,7 @@ class VoiceSessionService {
   private recognition: any = null;
   private dataChannel: RTCDataChannel | null = null;
 
-  async getEphemeralToken(
+ async getEphemeralToken(
     instructions: string,
     assistantId: string,
     voicemode: string
@@ -350,7 +350,7 @@ class VoiceSessionService {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ instructions }),
@@ -364,62 +364,8 @@ class VoiceSessionService {
     }
   }
 
-  private async handleGetMalabarGoldPrice(): Promise<any> {
-    try {
-      const res = await fetch(
-        `${BASE_URL}/product-service/all-different-gold-rates
-`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      
-      const data = await res.json();
-      console.log(data);
-      
-      return { success: true, data };
-    } catch (error) {
-      console.error("Failed to fetch Malabar gold price:", error);
-      return { error: "Failed to fetch gold price. Please try again." };
-    }
-  }
-
-  private injectRealtimeTools(
-    dc: RTCDataChannel,
-    selectedInstructions: string
-  ) {
-    const event = {
-      type: "session.update",
-      session: {
-        instructions: selectedInstructions,
-        modalities: ["text", "audio"],
-        tool_choice: "auto",
-        tools: [
-          {
-            type: "function",
-            name: "get_live_gold_price",
-            description:
-              "Fetch the latest gold prices. Call this whenever the user asks about gold price or gold rates.",
-            parameters: {
-              type: "object",
-              properties: {},
-              required: [],
-            },
-          },
-        ],
-      },
-    };
-
-    dc.send(JSON.stringify(event));
-    console.log("✅ Realtime tools injected");
-  }
 
   // ------------------ Start voice session ------------------
-
   async startSession(
     assistantId: string,
     selectedLanguage: LanguageConfig,
@@ -430,7 +376,6 @@ class VoiceSessionService {
     voicemode: string
   ): Promise<RTCDataChannel> {
     this.stopSession();
-
     try {
       const EPHEMERAL_KEY = await this.getEphemeralToken(
         selectedInstructions,
@@ -453,14 +398,16 @@ class VoiceSessionService {
       const dc = pc.createDataChannel("oai-events");
       this.dataChannel = dc;
 
-      // Pass selectedInstructions so tools can be injected on open
+      dc.addEventListener("open", () => {
+        console.log("🟢 Data channel opened");
+      
+      });
+
       this.setupDataChannelHandlers(
         dc,
         onMessage,
-        onAssistantSpeaking,
-        selectedInstructions
+        onAssistantSpeaking
       );
-
       this.setupSpeechRecognition(selectedLanguage, onMessage);
 
       const offer = await pc.createOffer();
@@ -492,113 +439,13 @@ class VoiceSessionService {
     }
   }
 
-  // ------------------ Data Channel Handlers ------------------
-
-  private setupDataChannelHandlers(
-    dc: RTCDataChannel,
-    onMessage: (message: ChatMessage) => void,
-    onAssistantSpeaking: (speaking: boolean) => void,
-    selectedInstructions: string
-  ) {
-    let buffer = "";
-    const pendingArgs: Record<string, string> = {};
-
-    dc.onopen = () => {
-      console.log("🟢 Data channel opened");
-      // Inject tools + instructions once channel is ready
-      this.injectRealtimeTools(dc, selectedInstructions);
-      // Trigger initial greeting
-      setTimeout(() => {
-        dc.send(JSON.stringify({ type: "response.create" }));
-      }, 300);
-    };
-
-    dc.onmessage = async (e) => {
-      try {
-        const event = JSON.parse(e.data);
-
-        // ── Text streaming ──
-        if (event.type === "response.output_text.delta" && event.delta) {
-          buffer += event.delta;
-          onAssistantSpeaking(true);
-          onMessage({
-            role: "assistant",
-            text: buffer,
-            timestamp: new Date().toLocaleTimeString(),
-          });
-          return;
-        }
-
-        // ── Audio playing ──
-        if (event.type === "response.audio.delta") {
-          onAssistantSpeaking(true);
-          return;
-        }
-
-        // ── Response finished ──
-        if (event.type === "response.stop") {
-          onAssistantSpeaking(false);
-          buffer = "";
-          return;
-        }
-
-        // ── Tool call argument streaming ──
-        if (event.type === "response.function_call_arguments.delta") {
-          if (!pendingArgs[event.call_id]) {
-            pendingArgs[event.call_id] = "";
-          }
-          pendingArgs[event.call_id] += event.delta;
-          return;
-        }
-
-        // ── Tool call complete ──
-        if (event.type === "response.function_call_arguments.done") {
-          const callId = event.call_id;
-          const functionName = event.name || "";
-
-          console.log(`🛠 Tool called: ${functionName}`);
-
-          let result: any = {};
-
-          if (functionName === "get_live_gold_price") {
-            result = await this.handleGetMalabarGoldPrice();
-          } else {
-            result = { error: `Unknown function: ${functionName}` };
-          }
-
-          // Send result back to OpenAI Realtime
-          dc.send(
-            JSON.stringify({
-              type: "conversation.item.create",
-              item: {
-                type: "function_call_output",
-                call_id: callId,
-                output: JSON.stringify(result),
-              },
-            })
-          );
-
-          // Trigger assistant to speak the response
-          dc.send(JSON.stringify({ type: "response.create" }));
-
-          delete pendingArgs[callId];
-          return;
-        }
-      } catch (err) {
-        console.error("❌ Failed to parse Realtime event:", err, e.data);
-      }
-    };
-  }
-
-  // ------------------ Speech Recognition ------------------
 
   private setupSpeechRecognition(
     selectedLanguage: LanguageConfig,
     onMessage: (message: ChatMessage) => void
   ) {
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -632,25 +479,63 @@ class VoiceSessionService {
     }
   }
 
-  // ------------------ Send Text Message ------------------
+  private setupDataChannelHandlers(
+    dc: RTCDataChannel,
+    onMessage: (message: ChatMessage) => void,
+    onAssistantSpeaking: (speaking: boolean) => void
+  ) {
+    let buffer = "";
+
+    dc.onmessage = (e) => {
+      try {
+        const event = JSON.parse(e.data);
+        onAssistantSpeaking(true);
+
+        if (event.type === "response.output_text.delta" && event.delta) {
+          buffer += event.delta;
+          onAssistantSpeaking(true);
+
+          const msg: ChatMessage = {
+            role: "assistant",
+            text: buffer,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          onMessage(msg);
+        }
+
+        if (event.type === "response.audio.delta") {
+          onAssistantSpeaking(true);
+        }
+
+        if (event.type === "response.stop") {
+          onAssistantSpeaking(false);
+          buffer = "";
+        }
+      } catch (err) {
+        console.error("Failed to parse assistant event:", err);
+      }
+    };
+
+    dc.onopen = () => {
+      console.log("Data channel opened");
+    };
+  }
 
   sendMessage(text: string) {
     if (!this.dataChannel) return;
 
-    this.dataChannel.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text }],
-        },
-      })
-    );
+    const event = {
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
+    };
+
+    this.dataChannel.send(JSON.stringify(event));
     this.dataChannel.send(JSON.stringify({ type: "response.create" }));
   }
-
-  // ------------------ Stop Session ------------------
 
   stopSession() {
     this.dataChannel?.close();

@@ -432,11 +432,30 @@ const JobDetails: React.FC = () => {
     const salaryRange = `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
     return payRateFrequencyType ? `${salaryRange} ${payRateFrequencyType}` : salaryRange;
   };
-
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString();
+    return new Date(timestamp).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
   };
+const formatDateWithBoth = (timestamp: number) => {
+  const date = new Date(timestamp);
 
+  // const ist = date.toLocaleString("en-IN", {
+  //   timeZone: "Asia/Kolkata",
+  //   dateStyle: "medium",
+  //   timeStyle: "short",
+  // });
+
+  const utc = date.toLocaleString("en-IN", {
+    timeZone: "UTC",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  return `   ${utc}`;
+};
   const autoFormatDescription = (text: string) => {
     const lines = text.split("\n");
 
@@ -729,7 +748,7 @@ const hasArrayContent = (value: any): boolean => {
             },
             {
               label: "Posted",
-              value: job.createdAt ? formatDate(job.createdAt) : null,
+              value: job.createdAt ? formatDateWithBoth(job.createdAt) : null,
             },
           ].filter((info) => !isEmpty(info.value));
 
@@ -1025,7 +1044,7 @@ const hasArrayContent = (value: any): boolean => {
               <Button
                 onClick={handleWriteToUs}
                 className="px-4 py-1.5 text-white rounded-lg flex items-center gap-2 hover:text-white"
-                style={{ backgroundColor: "#1ab394", borderColor: "#1ab394" }}
+                style={{ backgroundColor: "#008cba", borderColor: "#008cba" }}
               >
                 <MailIcon className="w-4 h-4" />
                 Contact Us

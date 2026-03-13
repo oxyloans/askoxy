@@ -187,15 +187,15 @@ const FreelancerList: React.FC = () => {
               <div className="w-full max-w-xl">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="relative min-w-0">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    {/* <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                       🔎
-                    </span>
-                    <input
+                    </span> */}
+                    {/* <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search by Open for freelancers work.."
                       className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
-                    />
+                    /> */}
                   </div>
 
                   <select
@@ -362,28 +362,25 @@ const FreelancerList: React.FC = () => {
 
                     {/* Actions */}
                     <div className="mt-5 flex w-full min-w-0 flex-col gap-2 sm:flex-row">
-                      <a
-                        href={freelancer.resumeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => {
-                          if (!freelancer.resumeUrl) {
-                            e.preventDefault();
-                            alert("Resume not available for this freelancer.");
-                          }
-                        }}
-                        className="min-w-0 flex-1 text-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
-                      >
-                        View Resume
-                      </a>
+                   <button
+  type="button"
+  onClick={() => {
+    const fileUrl = freelancer.resumeUrl;
 
-                      {/* <button
-                        type="button"
-                        onClick={() => navigate(`/main/freelanceappliedlist`)}
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-                      >
-                        View Applicants
-                      </button> */}
+    if (!fileUrl) {
+      alert("Resume not available for this freelancer.");
+      return;
+    }
+
+    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+    window.open(viewerUrl, "_blank", "noopener,noreferrer");
+  }}
+  className="min-w-0 flex-1 text-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+>
+  View Resume
+</button>  
+
+                      
                     </div>
                   </div>
                 );

@@ -28,9 +28,6 @@ const { useBreakpoint } = Grid;
 
 const PRIMARY = "#008cba";
 
-const userId = localStorage.getItem("userId");
-const API_URL = `${BASE_URL}/ai-service/agent/getFreeLancersData/${userId}`;
-
 type Freelancer = {
   id: string;
   email: string;
@@ -61,19 +58,63 @@ const FreelancersByUserId: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
+  const getAccessToken = (): string | null => {
+    return localStorage.getItem("accessToken");
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+
+    let userId = localStorage.getItem("userId");
+    let token = getAccessToken();
+
+    // ─── Fix for race condition after login redirect ───
+    if (!token || !userId) {
+      console.log("No token/userId found initially → waiting briefly...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      token = getAccessToken();
+      userId = localStorage.getItem("userId");
+
+      if (!token) {
+        setError("Authentication token not found. Please login again.");
+        setLoading(false);
+        return;
+      }
+      if (!userId) {
+        setError("User ID not found. Please login again.");
+        setLoading(false);
+        return;
+      }
+    }
+   
+
+    const API_URL = `${BASE_URL}/ai-service/agent/getFreeLancersData/${userId}`;
+    console.log("Using token:", token.substring(0, 10) + "...");
+
     try {
-      const accessToken = localStorage.getItem("accessToken");
       const res = await axios.get<Freelancer[]>(API_URL, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setData(Array.isArray(res.data) ? res.data : []);
+
+      const result = Array.isArray(res.data) ? res.data : [];
+      setData(result);
+      console.log(`Loaded ${result.length} freelancers`);
     } catch (e: any) {
-      setError(
-        e?.response?.data?.message || e?.message || "Failed to load freelancers"
-      );
+      const errMsg =
+        e?.response?.data?.message ||
+        e?.response?.statusText ||
+        e?.message ||
+        "Failed to load freelancers";
+
+      console.error("Fetch error:", e);
+      setError(errMsg);
+
+      // Optional: auto-logout on 401
+      if (e?.response?.status === 401) {
+        setError("Session expired or unauthorized. Please login again.");
+        // localStorage.removeItem("accessToken"); // uncomment if you want auto-logout
+      }
     } finally {
       setLoading(false);
     }
@@ -88,8 +129,7 @@ const FreelancersByUserId: React.FC = () => {
       title: "S.No",
       key: "serial",
       align: "center",
-      render: (_, __, index) =>
-        (currentPage - 1) * pageSize + index + 1,
+      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
     },
     {
       title: "Email",
@@ -112,12 +152,29 @@ const FreelancersByUserId: React.FC = () => {
             gap: 6,
           }}
         >
-          <div><Text type="secondary">₹/Hour</Text><br/><b>{formatMoney(r.perHour)}</b></div>
-          <div><Text type="secondary">₹/Day</Text><br/><b>{formatMoney(r.perDay)}</b></div>
-          <div><Text type="secondary">₹/Week</Text><br/><b>{formatMoney(r.perWeek)}</b></div>
-          <div><Text type="secondary">₹/Month</Text><br/><b>{formatMoney(r.perMonth)}</b></div>
+          <div>
+            <Text type="secondary">₹/Hour</Text>
+            <br />
+            <b>{formatMoney(r.perHour)}</b>
+          </div>
+          <div>
+            <Text type="secondary">₹/Day</Text>
+            <br />
+            <b>{formatMoney(r.perDay)}</b>
+          </div>
+          <div>
+            <Text type="secondary">₹/Week</Text>
+            <br />
+            <b>{formatMoney(r.perWeek)}</b>
+          </div>
+          <div>
+            <Text type="secondary">₹/Month</Text>
+            <br />
+            <b>{formatMoney(r.perMonth)}</b>
+          </div>
           <div style={{ gridColumn: "span 2" }}>
-            <Text type="secondary">₹/Year</Text><br/>
+            <Text type="secondary">₹/Year</Text>
+            <br />
             <b>{formatMoney(r.perYear)}</b>
           </div>
         </div>
@@ -150,8 +207,14 @@ const FreelancersByUserId: React.FC = () => {
           icon={<FilePdfOutlined />}
           disabled={!r.resumeUrl}
           onClick={() => {
-            if (r.resumeUrl)
-              window.open(r.resumeUrl, "_blank");
+            if (!r.resumeUrl) {
+              alert("Resume file is invalid or not available.");
+              return;
+            }
+            const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+              r.resumeUrl,
+            )}&embedded=true`;
+            window.open(viewerUrl, "_blank", "noopener,noreferrer");
           }}
           style={{
             background: PRIMARY,
@@ -181,15 +244,12 @@ const FreelancersByUserId: React.FC = () => {
         <Row justify="space-between" align="middle">
           <Col>
             <Title level={3} style={{ margin: 0 }}>
-             Freelancer Applied List
+              Freelancer Applied List
             </Title>
           </Col>
           <Col>
             <Space>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => navigate(-1)}
-              >
+              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
                 Back
               </Button>
               <Button
@@ -207,19 +267,35 @@ const FreelancersByUserId: React.FC = () => {
       <div style={{ height: 16 }} />
 
       {loading ? (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "300px",
-    }}
-  >
-    <Spin size="large" />
-  </div>
-) 
- : error ? (
-        <Alert type="error" message={error} />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "300px",
+          }}
+        >
+          <Spin size="large" tip="Loading freelancers..." />
+        </div>
+      ) : error ? (
+        <Alert
+          type="error"
+          message="Error"
+          description={error}
+          showIcon
+          action={
+            <Button size="middle" type="primary" onClick={fetchData}>
+              Try Again
+            </Button>
+          }
+        />
+      ) : data.length === 0 ? (
+        <Alert
+          type="info"
+          message="No freelancers found"
+          description="No one has applied yet or the list is empty."
+          showIcon
+        />
       ) : (
         <div
           style={{
@@ -234,7 +310,7 @@ const FreelancersByUserId: React.FC = () => {
             columns={columns}
             dataSource={data}
             bordered
-            scroll={{x:"100%"}}
+            scroll={{ x: "100%" }}
             pagination={{
               pageSize,
               onChange: (page) => setCurrentPage(page),

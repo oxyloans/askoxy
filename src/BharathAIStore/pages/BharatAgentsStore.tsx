@@ -484,7 +484,9 @@ const BharatAgentsStore: React.FC = () => {
   const prevQueryRef = useRef<string>(""); // 🔥 NEW
   const location = useLocation();
   const [showHero, setShowHero] = useState(false); // 🔑 toggle state
-
+const [myAgents, setMyAgents] = useState<Assistant[]>([]);
+const [loadingMyAgents, setLoadingMyAgents] = useState(false);  // better name than loadingMine
+  
   const [loadingMine, setLoadingMine] = useState(false);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
@@ -521,7 +523,42 @@ const BharatAgentsStore: React.FC = () => {
     hasMore: true,
     total: 0,
   });
+async function fetchMyAgents(userId: string): Promise<Assistant[]> {
+  try {
+    const res = await apiClient.get("/ai-service/agent/allAgentDataList", {
+      params: { userId },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
+      },
+    });
 
+    const rawAssistants = res.data?.assistants ?? [];
+
+    // Normalize to match the Assistant type your component expects
+    return rawAssistants.map((raw: any): Assistant => ({
+      ...raw,
+      id: raw.id,
+      assistantId: raw.assistantId || raw.id || raw.agentId || "",
+      agentId: raw.agentId || raw.assistantId || raw.id || "",
+      name: raw.agentName || raw.name || "Unnamed Agent",
+      description: raw.description || "",
+      imageUrl:
+        raw.profileImagePath?.trim() ||
+        raw.imageUrl?.trim() ||
+        "",
+      status: raw.status,
+      agentStatus: raw.agentStatus,
+      approvedAt: raw.approvedAt,
+      activeStatus: raw.activeStatus !== false,
+      hideAgent: raw.hideAgent === true,
+      // keep other fields you might need (instructions, tools, etc.)
+    }));
+  } catch (err) {
+    console.error("Failed to load my agents:", err);
+    return [];
+  }
+}
   const PRIORITY_ORDER = [
     "Bharath AI Mission",
     "Nyaya Gpt",
@@ -791,67 +828,29 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     fetchAssistants();
   }, [fetchAssistants]);
 
-  // 🚀 Auto-fetch all remaining pages when user switches to "My Agents"
-  useEffect(() => {
-    if (tab !== "MINE") return; // only when My Agents is active
-    if (!loggedInUserId) return; // must be logged in
-    if (!pagination.hasMore) return; // nothing else to load
+ useEffect(() => {
+  if (tab !== "MINE" || !loggedInUserId) {
+    setMyAgents([]);           // optional: clear when leaving tab
+    return;
+  }
 
-    let cancelled = false;
+  let cancelled = false;
 
-    const loadAllRemaining = async () => {
-      setLoadingMine(true);
-      try {
-        let after = pagination.lastId;
-        let hasMore = pagination.hasMore;
+  const loadMyAgents = async () => {
+    setLoadingMyAgents(true);
+    const agents = await fetchMyAgents(loggedInUserId);
+    if (!cancelled) {
+      setMyAgents(agents);
+    }
+    setLoadingMyAgents(false);
+  };
 
-        // Keep fetching until API says no more pages (cursor-based)
-        while (hasMore && !cancelled) {
-          const res = await getAssistants(pagination.pageSize, after);
+  loadMyAgents();
 
-          // Merge + dedupe by ID
-          setAssistants((prev) => {
-            const merged = [...prev, ...res.data];
-            const byId = new Map<string, Assistant>();
-            for (const a of merged) {
-              const key = a.assistantId || a.id || a.agentId || "";
-              if (key) byId.set(key, a);
-            }
-            return Array.from(byId.values());
-          });
-
-          // Advance the cursor strictly using API's lastId when hasMore = true
-          after = res.hasMore ? res.lastId : undefined;
-          hasMore = res.hasMore;
-
-          // keep pagination state in sync
-          setPagination((prev) => ({
-            ...prev,
-            hasMore,
-            lastId: after,
-            firstId: prev.firstId ?? res.firstId,
-            total: prev.total + res.data.length,
-          }));
-        }
-      } catch (e) {
-        console.error("My AI Agents auto-load failed:", e);
-      } finally {
-        if (!cancelled) setLoadingMine(false);
-      }
-    };
-
-    loadAllRemaining();
-    return () => {
-      cancelled = true;
-    };
-   
-  }, [
-    tab,
-    loggedInUserId,
-    pagination.hasMore,
-    pagination.lastId,
-    pagination.pageSize,
-  ]);
+  return () => {
+    cancelled = true;
+  };
+}, [tab, loggedInUserId]);
 
   const approvedAssistants = useMemo(() => {
     return assistants.filter((a) => {
@@ -923,8 +922,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
   }, [approvedAssistants, loggedInUserId]);
 
   // final list shown on screen (tab-aware)
-  const finalAssistants =
-    tab === "MINE" ? myApprovedAssistants : shownAssistants;
+ const finalAssistants = tab === "MINE" ? myAgents : shownAssistants;
 
   const SkeletonCard = () => (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse h-full flex flex-col">
@@ -1277,43 +1275,28 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
           <div className="text-sm text-red-600 mb-4">{searchError}</div>
         )}
 
-        {tab === "MINE" && loadingMine && myApprovedAssistants.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 p-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={`mine-skel-${i}`}
-                className="animate-pulse bg-gray-200 dark:bg-gray-700 h-52 rounded-xl"
-                style={{
-                  animationDelay: `${i * 0.15}s`,
-                  animationDuration: "1.2s",
-                }}
-              />
-            ))}
-          </div>
-        ) : finalAssistants.length === 0 ? (
-          // 🧾 Empty state (shown only after loading finishes)
-          <div className="text-center py-16">
-            <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900">
-              {tab === "MINE"
-                ? loggedInUserId
-                  ? "No approved agents found for your account."
-                  : "Please log in to view your agents."
-                : isSearching
-                ? "No results found"
-                : "No Assistants Found"}
-            </h3>
-            <p className="text-gray-600">
-              {tab === "MINE"
-                ? loggedInUserId
-                  ? "Create an agent or wait for approval to see it here."
-                  : "Sign in to access your personal agents."
-                : isSearching
-                ? "Try a different search term."
-                : "Try a different search term."}
-            </p>
-          </div>
-        ) : (
+        {tab === "MINE" && loadingMyAgents ? (
+  <div className="text-center py-12">
+    <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-600" />
+    <p className="mt-4 text-gray-600">Loading your AI Agents...</p>
+  </div>
+) : tab === "MINE" && myAgents.length === 0 ? (
+  <div className="text-center py-16">
+    <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+    <h3 className="text-lg font-semibold text-gray-900">
+      No AI Agents found
+    </h3>
+    <p className="text-gray-600 mt-2">
+      You haven't created any agents yet, or they might still be under review.
+    </p>
+    <button
+      onClick={handleLogin}
+      className="mt-6 inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700"
+    >
+      Create Your First AI Agent
+    </button>
+  </div>
+): (
           <>
             {/* ✅ Grid of real cards */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6 items-stretch">
