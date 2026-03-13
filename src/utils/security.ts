@@ -81,9 +81,11 @@ export const clearConsole = () => {
 
 // Initialize all security measures
 export const initializeSecurity = () => {
+  if (process.env.NODE_ENV === 'production') {
   disableContextMenu();
   disableDevToolsShortcuts();
   detectDevTools();
   disableConsole();
   clearConsole();
+  }
 };

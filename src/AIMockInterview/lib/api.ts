@@ -1,4 +1,4 @@
-let user = "production";
+let user = process.env.NODE_ENV || "development";
 let API_BASE_URL = "";
 if (user==="production") {
   API_BASE_URL = "https://interviews-zadn.onrender.com";

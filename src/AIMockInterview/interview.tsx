@@ -5,6 +5,9 @@ import { api } from "./lib/api";
 import { Modal } from "antd";
 import  logo from '../assets/img/ask oxy white.png';
 import { AttemptStatus } from './AttemptStatus';
+import axiosInstance from "../utils/axiosInstance";
+import axios from "axios";
+import  BASE_URL  from "../Config";
 
 export default function InterviewPage() {
   function cryptoRandom() {
@@ -231,29 +234,70 @@ export default function InterviewPage() {
 
    const handleLogin = async () => {
 
-    const stored = localStorage.getItem("profileData") || localStorage.getItem("user") || "";
+    const stored = localStorage.getItem("profileData") || localStorage.getItem("user") || localStorage.getItem("whatsappNumber") || localStorage.getItem("mobileNumber") || "";
 
     console.log("Stored profile data:", stored);
 
-    const phone = stored ? JSON.parse(stored).mobileNumber ? JSON.parse(stored).mobileNumber : JSON.parse(stored).whatsappNumber : "";
-    const name = stored ? JSON.parse(stored).userFirstName + " " + JSON.parse(stored).userLastName : "";
-    console.log("Phone:", phone);
-        console.log("Name:", name);
-     
-    if (!phone) {
+    let userId = "";
+    let phone = "";
+    let name = "";
+
+    if (stored) {
+      const parsedData = JSON.parse(stored);
+      console.log("Parsed profile data:", parsedData);
+      userId = localStorage.getItem("userId") || "";
+      phone = parsedData.mobileNumber || parsedData.whatsappNumber || parsedData ||"";
+      name = parsedData.userFirstName && parsedData.userLastName 
+        ? `${parsedData.userFirstName} ${parsedData.userLastName}` 
+        : parsedData.userName || "";
+    }
+
+    if (!userId && !phone) {
         Modal.warning({ title: "Login Required", content: "Please login to continue." });
         sessionStorage.setItem("redirectPath","/interview")
        window.location.href = "/whatsapplogin";
       return;
     }
 
-    if (!name) {
-        Modal.warning({ title: "Profile Incomplete", content: "Name not found in profile data, please fill profile details." });
-      return;
-    }
-
     setLoading(true);
     try {
+      let profileData = null;
+      
+      if (userId) {
+        const profileResponse = await axios.get(`${BASE_URL}/user-service/getProfile/${userId}`,{
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}`
+          }
+        });
+        if (profileResponse) {
+          profileData = await profileResponse.data;
+          console.log('Profile data:', profileData);
+          
+          if (profileData) {
+            phone = profileData.mobileNumber || profileData.whatsappNumber || phone;
+            name = profileData.userName || `${profileData.firstName || ''} ${" "} ${profileData.lastName || ''}`|| name;
+            
+            if (!profileData.mobileVerified && !profileData.whatsappVerified) {
+              Modal.warning({ title: "Verification Required", content: "Please verify your mobile or WhatsApp number." });
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      }
+
+      if (!phone) {
+        Modal.warning({ title: "Profile Incomplete", content: "Phone number not found. Please update your profile." });
+        setLoading(false);
+        return;
+      }
+
+      if (!name) {
+        Modal.warning({ title: "Profile Incomplete", content: "Name not found. Please complete your profile." });
+        setLoading(false);
+        return;
+      }
+
       const data = await api.login({ phone_number: phone, name });
       console.log('Login response:', data);
 
