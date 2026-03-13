@@ -233,8 +233,8 @@ const ForeignExchange: React.FC = () => {
 
     try {
       const userId = localStorage.getItem("userId");
-      const apiUrl = `http://65.0.147.157:9001/api/student-service/user/foreignExchange?InfoType=${encodeURIComponent(
-        queryInput
+      const apiUrl = `https://meta.oxyloans.com/api/student-service/user/foreignExchange?InfoType=${encodeURIComponent(
+        queryInput,
       )}${userId ? `&userId=${userId}` : ""}`;
       const response = await axios.post(apiUrl);
 

@@ -235,11 +235,11 @@ const InformationAboutCountries: React.FC = () => {
       const userId = localStorage.getItem("userId");
       const apiurl =
         userId !== null
-          ? `http://65.0.147.157:9001/api/student-service/user/studentCountries?countries=${encodeURIComponent(
-              queryInput
+          ? `https://meta.oxyloans.com/api/student-service/user/studentCountries?countries=${encodeURIComponent(
+              queryInput,
             )}`
-          : `http://65.0.147.157:9001/api/student-service/user/studentCountries?countries=${encodeURIComponent(
-              queryInput
+          : `https://meta.oxyloans.com/api/student-service/user/studentCountries?countries=${encodeURIComponent(
+              queryInput,
             )}`;
 
       const response = await axios.post(apiurl);

@@ -14,6 +14,7 @@ import {
   Tag,
   Typography,
   Grid,
+  Modal,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -57,6 +58,9 @@ const FreelancersByUserId: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [currentResumeUrl, setCurrentResumeUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const getAccessToken = (): string | null => {
     return localStorage.getItem("accessToken");
@@ -214,7 +218,9 @@ const FreelancersByUserId: React.FC = () => {
             const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
               r.resumeUrl,
             )}&embedded=true`;
-            window.open(viewerUrl, "_blank", "noopener,noreferrer");
+            setCurrentResumeUrl(viewerUrl);
+            setShowResumeModal(true);
+            setIsLoading(true);
           }}
           style={{
             background: PRIMARY,
@@ -318,6 +324,34 @@ const FreelancersByUserId: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Ant Design Modal */}
+      <Modal
+        title="Resume Viewer"
+        open={showResumeModal}
+        onCancel={() => {
+          setShowResumeModal(false);
+          setIsLoading(true);
+        }}
+        footer={null}
+        width="70%"
+        style={{ top: 20 }}
+        bodyStyle={{ height: '80vh', padding: 0 }}
+        maskClosable={true}
+        keyboard={true}
+      >
+        {isLoading && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <Spin size="large" tip="Loading resume..." />
+          </div>
+        )}
+        <iframe
+          src={currentResumeUrl}
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          title="Resume Viewer"
+          onLoad={() => setIsLoading(false)}
+        />
+      </Modal>
     </div>
   );
 };

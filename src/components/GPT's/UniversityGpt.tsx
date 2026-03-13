@@ -541,8 +541,8 @@ const University: React.FC = () => {
     if (query && !hasProcessedUrlQuery) {
       setShowEmptyState(false);
       setIsFirstVisit(false);
-      handleSend(query); // <- This triggers the API call when URL has "query"
-      setHasProcessedUrlQuery(true); // This flag prevents duplicate in that file
+      handleSend(query); 
+      setHasProcessedUrlQuery(true); 
     }
   }, [location.search, hasProcessedUrlQuery]);
 
@@ -594,14 +594,12 @@ const University: React.FC = () => {
     setShowHistory(false);
     setIsFirstVisit(false);
     setHasProcessedUrlQuery(false);
-    setLastQuery(""); // Clear last query on new chat
-    // Don't reset question count - we want to track this across new chats for the login modal
+    setLastQuery(""); 
+ 
     navigate("/main/dashboard/universities-gpt");
   };
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
+ 
 
   const handleSend = async (queryInput: string) => {
     const trimmedQuery = queryInput.trim();
@@ -635,8 +633,8 @@ const University: React.FC = () => {
 
     try {
       const userId = localStorage.getItem("userId");
-      const apiUrl = `http://65.0.147.157:9001/api/student-service/user/universityGpt?prompt=${encodeURIComponent(
-        queryInput
+      const apiUrl = `https://meta.oxyloans.com/api/student-service/user/universityGpt?prompt=${encodeURIComponent(
+        queryInput,
       )}${userId ? `&userId=${userId}` : ""}`;
       const response = await axios.post(apiUrl);
 

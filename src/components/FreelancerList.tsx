@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Modal } from "antd";
 import Logo from "../assets/img/askoxylogonew.png";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 import "./FreelancerList.css";
 import { FiArrowRight } from "react-icons/fi";
+
 
 interface Freelancer {
   id: string;
@@ -25,6 +27,9 @@ const FreelancerList: React.FC = () => {
   const [query, setQuery] = useState("");
   const [availability, setAvailability] = useState<"ALL" | "YES" | "NO">("ALL");
   const [displayCount, setDisplayCount] = useState(12);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [currentResumeUrl, setCurrentResumeUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
 
@@ -362,25 +367,22 @@ const FreelancerList: React.FC = () => {
 
                     {/* Actions */}
                     <div className="mt-5 flex w-full min-w-0 flex-col gap-2 sm:flex-row">
-                   <button
-  type="button"
-  onClick={() => {
-    const fileUrl = freelancer.resumeUrl;
-
-    if (!fileUrl) {
-      alert("Resume not available for this freelancer.");
-      return;
-    }
-
-    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
-    window.open(viewerUrl, "_blank", "noopener,noreferrer");
-  }}
-  className="min-w-0 flex-1 text-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
->
-  View Resume
-</button>  
-
-                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!freelancer.resumeUrl) {
+                            alert("Resume not available for this freelancer.");
+                            return;
+                          }
+                          const fileUrl = `${uploadurlwithId}${freelancer.resumeUrl}`;
+                          setCurrentResumeUrl(`https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`);
+                          setShowResumeModal(true);
+                          setIsLoading(true);
+                        }}
+                        className="min-w-0 flex-1 text-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      >
+                        View Resume
+                      </button>
                     </div>
                   </div>
                 );
@@ -416,6 +418,34 @@ const FreelancerList: React.FC = () => {
             </div>
           )}
         </main>
+
+        {/* Ant Design Modal */}
+        <Modal
+          title="Resume Viewer"
+          open={showResumeModal}
+          onCancel={() => {
+            setShowResumeModal(false);
+            setIsLoading(true);
+          }}
+          footer={null}
+          width="70%"
+          style={{ top: 20 }}
+          bodyStyle={{ height: '80vh', padding: 0 }}
+          maskClosable={true}
+          keyboard={true}
+        >
+          {isLoading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+            </div>
+          )}
+          <iframe
+            src={currentResumeUrl}
+            className="w-full h-full"
+            title="Resume Viewer"
+            onLoad={() => setIsLoading(false)}
+          />
+        </Modal>
 
         {/* Footer */}
         <footer className="border-t border-slate-200 bg-white">

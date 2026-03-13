@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Modal } from "antd";
 
 import { fetchCampaigns, Campaign } from "./servicesapi";
-import BASE_URL from "../Config";
+import BASE_URL,{uploadurlwithId} from "../Config";
 type Freelancer = {
   id: string;
   email: string;
@@ -51,6 +52,9 @@ const ServicesSlider: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
   const [showAllFreelancers, setShowAllFreelancers] = useState(false);
+// Add these state variables at the top of your component
+const [showResumeModal, setShowResumeModal] = useState(false);
+const [currentResumeUrl, setCurrentResumeUrl] = useState("");
 
   const accessToken = localStorage.getItem("accessToken");
 
@@ -79,9 +83,6 @@ const ServicesSlider: React.FC = () => {
   };
 
   const isGoodFreelancerRow = (f: Freelancer) => {
-    // ✅ must have userId
-    if (!f?.userId) return false;
-
     // ✅ show only if they are open for freelancing
     if ((f.openForFreeLancing || "").toUpperCase() !== "YES") return false;
 
@@ -940,34 +941,22 @@ flex flex-col border border-gray-100 m-2"
 
                   {/* Resume Button */}
                   <div className="px-4 pb-5 mt-auto flex justify-center">
-                    <a
-  href={
-    f.resumeUrl
-      ? `https://docs.google.com/gview?url=${encodeURIComponent(f.resumeUrl)}&embedded=true`
-      : "#"
-  }
-  target="_blank"
-  rel="noopener noreferrer"
-  className="
-    w-full
-    sm:w-auto
-    justify-center
-    bg-blue-100 text-blue-700 hover:bg-blue-200
-    py-3 px-6 rounded-full
-    font-semibold text-sm
-    transition-all duration-200
-    inline-flex items-center gap-2
-    focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
-  "
-  onClick={(e) => {
-    if (!f.resumeUrl) {
-      e.preventDefault();
-      alert("Resume file is invalid or not available.");
-    }
-  }}
->
-  View Resume
-</a>
+                    <button
+                      onClick={() => {
+                        if (!f.resumeUrl) {
+                          alert("Resume file is invalid or not available.");
+                          return;
+                        }
+                        setCurrentResumeUrl(
+                          `https://docs.google.com/gview?url=${encodeURIComponent(`${uploadurlwithId}${f.resumeUrl}`)}&embedded=true`,
+                        );
+                        setShowResumeModal(true);
+                        setIsLoading(true);
+                      }}
+                      className="w-full sm:w-auto justify-center bg-blue-100 text-blue-700 hover:bg-blue-200 py-3 px-6 rounded-full font-semibold text-sm transition-all duration-200 inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                    >
+                      View Resume
+                    </button>
                   </div>
                 </motion.div>
               );
@@ -981,6 +970,34 @@ flex flex-col border border-gray-100 m-2"
           </div>
         )}
       </div>
+
+      {/* Ant Design Modal */}
+      <Modal
+        title="Resume Viewer"
+        open={showResumeModal}
+        onCancel={() => {
+          setShowResumeModal(false);
+          setIsLoading(true);
+        }}
+        footer={null}
+        width="70%"
+        style={{ top: 20 }}
+        bodyStyle={{ height: '80vh', padding: 0 }}
+        maskClosable={true}
+        keyboard={true}
+      >
+        {isLoading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+          </div>
+        )}
+        <iframe
+          src={currentResumeUrl}
+          className="w-full h-full"
+          title="Resume Viewer"
+          onLoad={() => setIsLoading(false)}
+        />
+      </Modal>
     </section>
   );
 };
