@@ -46,7 +46,7 @@ const PartnerItemsList: React.FC = () => {
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
+  const getToken = () => localStorage.getItem("partner_accesstoken") || "";
   const [statusFilter, setStatusFilter] = useState("all");
   const [urls, setUrls] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState<string>("");
@@ -90,7 +90,7 @@ const PartnerItemsList: React.FC = () => {
       const response = await axios.get<ImageData>(
         `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${item.itemId}`,
         {
-          headers: { accept: "*/*" },
+          headers: { Authorization: `Bearer ${getToken()}` },
         },
       );
       setImageUpdateModal({
@@ -121,6 +121,9 @@ const PartnerItemsList: React.FC = () => {
     try {
       const response = await axios.get(
         `${BASE_URL}/product-service/ItemsGetTotal`,
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
       );
 
       const transformedItems = response.data.map((item: Item) => ({
@@ -164,9 +167,10 @@ const PartnerItemsList: React.FC = () => {
       message.error("Selling price cannot be higher than MRP");
       // return;
     }
+    const id = sessionStorage.getItem("partner_id");
     try {
       const data = {
-        sellerId: accessToken.id,
+        sellerId: id,
         itemMrp: parseFloat(mrp),
         active: priceUpdateModal.item.active,
         itemId: priceUpdateModal.item.itemId,
@@ -178,7 +182,7 @@ const PartnerItemsList: React.FC = () => {
         `${BASE_URL}/product-service/sellerItemPriceFix`,
         data,
         {
-          headers: { Authorization: `Bearer ${accessToken.token}` },
+          headers: { Authorization: `Bearer ${getToken()}` },
         },
       );
 
@@ -209,7 +213,7 @@ const PartnerItemsList: React.FC = () => {
         formData,
         {
           headers: {
-            Authorization: `Bearer ${accessToken.token}`,
+            Authorization: `Bearer ${getToken()}`,
             "Content-Type": "multipart/form-data",
           },
         },
@@ -252,6 +256,9 @@ const PartnerItemsList: React.FC = () => {
       await axios.patch(
         `${BASE_URL}/product-service/itemActiveAndInActive`,
         data,
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
       );
 
       message.success(`Item ${item.itemName} status updated`);
@@ -298,6 +305,7 @@ const PartnerItemsList: React.FC = () => {
         headers: {
           accept: "*/*",
           "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify(payload),
       });

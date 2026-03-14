@@ -13,6 +13,8 @@ import axios from "axios";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
 
+const getToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
@@ -47,7 +49,8 @@ const StockTable: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get<StockItem[]>(
-        `${BASE_URL}/product-service/getAllStock?Category_Type=${selectedCategory}`
+        `${BASE_URL}/product-service/getAllStock?Category_Type=${selectedCategory}`,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
       setData(response.data);
       setFilteredData(response.data);

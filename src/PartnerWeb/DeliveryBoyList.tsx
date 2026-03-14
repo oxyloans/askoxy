@@ -22,6 +22,8 @@ import {
 import BASE_URL from "../Config";
 import { useNavigate, useNavigation } from "react-router-dom";
 
+const getToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 interface DeliveryBoy {
   userId: string;
   firstName: string;
@@ -61,7 +63,8 @@ const DeliveryBoyList: React.FC = () => {
     try {
       setLoading(true);
       const response = await axios.get<DeliveryBoy[]>(
-        `${BASE_URL}/user-service/deliveryBoyList`
+        `${BASE_URL}/user-service/deliveryBoyList`,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
 
       const filteredDeliveryBoys = response.data.filter((boy) => !boy.testUser);
@@ -133,10 +136,10 @@ const DeliveryBoyList: React.FC = () => {
 
   const updateDeliveryBoyStatus = async (id: string, isActive: boolean) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/user-service/status`, {
-        id: id,
-        isActive: isActive.toString(),
-      });
+      const response = await axios.patch(`${BASE_URL}/user-service/status`,
+        { id: id, isActive: isActive.toString() },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
 
       if (response.status === 200) {
         message.success(
@@ -178,7 +181,8 @@ const DeliveryBoyList: React.FC = () => {
       };
       const response = await axios.patch(
         `${BASE_URL}/user-service/update`,
-        payload
+        payload,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
 
       if (response.status === 200) {
@@ -199,9 +203,9 @@ const DeliveryBoyList: React.FC = () => {
 
   const handleViewOrders = (boy: DeliveryBoy) => {
     // message.info(`Viewing orders for ${boy.firstName} ${boy.lastName}`);
-    localStorage.setItem("partner_dbId", boy.userId);
+    sessionStorage.setItem("partner_dbId", boy.userId);
     const name = boy.firstName + boy.lastName;
-    localStorage.setItem("partner_dbName", name);
+    sessionStorage.setItem("partner_dbName", name);
 
     navigate(`/home/dbOrderList`);
   };

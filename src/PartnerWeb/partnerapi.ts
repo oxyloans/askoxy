@@ -81,13 +81,14 @@ interface DeliveryBoy {
 
 export type { Order, OrderItems, Address, ExchangeOrder, DeliveryBoy };
 
-const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
+// Always read fresh token on every API call so refreshed tokens are used
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 export const fetchOrdersByStatus = async (status: string): Promise<Order[]> => {
   try {
     const response = await axios.get<Order[]>(
       `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=${status}`,
-      { headers: { Authorization: `Bearer ${accessToken.token}` } }
+      { headers: { Authorization: `Bearer ${getAccessToken()}` } }
     );
     return response.data.filter((order) => !order.testUser);
   } catch (error) {
@@ -106,7 +107,7 @@ export const fetchDeliveredOrders = async (
       {
         headers: {
           accept: "*/*",
-          Authorization: `Bearer ${accessToken.token}`,
+          Authorization: `Bearer ${getAccessToken()}`,
         },
       }
     );
@@ -152,7 +153,7 @@ export const fetchExchangeOrders = async (): Promise<ExchangeOrder[]> => {
     const response = await fetch(
       `${BASE_URL}/order-service/getAllExchangeOrder`,
       {
-        headers: { Authorization: `Bearer ${accessToken.token}` },
+        headers: { Authorization: `Bearer ${getAccessToken()}` },
       }
     );
     if (!response.ok) throw new Error();
@@ -172,7 +173,7 @@ export const fetchDeliveryBoys = async (): Promise<DeliveryBoy[]> => {
     const response = await fetch(`${BASE_URL}/user-service/deliveryBoyList`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${accessToken.token}`,
+        Authorization: `Bearer ${getAccessToken()}`,
         "Content-Type": "application/json",
       },
     });
@@ -191,7 +192,7 @@ export const rejectOrder = async (
     const response = await axios.post(
       `${BASE_URL}/order-service/reject_orders`,
       { orderId, cancelReason },
-      { headers: { Authorization: `Bearer ${accessToken.token}` } }
+      { headers: { Authorization: `Bearer ${getAccessToken()}` } }
     );
     if (!response.data.status) throw new Error(response.data.message);
   } catch {
@@ -231,7 +232,7 @@ export const assignOrderToDeliveryBoy = async (
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken.token}`,
+        Authorization: `Bearer ${getAccessToken()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
@@ -255,7 +256,7 @@ export const assignExchangeOrder = async (
       {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${accessToken.token}`,
+          Authorization: `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -288,7 +289,7 @@ export const reassignExchangeOrder = async (
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken.token}`,
+          Authorization: `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ exchangeId, ...data }),
@@ -302,16 +303,25 @@ export const reassignExchangeOrder = async (
 
 export const fetchGroupedProducts = async () => {
   const response = await fetch(
-    `${BASE_URL}/product-service/showGroupItemsForCustomrs`
+    `${BASE_URL}/product-service/showGroupItemsForCustomrs`,{
+       headers: {
+          Authorization: `Bearer ${getAccessToken()}`,
+          "Content-Type": "application/json",
+        },
+    }
   );
   if (!response.ok) throw new Error("Failed to fetch products");
   return response.json();
 };
 
 export const updateOrderItem = async (orderRequest: OrderRequest) => {
-  const response = await fetch(`${BASE_URL}/order-service/orderItemsUpdate`, {
+  const response = await fetch(`${BASE_URL}/order-service/orderItemsUpdate`,
+     {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+   headers: {
+          Authorization: `Bearer ${getAccessToken()}`,
+          "Content-Type": "application/json",
+        },
     body: JSON.stringify(orderRequest),
   });
   if (!response.ok) throw new Error("Failed to update item");

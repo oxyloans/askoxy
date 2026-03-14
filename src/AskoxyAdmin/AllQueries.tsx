@@ -5,6 +5,8 @@ import Sider from "./Sider";
 // import { setEmitFlags } from "typescript";
 import BASE_URL from "../Config";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { Content } = Layout;
 const { Option } = Select;
 
@@ -54,20 +56,18 @@ const AllQueries: React.FC = () => {
   const fetchQueries = async () => {
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken");
+      const requestPayload: any = {
+        projectType: "ASKOXY",
+        queryStatus,
+      };
 
-    const requestPayload: any = {
-      projectType: "ASKOXY",
-      queryStatus,
-      // userId,
-    };
-
-    if (askOxyOffersFilter !== "ALL") {
-      requestPayload.askOxyOfers = askOxyOffersFilter;
-    }
+      if (askOxyOffersFilter !== "ALL") {
+        requestPayload.askOxyOfers = askOxyOffersFilter;
+      }
       const response = await axios.post(
         `${BASE_URL}/user-service/write/getAllQueries`,
-        requestPayload
+        requestPayload,
+        { headers: { Authorization: `Bearer ${getAccessToken()}` } }
       );
 
      const sortedQueries = [...response.data].sort(
@@ -163,6 +163,7 @@ const AllQueries: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${getAccessToken()}`,
         },
 
         body: JSON.stringify(data),

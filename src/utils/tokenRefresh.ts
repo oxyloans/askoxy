@@ -39,14 +39,14 @@ export const refreshAccessToken = async (): Promise<boolean> => {
     const data = await response.json();
 
     // Update tokens in storage
-    if (data.accessToken) {
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("token", data.accessToken); // For backward compatibility  
+    if (data.mobileOtpSession) {
+      localStorage.setItem("accessToken", data.mobileOtpSession);
+      localStorage.setItem("token", data.mobileOtpSession); // For backward compatibility  
       console.log("Access token refreshed successfully");
     }
 
-    if (data.refreshToken) {
-      sessionStorage.setItem("refreshToken", data.refreshToken);
+    if (data.mobileNumber) {
+      sessionStorage.setItem("refreshToken", data.mobileNumber);
       console.log("Refresh token updated");
     }
 

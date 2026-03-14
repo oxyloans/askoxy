@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 import BASE_URL from "../Config";
+
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 // Define types for our data
 interface Product {
   barcode: string;
@@ -104,7 +106,6 @@ const BarcodeScanner: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const token = localStorage.getItem("accessToken");
   const customerId = localStorage.getItem("userId");
 
   // Fetch all categories and products when component mounts
@@ -187,7 +188,7 @@ const BarcodeScanner: React.FC = () => {
       const response = await axios.get(
         `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${getAccessToken()}` },
         }
       );
 
@@ -301,7 +302,11 @@ const BarcodeScanner: React.FC = () => {
     setCategories(mockCategories);
 
     axios
-      .get(BASE_URL + "/product-service/showItemsForCustomrs")
+      .get(BASE_URL + "/product-service/showItemsForCustomrs",
+      {
+        headers: { Authorization: `Bearer ${getAccessToken()}` }
+      }
+      )
       .then((response) => {
         setCategories(response.data);
       })
@@ -667,7 +672,8 @@ const BarcodeScanner: React.FC = () => {
 
       const response = await axios.post(
         BASE_URL + "/product-service/individualBarcodeScanner",
-        payload
+        payload,
+        { headers: { Authorization: `Bearer ${getAccessToken()}` } }
       );
 
       // Handle the response

@@ -7,7 +7,8 @@ import {
   CheckOutlined,
   TruckOutlined,
   UnorderedListOutlined,
-  UserOutlined,CarOutlined,
+  UserOutlined,
+  CarOutlined,
   InboxOutlined,
   QuestionCircleOutlined,
   QrcodeOutlined,
@@ -20,10 +21,11 @@ import {
   LineChartOutlined,
   AppstoreOutlined,
   CodeSandboxOutlined,
-  SyncOutlined,ShopOutlined,
+  SyncOutlined,
+  ShopOutlined,
   LinkOutlined,
 } from "@ant-design/icons";
-import { Truck } from 'lucide-react';
+import { Truck } from "lucide-react";
 import { FaChartBar, FaComments } from "react-icons/fa";
 import { stopTokenRefresh } from "../utils/tokenRefresh";
 
@@ -115,14 +117,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <QuestionCircleOutlined />,
       label: "All Queries",
     },
-      {
+    {
       key: "/home/addvehicle",
       icon: <CarOutlined />,
       label: "Vehicle Report",
     },
-      {
+    {
       key: "/home/marketreport",
-      icon: <ShopOutlined/>,
+      icon: <ShopOutlined />,
       label: "Market Report",
     },
     {
@@ -144,8 +146,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "/home/cartamountbasedorderplaces",
       icon: <ShoppingCartOutlined />,
       label: "Cart Amount Based Order Places",
-    }
-   
+    },
+
     // {
     //   key: "/home/feedback",
     //   icon: <FaComments />,
@@ -159,13 +161,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const handleLogout = () => {
-     stopTokenRefresh();
-    localStorage.removeItem("partner_orderId");
-    localStorage.removeItem("partner_orderparams");
-    localStorage.removeItem("partner_dbName");
-    localStorage.removeItem("partner_dbId");
-    localStorage.removeItem("partner_Token");
-    localStorage.removeItem("partner_scrollPosition");
+    stopTokenRefresh();
+    sessionStorage.removeItem("partner_orderId");
+    sessionStorage.removeItem("partner_orderparams");
+    sessionStorage.removeItem("partner_dbName");
+    sessionStorage.removeItem("partner_dbId");
+    localStorage.removeItem("partner_accesstoken");
+    sessionStorage.removeItem("partner_refreshtoken");
+    sessionStorage.removeItem("partner_type");
+    sessionStorage.removeItem("partner_scrollPosition");
     navigate("/partnerlogin");
   };
 

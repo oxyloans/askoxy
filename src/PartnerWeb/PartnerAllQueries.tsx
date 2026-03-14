@@ -3,6 +3,8 @@ import axios from "axios";
 import { Layout, Select, Table, Modal, Spin } from "antd";
 import BASE_URL from "../Config";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { Content } = Layout;
 const { Option } = Select;
 
@@ -56,7 +58,8 @@ const AllQueries: React.FC = () => {
 
       const response = await axios.post(
         `${BASE_URL}/user-service/write/getAllQueries`,
-        requestPayload
+        requestPayload,
+        { headers: { Authorization: `Bearer ${getAccessToken()}` } }
       );
 
       setQueries(response.data);
@@ -146,6 +149,7 @@ const AllQueries: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${getAccessToken()}`,
         },
 
         body: JSON.stringify(data),

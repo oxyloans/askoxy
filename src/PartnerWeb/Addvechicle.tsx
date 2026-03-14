@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import BASE_URL from "../Config";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 // Types
 interface Vehicle {
   id: string;
@@ -192,6 +194,7 @@ const VehicleManagement: React.FC = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
         }
       );
@@ -224,6 +227,7 @@ const VehicleManagement: React.FC = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
         }
       );
@@ -296,6 +300,7 @@ const VehicleManagement: React.FC = () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify(payload),
         }

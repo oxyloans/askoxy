@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import BASE_URL from "../Config";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 interface Version {
   version: string;
   versionType: "ANDROID" | "IOS";
@@ -38,13 +40,16 @@ const VersionUpdate: React.FC = () => {
     try {
       const [androidCustomerResponse, iosCustomerResponse, androidSellerResponse] = await Promise.all([
         fetch(
-          `${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=ANDROID`
+          `${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=ANDROID`,
+          { headers: { Authorization: `Bearer ${getAccessToken()}` } }
         ),
         fetch(
-          `${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=IOS`
+          `${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=IOS`,
+          { headers: { Authorization: `Bearer ${getAccessToken()}` } }
         ),
         fetch(
-          `${BASE_URL}/product-service/getAllVersions?userType=SELLER&versionType=ANDROID`
+          `${BASE_URL}/product-service/getAllVersions?userType=SELLER&versionType=ANDROID`,
+          { headers: { Authorization: `Bearer ${getAccessToken()}` } }
         ),
       ]);
 
@@ -82,6 +87,7 @@ const VersionUpdate: React.FC = () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify({
             list: [

@@ -42,6 +42,8 @@ import { Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -128,7 +130,10 @@ const Stats: React.FC = () => {
             startDate: startDate.format("YYYY-MM-DD"),
             endDate: endDate.format("YYYY-MM-DD"),
           },
-          headers: { accept: "*/*" },
+          headers: {
+            accept: "*/*",
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
         }
       );
 
@@ -193,6 +198,7 @@ const Stats: React.FC = () => {
           method: "GET",
           headers: {
             accept: "*/*",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
         }
       );
@@ -372,7 +378,7 @@ const Stats: React.FC = () => {
       message.info("please login into partner for watch order details");
       return;
     }
-    localStorage.setItem("partner_orderId", order.orderId);
+    sessionStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 
@@ -624,6 +630,7 @@ const Stats: React.FC = () => {
           method: "GET",
           headers: {
             Accept: "*/*",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
         }
       );

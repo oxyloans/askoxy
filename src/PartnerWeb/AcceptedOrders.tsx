@@ -25,6 +25,8 @@ interface Address {
   pincode?: string;
 }
 
+const getToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const AcceptedOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -37,7 +39,8 @@ const AcceptedOrders: React.FC = () => {
       try {
         setLoading(true);
         const response = await axios.get<Order[]>(
-          `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=2`
+          `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=2`,
+          { headers: { Authorization: `Bearer ${getToken()}` } }
         );
 
         const filteredOrders = response.data.filter((order) => !order.testUser);
@@ -76,7 +79,7 @@ const AcceptedOrders: React.FC = () => {
   };
 
   const handleOrderDetails = (order: Order) => {
-    localStorage.setItem("partner_orderId", order.orderId);
+    sessionStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 

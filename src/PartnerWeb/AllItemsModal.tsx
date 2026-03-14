@@ -18,7 +18,6 @@ import {
   MinusOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import BASE_URL from "../Config";
 import { fetchGroupedProducts, updateOrderItem } from "./partnerapi";
 
 const { Search } = Input;

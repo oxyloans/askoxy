@@ -3,6 +3,8 @@ import { Button, Input, Select, Card, message, Spin, Divider } from "antd";
 import { UserOutlined, PhoneOutlined, PlusOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { Option } = Select;
 
 interface UserData {
@@ -56,6 +58,7 @@ const AddReference: React.FC = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify({
             number: searchInput,
@@ -103,6 +106,7 @@ const AddReference: React.FC = () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify(referenceData),
         }
