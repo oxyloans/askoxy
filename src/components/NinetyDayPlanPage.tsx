@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { stopTokenRefresh } from "../utils/tokenRefresh";
 
 type ModuleKey = "lo-system" | "fm-system" | "cm-system";
 type ViewType = "business" | "system";
@@ -1305,6 +1306,7 @@ export default function NinetyDayPlanPage() {
   }, [bookDailyPlan, bookDay]);
 
   const handleLogout = useCallback(() => {
+     stopTokenRefresh();
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = "/90dayjobplan";

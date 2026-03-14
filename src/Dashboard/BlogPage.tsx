@@ -9,7 +9,7 @@ import {
   ArrowRightOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-
+import { uploadurlwithId } from "../Config";
 const Header1 = React.lazy(() => import("../components/Header"));
 const Footer = React.lazy(() => import("../components/Footer"));
 
@@ -22,7 +22,6 @@ const BlogsPage: React.FC = () => {
 
   const navigate = useNavigate();
   const prevTabRef = useRef<TabKey>("ALL");
-
   const userId =
     localStorage.getItem("userId") ||
     localStorage.getItem("customerId") ||
@@ -157,7 +156,7 @@ const BlogsPage: React.FC = () => {
       <div className="blogsGridWrap">
         <div className="blogsGrid">
           {list.map((campaign) => {
-            const mediaUrl = campaign.imageUrls?.[0]?.imageUrl;
+            const mediaUrl =`${uploadurlwithId}${campaign.imageUrls?.[0]?.imageUrl}`;
             const showImage = !!mediaUrl && isImage(mediaUrl);
             const showVideo = !!mediaUrl && isVideo(mediaUrl);
 

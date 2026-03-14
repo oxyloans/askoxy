@@ -424,6 +424,7 @@ const FreelancerList: React.FC = () => {
           title="Resume Viewer"
           open={showResumeModal}
           onCancel={() => {
+            setCurrentResumeUrl("");
             setShowResumeModal(false);
             setIsLoading(true);
           }}

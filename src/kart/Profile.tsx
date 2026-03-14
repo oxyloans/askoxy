@@ -96,7 +96,7 @@ const ProfilePage = () => {
   const [salt, setSalt] = useState();
   const [whatsappOtpSession, setWhatsappOtpSession] = useState();
 
-  const token = localStorage.getItem("token") || "";
+  const token = localStorage.getItem("accessToken") || "";
   const loginMethod = localStorage.getItem("loginMethod") || "";
   const isFromWhatsApp = loginMethod === "whatsapp";
 

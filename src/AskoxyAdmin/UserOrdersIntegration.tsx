@@ -235,7 +235,7 @@ const UserOrdersIntegration: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/user-service/assigned-users/${userId}`,
         { pageNo: currentPage, pageSize },
-        { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("accessToken")}` } },
       );
 
       setUsers(response.data?.activeUsersResponse || []);
@@ -255,7 +255,7 @@ const UserOrdersIntegration: React.FC = () => {
       }&size=${pageSize}`;
 
       const response = await axios.get(url, {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
       });
 
       setOrders(response.data?.content || []);
@@ -272,7 +272,7 @@ const UserOrdersIntegration: React.FC = () => {
     try {
       const response = await axios.get(
         `${BASE_URL}/order-service/getOrdersByOrderId/${orderId}`,
-        { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("accessToken")}` } },
       );
 
       if (response.data && response.data.length > 0) {
@@ -321,14 +321,14 @@ const UserOrdersIntegration: React.FC = () => {
       const usersReq = axios.post(
         `${BASE_URL}/user-service/assigned-users/${userId}`,
         { pageNo: currentPage, pageSize },
-        { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("accessToken")}` } },
       );
 
       const ordersReq = axios.get(
         `${BASE_URL}/order-service/getAllOrdersOnStatus?page=${
           currentPage - 1
         }&size=${pageSize}`,
-        { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("accessToken")}` } },
       );
 
       const [usersRes, ordersRes] = await Promise.all([usersReq, ordersReq]);

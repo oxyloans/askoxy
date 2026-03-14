@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSearch } from "../BharathAIStore/context/SearchContext";
-import BASE_URL from "../Config";
+import BASE_URL,{uploadurlwithId} from "../Config";
 import axios from "axios";
 import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
 import { message } from "antd";
@@ -1373,7 +1373,7 @@ const AllAIStore: React.FC = () => {
                                 {/* Image on top if valid */}
                                 {hasValidImage && (
                                   <img
-                                    src={agent.profileImageUrl!}
+                                    src={`${uploadurlwithId}${agent.profileImageUrl!}`}
                                     alt={agent.agentName}
                                     className="relative z-10 h-full w-full object-cover bg-white"
                                     loading="lazy"
@@ -1973,17 +1973,19 @@ const AllAIStore: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  <label htmlFor="blogImageUpload" className="mb-1 block text-sm font-semibold text-slate-700">
                     Blog Image (optional)
                   </label>
 
                   <div className="flex flex-wrap items-center gap-3">
                     <input
+                      id="blogImageUpload"
                       ref={blogFileInputRef}
                       type="file"
                       accept="image/*"
                       multiple
                       className="hidden"
+                      aria-label="Upload blog images"
                       onChange={(e) => {
                         const inputEl = e.target as HTMLInputElement;
                         const files = Array.from(inputEl.files || []);
@@ -2089,24 +2091,31 @@ const AllAIStore: React.FC = () => {
 
             <div className="mt-5 space-y-4">
               <div>
-                <div className="mb-2 text-sm font-bold text-slate-700">
+
+
+                <label htmlFor="companyEmailId" className="mb-2 text-sm font-bold text-slate-700">
                   Company Email ID
-                </div>
+                </label>
                 <input
+                  id="companyEmailId"
+                  type="email"
                   value={companyEmailId}
                   onChange={(e) => setCompanyEmailId(e.target.value)}
                   placeholder="name@gmail.com"
+                  aria-label="Company Email ID"
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 />
               </div>
 
               <div>
-                <div className="mb-2 text-sm font-bold text-slate-700">
+                <label htmlFor="personRole" className="mb-2 text-sm font-bold text-slate-700">
                   Your Role
-                </div>
+                </label>
                 <select
+                  id="personRole"
                   value={personRole}
                   onChange={(e) => setPersonRole(e.target.value)}
+                  aria-label="Select your role"
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 >
                   <option value="">Select role</option>
@@ -2119,9 +2128,12 @@ const AllAIStore: React.FC = () => {
 
                 {personRole === "Other" && (
                   <input
+                    id="personRoleOther"
+                    type="text"
                     value={personRoleOther}
                     onChange={(e) => setPersonRoleOther(e.target.value)}
                     placeholder="Type your role"
+                    aria-label="Type your custom role"
                     className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                   />
                 )}
@@ -2179,10 +2191,14 @@ const AllAIStore: React.FC = () => {
             </div>
 
             <div className="mt-5 space-y-4">
+              <label htmlFor="otpInput" className="sr-only">Enter OTP</label>
               <input
+                id="otpInput"
+                type="text"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 placeholder="Enter OTP"
+                aria-label="Enter OTP code"
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
               />
 

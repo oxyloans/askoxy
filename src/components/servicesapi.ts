@@ -190,6 +190,12 @@ export const submitInterest = async (
         userId,
         projectType: "ASKOXY",
         userRole,
+      },
+      {
+        headers:{
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        }
       }
     );
     if (response.status === 200) {

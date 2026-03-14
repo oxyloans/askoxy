@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { message } from "antd";
 import VideoImage from "../assets/img/Videothumb.png";
 import { fetchCampaigns, Campaign } from "../components/servicesapi";
+import {uploadurlwithId } from "../Config";
 
 interface DashboardItem {
   title: string;
@@ -45,7 +46,7 @@ const ServicesPage: React.FC = () => {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
-
+console.log({uploadurlwithId})
   useEffect(() => {
     const loadCampaigns = async () => {
       try {
@@ -320,14 +321,16 @@ const ServicesPage: React.FC = () => {
                     <div className="mb-2">
                       {campaign.imageUrls && campaign.imageUrls.length > 0 && (
                         <img
-                          src={campaign.imageUrls[0].imageUrl}
+                          // src={campaign.imageUrls[0].imageUrl}
+                          src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
+
                           alt={`${campaign.campaignType}`}
                           className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
                         />
                       )}
                     </div>
                     <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                      {campaign.campaignType}
+                      {campaign.campaignType} 
                     </h3>
                   </div>
                 ))}

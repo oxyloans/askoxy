@@ -346,7 +346,7 @@ const HiddenLogin = () => {
             <KeyRound className="w-4 h-4" />
             Hidden Login
           </button>
-          {/* <button
+          <button
             onClick={() => handleTabSwitch("onboard")}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               activeTab === "onboard"
@@ -356,7 +356,7 @@ const HiddenLogin = () => {
           >
             <UserPlus className="w-4 h-4" />
             Onboard User
-          </button> */}
+          </button>
         </div>
 
         {/* Success Message */}

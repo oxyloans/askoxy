@@ -36,6 +36,12 @@ const FreeAIBookHome: React.FC = () => {
             mobileNumber: mobileNumber || whatsappNumber,
             userId,
             projectType: "ASKOXY",
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
           }
         );
 

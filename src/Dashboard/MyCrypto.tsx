@@ -181,7 +181,12 @@ const formatIST = (dateString?: string) => {
       }
 
       const response = await axios.get(
-        `${BASE_URL}/user-service/getProfile/${userId}`
+        `${BASE_URL}/user-service/getProfile/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          }
+        }
       );
 
       if (isMounted.current) {

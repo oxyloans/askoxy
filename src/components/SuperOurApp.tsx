@@ -95,13 +95,13 @@ export default function SuperOurApp() {
   // Row-3: Nyaya GPT, GLMS, CA&CS, Study Abroad
   // ❌ Crypto removed from grid (now separate button below)
   const tiles: Tile[] = [
-    // { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
-    {
-      id: "s16",
-      src: s16,
-      route: "/freelancers",
-      title: "Freelance Marketplace",
-    },
+    { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
+    // {
+    //   id: "s16",
+    //   src: s16,
+    //   route: "/freelancers",
+    //   title: "Freelance Marketplace",
+    // },
     {
       id: "s7",
       src: s7,

@@ -264,7 +264,9 @@ const Home: React.FC = () => {
 
       try {
         const response = await axios.get(
-          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
+          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,{
+            headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}`, },
+          }
         );
 
         const cartList = response.data?.customerCartResponseList || [];

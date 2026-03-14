@@ -84,7 +84,12 @@ const Tabview = () => {
     try {
       const userId = localStorage.getItem("userId");
       const response = await axios.get(
-        `${BASE_URL}/user-service/getProfile/${userId}`
+        `${BASE_URL}/user-service/getProfile/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
       );
       setMultichainId(response.data.multiChainId);
       setBmvCoin(response.data.coinAllocated);

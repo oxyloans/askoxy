@@ -38,6 +38,12 @@ const FreeAiBook: React.FC = () => {
             userId,
             projectType: "ASKOXY",
           },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          }
         );
 
         if (response.status === 200) {

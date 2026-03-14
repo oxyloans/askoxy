@@ -5,10 +5,10 @@ import App from "./App"
 import { BrowserRouter } from "react-router-dom";
 import { Provider } from 'react-redux';
 import { store } from './store';
-import { initializeSecurity } from './utils/security';
+// import { initializeSecurity } from './utils/security';
 
 // Initialize security measures
-initializeSecurity();
+// initializeSecurity();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

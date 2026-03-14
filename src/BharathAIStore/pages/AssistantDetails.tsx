@@ -32,6 +32,7 @@ import SubscriptionModal from "../components/SubscriptionModal";
 import { set } from "lodash";
 import { Button } from "antd";
 import { log } from "node:console";
+import { stopTokenRefresh } from "../../utils/tokenRefresh";
 /** ---------------- Types ---------------- */
 interface Assistant {
   id: string;
@@ -2058,6 +2059,7 @@ ${url}`.trim();
   }, [history, historySearch]);
   const handleLogout = () => {
     try {
+       stopTokenRefresh();
       localStorage.removeItem("userId");
       localStorage.removeItem("token");
       localStorage.clear();

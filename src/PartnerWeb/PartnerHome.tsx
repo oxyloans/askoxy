@@ -4,6 +4,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./PartnerSidebar";
 import Header from "./HeaderPartner";
 import Footer from "../components/Footer";
+import { stopTokenRefresh } from "../utils/tokenRefresh";
 
 const { Content, Sider, Footer: AntFooter } = Layout;
 
@@ -24,6 +25,7 @@ const PartnerHome: React.FC = () => {
   };
 
   const handleLogout = () => {
+     stopTokenRefresh();
     localStorage.removeItem("partner_orderId");
     localStorage.removeItem("partner_orderparams");
     localStorage.removeItem("partner_dbName");

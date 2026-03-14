@@ -106,7 +106,7 @@ const [askOxyOffer, setAskOxyOffer] = useState<string>("FREESAMPLE");
   const fetchProfileData = async () => {
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const customerId = localStorage.getItem('userId');
 
       const response = await axios.get(

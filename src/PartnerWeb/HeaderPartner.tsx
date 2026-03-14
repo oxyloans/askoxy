@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/img/logo.png";
+import { stopTokenRefresh } from "../utils/tokenRefresh";
 
 const { Header } = Layout;
 
@@ -27,6 +28,7 @@ const PartnerHeader: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
+     stopTokenRefresh();
     localStorage.removeItem("partner_orderId");
     localStorage.removeItem("partner_orderparams");
     localStorage.removeItem("partner_dbName");

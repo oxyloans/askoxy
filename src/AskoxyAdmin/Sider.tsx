@@ -50,6 +50,7 @@ import {
 import { message } from "antd";
 import { MdPayment, MdWork } from "react-icons/md";
 import { ApartmentOutlined } from "@ant-design/icons";
+import { stopTokenRefresh } from "../utils/tokenRefresh";
 interface SidebarSubItem {
   title: string;
   icon: React.ReactNode;
@@ -84,10 +85,12 @@ const Sidebar: React.FC = () => {
   const primaryType = localStorage.getItem("admin_primaryType");
 
   const handleLogout = () => {
+     stopTokenRefresh();
     localStorage.removeItem("admin_primaryType");
     localStorage.removeItem("admin_uniquId");
     localStorage.removeItem("admin_userName");
     localStorage.removeItem("admin_acToken");
+    sessionStorage.removeItem("refreshToken");
     navigate("/admin");
   };
 

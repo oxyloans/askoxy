@@ -27,6 +27,7 @@ import {
 import MarkdownRenderer from "./MarkdownRenderer";
 import { message, Modal } from "antd";
 import BASE_URL from "../../Config";
+import { stopTokenRefresh } from "../../utils/tokenRefresh";
 
 /** ---------------- Types ---------------- */
 
@@ -1709,6 +1710,7 @@ const TestAgentDetails: React.FC = () => {
   }, [history, historySearch]);
   const handleLogout = () => {
     try {
+       stopTokenRefresh();
       localStorage.removeItem("userId");
       localStorage.removeItem("token");
       localStorage.clear();

@@ -5,6 +5,8 @@ import Footer from "../components/Footer";
 import { message, Modal, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import Header1 from "./Header";
+import {uploadurlwithId} from "../Config";
+
 import {
   fetchCampaigns,
   submitWriteToUsQuery,
@@ -51,6 +53,7 @@ const CampaignDetails: React.FC = () => {
   const [commentsError, setCommentsError] = useState<string | undefined>(
     undefined,
   );
+  console.log({uploadurlwithId})
   const [comments, setComments] = useState("");
 
   const whatsappNumber = localStorage.getItem("whatsappNumber");
@@ -400,7 +403,7 @@ const CampaignDetails: React.FC = () => {
             {/* Title + actions */}
             <div className="flex flex-col mb-6 w-full">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-4">
-                {campaign.campaignType}
+                {campaign.campaignType} 
               </h1>
 
               <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-end">
@@ -501,17 +504,17 @@ const CampaignDetails: React.FC = () => {
             rounded-xl overflow-hidden
           "
                       >
-                        {isVideoUrl(image.imageUrl) ? (
+                        {isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) || isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) ? (
                           <video
                             controls
                             className="max-w-full max-h-full w-auto h-auto self-start"
                             preload="metadata"
                           >
-                            <source src={image.imageUrl} type="video/mp4" />
+                            <source src={`${uploadurlwithId}${image.imageUrl}`} type="video/mp4" />
                           </video>
                         ) : (
                           <img
-                            src={image.imageUrl}
+                            src={`${uploadurlwithId}${image.imageUrl}`}
                             alt={`${campaign.campaignType} - ${idx + 1}`}
                             className="w-full h-auto object-contain sm:object-cover rounded-lg"
                             style={{

@@ -129,7 +129,7 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
   
   // Get auth details once and memoize them
   const customerId = localStorage.getItem("userId") || "";
-  const token = localStorage.getItem("token") || "";
+  const token = localStorage.getItem("accessToken") || "";
   const loginMethod = localStorage.getItem("loginMethod") || "";
   const isFromWhatsApp = loginMethod === "whatsapp";
   const [isWhatsappVerified, setIsWhatsappVerified] = useState(false);

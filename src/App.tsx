@@ -4,6 +4,7 @@ import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 import { SearchProvider } from "./until/SearchContext";
+import { useTokenRefresh } from "./utils/useTokenRefresh";
 import AppliedJobs from "./Dashboard/AppliedJobs";
 import NinetyDayPlanPage from "./components/NinetyDayPlanPage";
 import CASRouteRenderer1 from "./GLMS/CAS/Pages/CASRouteRenderer1";
@@ -447,6 +448,9 @@ const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
   useGtagPageView();
+  
+  // ✅ Initialize automatic token refresh
+  useTokenRefresh();
 
   useEffect(() => {
     const validEntryPoints = [
@@ -510,6 +514,8 @@ const App: React.FC = () => {
     );
   };
 
+  useTokenRefresh();
+
   return (
     <CartProvider>
       <SearchProvider>
@@ -537,7 +543,7 @@ const App: React.FC = () => {
                 path="/carnivals/edit/:id"
                 element={<CarnivalEditPage />}
               />
-              <Route path="/freelancers" element={<FreelancerList />} />
+              {/* <Route path="/freelancers" element={<FreelancerList />} /> */}
 
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />

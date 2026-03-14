@@ -25,6 +25,7 @@ import {
 } from "@ant-design/icons";
 import { Truck } from 'lucide-react';
 import { FaChartBar, FaComments } from "react-icons/fa";
+import { stopTokenRefresh } from "../utils/tokenRefresh";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -158,6 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const handleLogout = () => {
+     stopTokenRefresh();
     localStorage.removeItem("partner_orderId");
     localStorage.removeItem("partner_orderparams");
     localStorage.removeItem("partner_dbName");

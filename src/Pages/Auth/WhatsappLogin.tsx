@@ -35,6 +35,7 @@ interface UserResponse {
   salt?: string;
   otpGeneratedTime?: string;
   message?: string;
+  refreshToken?: string;
 }
 
 interface ErrorResponse {
@@ -151,6 +152,7 @@ const WhatsappLogin: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
   const pendingGoogleAuth = sessionStorage.getItem("pendingGoogleAuth");
+     const deviceId = crypto.randomUUID();
 
   // OAuth URL for Gmail authentication
   const state = encodeURIComponent(JSON.stringify({ primaryType }));
@@ -443,6 +445,7 @@ const WhatsappLogin: React.FC = () => {
       setIsLoading(false);
       return;
     }
+ 
 
     try {
       const phoneWithoutCode = extractPhoneWithoutCode(phoneNumber);
@@ -451,6 +454,7 @@ const WhatsappLogin: React.FC = () => {
         userType: "Login",
         countryCode,
         primaryType,
+        deviceId,
         ...(otpMethod === "whatsapp"
           ? { whatsappNumber: phoneWithoutCode }
           : { mobileNumber: phoneWithoutCode }),
@@ -557,6 +561,7 @@ const WhatsappLogin: React.FC = () => {
         userType: "Login",
         countryCode,
         primaryType,
+        deviceId,
         ...(otpMethod === "whatsapp"
           ? {
               whatsappNumber: phoneWithoutCode,
@@ -580,6 +585,13 @@ const WhatsappLogin: React.FC = () => {
       );
       if (response.data && response.data.accessToken && response.data.userId) {
         localStorage.setItem("accessToken", response.data.accessToken);
+        localStorage.setItem("token", response.data.accessToken);
+        
+        // Store refresh token if available
+        if (response.data.refreshToken) {
+          sessionStorage.setItem("refreshToken", response.data.refreshToken);
+        }
+        
         localStorage.setItem("primaryType", primaryType);
 
         // Fetch user details

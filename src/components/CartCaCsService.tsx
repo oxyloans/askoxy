@@ -51,7 +51,7 @@ const CartCaCsService: React.FC = () => {
 
   // Get values from localStorage
     const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token") ||
+    const token = localStorage.getItem("accessToken") ||
       localStorage.getItem("authToken") ||
       localStorage.getItem("accessToken");
     const customerId = localStorage.getItem("customerId") ||

@@ -345,6 +345,7 @@ const RegisteredUser: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
             accept: "*/*",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );

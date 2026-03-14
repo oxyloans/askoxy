@@ -84,7 +84,7 @@ const Content1: React.FC = () => {
   }, []);
 
   const customerId = localStorage.getItem("userId") || "";
-  const token = localStorage.getItem("token") || "";
+  const token = localStorage.getItem("accessToken") || "";
 
   useEffect(() => {
     if (customerId) {

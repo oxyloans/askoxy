@@ -25,6 +25,7 @@ import {
   checkEligibilityForActiveZones,
 } from "./DeliveryFee";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { head } from "lodash";
 
 interface CartItem {
   itemId: string;
@@ -895,6 +896,9 @@ const CheckoutPage: React.FC = () => {
       const response = await axios.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
         formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
       );
       localStorage.setItem("askOxyOfers", response.data.askData);
 

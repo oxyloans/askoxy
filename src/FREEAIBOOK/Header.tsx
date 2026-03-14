@@ -43,6 +43,12 @@ const Header: React.FC = () => {
           mobileNumber,
           userId,
           projectType: "ASKOXY",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
         }
       );
 

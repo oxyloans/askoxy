@@ -6,7 +6,7 @@ import {
   IconSearch,
   IconFilter,
 } from "@tabler/icons-react";
-import BASE_URL from "../Config";
+import BASE_URL ,{uploadurlwithId}from "../Config";
 import axios from "axios";
 import { Modal, Radio, Input, Select, Spin, message } from "antd";
 
@@ -751,7 +751,7 @@ const StoreCard: React.FC<{
     >
       <DynamicBanner
         storeName={store.storeName}
-        storeImageUrl={store.storeImageUrl}
+        storeImageUrl={`${uploadurlwithId}${store.storeImageUrl}`}
       />
 
       <div className="flex flex-1 flex-col px-2 pb-2 pt-3">

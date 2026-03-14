@@ -94,7 +94,7 @@ async function authFetch(
   const headers: Record<string, string> = {
     ...base,
     ...incoming,
-    ...(shouldSetJson ? { "Content-Type": "application/json" } : {}),
+    ...(shouldSetJson ? { "Content-Type": "application/json", Authorization: `Bearer ${getAccessToken()}` } : {}),
   };
   return fetch(input, {
     mode: "cors",

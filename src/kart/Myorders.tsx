@@ -477,7 +477,7 @@ const MyOrders: React.FC = () => {
   ): Promise<OrderDetailsResponse[]> => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       const API_URL = `${BASE_URL}/order-service/getAllOrders_customerId`;
 
       const response = await axios.post(

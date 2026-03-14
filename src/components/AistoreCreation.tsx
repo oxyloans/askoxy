@@ -30,7 +30,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 
-import BASE_URL from "../Config";
+import BASE_URL,{uploadurlwithId} from "../Config";
 import type { FormInstance } from "antd/es/form";
 
 const PAGE_SIZE = 100;
@@ -1178,7 +1178,7 @@ const AgentStoreManager: React.FC = () => {
                     <strong>Image Preview:</strong>
                   </p>
                   <img
-                    src={form.getFieldValue("storeImageUrl") as string}
+                    src={`${uploadurlwithId}${form.getFieldValue('storeImageUrl')}`}
                     alt="store"
                     style={{
                       width: 120,

@@ -186,7 +186,7 @@ const OrderDetailsPage: React.FC = () => {
   const [orderDetails, setOrderDetails] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
+  const accessToken = JSON.parse(localStorage.getItem("accessToken") || "{}");
   // const { orderId, orderStatus } = useParams<{
   //   orderId: string;
   //   orderStatus: string;
@@ -230,7 +230,12 @@ const OrderDetailsPage: React.FC = () => {
   const fetchContainerStatus = (ordersData: Order) => {
     axios
       .get(
-        `${BASE_URL}/cart-service/cart/ContainerInterested/${ordersData?.customerId}`
+        `${BASE_URL}/cart-service/cart/ContainerInterested/${ordersData?.customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       )
       .then((response) => {
         const status = response.data?.freeContainerStatus;
@@ -570,7 +575,11 @@ const OrderDetailsPage: React.FC = () => {
     try {
       await axios.patch(
         `${BASE_URL}/order-service/containerAddForStore`,
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          }}
       );
 
       message.success(
@@ -652,6 +661,7 @@ const OrderDetailsPage: React.FC = () => {
             headers: {
               accept: "*/*",
               "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`
             },
           }
         );
@@ -671,7 +681,13 @@ const OrderDetailsPage: React.FC = () => {
           {
             orderId: orderId,
             orderStatus: status || "3",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
           }
+
         );
         if (response.status === 200) {
           const deliveryData = response.data[0];
@@ -691,6 +707,7 @@ const OrderDetailsPage: React.FC = () => {
     }
   };
 
+
   const findOrderDetails = async () => {
     setLoading(true);
     try {
@@ -700,6 +717,7 @@ const OrderDetailsPage: React.FC = () => {
           method: "GET",
           headers: {
             Accept: "*/*",
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );
@@ -853,7 +871,7 @@ const OrderDetailsPage: React.FC = () => {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${accessToken.token}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       });
@@ -901,7 +919,7 @@ const OrderDetailsPage: React.FC = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${accessToken.token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );
@@ -944,7 +962,7 @@ const OrderDetailsPage: React.FC = () => {
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken.token}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
@@ -1752,7 +1770,12 @@ const OrderDetailsPage: React.FC = () => {
 
             await axios.patch(
               `${BASE_URL}/order-service/orderAddressUpdate`,
-              payload
+              payload,
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+              }
             );
 
             message.success("Address updated successfully!");

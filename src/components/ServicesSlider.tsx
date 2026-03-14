@@ -233,7 +233,7 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
               "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
           )
           .map((campaign) => ({
-            image: campaign.imageUrls?.[0]?.imageUrl || "",
+            image: `${uploadurlwithId}${campaign.imageUrls?.[0]?.imageUrl}` || "",
             title: campaign.campaignType,
             path: "", // Will be handled by click handler
             campaign: campaign,
@@ -561,7 +561,7 @@ const rateLabel = (n: number) => {
               animate="visible"
             >
               {displayedBlogs.map((campaign) => {
-                const mediaUrl = campaign.imageUrls?.[0]?.imageUrl || "";
+                const mediaUrl =  `${uploadurlwithId}${campaign.imageUrls?.[0]?.imageUrl}`;
                 const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(mediaUrl);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
 
@@ -778,7 +778,7 @@ flex flex-col border border-gray-100 m-2"
         )}
       </div>
 
-      <hr className="p-2 mt-12"></hr>
+      {/* <hr className="p-2 mt-12"></hr>
 
       <div className="relative z-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:justify-between sm:items-center mb-10">
@@ -867,14 +867,14 @@ flex flex-col border border-gray-100 m-2"
               flex flex-col
             "
                 >
-                  {/* Top icon block */}
+                  
                   <div className="pt-6 pb-4 flex justify-center">
                     <div className="w-28 sm:w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
                       <div className="text-3xl">🧑‍💻</div>
                     </div>
                   </div>
 
-                  {/* Name & Status */}
+                 
                   <div className="px-4 pb-3 space-y-2">
                     <div className="text-center">
                       <span
@@ -887,8 +887,7 @@ flex flex-col border border-gray-100 m-2"
                     </div>
                   </div>
 
-                  {/* Rates */}
-                  {/* Rates */}
+           
                   <div className="px-4 pb-3 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-slate-50 rounded-lg p-2 text-center">
@@ -919,7 +918,7 @@ flex flex-col border border-gray-100 m-2"
                         </div>
                       </div>
 
-                      {/* Yearly - centered full width */}
+                   
                       <div className="bg-slate-50 rounded-lg p-2 text-center col-span-2">
                         <div className="text-xs text-gray-600">Yearly</div>
                         <div className="text-sm font-bold text-gray-900">
@@ -928,7 +927,7 @@ flex flex-col border border-gray-100 m-2"
                       </div>
                     </div>
 
-                    {/* Negotiable */}
+                   
                     <div className="text-center text-xs text-gray-600">
                       Negotiable:{" "}
                       <span
@@ -939,7 +938,7 @@ flex flex-col border border-gray-100 m-2"
                     </div>
                   </div>
 
-                  {/* Resume Button */}
+                
                   <div className="px-4 pb-5 mt-auto flex justify-center">
                     <button
                       onClick={() => {
@@ -969,10 +968,10 @@ flex flex-col border border-gray-100 m-2"
             </p>
           </div>
         )}
-      </div>
+      </div> */}
 
-      {/* Ant Design Modal */}
-      <Modal
+    
+      {/* <Modal
         title="Resume Viewer"
         open={showResumeModal}
         onCancel={() => {
@@ -997,7 +996,7 @@ flex flex-col border border-gray-100 m-2"
           title="Resume Viewer"
           onLoad={() => setIsLoading(false)}
         />
-      </Modal>
+      </Modal> */}
     </section>
   );
 };
