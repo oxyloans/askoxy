@@ -212,7 +212,11 @@ const FloatingCallButton: React.FC = () => {
     try {
       const userId = localStorage.getItem("userId") || "default-user-id";
       const response = await fetch(
-        `${BASE_URL}/user-service/callerNumberToUserMapping/${userId}`
+        `${BASE_URL}/user-service/callerNumberToUserMapping/${userId}`,{
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          }
+        }
       );
       const data = await response.json();
       setCallerInfo(data);

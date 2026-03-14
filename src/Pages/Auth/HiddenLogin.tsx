@@ -196,6 +196,8 @@ const HiddenLogin = () => {
         setShowSuccessPopup(true);
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);
+        localStorage.setItem("token", response.data.accessToken); // For backward compatibility
+        sessionStorage.setItem("refreshToken", response.data.refreshToken);
         if (otpMethod === "whatsapp") {
           localStorage.setItem("whatsappNumber", phoneNumber);
         } else {
@@ -255,6 +257,8 @@ const HiddenLogin = () => {
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);
         localStorage.setItem("mobileNumber", response.data.mobileNumber);
+        localStorage.setItem("token", response.data.accessToken); // For backward compatibility
+        sessionStorage.setItem("refreshToken", response.data.refreshToken);
         setTimeout(() => {
           setShowSuccessPopup(false);
           setOnboardMobileNumber("");

@@ -12,9 +12,21 @@ const isAuthPage = (path: string) =>
   AUTH_PAGES.some((p) => path === p || path.startsWith(p + "?") || path.startsWith(p + "#"));
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
-  const accessToken = localStorage.getItem("accessToken");
-  const userId = localStorage.getItem("userId");
-  const token = accessToken || userId;
+  let accessToken= "";
+  let userId = "";
+  let token = "";
+  if(sessionStorage.getItem("refreshToken")) {
+     accessToken = localStorage.getItem("accessToken") || "";
+     userId = localStorage.getItem("userId") || "";
+     token = accessToken || userId;
+  }else {
+     localStorage.removeItem("accessToken");
+     localStorage.removeItem("userId");
+     localStorage.clear();
+  }
+  // const accessToken = localStorage.getItem("accessToken");
+  // const userId = localStorage.getItem("userId");
+  // const token = accessToken || userId;
 
   const location = useLocation();
 

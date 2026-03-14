@@ -32,6 +32,7 @@ import BMVICON from "../assets/img/bmvlogo.png";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { head } from "lodash";
 
 
 
@@ -232,8 +233,11 @@ const formatIST = (dateString?: string) => {
 
       const response = await axios.get(`${BASE_URL}/user-service/bmvhistory`, {
         params: { mobileNumber: userMobileNumber },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
         timeout: 1000,
-        validateStatus: (status) =>
+        validateStatus: (status: number) =>
           (status >= 200 && status < 300) || status === 204,
       });
 
