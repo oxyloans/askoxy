@@ -245,7 +245,7 @@
 
 import React, { useState, ChangeEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { customerApi } from '../../utils/axiosInstance';
 
 interface Carnival {
   id: number;
@@ -296,15 +296,10 @@ const CarnivalEditPage: React.FC = () => {
     }
 
     try {
-      await axios.put(
+      await customerApi.put(
         `https://meta.oxyloans.com/api/riceapp-service/carnivals/${carnival.id}`,
         data,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: AUTH_TOKEN,
-          },
-        }
+        { headers: { 'Content-Type': undefined } }
       );
       alert('✅ Carnival updated successfully');
       navigate('/carnival-list');

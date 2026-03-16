@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   useEffect,
   useMemo,
   useRef,
@@ -8,6 +8,7 @@ import React, {
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSearch } from "../BharathAIStore/context/SearchContext";
 import BASE_URL,{uploadurlwithId} from "../Config";
+import axiosInstance from "../utils/axiosInstance";
 import axios from "axios";
 import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
 import { message } from "antd";
@@ -221,10 +222,7 @@ const AllAIStore: React.FC = () => {
     localStorage.getItem("user_id") ||
     "";
   console.log("AccessToken:", accessToken);
-  const getAuthHeaders = () => ({
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${accessToken}`,
-  });
+
 
   // ✅ Tabs
   const [activeTab, setActiveTab] = useState<TabKey>("AGENTS");
@@ -317,7 +315,7 @@ const AllAIStore: React.FC = () => {
         customerId
       )}`;
 
-      const res = await fetch(url, { headers: getAuthHeaders() });
+      const res = await axiosInstance.get(url, { validateStatus: (s) => s < 500 });
 
       // ✅ If 404 → details not submitted yet
       if (res.status === 404) {
@@ -328,9 +326,8 @@ const AllAIStore: React.FC = () => {
         return "";
       }
 
-      if (!res.ok) throw new Error("Failed to check company contact");
-
-      const data: any = await res.json();
+      if (res.status < 200 || res.status >= 300) throw new Error("Failed to check company contact");
+           const data: any = res.data;
 
       const id = (data?.id || "").toString();
       const isEmp = data?.isEmployee === true;
@@ -466,20 +463,9 @@ const AllAIStore: React.FC = () => {
         name: "User",
       };
 
-      const res = await fetch(
-        `${BASE_URL}/marketing-service/campgin/add-company-info`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await axiosInstance.post(`${BASE_URL}/marketing-service/campgin/add-company-info`, payload);
 
-      const json = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(json?.message || "Failed to send OTP");
-      }
+      const json = res.data;
 
       if (!json?.salt || !json?.emailOtpSession) {
         throw new Error("OTP session not received. Please try again.");
@@ -544,20 +530,9 @@ const AllAIStore: React.FC = () => {
         emailOtpSession,
       };
 
-      const res = await fetch(
-        `${BASE_URL}/marketing-service/campgin/add-company-info`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await axiosInstance.post(`${BASE_URL}/marketing-service/campgin/add-company-info`, payload);
 
-      const json = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(json?.message || "OTP verification failed");
-      }
+      const json = res.data;
 
       message.success(json?.message || "Company verification completed");
       setCompanyOtpOpen(false);
@@ -598,14 +573,9 @@ const AllAIStore: React.FC = () => {
       const url = `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(
         name
       )}`;
-      const res = await fetch(url, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
+      const res = await axiosInstance.get(url);
 
-      if (!res.ok) throw new Error("Failed to load jobs");
-
-      const json = await res.json();
+      const json = res.data;
       const jobs: CompanyJob[] = Array.isArray(json)
         ? json
         : Array.isArray(json?.data)
@@ -625,14 +595,9 @@ const AllAIStore: React.FC = () => {
     setBlogsError(null);
 
     try {
-      const res = await fetch(
-        `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`,
-        { method: "GET", headers: getAuthHeaders() }
-      );
+      const res = await axiosInstance.get(`${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`);
 
-      if (!res.ok) throw new Error("Failed to load blogs");
-
-      const json = await res.json();
+      const json = res.data;
       const list: CampaignBlog[] = Array.isArray(json)
         ? json
         : Array.isArray(json?.data)
@@ -691,17 +656,9 @@ const AllAIStore: React.FC = () => {
     setError(null);
 
     try {
-      const res = await fetch(
-        `${BASE_URL}/ai-service/agent/getAiStoreAllAgents`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
+      const res = await axiosInstance.get(`${BASE_URL}/ai-service/agent/getAiStoreAllAgents`);
 
-      if (!res.ok) throw new Error("Failed to load store details");
-
-      const json = await res.json();
+      const json = res.data;
       const list: StoreDetail[] = Array.isArray(json)
         ? json
         : Array.isArray(json?.data)
@@ -840,17 +797,9 @@ const AllAIStore: React.FC = () => {
         ],
       };
 
-      const res = await fetch(
-        `${BASE_URL}/marketing-service/campgin/addCampaignTypes`,
-        {
-          method: "PATCH", // ✅ changed from POST
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await axiosInstance.patch(`${BASE_URL}/marketing-service/campgin/addCampaignTypes`, payload);
 
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.message || "Failed to add blog");
+      const json = res.data;
 
       message.success(json?.message || "Blog added successfully");
       setAddBlogOpen(false);
@@ -943,17 +892,9 @@ const AllAIStore: React.FC = () => {
         companyName: (store?.companyName || "").trim() || undefined,
       };
 
-      const res = await fetch(
-        `${BASE_URL}/marketing-service/campgin/add-job-company-person`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await axiosInstance.post(`${BASE_URL}/marketing-service/campgin/add-job-company-person`, payload);
 
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.message || "Failed to add job");
+      const json = res.data;
 
       message.success(json?.message || "Job added successfully");
       setAddJobOpen(false);

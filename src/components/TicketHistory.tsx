@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Select, Spin, Table, Modal, Input, message } from "antd";
-import axios from "axios";
+import { customerApi } from "../utils/axiosInstance";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -203,7 +203,7 @@ const TicketHistory: React.FC = () => {
   const fetchQueries = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/write-to-us/student/getAllQueries",
         {
           askOxyOfers:
@@ -234,7 +234,7 @@ const TicketHistory: React.FC = () => {
 
     setReplyLoading(true);
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/write-to-us/student/saveData",
         {
           id: selectedQuery.id,
@@ -281,7 +281,7 @@ const TicketHistory: React.FC = () => {
 
     setCancelLoading(true);
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/write-to-us/student/saveData",
         {
           id: selectedQuery.id,

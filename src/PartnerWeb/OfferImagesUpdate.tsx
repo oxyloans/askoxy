@@ -26,6 +26,8 @@ import type { ColumnsType } from "antd/es/table";
 import type { UploadProps } from "antd/es/upload";
 import BASE_URL from "../Config";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { TabPane } = Tabs;
 const { Option } = Select;
 const { TextArea } = Input;
@@ -95,7 +97,13 @@ const UpdateOffers: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${BASE_URL}/order-service/getCodAndOnlinePaymetStatus`
+        `${BASE_URL}/order-service/getCodAndOnlinePaymetStatus`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
+        }
       );
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -117,7 +125,13 @@ const UpdateOffers: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${BASE_URL}/product-service/getOfferImages`
+        `${BASE_URL}/product-service/getOfferImages`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
+        }
       );
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -138,7 +152,13 @@ const UpdateOffers: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${BASE_URL}/order-service/allMinimumOrders`
+        `${BASE_URL}/order-service/allMinimumOrders`,
+        {
+           headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
+        }
       );
       const data = await response.json();
       console.log("Fetched minimum order data:", data);
@@ -165,7 +185,12 @@ const UpdateOffers: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${BASE_URL}/user-service/allBmvDiscriptionData`
+        `${BASE_URL}/user-service/allBmvDiscriptionData`,{
+         headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
+          }
       );
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -198,6 +223,7 @@ const UpdateOffers: React.FC = () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify({
             id: record.id,
@@ -227,6 +253,7 @@ const UpdateOffers: React.FC = () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify({
             id: record.id,
@@ -265,6 +292,7 @@ const UpdateOffers: React.FC = () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify({
             id: minOrderAmount.id,
@@ -313,6 +341,7 @@ const UpdateOffers: React.FC = () => {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify(payload),
         }
@@ -374,6 +403,7 @@ const UpdateOffers: React.FC = () => {
         method,
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${getAccessToken()}`,
         },
         body: JSON.stringify(body),
       });
@@ -423,6 +453,9 @@ const UpdateOffers: React.FC = () => {
         `${BASE_URL}/product-service/offerImageUpload`,
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
           body: formData,
         }
       );

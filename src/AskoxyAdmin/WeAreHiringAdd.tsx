@@ -1,6 +1,6 @@
 // WeAreHiringAdd.tsx
 import React, { useState } from "react";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import { message, Modal } from "antd";
 import BASE_URL from "../Config";
 
@@ -59,8 +59,6 @@ const WeAreHiringAdd: React.FC = () => {
     const files = event.target.files;
     if (!files) return;
 
-    const accessToken = localStorage.getItem("accessToken");
-
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
@@ -79,10 +77,7 @@ const WeAreHiringAdd: React.FC = () => {
           "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
           fd,
           {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${accessToken}`,
-            },
+            headers: { "Content-Type": "multipart/form-data" },
           }
         );
 

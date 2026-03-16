@@ -15,7 +15,7 @@ import {
   SearchOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstance";
 import BASE_URL from "../Config";
 
 // Define the type for the item based on the new API response
@@ -46,7 +46,7 @@ const PartnerItemsList: React.FC = () => {
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
+  const getToken = () => localStorage.getItem("partner_accesstoken") || "";
   const [statusFilter, setStatusFilter] = useState("all");
   const [urls, setUrls] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState<string>("");
@@ -87,11 +87,8 @@ const PartnerItemsList: React.FC = () => {
 
   const openImageUpdateModal = async (item: Item) => {
     try {
-      const response = await axios.get<ImageData>(
-        `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${item.itemId}`,
-        {
-          headers: { accept: "*/*" },
-        },
+      const response = await partnerApi.get<ImageData>(
+        `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${item.itemId}`
       );
       setImageUpdateModal({
         visible: true,
@@ -119,8 +116,8 @@ const PartnerItemsList: React.FC = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `${BASE_URL}/product-service/ItemsGetTotal`,
+      const response = await partnerApi.get(
+        `${BASE_URL}/product-service/ItemsGetTotal`
       );
 
       const transformedItems = response.data.map((item: Item) => ({
@@ -164,9 +161,10 @@ const PartnerItemsList: React.FC = () => {
       message.error("Selling price cannot be higher than MRP");
       // return;
     }
+    const id = sessionStorage.getItem("partner_id");
     try {
       const data = {
-        sellerId: accessToken.id,
+        sellerId: id,
         itemMrp: parseFloat(mrp),
         active: priceUpdateModal.item.active,
         itemId: priceUpdateModal.item.itemId,
@@ -174,12 +172,9 @@ const PartnerItemsList: React.FC = () => {
         itemBuyingPrice: parseFloat(buyingPrice),
       };
 
-      await axios.patch(
+      await partnerApi.patch(
         `${BASE_URL}/product-service/sellerItemPriceFix`,
-        data,
-        {
-          headers: { Authorization: `Bearer ${accessToken.token}` },
-        },
+        data
       );
 
       setPriceUpdateModal({ visible: false, item: null });
@@ -204,15 +199,10 @@ const PartnerItemsList: React.FC = () => {
         formData.append("multiPart", file.originFileObj);
       });
 
-      await axios.patch(
+      await partnerApi.patch(
         `${BASE_URL}/product-service/imagePriceUpload?itemId=${imageUpdateModal.item.itemId}`,
         formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken.token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        },
+        { headers: { "Content-Type": undefined } }
       );
 
       setImageUpdateModal({ visible: false, item: null, images: [] });
@@ -249,9 +239,9 @@ const PartnerItemsList: React.FC = () => {
         status: updatedStatus,
       };
 
-      await axios.patch(
+      await partnerApi.patch(
         `${BASE_URL}/product-service/itemActiveAndInActive`,
-        data,
+        data
       );
 
       message.success(`Item ${item.itemName} status updated`);
@@ -298,6 +288,7 @@ const PartnerItemsList: React.FC = () => {
         headers: {
           accept: "*/*",
           "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify(payload),
       });

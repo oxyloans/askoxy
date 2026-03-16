@@ -1,7 +1,7 @@
 import { Modal, Spin, Select, Button, message, SelectProps } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 
 interface Comment {
   adminComments: string;

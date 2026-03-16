@@ -93,7 +93,7 @@
 
 
 import React, { useState } from 'react';
-import axios from 'axios';
+import { customerApi } from '../../utils/axiosInstance';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface Carnival {
@@ -127,14 +127,9 @@ const CarnivalEdit: React.FC = () => {
 
     try {
       setLoading(true);
-      await axios.put(
+      await customerApi.put(
         `https://meta.oxyloans.com/api/riceapp-service/carnivals/${form.id}`,
-        form,
-        {
-          headers: {
-            Authorization: AUTH_TOKEN,
-          },
-        }
+        form
       );
       alert('✅ Carnival updated successfully!');
       navigate('/carnivals');

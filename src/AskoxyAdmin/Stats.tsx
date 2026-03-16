@@ -40,7 +40,7 @@ import dayjs, { Dayjs } from "dayjs";
 import BASE_URL from "../Config";
 import { Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { sharedApi as axios } from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -128,7 +128,6 @@ const Stats: React.FC = () => {
             startDate: startDate.format("YYYY-MM-DD"),
             endDate: endDate.format("YYYY-MM-DD"),
           },
-          headers: { accept: "*/*" },
         }
       );
 
@@ -183,25 +182,16 @@ const Stats: React.FC = () => {
   const fetchOrderData = async (startDate1: Dayjs, endDate1: Dayjs) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${endDate1.format(
-          "YYYY-MM-DD"
-        )}&startDate=${startDate1.format(
-          "YYYY-MM-DD"
-        )}&status=${selectedStatus}`,
+      const { data } = await axios.get<ApiResponse>(
+        `${BASE_URL}/order-service/notification_to_dev_team_weekly`,
         {
-          method: "GET",
-          headers: {
-            accept: "*/*",
+          params: {
+            endDate: endDate1.format("YYYY-MM-DD"),
+            startDate: startDate1.format("YYYY-MM-DD"),
+            status: selectedStatus,
           },
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: ApiResponse = await response.json();
       const filteredData = filterOrderItems(data);
 
       setOrderData(filteredData);
@@ -372,7 +362,7 @@ const Stats: React.FC = () => {
       message.info("please login into partner for watch order details");
       return;
     }
-    localStorage.setItem("partner_orderId", order.orderId);
+    sessionStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 
@@ -618,21 +608,15 @@ const Stats: React.FC = () => {
     try {
       const startDate1 = startDate.format("YYYY-MM-DD");
       const endDate1 = endDate.format("YYYY-MM-DD");
-      const response = await fetch(
-        `${BASE_URL}/order-service/download_orderDetails_in_range?endingDate=${endDate1}&startingDate=${startDate1}`,
+      const response = await axios.get(
+        `${BASE_URL}/order-service/download_orderDetails_in_range`,
         {
-          method: "GET",
-          headers: {
-            Accept: "*/*",
-          },
+          params: { endingDate: endDate1, startingDate: startDate1 },
+          responseType: "blob",
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to download CSV");
-      }
-
-      const blob = await response.blob();
+      const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

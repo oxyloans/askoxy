@@ -1,9 +1,5 @@
-import axios from "axios";
+import { adminApi as axiosInstance } from "../../utils/axiosInstances";
 import BASE_URL from "../../Config";
-
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-});
 
 export interface RankingOptions {
   ranker: string;
@@ -21,9 +17,7 @@ export interface Tool {
 }
 
 export interface ToolResources {
-  file_search?: {
-    vector_store_ids: string[];
-  };
+  file_search?: { vector_store_ids: string[] };
 }
 
 export interface Assistant {
@@ -44,6 +38,7 @@ export interface Assistant {
   functions?: CustomFunction[];
   lastViewed?: string;
 }
+
 export interface CustomFunction {
   name: string;
   description: string;
@@ -85,152 +80,72 @@ export interface AssistantsResponse {
   has_more: boolean;
 }
 
-export async function getAssistants(
-  limit = 50,
-  after?: string
-): Promise<AssistantsResponse> {
-  const res = await apiClient.get("/student-service/user/getAllAssistants", {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-    },
+export async function getAssistants(limit = 50, after?: string): Promise<AssistantsResponse> {
+  const { data } = await axiosInstance.get(`${BASE_URL}/student-service/user/getAllAssistants`, {
     params: { limit, after },
   });
-  return res.data;
+  return data;
 }
 
 export async function getAssistantDetails(id: string): Promise<Assistant> {
-  const res = await apiClient.get(
-    `/student-service/user/getAssistantbyid/${id}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-      },
-    }
-  );
-  return res.data;
+  const { data } = await axiosInstance.get(`${BASE_URL}/student-service/user/getAssistantbyid/${id}`);
+  return data;
 }
 
-export async function createAssistant(
-  data: Partial<Assistant>
-): Promise<Assistant> {
-  const res = await apiClient.post(
-    "/student-service/user/createAssistant",
-    data,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-      },
-    }
-  );
-  return res.data;
+export async function createAssistant(payload: Partial<Assistant>): Promise<Assistant> {
+  const { data } = await axiosInstance.post(`${BASE_URL}/student-service/user/createAssistant`, payload);
+  return data;
 }
 
-export async function updateAssistant(
-  id: string,
-  data: Partial<Assistant>
-): Promise<Assistant> {
-  const res = await apiClient.patch(
-    `/student-service/user/update/${id}`,
-    data,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-      },
-    }
-  );
-  return res.data;
+export async function updateAssistant(id: string, payload: Partial<Assistant>): Promise<Assistant> {
+  const { data } = await axiosInstance.patch(`${BASE_URL}/student-service/user/update/${id}`, payload);
+  return data;
 }
 
 export async function uploadFile(file: File): Promise<any> {
   const formData = new FormData();
   formData.append("file", file);
-
-  const res = await apiClient.post("/student-service/user/addfiles", formData, {
-    headers: {
-      Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-    },
+  const { data } = await axiosInstance.post(`${BASE_URL}/student-service/user/addfiles`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
-  return res.data;
+  return data;
 }
 
-export async function askAssistant(
-  assistantId: string,
-  messages: Message[]
-): Promise<Message> {
+export async function askAssistant(assistantId: string, messages: Message[]): Promise<Message> {
   try {
-    const res = await apiClient.post(
-      `/student-service/user/askquestion?assistantId=${assistantId}`,
-      messages,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-        },
-      }
+    const { data } = await axiosInstance.post(
+      `${BASE_URL}/student-service/user/askquestion?assistantId=${assistantId}`,
+      messages
     );
-
-    const content =
-      typeof res.data === "string"
-        ? res.data
-        : (res.data as Message)?.content || "";
-
+    const content = typeof data === "string" ? data : (data as Message)?.content || "";
+    return { role: "assistant", content };
+  } catch {
     return {
       role: "assistant",
-      content,
-    };
-  } catch (error: any) {
-    console.error("Error asking assistant:", error);
-
-    return {
-      role: "assistant",
-      content: `⚠️ Sorry, I couldn't process your request now please try again after some time."
-      }`,
+      content: "⚠️ Sorry, I couldn't process your request now please try again after some time.",
     };
   }
 }
 
 export async function getModels(): Promise<any[]> {
-  const res = await apiClient.get("/student-service/user/models", {
-    headers: {
-      Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-    },
-  });
-  return res.data.data || [];
+  const { data } = await axiosInstance.get(`${BASE_URL}/student-service/user/models`);
+  return data.data || [];
 }
 
 export async function deleteAssistant(id: string): Promise<any> {
-  const res = await apiClient.delete(`/student-service/user/delete/${id}`, {
-    headers: {
-      Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-    },
-  });
-  return res.data;
+  const { data } = await axiosInstance.delete(`${BASE_URL}/student-service/user/delete/${id}`);
+  return data;
 }
 
-export async function createVectorStore(data: any): Promise<any> {
-  const res = await apiClient.post("/student-service/user/vectorstores", data, {
-    headers: {
-      Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-    },
-  });
-  return res.data;
+export async function createVectorStore(payload: any): Promise<any> {
+  const { data } = await axiosInstance.post(`${BASE_URL}/student-service/user/vectorstores`, payload);
+  return data;
 }
 
-export async function addFileToVectorStore(
-  vectorStoreId: string,
-  fileId: string
-): Promise<any> {
-  const res = await apiClient.post(
-    `/student-service/user/vectorstores/${vectorStoreId}/files`,
-    { file_id: fileId },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-      },
-    }
+export async function addFileToVectorStore(vectorStoreId: string, fileId: string): Promise<any> {
+  const { data } = await axiosInstance.post(
+    `${BASE_URL}/student-service/user/vectorstores/${vectorStoreId}/files`,
+    { file_id: fileId }
   );
-  return res.data;
+  return data;
 }

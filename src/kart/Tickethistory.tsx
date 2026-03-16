@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { customerApi } from "../utils/axiosInstance";
 import Footer from "../components/Footer";
 import { ColumnsType } from "antd/es/table";
 import {
@@ -123,7 +123,7 @@ const TicketHistoryPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         BASE_URL + "/user-service/write/getAllQueries",
         {
           askOxyOfers:
@@ -184,7 +184,7 @@ const TicketHistoryPage: React.FC = () => {
 
     setCancelLoader(true);
     try {
-      await axios.post(BASE_URL + "/user-service/write/saveData", {
+      await customerApi.post(BASE_URL + "/user-service/write/saveData", {
         adminDocumentId: "",
         askOxyOfers: "FREESAMPLE",
         comments: reason,

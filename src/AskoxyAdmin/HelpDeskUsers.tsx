@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import {
   Table,
   Layout,

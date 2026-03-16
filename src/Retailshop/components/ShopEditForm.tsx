@@ -155,7 +155,7 @@
 
 
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { customerApi } from '../../utils/axiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
 
 interface Shop {
@@ -167,9 +167,6 @@ interface Shop {
   imageUrl?: string;
   category:string;
 }
-
-const AUTH_TOKEN =
-  'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJlYzY3OTExYS1iMmIzLTQ3OTMtODZiMy00ZDIxMjg4ODZmYWYiLCJpYXQiOjE3NDkyOTczNzAsImV4cCI6MTc1MDE2MTM3MH0.JVsP0oQxLC0d3TbGozrmcDCvNPmZZC8yW6htCODbdLX2OccSbQWX68SOsxtyeNPPZ47vtfRNEf-VeJ1rpn-k6g';
 
 export default function ShopEditForm() {
   const { id } = useParams<{ id: string }>();
@@ -220,9 +217,7 @@ export default function ShopEditForm() {
 useEffect(() => {
   const fetchShop = async () => {
     try {
-      const res = await axios.get(`https://meta.oxyloans.com/api/riceapp-service`, {
-        headers: { Authorization: AUTH_TOKEN },
-      });
+      const res = await customerApi.get(`https://meta.oxyloans.com/api/riceapp-service`);
 
       const shops = res.data as Shop[];
 
@@ -237,8 +232,6 @@ useEffect(() => {
           contactNumber: shop.contactNumber,
           locationUrl: shop.locationUrl,
           description: shop.description,
-          imageUrl: shop.imageUrl,
-          category: shop.category,
         }));
       } else {
         alert("❌ No shop found with the provided ID");
@@ -285,15 +278,10 @@ useEffect(() => {
         formData.append('image', form.image);
       }
 
-       const res =await axios.put(
+       const res = await customerApi.put(
         `https://meta.oxyloans.com/api/riceapp-service/${id}`,
         formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: AUTH_TOKEN,
-          },
-        }
+        { headers: { 'Content-Type': undefined } }
       );
       console.log("updte call response",res);
       

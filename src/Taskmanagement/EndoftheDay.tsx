@@ -37,7 +37,7 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import UserPanelLayout from "./UserPanelLayout";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstance";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -155,16 +155,11 @@ const canUpdateTask = (task: Task): boolean => {
   const fetchAllPendingTasks = async (userIdValue: string) => {
     setFetchingTasks(true);
     try {
-      const response = await axios.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/user-service/write/getAllTaskUpdates`,
         {
           taskStatus: "PENDING",
           userId: userIdValue,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
         }
       );
 
@@ -251,14 +246,9 @@ const canUpdateTask = (task: Task): boolean => {
         };
       }
 
-      const response = await axios.patch<ApiResponse>(
+      const response = await employeeApi.patch<ApiResponse>(
         `${BASE_URL}/user-service/write/userTaskUpdate`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        payload
       );
 
       if (response.data.success) {
@@ -320,13 +310,11 @@ const canUpdateTask = (task: Task): boolean => {
     formData.append("fileType", "kyc");
 
     try {
-      const response = await axios.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/user-service/write/uploadTaskScreenShot?userId=${userId}`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": undefined },
           onUploadProgress: (progressEvent: any) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total

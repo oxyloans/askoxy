@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { sharedApi as axios } from "../utils/axiosInstances";
 import { Layout, Select, Table, Modal, Spin, Button } from "antd";
 import Sider from "./Sider";
-// import { setEmitFlags } from "typescript";
 import BASE_URL from "../Config";
 
 const { Content } = Layout;
@@ -54,17 +53,14 @@ const AllQueries: React.FC = () => {
   const fetchQueries = async () => {
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken");
+      const requestPayload: any = {
+        projectType: "ASKOXY",
+        queryStatus,
+      };
 
-    const requestPayload: any = {
-      projectType: "ASKOXY",
-      queryStatus,
-      // userId,
-    };
-
-    if (askOxyOffersFilter !== "ALL") {
-      requestPayload.askOxyOfers = askOxyOffersFilter;
-    }
+      if (askOxyOffersFilter !== "ALL") {
+        requestPayload.askOxyOfers = askOxyOffersFilter;
+      }
       const response = await axios.post(
         `${BASE_URL}/user-service/write/getAllQueries`,
         requestPayload
@@ -159,16 +155,10 @@ const AllQueries: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/user-service/write/saveData`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
+      const { data: result } = await axios.post(
+        `${BASE_URL}/user-service/write/saveData`,
+        data
+      );
 
       if (result != null) {
         setLoading(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
+import { sharedApi as axios } from "../utils/axiosInstances";
 import { Button, DatePicker, message, Select, Table, Typography } from "antd";
 import {
   ShoppingBag,
@@ -105,7 +105,7 @@ const OrderReport: React.FC = () => {
       const formattedStartDate = weeklyStartDate.format("YYYY-MM-DD");
       const formattedEndDate = weeklyEndDate.format("YYYY-MM-DD");
       const response = await axios.get(
-        `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${formattedEndDate}&startDate=${formattedStartDate}`
+        `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${formattedEndDate}&startDate=${formattedStartDate}`,
       );
       setWeeklyDeliveryData(response.data);
     } catch (err) {
@@ -462,21 +462,14 @@ const OrderReport: React.FC = () => {
     try {
       const startDate = weeklyStartDate.format("YYYY-MM-DD");
       const endDate = weeklyEndDate.format("YYYY-MM-DD");
-      const response = await fetch(
-        `${BASE_URL}/order-service/download_orderDetails_in_range?endingDate=${endDate}&startingDate=${startDate}`,
+      const response = await axios.get(
+        `${BASE_URL}/order-service/download_orderDetails_in_range`,
         {
-          method: "GET",
-          headers: {
-            Accept: "*/*",
-          },
+          params: { endingDate: endDate, startingDate: startDate },
+          responseType: "blob",
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to download CSV");
-      }
-
-      const blob = await response.blob();
+      const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

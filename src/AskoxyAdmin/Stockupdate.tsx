@@ -30,6 +30,7 @@ import {
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
+import { adminApi as axios } from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -121,26 +122,14 @@ const StockUpdate: React.FC = () => {
       message.warning("Please select a category first");
       return;
     }
-
     setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/product-service/getRiceBagDetails?categoryType=${selectedCategory}`,
-        {
-          method: "GET",
-          headers: {
-            accept: "*/*",
-          },
-        }
+      const response = await axios.get(
+        `${BASE_URL}/product-service/getRiceBagDetails`,
+        { params: { categoryType: selectedCategory } }
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data);
-        setFilteredProducts(data);
-      } else {
-        message.error("Failed to fetch products");
-      }
+      setProducts(response.data);
+      setFilteredProducts(response.data);
     } catch (error) {
       message.error("Error fetching products");
       console.error("Error:", error);
@@ -152,22 +141,10 @@ const StockUpdate: React.FC = () => {
   const fetchStockData = async (itemId: string) => {
     setStockLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/product-service/get_stock/${itemId}`,
-        {
-          method: "GET",
-          headers: {
-            accept: "*/*",
-          },
-        }
+      const response = await axios.get(
+        `${BASE_URL}/product-service/get_stock/${itemId}`
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        setStockData(data);
-      } else {
-        message.error("Failed to fetch stock data");
-      }
+      setStockData(response.data);
     } catch (error) {
       message.error("Error fetching stock data");
       console.error("Error:", error);
@@ -189,30 +166,16 @@ const StockUpdate: React.FC = () => {
         updatedBy: values.updatedBy,
       };
 
-      const response = await fetch(`${BASE_URL}/product-service/updateStock`, {
-        method: "PATCH",
-        headers: {
-          accept: "*/*",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      });
+      const response = await axios.patch(
+        `${BASE_URL}/product-service/updateStock`,
+        updateData
+      );
 
-      if (response.ok) {
-        const result = await response.json();
-
-        // Close the update modal first
-        setUpdateModalVisible(false);
-
-        // Set the result data and show the result modal
-        setUpdateResult(result);
-        setResultModalVisible(true);
-
-        message.success("Stock updated successfully");
-        fetchProducts();
-      } else {
-        message.error("Failed to update stock");
-      }
+      setUpdateModalVisible(false);
+      setUpdateResult(response.data);
+      setResultModalVisible(true);
+      message.success("Stock updated successfully");
+      fetchProducts();
     } catch (error) {
       message.error("Error updating stock");
       console.error("Error:", error);

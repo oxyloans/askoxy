@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios, { AxiosError } from "axios";
+import { adminApi as axios, customerApi } from "../utils/axiosInstances";
+import { AxiosError } from "axios";
 import Sidebar from "./Sider";
 import {
   message,
@@ -261,12 +262,7 @@ const AllCampaignsDetails: React.FC = () => {
         const response = await axios.post(
           "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
           uploadFormData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
+          { headers: { "Content-Type": "multipart/form-data" } }
         );
 
         if (response.data.uploadStatus === "UPLOADED") {

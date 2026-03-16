@@ -37,7 +37,8 @@ import {
   PlusOutlined,
   DownOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
+import { isAxiosError } from "axios";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import moment from "moment";
@@ -234,22 +235,10 @@ const DataAssigned: React.FC = () => {
   const fetchWalletData = async (customerId: string): Promise<void> => {
     setWalletLoading(true);
     try {
-      const response = await fetch(
+      const { data } = await axios.post<WalletData>(
         `${BASE_URL}/order-service/customerWalletData`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ customerId }),
-        }
+        { customerId }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch wallet data");
-      }
-
-      const data: WalletData = await response.json();
       setWalletData(data);
     } catch (error) {
       console.error("Error fetching wallet data:", error);
@@ -467,7 +456,6 @@ const DataAssigned: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
             accept: "*/*",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -782,7 +770,7 @@ const DataAssigned: React.FC = () => {
         message.error("Failed to load wallet. Please try again.");
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         const errorMessage =
           error.response?.data?.message || "Failed to load wallet";
         message.error(errorMessage);
@@ -835,7 +823,7 @@ const DataAssigned: React.FC = () => {
         message.error("Failed to deduct amount. Please try again.");
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         const errorMessage =
           error.response?.data?.message || "Failed to deduct amount";
         message.error(errorMessage);

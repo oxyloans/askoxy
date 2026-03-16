@@ -1,8 +1,3 @@
-import axios from 'axios';
+import axiosInstance from "../../utils/axiosInstance";
 
-export const API = axios.create({
-  baseURL: 'https://meta.oxyloans.com/api/riceapp-service',
-  headers: {
-    Authorization: `Bearer eyJhbGciOiJIUzUxMiJ9...`,
-  },
-});
+export const API = axiosInstance;

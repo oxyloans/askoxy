@@ -9,7 +9,7 @@ import {
   Popconfirm,
 } from "antd";
 import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
 interface WalletUploadModalProps {

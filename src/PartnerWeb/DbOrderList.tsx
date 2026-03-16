@@ -40,6 +40,8 @@ import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import dayjs, { Dayjs } from "dayjs";
 
+const getToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
@@ -131,7 +133,8 @@ const DeliveryBoyOrders: React.FC = () => {
       try {
         const assignedResponse = await axios.post(
           `${BASE_URL}/order-service/getAssignedOrdersToDeliveryBoy`,
-          { deliveryBoyId, orderStatus: 3 }
+          { deliveryBoyId, orderStatus: 3 },
+          { headers: { Authorization: `Bearer ${getToken()}` } }
         );
         assignedData = assignedResponse.data || [];
       } catch (err: any) {
@@ -144,7 +147,8 @@ const DeliveryBoyOrders: React.FC = () => {
 
       try {
         const pickedUpResponse = await axios.get(
-          `${BASE_URL}/order-service/getPickupDataBasedOnIdList?deliveryBoyId=${deliveryBoyId}`
+          `${BASE_URL}/order-service/getPickupDataBasedOnIdList?deliveryBoyId=${deliveryBoyId}`,
+          { headers: { Authorization: `Bearer ${getToken()}` } }
         );
         pickedUpData = pickedUpResponse.data || [];
       } catch (err) {
@@ -158,7 +162,7 @@ const DeliveryBoyOrders: React.FC = () => {
       // Set delivery boy name from any available order
       const name =
         assignedData[0]?.deliveryBoyName ||
-        localStorage.getItem("partner_dbName") ||
+        sessionStorage.getItem("partner_dbName") ||
         "Delivery Partner";
 
       setDeliveryBoyName(name);
@@ -184,7 +188,8 @@ const DeliveryBoyOrders: React.FC = () => {
     setDeliveredLoading(true);
     try {
       const deliveredResponse = await axios.get(
-        `${BASE_URL}/order-service/get_DeliverdDetails_By_DeliveryBoyId?deliveryBoyId=${deliveryBoyId}&EndData=${endDate}&StartDate=${startDate}`
+        `${BASE_URL}/order-service/get_DeliverdDetails_By_DeliveryBoyId?deliveryBoyId=${deliveryBoyId}&EndData=${endDate}&StartDate=${startDate}`,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
 
       const deliveredData = deliveredResponse.data?.orderResponseList || [];
@@ -194,7 +199,8 @@ const DeliveryBoyOrders: React.FC = () => {
         deliveredData.map(async (order: any) => {
           try {
             const res = await axios.get(
-              `${BASE_URL}/order-service/getAllOrdersDelivered?orderId=${order.orderId}`
+              `${BASE_URL}/order-service/getAllOrdersDelivered?orderId=${order.orderId}`,
+              { headers: { Authorization: `Bearer ${getToken()}` } }
             );
             return {
               ...order,
@@ -246,7 +252,7 @@ const DeliveryBoyOrders: React.FC = () => {
       return;
     }
 
-    const deliveryBoyId = localStorage.getItem("partner_dbId");
+    const deliveryBoyId = sessionStorage.getItem("partner_dbId");
     if (deliveryBoyId) {
       fetchDeliveredOrders(
         deliveryBoyId,
@@ -257,7 +263,7 @@ const DeliveryBoyOrders: React.FC = () => {
   };
 
   const handleOrderDetails = (order: Order | DeliveredOrderResponse) => {
-    localStorage.setItem("partner_orderId", order.orderId);
+    sessionStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
   const handleSearchOrderId = (value: string) => {
@@ -277,7 +283,7 @@ const DeliveryBoyOrders: React.FC = () => {
   }, [deliveredOrders]);
 
   useEffect(() => {
-    const deliveryBoyId = localStorage.getItem("partner_dbId");
+    const deliveryBoyId = sessionStorage.getItem("partner_dbId");
 
     if (deliveryBoyId) {
       fetchOrders(deliveryBoyId);

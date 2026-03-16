@@ -19,7 +19,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import TextArea from "antd/es/input/TextArea";
 import dayjs, { Dayjs } from "dayjs";
 
@@ -80,28 +80,17 @@ const HelpDeskDashboard: React.FC = () => {
   ): Promise<void> => {
     try {
       setLoading(true);
-      let url = `${BASE_URL}/user-service/getCallersTotalDataBwRange`;
-
       if (!start || !end) {
         const currentDate = dayjs().format("YYYY-MM-DD");
         start = currentDate;
         end = currentDate;
       }
 
-      url += `?startDate=${start}&endDate=${end}`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          accept: "*/*",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      const data: CallerData = await response.json();
+      const { data } = await axios.post<CallerData>(
+        `${BASE_URL}/user-service/getCallersTotalDataBwRange`,
+        null,
+        { params: { startDate: start, endDate: end } }
+      );
       setCallerData(data);
       setLoading(false);
     } catch (err: any) {
@@ -363,28 +352,12 @@ const handleUserDetailsClick = async (userId: string) => {
     };
 
     try {
-      const response = await fetch(
+      await axios.patch(
         `${BASE_URL}/user-service/adminRespondedComments`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestData),
-        }
+        requestData
       );
-
-      if (response.ok) {
-        message.success("Comments submitted successfully");
-
-        // Clear the submitted comment only
-        setComments((prev) => ({
-          ...prev,
-          [record.id]: "",
-        }));
-      } else {
-        message.error("Failed to submit comments");
-      }
+      message.success("Comments submitted successfully");
+      setComments((prev) => ({ ...prev, [record.id]: "" }));
     } catch (error) {
       message.error("An error occurred while submitting comments");
       console.error("Error submitting comments:", error);
@@ -405,21 +378,14 @@ const handleUserDetailsClick = async (userId: string) => {
     setIsDownloading(true);
 
     try {
-      const response = await fetch(
-        `${BASE_URL}/user-service/dateRange-caller-comments-xl?startDate=${startDateStr}&endDate=${endDateStr}`,
+      const response = await axios.get(
+        `${BASE_URL}/user-service/dateRange-caller-comments-xl`,
         {
-          method: "GET",
-          headers: {
-            accept: "*/*",
-          },
+          params: { startDate: startDateStr, endDate: endDateStr },
+          responseType: "blob",
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to download Excel file");
-      }
-
-      const blob = await response.blob();
+      const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -428,7 +394,6 @@ const handleUserDetailsClick = async (userId: string) => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
       message.success("Excel file downloaded successfully");
     } catch (error) {
       console.error("Download error:", error);

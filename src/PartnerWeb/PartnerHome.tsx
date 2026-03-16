@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Layout } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./PartnerSidebar";
 import Header from "./HeaderPartner";
 import Footer from "../components/Footer";
-import { stopTokenRefresh } from "../utils/tokenRefresh";
+import { stopTokenRefresh } from "./RefreshToken";
+import { useSessionManager } from "./useSessionManager";
+import SessionModal from "./SessionModal";
 
 const { Content, Sider, Footer: AntFooter } = Layout;
 
@@ -24,16 +26,21 @@ const PartnerHome: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-     stopTokenRefresh();
-    localStorage.removeItem("partner_orderId");
-    localStorage.removeItem("partner_orderparams");
-    localStorage.removeItem("partner_dbName");
-    localStorage.removeItem("partner_dbId");
-    localStorage.removeItem("partner_Token");
-    localStorage.removeItem("partner_scrollPosition");
+  const handleLogout = useCallback(() => {
+    stopTokenRefresh();
+    sessionStorage.removeItem("partner_orderId");
+    sessionStorage.removeItem("partner_orderparams");
+    sessionStorage.removeItem("partner_dbName");
+    sessionStorage.removeItem("partner_dbId");
+    localStorage.removeItem("partner_accesstoken");
+    sessionStorage.removeItem("partner_refreshtoken");
+    sessionStorage.removeItem("partner_type");
+    sessionStorage.removeItem("partner_scrollPosition");
     navigate("/partnerlogin");
-  };
+  }, [navigate]);
+
+  const { showSessionModal, refreshing, handleContinueSession, handleSessionLogout } =
+    useSessionManager(handleLogout);
 
   const handleSidebarItemClick = () => {
     if (isMobile) {
@@ -42,13 +49,13 @@ const PartnerHome: React.FC = () => {
   };
 
   useEffect(() => {
-    const tokenString = localStorage.getItem("partner_Token");
+    const tokenString = localStorage.getItem("partner_accesstoken");
     if (!tokenString) {
       navigate("/partnerlogin");
       return;
     }
-    const tokenObj = JSON.parse(tokenString);
-    if (!tokenObj || tokenObj.primaryType !== "SELLER") {
+    const tokenObj =  sessionStorage.getItem("partner_type");
+    if (!tokenObj || tokenObj !=="SELLER") {
       navigate("/partnerlogin");
     }
   }, []);
@@ -83,6 +90,14 @@ const PartnerHome: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col">
+      {showSessionModal && (
+        <SessionModal
+          visible={showSessionModal}
+          loading={refreshing}
+          onContinue={handleContinueSession}
+          onLogout={handleSessionLogout}
+        />
+      )}
       <div className="fixed top-0 left-0 w-full bg-white shadow-md z-40">
         <Header
           onSidebarToggle={onCollapse}

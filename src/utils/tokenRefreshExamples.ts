@@ -77,11 +77,6 @@ export const handleLogout = () => {
   console.log("Logout successful, token refresh stopped");
 };
 
-// ============================================
-// EXAMPLE 4: Protected API Call with Auto-Retry
-// ============================================
-// Wrapper function that automatically retries API calls on 401 errors
-
 export const makeProtectedApiCall = async (
   url: string,
   options: RequestInit = {}

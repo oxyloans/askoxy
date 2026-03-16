@@ -20,6 +20,7 @@ import {
   MailOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
+import { adminApi as axios } from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -74,30 +75,12 @@ const FeedbackDashboard: React.FC = () => {
   // Fetch user details based on userId
   const fetchUserDetails = async (userId: string): Promise<UserData | null> => {
     try {
-      const response = await fetch(
+      const response = await axios.post(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            accept: "*/*",
-          },
-          body: JSON.stringify({
-            number: null,
-            userId: userId || null,
-          }),
-        }
+        { number: null, userId: userId || null }
       );
-
-      if (!response.ok) {
-        console.error(`Failed to fetch user details for userId: ${userId}`);
-        return null;
-      }
-
-      const userData: UserResponse = await response.json();
-      // Return the first user from activeUsersResponse array if it exists
-      return userData.activeUsersResponse &&
-        userData.activeUsersResponse.length > 0
+      const userData = response.data;
+      return userData.activeUsersResponse && userData.activeUsersResponse.length > 0
         ? userData.activeUsersResponse[0]
         : null;
     } catch (error) {
@@ -113,20 +96,10 @@ const FeedbackDashboard: React.FC = () => {
 
       try {
         // Make the API call to get all feedback
-        const feedbackResponse = await fetch(
-          `${BASE_URL}/order-service/getAllfeedback`,
-          {
-            method: "GET",
-            headers: {
-              accept: "*/*",
-            },
-          }
+        const feedbackResponse = await axios.get(
+          `${BASE_URL}/order-service/getAllfeedback`
         );
-
-        if (!feedbackResponse.ok) {
-          throw new Error(`HTTP error! Status: ${feedbackResponse.status}`);
-        }
-        const feedbackItems: Feedback[] = await feedbackResponse.json();
+        const feedbackItems: Feedback[] = feedbackResponse.data;
 
         const filteredFeedbackItems = feedbackItems.filter(
           (item) => item.comments !== null

@@ -7,6 +7,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
+import { adminApi as axios } from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 
@@ -40,25 +41,11 @@ const AppliedJobsDashboard: React.FC = () => {
   const fetchAppliedJobs = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
-        {
-          method: "GET",
-          headers: {
-            accept: "*/*",
-          },
-        }
+      const response = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch applied jobs");
-      }
-
-      const data = await response.json();
-
-      // Add null check for data
-      if (Array.isArray(data)) {
-        setAppliedJobs(data);
+      if (Array.isArray(response.data)) {
+        setAppliedJobs(response.data);
       } else {
         setAppliedJobs([]);
         message.warning("No applied jobs data received");

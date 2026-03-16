@@ -9,9 +9,11 @@ import {
   Select,
   message,
 } from "antd";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstance";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
+
+const getToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -46,7 +48,7 @@ const StockTable: React.FC = () => {
   const fetchStockData = async (selectedCategory: string) => {
     setLoading(true);
     try {
-      const response = await axios.get<StockItem[]>(
+      const response = await partnerApi.get<StockItem[]>(
         `${BASE_URL}/product-service/getAllStock?Category_Type=${selectedCategory}`
       );
       setData(response.data);

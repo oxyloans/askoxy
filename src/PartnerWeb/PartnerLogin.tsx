@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Card, message, Spin } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { customerApi } from "../utils/axiosInstance";
 import Logo from "../assets/img/logo.png";
 import BASE_URL from "../Config";
 
@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
 
   const checkAutoLogin = async () => {
     try {
-      const token = localStorage.getItem("partner_Token");
+      const token = sessionStorage.getItem("partner_refreshtoken");
       if (token) {
         navigate("/home");
       }
@@ -57,7 +57,7 @@ const LoginPage: React.FC = () => {
     try {
       const loginUrl = `${BASE_URL}/user-service/userEmailPassword`;
 
-      const response = await axios({
+      const response = await customerApi({
         method: "post",
         url: loginUrl,
         data: {
@@ -68,35 +68,41 @@ const LoginPage: React.FC = () => {
 
       if (response.data) {
         if (response.data.primaryType === "SELLER") {
-          localStorage.setItem("partner_Token", JSON.stringify(response.data));
+          const result = response.data;
+          // localStorage.setItem("partner_Token", JSON.stringify(result));
+          localStorage.setItem("partner_accesstoken", result.accessToken);
+          sessionStorage.setItem("partner_refreshtoken", result.refreshToke);
+          sessionStorage.setItem("partner_type", result.primaryType);
+          sessionStorage.setItem("partner_id", result.id);
+
           message.success("Login Successful! Welcome to AskOxy.AI Partner!");
           navigate("/home");
         } else {
           message.info(
-            "The credentials are incorrect for partner login. Please verify and try again."
+            "The credentials are incorrect for partner login. Please verify and try again.",
           );
         }
       } else {
         message.error(
-          "Login Failed: Please check your credentials and try again."
+          "Login Failed: Please check your credentials and try again.",
         );
       }
     } catch (error: any) {
       if (error.response) {
         if (error.response.status === 500) {
           message.error(
-            "Server Error: The server encountered an internal error. Please try again later."
+            "Server Error: The server encountered an internal error. Please try again later.",
           );
         } else {
           message.error(
             "Login Failed: " +
               (error.response.data?.message ||
-                "Unable to log in. Please check your credentials and try again later")
+                "Unable to log in. Please check your credentials and try again later"),
           );
         }
       } else if (error.request) {
         message.error(
-          "Connection Error: Unable to connect to the server. Please check your internet connection."
+          "Connection Error: Unable to connect to the server. Please check your internet connection.",
         );
       } else {
         message.error("Error: An unexpected error occurred. Please try again.");

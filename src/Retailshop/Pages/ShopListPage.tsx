@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { customerApi } from '../../utils/axiosInstance';
 import { Link } from 'react-router-dom';
 
 interface Shop {
@@ -28,9 +28,7 @@ export default function ShopListPage() {
 const fetchShops = useCallback(async () => {
   setLoading(true);
   try {
-    const res = await axios.get(BASE_URL, {
-      headers: { Authorization: TOKEN },
-    });
+    const res = await customerApi.get(BASE_URL);
 
     let shopsData: Shop[] = [];
 
@@ -96,9 +94,7 @@ const fetchShops = useCallback(async () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this shop?')) return;
     try {
-      await axios.delete(`${BASE_URL}/${id}`, {
-        headers: { Authorization: TOKEN },
-      });
+      await customerApi.delete(`${BASE_URL}/${id}`);
       fetchShops();
     } catch (err) {
       console.error(err);

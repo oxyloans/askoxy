@@ -6,7 +6,6 @@ import { Modal } from "antd";
 import  logo from '../assets/img/ask oxy white.png';
 import { AttemptStatus } from './AttemptStatus';
 import axiosInstance from "../utils/axiosInstance";
-import axios from "axios";
 import  BASE_URL  from "../Config";
 
 export default function InterviewPage() {
@@ -264,11 +263,7 @@ export default function InterviewPage() {
       let profileData = null;
       
       if (userId) {
-        const profileResponse = await axios.get(`${BASE_URL}/user-service/getProfile/${userId}`,{
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}`
-          }
-        });
+        const profileResponse = await axiosInstance.get(`${BASE_URL}/user-service/getProfile/${userId}`);
         if (profileResponse) {
           profileData = await profileResponse.data;
           console.log('Profile data:', profileData);

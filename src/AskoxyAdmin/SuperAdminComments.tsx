@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Table, Card, Typography, Tag, Spin, message } from "antd";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
 const { Title, Text } = Typography;

@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import axios from 'axios';
+import { customerApi } from '../../utils/axiosInstance';
 
 interface ShopFormProps {
   onShopAdded: () => void;
@@ -47,12 +47,8 @@ const ShopForm: React.FC<ShopFormProps> = ({ onShopAdded }) => {
     }
 
     try {
-      await axios.post('https://meta.oxyloans.com/api/riceapp-service', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization:
-            'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJlYzY3OTExYS1iMmIzLTQ3OTMtODZiMy00ZDIxMjg4ODZmYWYiLCJpYXQiOjE3NDkyOTczNzAsImV4cCI6MTc1MDE2MTM3MH0.JVsP0oQxLC0d3TbGozrmcDCvNPmZZC8yW6htCODbdLX2OccSbQWX68SOsxtyeNPPZ47vtfRNEf-VeJ1rpn-k6g',
-        },
+      await customerApi.post('https://meta.oxyloans.com/api/riceapp-service', data, {
+        headers: { 'Content-Type': undefined },
       });
 
       alert('✅ Shop added successfully!');

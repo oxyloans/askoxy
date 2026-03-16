@@ -279,7 +279,7 @@
 
 
 import React, { useState, ChangeEvent } from 'react';
-import axios from 'axios';
+import { customerApi } from '../../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 
 const CarnivalFormPage: React.FC = () => {
@@ -330,16 +330,10 @@ formData.forEach((value, key) => {
 
 
     try {
-      await axios.post(
+      await customerApi.post(
         'https://meta.oxyloans.com/api/riceapp-service/carnivals',
         formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization:
-              'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJlYzY3OTExYS1iMmIzLTQ3OTMtODZiMy00ZDIxMjg4ODZmYWYiLCJpYXQiOjE3NDkyOTczNzAsImV4cCI6MTc1MDE2MTM3MH0.JVsP0oQxLC0d3TbGozrmcDCvNPmZZC8yW6htCODbdLX2OccSbQWX68SOsxtyeNPPZ47vtfRNEf-VeJ1rpn-k6g',
-          },
-        }
+        { headers: { 'Content-Type': undefined } }
       );
       alert('✅ Carnival created successfully!');
       // navigate('/carnivals');

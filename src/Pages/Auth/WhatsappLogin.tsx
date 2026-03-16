@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { FaWhatsapp, FaGoogle } from "react-icons/fa6";
 import axios, { AxiosError } from "axios";
+import axiosInstance from "../../utils/axiosInstance";
 import PhoneInput, {
   isValidPhoneNumber,
   parsePhoneNumber,
@@ -161,9 +162,7 @@ const WhatsappLogin: React.FC = () => {
   // Fetch user details
   const fetchUserDetails = async (accessToken: string) => {
     try {
-      const response = await axios.get(`${BASE_URL}/user-service/me`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(`${BASE_URL}/user-service/me`);
       setUserDetails(response.data);
       localStorage.setItem("userId", response.data.userId || "");
       return response.data;

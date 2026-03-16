@@ -12,7 +12,7 @@ import {
   Tag,
 } from "antd";
 import { PhoneOutlined } from "@ant-design/icons";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import moment, { Moment } from "moment";
 import BASE_URL from "../Config";
 

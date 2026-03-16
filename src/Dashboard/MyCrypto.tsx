@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import axios from "axios";
 import {
   Coins,
   Copy,
@@ -32,7 +31,7 @@ import BMVICON from "../assets/img/bmvlogo.png";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { head } from "lodash";
+import axiosInstance from "../utils/axiosInstance";
 
 
 
@@ -181,13 +180,8 @@ const formatIST = (dateString?: string) => {
         throw new Error("User ID not found in local storage");
       }
 
-      const response = await axios.get(
-        `${BASE_URL}/user-service/getProfile/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          }
-        }
+      const response = await axiosInstance.get(
+        `${BASE_URL}/user-service/getProfile/${userId}`
       );
 
       if (isMounted.current) {
@@ -231,11 +225,8 @@ const formatIST = (dateString?: string) => {
       setTransfersLoading(true);
       setTransfersError(null);
 
-      const response = await axios.get(`${BASE_URL}/user-service/bmvhistory`, {
+      const response = await axiosInstance.get(`${BASE_URL}/user-service/bmvhistory`, {
         params: { mobileNumber: userMobileNumber },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
         timeout: 1000,
         validateStatus: (status: number) =>
           (status >= 200 && status < 300) || status === 204,
@@ -368,7 +359,7 @@ const formatIST = (dateString?: string) => {
     try {
       setTransferStatus({ loading: true, success: false, error: null });
 
-      await axios.post(`${BASE_URL}/user-service/assetTransfer`, {
+      await axiosInstance.post(`${BASE_URL}/user-service/assetTransfer`, {
         from_mobile: userMobileNumber,
         to_mobile: recipientMobile,
         amount: transferAmount,

@@ -33,6 +33,7 @@ import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import type { SelectProps } from "antd";
 import BASE_URL from "../Config";
+import { adminApi as axios } from "../utils/axiosInstances";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { parsePhoneNumber } from "react-phone-number-input";
@@ -159,25 +160,16 @@ const AddJob: React.FC = () => {
   const handleImageUpload = async (file: File) => {
     setUploading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken");
       const uploadFormData = new FormData();
       uploadFormData.append("file", file);
-
-      const response = await fetch(
+      const response = await axios.post(
         "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: uploadFormData,
-        }
+        uploadFormData,
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
-
-      const data = await response.json();
-      if (data.uploadStatus === "UPLOADED") {
-        setLogoUrl(data.documentPath);
-        form.setFieldsValue({ companyLogo: data.documentPath });
+      if (response.data.uploadStatus === "UPLOADED") {
+        setLogoUrl(response.data.documentPath);
+        form.setFieldsValue({ companyLogo: response.data.documentPath });
         message.success("Logo uploaded successfully!");
       } else {
         throw new Error("Upload failed");
@@ -225,22 +217,10 @@ const AddJob: React.FC = () => {
         jobSource: formValues.jobSource,
       };
 
-      const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/postajob`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (response.ok) {
-        form.resetFields();
-        setIsModalVisible(false);
-        message.success("Job posted successfully!");
-      } else {
-        throw new Error("Failed to post job");
-      }
+      await axios.post(`${BASE_URL}/marketing-service/campgin/postajob`, payload);
+      form.resetFields();
+      setIsModalVisible(false);
+      message.success("Job posted successfully!");
       navigate("/admn/alljobdetails");
     } catch (error) {
       message.error("Failed to post job. Please try again.");
@@ -301,38 +281,20 @@ const AddJob: React.FC = () => {
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-
               const formData = new FormData();
               formData.append("file", file);
-
               try {
-                const accessToken = localStorage.getItem("accessToken");
-                const response = await fetch(
+                await axios.post(
                   `${BASE_URL}/marketing-service/campgin/JobsExcelUpdate`,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${accessToken}`,
-                    },
-                    body: formData,
-                  }
+                  formData,
+                  { headers: { "Content-Type": "multipart/form-data" } }
                 );
-
-                if (response.ok) {
-                  message.success("Jobs uploaded successfully from Excel!");
-                } else {
-                  throw new Error("Upload failed");
-                }
+                message.success("Jobs uploaded successfully from Excel!");
               } catch (error) {
                 console.error("Upload error:", error);
                 message.error("Failed to upload Excel file.");
               } finally {
-                // Reset file input so you can upload the same file again if needed
-                (
-                  document.getElementById(
-                    "hiddenExcelUpload"
-                  ) as HTMLInputElement
-                ).value = "";
+                (document.getElementById("hiddenExcelUpload") as HTMLInputElement).value = "";
               }
             }}
           />

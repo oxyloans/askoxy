@@ -18,7 +18,7 @@ import {
   PhoneOutlined,
   MailOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 

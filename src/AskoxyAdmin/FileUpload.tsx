@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import Sidebar from "./Sider";
 
 const FileUploadComponent: React.FC = () => {

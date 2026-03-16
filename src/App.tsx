@@ -389,6 +389,7 @@ const AgentCreationSteps = lazy(
 );
 const TripPlanner = lazy(() => import("./AITripPlanner/TripPlanner"));
 const TaxInvoice = lazy(() => import("./components/TaxInvoice"));
+const AccentureServices = lazy(() => import("./components/CampaignStatsAccenture"));
 // Simple centered loader component
 const LoadingSpinner = React.memo(() => {
   React.useEffect(() => {
@@ -482,7 +483,6 @@ const App: React.FC = () => {
     }
   }, [location.pathname]);
 
-  // Check if current route is an admin/partner/employee route where we don't want to show FloatingCallButton
   const isRestrictedRoute = () => {
     const currentPath = location.pathname;
     return (
@@ -513,8 +513,6 @@ const App: React.FC = () => {
       currentPath.startsWith("/adminRegister")
     );
   };
-
-  useTokenRefresh();
 
   return (
     <CartProvider>
@@ -566,6 +564,7 @@ const App: React.FC = () => {
                 path="/rotarydistrict3150AiAgent"
                 element={<RotaryLandingPage />}
               />
+              <Route path="/accenture-services" element={<AccentureServices />} />
               <Route path="/dynamic-rotaryposter" element={<RotaryPosterStudio />} />
               <Route
                 path="/ninetydayplan"

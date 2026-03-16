@@ -9,7 +9,7 @@ import {
   Typography,
   Divider,
 } from "antd";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import { Link, useNavigate } from "react-router-dom";
 import {
   MailOutlined,

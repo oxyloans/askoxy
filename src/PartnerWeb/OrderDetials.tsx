@@ -64,6 +64,8 @@ import {
 import BASE_URL from "../Config";
 import ProductModal from "./AllItemsModal";
 
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 const { Title, Text } = Typography;
 
 // Type Definitions
@@ -186,12 +188,11 @@ const OrderDetailsPage: React.FC = () => {
   const [orderDetails, setOrderDetails] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = JSON.parse(localStorage.getItem("accessToken") || "{}");
   // const { orderId, orderStatus } = useParams<{
   //   orderId: string;
   //   orderStatus: string;
   // }>();
-  const orderId = localStorage.getItem("partner_orderId");
+  const orderId = sessionStorage.getItem("partner_orderId");
   const [orderStatus, setOrderStatus] = useState<string>();
   const [rejectForm] = Form.useForm();
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -233,7 +234,7 @@ const OrderDetailsPage: React.FC = () => {
         `${BASE_URL}/cart-service/cart/ContainerInterested/${ordersData?.customerId}`,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           },
         }
       )
@@ -386,12 +387,11 @@ const OrderDetailsPage: React.FC = () => {
   const fetchAvailableTimeSlots = async (_orderId: string) => {
     setIsLoading2(true);
     try {
-      const token = localStorage.getItem("token");
       const response = await axios.get(
         `${BASE_URL}/order-service/fetchTimeSlotlist`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getAccessToken()}`,
             "Content-Type": "application/json",
           },
         }
@@ -490,7 +490,6 @@ const OrderDetailsPage: React.FC = () => {
 
     setTimeSlotUpdating(true);
     try {
-      const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId") || "";
 
       const requestUrl = `${BASE_URL}/order-service/userSelectedDiffslot`;
@@ -504,7 +503,7 @@ const OrderDetailsPage: React.FC = () => {
 
       const resp = await axios.patch(requestUrl, requestBody, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json",
         },
         timeout: 10000,
@@ -578,7 +577,7 @@ const OrderDetailsPage: React.FC = () => {
         payload,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           }}
       );
 
@@ -661,7 +660,7 @@ const OrderDetailsPage: React.FC = () => {
             headers: {
               accept: "*/*",
               "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`
+              Authorization: `Bearer ${getAccessToken()}`
             },
           }
         );
@@ -684,10 +683,9 @@ const OrderDetailsPage: React.FC = () => {
           },
           {
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${getAccessToken()}`,
             },
           }
-
         );
         if (response.status === 200) {
           const deliveryData = response.data[0];
@@ -717,7 +715,7 @@ const OrderDetailsPage: React.FC = () => {
           method: "GET",
           headers: {
             Accept: "*/*",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           },
         }
       );
@@ -871,7 +869,7 @@ const OrderDetailsPage: React.FC = () => {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json",
         },
       });
@@ -919,7 +917,7 @@ const OrderDetailsPage: React.FC = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           },
         }
       );
@@ -962,7 +960,7 @@ const OrderDetailsPage: React.FC = () => {
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
@@ -1773,7 +1771,7 @@ const OrderDetailsPage: React.FC = () => {
               payload,
               {
                 headers: {
-                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  Authorization: `Bearer ${getAccessToken()}`,
                 },
               }
             );

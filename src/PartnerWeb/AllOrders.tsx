@@ -53,6 +53,8 @@ const getStatusText = (status: string | null) => {
   }
 };
 
+const getToken = () => localStorage.getItem("partner_accesstoken") || "";
+      
 const getStatusColor = (status: string | null) => {
   switch (status) {
     case "1":
@@ -84,7 +86,7 @@ const AllOrders: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedParams = localStorage.getItem("partner_orderparams");
+    const storedParams = sessionStorage.getItem("partner_orderparams");
 
     if (storedParams) {
       const parsedParams = new URLSearchParams(storedParams);
@@ -108,7 +110,7 @@ const AllOrders: React.FC = () => {
   const fetchOrders = async (
     startD?: dayjs.Dayjs,
     endD?: dayjs.Dayjs,
-    status?: string
+    status?: string,
   ) => {
     const start = startD || startDate;
     const end = endD || endDate;
@@ -137,10 +139,11 @@ const AllOrders: React.FC = () => {
         params.append("status", currentStatus);
       }
 
-      localStorage.setItem("partner_orderparams", params.toString());
-
+      sessionStorage.setItem("partner_orderparams", params.toString());
+      
       const response = await axios.get<Order[]>(
-        `${BASE_URL}/order-service/date-range?${params.toString()}`
+        `${BASE_URL}/order-service/date-range?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${getToken()}` } },
       );
 
       const filteredOrders = response.data.filter((order) => !order.testUser);
@@ -164,7 +167,7 @@ const AllOrders: React.FC = () => {
     if (!isDataFetched) return;
 
     const filtered = orders.filter((order) =>
-      order.orderId.slice(-4).includes(value)
+      order.orderId.slice(-4).includes(value),
     );
 
     setFilteredOrders(filtered);
@@ -179,7 +182,7 @@ const AllOrders: React.FC = () => {
   };
 
   const handleOrderDetails = (order: Order) => {
-    localStorage.setItem("partner_orderId", order.orderId);
+    sessionStorage.setItem("partner_orderId", order.orderId);
     navigate(`/home/orderDetails`);
   };
 
@@ -309,7 +312,7 @@ const AllOrders: React.FC = () => {
                       </Typography.Text>
                       <Typography.Text
                         className={`font-semibold ${getStatusColor(
-                          order.orderStatus
+                          order.orderStatus,
                         )}`}
                       >
                         {getStatusText(order.orderStatus)}

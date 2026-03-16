@@ -266,7 +266,7 @@
 
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { customerApi } from '../../utils/axiosInstance';
 import { useNavigate } from "react-router-dom";
 
 interface Carnival {
@@ -289,9 +289,7 @@ const CarnivalListPage: React.FC = () => {
   const fetchCarnivals = async () => {
     try {
       setLoading(true);
-      const response = await axios.get<Carnival[]>(API_URL, {
-        headers: { Authorization: AUTH_TOKEN },
-      });
+      const response = await customerApi.get<Carnival[]>(API_URL);
       setCarnivals(response.data || []);
     } catch (error) {
       console.error("❌ Error fetching carnivals:", error);
@@ -314,9 +312,7 @@ const CarnivalListPage: React.FC = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${API_URL}/${id}`, {
-        headers: { Authorization: AUTH_TOKEN },
-      });
+      await customerApi.delete(`${API_URL}/${id}`);
       alert("✅ Carnival deleted successfully");
       fetchCarnivals(); // Refresh list
     } catch (error) {

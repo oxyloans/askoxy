@@ -26,6 +26,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import BASE_URL from "../Config";
+import { adminApi as axios } from "../utils/axiosInstances";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
 const { Title, Text } = Typography;
@@ -98,21 +99,11 @@ const OrderSalesDashboard: React.FC = () => {
       const startDate = dateRange[0]?.format("YYYY-MM-DD");
       const endDate = dateRange[1]?.format("YYYY-MM-DD");
 
-      const response = await fetch(
-        `${BASE_URL}/order-service/orderSalesExcleSheet?endDate=${endDate}&pinCode=${pinCode}&startDate=${startDate}&weight=${weight}`,
-        {
-          method: "GET",
-          headers: {
-            accept: "*/*",
-          },
-        }
+      const response = await axios.get(
+        `${BASE_URL}/order-service/orderSalesExcleSheet`,
+        { params: { endDate, pinCode, startDate, weight } }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch orders");
-      }
-
-      const data: Order[] = await response.json();
+      const data: Order[] = response.data;
       setOrders(data || []);
       message.success(`${(data || []).length} orders fetched successfully`);
     } catch (error) {

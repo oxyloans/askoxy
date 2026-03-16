@@ -1,4 +1,4 @@
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";
 import BASE_URL from "../Config";
 
 interface Image {
@@ -46,12 +46,11 @@ interface SubComment {
 
 export const fetchCampaigns = async (): Promise<Campaign[]> => {
   try {
-    const response = await axios.get<Campaign[]>(
+    const { data } = await axiosInstance.get<Campaign[]>(
       `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`
     );
-    return response.data || [];
-  } catch (err) {
-    console.error("Error fetching campaigns:", err);
+    return data || [];
+  } catch {
     return [];
   }
 };
@@ -69,39 +68,34 @@ export const fetchLikesAndComments = async (
   likeStatus: string;
   subscribed: string;
 }> => {
+  const url = userId
+    ? `${BASE_URL}/marketing-service/campgin/getcampainlikesandcommentsbycamapignid?campaignId=${campaignId}&userId=${userId}`
+    : `${BASE_URL}/marketing-service/campgin/getcampainlikesandcommentsbycamapignid?campaignId=${campaignId}`;
+
   try {
-    const url = `${BASE_URL}/marketing-service/campgin/getcampainlikesandcommentsbycamapignid?campaignId=${campaignId}`;
-    const finalUrl = userId ? `${url}&userId=${userId}` : url;
-
-    const response = await axios.get(finalUrl, {
-      headers: { accept: "*/*" },
-    });
-
-    if (response.status === 200) {
-      return {
-        likesTotalCount: response.data.likesTotalCount || 0,
-        dislikesTotalCount: response.data.dislikesTotalCount || 0,
-        subComments: response.data.subComments || [],
-        likeStatus: response.data.likeStatus || "",
-        subscribed: response.data.subscribed || "",
-        isLiked: userId ? response.data.likeStatus === "yes" : false,
-        isDisliked: userId ? response.data.likeStatus === "no" : false,
-        isSubscribed: userId ? response.data.subscribed === "yes" : false,
-      };
-    }
-  } catch (error) {
-    console.error("Error fetching likes and comments:", error);
+    const { data } = await axiosInstance.get(url);
+    return {
+      likesTotalCount: data.likesTotalCount || 0,
+      dislikesTotalCount: data.dislikesTotalCount || 0,
+      subComments: data.subComments || [],
+      likeStatus: data.likeStatus || "",
+      subscribed: data.subscribed || "",
+      isLiked: userId ? data.likeStatus === "yes" : false,
+      isDisliked: userId ? data.likeStatus === "no" : false,
+      isSubscribed: userId ? data.subscribed === "yes" : false,
+    };
+  } catch {
+    return {
+      likesTotalCount: 0,
+      dislikesTotalCount: 0,
+      subComments: [],
+      isLiked: false,
+      isDisliked: false,
+      isSubscribed: false,
+      likeStatus: "",
+      subscribed: "",
+    };
   }
-  return {
-    likesTotalCount: 0,
-    dislikesTotalCount: 0,
-    subComments: [],
-    isLiked: false,
-    isDisliked: false,
-    isSubscribed: false,
-    likeStatus: "",
-    subscribed: "",
-  };
 };
 
 export const submitWriteToUsQuery = async (
@@ -111,36 +105,28 @@ export const submitWriteToUsQuery = async (
   campaignType: string,
   userId: string | null
 ): Promise<boolean> => {
-  const payload = {
-    email,
-    mobileNumber,
-    queryStatus: "PENDING",
-    projectType: "ASKOXY",
-    askOxyOfers: campaignType,
-    adminDocumentId: "",
-    comments: "",
-    id: "",
-    resolvedBy: "",
-    resolvedOn: "",
-    status: "",
-    userDocumentId: "",
-    query,
-    userId,
-  };
-
-  const accessToken = localStorage.getItem("accessToken");
-
-  const headers = { Authorization: `Bearer ${accessToken}` };
-
   try {
-    const response = await axios.post(
+    const { data } = await axiosInstance.post(
       `${BASE_URL}/user-service/write/saveData`,
-      payload,
-      { headers }
+      {
+        email,
+        mobileNumber,
+        queryStatus: "PENDING",
+        projectType: "ASKOXY",
+        askOxyOfers: campaignType,
+        adminDocumentId: "",
+        comments: "",
+        id: "",
+        resolvedBy: "",
+        resolvedOn: "",
+        status: "",
+        userDocumentId: "",
+        query,
+        userId,
+      }
     );
-    return response.data ? true : false;
-  } catch (error) {
-    console.error("Error sending the query:", error);
+    return !!data;
+  } catch {
     return false;
   }
 };
@@ -150,29 +136,18 @@ export const checkUserInterest = async (
   campaignType: string
 ): Promise<{ exists: boolean; userRole?: string }> => {
   try {
-    const response = await axios.post(
-     `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
+    const { data, status } = await axiosInstance.post(
+      `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
       { userId }
     );
-
-    if (response.status === 200 && Array.isArray(response.data)) {
-      const matchedOffer = response.data.find(
-        (offer: any) => offer.askOxyOfers === campaignType
-      );
-
-      if (matchedOffer) {
-        return {
-          exists: true,
-          userRole: matchedOffer.userRole,
-        };
-      }
+    if (status === 200 && Array.isArray(data)) {
+      const match = data.find((offer: any) => offer.askOxyOfers === campaignType);
+      if (match) return { exists: true, userRole: match.userRole };
     }
-
     return { exists: false };
-  } catch (error) {
-    console.error("Error while fetching offers:", error);
-    return { exists: false };
-  }
+  } catch {
+    return { exists: false };
+  }
 };
 
 export const submitInterest = async (
@@ -182,81 +157,41 @@ export const submitInterest = async (
   userRole: string
 ): Promise<boolean> => {
   try {
-    const response = await axios.post(
+    const { status, data } = await axiosInstance.post(
       `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-      {
-        askOxyOfers: campaignType,
-        mobileNumber,
-        userId,
-        projectType: "ASKOXY",
-        userRole,
-      },
-      {
-        headers:{
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        }
-      }
+      { askOxyOfers: campaignType, mobileNumber, userId, projectType: "ASKOXY", userRole }
     );
-    if (response.status === 200) {
-      localStorage.setItem("askOxyOfers", response.data.askOxyOfers);
+    if (status === 200) {
+      localStorage.setItem("askOxyOfers", data.askOxyOfers);
       return true;
     }
     return false;
-  } catch (error) {
-    console.error("API Error:", error);
+  } catch {
     return false;
   }
 };
 
 export const submitUserInteraction = async (
   interaction:
-    | {
-        campaignId: string;
-        interavtionType: "LIKEORDISLIKE";
-        likeStatus: "yes" | "no";
-        userId: string | null;
-      }
-    | {
-        campaignId: string;
-        interavtionType: "SUBSCRIBE";
-        subscribed: "yes" | "no";
-        userId: string | null;
-      }
-    | {
-        campaignId: string;
-        interavtionType: "COMMENTS";
-        userComments: string;
-        userId: string | null;
-      }
+    | { campaignId: string; interavtionType: "LIKEORDISLIKE"; likeStatus: "yes" | "no"; userId: string | null }
+    | { campaignId: string; interavtionType: "SUBSCRIBE"; subscribed: "yes" | "no"; userId: string | null }
+    | { campaignId: string; interavtionType: "COMMENTS"; userComments: string; userId: string | null }
 ): Promise<boolean> => {
   try {
     const payload = {
       campaignId: interaction.campaignId,
       userId: interaction.userId,
       interavtionType: interaction.interavtionType,
-      likeStatus:
-        interaction.interavtionType === "LIKEORDISLIKE"
-          ? interaction.likeStatus
-          : null,
-      subscribed:
-        interaction.interavtionType === "SUBSCRIBE"
-          ? interaction.subscribed
-          : null,
-      userComments:
-        interaction.interavtionType === "COMMENTS"
-          ? interaction.userComments
-          : null,
+      likeStatus: interaction.interavtionType === "LIKEORDISLIKE" ? (interaction as any).likeStatus : null,
+      subscribed: interaction.interavtionType === "SUBSCRIBE" ? (interaction as any).subscribed : null,
+      userComments: interaction.interavtionType === "COMMENTS" ? (interaction as any).userComments : null,
     };
-
-    const response = await axios.post(
+    const { status } = await axiosInstance.post(
       `${BASE_URL}/marketing-service/campgin/filluserinteractions`,
-      payload,
-      { headers: { accept: "*/*", "Content-Type": "application/json" } }
+      payload
     );
-    return response.status === 200;
-  } catch (error) {
-    console.error("Error submitting user interaction:", error);
+    return status === 200;
+  } catch {
     return false;
   }
 };
@@ -267,18 +202,12 @@ export const submitSubComment = async (
   userId: string
 ): Promise<boolean> => {
   try {
-    const response = await axios.post(
+    const { status } = await axiosInstance.post(
       `${BASE_URL}/marketing-service/campgin/fillusersubinteractioncomments`,
-      {
-        mainCommentId,
-        subComment,
-        userId,
-      },
-      { headers: { accept: "*/*", "Content-Type": "application/json" } }
+      { mainCommentId, subComment, userId }
     );
-    return response.status === 200;
-  } catch (error) {
-    console.error("Error submitting sub-comment:", error);
+    return status === 200;
+  } catch {
     return false;
   }
 };
@@ -286,20 +215,14 @@ export const submitSubComment = async (
 export const fetchAppliedJobsByUserId = async (
   userId: string | null
 ): Promise<AppliedJob[]> => {
-  if (!userId) {
-    return [];
-  }
+  if (!userId) return [];
   try {
-    const response = await axios.get<AppliedJob[]>(
+    const { data } = await axiosInstance.get<AppliedJob[]>(
       `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
-      {
-        params: { userId },
-        headers: { accept: "*/*" },
-      }
+      { params: { userId } }
     );
-    return response.data || [];
-  } catch (error) {
-    console.error("Failed to fetch applied jobs:", error);
+    return data || [];
+  } catch {
     return [];
   }
 };

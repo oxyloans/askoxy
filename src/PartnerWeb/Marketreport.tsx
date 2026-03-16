@@ -74,6 +74,8 @@ interface MarketUsersResponse {
   marketName: string;
   listMarketUserInfo: UserInfo[];
 }
+const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
+
 
 const MarketReport = () => {
   const [markets, setMarkets] = useState<Market[]>([]);
@@ -98,7 +100,13 @@ const MarketReport = () => {
     setError(null);
     try {
       const response = await fetch(
-        `${BASE_URL}/product-service/getAllMarket?page=${page}&size=${size}`
+        `${BASE_URL}/product-service/getAllMarket?page=${page}&size=${size}`,
+        {
+           headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
+        }
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -122,7 +130,13 @@ const MarketReport = () => {
     setError(null);
     try {
       const response = await fetch(
-        `${BASE_URL}/user-service/getMarketUsers?marketId=${marketId}`
+        `${BASE_URL}/user-service/getMarketUsers?marketId=${marketId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
+        }
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import axios from "axios";
+import { customerApi } from "../utils/axiosInstance";
 import Footer from "../components/Footer";
 import {
   FiUploadCloud,
@@ -106,15 +106,11 @@ const [askOxyOffer, setAskOxyOffer] = useState<string>("FREESAMPLE");
   const fetchProfileData = async () => {
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('accessToken');
       const customerId = localStorage.getItem('userId');
 
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/customerProfileDetails`,
-        {
-          params: { customerId },
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { params: { customerId } }
       );
 
       const data = response.data;
@@ -208,7 +204,7 @@ if (fromTicketHistory && locationState.askOxyOffer) {
     if (!id) return;
 
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/write/getQuery/${id}`
       );
       if (response.data) {
@@ -267,19 +263,22 @@ if (fromTicketHistory && locationState.askOxyOffer) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
+    
     if (!file) return;
 
     const formData = new FormData();
+    console.log("Selected file:", file);
     formData.append("file", file);
     formData.append("fileType", "kyc");
     formData.append("projectType", "ASKOXY");
     const storedUserId = localStorage.getItem("userId") || "";
 
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/user-service/write/uploadQueryScreenShot?userId=${storedUserId}`,
         formData,
         {
+          headers: { "Content-Type": undefined },
           onUploadProgress: (progressEvent) => {
             const progress = Math.round(
               (progressEvent.loaded * 100) / (progressEvent.total || 100)
@@ -357,7 +356,7 @@ if (fromTicketHistory && locationState.askOxyOffer) {
     };
 
     try {
-      await axios.post(BASE_URL + "/user-service/write/saveData", data);
+      await customerApi.post(BASE_URL + "/user-service/write/saveData", data);
 
       // Track query submission
       if (typeof window !== "undefined" && window.gtag) {

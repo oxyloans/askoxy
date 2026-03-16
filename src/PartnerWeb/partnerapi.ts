@@ -1,4 +1,4 @@
-import axios from "axios";
+import { partnerApi as axiosInstance } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
 interface Order {
@@ -81,122 +81,78 @@ interface DeliveryBoy {
 
 export type { Order, OrderItems, Address, ExchangeOrder, DeliveryBoy };
 
-const accessToken = JSON.parse(localStorage.getItem("partner_Token") || "{}");
-
 export const fetchOrdersByStatus = async (status: string): Promise<Order[]> => {
-  try {
-    const response = await axios.get<Order[]>(
-      `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=${status}`,
-      { headers: { Authorization: `Bearer ${accessToken.token}` } }
-    );
-    return response.data.filter((order) => !order.testUser);
-  } catch (error) {
-    console.error(`Error fetching orders with status ${status}:`, error);
-    throw new Error("Unable to load orders. Please try again later.");
-  }
+  const { data } = await axiosInstance.get<Order[]>(
+    `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=${status}`
+  );
+  return data.filter((order) => !order.testUser);
 };
 
 export const fetchDeliveredOrders = async (
   startDate: string,
   endDate: string
 ): Promise<Order[]> => {
-  try {
-    const response = await axios.get(
-      `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${endDate}&startDate=${startDate}&status=4`,
-      {
-        headers: {
-          accept: "*/*",
-          Authorization: `Bearer ${accessToken.token}`,
-        },
-      }
-    );
-    return response.data
-      .filter((order: any) => order.testUser === "false")
-      .map((order: any) => ({
-        orderId: order.orderId,
-        uniqueId: order.orderId.slice(-4),
-        orderDate: order.orderPlacedDate || null,
-        subTotal: order.grandTotal || 0,
-        grandTotal: order.grandTotal || 0,
-        testUser: false,
-        orderStatus: "4",
-        orderAddress: {
-          pincode: order.pincode?.toString() || "",
-          address: order.address || "",
-          googleMapLink: "",
-        },
-        userType: "",
-        orderFrom: "",
-        orderItems: order.orderItems.map((item: any) => ({
-          itemName: item.itemName,
-          quantity: item.itemQty ? item.itemQty.toString() : null,
-          singleItemPrice: item.price,
-          itemMrpPrice: item.price,
-          price: item.price,
-          weight: item.weight ? item.weight.toString() : "0",
-        })),
-        customerName: order.customerName,
-        mobileNumber: order.mobileNumber,
-        deliveryDate: order.deliveryDate,
-      }));
-  } catch (error: any) {
-    console.error("Error fetching delivered orders:", error);
-    throw new Error(
-      error.response?.data?.message || "Unable to load delivered orders."
-    );
-  }
+  const { data } = await axiosInstance.get(
+    `${BASE_URL}/order-service/notification_to_dev_team_weekly?endDate=${endDate}&startDate=${startDate}&status=4`
+  );
+  return data
+    .filter((order: any) => order.testUser === "false")
+    .map((order: any) => ({
+      orderId: order.orderId,
+      uniqueId: order.orderId.slice(-4),
+      orderDate: order.orderPlacedDate || null,
+      subTotal: order.grandTotal || 0,
+      grandTotal: order.grandTotal || 0,
+      testUser: false,
+      orderStatus: "4",
+      orderAddress: {
+        pincode: order.pincode?.toString() || "",
+        address: order.address || "",
+        googleMapLink: "",
+      },
+      userType: "",
+      orderFrom: "",
+      orderItems: order.orderItems.map((item: any) => ({
+        itemName: item.itemName,
+        quantity: item.itemQty ? item.itemQty.toString() : null,
+        singleItemPrice: item.price,
+        itemMrpPrice: item.price,
+        price: item.price,
+        weight: item.weight ? item.weight.toString() : "0",
+      })),
+      customerName: order.customerName,
+      mobileNumber: order.mobileNumber,
+      deliveryDate: order.deliveryDate,
+    }));
 };
 
 export const fetchExchangeOrders = async (): Promise<ExchangeOrder[]> => {
-  try {
-    const response = await fetch(
-      `${BASE_URL}/order-service/getAllExchangeOrder`,
-      {
-        headers: { Authorization: `Bearer ${accessToken.token}` },
-      }
-    );
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-    return data.sort(
-      (a: ExchangeOrder, b: ExchangeOrder) =>
-        new Date(b.exchangeRequestDate).getTime() -
-        new Date(a.exchangeRequestDate).getTime()
-    );
-  } catch {
-    throw new Error("Error fetching exchange orders.");
-  }
+  const { data } = await axiosInstance.get<ExchangeOrder[]>(
+    `${BASE_URL}/order-service/getAllExchangeOrder`
+  );
+  return data.sort(
+    (a, b) =>
+      new Date(b.exchangeRequestDate).getTime() -
+      new Date(a.exchangeRequestDate).getTime()
+  );
 };
 
 export const fetchDeliveryBoys = async (): Promise<DeliveryBoy[]> => {
-  try {
-    const response = await fetch(`${BASE_URL}/user-service/deliveryBoyList`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken.token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) throw new Error();
-    return await response.json();
-  } catch {
-    throw new Error("Failed to get Delivery Boy list.");
-  }
+  const { data } = await axiosInstance.get<DeliveryBoy[]>(
+    `${BASE_URL}/user-service/deliveryBoyList`
+  );
+  return data;
 };
 
 export const rejectOrder = async (
   orderId: string,
   cancelReason: string
 ): Promise<void> => {
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/order-service/reject_orders`,
-      { orderId, cancelReason },
-      { headers: { Authorization: `Bearer ${accessToken.token}` } }
-    );
-    if (!response.data.status) throw new Error(response.data.message);
-  } catch {
-    throw new Error("Failed to reject order.");
-  }
+  const { data } = await axiosInstance.post(
+    `${BASE_URL}/order-service/reject_orders`,
+    { orderId, cancelReason }
+  );
+  if (!data.status) throw new Error(data.message);
 };
 
 export const assignOrderToDeliveryBoy = async (
@@ -204,43 +160,21 @@ export const assignOrderToDeliveryBoy = async (
   deliveryBoyId: string,
   orderStatus: string
 ): Promise<void> => {
-  let data: any;
-  let apiUrl: string;
+  let body: any;
+  let url: string;
 
   if (orderStatus === "PickedUp") {
-    data = {
-      deliveryBoyId,
-      orderId,
-    };
-    apiUrl = `${BASE_URL}/order-service/swappingDeliveryBoyIds`;
+    body = { deliveryBoyId, orderId };
+    url = `${BASE_URL}/order-service/swappingDeliveryBoyIds`;
   } else if (orderStatus === "2" || orderStatus === "1") {
-    data = {
-      orderId,
-      deliveryBoyId,
-    };
-    apiUrl = `${BASE_URL}/order-service/orderIdAndDbId`;
+    body = { orderId, deliveryBoyId };
+    url = `${BASE_URL}/order-service/orderIdAndDbId`;
   } else {
-    data = {
-      orderId,
-      deliverBoyId: deliveryBoyId,
-    };
-    apiUrl = `${BASE_URL}/order-service/reassignOrderToDb`;
+    body = { orderId, deliverBoyId: deliveryBoyId };
+    url = `${BASE_URL}/order-service/reassignOrderToDb`;
   }
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken.token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) throw new Error();
-  } catch {
-    throw new Error("Failed to assign order.");
-  }
+  await axiosInstance.post(url, body);
 };
 
 export const assignExchangeOrder = async (
@@ -249,27 +183,12 @@ export const assignExchangeOrder = async (
   collectedNewBag: string,
   newBagBarCode: string | null
 ): Promise<void> => {
-  try {
-    const response = await fetch(
-      `${BASE_URL}/order-service/exchangeBagCollect`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accessToken.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          collectedNewBag,
-          exchangeId,
-          deliveryBoyId,
-          newBagBarCode,
-        }),
-      }
-    );
-    if (!response.ok) throw new Error();
-  } catch {
-    throw new Error("Failed to assign order.");
-  }
+  await axiosInstance.patch(`${BASE_URL}/order-service/exchangeBagCollect`, {
+    collectedNewBag,
+    exchangeId,
+    deliveryBoyId,
+    newBagBarCode,
+  });
 };
 
 export const reassignExchangeOrder = async (
@@ -282,38 +201,23 @@ export const reassignExchangeOrder = async (
     amountPaid: string;
   }
 ): Promise<void> => {
-  try {
-    const response = await fetch(
-      `${BASE_URL}/order-service/exchangeOrderReassign`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ exchangeId, ...data }),
-      }
-    );
-    if (!response.ok) throw new Error();
-  } catch {
-    throw new Error("Something went wrong!");
-  }
+  await axiosInstance.post(`${BASE_URL}/order-service/exchangeOrderReassign`, {
+    exchangeId,
+    ...data,
+  });
 };
 
 export const fetchGroupedProducts = async () => {
-  const response = await fetch(
+  const { data } = await axiosInstance.get(
     `${BASE_URL}/product-service/showGroupItemsForCustomrs`
   );
-  if (!response.ok) throw new Error("Failed to fetch products");
-  return response.json();
+  return data;
 };
 
 export const updateOrderItem = async (orderRequest: OrderRequest) => {
-  const response = await fetch(`${BASE_URL}/order-service/orderItemsUpdate`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(orderRequest),
-  });
-  if (!response.ok) throw new Error("Failed to update item");
-  return response.json();
+  const { data } = await axiosInstance.patch(
+    `${BASE_URL}/order-service/orderItemsUpdate`,
+    orderRequest
+  );
+  return data;
 };

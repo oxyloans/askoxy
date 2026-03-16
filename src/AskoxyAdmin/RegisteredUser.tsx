@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "./Sider";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 import {
   Typography,
@@ -345,7 +345,6 @@ const RegisteredUser: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
             accept: "*/*",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );

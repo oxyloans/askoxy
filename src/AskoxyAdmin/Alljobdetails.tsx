@@ -28,6 +28,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
+import { adminApi as axios } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
 const { Title, Text } = Typography;
@@ -103,21 +104,14 @@ const JobsAdminPage: React.FC = () => {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
+      const response = await axios.get(
         `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs");
-      }
-
-      const data = await response.json();
-      // Ensure data is an array; fallback to empty array if not
-      setJobs(Array.isArray(data) ? data : []);
+      setJobs(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching jobs:", error);
       message.error("Failed to load jobs. Please try again.");
-      setJobs([]); // Fallback to empty array on error
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -135,23 +129,13 @@ const JobsAdminPage: React.FC = () => {
       onOk: async () => {
         try {
           setUpdateLoading(jobId);
-          const response = await fetch(
+          await axios.post(
             `${BASE_URL}/marketing-service/campgin/updatejobstatus`,
             {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                id: jobId,
-                jobStatus: currentStatus !== undefined ? !currentStatus : true, // Default to true if undefined
-              }),
+              id: jobId,
+              jobStatus: currentStatus !== undefined ? !currentStatus : true,
             }
           );
-
-          if (!response.ok) {
-            throw new Error("Failed to update job status");
-          }
 
           setJobs((prevJobs) =>
             prevJobs.map((job) =>
@@ -266,24 +250,16 @@ const JobsAdminPage: React.FC = () => {
         jobSource: formValues.jobSource || "",
       };
 
-      const response = await fetch(
+      await axios.post(
         `${BASE_URL}/marketing-service/campgin/postajob`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
+        payload
       );
 
-      if (response.ok) {
-        form.resetFields();
-        setIsUpdateModalVisible(false);
-        setCurrentJob(null);
-        message.success("Job updated successfully!");
-        fetchJobs();
-      } else {
-        throw new Error("Failed to update job");
-      }
+      form.resetFields();
+      setIsUpdateModalVisible(false);
+      setCurrentJob(null);
+      message.success("Job updated successfully!");
+      fetchJobs();
     } catch (error) {
       message.error("Failed to update job. Please try again.");
       console.error("Error updating job:", error);

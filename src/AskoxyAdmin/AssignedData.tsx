@@ -26,7 +26,7 @@ import {
  
   WhatsAppOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import { adminApi as axios } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import moment from "moment";
@@ -358,7 +358,6 @@ const AssignedDataPage: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
             accept: "*/*",
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
