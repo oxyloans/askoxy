@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 import { FaWhatsapp, FaGoogle } from "react-icons/fa6";
 import axios, { AxiosError } from "axios";
 import axiosInstance from "../../utils/axiosInstance";
+import { store } from "../../store";
+import { updateAccessToken, updateRefreshToken, logout } from "../../store/authSlice";
+// import { getRefreshToken } from "../../utils/cookieUtils";
 import PhoneInput, {
   isValidPhoneNumber,
   parsePhoneNumber,
@@ -589,6 +592,7 @@ const WhatsappLogin: React.FC = () => {
         // Store refresh token if available
         if (response.data.refreshToken) {
           sessionStorage.setItem("refreshToken", response.data.refreshToken);
+          store.dispatch(updateRefreshToken(response.data.refreshToken));
         }
         
         localStorage.setItem("primaryType", primaryType);

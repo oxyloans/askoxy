@@ -38,8 +38,9 @@ const Login: React.FC = () => {
       const id = localStorage.getItem("admin_uniquId");
       const primaryType = localStorage.getItem("admin_primaryType");
       const acToken = localStorage.getItem("admin_acToken");
+      const refreshToken = sessionStorage.getItem("admin_refreshToken");
 
-      if (id && primaryType && acToken) {
+      if (id && primaryType && acToken && refreshToken) {
         if (primaryType === "HELPDESKSUPERADMIN") {
           navigate("/admn/helpdashboard");
         } else if (primaryType === "HELPDESKADMIN") {

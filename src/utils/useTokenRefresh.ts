@@ -5,6 +5,7 @@ import { getRefreshToken } from "./cookieUtils";
 
 export const useTokenRefresh = (): void => {
   const accessToken = useAppSelector((state) => state.auth.accessToken);
+  console.log("useTokenRefresh - accessToken changed:", { accessToken: !!accessToken });
 
   useEffect(() => {
     if (accessToken && getRefreshToken()) {

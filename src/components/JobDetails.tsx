@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { MailIcon, Search } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BASE_URL from "../Config";
 import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
 import { Button, message, Select } from "antd";
@@ -46,13 +46,14 @@ const { Option } = Select;
 
 const JobDetails: React.FC = () => {
   const location = useLocation();
-  const { id } = location.state || {};
+  const navigate = useNavigate();
+  const { id: urlId } = useParams<{ id: string }>();
+  const id = urlId || location.state?.id;
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
     industry: "",
@@ -150,9 +151,10 @@ const JobDetails: React.FC = () => {
 
     if (id) {
       const job = jobs.find((job) => job.id === id);
-      setSelectedJob(job || null);
+      if (job) {
+        setSelectedJob(job);
+      }
     }
-  
 
     const redirectJobId = sessionStorage.getItem("redirectJobId");
     if (redirectJobId && jobs.length > 0) {
@@ -485,6 +487,7 @@ const formatDateWithBoth = (timestamp: number) => {
       sessionStorage.setItem("redirectJobId", job.id);
       return;
     }
+    navigate(`/main/jobdetails/${job.id}`);
     setSelectedJob(job);
     window.scrollTo({
       top: 400,

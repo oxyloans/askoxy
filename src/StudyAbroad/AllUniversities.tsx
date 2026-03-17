@@ -137,6 +137,7 @@ const AllUniversities: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
 
@@ -183,6 +184,7 @@ const AllUniversities: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
+            authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
           body: JSON.stringify({
             countryName: university.country,

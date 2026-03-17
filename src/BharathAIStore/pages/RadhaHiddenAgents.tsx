@@ -44,12 +44,11 @@ const gradientFor = (seed: string) => {
 };
 
 function makeInitialsSVG(name: string) {
+  const words = name.trim().split(/\s+/).filter((w) => /[a-zA-Z]/.test(w[0]));
   const initials =
-    name
-      .trim()
-      .split(/\s+/)
+    words
       .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? "")
+      .map((w) => w[0].toUpperCase())
       .join("") || "AI";
 
   const { c1, c2, x2, y2 } = gradientFor(name || "AI");
@@ -65,7 +64,7 @@ function makeInitialsSVG(name: string) {
   <rect width="800" height="450" rx="28" ry="28" fill="url(#g)"/>
   <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
         font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
-        font-size="180" fill="rgba(255,255,255,0.96)" letter-spacing="6">${initials}</text>
+        font-size="180" fill="rgba(255,255,255,0.96)" letter-spacing="6">${initials.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</text>
 </svg>`.trim();
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
@@ -143,6 +142,39 @@ const HiddenAssistantCard: React.FC<{
 
 // ------------------ Static Agents ------------------
 const staticAgents: Assistant[] = [
+  {
+    id: "MyCBS Data Assistant",
+    assistantId: "MyCBS Data Assistant",
+    agentId: "MyCBS Data Assistant*",
+    name: "MyCBS Data Assistant",
+    description:
+      "The CBS Data Analyst agent is designed to support data professionals by conducting thorough analyses of datasets to identify trends and insights. Its primary purpose is to enhance the accuracy of data interpretations, aiding users in making informed business decisions. — for CBS Data Analyst, to Improve accuracy, aimed at Analyze.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/asst_3JtI3qfOaJFi31V9247UuAQh/90a2142e-1c32-422b-a6fb-7e94cdd2286e/MyCBS%20Data%20Assistant",
+  },
+  {
+    id: "Tie Data Analyst",
+    assistantId: "Tie Data Analyst",
+    agentId: "Tie Data Analyst",
+    name: "Tie Data Analyst",
+    description:
+      "This AI agent assists data analysts in improving accuracy by analyzing datasets for trends, anomalies, and patterns. It streamlines data interpretation, offers insights for refinement, and supports decision-making processes, ensuring precise outcomes. — for Data Analyst, to Improve accuracy, aimed at Analyze.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/asst_gO1AvaQNoiW9yucgpWSLvgol/b1c61254-198b-44d5-b00b-943bb6ab76bc/Tie%20Data%20Analyst",
+  },
+  {
+    id: "OXY <> Jobs",
+    assistantId: "OXY <> Jobs",
+    agentId: "OXY <> Jobs",
+    name: "OXY <> Jobs",
+    description:
+      "A centralized hub of AI agents for job data analysis, recruitment insights, and workforce information retrieval.",
+    imageUrl: "",
+    hideAgent: true,
+    link: "/ai-store/oxy-jobs",
+  },
   {
     id: "TCS 360*",
     assistantId: "TCS 360*",

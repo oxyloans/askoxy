@@ -1,4 +1,5 @@
 import React, { useEffect, Suspense, lazy } from "react";
+import { getRefreshToken } from "./utils/cookieUtils";
 
 import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
@@ -30,6 +31,9 @@ import { CandidateDetail } from "./AIMockInterview/admin/CandidateDetail";
 import ImageCreation from "./BharathAIStore/pages/ImageCreation";
 import { AdminDashboard } from "./AIMockInterview/admin/AdminDashboard";
 import { FeedbackForm, MultiLevelSelection, ProctoredInterview } from "./AIMockInterview";
+import CampaignStats from "./components/CampaignStatsAccenture";
+import AccentureJobsPage from "./components/AccentureJobsPage";
+import AccenturePresentation from "./Dashboard/AccenturePresentation";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -390,6 +394,8 @@ const AgentCreationSteps = lazy(
 const TripPlanner = lazy(() => import("./AITripPlanner/TripPlanner"));
 const TaxInvoice = lazy(() => import("./components/TaxInvoice"));
 const AccentureServices = lazy(() => import("./components/CampaignStatsAccenture"));
+
+
 // Simple centered loader component
 const LoadingSpinner = React.memo(() => {
   React.useEffect(() => {
@@ -453,6 +459,16 @@ const App: React.FC = () => {
   // ✅ Initialize automatic token refresh
   useTokenRefresh();
 
+// useEffect(() => {
+//     const rt = getRefreshToken();
+//     if (rt) {
+//       console.log("Refresh token found on app load, attempting refresh...");
+//       // You can trigger an immediate token refresh here if needed
+//     } else {
+//       console.log("No refresh token found on app load.");
+//     }
+//   }, []);
+
   useEffect(() => {
     const validEntryPoints = [
       "/",
@@ -510,7 +526,10 @@ const App: React.FC = () => {
       currentPath.startsWith("/home") ||
       // Admin routes
       currentPath.startsWith("/admn") ||
-      currentPath.startsWith("/adminRegister")
+      currentPath.startsWith("/adminRegister") ||
+      currentPath.startsWith("/accenture/jobs") ||
+      currentPath.startsWith("accenturestats") || 
+      currentPath.startsWith("/accenture-presentation")
     );
   };
 
@@ -560,6 +579,9 @@ const App: React.FC = () => {
               <Route path="/smartlock" element={<GoldSilverTargets />} />
               <Route path="/allgoldrates" element={<GoldRatesPage />} />
               <Route path="/oxyinsurance" element={<DataReading />} />
+              <Route path="/accenturestats" element={<CampaignStats/>} />
+              <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
+              <Route path ="/accenture-presentation" element={<AccenturePresentation />} />
               <Route
                 path="/rotarydistrict3150AiAgent"
                 element={<RotaryLandingPage />}
@@ -976,6 +998,7 @@ const App: React.FC = () => {
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
+                <Route path="jobdetails/:id" element={<JobDetails />} />
                 <Route path="caserviceitems" element={<CAServicesItems />} />
                 <Route path="cartcaservice" element={<CartCaCsService />} />
                 <Route path="servicecalist" element={<ServiceCAList />} />

@@ -521,7 +521,7 @@ const [loadingMyAgents, setLoadingMyAgents] = useState(false);  // better name t
 
 
   const [pagination, setPagination] = useState<PaginationState>({
-    pageSize: 20,
+    pageSize: 80,
     hasMore: true,
     total: 0,
   });
@@ -855,24 +855,10 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
 }, [tab, loggedInUserId]);
 
   const approvedAssistants = useMemo(() => {
-    console.log("Total assistants loaded:", assistants.length);
     return assistants.filter((a) => {
-      if (a.hideAgent === true) return false; // ❌ hide
-      
-      // ✅ FIXED: API response doesn't include status/agentStatus, so allow all non-hidden agents
-      // Only filter by hideAgent and activeStatus
-      const isActive = a.activeStatus !== false;
-      const name = (a.name || "").trim().toLowerCase();
-      const isWhitelisted = Array.from(ALWAYS_SHOW_NAMES).some(
-        (n) => n.toLowerCase() === name
-      );
-      
-      // Show if: not hidden AND (active OR whitelisted)
-      const shouldShow = isActive || isWhitelisted;
-      
-      console.log(`Agent: ${a.name}, hideAgent: ${a.hideAgent}, activeStatus: ${a.activeStatus}, shouldShow: ${shouldShow}`);
-      
-      return shouldShow;
+      if (a.hideAgent === true) return false;
+      const status = ((a.status || a.agentStatus || "") + "").toUpperCase();
+      return status === "APPROVED" && a.activeStatus === true;
     });
   }, [assistants]);
 

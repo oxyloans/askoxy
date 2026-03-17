@@ -133,7 +133,7 @@ const ReferralPage: React.FC = () => {
   const fetchUserDetails = async () => {
     try {
       const response = await axios.get(
-        `{BASE_URL}/user-service/user/${customerId}`,
+        `${BASE_URL}/user-service/user/${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

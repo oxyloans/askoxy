@@ -11,10 +11,12 @@ export const refreshAccessToken = async (): Promise<boolean> => {
   if (pendingRefresh) return pendingRefresh;
 
   const refreshToken = getRefreshToken();
+  console.log("Initiating token refresh...", { refreshToken: !!refreshToken });
   if (!refreshToken) return false;
 
   pendingRefresh = (async () => {
     try {
+      console.log("Attempting token refresh...");
       const response = await fetch(`${BASE_URL}/user-service/refresh-token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -25,12 +27,12 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 
       const data = await response.json();
 
-      if (data.accessToken) {
-        store.dispatch(updateAccessToken(data.accessToken));
+      if (data.mobileNumber) {
+        store.dispatch(updateAccessToken(data.mobileNumber));
       }
 
-      if (data.refreshToken) {
-        store.dispatch(updateRefreshToken(data.refreshToken));
+      if (data.mobileOtpSession) {
+        store.dispatch(updateRefreshToken(data.mobileOtpSession));
       }
 
       return true;
@@ -51,6 +53,8 @@ export const refreshAccessToken = async (): Promise<boolean> => {
 export const startTokenRefresh = (): void => {
   stopTokenRefresh();
   if (!getRefreshToken()) return;
+
+  refreshAccessToken(); // immediate call on start
 
   refreshTokenInterval = setInterval(() => {
     refreshAccessToken();

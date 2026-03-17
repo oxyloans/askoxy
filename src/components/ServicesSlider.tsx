@@ -715,7 +715,7 @@ flex flex-col border border-gray-100 m-2"
                     <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 p-2">
                       <img
                         src={
-                          job.companyLogo ||
+                          `${uploadurlwithId}${job.companyLogo}` ||
                           "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
                         }
                         className="max-w-full max-h-full object-contain"
