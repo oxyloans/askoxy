@@ -23,6 +23,7 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import VendorCreationModal from "../BharathAIStore/components/VendorCreationModal";
+import DeleteConfirmModal from "./DeleteConfirmModal";
 
 /** -------- Auth helpers -------- */
 function getAccessToken(): string | null {
@@ -252,6 +253,7 @@ const AllAgentsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AllAgentDataResponse | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteType, setDeleteType] = useState<"soft" | "permanent" | null>(null);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
   // ⬇️ place with the other React.useState hooks (top of component)
@@ -942,7 +944,50 @@ const AllAgentsPage: React.FC = () => {
             : [],
         });
       } catch (e: any) {
-        setError(e?.message || "Failed to load agents.");
+        console.error("Error loading agents:", e);
+        
+        // Enhanced error handling with user-friendly messages
+        let errorMessage = "Failed to load agents.";
+        
+        if (e?.response) {
+          const status = e.response.status;
+          const data = e.response.data;
+          
+          switch (status) {
+            case 400:
+              errorMessage = "Invalid request. Please check your user credentials.";
+              break;
+            case 401:
+              errorMessage = "Authentication failed. Please login again.";
+              break;
+            case 403:
+              errorMessage = "Access denied. You don't have permission to view agents.";
+              break;
+            case 404:
+              errorMessage = "Agent service not found. Please try again later.";
+              break;
+            case 500:
+              errorMessage = "Server error occurred. Our team has been notified. Please try again in a few minutes.";
+              break;
+            case 502:
+              errorMessage = "Service temporarily unavailable. Please try again later.";
+              break;
+            case 503:
+              errorMessage = "Service is under maintenance. Please try again later.";
+              break;
+            default:
+              errorMessage = `Request failed (Error ${status}). Please try again.`;
+          }
+          
+          // Log detailed error for debugging but show user-friendly message
+          console.error(`API Error ${status}:`, data);
+        } else if (e?.request) {
+          errorMessage = "Network error. Please check your internet connection.";
+        } else {
+          errorMessage = e?.message || "An unexpected error occurred.";
+        }
+        
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -1395,7 +1440,46 @@ const AllAgentsPage: React.FC = () => {
     return list.filter((a) => a.status === filterStatus);
   }, [data, filterStatus]);
 
-  const deleteAssistant = async (
+  const softDeleteAssistant = async (
+    assistantId: string | null,
+    agentId: string
+  ) => {
+    if (!assistantId) {
+      message.error("Missing assistantId. Cannot delete this assistant.");
+      return;
+    }
+    setDeleting(agentId);
+    try {
+      const url = `${BASE_URL}/ai-service/agent/deleteId/${encodeURIComponent(
+        assistantId
+      )}`;
+      const res = await authFetch(url, { method: "DELETE" });
+      const txt = await res.text().catch(() => "");
+      if (!res.ok)
+        throw new Error(
+          `Delete failed: ${res.status} ${res.statusText}. ${txt || ""}`
+        );
+      setData((old) =>
+        old
+          ? {
+              ...old,
+              assistants: old.assistants.filter((a) => a.id !== agentId),
+              conversations: old.conversations.filter(
+                (c) => c.agentId !== agentId
+              ),
+            }
+          : old
+      );
+      message.success("Agent deleted successfully.");
+    } catch (e: any) {
+      message.error(e?.message || "Failed to delete assistant.");
+    } finally {
+      setDeleting(null);
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const permanentDeleteAssistant = async (
     assistantId: string | null,
     agentId: string
   ) => {
@@ -1413,7 +1497,7 @@ const AllAgentsPage: React.FC = () => {
       const txt = await res.text().catch(() => "");
       if (!res.ok)
         throw new Error(
-          `Delete failed: ${res.status} ${res.statusText}. ${txt || ""}`
+          `Permanent delete failed: ${res.status} ${res.statusText}. ${txt || ""}`
         );
       setData((old) =>
         old
@@ -1426,9 +1510,9 @@ const AllAgentsPage: React.FC = () => {
             }
           : old
       );
-      message.success("Deleted permanently.");
+      message.success("Agent permanently deleted from database.");
     } catch (e: any) {
-      message.error(e?.message || "Failed to delete assistant.");
+      message.error(e?.message || "Failed to permanently delete assistant.");
     } finally {
       setDeleting(null);
       setDeleteConfirmId(null);
@@ -2140,7 +2224,10 @@ const AllAgentsPage: React.FC = () => {
 
                             {/* 🗑️ Delete Button */}
                             <button
-                              onClick={() => setDeleteConfirmId(a.id)}
+                              onClick={() => {
+                                setDeleteConfirmId(a.id);
+                                setDeleteType(null);
+                              }}
                               title="Delete Agent"
                               disabled={deleting === a.id}
                               className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-semibold
@@ -2883,7 +2970,7 @@ const AllAgentsPage: React.FC = () => {
                       </Modal>
 
                       {/* ✅ Delete / Inactive Confirmation (no "Archive") */}
-                      {deleteConfirmId === a.id && (
+                      {/* {deleteConfirmId === a.id && (
                         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
                           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
                             <h3 className="text-lg font-semibold text-purple-900 mb-2">
@@ -2903,7 +2990,7 @@ const AllAgentsPage: React.FC = () => {
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                              {/* Cancel */}
+                             
                               <button
                                 onClick={() => setDeleteConfirmId(null)}
                                 className="px-4 py-2 text-sm font-medium border border-purple-300 text-purple-700 rounded-md hover:bg-purple-50"
@@ -2911,11 +2998,10 @@ const AllAgentsPage: React.FC = () => {
                                 Cancel
                               </button>
 
-                              {/* Inactive */}
                               <button
                                 onClick={() => {
                                   setDeleteConfirmId(null);
-                                  // use your existing toggle API to set inactive
+                                
                                   setActiveStatus(a.id, false);
                                 }}
                                 className="px-4 py-2 text-sm font-medium bg-amber-500 text-purple-900 rounded-md hover:bg-amber-400"
@@ -2923,19 +3009,48 @@ const AllAgentsPage: React.FC = () => {
                                 Inactive
                               </button>
 
-                              {/* Delete */}
+                            
                               <button
                                 onClick={() => {
                                   setDeleteConfirmId(null);
-                                  deleteAssistant(a.assistantId, a.id);
+                                  softDeleteAssistant(a.assistantId, a.id);
+                                }}
+                                className="px-4 py-2 text-sm font-medium bg-amber-500 text-white rounded-md hover:bg-amber-600"
+                              >
+                                Soft Delete
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setDeleteConfirmId(null);
+                                  permanentDeleteAssistant(a.assistantId, a.id);
                                 }}
                                 className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-md hover:bg-red-700"
                               >
-                                Delete
+                                Permanent Delete
                               </button>
                             </div>
                           </div>
                         </div>
+                      )} */}
+                      {deleteConfirmId === a.id && (
+                        <DeleteConfirmModal
+                          isOpen={true}
+                          deleteType={deleteType}
+                          onClose={() => {
+                            setDeleteConfirmId(null);
+                            setDeleteType(null);
+                          }}
+                          onSelectType={(type) => setDeleteType(type)}
+                          onConfirmSoft={() => {
+                            softDeleteAssistant(a.assistantId, a.id);
+                            setDeleteType(null);
+                          }}
+                          onConfirmPermanent={() => {
+                            permanentDeleteAssistant(a.assistantId, a.id);
+                            setDeleteType(null);
+                          }}
+                        />
                       )}
                     </div>
                   );

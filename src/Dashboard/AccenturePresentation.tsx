@@ -33,9 +33,9 @@ const presentations: Presentation[] = [
     imageAlt: "Accenture 2 pager PDF preview",
     buttonText: "View 2 Pager",
     driveLink:
-      "https://drive.google.com/file/d/131h6RJub68sfA9iTFDNeyL3xAsk_t-hT/view",
+      "https://drive.google.com/file/d/1b3uJndmO73bfCmkt_7Q-Vbn-bmdvfO36/view",
     embedLink:
-      "https://drive.google.com/file/d/131h6RJub68sfA9iTFDNeyL3xAsk_t-hT/preview",
+      "https://drive.google.com/file/d/1b3uJndmO73bfCmkt_7Q-Vbn-bmdvfO36/preview",
   },
   {
     id: 2,
@@ -57,6 +57,8 @@ const presentations: Presentation[] = [
       "https://drive.google.com/file/d/1zsNEKiSn36w4LjS5URSgflWDROAPUG_C/preview",
   },
 ];
+
+const ACCENTURE_JOBS_URL = "https://www.askoxy.ai/accenture/jobs";
 
 // Accenture Theme Colors
 const THEME = {
@@ -193,6 +195,10 @@ const AccenturePresentation: React.FC = () => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
+  const handleOpenJobs = () => {
+    window.open(ACCENTURE_JOBS_URL, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       <Header />
@@ -235,6 +241,25 @@ const AccenturePresentation: React.FC = () => {
                 landscape, sourcing workflow, and OXYGLOBAL.TECH’s strategic
                 partnership model.
               </motion.p>
+
+              <motion.div
+                variants={fadeUp}
+                className="mt-7 flex flex-wrap items-center justify-center gap-4"
+              >
+                <motion.button
+                  whileHover={{ y: -2, scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleOpenJobs}
+                  className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition duration-300"
+                  style={{
+                    backgroundColor: THEME.purple,
+                    color: THEME.white,
+                  }}
+                >
+                  View Accenture Jobs Here
+                  <ExternalLink size={16} />
+                </motion.button>
+              </motion.div>
             </motion.div>
 
             <div className="space-y-16 sm:space-y-20 lg:space-y-24">
@@ -430,7 +455,10 @@ const AccenturePresentation: React.FC = () => {
                         ))}
                       </motion.div>
 
-                      <motion.div variants={itemFade} className="mt-8 sm:mt-9">
+                      <motion.div
+                        variants={itemFade}
+                        className="mt-8 flex flex-wrap gap-3 sm:mt-9"
+                      >
                         <motion.button
                           whileHover={{ y: -2, scale: 1.02 }}
                           whileTap={{ scale: 0.97 }}
@@ -442,6 +470,21 @@ const AccenturePresentation: React.FC = () => {
                           }}
                         >
                           {item.buttonText}
+                        </motion.button>
+
+                        <motion.button
+                          whileHover={{ y: -2, scale: 1.02 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleOpenJobs}
+                          className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition duration-300"
+                          style={{
+                            border: `1px solid ${THEME.purple}`,
+                            color: THEME.purple,
+                            backgroundColor: THEME.white,
+                          }}
+                        >
+                          View Accenture Jobs
+                          <ExternalLink size={16} />
                         </motion.button>
                       </motion.div>
                     </motion.div>
@@ -495,6 +538,19 @@ const AccenturePresentation: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <a
+                    href={ACCENTURE_JOBS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden rounded-full px-4 py-2 text-sm font-medium transition sm:inline-flex"
+                    style={{
+                      border: `1px solid ${THEME.border}`,
+                      color: THEME.purple,
+                    }}
+                  >
+                    View Jobs
+                  </a>
+
+                  <a
                     href={selectedPresentation.driveLink}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -525,18 +581,33 @@ const AccenturePresentation: React.FC = () => {
                 className="border-b px-4 py-2 sm:hidden"
                 style={{ borderColor: THEME.border }}
               >
-                <a
-                  href={selectedPresentation.driveLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex rounded-full px-4 py-2 text-xs font-medium"
-                  style={{
-                    border: `1px solid ${THEME.border}`,
-                    color: THEME.purple,
-                  }}
-                >
-                  Open in New Tab
-                </a>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={ACCENTURE_JOBS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex rounded-full px-4 py-2 text-xs font-medium"
+                    style={{
+                      border: `1px solid ${THEME.border}`,
+                      color: THEME.purple,
+                    }}
+                  >
+                    View Jobs
+                  </a>
+
+                  <a
+                    href={selectedPresentation.driveLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex rounded-full px-4 py-2 text-xs font-medium"
+                    style={{
+                      border: `1px solid ${THEME.border}`,
+                      color: THEME.purple,
+                    }}
+                  >
+                    Open in New Tab
+                  </a>
+                </div>
               </div>
 
               <div

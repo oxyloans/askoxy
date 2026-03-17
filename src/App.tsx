@@ -34,6 +34,7 @@ import { FeedbackForm, MultiLevelSelection, ProctoredInterview } from "./AIMockI
 import CampaignStats from "./components/CampaignStatsAccenture";
 import AccentureJobsPage from "./components/AccentureJobsPage";
 import AccenturePresentation from "./Dashboard/AccenturePresentation";
+import MinisterMeetingPage from "./components/MinisterPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -492,6 +493,8 @@ const App: React.FC = () => {
       "/genoxyai-services",
       "/bharath-aistore",
       "/interview",
+      "/accenture/jobs",
+      "/accenturestats",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -528,7 +531,7 @@ const App: React.FC = () => {
       currentPath.startsWith("/admn") ||
       currentPath.startsWith("/adminRegister") ||
       currentPath.startsWith("/accenture/jobs") ||
-      currentPath.startsWith("accenturestats") || 
+      currentPath.startsWith("/accenturestats") || 
       currentPath.startsWith("/accenture-presentation")
     );
   };
@@ -579,6 +582,10 @@ const App: React.FC = () => {
               <Route path="/smartlock" element={<GoldSilverTargets />} />
               <Route path="/allgoldrates" element={<GoldRatesPage />} />
               <Route path="/oxyinsurance" element={<DataReading />} />
+              <Route
+                path="/it-minister-vision"
+                element={<MinisterMeetingPage />}
+              />
               <Route path="/accenturestats" element={<CampaignStats/>} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
               <Route path ="/accenture-presentation" element={<AccenturePresentation />} />

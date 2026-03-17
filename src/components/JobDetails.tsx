@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { MailIcon, Search } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -605,6 +605,18 @@ const formatDateWithBoth = (timestamp: number) => {
   };
 
   const JobDetailsComponent = ({ job }: { job: Job }) => {
+    const jobDetailsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (jobDetailsRef.current) {
+        const elementTop = jobDetailsRef.current.offsetTop;
+        window.scrollTo({
+          top: elementTop - 20,
+          behavior: 'smooth'
+        });
+      }
+    }, [job.id]);
+
     // Helper function to check if a value is empty or null
     const isEmpty = (value: any): boolean => {
       return (
@@ -646,7 +658,7 @@ const hasArrayContent = (value: any): boolean => {
     };
 
     return (
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-6 my-8 border border-gray-100 space-y-6">
+      <div ref={jobDetailsRef} className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-6 my-8 border border-gray-100 space-y-6">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-6 rounded-xl shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

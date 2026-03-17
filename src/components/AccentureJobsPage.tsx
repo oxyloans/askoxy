@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import BASE_URL from "../Config";
 import Logo from "../assets/img/askoxylogonew.png";
 import Footer from "./Footer";
@@ -30,6 +31,28 @@ type Job = {
 
 const PAGE_SIZE = 20;
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+    },
+  },
+};
+
 const AccentureJobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,9 +80,11 @@ const AccentureJobsPage: React.FC = () => {
 
   const formatTitle = (job: Job) => job.jobTitle || job.jobDesignation || "Open Position";
 
-  const handleViewDetails = (jobId: string) => {
+  const handleJobNavigate = (jobId: string) => {
     navigate(`/main/jobdetails/${jobId}`);
   };
+
+  const displayedJobs = jobs.slice(0, visible);
 
   const lastUpdated = jobs.length
     ? new Date(Math.max(...jobs.map((j) => j.createdAt))).toLocaleDateString("en-IN", {
@@ -71,10 +96,13 @@ const AccentureJobsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f6f6f8] flex items-center justify-center px-4">
-        <div className="flex items-center gap-3 text-slate-700 font-semibold text-base sm:text-lg">
-          <Loader2 className="w-6 h-6 animate-spin text-violet-700" />
-          Loading Accenture jobs...
+      <div className="min-h-screen bg-gradient-to-br from-[#f6f6f8] to-[#f0f0f5] flex items-center justify-center px-4">
+        <div className="flex flex-col items-center gap-4 text-slate-700 font-semibold text-base sm:text-lg">
+          <div className="relative">
+            <Loader2 className="w-8 h-8 animate-spin text-violet-700" />
+            <div className="absolute inset-0 w-8 h-8 border-2 border-violet-200 rounded-full animate-pulse"></div>
+          </div>
+          <p className="text-center">Loading Accenture jobs...</p>
         </div>
       </div>
     );
@@ -82,32 +110,46 @@ const AccentureJobsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#f6f6f8] flex items-center justify-center p-4">
-        <div className="bg-white border border-red-100 text-red-600 rounded-[28px] p-8 text-center shadow-sm max-w-md w-full">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
-          <p className="text-lg font-semibold">{error}</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#f6f6f8] to-[#f0f0f5] flex items-center justify-center p-4">
+        <div className="bg-white border border-red-100 text-red-600 rounded-3xl p-8 text-center shadow-xl max-w-md w-full transform hover:scale-105 transition-transform">
+          <div className="bg-red-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-bold mb-2">Oops! Something went wrong</h3>
+          <p className="text-lg font-semibold text-red-500">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7fa] flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] via-[#f6f6f8] to-[#f4f4f7] flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-        <img src={Logo} alt="ASKOXY.AI" className="h-10 w-auto object-contain cursor-pointer" onClick={() => navigate("/")} />
-        <div className="flex items-center gap-4">
+      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/60 px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <img 
+          src={Logo} 
+          alt="ASKOXY.AI" 
+          className="h-10 w-auto object-contain cursor-pointer hover:scale-110 transition-transform duration-200" 
+          onClick={() => navigate("/accenturestats")} 
+        />
+        <div className="flex items-center gap-3 sm:gap-4">
           {lastUpdated && (
-            <span className="hidden sm:block text-xs text-gray-500">
-              Last updated: <span className="font-medium text-gray-700">{lastUpdated}</span>
+            <span className="hidden sm:block text-xs bg-gray-100 px-3 py-1.5 rounded-full text-gray-600 border">
+              Updated: <span className="font-semibold text-gray-800">{lastUpdated}</span>
             </span>
           )}
           <button
             onClick={() => navigate("/accenturestats")}
-            className="inline-flex items-center gap-1.5 text-violet-700 hover:text-violet-900 font-medium transition text-sm"
+            className="inline-flex items-center gap-2 text-violet-700 hover:text-white hover:bg-violet-700 font-medium transition-all duration-200 text-sm px-4 py-2 rounded-full border border-violet-200 hover:border-violet-700"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </button>
         </div>
       </header>
@@ -115,109 +157,131 @@ const AccentureJobsPage: React.FC = () => {
       {/* Main */}
       <main className="flex-1 px-3 sm:px-5 lg:px-8 py-6 sm:py-8">
         <div className="max-w-[1800px] mx-auto">
-          <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-700 to-purple-600">
+          <div className="mb-8 text-center sm:text-left">
+           
+            <h1 className="text-2xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-700 via-purple-600 to-blue-600 mb-2">
               Accenture Open Positions
             </h1>
-            <p className="text-sm sm:text-base text-gray-500 mt-1">
-              {jobs.length} jobs available
+            <p className="text-base sm:text-lg text-gray-600 font-medium">
+              <span className="inline-flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                {jobs.length} jobs available
+              </span>
             </p>
           </div>
 
-          {jobs.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-              <Briefcase className="w-20 h-20 mx-auto mb-6 opacity-60" />
-              <p className="text-2xl">No open positions found at the moment.</p>
-            </div>
-          ) : (
+          {jobs.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5">
-                {jobs.slice(0, visible).map((job) => (
-                  <div
-                    key={job.id}
-                    onClick={() => handleViewDetails(job.id)}
-                    className="bg-white border border-[#e8e8ee] rounded-[28px] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer"
-                  >
-                    <div className="p-5 flex flex-col items-center text-center h-full">
-                      {/* Logo */}
-                      <div className="w-[140px] h-[96px] rounded-[18px] border border-[#d9d9df] bg-[#fbfbfc] flex items-center justify-center overflow-hidden mb-4">
-                        {job.companyLogo ? (
+              <motion.div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {displayedJobs.map((job, index) => {
+                  const lightBackgroundColors = [
+                    "bg-slate-50",
+                    "bg-emerald-50",
+                    "bg-violet-50",
+                    "bg-rose-50",
+                    "bg-amber-50",
+                    "bg-cyan-50",
+                    "bg-orange-50",
+                    "bg-stone-50",
+                  ];
+
+                  const bgColor =
+                    lightBackgroundColors[index % lightBackgroundColors.length];
+
+                  return (
+                    <motion.div
+                      key={job.id}
+                      variants={itemVariants}
+                      className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl 
+transition-all duration-300 transform hover:-translate-y-1 cursor-pointer 
+flex flex-col border border-gray-100 m-2"
+                      onClick={() => handleJobNavigate(job.id)}
+                    >
+                      <div className="pt-6 pb-4 flex justify-center">
+                        <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 p-2">
                           <img
-                            src={job.companyLogo}
-                            alt={job.companyName}
-                            className="w-full h-full object-contain p-3"
+                            src={
+                              job.companyLogo ||
+                              "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
+                            }
+                            className="max-w-full max-h-full object-contain"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = "none";
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src =
+                                "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
                             }}
                           />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center text-[#c4c4c8]">
-                            <Building2 className="w-7 h-7 mb-1" />
-                            <span className="text-[22px] font-extrabold leading-none">LOGO</span>
-                            <span className="text-[9px] tracking-[3px] lowercase">empresa</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Company tag */}
-                      <div className="px-4 py-2 rounded-2xl bg-[#edf8f2] text-[#243a5a] font-semibold text-[14px] mb-4 min-h-[44px] flex items-center justify-center">
-                        {job.companyName || "ASKOXY.AI partner"}
-                      </div>
-
-                      {/* Job title */}
-                      <h3 className="text-[18px] font-extrabold text-[#15233b] leading-[1.35] mb-3 min-h-[60px] flex items-center justify-center">
-                        <span className="line-clamp-2">{formatTitle(job)}</span>
-                      </h3>
-
-                      {/* Title box */}
-                      <div className="w-full bg-[#f2f2f5] rounded-2xl px-3 py-3 mb-3">
-                        <div className="flex items-start justify-center gap-2">
-                          <Briefcase className="w-4 h-4 text-[#8b5e3c] mt-0.5 flex-shrink-0" />
-                          <p className="text-[#22324d] font-bold text-[14px] leading-snug text-center line-clamp-2">
-                            {formatTitle(job)}
-                          </p>
                         </div>
                       </div>
 
-                      {/* Location & Experience */}
-                      <div className="w-full space-y-1.5 mb-5">
-                        <div className="flex items-center justify-center gap-2 text-[#43506a] text-[13px]">
-                          <MapPin className="w-3.5 h-3.5 text-[#ea4c89] flex-shrink-0" />
-                          <span className="line-clamp-1">Loc: {job.jobLocations || "Not Available"}</span>
-                        </div>
-                        <div className="flex items-center justify-center gap-2 text-[#43506a] text-[13px]">
-                          <Clock3 className="w-3.5 h-3.5 text-[#ff5d8f] flex-shrink-0" />
-                          <span>Exp: {job.experience || "Not Available"}</span>
+                      <div className="flex justify-center px-4 pb-3">
+                        <div
+                          className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
+                        >
+                          <span className="text-base font-semibold text-gray-700 text-center">
+                            {job.companyName}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetails(job.id);
-                        }}
-                        className="mt-auto min-w-[148px] rounded-full bg-[#dbe9ff] hover:bg-[#cfe2ff] text-[#3f73f0] font-semibold text-[16px] px-6 py-3 transition-all duration-200"
-                      >
-                        View Job
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      <div className="px-4 pb-1">
+                        <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-2">
+                          {formatTitle(job)}
+                        </h3>
+                      </div>
+
+                      <div className="px-2 pb-2">
+                        <div className="text-sm font-bold text-gray-700 text-center bg-gray-50 py-2 px-3 rounded-lg">
+                          💼 {job.jobDesignation || formatTitle(job)}
+                        </div>
+                      </div>
+
+                      <div className="px-4 pb-3 space-y-1 text-center">
+                        <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
+                          📍 Loc: {job.jobLocations || "Remote"}
+                        </div>
+                        <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
+                          ⏰ Exp: {job.experience || "Entry Level"}
+                        </div>
+                      </div>
+
+                      <div className="px-4 pb-5 mt-auto flex justify-center">
+                        <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200 hover:bg-blue-200">
+                          View Job
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
 
               {/* Load More */}
               {visible < jobs.length && (
-                <div className="flex justify-center mt-8">
+                <div className="flex justify-center mt-12">
                   <button
                     onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                    className="px-10 py-3 rounded-full bg-violet-700 hover:bg-violet-800 text-white font-semibold text-base transition-all duration-200 shadow"
+                    className="group px-12 py-3 rounded-full bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-800 hover:to-purple-800 text-white font-bold text-base transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border border-violet-600"
                   >
-                    Load More ({jobs.length - visible} remaining)
+                    <span className="flex items-center gap-1">
+                      Load More ({jobs.length - visible} Remaining)
+                     
+                    </span>
                   </button>
                 </div>
               )}
             </>
+          ) : (
+            <div className="text-center py-5">
+              <p className="text-gray-500 text-lg">
+                No jobs available at the moment.
+              </p>
+            </div>
           )}
         </div>
       </main>

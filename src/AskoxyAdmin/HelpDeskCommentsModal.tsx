@@ -121,24 +121,62 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
         { userId },
         { headers: { "Content-Type": "application/json" } },
       );
-      const commentsData = Array.isArray(response.data) ? response.data : [];
-      setComments(commentsData);
+      
+      // Handle successful response
+      if (response.status === 200) {
+        const commentsData = Array.isArray(response.data) ? response.data : [];
+        setComments(commentsData);
 
-      // If no record isActive status, get from latest comment
-      if (
-        commentsData.length > 0 &&
-        (record?.isActive === undefined || record?.isActive === null)
-      ) {
-        const latestComment = commentsData[0];
-        setCurrentIsActiveStatus(latestComment.isActive);
-        setIsActive(latestComment.isActive);
+        // If no record isActive status, get from latest comment
+        if (
+          commentsData.length > 0 &&
+          (record?.isActive === undefined || record?.isActive === null)
+        ) {
+          const latestComment = commentsData[0];
+          setCurrentIsActiveStatus(latestComment.isActive);
+          setIsActive(latestComment.isActive);
+        }
       }
     } catch (error: any) {
-      if (error.response?.status === 500) {
-        message.info("No comments found");
+      console.error("Error fetching comments:", error);
+      
+      // Handle different status codes
+      if (error.response) {
+        const statusCode = error.response.status;
+        
+        switch (statusCode) {
+          case 400:
+            message.error("Bad request. Please check the user ID.");
+            break;
+          case 401:
+            message.error("Unauthorized. Please login again.");
+            break;
+          case 403:
+            message.error("Access forbidden. You don't have permission.");
+            break;
+          case 404:
+            message.info("No comments found for this user.");
+            break;
+          case 500:
+            message.info("No comments found.");
+            break;
+          case 502:
+            message.error("Server error. Please try again later.");
+            break;
+          case 503:
+            message.error("Service unavailable. Please try again later.");
+            break;
+          default:
+            message.error(`Request failed with status ${statusCode}. Please try again.`);
+        }
+      } else if (error.request) {
+        // Network error
+        message.error("Network error. Please check your connection.");
       } else {
-        message.error("Failed to load comments. Please try again later.");
+        // Other error
+        message.error("An unexpected error occurred. Please try again.");
       }
+      
       setComments([]);
     } finally {
       setLoadingComments(false);

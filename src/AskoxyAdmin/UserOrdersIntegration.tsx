@@ -26,7 +26,7 @@ import {
 import { AiOutlinePrinter } from "react-icons/ai";
 import BASE_URL from "../Config";
 import dayjs from "dayjs";
-
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 interface UserData {
   userId: string;
   userType: string;
@@ -208,18 +208,28 @@ const UserOrdersIntegration: React.FC = () => {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [matchedData, setMatchedData] = useState<MatchedUserOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-
+  // Comments state
+    const [record, setRecord] = useState<UserData | null>(null);
+  const [commentsModalVisible, setCommentsModalVisible] =
+    useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
   const [totalUsersCount, setTotalUsersCount] = useState<number>(0);
-
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   // Modal states
+   const [orderId, setOrderId] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<DetailedOrderData | null>(
     null,
-  );
+  ); const storedUniqueId = localStorage.getItem("admin_uniquId");
+    const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
   const [orderDetailsLoading, setOrderDetailsLoading] =
     useState<boolean>(false);
+  const showCommentsModal = async (record: UserData | null) => {
+    setCommentsModalVisible(true);
+    setRecord(record);
+    // The HelpDeskCommentsModal will handle fetching comments when it opens
+  };
 
   // ✅ Fetch Users
   const fetchUsers = useCallback(async () => {
@@ -361,8 +371,14 @@ const UserOrdersIntegration: React.FC = () => {
 
   const handlePageChange = (page: number, size?: number) => {
     setCurrentPage(page);
-    if (size) setPageSize(size);
+    if (size && size !== pageSize) {
+      setPageSize(size);
+      setCurrentPage(1); // Reset to first page when changing page size
+    }
   };
+
+  // Calculate total pages for better UX
+  const totalPages = Math.ceil(totalUsersCount / pageSize);
 
   const columns = useMemo(
     () => [
@@ -451,26 +467,40 @@ const UserOrdersIntegration: React.FC = () => {
       {
         title: "Actions",
         key: "actions",
-        width: 100,
+        width: 120,
         align: "center" as const,
         render: (_: any, record: MatchedUserOrder) => (
-          <Button
-            type="primary"
-            size="small"
-            style={{
-              backgroundColor: "#008cba",
-              color: "white",
-              border: "#008cba",
-            }}
-            icon={<EyeOutlined />}
-            onClick={() => fetchOrderDetails(record.order.orderId)}
-            loading={
-              orderDetailsLoading &&
-              selectedOrder?.orderId === record.order.orderId
-            }
-          >
-            View
-          </Button>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Button
+              type="primary"
+              size="small"
+              style={{
+                backgroundColor: "#008cba",
+                color: "white",
+                border: "#008cba",
+              }}
+              icon={<EyeOutlined />}
+              onClick={() => fetchOrderDetails(record.order.orderId)}
+              loading={
+                orderDetailsLoading &&
+                selectedOrder?.orderId === record.order.orderId
+              }
+            >
+              View
+            </Button>
+            <Button
+              type="default"
+              size="small"
+              onClick={() => {
+                setSelectedUser(record.user);
+                showCommentsModal(record.user);
+                setOrderId(record.order.orderId);
+              }}
+              className="rounded-md bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-700"
+            >
+              Comments
+            </Button>
+          </div>
         ),
       },
     ],
@@ -563,28 +593,55 @@ const UserOrdersIntegration: React.FC = () => {
         </Card>
       )}
 
-      {/* Pagination */}
+      {/* Enhanced Pagination */}
       <div
         style={{
           marginTop: 14,
           display: "flex",
-          justifyContent: "flex-end",
+          justifyContent: "space-between",
+          alignItems: "center",
           flexWrap: "wrap",
           gap: 10,
+          padding: "12px 16px",
+          backgroundColor: "#f8f9fa",
+          borderRadius: 8,
+          border: "1px solid #e9ecef",
         }}
       >
+        <div style={{ fontSize: 14, color: "#6c757d" }}>
+          Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalUsersCount)} of {totalUsersCount} users
+        </div>
+        
         <Pagination
           current={currentPage}
           pageSize={pageSize}
           total={totalUsersCount}
           onChange={handlePageChange}
           showSizeChanger
-          pageSizeOptions={["1500", "2000", "3000", "4000"]}
-          showTotal={(total) => `Total ${total} users`}
+          showQuickJumper
+          showPrevNextJumpers
+          pageSizeOptions={["1500", "2000", "3000", "4000", "5000"]}
+          showTotal={(total, range) => 
+            `${range[0]}-${range[1]} of ${total} items`
+          }
+          size="default"
           responsive
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
         />
       </div>
-
+   <HelpDeskCommentsModal
+        open={commentsModalVisible}
+        onClose={() => setCommentsModalVisible(false)}
+        userId={record?.userId}
+        updatedBy={updatedBy}
+        storedUniqueId={storedUniqueId}
+        record={record}
+        BASE_URL={BASE_URL}
+      />
       {/* Order Details Modal */}
       <Modal
         title={

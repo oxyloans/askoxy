@@ -209,8 +209,71 @@ const AssignedDataPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
   const [userResponse, setUserResponse] = useState<string | undefined>();
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [originalData, setOriginalData] = useState<UserData[]>([]);
 
-  // for getting user response
+  // Status filter options
+  const statusFilterOptions = [
+    { label: "All Users", value: "ALL" },
+    { label: "Approved Users", value: "APPROVED" },
+    { label: "Deleted Users", value: "DELETED" },
+    { label: "Requested Users", value: "REQUESTED" },
+    { label: "Rejected Users", value: "REJECTED" },
+  ];
+
+  // Apply status filter
+  const applyStatusFilter = (filterValue: string, dataToFilter?: UserData[]) => {
+    const sourceData = dataToFilter || originalData;
+    
+    if (filterValue === "ALL") {
+      setFilteredData(sourceData);
+      return;
+    }
+
+    let filtered = sourceData;
+    
+    switch (filterValue) {
+      case "APPROVED":
+        // Filter logic for approved users
+        filtered = sourceData.filter(user => 
+          user.userType?.toUpperCase() === "APPROVED" || 
+          user.userType?.toUpperCase() === "ACTIVE" ||
+          user.userType?.toUpperCase() === "USER"
+        );
+        break;
+      case "DELETED":
+        // Filter logic for deleted users
+        filtered = sourceData.filter(user => 
+          user.userType?.toUpperCase() === "DELETED" || 
+          user.userType?.toUpperCase() === "INACTIVE"
+        );
+        break;
+      case "REQUESTED":
+        // Filter logic for requested users
+        filtered = sourceData.filter(user => 
+          user.userType?.toUpperCase() === "REQUESTED" || 
+          user.userType?.toUpperCase() === "PENDING"
+        );
+        break;
+      case "REJECTED":
+        // Filter logic for rejected users
+        filtered = sourceData.filter(user => 
+          user.userType?.toUpperCase() === "REJECTED"
+        );
+        break;
+      default:
+        filtered = sourceData;
+    }
+    
+    setFilteredData(filtered);
+  };
+
+  // Handle status filter change
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    applyStatusFilter(value);
+  };
+
   const handleUserResponseChange = (value: string) => {
     console.log("User Response:", value);
     setUserResponse(value);
@@ -278,8 +341,14 @@ const AssignedDataPage: React.FC = () => {
       );
 
       setUserData(filteredUsers);
-      setFilteredData(response.data.activeUsersResponse);
+      setOriginalData(filteredUsers);
+      setFilteredData(filteredUsers);
       setTotalCount(response.data.totalCount);
+      
+      // Only apply filter if it's not ALL
+      if (statusFilter !== "ALL") {
+        applyStatusFilter(statusFilter, filteredUsers);
+      }
 
       setLoading(false);
     } catch (error) {
@@ -799,7 +868,7 @@ const AssignedDataPage: React.FC = () => {
 
     if (value.trim() === "") {
       setError(null);
-      setFilteredData(userData);
+      applyStatusFilter(statusFilter, originalData);
       return;
     }
 
@@ -807,7 +876,7 @@ const AssignedDataPage: React.FC = () => {
       setError("Please enter 10 digits mobile number");
       setFilteredData(
         value
-          ? userData.filter(
+          ? originalData.filter(
               (user) =>
                 user.whastappNumber?.includes(value) ||
                 user.lastFourDigitsUserId?.includes(value) ||
@@ -815,7 +884,7 @@ const AssignedDataPage: React.FC = () => {
                   user.firstName.toLowerCase().includes(value.toLowerCase())) ||
                 String(user.ericeCustomerId).includes(value)
             )
-          : userData
+          : originalData
       );
       return;
     }
@@ -848,25 +917,47 @@ const AssignedDataPage: React.FC = () => {
 
   return (
     <Card className="shadow-lg rounded-lg border-0">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-800">
           Assigned Users
-          {/* <Tag color="green" className="ml-3">
-              {filteredData.length} Users
-            </Tag> */}
         </h1>
-        <div className="w-64">
-          <Input
-            placeholder="Search by mobile number"
-            prefix={<SearchOutlined className="text-gray-400" />}
-            value={searchTerm}
-            onChange={(e) => handleChange(e.target.value)}
-            allowClear
-            className="rounded-md"
-          />
-          {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
+        <div className="flex gap-4 items-center">
+          {/* Status Filter */}
+          <div className="w-48">
+            <Select
+              value={statusFilter}
+              onChange={handleStatusFilterChange}
+              options={statusFilterOptions}
+              placeholder="Filter by status"
+              className="w-full"
+              size="middle"
+            />
+          </div>
+          {/* Search Input */}
+          <div className="w-64">
+            <Input
+              placeholder="Search by mobile number"
+              prefix={<SearchOutlined className="text-gray-400" />}
+              value={searchTerm}
+              onChange={(e) => handleChange(e.target.value)}
+              allowClear
+              className="rounded-md"
+            />
+            {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
+          </div>
         </div>
       </div>
+      
+      {/* Status Info */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="text-sm text-gray-600">
+          <span className="font-medium">Filter:</span> {statusFilterOptions.find(opt => opt.value === statusFilter)?.label}
+        </div>
+        <div className="text-sm text-gray-600">
+          <span className="font-medium">Showing:</span> {filteredData.length} users
+        </div>
+      </div>
+      
       <div className="h-1 w-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-4"></div>
 
       {loading ? (

@@ -185,13 +185,23 @@ const CampaignStats: React.FC = () => {
             className="h-10 w-auto object-contain cursor-pointer"
             onClick={() => navigate("/")}
           />
-          <button
-            onClick={() => navigate("/accenture/jobs")}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition shadow-md ring-2 ring-indigo-300"
-          >
-            View Accenture All Jobs
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={downloadBoard}
+              className="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Download</span>
+            </button>
+            <button
+              onClick={() => navigate("/accenture/jobs")}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-4 sm:px-6 py-2.5 rounded-xl text-sm font-bold transition shadow-md ring-2 ring-indigo-300"
+            >
+              <span className="hidden sm:inline">View Accenture All Jobs</span>
+              <span className="sm:hidden">Jobs</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -200,7 +210,7 @@ const CampaignStats: React.FC = () => {
           {/* BOARD — download captures this entire div */}
           <div ref={boardRef} className="bg-white overflow-hidden">
             {/* PURPLE HEADER */}
-            <div className="bg-gradient-to-r from-[#6b1fad] via-[#6b1fad] to-[#6b1fad] text-white px-6 sm:px-10 py-5">
+            <div className="bg-gradient-to-r from-[#6b1fad] via-[#6b1fad] to-[#6b1fad] text-white px-6 sm:px-10 py-4">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <h1 className="text-base sm:text-xl font-bold text-center sm:text-left">
                   Accenture's Global Talent Landscape
@@ -474,18 +484,7 @@ const CampaignStats: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* end BOARD */}
-
-          {/* DOWNLOAD — outside board */}
-          <div className="flex justify-end mt-4">
-            <button
-              onClick={downloadBoard}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm"
-            >
-              <Download className="w-4 h-4" />
-              Download Board
-            </button>
-          </div>
+         
         </div>
       </div>
      
