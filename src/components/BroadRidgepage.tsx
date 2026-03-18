@@ -55,7 +55,7 @@ const itemVariants = {
   },
 };
 
-const AccentureJobsPage: React.FC = () => {
+const BroadRidgeJobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -69,7 +69,7 @@ const AccentureJobsPage: React.FC = () => {
     const fetchJobs = async () => {
       try {
         const res = await fetch(
-          `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=ACCENTURE`
+          `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=BROADRIDGE`,
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: Job[] = await res.json();
@@ -83,38 +83,49 @@ const AccentureJobsPage: React.FC = () => {
     fetchJobs();
   }, []);
 
-  const formatTitle = (job: Job) => job.jobTitle || job.jobDesignation || "Open Position";
+  const formatTitle = (job: Job) =>
+    job.jobTitle || job.jobDesignation || "Open Position";
 
   const handleJobNavigate = (jobId: string) => {
     navigate(`/main/jobdetails/${jobId}`);
   };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = searchTerm === "" || 
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch =
+      searchTerm === "" ||
       job.jobTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.jobDesignation?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.skills?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesLocation = locationFilter === "" || 
+
+    const matchesLocation =
+      locationFilter === "" ||
       job.jobLocations?.toLowerCase().includes(locationFilter.toLowerCase());
-    
-    const matchesExperience = experienceFilter === "" || 
+
+    const matchesExperience =
+      experienceFilter === "" ||
       job.experience?.toLowerCase().includes(experienceFilter.toLowerCase());
-    
+
     return matchesSearch && matchesLocation && matchesExperience;
   });
 
   const displayedJobs = filteredJobs.slice(0, visible);
 
-  const uniqueLocations = Array.from(new Set(jobs.map(job => job.jobLocations).filter(Boolean)));
-  const uniqueExperience = Array.from(new Set(jobs.map(job => job.experience).filter(Boolean)));
+  const uniqueLocations = Array.from(
+    new Set(jobs.map((job) => job.jobLocations).filter(Boolean)),
+  );
+  const uniqueExperience = Array.from(
+    new Set(jobs.map((job) => job.experience).filter(Boolean)),
+  );
 
   const lastUpdated = jobs.length
-    ? new Date(Math.max(...jobs.map((j) => j.createdAt))).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+    ? new Date(Math.max(...jobs.map((j) => j.createdAt))).toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        },
+      )
     : null;
 
   if (loading) {
@@ -125,7 +136,7 @@ const AccentureJobsPage: React.FC = () => {
             <Loader2 className="w-8 h-8 animate-spin text-violet-700" />
             <div className="absolute inset-0 w-8 h-8 border-2 border-violet-200 rounded-full animate-pulse"></div>
           </div>
-          <p className="text-center">Loading Accenture jobs...</p>
+          <p className="text-center">Loading BroadRidge jobs...</p>
         </div>
       </div>
     );
@@ -140,8 +151,8 @@ const AccentureJobsPage: React.FC = () => {
           </div>
           <h3 className="text-xl font-bold mb-2">Oops! Something went wrong</h3>
           <p className="text-lg font-semibold text-red-500">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-4 px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
           >
             Try Again
@@ -155,20 +166,21 @@ const AccentureJobsPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#f8f7fa] via-[#f6f6f8] to-[#f4f4f7] flex flex-col">
       {/* Header */}
       <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/60 px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-        <img 
-          src={Logo} 
-          alt="ASKOXY.AI" 
-          className="h-10 w-auto object-contain cursor-pointer hover:scale-110 transition-transform duration-200" 
-          onClick={() => navigate("/accenturestats")} 
+        <img
+          src={Logo}
+          alt="ASKOXY.AI"
+          className="h-10 w-auto object-contain cursor-pointer hover:scale-110 transition-transform duration-200"
+          //   onClick={() => navigate("/")}
         />
         <div className="flex items-center gap-3 sm:gap-4">
           {lastUpdated && (
             <span className="hidden sm:block text-xs bg-gray-100 px-3 py-1.5 rounded-full text-gray-600 border">
-              Updated: <span className="font-semibold text-gray-800">{lastUpdated}</span>
+              Updated:{" "}
+              <span className="font-semibold text-gray-800">{lastUpdated}</span>
             </span>
           )}
           <button
-            onClick={() => navigate("/accenturestats")}
+            onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 text-violet-700 hover:text-white hover:bg-violet-700 font-medium transition-all duration-200 text-sm px-4 py-2 rounded-full border border-violet-200 hover:border-violet-700"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -181,9 +193,8 @@ const AccentureJobsPage: React.FC = () => {
       <main className="flex-1 px-3 sm:px-5 lg:px-8 py-6 sm:py-8">
         <div className="max-w-[1800px] mx-auto">
           <div className="mb-8 text-center sm:text-left">
-           
             <h1 className="text-2xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-700 via-purple-600 to-blue-600 mb-2">
-              Accenture Open Positions
+              Broadridge Open Positions
             </h1>
             <p className="text-base sm:text-lg text-gray-600 font-medium">
               <span className="inline-flex items-center gap-2">
@@ -212,8 +223,10 @@ const AccentureJobsPage: React.FC = () => {
                 className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
               >
                 <option value="">All Locations</option>
-                {uniqueLocations.map(location => (
-                  <option key={location} value={location}>{location}</option>
+                {uniqueLocations.map((location) => (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
                 ))}
               </select>
               <select
@@ -222,8 +235,10 @@ const AccentureJobsPage: React.FC = () => {
                 className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
               >
                 <option value="">All Experience</option>
-                {uniqueExperience.map(exp => (
-                  <option key={exp} value={exp}>{exp}</option>
+                {uniqueExperience.map((exp) => (
+                  <option key={exp} value={exp}>
+                    {exp}
+                  </option>
                 ))}
               </select>
             </div>
@@ -329,7 +344,6 @@ flex flex-col border border-gray-100 m-2"
                   >
                     <span className="flex items-center gap-1">
                       Load More ({filteredJobs.length - visible} Remaining)
-                     
                     </span>
                   </button>
                 </div>
@@ -350,4 +364,4 @@ flex flex-col border border-gray-100 m-2"
   );
 };
 
-export default AccentureJobsPage;
+export default BroadRidgeJobsPage;

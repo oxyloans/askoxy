@@ -6,6 +6,7 @@ import CartProvider from "./until/CartProvider";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 import { SearchProvider } from "./until/SearchContext";
 import { useTokenRefresh } from "./utils/useTokenRefresh";
+import { useTaskTokenExpiry } from "./utils/taskTokenManager";
 import AppliedJobs from "./Dashboard/AppliedJobs";
 import NinetyDayPlanPage from "./components/NinetyDayPlanPage";
 import CASRouteRenderer1 from "./GLMS/CAS/Pages/CASRouteRenderer1";
@@ -35,6 +36,10 @@ import CampaignStats from "./components/CampaignStatsAccenture";
 import AccentureJobsPage from "./components/AccentureJobsPage";
 import AccenturePresentation from "./Dashboard/AccenturePresentation";
 import MinisterMeetingPage from "./components/MinisterPage";
+import CrederaJobsPage from "./components/CrederaJobsPage";
+import TechmahindraJobsPage from "./components/TechmahindraJobsPage";
+import AllCompaniesJobsPage from "./components/AllCompaniesJobsPage";
+import BroadRidgeJobsPage from "./components/BroadRidgepage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -191,7 +196,7 @@ const HelpDeskUsersDashboard = lazy(
 );
 const DataAssigned = lazy(() => import("./AskoxyAdmin/AskoxyUsers"));
 const ReferredData = lazy(() => import("./AskoxyAdmin/RefferedData"));
-const ProtectedRoute = lazy(() => import("./auth/ProtectedRoute"));
+const TaskProtectedRoute = lazy(() => import("./auth/TaskProtectedRoute"));
 const FreeRiceBlog = lazy(() => import("./components/FreeRice"));
 const MeyaporeMetro = lazy(() => import("./components/MeyaporeMetro"));
 // const { SearchProvider } = lazy(() => import("./until/SearchContext"));
@@ -459,6 +464,9 @@ const App: React.FC = () => {
   
   // ✅ Initialize automatic token refresh
   useTokenRefresh();
+  
+  // ✅ Initialize task token expiry checking
+  useTaskTokenExpiry();
 
 // useEffect(() => {
 //     const rt = getRefreshToken();
@@ -495,6 +503,10 @@ const App: React.FC = () => {
       "/interview",
       "/accenture/jobs",
       "/accenturestats",
+      "/techmahindra/jobs",
+      "/allcompanies/jobs",
+      "/broadridge/jobs",
+      "/credera/jobs",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -523,7 +535,11 @@ const App: React.FC = () => {
       currentPath.startsWith("/leavestatus") ||
       currentPath.startsWith("/all-statuses") ||
       currentPath.startsWith("/assigned-task") ||
+      currentPath.startsWith("/techmahindra/jobs") ||
+      currentPath.startsWith("/allcompanies/jobs") ||
+      currentPath.startsWith("/credera/jobs") ||
       currentPath.startsWith("/taskassigneduser") ||
+        currentPath.startsWith("/broadridge/jobs") ||
       currentPath.startsWith("/usermobilenumberupdate") ||
       // Partner routes
       currentPath.startsWith("/home") ||
@@ -568,9 +584,18 @@ const App: React.FC = () => {
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
-              <Route path="/admin/candidate/:userId" element={<CandidateDetail />} />
-              <Route path="/admin/interviewdashboard" element={<AdminDashboard />}/>
-              <Route path="/multi-level-select" element={<MultiLevelSelection />} />
+              <Route
+                path="/admin/candidate/:userId"
+                element={<CandidateDetail />}
+              />
+              <Route
+                path="/admin/interviewdashboard"
+                element={<AdminDashboard />}
+              />
+              <Route
+                path="/multi-level-select"
+                element={<MultiLevelSelection />}
+              />
               <Route path="/multi-interview" element={<ProctoredInterview />} />
               <Route path="/feedback" element={<FeedbackForm />} />
               <Route path="/offer" element={<OfferScreen />} />
@@ -586,15 +611,37 @@ const App: React.FC = () => {
                 path="/it-minister-vision"
                 element={<MinisterMeetingPage />}
               />
-              <Route path="/accenturestats" element={<CampaignStats/>} />
+              <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
-              <Route path ="/accenture-presentation" element={<AccenturePresentation />} />
+              <Route path="/credera/jobs" element={<CrederaJobsPage />} />
+              <Route
+                path="/techmahindra/jobs"
+                element={<TechmahindraJobsPage />}
+              />
+              <Route
+                path=  "/broadridge/jobs"
+                element={<BroadRidgeJobsPage />}
+              />
+              <Route
+                path="/allcompanies/jobs"
+                element={<AllCompaniesJobsPage />}
+              />
+              <Route
+                path="/accenture-presentation"
+                element={<AccenturePresentation />}
+              />
               <Route
                 path="/rotarydistrict3150AiAgent"
                 element={<RotaryLandingPage />}
               />
-              <Route path="/accenture-services" element={<AccentureServices />} />
-              <Route path="/dynamic-rotaryposter" element={<RotaryPosterStudio />} />
+              <Route
+                path="/accenture-services"
+                element={<AccentureServices />}
+              />
+              <Route
+                path="/dynamic-rotaryposter"
+                element={<RotaryPosterStudio />}
+              />
               <Route
                 path="/ninetydayplan"
                 element={
@@ -661,10 +708,7 @@ const App: React.FC = () => {
               <Route path="/userFeedback" element={<Feedback />} />
               <Route path="/miyapurmetro" element={<MeyaporeMetro />} />
               <Route path="/aiassistant" element={<ChatInterface />} />
-              <Route
-                path="/usermobilenumberupdate"
-                element={<MobileNumberUpdate />}
-              />
+
               <Route path="/userregister" element={<UserRegister />} />
               <Route path="/userlogin" element={<UserLogin />} />
 
@@ -839,22 +883,94 @@ const App: React.FC = () => {
               <Route path="/gstonrice" element={<GSTRiceFAQ />} />
 
               {/* Employee / Internal */}
-              <Route path="/userPanelLayout" element={<PlanOfTheDay />} />
-              <Route path="/planoftheday" element={<PlanOfTheDay />} />
+              <Route
+                path="/userPanelLayout"
+                element={
+                  <TaskProtectedRoute>
+                    <PlanOfTheDay />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/planoftheday"
+                element={
+                  <TaskProtectedRoute>
+                    <PlanOfTheDay />
+                  </TaskProtectedRoute>
+                }
+              />
               <Route
                 path="/userinstructionsview"
-                element={<EmployeeInteractions />}
+                element={
+                  <TaskProtectedRoute>
+                    <EmployeeInteractions />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/usermobilenumberupdate"
+                element={
+                  <TaskProtectedRoute>
+                    <MobileNumberUpdate />
+                  </TaskProtectedRoute>
+                }
               />
               <Route
                 path="/taskmanagement/chatview/:id"
-                element={<EmployeeViewChat />}
+                element={
+                  <TaskProtectedRoute>
+                    <EmployeeViewChat />
+                  </TaskProtectedRoute>
+                }
               />
-              <Route path="/taskupdated" element={<TaskUpdate />} />
-              <Route path="/leaveapproval" element={<LeaveApplicationPage />} />
-              <Route path="/leavestatus" element={<TeamLeaveStatus />} />
-              <Route path="/all-statuses" element={<AllStatusPage />} />
-              <Route path="/assigned-task" element={<AdminTasks />} />
-              <Route path="/taskassigneduser" element={<TaskAssignedUser />} />
+              <Route
+                path="/taskupdated"
+                element={
+                  <TaskProtectedRoute>
+                    <TaskUpdate />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/leaveapproval"
+                element={
+                  <TaskProtectedRoute>
+                    <LeaveApplicationPage />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/leavestatus"
+                element={
+                  <TaskProtectedRoute>
+                    <TeamLeaveStatus />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/all-statuses"
+                element={
+                  <TaskProtectedRoute>
+                    <AllStatusPage />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/assigned-task"
+                element={
+                  <TaskProtectedRoute>
+                    <AdminTasks />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/taskassigneduser"
+                element={
+                  <TaskProtectedRoute>
+                    <TaskAssignedUser />
+                  </TaskProtectedRoute>
+                }
+              />
 
               {/* Auth / Help */}
               <Route path="/secure-login" element={<HiddenLogin />} />

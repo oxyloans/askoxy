@@ -133,7 +133,7 @@ const AllStatusPage: React.FC = () => {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<"plan" | "eod" | null>(null);
   const taskId = sessionStorage.getItem("taskId");
-
+const accessToken = sessionStorage.getItem("taskAccessToken");
   useEffect(() => {
     // Get userId from localStorage
     const storedUserId = sessionStorage.getItem("userId");
@@ -196,6 +196,7 @@ const AllStatusPage: React.FC = () => {
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );
@@ -287,6 +288,7 @@ const AllStatusPage: React.FC = () => {
           headers: {
             accept: "*/*",
             "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );
@@ -352,6 +354,7 @@ const AllStatusPage: React.FC = () => {
           headers: {
             accept: "*/*",
             "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );

@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 import BASE_URL from "../Config";
 import { Link, useNavigate } from "react-router-dom";
+import { setIntendedRoute } from "../utils/taskTokenManager";
 import {
   MailOutlined,
   LockOutlined,
@@ -55,6 +56,11 @@ const UserRegister: React.FC = () => {
 
       // Set immediate timeout for redirection
       const redirectTimer = setTimeout(() => {
+        // Preserve intended route if it exists
+        const intendedRoute = localStorage.getItem('intendedRoute');
+        if (intendedRoute) {
+          setIntendedRoute(intendedRoute);
+        }
         navigate("/userlogin", { replace: true });
       }, 1000);
 

@@ -104,8 +104,15 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   const toggleCollapse = (): void => setCollapsed((prev) => !prev);
 
   const handleSignOut = (): void => {
+    // Store current route as intended route before logout
+    const currentPath = location.pathname;
+    if (currentPath !== '/userlogin' && currentPath !== '/userregister') {
+      localStorage.setItem('intendedRoute', currentPath);
+    }
     sessionStorage.clear();
-    window.location.href = "/userlogin";
+    // Clear browser history to prevent back navigation
+    window.history.replaceState(null, '', '/userlogin');
+    window.location.replace('/userlogin');
   };
 
   const getUserInitials = (): string => {

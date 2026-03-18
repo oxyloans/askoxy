@@ -55,7 +55,7 @@ const itemVariants = {
   },
 };
 
-const AccentureJobsPage: React.FC = () => {
+const TechmahindraJobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -69,7 +69,7 @@ const AccentureJobsPage: React.FC = () => {
     const fetchJobs = async () => {
       try {
         const res = await fetch(
-          `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=ACCENTURE`
+          `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=TECH_MAHINDRA`
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: Job[] = await res.json();
@@ -125,7 +125,7 @@ const AccentureJobsPage: React.FC = () => {
             <Loader2 className="w-8 h-8 animate-spin text-violet-700" />
             <div className="absolute inset-0 w-8 h-8 border-2 border-violet-200 rounded-full animate-pulse"></div>
           </div>
-          <p className="text-center">Loading Accenture jobs...</p>
+          <p className="text-center">Loading Tech mahindra jobs...</p>
         </div>
       </div>
     );
@@ -159,7 +159,7 @@ const AccentureJobsPage: React.FC = () => {
           src={Logo} 
           alt="ASKOXY.AI" 
           className="h-10 w-auto object-contain cursor-pointer hover:scale-110 transition-transform duration-200" 
-          onClick={() => navigate("/accenturestats")} 
+        //   onClick={() => navigate("/")} 
         />
         <div className="flex items-center gap-3 sm:gap-4">
           {lastUpdated && (
@@ -168,7 +168,7 @@ const AccentureJobsPage: React.FC = () => {
             </span>
           )}
           <button
-            onClick={() => navigate("/accenturestats")}
+            onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 text-violet-700 hover:text-white hover:bg-violet-700 font-medium transition-all duration-200 text-sm px-4 py-2 rounded-full border border-violet-200 hover:border-violet-700"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -183,7 +183,7 @@ const AccentureJobsPage: React.FC = () => {
           <div className="mb-8 text-center sm:text-left">
            
             <h1 className="text-2xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-700 via-purple-600 to-blue-600 mb-2">
-              Accenture Open Positions
+              Tech mahindra Open Positions
             </h1>
             <p className="text-base sm:text-lg text-gray-600 font-medium">
               <span className="inline-flex items-center gap-2">
@@ -350,4 +350,4 @@ flex flex-col border border-gray-100 m-2"
   );
 };
 
-export default AccentureJobsPage;
+export default TechmahindraJobsPage;

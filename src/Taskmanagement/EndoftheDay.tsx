@@ -138,6 +138,7 @@ const TaskUpdate: React.FC = () => {
       fetchAllPendingTasks(storedUserId);
     }
   }, []);
+  const accessToken = sessionStorage.getItem("taskAccessToken");
   // Check if task can be updated based on date and time
 const canUpdateTask = (task: Task): boolean => {
   const currentTime = dayjs();
@@ -160,6 +161,11 @@ const canUpdateTask = (task: Task): boolean => {
         {
           taskStatus: "PENDING",
           userId: userIdValue,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
       );
 
@@ -248,7 +254,12 @@ const canUpdateTask = (task: Task): boolean => {
 
       const response = await employeeApi.patch<ApiResponse>(
         `${BASE_URL}/user-service/write/userTaskUpdate`,
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       if (response.data.success) {
@@ -314,7 +325,10 @@ const canUpdateTask = (task: Task): boolean => {
         `${BASE_URL}/user-service/write/uploadTaskScreenShot?userId=${userId}`,
         formData,
         {
-          headers: { "Content-Type": undefined },
+          headers: { 
+            "Content-Type": undefined,
+            Authorization: `Bearer ${accessToken}`,
+          },
           onUploadProgress: (progressEvent: any) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total

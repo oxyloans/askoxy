@@ -93,7 +93,7 @@ const PlanOfTheDay: React.FC = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiResponse, setShowAiResponse] = useState(false);
   const [hasSeenAiResponse, setHasSeenAiResponse] = useState(false);
-
+  const token = sessionStorage.getItem("taskAccessToken");
   useEffect(() => {
     const today = new Date();
     const options: Intl.DateTimeFormatOptions = {
@@ -149,7 +149,7 @@ const PlanOfTheDay: React.FC = () => {
   const checkPendingTasksForToday = async (userId: string) => {
     setFetchingStatus(true);
     setErrorState(false);
-    const token = sessionStorage.getItem("accessToken") || "";
+
     console.log("userId", userId);
     try {
       const response = await axios.post(
@@ -244,7 +244,7 @@ const PlanOfTheDay: React.FC = () => {
         payload = {
           id: todayTask.id,
           planOftheDay: planWithUsername,
-          taskTeam: values.taskTeam || todayTask.taskTeam, // Preserve existing team or use new one
+          taskTeam: values.taskTeam || todayTask.taskTeam,
           taskStatus: "PENDING",
           userId: userId,
         };
@@ -257,15 +257,26 @@ const PlanOfTheDay: React.FC = () => {
         };
       }
 
-      // Use POST for new submissions, PATCH for edits
       const response = isEditMode
         ? await axios.patch<TaskResponse>(
             `${BASE_URL}/user-service/write/userTaskUpdate`,
             payload,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
           )
         : await axios.patch<TaskResponse>(
             `${BASE_URL}/user-service/write/userTaskUpdate`,
             payload,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
 
       if (response.data.success) {

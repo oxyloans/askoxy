@@ -10,12 +10,12 @@ import {
   Button,
   Row,
   Col,
-  Segmented,
+ 
   Popconfirm,
   Tag,
   Modal,
   Space,
-  Radio,
+ 
 } from "antd";
 import {
   SearchOutlined,
@@ -26,6 +26,7 @@ import {
   SortDescendingOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
+import { employeeApi } from "../utils/axiosInstance";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 
@@ -52,9 +53,8 @@ const AdminTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
-  const accessToken = sessionStorage.getItem("accessToken");
-
   const userId = sessionStorage.getItem("userId") || "";
+  const accessToken = sessionStorage.getItem("taskAccessToken")
   const [searchText, setSearchText] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
@@ -135,11 +135,13 @@ const AdminTasks: React.FC = () => {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
+      const response = await employeeApi.get(
         `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`,
         {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       const reversedTasks = response.data.slice().reverse();
@@ -250,12 +252,14 @@ const AdminTasks: React.FC = () => {
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     setLoading(true);
     try {
-      await axios.patch(
+      await employeeApi.patch(
         `${BASE_URL}/ai-service/agent/taskUpdate?id=${id}&status=${newStatus}`,
         {},
         {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
       message.success(`Task marked as ${newStatus}`);
       fetchTasks();
@@ -319,14 +323,18 @@ const AdminTasks: React.FC = () => {
       return;
     }
     try {
-      await axios.post(
+      await employeeApi.post(
         `${BASE_URL}/ai-service/agent/userAndRadhaSirComments`,
         {
           taskId: selectedTask?.id,
           comments,
           commentsBy: "EMPLOYEE",
         },
-        { headers: { Authorization: `Bearer ${accessToken}` } },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
       message.success("Comments added successfully!");
       setCommentsModalVisible(false);
@@ -347,12 +355,14 @@ const AdminTasks: React.FC = () => {
     try {
       setLoading(true);
       setSelectedTask(task);
-      const response = await axios.get(
+      const response = await employeeApi.get(
         `${BASE_URL}/ai-service/agent/taskedIdBasedOnComments`,
         {
-          headers: { Authorization: `Bearer ${accessToken}` },
           params: { taskId: task.id },
-        },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
       setCommentsData(response.data || []);
       setViewModalVisible(true);

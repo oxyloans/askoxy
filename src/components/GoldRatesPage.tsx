@@ -170,7 +170,14 @@ const GoldRatesPage: React.FC = () => {
   const s24Payable = (s24Base !== null && s24Charges !== null) ? s24Base - s24Charges : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f7f4", fontFamily: "'Inter', -apple-system, sans-serif", color: "#1a1a1a" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8f7f4",
+        fontFamily: "'Inter', -apple-system, sans-serif",
+        color: "#1a1a1a",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; }
@@ -274,80 +281,219 @@ const GoldRatesPage: React.FC = () => {
       `}</style>
 
       {/* ════════════════ HEADER ════════════════ */}
-      <header style={{
-        background: "#fff",
-        borderBottom: "1px solid #e8e0cc",
-        padding: "0 28px",
-        height: 58,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        position: "sticky",
-        top: 0,
-        zIndex: 30,
-      }}>
+      <header
+        style={{
+          background: "#fff",
+          borderBottom: "1px solid #e8e0cc",
+          padding: "0 28px",
+          height: 58,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+        }}
+      >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 30, height: 30,
-            background: "linear-gradient(135deg, #c9993a, #e8b84a)",
-            borderRadius: 7,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, color: "#fff", fontWeight: 700,
-          }}>✦</div>
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              background: "linear-gradient(135deg, #c9993a, #e8b84a)",
+              borderRadius: 7,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              color: "#fff",
+              fontWeight: 700,
+            }}
+          >
+            ✦
+          </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: "-0.01em" }}>
-              <span style={{ color: "#810cab" }}>ASKOXY</span><span style={{ color: "#b8761c" }}>.AI</span>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: 15,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              <span style={{ color: "#810cab" }}>ASKOXY</span>
+              <span style={{ color: "#b8761c" }}>.AI</span>
             </div>
-            <div className="header-sub" style={{ fontSize: 10, color: "#888", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 1 }}>Gold & Silver Rates</div>
+            <div
+              className="header-sub"
+              style={{
+                fontSize: 10,
+                color: "#888",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginTop: 1,
+              }}
+            >
+              Gold & Silver Rates
+            </div>
           </div>
         </div>
 
         {/* Nav */}
         <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <button className={`nav-btn${activeSection === "buy" ? " active" : ""}`} onClick={() => scrollTo(buyRef, "buy")}>Buy Gold</button>
-          <button className={`nav-btn${activeSection === "lease" ? " active" : ""}`} onClick={() => scrollTo(leaseRef, "lease")}>Lease Gold</button>
-          <button className={`nav-btn${activeSection === "sell" ? " active" : ""}`} onClick={() => scrollTo(sellRef, "sell")}>Sell Gold</button>
-          <div style={{ width: 1, height: 18, background: "#e8e0cc", margin: "0 8px" }} />
+          <button
+            className={`nav-btn${activeSection === "buy" ? " active" : ""}`}
+            onClick={() => scrollTo(buyRef, "buy")}
+          >
+            Buy Gold
+          </button>
+          <button
+            className={`nav-btn${activeSection === "lease" ? " active" : ""}`}
+            onClick={() => scrollTo(leaseRef, "lease")}
+          >
+            Lease Gold
+          </button>
+          <button
+            className={`nav-btn${activeSection === "sell" ? " active" : ""}`}
+            onClick={() => scrollTo(sellRef, "sell")}
+          >
+            Sell Gold
+          </button>
+          <div
+            style={{
+              width: 1,
+              height: 18,
+              background: "#e8e0cc",
+              margin: "0 8px",
+            }}
+          />
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span className="live-dot" />
-            <span style={{ fontSize: 11, color: "#555", fontWeight: 500 }}>Live</span>
+            <span style={{ fontSize: 11, color: "#555", fontWeight: 500 }}>
+              Live
+            </span>
           </div>
         </div>
       </header>
 
       {/* ════════════════ MAIN ════════════════ */}
-      <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px 80px" }}>
-
+      <main
+        style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px 80px" }}
+      >
         {/* Error */}
         {error && (
-          <div style={{ background: "#fff5f5", border: "1px solid #fca5a5", borderRadius: 8, padding: "11px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              background: "#fff5f5",
+              border: "1px solid #fca5a5",
+              borderRadius: 8,
+              padding: "11px 16px",
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
             <span style={{ color: "#b91c1c", fontSize: 13 }}>{error}</span>
-            <button onClick={() => fetchGoldRates(true)} style={{ marginLeft: "auto", color: "#b91c1c", background: "none", border: "1px solid #fca5a5", borderRadius: 5, cursor: "pointer", fontSize: 11, padding: "3px 10px", fontFamily: "inherit" }}>Retry</button>
+            <button
+              onClick={() => fetchGoldRates(true)}
+              style={{
+                marginLeft: "auto",
+                color: "#b91c1c",
+                background: "none",
+                border: "1px solid #fca5a5",
+                borderRadius: 5,
+                cursor: "pointer",
+                fontSize: 11,
+                padding: "3px 10px",
+                fontFamily: "inherit",
+              }}
+            >
+              Retry
+            </button>
           </div>
         )}
 
         {/* Loading */}
         {loading && goldRates.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "100px 0" }}>
-            <div style={{ width: 32, height: 32, border: "2.5px solid #f0e4c8", borderTopColor: "#c9993a", borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 14 }} />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "100px 0",
+            }}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                border: "2.5px solid #f0e4c8",
+                borderTopColor: "#c9993a",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+                marginBottom: 14,
+              }}
+            />
             <p style={{ color: "#777", fontSize: 13 }}>Loading rates…</p>
           </div>
         ) : (
           <>
             {/* ══════════ BUY GOLD ══════════ */}
             <div ref={buyRef} className="section-anchor">
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                  marginBottom: 14,
+                }}
+              >
                 <div>
                   <span className="section-label">Market Rates</span>
-                  <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", letterSpacing: "-0.01em", margin: 0 }}>Buy Gold &amp; Silver</h2>
-                  <p style={{ fontSize: 13, color: "#666", marginTop: 5, lineHeight: 1.5 }}>
-                    Live rates from leading jewellery brands. Click a price to visit their site.
+                  <h2
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: "#111",
+                      letterSpacing: "-0.01em",
+                      margin: 0,
+                    }}
+                  >
+                    Buy Gold &amp; Silver
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "#666",
+                      marginTop: 5,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Live rates from leading jewellery brands. Click a price to
+                    visit their site.
                   </p>
                 </div>
-                <div style={{ fontSize: 11.5, color: "#777", textAlign: "right", paddingBottom: 2 }}>
+                <div
+                  style={{
+                    fontSize: 11.5,
+                    color: "#777",
+                    textAlign: "right",
+                    paddingBottom: 2,
+                  }}
+                >
                   Updates every 5 min
-                  {refreshing && <div style={{ color: "#c9993a", marginTop: 2, fontWeight: 500 }}>Refreshing…</div>}
+                  {refreshing && (
+                    <div
+                      style={{
+                        color: "#c9993a",
+                        marginTop: 2,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Refreshing…
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -357,63 +503,220 @@ const GoldRatesPage: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Brand</th>
-                      <th>22K Gold <span style={{ fontWeight: 400, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>/g</span></th>
-                      <th>24K Gold <span style={{ fontWeight: 400, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>/g</span></th>
-                      <th>Silver <span style={{ fontWeight: 400, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>/kg</span></th>
+                      <th>
+                        22K Gold{" "}
+                        <span
+                          style={{
+                            fontWeight: 400,
+                            color: "#aaa",
+                            textTransform: "none",
+                            letterSpacing: 0,
+                          }}
+                        >
+                          /g
+                        </span>
+                      </th>
+                      <th>
+                        24K Gold{" "}
+                        <span
+                          style={{
+                            fontWeight: 400,
+                            color: "#aaa",
+                            textTransform: "none",
+                            letterSpacing: 0,
+                          }}
+                        >
+                          /g
+                        </span>
+                      </th>
+                      <th>
+                        Silver{" "}
+                        <span
+                          style={{
+                            fontWeight: 400,
+                            color: "#aaa",
+                            textTransform: "none",
+                            letterSpacing: 0,
+                          }}
+                        >
+                          /kg
+                        </span>
+                      </th>
                       <th>Updated</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {tableRates.map(rate => (
+                    {tableRates.map((rate) => (
                       <tr key={rate.id}>
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{
-                              width: 28, height: 28, borderRadius: 6,
-                              background: "#fdf5e6", border: "1px solid #e8dcc8",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              fontSize: 11, fontWeight: 700, color: "#9a7a30",
-                            }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 6,
+                                background: "#fdf5e6",
+                                border: "1px solid #e8dcc8",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: "#9a7a30",
+                              }}
+                            >
                               {rate.companyName[0]}
                             </div>
-                            <span style={{ fontWeight: 600, fontSize: 14, color: "#111" }}>
-                              {rate.companyName === "ASKOXY.AI"
-                                ? <><span style={{ color: "#810cab" }}>ASKOXY</span><span style={{ color: "#b8761c" }}>.AI</span></>
-                                : rate.companyName}
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                fontSize: 14,
+                                color: "#111",
+                              }}
+                            >
+                              {rate.companyName === "ASKOXY.AI" ? (
+                                <>
+                                  <span style={{ color: "#810cab" }}>
+                                    ASKOXY
+                                  </span>
+                                  <span style={{ color: "#b8761c" }}>.AI</span>
+                                </>
+                              ) : (
+                                rate.companyName
+                              )}
                             </span>
                           </div>
                         </td>
-                        <td><a href={rate.website22kt || rate.websiteLink || "#"} target="_blank" rel="noopener noreferrer" className="gr-price-link">{formatCurrency2(rate.rate22kt)}</a></td>
-                        <td><a href={rate.website24kt || rate.websiteLink || "#"} target="_blank" rel="noopener noreferrer" className="gr-price-link">{formatCurrency2(rate.rate24kt)}</a></td>
-                        <td><a href={rate.websiteSilver || rate.websiteLink || "#"} target="_blank" rel="noopener noreferrer" className="gr-price-link">{formatCurrency2(rate.silverprice)}</a></td>
-                        <td style={{ fontSize: 12, color: "#777" }}>{formatTime(rate.updatedTime)}</td>
+                        <td>
+                          <a
+                            href={rate.website22kt || rate.websiteLink || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gr-price-link"
+                          >
+                            {formatCurrency2(rate.rate22kt)}
+                          </a>
+                        </td>
+                        <td>
+                          <a
+                            href={rate.website24kt || rate.websiteLink || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gr-price-link"
+                          >
+                            {formatCurrency2(rate.rate24kt)}
+                          </a>
+                        </td>
+                        <td>
+                          <a
+                            href={rate.websiteSilver || rate.websiteLink || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gr-price-link"
+                          >
+                            {formatCurrency2(rate.silverprice)}
+                          </a>
+                        </td>
+                        <td style={{ fontSize: 12, color: "#777" }}>
+                          {formatTime(rate.updatedTime)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+               
               </div>
-
+ <p>
+                  <strong>Note:</strong> All gold rates are excluding GST.
+                </p>
               {/* Mobile cards */}
-              <div className="mobile-cards-list" style={{ display: "none", flexDirection: "column", gap: 10, marginTop: 14 }}>
-                {tableRates.map(rate => (
+              <div
+                className="mobile-cards-list"
+                style={{
+                  display: "none",
+                  flexDirection: "column",
+                  gap: 10,
+                  marginTop: 14,
+                }}
+              >
+                {tableRates.map((rate) => (
                   <div key={rate.id} className="card">
-                    <div style={{ padding: "10px 14px", borderBottom: "1px solid #f0ece2", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontWeight: 600, fontSize: 14, color: "#111" }}>
-                        {rate.companyName === "ASKOXY.AI"
-                          ? <><span style={{ color: "#810cab" }}>ASKOXY</span><span style={{ color: "#b8761c" }}>.AI</span></>
-                          : rate.companyName}
+                    <div
+                      style={{
+                        padding: "10px 14px",
+                        borderBottom: "1px solid #f0ece2",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        style={{ fontWeight: 600, fontSize: 14, color: "#111" }}
+                      >
+                        {rate.companyName === "ASKOXY.AI" ? (
+                          <>
+                            <span style={{ color: "#810cab" }}>ASKOXY</span>
+                            <span style={{ color: "#b8761c" }}>.AI</span>
+                          </>
+                        ) : (
+                          rate.companyName
+                        )}
                       </span>
-                      <span style={{ fontSize: 11, color: "#777" }}>{formatTime(rate.updatedTime)}</span>
+                      <span style={{ fontSize: 11, color: "#777" }}>
+                        {formatTime(rate.updatedTime)}
+                      </span>
                     </div>
-                    <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div
+                      style={{
+                        padding: "12px 14px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                      }}
+                    >
                       {[
-                        { label: "22K Gold", val: rate.rate22kt, href: rate.website22kt || rate.websiteLink || "#" },
-                        { label: "24K Gold", val: rate.rate24kt, href: rate.website24kt || rate.websiteLink || "#" },
-                        { label: "Silver",   val: rate.silverprice, href: rate.websiteSilver || rate.websiteLink || "#" },
-                      ].map(item => (
-                        <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: 13, color: "#555" }}>{item.label}</span>
-                          <a href={item.href} target="_blank" rel="noopener noreferrer" className="gr-price-link" style={{ fontSize: 13.5 }}>{formatCurrency2(item.val)}</a>
+                        {
+                          label: "22K Gold",
+                          val: rate.rate22kt,
+                          href: rate.website22kt || rate.websiteLink || "#",
+                        },
+                        {
+                          label: "24K Gold",
+                          val: rate.rate24kt,
+                          href: rate.website24kt || rate.websiteLink || "#",
+                        },
+                        {
+                          label: "Silver",
+                          val: rate.silverprice,
+                          href: rate.websiteSilver || rate.websiteLink || "#",
+                        },
+                      ].map((item) => (
+                        <div
+                          key={item.label}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span style={{ fontSize: 13, color: "#555" }}>
+                            {item.label}
+                          </span>
+                          <a
+                            href={item.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gr-price-link"
+                            style={{ fontSize: 13.5 }}
+                          >
+                            {formatCurrency2(item.val)}
+                          </a>
                         </div>
                       ))}
                     </div>
@@ -421,35 +724,73 @@ const GoldRatesPage: React.FC = () => {
                 ))}
               </div>
             </div>
+            
             {/* end Buy Gold */}
 
             {/* ══════════ LEASE GOLD ══════════ */}
-            <div ref={leaseRef} className="section-anchor" style={{ marginTop: 52 }}>
+            <div
+              ref={leaseRef}
+              className="section-anchor"
+              style={{ marginTop: 52 }}
+            >
               <div style={{ marginBottom: 14 }}>
                 <span className="section-label">Reference Rates</span>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", letterSpacing: "-0.01em", margin: 0 }}>Lease Gold</h2>
-                <p style={{ fontSize: 13, color: "#666", marginTop: 5 }}>Lease value referenced against the daily IBJA benchmark.</p>
+                <h2
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: "#111",
+                    letterSpacing: "-0.01em",
+                    margin: 0,
+                  }}
+                >
+                  Lease Gold
+                </h2>
+                <p style={{ fontSize: 13, color: "#666", marginTop: 5 }}>
+                  Lease value referenced against the daily IBJA benchmark.
+                </p>
               </div>
 
-              <div className="two-col-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div
+                className="two-col-grid"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                }}
+              >
                 <div className="card">
                   <table className="sec-table">
-                    <thead><tr><th colSpan={2}>22 Karat Gold</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th colSpan={2}>22 Karat Gold</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       <tr>
                         <td className="td-label">IBJA Price</td>
-                        <td className="td-value">{fmt(ibjaRate?.rate22kt ?? null)}<span className="td-sub">/g</span></td>
+                        <td className="td-value">
+                          {fmt(ibjaRate?.rate22kt ?? null)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 <div className="card">
                   <table className="sec-table">
-                    <thead><tr><th colSpan={2}>24 Karat Gold</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th colSpan={2}>24 Karat Gold</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       <tr>
                         <td className="td-label">IBJA Price</td>
-                        <td className="td-value">{fmt(ibjaRate?.rate24kt ?? null)}<span className="td-sub">/g</span></td>
+                        <td className="td-value">
+                          {fmt(ibjaRate?.rate24kt ?? null)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -459,11 +800,18 @@ const GoldRatesPage: React.FC = () => {
               {ibjaRate?.silverprice && (
                 <div className="card" style={{ marginTop: 12 }}>
                   <table className="sec-table">
-                    <thead><tr><th colSpan={2}>Silver</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th colSpan={2}>Silver</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       <tr>
                         <td className="td-label">IBJA Price</td>
-                        <td className="td-value">{fmt(ibjaRate.silverprice)}<span className="td-sub">/kg</span></td>
+                        <td className="td-value">
+                          {fmt(ibjaRate.silverprice)}
+                          <span className="td-sub">/kg</span>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -473,30 +821,72 @@ const GoldRatesPage: React.FC = () => {
             {/* end Lease Gold */}
 
             {/* ══════════ SELL GOLD ══════════ */}
-            <div ref={sellRef} className="section-anchor" style={{ marginTop: 52 }}>
+            <div
+              ref={sellRef}
+              className="section-anchor"
+              style={{ marginTop: 52 }}
+            >
               <div style={{ marginBottom: 14 }}>
                 <span className="section-label">Valuation</span>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", letterSpacing: "-0.01em", margin: 0 }}>Sell Gold &amp; Silver</h2>
-                <p style={{ fontSize: 13, color: "#666", marginTop: 5 }}>Sell price based on the daily IBJA rate, minus applicable charges.</p>
+                <h2
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: "#111",
+                    letterSpacing: "-0.01em",
+                    margin: 0,
+                  }}
+                >
+                  Sell Gold &amp; Silver
+                </h2>
+                <p style={{ fontSize: 13, color: "#666", marginTop: 5 }}>
+                  Sell price based on the daily IBJA rate, minus applicable
+                  charges.
+                </p>
               </div>
 
-              <div className="two-col-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div
+                className="two-col-grid"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                }}
+              >
                 {/* 22K */}
                 <div className="card">
                   <table className="sec-table">
-                    <thead><tr><th colSpan={2}>22 Karat Gold</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th colSpan={2}>22 Karat Gold</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       <tr>
                         <td className="td-label">IBJA Rate</td>
-                        <td className="td-value">{fmt(s22Base)}<span className="td-sub">/g</span></td>
+                        <td className="td-value">
+                          {fmt(s22Base)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                       <tr>
                         <td className="td-label">Trading Charges (2%)</td>
-                        <td className="td-value" style={{ color: "#c0392b" }}>− {fmt(s22Charges)}<span className="td-sub">/g</span></td>
+                        <td className="td-value" style={{ color: "#c0392b" }}>
+                          − {fmt(s22Charges)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                       <tr style={{ background: "#fffdf8" }}>
-                        <td className="td-label" style={{ fontWeight: 600, color: "#111" }}>You Receive</td>
-                        <td className="td-total">{fmt(s22Payable)}<span className="td-sub">/g</span></td>
+                        <td
+                          className="td-label"
+                          style={{ fontWeight: 600, color: "#111" }}
+                        >
+                          You Receive
+                        </td>
+                        <td className="td-total">
+                          {fmt(s22Payable)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -505,19 +895,37 @@ const GoldRatesPage: React.FC = () => {
                 {/* 24K */}
                 <div className="card">
                   <table className="sec-table">
-                    <thead><tr><th colSpan={2}>24 Karat Gold</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th colSpan={2}>24 Karat Gold</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       <tr>
                         <td className="td-label">IBJA Rate</td>
-                        <td className="td-value">{fmt(s24Base)}<span className="td-sub">/g</span></td>
+                        <td className="td-value">
+                          {fmt(s24Base)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                       <tr>
                         <td className="td-label">Trading Charges (2%)</td>
-                        <td className="td-value" style={{ color: "#c0392b" }}>− {fmt(s24Charges)}<span className="td-sub">/g</span></td>
+                        <td className="td-value" style={{ color: "#c0392b" }}>
+                          − {fmt(s24Charges)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                       <tr style={{ background: "#fffdf8" }}>
-                        <td className="td-label" style={{ fontWeight: 600, color: "#111" }}>You Receive</td>
-                        <td className="td-total">{fmt(s24Payable)}<span className="td-sub">/g</span></td>
+                        <td
+                          className="td-label"
+                          style={{ fontWeight: 600, color: "#111" }}
+                        >
+                          You Receive
+                        </td>
+                        <td className="td-total">
+                          {fmt(s24Payable)}
+                          <span className="td-sub">/g</span>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -528,19 +936,37 @@ const GoldRatesPage: React.FC = () => {
               {ibjaRate?.silverprice && (
                 <div className="card" style={{ marginTop: 12 }}>
                   <table className="sec-table">
-                    <thead><tr><th colSpan={2}>Silver</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th colSpan={2}>Silver</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       <tr>
                         <td className="td-label">IBJA Rate</td>
-                        <td className="td-value">{fmt(ibjaRate.silverprice)}<span className="td-sub">/kg</span></td>
+                        <td className="td-value">
+                          {fmt(ibjaRate.silverprice)}
+                          <span className="td-sub">/kg</span>
+                        </td>
                       </tr>
                       <tr>
                         <td className="td-label">Refining Charges (5%)</td>
-                        <td className="td-value" style={{ color: "#c0392b" }}>− {fmt(ibjaRate.silverprice * 0.05)}<span className="td-sub">/kg</span></td>
+                        <td className="td-value" style={{ color: "#c0392b" }}>
+                          − {fmt(ibjaRate.silverprice * 0.05)}
+                          <span className="td-sub">/kg</span>
+                        </td>
                       </tr>
                       <tr style={{ background: "#fffdf8" }}>
-                        <td className="td-label" style={{ fontWeight: 600, color: "#111" }}>You Receive</td>
-                        <td className="td-total">{fmt(ibjaRate.silverprice * 0.95)}<span className="td-sub">/kg</span></td>
+                        <td
+                          className="td-label"
+                          style={{ fontWeight: 600, color: "#111" }}
+                        >
+                          You Receive
+                        </td>
+                        <td className="td-total">
+                          {fmt(ibjaRate.silverprice * 0.95)}
+                          <span className="td-sub">/kg</span>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -551,8 +977,25 @@ const GoldRatesPage: React.FC = () => {
 
             {!loading && goldRates.length === 0 && (
               <div style={{ textAlign: "center", padding: "64px 0" }}>
-                <p style={{ color: "#777", marginBottom: 16, fontSize: 13 }}>No rates available right now</p>
-                <button onClick={() => fetchGoldRates(true)} style={{ background: "#c9993a", color: "#fff", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 600, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Retry</button>
+                <p style={{ color: "#777", marginBottom: 16, fontSize: 13 }}>
+                  No rates available right now
+                </p>
+                <button
+                  onClick={() => fetchGoldRates(true)}
+                  style={{
+                    background: "#c9993a",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "10px 22px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Retry
+                </button>
               </div>
             )}
           </>
@@ -560,29 +1003,96 @@ const GoldRatesPage: React.FC = () => {
       </main>
 
       <ModalContent
-        showModal={showModal} setShowModal={setShowModal}
-        mode={mode} setMode={setMode}
-        selectedKarat={selectedKarat} setSelectedKarat={setSelectedKarat}
-        weight={weight} setWeight={setWeight}
-        result={result} setResult={setResult}
-        calculatePrice={calculatePrice} calculateSellPrice={calculateSellPrice}
-        goldRates={goldRates} formatCurrency2={formatCurrency2}
+        showModal={showModal}
+        setShowModal={setShowModal}
+        mode={mode}
+        setMode={setMode}
+        selectedKarat={selectedKarat}
+        setSelectedKarat={setSelectedKarat}
+        weight={weight}
+        setWeight={setWeight}
+        result={result}
+        setResult={setResult}
+        calculatePrice={calculatePrice}
+        calculateSellPrice={calculateSellPrice}
+        goldRates={goldRates}
+        formatCurrency2={formatCurrency2}
       />
 
       {showComingSoon && (
-        <div onClick={() => setShowComingSoon(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 32, maxWidth: 360, width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 8 }}>Coming Soon</h2>
-            <p style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6 }}>We're working on the best gold experience. Stay tuned!</p>
-            <button onClick={() => setShowComingSoon(false)} style={{ marginTop: 22, width: "100%", padding: "11px", borderRadius: 8, fontWeight: 600, fontSize: 14, border: "none", cursor: "pointer", background: "linear-gradient(135deg,#c9993a,#d4a843)", color: "#fff", fontFamily: "inherit" }}>Got it</button>
+        <div
+          onClick={() => setShowComingSoon(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              padding: 32,
+              maxWidth: 360,
+              width: "90%",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: "#111",
+                marginBottom: 8,
+              }}
+            >
+              Coming Soon
+            </h2>
+            <p style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6 }}>
+              We're working on the best gold experience. Stay tuned!
+            </p>
+            <button
+              onClick={() => setShowComingSoon(false)}
+              style={{
+                marginTop: 22,
+                width: "100%",
+                padding: "11px",
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 14,
+                border: "none",
+                cursor: "pointer",
+                background: "linear-gradient(135deg,#c9993a,#d4a843)",
+                color: "#fff",
+                fontFamily: "inherit",
+              }}
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}
 
       {/* ════════ FOOTER ════════ */}
-      <footer style={{ borderTop: "1px solid #e8e0cc", padding: "22px 20px", textAlign: "center", background: "#fff" }}>
-        <p style={{ fontSize: 13, color: "#555", fontWeight: 500 }}>© {new Date().getFullYear()} ASKOXY.AI — Gold & Silver Rates</p>
-        <p style={{ fontSize: 12, color: "#888", marginTop: 4 }}>Prices update regularly. Verify with jewellers before transacting.</p>
+      <footer
+        style={{
+          borderTop: "1px solid #e8e0cc",
+          padding: "22px 20px",
+          textAlign: "center",
+          background: "#fff",
+        }}
+      >
+        <p style={{ fontSize: 13, color: "#555", fontWeight: 500 }}>
+          © {new Date().getFullYear()} ASKOXY.AI — Gold & Silver Rates
+        </p>
+        <p style={{ fontSize: 12, color: "#888", marginTop: 4 }}>
+          Prices update regularly. Verify with jewellers before transacting.
+        </p>
       </footer>
 
       {/* Scroll to top */}
@@ -590,19 +1100,33 @@ const GoldRatesPage: React.FC = () => {
         <button
           onClick={scrollToTop}
           style={{
-            position: "fixed", bottom: 24, right: 24,
-            width: 42, height: 42, borderRadius: "50%",
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            width: 42,
+            height: 42,
+            borderRadius: "50%",
             background: "linear-gradient(135deg,#c9993a,#e8b84a)",
-            border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             boxShadow: "0 4px 14px rgba(201,153,58,0.35)",
-            transition: "all 0.2s", zIndex: 40,
+            transition: "all 0.2s",
+            zIndex: 40,
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+          }}
           title="Back to top"
         >
-          <span style={{ fontSize: 16, color: "#fff", fontWeight: 700 }}>↑</span>
+          <span style={{ fontSize: 16, color: "#fff", fontWeight: 700 }}>
+            ↑
+          </span>
         </button>
       )}
     </div>

@@ -11,6 +11,7 @@ import {
   Typography,
 } from "antd";
 import axios from "axios";
+import { employeeApi } from "../utils/axiosInstance";
 import dayjs from "dayjs";
 import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
@@ -35,15 +36,20 @@ const LeaveStatus: React.FC = () => {
   const [leaveData, setLeaveData] = useState<LeaveData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+const accessToken = sessionStorage.getItem("taskAccessToken");
   const userId = sessionStorage.getItem("userId");
 
   useEffect(() => {
     const fetchLeaveData = async () => {
       try {
         if (!userId) throw new Error("User ID not found.");
-        const response = await axios.get<LeaveData[]>(
-          `${BASE_URL}/user-service/write/leaves/${userId}`
+        const response = await employeeApi.get<LeaveData[]>(
+          `${BASE_URL}/user-service/write/leaves/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
         );
         setLeaveData(response.data);
       } catch (err) {

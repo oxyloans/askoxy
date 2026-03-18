@@ -44,7 +44,7 @@ const MobileNumberUpdate: React.FC<MobileNumberUpdateProps> = ({
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [inlineError, setInlineError] = useState<string>("");
-
+const accessToken = sessionStorage.getItem("taskAccessToken");
   const isMobile = useMemo(() => !screens.md, [screens.md]);
 
   useEffect(() => {
@@ -87,6 +87,9 @@ const MobileNumberUpdate: React.FC<MobileNumberUpdateProps> = ({
         null,
         {
           params: { mobileNumber },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
       );
 

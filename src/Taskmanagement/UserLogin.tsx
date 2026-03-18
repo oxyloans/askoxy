@@ -13,6 +13,7 @@ import {
 import axios, { AxiosError } from "axios";
 import BASE_URL from "../Config";
 import { useNavigate, Link } from "react-router-dom";
+import { setTaskTokens, getIntendedRoute, clearIntendedRoute } from "../utils/taskTokenManager";
 import {
   MailOutlined,
   LockOutlined,
@@ -59,10 +60,11 @@ const UserLogin: React.FC = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    const token = sessionStorage.getItem("accessToken");
+    const token = sessionStorage.getItem("taskAccessToken");
     const type = sessionStorage.getItem("primaryType");
     if (token && type === "EMPLOYEE") {
-      navigate("/userPanelLayout");
+      window.history.replaceState(null, '', '/userPanelLayout');
+      navigate("/userPanelLayout", { replace: true });
     }
   }, [navigate]);
 
@@ -95,9 +97,8 @@ const UserLogin: React.FC = () => {
       if (response.data.status === "Login Successful" && response.data.token) {
         const { token, refreshToken, id, name, primaryType } = response.data;
 
-        // Store user info in localStorage
-        sessionStorage.setItem("accessToken", token);
-        if (refreshToken) sessionStorage.setItem("refreshToken", refreshToken);
+        // Store user info using token manager
+        setTaskTokens(token, refreshToken);
         if (id) sessionStorage.setItem("userId", id);
         if (name) sessionStorage.setItem("Name", name);
         if (primaryType) sessionStorage.setItem("primaryType", primaryType);
@@ -113,7 +114,11 @@ const UserLogin: React.FC = () => {
 
           // Slight delay for user to see success message
           setTimeout(() => {
-            navigate("/userPanelLayout");
+            const intendedRoute = getIntendedRoute();
+            clearIntendedRoute();
+            // Clear login page from history and navigate
+            window.history.replaceState(null, '', intendedRoute || "/userPanelLayout");
+            navigate(intendedRoute || "/userPanelLayout", { replace: true });
           }, 1000);
         } else if (
           primaryType === "SELLER" ||
@@ -122,8 +127,9 @@ const UserLogin: React.FC = () => {
           setAccessDenied(true);
           setUserType(primaryType);
 
-          // Remove token for non-EMPLOYEE users
-          localStorage.removeItem("accessToken");
+          // Remove tokens for non-EMPLOYEE users
+          sessionStorage.removeItem("taskAccessToken");
+          sessionStorage.removeItem("taskRefreshToken");
         } else {
           setError("Invalid user type. Please contact support.");
         }
