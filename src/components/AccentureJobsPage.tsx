@@ -86,7 +86,7 @@ const AccentureJobsPage: React.FC = () => {
   const formatTitle = (job: Job) => job.jobTitle || job.jobDesignation || "Open Position";
 
   const handleJobNavigate = (jobId: string) => {
-    navigate(`/main/jobdetails/${jobId}`);
+    navigate(`/main/jobdetails/${jobId}/ACCENTURE`);
   };
 
   const filteredJobs = jobs.filter(job => {

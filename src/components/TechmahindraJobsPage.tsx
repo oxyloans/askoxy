@@ -86,7 +86,7 @@ const TechmahindraJobsPage: React.FC = () => {
   const formatTitle = (job: Job) => job.jobTitle || job.jobDesignation || "Open Position";
 
   const handleJobNavigate = (jobId: string) => {
-    navigate(`/main/jobdetails/${jobId}`);
+    navigate(`/main/jobdetails/${jobId}/TECH_MAHINDRA`);
   };
 
   const filteredJobs = jobs.filter(job => {

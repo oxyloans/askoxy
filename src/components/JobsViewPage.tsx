@@ -58,11 +58,12 @@ type FilterKey =
 
 const { Option } = Select;
 
-const JobDetails: React.FC = () => {
+const JobViewPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id: urlId } = useParams<{ id: string }>();
-  const id = urlId || location.state?.id;
+  const { id: urlId, company } = useParams<{ id: string; company: string }>();
+  const id = urlId === "default" ? null : urlId || location.state?.id;
+  const currentCompany = company || "ACCENTURE";
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -94,6 +95,26 @@ const JobDetails: React.FC = () => {
     companyName: string;
   } | null>(null);
   const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
+
+  const uniqueLocations = Array.from(
+    new Set(
+      jobs.flatMap((job) => {
+        if (!job.jobLocations?.trim()) return [];
+        return job.jobLocations
+          .split(",")
+          .map((loc) => loc.trim())
+          .filter((loc) => loc.length > 1);
+      }),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
+
+  const uniqueExperience = Array.from(
+    new Set(
+      jobs
+        .map((job) => job.experience?.trim())
+        .filter((exp): exp is string => !!exp && exp.length > 1),
+    ),
+  ).sort();
 
   // 🔐 Read auth token (same format as other pages)
   const readAuth = () => {
@@ -230,8 +251,8 @@ const JobDetails: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchJobs();
-  }, []);
+    fetchJobs(currentCompany);
+  }, [currentCompany]);
 
   useEffect(() => {
     if (location.state?.openApplyModal && selectedJob) {
@@ -257,17 +278,18 @@ const JobDetails: React.FC = () => {
     setDisplayedJobsCount(20); // Reset pagination when filters change
   }, [jobs, searchTerm, filters]);
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (compName: string) => {
     try {
       const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
+        `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(compName)}`,
       );
       const data = await response.json();
-      const filteredJobs = data.filter((job: Job) => job.jobStatus === true);
-      setJobs(filteredJobs);
-      const matchedJob = data.find((job: Job) => job.id === id);
+      const jobsArray = Array.isArray(data) ? data : [];
+      const activeJobs = jobsArray.filter((job: Job) => job.jobStatus === true);
+      setJobs(activeJobs);
+      const matchedJob = activeJobs.find((job: Job) => job.id === id);
       setSelectedJob(matchedJob || null);
-      setFilteredJobs(data);
+      setFilteredJobs(activeJobs);
     } catch (error) {
       console.error("Error fetching jobs:", error);
     } finally {
@@ -514,10 +536,10 @@ const JobDetails: React.FC = () => {
       sessionStorage.setItem("redirectJobId", job.id);
       return;
     }
-    navigate(`/main/jobdetails/${job.id}`);
+    navigate(`/main/jobdetails/${job.id}/${currentCompany}`);
     setSelectedJob(job);
     window.scrollTo({
-      top: 400,
+      top: 200,
       behavior: "smooth",
     });
   };
@@ -624,7 +646,7 @@ const JobDetails: React.FC = () => {
         </div>
         <div className="px-4 pb-5 mt-auto flex justify-center">
           <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200 hover:bg-blue-200">
-            View Job
+            View Job Details
           </div>
         </div>
       </motion.div>
@@ -670,13 +692,13 @@ const JobDetails: React.FC = () => {
 
     return (
       <div
-        ref={jobDetailsRef}
+        // ref={jobDetailsRef}
         className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
       >
         {/* Banner/Header Segment */}
         <div className="p-5 md:p-6 border-b border-gray-100">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center md:items-start gap-5 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center md:items-start gap-5">
               <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 bg-white border border-gray-100 rounded-xl p-2 flex items-center justify-center shadow-sm">
                 <img
                   src={
@@ -687,12 +709,12 @@ const JobDetails: React.FC = () => {
                   className="max-w-full max-h-full object-contain"
                 />
               </div>
-              <div className="text-center sm:text-left min-w-0">
-                <h1 className="text-xl md:text-1xl font-semibold text-gray-900 leading-tight truncate">
+              <div className="text-center sm:text-left">
+                <h1 className="text-xl md:text-1xl font-semibold text-gray-900 leading-tight">
                   {job.jobTitle || "Job Title"}
                 </h1>
                 {job.jobDesignation && (
-                  <p className="text-blue-700 font-semibold mt-1 text-base md:text-lg truncate">
+                  <p className="text-blue-700 font-semibold mt-1 text-base md:text-lg">
                     {job.jobDesignation}
                   </p>
                 )}
@@ -703,16 +725,12 @@ const JobDetails: React.FC = () => {
                   {job.companyName && job.jobLocations && (
                     <span className="text-gray-300 hidden sm:inline">•</span>
                   )}
-                  {job.jobLocations && (
-                    <span className="truncate max-w-[200px] sm:max-w-xs">
-                      {job.jobLocations}
-                    </span>
-                  )}
+                  {job.jobLocations && <span>{job.jobLocations}</span>}
                   {job.createdAt && (
                     <span className="text-gray-300 hidden sm:inline">•</span>
                   )}
                   {job.createdAt && (
-                    <span className="text-gray-500 font-normal whitespace-nowrap">
+                    <span className="text-gray-500 font-normal">
                       Posted {new Date(job.createdAt).toLocaleDateString()}
                     </span>
                   )}
@@ -724,8 +742,8 @@ const JobDetails: React.FC = () => {
               <button
                 className={`w-full md:w-[180px] py-3.5 rounded-xl font-bold text-base transition-all shadow-sm ${
                   appliedJobIds.has(job.id)
-                    ? "bg-green-50 text-green-700 border border-green-200 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md"
+                    ? "bg-[1ab394] text-white  cursor-not-allowed"
+                    : "bg-[#008cba] text-white hover:bg-[#008cba] hover:shadow-md"
                 }`}
                 onClick={() =>
                   !appliedJobIds.has(job.id) &&
@@ -932,131 +950,99 @@ const JobDetails: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <div className="py-6 md:py-10 text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
-            Find Your Next Opportunity
-          </h1>
-          <p className="mt-2 text-base text-gray-600">
-            Discover jobs that match your skills
-          </p>
-        </div>
-
-        {/* Search Section */}
-        <div className="mb-6">
-          <div className="max-w-4xl mx-auto">
+        {/* Filters */}
+        <div className="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={currentCompany}
+                onChange={(e) =>
+                  navigate(`/main/jobdetails/default/${e.target.value}`)
+                }
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800"
+              >
+                <option value="ACCENTURE">Accenture</option>
+                <option value="CREDERA">Credera</option>
+                <option value="TECH_MAHINDRA">Tech Mahindra</option>
+                <option value="BROADRIDGE">Broadridge</option>
+              </select>
+            </div>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search jobs by title, company, or keywords..."
+                placeholder="Search jobs, skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
               />
             </div>
-          </div>
-        </div>
 
-        {/* Filters Section */}
-        <div className="mb-6  p-4">
-          <h3 className="text-base font-semibold text-gray-800 mb-3">
-            Filter Jobs
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-3">
-            {(
-              [
-                {
-                  key: "industry",
-                  label: "Industry",
-                  icon: "🏢",
-                  values: getUniqueValues("industry"),
-                },
-                {
-                  key: "jobType",
-                  label: "Job Type",
-                  icon: "💼",
-                  values: getUniqueValues("jobType"),
-                },
-                {
-                  key: "location",
-                  label: "Location",
-                  icon: "📍",
-                  values: getUniqueValues("jobLocations"),
-                },
-                {
-                  key: "experience",
-                  label: "Experience",
-                  icon: "🎯",
-                  values: getUniqueValues("experience"),
-                },
-                {
-                  key: "salaryRange",
-                  label: "Salary Range",
-                  icon: "💰",
-                  values: getSalaryRanges().map((r) => r.label),
-                },
-                {
-                  key: "skills",
-                  label: "Skills",
-                  icon: "🛠",
-                  values: getUniqueSkills(),
-                },
-              ] as {
-                key: FilterKey;
-                label: string;
-                icon: string;
-                values: string[];
-              }[]
-            ).map(({ key, label, icon, values }) => (
-              <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {icon} {label}
-                </label>
-                <Select
-                  value={filters[key] || undefined}
-                  onChange={(value) => handleFilterChange(key, value)}
-                  placeholder={`Select ${label.toLowerCase()}`}
-                  className="w-full"
-                  size="large"
-                  allowClear
-                >
-                  {values.map((val, idx) => (
-                    <Option key={`${key}-${idx}`} value={val}>
-                      {val}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="font-medium">{filteredJobs.length}</span>
-              <span>jobs found</span>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filters.location}
+                onChange={(e) => handleFilterChange("location", e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+              >
+                <option value="">All Locations</option>
+                {uniqueLocations.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={clearFilters}
-                className="px-4 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg"
+
+            <div className="relative">
+              <Clock3 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filters.experience}
+                onChange={(e) =>
+                  handleFilterChange("experience", e.target.value)
+                }
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
               >
-                Clear All
-              </Button>
-              <Button
-                onClick={handleWriteToUs}
-                className="px-4 py-1.5 text-white rounded-lg flex items-center gap-2 hover:text-white"
-                style={{ backgroundColor: "#008cba", borderColor: "#008cba" }}
-              >
-                <MailIcon className="w-4 h-4" />
-                Contact Us
-              </Button>
+                <option value="">All Experience</option>
+                {uniqueExperience.map((exp) => (
+                  <option key={exp} value={exp}>
+                    {exp}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
+
+          {/* Action Row */}
         </div>
-        {/* Job Listings */}
+        <div className="mt-2 flex flex-col items-center justify-between gap-2 border-t border-gray-100  sm:flex-row">
+          {/* Left side - empty or can add other buttons/links later */}
+          <div className="flex gap-2 sm:invisible sm:w-0" />{" "}
+          <div className="flex justify-end w-full sm:w-auto">
+            <Button
+              onClick={handleWriteToUs}
+              className="
+        flex items-center gap-2 
+        rounded-lg 
+        border 
+        bg-transparent 
+        px-5 py-2 
+        text-black 
+        hover:bg-black/10 
+        hover:text-black 
+        active:bg-black/20 
+        transition-colors
+      "
+            >
+              <MailIcon className="h-4 w-4" />
+              Contact Us
+            </Button>
+          </div>
+        </div>
         {selectedJob ? (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 pt-2 gap-6">
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl p-6 shadow-sm border sticky top-6">
                 <div className="flex justify-between items-center mb-4">
@@ -1064,7 +1050,10 @@ const JobDetails: React.FC = () => {
                     Similar Jobs
                   </h3>
                   <button
-                    onClick={() => setSelectedJob(null)}
+                    onClick={() => {
+                      setSelectedJob(null);
+                      navigate(`/main/jobdetails/default/${currentCompany}`);
+                    }}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
                     ← Back to all
@@ -1091,9 +1080,12 @@ const JobDetails: React.FC = () => {
         ) : (
           <>
             <div className="mb-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center sm:flex-row flex-col max-sm:items-start max-sm:gap-2">
                 <h2 className="text-xl font-bold text-gray-800">
-                  Available Positions
+                  Available Positions at{" "}
+                  <span className="text-blue-600 capitalize">
+                    {currentCompany?.toLowerCase()}
+                  </span>
                 </h2>
                 <div className="text-sm text-gray-600">
                   Showing {Math.min(displayedJobsCount, filteredJobs.length)} of{" "}
@@ -1117,8 +1109,7 @@ const JobDetails: React.FC = () => {
               <div className="text-center mt-6">
                 <button
                   onClick={() => setDisplayedJobsCount((prev) => prev + 20)}
-                  className="text-white px-6 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200"
-                  style={{ backgroundColor: "#008cba" }}
+                  className="text-white bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   Load More Jobs ({filteredJobs.length - displayedJobsCount}{" "}
                   remaining)
@@ -1164,6 +1155,17 @@ const JobDetails: React.FC = () => {
                     <JobCard key={job.id} job={job} />
                   ))}
                 </motion.div>
+                {remainingJobs.length > displayedJobsCount && (
+                  <div className="text-center mt-6">
+                    <button
+                      onClick={() => setDisplayedJobsCount((prev) => prev + 20)}
+                      className="text-white bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                    >
+                      Load More Jobs (
+                      {remainingJobs.length - displayedJobsCount} remaining)
+                    </button>
+                  </div>
+                )}
               </div>
             ) : null;
           })()}
@@ -1179,8 +1181,7 @@ const JobDetails: React.FC = () => {
             </p>
             <button
               onClick={clearFilters}
-              className="text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              style={{ backgroundColor: "#008cba" }}
+              className="text-white bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
             >
               Clear Filters
             </button>
@@ -1296,6 +1297,7 @@ const JobDetails: React.FC = () => {
         />
       )}
 
+      {/* showNoAgentPopup has been commented out to temporarily disable the agent creation popup 
       {showNoAgentPopup && (
         <div
           className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/40"
@@ -1366,8 +1368,9 @@ const JobDetails: React.FC = () => {
           </div>
         </div>
       )}
+      */}
     </div>
   );
 };
 
-export default JobDetails;
+export default JobViewPage;

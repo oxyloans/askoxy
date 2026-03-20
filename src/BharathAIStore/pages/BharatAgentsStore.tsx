@@ -918,7 +918,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
   }, [approvedAssistants, loggedInUserId]);
 
   // final list shown on screen (tab-aware)
- const finalAssistants = tab === "MINE" ? myAgents : shownAssistants;
+  const finalAssistants = tab === "MINE" ? myAgents.filter(a => isApproved(a)) : shownAssistants;
 
   const SkeletonCard = () => (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden animate-pulse h-full flex flex-col">
@@ -1276,7 +1276,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
     <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-600" />
     <p className="mt-4 text-gray-600">Loading your AI Agents...</p>
   </div>
-) : tab === "MINE" && myAgents.length === 0 ? (
+) : tab === "MINE" && finalAssistants.length === 0 ? (
   <div className="text-center py-16">
     <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />
     <h3 className="text-lg font-semibold text-gray-900">

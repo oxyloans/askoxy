@@ -290,7 +290,7 @@ const JobStreet: React.FC = () => {
       </header>
 
       {/* Main */}
-      <main className="flex-grow bg-gradient-to-br from-white via-blue-50 to-purple-50 pb-10 px-4 sm:px-6">
+      <main className="flex-grow  pb-10 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="sr-only">JobStreet Use Cases</h1>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-2 mb-4">
@@ -333,10 +333,10 @@ const JobStreet: React.FC = () => {
                 if (route) window.location.href = route;
               }}
             >
-              <h3 className="text-lg sm:text-xl font-semibold text-indigo-700">
+              <h3 className="text-lg sm:text-xl font-semibold text-indigo-700 mb-2">
                 {currentUseCase.title}
+                {currentIndex >= 2 && ` - Use Case ${currentIndex - 1}/${useCases.length - 2}`}
               </h3>
-       
 
               <AnimatePresence mode="wait">
                 <motion.img
@@ -354,8 +354,7 @@ const JobStreet: React.FC = () => {
                 />
               </AnimatePresence>
             </div>
-
-                     </div>
+          </div>
         </div>
       </main>
 

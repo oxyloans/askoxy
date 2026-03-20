@@ -87,7 +87,7 @@ const BroadRidgeJobsPage: React.FC = () => {
     job.jobTitle || job.jobDesignation || "Open Position";
 
   const handleJobNavigate = (jobId: string) => {
-    navigate(`/main/jobdetails/${jobId}`);
+    navigate(`/main/jobdetails/${jobId}/BROADRIDGE`);
   };
 
   const filteredJobs = jobs.filter((job) => {

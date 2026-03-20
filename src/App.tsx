@@ -40,6 +40,7 @@ import CrederaJobsPage from "./components/CrederaJobsPage";
 import TechmahindraJobsPage from "./components/TechmahindraJobsPage";
 import AllCompaniesJobsPage from "./components/AllCompaniesJobsPage";
 import BroadRidgeJobsPage from "./components/BroadRidgepage";
+import JobViewPage from "./components/JobsViewPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -618,10 +619,7 @@ const App: React.FC = () => {
                 path="/techmahindra/jobs"
                 element={<TechmahindraJobsPage />}
               />
-              <Route
-                path=  "/broadridge/jobs"
-                element={<BroadRidgeJobsPage />}
-              />
+              <Route path="/broadridge/jobs" element={<BroadRidgeJobsPage />} />
               <Route
                 path="/allcompanies/jobs"
                 element={<AllCompaniesJobsPage />}
@@ -1122,6 +1120,10 @@ const App: React.FC = () => {
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
                 <Route path="jobdetails/:id" element={<JobDetails />} />
+                <Route
+                  path="jobdetails/:id/:company"
+                  element={<JobViewPage />}
+                />
                 <Route path="caserviceitems" element={<CAServicesItems />} />
                 <Route path="cartcaservice" element={<CartCaCsService />} />
                 <Route path="servicecalist" element={<ServiceCAList />} />
