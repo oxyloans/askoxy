@@ -614,7 +614,7 @@ const App: React.FC = () => {
               />
               <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
-              <Route path="/credera/jobs" element={<CrederaJobsPage />} />
+              {/* <Route path="/credera/jobs" element={<CrederaJobsPage />} /> */}
               <Route
                 path="/techmahindra/jobs"
                 element={<TechmahindraJobsPage />}

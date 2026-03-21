@@ -13,7 +13,7 @@ const images = [
   "https://i.ibb.co/MxRvdwK2/work-flow-for-recommendations.png",
   "https://i.ibb.co/27bX7GGK/15.png",
   "https://i.ibb.co/Q7ZhS8Ft/Usecase13.png",
-  "https://i.ibb.co/v6GkKVNF/loan-sanction-letter.png",
+  "https://i.ibb.co/VYKPHCNy/Whats-App-Image-2026-03-21-at-3-42-58-PM.jpg",
   "https://i.ibb.co/wnVWrMG/terms-conditions.png",
   "https://i.ibb.co/nMntMRSG/caparing-proposed-asset-details.png",
   "https://i.ibb.co/279s0FBy/checking-the-eligibility-of-the-customer.png",
@@ -335,7 +335,8 @@ const JobStreet: React.FC = () => {
             >
               <h3 className="text-lg sm:text-xl font-semibold text-indigo-700 mb-2">
                 {currentUseCase.title}
-                {currentIndex >= 2 && ` - Use Case ${currentIndex - 1}/${useCases.length - 2}`}
+                {currentIndex >= 2 &&
+                  ` - Use Case ${currentIndex - 1}/${useCases.length - 2}`}
               </h3>
 
               <AnimatePresence mode="wait">

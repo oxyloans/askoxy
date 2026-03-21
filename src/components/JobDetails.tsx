@@ -18,7 +18,7 @@ import {
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BASE_URL from "../Config";
 import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
-import { Button, message, Select } from "antd";
+import { message } from "antd";
 import JobApplicationModal from "./JobApplyModal";
 
 interface Job {
@@ -48,15 +48,7 @@ interface Job {
   payRateFrequencyType: string;
 }
 
-type FilterKey =
-  | "industry"
-  | "jobType"
-  | "location"
-  | "experience"
-  | "salaryRange"
-  | "skills";
-
-const { Option } = Select;
+type FilterKey = "industry" | "location" | "experience";
 
 const JobDetails: React.FC = () => {
   const location = useLocation();
@@ -71,11 +63,8 @@ const JobDetails: React.FC = () => {
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
     industry: "",
-    jobType: "",
     location: "",
     experience: "",
-    salaryRange: "",
-    skills: "",
   });
   const [isprofileOpen, setIsprofileOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -296,12 +285,6 @@ const JobDetails: React.FC = () => {
       );
     }
 
-    if (filters.jobType) {
-      filtered = filtered.filter((job) =>
-        job.jobType?.toLowerCase().includes(filters.jobType.toLowerCase()),
-      );
-    }
-
     if (filters.location) {
       filtered = filtered.filter((job) =>
         job.jobLocations
@@ -315,29 +298,6 @@ const JobDetails: React.FC = () => {
         job.experience
           ?.toLowerCase()
           .includes(filters.experience.toLowerCase()),
-      );
-    }
-
-    if (filters.salaryRange) {
-      const selectedRange = getSalaryRanges().find(
-        (range) =>
-          range.label.toLowerCase() === filters.salaryRange.toLowerCase(),
-      );
-      if (selectedRange) {
-        filtered = filtered.filter(
-          (job) =>
-            job.salaryMin >= selectedRange.min &&
-            job.salaryMax <= selectedRange.max,
-        );
-      }
-    }
-
-    if (filters.skills) {
-      filtered = filtered.filter((job) =>
-        safeSplit(job.skills)
-          .join(" ")
-          .toLowerCase()
-          .includes(filters.skills.toLowerCase()),
       );
     }
 
@@ -397,11 +357,8 @@ const JobDetails: React.FC = () => {
   const clearFilters = () => {
     setFilters({
       industry: "",
-      jobType: "",
       location: "",
       experience: "",
-      salaryRange: "",
-      skills: "",
     });
     setSearchTerm("");
   };
@@ -517,7 +474,7 @@ const JobDetails: React.FC = () => {
     navigate(`/main/jobdetails/${job.id}`);
     setSelectedJob(job);
     window.scrollTo({
-      top: 400,
+      top: 200,
       behavior: "smooth",
     });
   };
@@ -623,7 +580,7 @@ const JobDetails: React.FC = () => {
           </div>
         </div>
         <div className="px-4 pb-5 mt-auto flex justify-center">
-          <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200 hover:bg-blue-200">
+          <div className="bg-indigo-50 text-indigo-600 py-2 px-6 rounded-lg font-semibold text-sm transition-all duration-200 hover:bg-indigo-100">
             View Job
           </div>
         </div>
@@ -670,7 +627,7 @@ const JobDetails: React.FC = () => {
 
     return (
       <div
-        ref={jobDetailsRef}
+        // ref={jobDetailsRef}
         className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
       >
         {/* Banner/Header Segment */}
@@ -683,8 +640,13 @@ const JobDetails: React.FC = () => {
                     job.companyLogo ||
                     "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
                   }
-                  alt={job.companyName}
-                  className="max-w-full max-h-full object-contain"
+                  className="w-40 h-20 object-contain transition-transform duration-300"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src =
+                      "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+                  }}
                 />
               </div>
               <div className="text-center sm:text-left min-w-0">
@@ -720,12 +682,12 @@ const JobDetails: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 w-full md:w-auto shrink-0 mt-4 md:mt-0">
+            <div className="flex flex-col gap-2 w-full md:w-auto shrink-0 mt-3 md:mt-0">
               <button
-                className={`w-full md:w-[180px] py-3.5 rounded-xl font-bold text-base transition-all shadow-sm ${
+                className={`w-full md:w-auto px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   appliedJobIds.has(job.id)
                     ? "bg-green-50 text-green-700 border border-green-200 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md"
+                    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-sm hover:shadow-md"
                 }`}
                 onClick={() =>
                   !appliedJobIds.has(job.id) &&
@@ -930,10 +892,10 @@ const JobDetails: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen  p-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="py-6 md:py-10 text-center">
+        <div className="py-2 md:py-4 text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
             Find Your Next Opportunity
           </h1>
@@ -942,115 +904,91 @@ const JobDetails: React.FC = () => {
           </p>
         </div>
 
-        {/* Search Section */}
-        <div className="mb-6">
-          <div className="max-w-4xl mx-auto">
+       
+        <div className="mb-4 p-4 ">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search */}
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search jobs by title, company, or keywords..."
+                placeholder="Search jobs, skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-          </div>
-        </div>
 
-        {/* Filters Section */}
-        <div className="mb-6  p-4">
-          <h3 className="text-base font-semibold text-gray-800 mb-3">
-            Filter Jobs
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-3">
-            {(
-              [
-                {
-                  key: "industry",
-                  label: "Industry",
-                  icon: "🏢",
-                  values: getUniqueValues("industry"),
-                },
-                {
-                  key: "jobType",
-                  label: "Job Type",
-                  icon: "💼",
-                  values: getUniqueValues("jobType"),
-                },
-                {
-                  key: "location",
-                  label: "Location",
-                  icon: "📍",
-                  values: getUniqueValues("jobLocations"),
-                },
-                {
-                  key: "experience",
-                  label: "Experience",
-                  icon: "🎯",
-                  values: getUniqueValues("experience"),
-                },
-                {
-                  key: "salaryRange",
-                  label: "Salary Range",
-                  icon: "💰",
-                  values: getSalaryRanges().map((r) => r.label),
-                },
-                {
-                  key: "skills",
-                  label: "Skills",
-                  icon: "🛠",
-                  values: getUniqueSkills(),
-                },
-              ] as {
-                key: FilterKey;
-                label: string;
-                icon: string;
-                values: string[];
-              }[]
-            ).map(({ key, label, icon, values }) => (
-              <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {icon} {label}
-                </label>
-                <Select
-                  value={filters[key] || undefined}
-                  onChange={(value) => handleFilterChange(key, value)}
-                  placeholder={`Select ${label.toLowerCase()}`}
-                  className="w-full"
-                  size="large"
-                  allowClear
-                >
-                  {values.map((val, idx) => (
-                    <Option key={`${key}-${idx}`} value={val}>
-                      {val}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-            ))}
+            {/* Industry */}
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filters.industry}
+                onChange={(e) => handleFilterChange("industry", e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Industries</option>
+                {getUniqueValues("industry").map((val, idx) => (
+                  <option key={idx} value={val}>{val}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Location */}
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filters.location}
+                onChange={(e) => handleFilterChange("location", e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Locations</option>
+                {getUniqueValues("jobLocations").map((val, idx) => (
+                  <option key={idx} value={val}>{val}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Experience */}
+            <div className="relative">
+              <Clock3 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filters.experience}
+                onChange={(e) => handleFilterChange("experience", e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Experience</option>
+                {getUniqueValues("experience").map((val, idx) => (
+                  <option key={idx} value={val}>{val}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+          {/* Bottom row: count + actions */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4 pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="font-medium">{filteredJobs.length}</span>
-              <span>jobs found</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="font-medium">{filteredJobs.length}</span> of{" "}
+                <span className="font-medium">{jobs.length}</span> jobs found
+              </span>
             </div>
             <div className="flex gap-2">
-              <Button
+              <button
                 onClick={clearFilters}
-                className="px-4 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg"
+                className="px-4 py-1.5 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors"
               >
                 Clear All
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={handleWriteToUs}
-                className="px-4 py-1.5 text-white rounded-lg flex items-center gap-2 hover:text-white"
-                style={{ backgroundColor: "#008cba", borderColor: "#008cba" }}
+                className="px-4 py-1.5 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#008cba" }}
               >
                 <MailIcon className="w-4 h-4" />
                 Contact Us
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -1114,11 +1052,10 @@ const JobDetails: React.FC = () => {
             </motion.div>
 
             {filteredJobs.length > displayedJobsCount && (
-              <div className="text-center mt-6">
+              <div className="text-center mt-8">
                 <button
                   onClick={() => setDisplayedJobsCount((prev) => prev + 20)}
-                  className="text-white px-6 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200"
-                  style={{ backgroundColor: "#008cba" }}
+                  className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-8 py-2.5 rounded-lg font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 border border-indigo-100"
                 >
                   Load More Jobs ({filteredJobs.length - displayedJobsCount}{" "}
                   remaining)
@@ -1179,8 +1116,7 @@ const JobDetails: React.FC = () => {
             </p>
             <button
               onClick={clearFilters}
-              className="text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              style={{ backgroundColor: "#008cba" }}
+              className="text-gray-600 border border-gray-200 hover:bg-gray-50 px-5 py-2 rounded-lg font-medium text-sm transition-all shadow-sm"
             >
               Clear Filters
             </button>
@@ -1248,8 +1184,7 @@ const JobDetails: React.FC = () => {
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleWriteToUsSubmitButton}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow hover:shadow-lg hover:scale-105 transition-all"
-                style={{ backgroundColor: "#1ab394", backgroundImage: "none" }}
+                className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all font-semibold text-sm"
               >
                 Submit Query
               </button>
@@ -1325,7 +1260,16 @@ const JobDetails: React.FC = () => {
             </div>
             <div className="flex gap-3 mt-4">
               <button
-                onClick={() => setShowNoAgentPopup(false)}
+                onClick={() => {
+                  setShowNoAgentPopup(false);
+                  if (selectedJob) {
+                    setApplySelectedJob({
+                      jobDesignation: selectedJob.jobDesignation,
+                      companyName: selectedJob.companyName,
+                    });
+                    setIsModalOpen(true);
+                  }
+                }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel

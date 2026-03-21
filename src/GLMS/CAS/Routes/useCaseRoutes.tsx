@@ -91,7 +91,8 @@ export const useCaseRoutes: Record<
     title: "Repayment Schedule Generation",
     business: <WFSanctionOfLoanBusiness />,
     system: <WFForSanctionOfLoan />,
-    image: "https://i.ibb.co/v6GkKVNF/loan-sanction-letter.png",
+    image:
+      "https://i.ibb.co/VYKPHCNy/Whats-App-Image-2026-03-21-at-3-42-58-PM.jpg",
   },
   "terms-conditions-workflow": {
     title: "Terms & Conditions Approval",

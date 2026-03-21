@@ -34,7 +34,7 @@ const PAGE_SIZE = 20;
 
 const COMPANY_OPTIONS = [
   "ACCENTURE",
-  "CREDERA",
+  // "CREDERA",
   "TECH_MAHINDRA",
   "BROADRIDGE",
 ] as const;
@@ -407,7 +407,7 @@ const AllCompaniesJobsPage: React.FC = () => {
                       <div className="px-4 pb-5 mt-auto flex justify-center">
                         <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200 hover:bg-blue-200 inline-flex items-center gap-2">
                          
-                          View Job
+                          View Job Details
                         </div>
                       </div>
                     </motion.div>

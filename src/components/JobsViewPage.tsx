@@ -645,7 +645,7 @@ const JobViewPage: React.FC = () => {
           </div>
         </div>
         <div className="px-4 pb-5 mt-auto flex justify-center">
-          <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200 hover:bg-blue-200">
+          <div className="bg-indigo-50 text-indigo-600 py-2 px-6 rounded-lg font-semibold text-sm transition-all duration-200 hover:bg-indigo-100">
             View Job Details
           </div>
         </div>
@@ -738,12 +738,12 @@ const JobViewPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 w-full md:w-auto shrink-0 mt-4 md:mt-0">
+            <div className="flex flex-col gap-2 w-full md:w-auto shrink-0 mt-3 md:mt-0">
               <button
-                className={`w-full md:w-[180px] py-3.5 rounded-xl font-bold text-base transition-all shadow-sm ${
+                className={`w-full md:w-auto px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   appliedJobIds.has(job.id)
-                    ? "bg-[1ab394] text-white  cursor-not-allowed"
-                    : "bg-[#008cba] text-white hover:bg-[#008cba] hover:shadow-md"
+                    ? "bg-green-50 text-green-700 border border-green-200 cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-sm hover:shadow-md"
                 }`}
                 onClick={() =>
                   !appliedJobIds.has(job.id) &&
@@ -948,10 +948,10 @@ const JobViewPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen  p-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Filters */}
-        <div className="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mt-4">
+        <div className="mb-6  p-4  mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -963,7 +963,7 @@ const JobViewPage: React.FC = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800"
               >
                 <option value="ACCENTURE">Accenture</option>
-                <option value="CREDERA">Credera</option>
+                {/* <option value="CREDERA">Credera</option> */}
                 <option value="TECH_MAHINDRA">Tech Mahindra</option>
                 <option value="BROADRIDGE">Broadridge</option>
               </select>
@@ -1017,8 +1017,8 @@ const JobViewPage: React.FC = () => {
 
           {/* Action Row */}
         </div>
-        <div className="mt-2 flex flex-col items-center justify-between gap-2 border-t border-gray-100  sm:flex-row">
-          {/* Left side - empty or can add other buttons/links later */}
+        <div className="mt-2 flex flex-col items-center justify-between gap-2  border-gray-100  sm:flex-row">
+          
           <div className="flex gap-2 sm:invisible sm:w-0" />{" "}
           <div className="flex justify-end w-full sm:w-auto">
             <Button
@@ -1026,14 +1026,10 @@ const JobViewPage: React.FC = () => {
               className="
         flex items-center gap-2 
         rounded-lg 
-        border 
-        bg-transparent 
+       
         px-5 py-2 
         text-black 
-        hover:bg-black/10 
-        hover:text-black 
-        active:bg-black/20 
-        transition-colors
+        
       "
             >
               <MailIcon className="h-4 w-4" />
@@ -1106,10 +1102,10 @@ const JobViewPage: React.FC = () => {
             </motion.div>
 
             {filteredJobs.length > displayedJobsCount && (
-              <div className="text-center mt-6">
+              <div className="text-center mt-8">
                 <button
                   onClick={() => setDisplayedJobsCount((prev) => prev + 20)}
-                  className="text-white bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                  className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-8 py-2.5 rounded-lg font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 border border-indigo-100"
                 >
                   Load More Jobs ({filteredJobs.length - displayedJobsCount}{" "}
                   remaining)
@@ -1156,10 +1152,10 @@ const JobViewPage: React.FC = () => {
                   ))}
                 </motion.div>
                 {remainingJobs.length > displayedJobsCount && (
-                  <div className="text-center mt-6">
+                  <div className="text-center mt-8">
                     <button
                       onClick={() => setDisplayedJobsCount((prev) => prev + 20)}
-                      className="text-white bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                      className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-8 py-2.5 rounded-lg font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 border border-indigo-100"
                     >
                       Load More Jobs (
                       {remainingJobs.length - displayedJobsCount} remaining)
@@ -1181,7 +1177,7 @@ const JobViewPage: React.FC = () => {
             </p>
             <button
               onClick={clearFilters}
-              className="text-white bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
+              className="text-gray-600 border border-gray-200 hover:bg-gray-50 px-5 py-2 rounded-lg font-medium text-sm transition-all shadow-sm"
             >
               Clear Filters
             </button>
