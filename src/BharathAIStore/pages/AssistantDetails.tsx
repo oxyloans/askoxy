@@ -24,6 +24,7 @@ import {
   LogOut,
   MoreHorizontal,
   Star as StarIcon,
+  Mail,
 } from "lucide-react";
 import MarkdownRenderer from "../../GenOxy/components/MarkdownRenderer";
 import { message, Modal } from "antd";
@@ -33,6 +34,7 @@ import { set } from "lodash";
 import { Button } from "antd";
 import { log } from "node:console";
 import { stopTokenRefresh } from "../../utils/tokenRefresh";
+import { WhatsAppOutlined } from "@ant-design/icons";
 /** ---------------- Types ---------------- */
 interface Assistant {
   id: string;
@@ -1961,6 +1963,7 @@ const AssistantDetails: React.FC = () => {
     }
   };
   const [showShareQuestion, setShowShareQuestion] = useState(false);
+  const [shareTitle, setShareTitle] = useState("Share Chat History");
   const [shareText, setShareText] = useState<string>("");
 
   // Common share helper
@@ -2000,27 +2003,24 @@ const AssistantDetails: React.FC = () => {
       return;
     }
 
-    const lastUser = [...messages].reverse().find((m) => m.role === "user");
-    const lastAssistant = [...messages]
-      .reverse()
-      .find((m) => m.role === "assistant");
+    // Aggregate all Q&A
+    const chatContent = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => {
+        const prefix = m.role === "user" ? "Q" : "A";
+        return `${prefix}: ${m.content}`;
+      })
+      .join("\n\n");
 
-    // 👉 If no Q or no A, also show same modal
-    if (!lastUser || !lastAssistant) {
-      setShowNoChatModal(true);
-      return;
-    }
+    const text = `🤖 ${assistant?.name || "AI Agent"} — Chat History
 
-    const text = `🤖 ${assistant?.name || "AI Agent"} — Chat Snippet
-
-Q: ${lastUser.content}
-
-A: ${lastAssistant.content}
+${chatContent}
 
 🔗 Bharat AI Store`;
 
     setShareText(text);
-    setShowShareQuestion(true); // open confirm modal
+    setShareTitle("Share Chat History");
+    setShowShareQuestion(true); // open share modal
   };
 
   // 🟡 Agent Share = Show modal -> Share on WhatsApp
@@ -2307,6 +2307,7 @@ ${url}`.trim();
                     style={{
                       display: "flex",
                       justifyContent: "center",
+                      flexWrap: "wrap",
                       gap: "12px",
                       marginTop: "10px",
                     }}
@@ -2325,6 +2326,29 @@ ${url}`.trim();
                     >
                       Close
                     </Button>
+
+                    {/* Email */}
+                    {/* <Button
+                      onClick={() => {
+                        const subject = encodeURIComponent(`Check out this AI Agent: ${assistant?.name || "AI Agent"}`);
+                        const body = encodeURIComponent(agentShareText);
+                        window.open(`mailto:?subject=${subject}&body=${body}`, "_self");
+                        setShowAgentShareModal(false);
+                      }}
+                      icon={<Mail className="w-4 h-4 inline-block mr-1" />}
+                      style={{
+                        background: "#EA4335", // Google/Email red
+                        borderColor: "#EA4335",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      Email
+                    </Button> */}
 
                     {/* WhatsApp */}
                     <Button
@@ -2437,31 +2461,104 @@ ${url}`.trim();
             </div>
           </header>
 
-          {showShareQuestion && (
-            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg w-80">
-                <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
-                  Do you want to share this content?
-                </h2>
+          <Modal
+            open={showShareQuestion}
+            onCancel={() => setShowShareQuestion(false)}
+            footer={null}
+            centered
+          >
+            <div className="text-center px-4 py-2">
+              <h3
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 600,
+                  marginBottom: "12px",
+                }}
+              >
+                {shareTitle}
+              </h3>
 
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={cancelShare}
-                    className="px-4 py-2 bg-gray-300 rounded-md dark:bg-gray-700"
-                  >
-                    Cancel
-                  </button>
+              <p
+                style={{
+                  fontSize: "15px",
+                  lineHeight: "1.6",
+                  marginBottom: "20px",
+                  textAlign: "center",
+                }}
+              >
+                Share this {shareTitle.toLowerCase().includes("history") ? "full conversation" : "message"} with your friends via WhatsApp or Email.
+              </p>
 
-                  <button
-                    onClick={confirmShareNow}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-md"
-                  >
-                    Yes, Share
-                  </button>
-                </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                  marginTop: "10px",
+                }}
+              >
+                <Button
+                  onClick={() => setShowShareQuestion(false)}
+                  style={{
+                    background: "#e0e0e0",
+                    border: "none",
+                    color: "#000",
+                    padding: "6px 20px",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                  }}
+                >
+                  Close
+                </Button>
+
+                {/* <Button
+                  onClick={() => {
+                    const subject = encodeURIComponent(`Chat History with ${assistant?.name || "AI Agent"}`);
+                    const body = encodeURIComponent(shareText);
+                    window.open(`mailto:?subject=${subject}&body=${body}`, "_self");
+                    setShowShareQuestion(false);
+                  }}
+                  icon={<Mail className="w-4 h-4 inline-block mr-1" />}
+                  style={{
+                    background: "#EA4335",
+                    borderColor: "#EA4335",
+                    padding: "6px 20px",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  Email
+                </Button> */}
+
+                <Button
+                  type="primary"
+                  icon={<WhatsAppOutlined className="w-4 h-4 inline-block mr-1" />} 
+               
+                  onClick={() => {
+                    const whatsappUrl =
+                      "https://api.whatsapp.com/send?text=" +
+                      encodeURIComponent(shareText);
+                    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                    setShowShareQuestion(false);
+                  }}
+                  style={{
+                    background: "#25D366",
+                    borderColor: "#25D366",
+                    padding: "6px 20px",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    color: "#fff",
+                  }}
+                >
+                  WhatsApp
+                </Button>
               </div>
             </div>
-          )}
+          </Modal>
 
           {/* Sidebar */}
           <aside
@@ -3389,35 +3486,22 @@ ${url}`.trim();
                                     <Copy className="w-4 h-4" />
                                   </button>
 
-                                  <button
-                                    onClick={async () => {
-                                      if (navigator.share) {
-                                        try {
-                                          await navigator.share({
-                                            title:
-                                              assistant?.name || "Assistant",
-                                            text: msg.content,
-                                          });
-                                        } catch (err) {
-                                          console.error(
-                                            "Share cancelled or failed:",
-                                            err
-                                          );
-                                        }
-                                      } else {
-                                        navigator.clipboard.writeText(
-                                          msg.content
-                                        );
-                                        message.info(
-                                          "Copied text to share manually"
-                                        );
-                                      }
+                                  {/* <button
+                                    onClick={() => {
+                                      const text = `🤖 ${assistant?.name || "AI Agent"} — Shared Snippet
+
+${msg.content}
+
+🔗 Bharat AI Store`;
+                                      setShareText(text);
+                                      setShareTitle("Share Message");
+                                      setShowShareQuestion(true);
                                     }}
                                     className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
                                     title="Share"
                                   >
                                     <Share2 className="w-4 h-4" />
-                                  </button>
+                                  </button> */}
 
                                   <button
                                     onClick={() =>

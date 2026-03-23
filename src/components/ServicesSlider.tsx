@@ -384,11 +384,13 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
 
   const handleJobNavigate = (id: string | null) => {
     console.log("service slider" + id);
+    const userId = localStorage.getItem("userId");
 
-    if (!accessToken) {
-      navigate("/jobdetails", { state: { id } });
+    const pathPrefix = userId ? "/main/viewjobdetails" : "/viewjobdetails";
+    if (id) {
+      navigate(`${pathPrefix}/${id}/ALL`);
     } else {
-      navigate("/main/jobdetails", { state: { id } });
+      navigate(`${pathPrefix}/default/ALL`);
     }
   };
 

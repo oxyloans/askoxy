@@ -64,6 +64,7 @@ const AccentureJobsPage: React.FC = () => {
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
   const navigate = useNavigate();
+  const userId = localStorage.getItem("userId");
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -86,7 +87,7 @@ const AccentureJobsPage: React.FC = () => {
   const formatTitle = (job: Job) => job.jobTitle || job.jobDesignation || "Open Position";
 
   const handleJobNavigate = (jobId: string) => {
-    navigate(`/main/jobdetails/${jobId}/ACCENTURE`);
+    navigate(`/main/viewjobdetails/${jobId}/ACCENTURE`);
   };
 
   const filteredJobs = jobs.filter(job => {
@@ -232,7 +233,9 @@ const AccentureJobsPage: React.FC = () => {
           {jobs.length > 0 ? (
             <>
               <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+                className={`grid grid-cols-1 sm:grid-cols-2 ${
+                  userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+                } gap-0`}
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"

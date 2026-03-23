@@ -33,6 +33,7 @@ type Job = {
 const PAGE_SIZE = 20;
 
 const COMPANY_OPTIONS = [
+  "ALL",
   "ACCENTURE",
   // "CREDERA",
   "TECH_MAHINDRA",
@@ -61,7 +62,7 @@ const itemVariants = {
     },
   },
 };
-
+ 
 const formatCompanyLabel = (company: string) => {
   return company
     .toLowerCase()
@@ -72,7 +73,7 @@ const formatCompanyLabel = (company: string) => {
 
 const AllCompaniesJobsPage: React.FC = () => {
   const [selectedCompany, setSelectedCompany] =
-    useState<CompanyType>("ACCENTURE");
+    useState<CompanyType>("ALL");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -80,8 +81,9 @@ const AllCompaniesJobsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
-
+ const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
+  const userId = localStorage.getItem("userId");
 
   const selectedCompanyLabel = useMemo(
     () => formatCompanyLabel(selectedCompany),
@@ -96,13 +98,19 @@ const AllCompaniesJobsPage: React.FC = () => {
         setJobs([]);
         setVisible(PAGE_SIZE);
 
-        const res = await fetch(
-          `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${selectedCompany}`,
-        );
+         let url = "";
+         if (selectedCompany === "ALL") {
+           url = `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`;
+         } else {
+           url = `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(selectedCompany)}`;
+         }
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         const response = await fetch(url);
 
-        const data: Job[] = await res.json();
+         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+         const data: Job[] = await response.json();
+
         setJobs(Array.isArray(data) ? data : []);
       } catch (err: any) {
         setError(err.message || "Failed to load jobs");
@@ -118,9 +126,23 @@ const AllCompaniesJobsPage: React.FC = () => {
     job.jobTitle || job.jobDesignation || "Open Position";
 
   const handleJobNavigate = (jobId: string) => {
-    navigate(`/main/jobdetails/${jobId}/${selectedCompany}`);
+    navigate(`/main/viewjobdetails/${jobId}/${selectedCompany}`);
   };
+ useEffect(() => {
+   fetchCompanyNames();
+ }, []);
 
+ const fetchCompanyNames = async () => {
+   try {
+     const response = await fetch(
+       `${BASE_URL}/marketing-service/campgin/distinct-company-names`,
+     );
+     const data = await response.json();
+     setCompanyNames(data || {});
+   } catch (error) {
+     console.error("Error fetching company names:", error);
+   }
+ };
   const uniqueLocations = Array.from(
     new Set(
       jobs.flatMap((job) => {
@@ -268,11 +290,14 @@ const AllCompaniesJobsPage: React.FC = () => {
                   }
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 >
-                  {COMPANY_OPTIONS.map((company) => (
-                    <option key={company} value={company}>
-                      {formatCompanyLabel(company)}
-                    </option>
-                  ))}
+                  <option value="ALL">All Jobs</option>
+                  {Object.entries(companyNames)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([label, value]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -324,7 +349,9 @@ const AllCompaniesJobsPage: React.FC = () => {
           {jobs.length > 0 ? (
             <>
               <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+                className={`grid grid-cols-1 sm:grid-cols-2 ${
+                  userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+                } gap-0`}
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -406,7 +433,6 @@ const AllCompaniesJobsPage: React.FC = () => {
 
                       <div className="px-4 pb-5 mt-auto flex justify-center">
                         <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200 hover:bg-blue-200 inline-flex items-center gap-2">
-                         
                           View Job Details
                         </div>
                       </div>

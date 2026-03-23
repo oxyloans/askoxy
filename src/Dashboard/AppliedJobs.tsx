@@ -334,10 +334,14 @@ const AppliedJobs: React.FC = () => {
           </div>
 
           <Button
-           
             icon={<PlusOutlined />}
-            href="/main/jobDetails"
-            style={{ borderRadius: 10,backgroundColor: '#0089c4', borderColor: '#0089c4',color:'white' }}
+            href="/main/viewjobdetails/default/ALL"
+            style={{
+              borderRadius: 10,
+              backgroundColor: "#0089c4",
+              borderColor: "#0089c4",
+              color: "white",
+            }}
           >
             Browse Jobs
           </Button>

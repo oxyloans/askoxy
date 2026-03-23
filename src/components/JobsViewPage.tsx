@@ -63,7 +63,7 @@ const JobViewPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: urlId, company } = useParams<{ id: string; company: string }>();
   const id = urlId === "default" ? null : urlId || location.state?.id;
-  const currentCompany = company || "ACCENTURE";
+  const currentCompany = company || "ALL";
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -95,6 +95,7 @@ const JobViewPage: React.FC = () => {
     companyName: string;
   } | null>(null);
   const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
+  const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>({});
 
   const uniqueLocations = Array.from(
     new Set(
@@ -103,7 +104,13 @@ const JobViewPage: React.FC = () => {
         return job.jobLocations
           .split(",")
           .map((loc) => loc.trim())
-          .filter((loc) => loc.length > 1);
+          .filter(
+            (loc) =>
+              loc &&
+              loc.length > 1 &&
+              loc.toLowerCase() !== "null" &&
+              loc.toLowerCase() !== "undefined",
+          );
       }),
     ),
   ).sort((a, b) => a.localeCompare(b));
@@ -112,7 +119,46 @@ const JobViewPage: React.FC = () => {
     new Set(
       jobs
         .map((job) => job.experience?.trim())
-        .filter((exp): exp is string => !!exp && exp.length > 1),
+        .filter(
+          (exp): exp is string =>
+            !!exp &&
+            exp.length > 0 &&
+            exp.toLowerCase() !== "null" &&
+            exp.toLowerCase() !== "undefined",
+        ),
+    ),
+  ).sort();
+
+  const uniqueIndustries = Array.from(
+    new Set(
+      jobs
+        .map((job) => job.industry?.trim())
+        .filter(
+          (ind): ind is string =>
+            !!ind &&
+            ind.length > 0 &&
+            ind.toLowerCase() !== "null" &&
+            ind.toLowerCase() !== "undefined",
+        ),
+    ),
+  ).sort();
+
+  const formatLPA = (num: number) => {
+    if (!num) return "0";
+    return (num / 100000).toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    });
+  };
+
+  const getSalaryString = (j: Job) =>
+    `₹${formatLPA(j.salaryMin)} - ₹${formatLPA(j.salaryMax)} LPA`;
+
+  const uniqueSalaries = Array.from(
+    new Set(
+      jobs
+        .filter((j) => j.salaryMin > 0 || j.salaryMax > 0)
+        .map((j) => getSalaryString(j)),
     ),
   ).sort();
 
@@ -255,6 +301,22 @@ const JobViewPage: React.FC = () => {
   }, [currentCompany]);
 
   useEffect(() => {
+    fetchCompanyNames();
+  }, []);
+
+  const fetchCompanyNames = async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/marketing-service/campgin/distinct-company-names`,
+      );
+      const data = await response.json();
+      setCompanyNames(data || {});
+    } catch (error) {
+      console.error("Error fetching company names:", error);
+    }
+  };
+
+  useEffect(() => {
     if (location.state?.openApplyModal && selectedJob) {
       // ✅ Open JobApplicationModal ONCE
       setApplySelectedJob({
@@ -279,16 +341,30 @@ const JobViewPage: React.FC = () => {
   }, [jobs, searchTerm, filters]);
 
   const fetchJobs = async (compName: string) => {
+    setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(compName)}`,
-      );
+      let url = "";
+      if (compName === "ALL") {
+        url = `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`;
+      } else {
+        url = `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(compName)}`;
+      }
+
+      const response = await fetch(url);
       const data = await response.json();
       const jobsArray = Array.isArray(data) ? data : [];
       const activeJobs = jobsArray.filter((job: Job) => job.jobStatus === true);
       setJobs(activeJobs);
-      const matchedJob = activeJobs.find((job: Job) => job.id === id);
-      setSelectedJob(matchedJob || null);
+
+      // If there's an ID in the URL, try to set it as selectedJob
+      if (id) {
+        const matchedJob = activeJobs.find((job: Job) => job.id === id);
+        if (matchedJob) {
+          setSelectedJob(matchedJob);
+        }
+      } else {
+        setSelectedJob(null);
+      }
       setFilteredJobs(activeJobs);
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -341,17 +417,9 @@ const JobViewPage: React.FC = () => {
     }
 
     if (filters.salaryRange) {
-      const selectedRange = getSalaryRanges().find(
-        (range) =>
-          range.label.toLowerCase() === filters.salaryRange.toLowerCase(),
-      );
-      if (selectedRange) {
-        filtered = filtered.filter(
-          (job) =>
-            job.salaryMin >= selectedRange.min &&
-            job.salaryMax <= selectedRange.max,
-        );
-      }
+      filtered = filtered.filter((job) => {
+        return getSalaryString(job) === filters.salaryRange;
+      });
     }
 
     if (filters.skills) {
@@ -395,7 +463,10 @@ const JobViewPage: React.FC = () => {
     if (!userId) {
       message.warning("Please login to submit your interest.");
       navigate("/whatsapplogin");
-      sessionStorage.setItem("redirectPath", "/main/jobdetails");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/viewjobdetails/${jobId}/${currentCompany}`,
+      );
       return;
     }
 
@@ -459,7 +530,10 @@ const JobViewPage: React.FC = () => {
     if (!userId) {
       message.warning("Please login to submit your Query.");
       navigate("/whatsapplogin");
-      sessionStorage.setItem("redirectPath", "/main/jobdetails");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/viewjobdetails${selectedJob ? `/${selectedJob.id}/${currentCompany}` : ""}`,
+      );
     }
     if (
       !email ||
@@ -532,11 +606,16 @@ const JobViewPage: React.FC = () => {
     if (!userId) {
       message.warning("Please login to view job details.");
       navigate("/whatsapplogin");
-      sessionStorage.setItem("redirectPath", "/main/jobdetails");
+      sessionStorage.setItem(
+        "redirectPath",
+        `/main/viewjobdetails/${job.id}/${currentCompany}`,
+      );
       sessionStorage.setItem("redirectJobId", job.id);
       return;
     }
-    navigate(`/main/jobdetails/${job.id}/${currentCompany}`);
+    const pathPrefix = "/main/viewjobdetails";
+
+    navigate(`${pathPrefix}/${job.id}/${currentCompany}`);
     setSelectedJob(job);
     window.scrollTo({
       top: 200,
@@ -562,35 +641,12 @@ const JobViewPage: React.FC = () => {
       "bg-gradient-to-br from-fuchsia-50 to-pink-100",
     ];
 
+    // Find index of job in filteredJobs to get stable color
+    const index = filteredJobs.findIndex((j) => j.id === job.id);
     const bgColor =
       lightBackgroundColors[
-        Math.floor(Math.random() * lightBackgroundColors.length)
+        (index >= 0 ? index : 0) % lightBackgroundColors.length
       ];
-
-    if (isCompact) {
-      return (
-        <motion.div
-          variants={itemVariants}
-          className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-300 cursor-pointer"
-          onClick={() => handleJobSelect(job)}
-        >
-          <h4 className="font-semibold text-lg text-purple-900 mb-1 line-clamp-1">
-            {job.jobTitle}
-          </h4>
-          <p className="text-gray-700 text-sm font-medium mb-3 truncate">
-            {job.companyName.toUpperCase()}.
-          </p>
-          <div className="flex flex-col items-start text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              ⏰ Exp: {job.experience}
-            </span>
-            <span className="flex items-center gap-1">
-              📍 Loc: {job.jobLocations}
-            </span>
-          </div>
-        </motion.div>
-      );
-    }
 
     return (
       <motion.div
@@ -645,7 +701,7 @@ const JobViewPage: React.FC = () => {
           </div>
         </div>
         <div className="px-4 pb-5 mt-auto flex justify-center">
-          <div className="bg-indigo-50 text-indigo-600 py-2 px-6 rounded-lg font-semibold text-sm transition-all duration-200 hover:bg-indigo-100">
+          <div className="bg-indigo-100 text-indigo-600 py-2.5 px-8 rounded-full font-bold text-sm transition-all duration-300 shadow-md">
             View Job Details
           </div>
         </div>
@@ -692,11 +748,10 @@ const JobViewPage: React.FC = () => {
 
     return (
       <div
-        // ref={jobDetailsRef}
-        className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+        className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden transition-all duration-500 hover:shadow-2xl"
       >
         {/* Banner/Header Segment */}
-        <div className="p-5 md:p-6 border-b border-gray-100">
+        <div className="p-6 md:p-8 border-b border-gray-100 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center md:items-start gap-5">
               <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 bg-white border border-gray-100 rounded-xl p-2 flex items-center justify-center shadow-sm">
@@ -706,6 +761,12 @@ const JobViewPage: React.FC = () => {
                     "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
                   }
                   alt={job.companyName}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src =
+                      "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+                  }}
                   className="max-w-full max-h-full object-contain"
                 />
               </div>
@@ -740,10 +801,10 @@ const JobViewPage: React.FC = () => {
 
             <div className="flex flex-col gap-2 w-full md:w-auto shrink-0 mt-3 md:mt-0">
               <button
-                className={`w-full md:w-auto px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                className={`w-full md:w-auto px-8 py-3 rounded-full text-base font-bold transition-all duration-300 shadow-md transform hover:scale-105 ${
                   appliedJobIds.has(job.id)
-                    ? "bg-green-50 text-green-700 border border-green-200 cursor-not-allowed"
-                    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-sm hover:shadow-md"
+                    ? "bg-green-100 text-green-700 border border-green-200 cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
                 }`}
                 onClick={() =>
                   !appliedJobIds.has(job.id) &&
@@ -751,7 +812,13 @@ const JobViewPage: React.FC = () => {
                 }
                 disabled={appliedJobIds.has(job.id)}
               >
-                {appliedJobIds.has(job.id) ? "✓ Applied" : "Apply Now"}
+                {appliedJobIds.has(job.id) ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" /> Applied
+                  </span>
+                ) : (
+                  "Apply Now"
+                )}
               </button>
             </div>
           </div>
@@ -948,24 +1015,56 @@ const JobViewPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen  p-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen p-2 sm:p-4">
+      <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6">
+        {/* Hero Section */}
+        <div className="flex flex-col md:flex-row justify-between items-center py-4 mb-4 mt-6 gap-6 px-2">
+          <div className="flex-1">
+            <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-purple-900 leading-tight">
+              Find Your Next{" "}
+              <span className="text-purple-900">Opportunity</span>
+            </h1>
+            <p className="text-base md:text-lg text-gray-600 font-medium mt-1">
+              Discover jobs that match your skills.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <button
+              onClick={handleWriteToUs}
+              className="bg-[#008cba] text-white hover:bg-[#008cba] px-8 py-2 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2"
+            >
+              <MailIcon className="w-5 h-5" />
+              Contact Us
+            </button>
+          </div>
+        </div>
+
         {/* Filters */}
-        <div className="mb-6  p-4  mt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mb-6 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
                 value={currentCompany}
-                onChange={(e) =>
-                  navigate(`/main/jobdetails/default/${e.target.value}`)
-                }
+                onChange={(e) => {
+                  const token = localStorage.getItem("accessToken");
+                  const userId = localStorage.getItem("userId");
+                  const prefix =
+                    token && userId
+                      ? "/main/viewjobdetails"
+                      : "/viewjobdetails";
+                  navigate(`${prefix}/default/${e.target.value}`);
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800"
               >
-                <option value="ACCENTURE">Accenture</option>
-                {/* <option value="CREDERA">Credera</option> */}
-                <option value="TECH_MAHINDRA">Tech Mahindra</option>
-                <option value="BROADRIDGE">Broadridge</option>
+                <option value="ALL">All Jobs</option>
+                {Object.entries(companyNames)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([label, value]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -1013,42 +1112,64 @@ const JobViewPage: React.FC = () => {
                 ))}
               </select>
             </div>
+
+            <div className="relative">
+              <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filters.industry}
+                onChange={(e) => handleFilterChange("industry", e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+              >
+                <option value="">All Industries</option>
+                {uniqueIndustries.map((ind) => (
+                  <option key={ind} value={ind}>
+                    {ind}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={filters.salaryRange}
+                onChange={(e) =>
+                  handleFilterChange("salaryRange", e.target.value)
+                }
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+              >
+                <option value="">All Salary Ranges</option>
+                {uniqueSalaries.map((sal) => (
+                  <option key={sal} value={sal}>
+                    {sal}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Action Row */}
         </div>
-        <div className="mt-2 flex flex-col items-center justify-between gap-2  border-gray-100  sm:flex-row">
-          
-          <div className="flex gap-2 sm:invisible sm:w-0" />{" "}
-          <div className="flex justify-end w-full sm:w-auto">
-            <Button
-              onClick={handleWriteToUs}
-              className="
-        flex items-center gap-2 
-        rounded-lg 
-       
-        px-5 py-2 
-        text-black 
-        
-      "
-            >
-              <MailIcon className="h-4 w-4" />
-              Contact Us
-            </Button>
-          </div>
-        </div>
         {selectedJob ? (
-          <div className="grid grid-cols-1 lg:grid-cols-4 pt-2 gap-6">
+          <div className={`grid grid-cols-1 lg:grid-cols-4 pt-2 gap-4`}>
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl p-6 shadow-sm border sticky top-6">
+              <div className="bg-white rounded-xl p-4 shadow-sm border sticky top-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">
                     Similar Jobs
                   </h3>
                   <button
                     onClick={() => {
+                      const accessToken = localStorage.getItem("accessToken");
+                      const userId = localStorage.getItem("userId");
                       setSelectedJob(null);
-                      navigate(`/main/jobdetails/default/${currentCompany}`);
+                      if (accessToken && userId) {
+                        navigate(
+                          `/main/viewjobdetails/default/${currentCompany}`,
+                        );
+                      } else {
+                        navigate(`/viewjobdetails/default/${currentCompany}`);
+                      }
                     }}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
@@ -1069,14 +1190,14 @@ const JobViewPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-3">
+            <div className={"lg:col-span-3"}>
               <JobDetailsComponent job={selectedJob} />
             </div>
           </div>
         ) : (
           <>
             <div className="mb-4">
-              <div className="flex justify-between items-center sm:flex-row flex-col max-sm:items-start max-sm:gap-2">
+              <div className="flex px-2 sm:px-4 lg:px-6 justify-between items-center sm:flex-row flex-col max-sm:items-start max-sm:gap-2">
                 <h2 className="text-xl font-bold text-gray-800">
                   Available Positions at{" "}
                   <span className="text-blue-600 capitalize">
@@ -1091,7 +1212,9 @@ const JobViewPage: React.FC = () => {
             </div>
 
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+                userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+              } gap-0`}
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -1142,7 +1265,9 @@ const JobViewPage: React.FC = () => {
                   </p>
                 </div>
                 <motion.div
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0"
+                  className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+                    userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+                  } gap-0`}
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
@@ -1245,8 +1370,7 @@ const JobViewPage: React.FC = () => {
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleWriteToUsSubmitButton}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow hover:shadow-lg hover:scale-105 transition-all"
-                style={{ backgroundColor: "#1ab394", backgroundImage: "none" }}
+                className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all font-semibold text-sm"
               >
                 Submit Query
               </button>
@@ -1293,7 +1417,6 @@ const JobViewPage: React.FC = () => {
         />
       )}
 
-      {/* showNoAgentPopup has been commented out to temporarily disable the agent creation popup 
       {showNoAgentPopup && (
         <div
           className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/40"
@@ -1323,7 +1446,16 @@ const JobViewPage: React.FC = () => {
             </div>
             <div className="flex gap-3 mt-4">
               <button
-                onClick={() => setShowNoAgentPopup(false)}
+                onClick={() => {
+                  setShowNoAgentPopup(false);
+                  if (selectedJob) {
+                    setApplySelectedJob({
+                      jobDesignation: selectedJob.jobDesignation,
+                      companyName: selectedJob.companyName,
+                    });
+                    setIsModalOpen(true);
+                  }
+                }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
@@ -1364,7 +1496,6 @@ const JobViewPage: React.FC = () => {
           </div>
         </div>
       )}
-      */}
     </div>
   );
 };

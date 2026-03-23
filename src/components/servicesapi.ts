@@ -220,6 +220,7 @@ export const fetchAppliedJobsByUserId = async (
     const { data } = await axiosInstance.get<AppliedJob[]>(
       `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
       { params: { userId } }
+      
     );
     return data || [];
   } catch {

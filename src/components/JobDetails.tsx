@@ -502,37 +502,12 @@ const JobDetails: React.FC = () => {
         Math.floor(Math.random() * lightBackgroundColors.length)
       ];
 
-    if (isCompact) {
-      return (
-        <motion.div
-          variants={itemVariants}
-          className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-300 cursor-pointer"
-          onClick={() => handleJobSelect(job)}
-        >
-          <h4 className="font-semibold text-lg text-purple-900 mb-1 line-clamp-1">
-            {job.jobTitle}
-          </h4>
-          <p className="text-gray-700 text-sm font-medium mb-3 truncate">
-            {job.companyName.toUpperCase()}.
-          </p>
-          <div className="flex flex-col items-start text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              ⏰ Exp: {job.experience}
-            </span>
-            <span className="flex items-center gap-1">
-              📍 Loc: {job.jobLocations}
-            </span>
-          </div>
-        </motion.div>
-      );
-    }
-
     return (
       <motion.div
         variants={itemVariants}
         className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl 
         transition-all duration-300 transform hover:-translate-y-1 cursor-pointer 
-        flex flex-col border border-gray-100 ${isCompact ? "m-1" : "m-2"}`}
+        flex flex-col border border-gray-100 ${isCompact ? "m-1" : "m-1"}`}
         onClick={() => handleJobSelect(job)}
       >
         <div className="pt-6 pb-4 flex justify-center">
@@ -892,8 +867,8 @@ const JobDetails: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen  p-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen p-2 sm:p-4 bg-gray-50">
+      <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6">
         {/* Hero Section */}
         <div className="py-2 md:py-4 text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
@@ -992,11 +967,14 @@ const JobDetails: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* Job Listings */}
         {selectedJob ? (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div
+            className={`grid grid-cols-1 ${
+              userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+            } gap-4`}
+          >
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl p-6 shadow-sm border sticky top-6">
+              <div className="bg-white rounded-xl p-4 shadow-sm border sticky top-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">
                     Similar Jobs
@@ -1022,7 +1000,7 @@ const JobDetails: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-3">
+            <div className={userId ? "lg:col-span-3" : "lg:col-span-4"}>
               <JobDetailsComponent job={selectedJob} />
             </div>
           </div>
@@ -1041,7 +1019,9 @@ const JobDetails: React.FC = () => {
             </div>
 
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+                userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+              } gap-4`}
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -1092,7 +1072,9 @@ const JobDetails: React.FC = () => {
                   </p>
                 </div>
                 <motion.div
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0"
+                  className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+                    userId ? "lg:grid-cols-4" : "lg:grid-cols-5"
+                  } gap-4`}
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"

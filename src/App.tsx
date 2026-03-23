@@ -508,6 +508,7 @@ const App: React.FC = () => {
       "/allcompanies/jobs",
       "/broadridge/jobs",
       "/credera/jobs",
+      "/viewjobdetails/default/ALL"
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -662,6 +663,12 @@ const App: React.FC = () => {
               <Route path="services/:id/:type" element={<CampaignDetails />} />
               <Route path="blog/:id/:type" element={<BlogDetails />} />
               <Route path="jobdetails" element={<JobDetails />} />
+              <Route path="viewjobdetails" element={<JobViewPage />} />
+              <Route path="viewjobdetails/:id" element={<JobViewPage />} />
+              <Route
+                path="viewjobdetails/:id/:company"
+                element={<JobViewPage />}
+              />
               <Route path="caserviceitems" element={<CAServicesItems />} />
               <Route path="metroLogin" element={<MetroLogin />} />
               <Route
@@ -1120,10 +1127,6 @@ const App: React.FC = () => {
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
                 <Route path="jobdetails/:id" element={<JobDetails />} />
-                <Route
-                  path="jobdetails/:id/:company"
-                  element={<JobViewPage />}
-                />
                 <Route path="caserviceitems" element={<CAServicesItems />} />
                 <Route path="cartcaservice" element={<CartCaCsService />} />
                 <Route path="servicecalist" element={<ServiceCAList />} />
@@ -1177,6 +1180,12 @@ const App: React.FC = () => {
                   element={<CampaignDetails />}
                 />
                 <Route path="blog/:id/:type" element={<BlogDetails />} />
+                <Route path="viewjobdetails" element={<JobViewPage />} />
+                <Route path="viewjobdetails/:id" element={<JobViewPage />} />
+                <Route
+                  path="viewjobdetails/:id/:company"
+                  element={<JobViewPage />}
+                />
                 <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="writetous" element={<WriteToUs />} />
                 <Route path="writetous/:id" element={<WriteToUs />} />

@@ -1221,7 +1221,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
                     </button>
 
                     {/* KYC Verification */}
-                    <button
+                    {/* <button
                       onClick={() => {
                         const userId = localStorage.getItem("userId");
                         if (userId) {
@@ -1243,7 +1243,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
                       ].join(" ")}
                     >
                       KYC Verification
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>

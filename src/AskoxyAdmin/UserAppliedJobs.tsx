@@ -37,12 +37,13 @@ const AppliedJobsDashboard: React.FC = () => {
   useEffect(() => {
     fetchAppliedJobs();
   }, []);
-
+const accessToken = localStorage.getItem("accessToken")
   const fetchAppliedJobs = async () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`
+        `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },        
       );
       if (Array.isArray(response.data)) {
         setAppliedJobs(response.data);

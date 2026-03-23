@@ -160,14 +160,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           to: "/main/freelanceform",
-          label:"Freelancer Skills Profile",
+          label: "Freelancer Skills Profile",
           icon: <FaPlusCircle size={16} />,
         },
-       
+
         {
-          to:"/main/freelanceappliedlist",
-          label:"Freelancer Applied List",
-          icon:<FaRegCheckCircle size={16} />
+          to: "/main/freelanceappliedlist",
+          label: "Freelancer Applied List",
+          icon: <FaRegCheckCircle size={16} />,
         },
         {
           to: "/main/wallet",
@@ -262,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <AiFillFileText size={16} />,
         },
         {
-          to: "/main/jobDetails",
+          to: "/main/viewjobdetails/default/ALL",
           label: "All Jobs",
           icon: <FaBriefcase size={16} />,
         },

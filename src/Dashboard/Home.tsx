@@ -926,6 +926,7 @@ const Home: React.FC = () => {
         try {
           const res = await axios.get(
             `${BASE_URL}/product-service/getComboInfo/${item.itemId}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } },
           );
           const comboData = res.data;
 
