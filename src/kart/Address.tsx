@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { customerApi } from "../utils/axiosInstance";
 import Footer from "../components/Footer";
 import { FaBars, FaTimes, FaHome, FaBriefcase, FaMapMarkerAlt, FaTrash, FaPen } from 'react-icons/fa';
 import { Loader2 } from 'lucide-react';
@@ -64,9 +65,7 @@ const ManageAddressesPage: React.FC = () => {
   const fetchAddresses = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await customerApi.get(`${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`);
       setAddresses(response.data);
       setError('');
     } catch (error) {
@@ -141,14 +140,10 @@ const ManageAddressesPage: React.FC = () => {
       };
 
       if (editingId) {
-        await axios.put(`${BASE_URL}/user-service/updateAddress/${editingId}`, data, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await customerApi.put(`${BASE_URL}/user-service/updateAddress/${editingId}`, data);
         message.success("Address updated successfully!");
       } else {
-        await axios.post(`${BASE_URL}/user-service/addAddress`, data, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await customerApi.post(`${BASE_URL}/user-service/addAddress`, data);
         message.success("Address added successfully!", 5);
       }
 
@@ -174,9 +169,7 @@ const ManageAddressesPage: React.FC = () => {
 
     try {
       setIsLoading(true);
-      await axios.delete(`${BASE_URL}/user-service/deleteAddress/${addressId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await customerApi.delete(`${BASE_URL}/user-service/deleteAddress/${addressId}`);
       message.success("Address deleted successfully!");
       await fetchAddresses();
     } catch (error) {

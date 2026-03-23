@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -172,11 +173,8 @@ const CartPage: React.FC = () => {
 
   const fetchAddresses = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const response = await customerApi.get(
+        `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`
       );
       const fetchedAddresses = response.data;
       let defaultAddress = fetchedAddresses[0] || null;
@@ -236,14 +234,10 @@ const CartPage: React.FC = () => {
         requestBody.planb = "YES";
       }
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/reference-service/referenceoffer`,
         requestBody,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
           validateStatus: () => true,
         }
       );
@@ -373,17 +367,11 @@ const CartPage: React.FC = () => {
 
     if (prefUpdated) {
       try {
-        await axios.post(
+        await customerApi.post(
           `${BASE_URL}/cart-service/cart/updateContainerStatus`,
           {
             customerId,
             status: "interested",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
           }
         );
       } catch (error) {
@@ -508,13 +496,8 @@ const CartPage: React.FC = () => {
       console.log(
         `Fetching container preference for customer ID: ${customerId}`
       );
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/ContainerInterested/${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/ContainerInterested/${customerId}`
       );
 
       if (response && response.data) {
@@ -666,7 +649,7 @@ const CartPage: React.FC = () => {
           `Removing free container from cart: ID ${containerItem.itemId}, cartId ${containerItem.cartId}`
         );
 
-        await axios.delete(
+        await customerApi.delete(
           `${BASE_URL}/cart-service/cart/removeFreeContainer`,
           {
             data: {
@@ -674,10 +657,6 @@ const CartPage: React.FC = () => {
               customerId,
               itemId: containerItem.itemId,
               status: "FREE",
-            },
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
             },
           }
         );
@@ -700,13 +679,8 @@ const CartPage: React.FC = () => {
     try {
       console.log("Fetching cart data for customer ID:", customerId);
 
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
       );
 
       console.log("API Response:", response.data);
@@ -934,18 +908,13 @@ const CartPage: React.FC = () => {
       };
 
       if (editingAddressId) {
-        await axios.put(
+        await customerApi.put(
           `${BASE_URL}/user-service/updateAddress/${editingAddressId}`,
-          data,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          data
         );
         message.success("Address updated successfully.", 5);
       } else {
-        await axios.post(`${BASE_URL}/user-service/addAddress`, data, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await customerApi.post(`${BASE_URL}/user-service/addAddress`, data);
         message.success("Address added successfully.", 5);
         setAddressFormData({
           flatNo: "",
@@ -988,19 +957,13 @@ const CartPage: React.FC = () => {
 
       const newQuantity = currentQuantity + 1;
 
-      await axios.post(
+      await customerApi.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         {
           cartQuantity: newQuantity,
           customerId,
           itemId: item.itemId,
           status: isFreeItem ? "FREE" : undefined,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
         }
       );
 
@@ -1039,18 +1002,12 @@ const CartPage: React.FC = () => {
       if (currentQuantity > 1) {
         const newQuantity = currentQuantity - 1;
 
-        await axios.patch(
+        await customerApi.patch(
           `${BASE_URL}/cart-service/cart/minusCartItem`,
           {
             cartQuantity: newQuantity,
             customerId,
             itemId: item.itemId,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
           }
         );
 
@@ -1102,7 +1059,7 @@ const CartPage: React.FC = () => {
       );
 
       if (isFreeItem) {
-        await axios.delete(
+        await customerApi.delete(
           `${BASE_URL}/cart-service/cart/removeFreeContainer`,
           {
             data: {
@@ -1111,20 +1068,12 @@ const CartPage: React.FC = () => {
               itemId: itemIdToRemove,
               status: "FREE",
             },
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
           }
         );
       } else {
-        await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
+        await customerApi.delete(`${BASE_URL}/cart-service/cart/remove`, {
           data: {
             id: cartIdToRemove,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         });
       }
@@ -1262,17 +1211,11 @@ const CartPage: React.FC = () => {
         await removeContainerFromCart();
       }
       try {
-        await axios.post(
+        await customerApi.post(
           `${BASE_URL}/cart-service/cart/updateContainerStatus`,
           {
             customerId,
             status: "declined",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
           }
         );
         message.info("Container preference updated");
@@ -1308,17 +1251,11 @@ const CartPage: React.FC = () => {
 
     if (prefUpdated === true) {
       try {
-        await axios.post(
+        await customerApi.post(
           `${BASE_URL}/cart-service/cart/updateContainerStatus`,
           {
             customerId,
             status: "interested",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
           }
         );
       } catch (error) {
@@ -1415,21 +1352,18 @@ const CartPage: React.FC = () => {
             setCoordinatesReady(true); // Mark coordinates as ready
             // Optionally update backend with coordinates
             try {
-              await axios.put(
-                `${BASE_URL}/user-service/updateAddress/${selectedAddress.id}`,
-                {
-                  ...updatedAddress,
-                  latitude: coordinates.lat.toString(),
-                  longitude: coordinates.lng.toString(),
-                  userId: customerId,
-                },
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                }
-              );
-            } catch (error) {
-              console.error("Error updating address with coordinates:", error);
-            }
+        await customerApi.put(
+          `${BASE_URL}/user-service/updateAddress/${selectedAddress.id}`,
+          {
+            ...updatedAddress,
+            latitude: coordinates.lat.toString(),
+            longitude: coordinates.lng.toString(),
+            userId: customerId,
+          }
+        );
+      } catch (error) {
+        console.error("Error updating address with coordinates:", error);
+      }
           } else {
             console.warn(
               "Could not fetch valid coordinates for address:",
@@ -1621,17 +1555,11 @@ const CartPage: React.FC = () => {
     const res = await updateContainerPreference(selectedPlans, mobileNumbers);
     if (res) {
       try {
-        await axios.post(
+        await customerApi.post(
           `${BASE_URL}/cart-service/cart/updateContainerStatus`,
           {
             customerId,
             status: "interested",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
           }
         );
       } catch (error) {

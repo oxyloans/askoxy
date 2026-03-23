@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import { FaWhatsapp } from "react-icons/fa";
 import BASE_URL from "../Config";
 
@@ -132,14 +133,8 @@ const ReferralPage: React.FC = () => {
 
   const fetchUserDetails = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/user-service/user/${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await customerApi.get(
+        `${BASE_URL}/user-service/user/${customerId}`
       );
 
       if (response.data) {
@@ -164,14 +159,8 @@ const ReferralPage: React.FC = () => {
 
   const fetchRefereeDetails = async () => {
     try {
-      const response = await axios.get<RefereeDetail[]>(
-        `${BASE_URL}/reference-service/getreferencedetails/${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await customerApi.get<RefereeDetail[]>(
+        `${BASE_URL}/reference-service/getreferencedetails/${customerId}`
       );
 
       setRefereeDetails(response.data);
@@ -268,18 +257,12 @@ const ReferralPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/user-service/inviteaUser`,
         {
           referealId: customerId,
-          refereeMobileNumber: phoneNumber.replace(countryCode, ""), // Remove country code
+          refereeMobileNumber: phoneNumber.replace(countryCode, ""),
           countryCode: countryCode,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
         }
       );
 

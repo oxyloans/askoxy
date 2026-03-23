@@ -156,7 +156,11 @@ const WhatsappLogin: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
   const pendingGoogleAuth = sessionStorage.getItem("pendingGoogleAuth");
-     const deviceId = crypto.randomUUID();
+  const deviceId = useRef<string>(
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  ).current;
 
   // OAuth URL for Gmail authentication
   const state = encodeURIComponent(JSON.stringify({ primaryType }));

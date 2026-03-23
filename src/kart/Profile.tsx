@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import {
   FaBars,
@@ -190,11 +191,10 @@ const ProfilePage = () => {
   const fetchProfileData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/customerProfileDetails`,
         {
           params: { customerId },
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
       const data = response.data;
@@ -233,17 +233,12 @@ const ProfilePage = () => {
         return;
       }
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
         {
           chatId: formData.whatsappNumber.replace(countryCode, ""),
           countryCode: countryCode,
           id: customerId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -274,7 +269,7 @@ const ProfilePage = () => {
   const handleWhatsappVerification = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
         {
           chatId: formData.whatsappNumber.replace(countryCode, ""),
@@ -283,11 +278,6 @@ const ProfilePage = () => {
           whatsappOtp: whatsappVerificationCode,
           whatsappOtpSession: whatsappOtpSession,
           salt: salt,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -310,11 +300,8 @@ const ProfilePage = () => {
   const fetchAddresses = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(
-        `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const response = await customerApi.get(
+        `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`
       );
       setAddresses(response.data);
     } catch (error) {
@@ -400,12 +387,7 @@ const ProfilePage = () => {
         mobileNumber: formData.mobileNumber.replace(countryCode, ""),
       };
 
-      await axios.patch(`${BASE_URL}/user-service/profileUpdate`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await customerApi.patch(`${BASE_URL}/user-service/profileUpdate`, payload);
 
       // Track profile update event with TypeScript-safe implementation
       if (typeof window !== "undefined" && window.gtag) {
@@ -477,12 +459,9 @@ const ProfilePage = () => {
       };
 
       if (editingAddressId) {
-        await axios.put(
+        await customerApi.put(
           `${BASE_URL}/user-service/updateAddress/${editingAddressId}`,
-          data,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          data
         );
         // Track address update event
         if (typeof window !== "undefined" && window.gtag) {
@@ -494,9 +473,7 @@ const ProfilePage = () => {
 
         setSuccessMessage("Address updated successfully!");
       } else {
-        await axios.post(`${BASE_URL}/user-service/addAddress`, data, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await customerApi.post(`${BASE_URL}/user-service/addAddress`, data);
 
         // Track new address addition event
         if (typeof window !== "undefined" && window.gtag) {
@@ -540,11 +517,8 @@ const ProfilePage = () => {
   const handleDeleteAddress = async (addressId: string) => {
     try {
       setIsLoading(true);
-      await axios.delete(
-        `${BASE_URL}/user-service/deleteAddress/${addressId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      await customerApi.delete(
+        `${BASE_URL}/user-service/deleteAddress/${addressId}`
       );
       setSuccessMessage("Address deleted successfully!");
       await fetchAddresses();

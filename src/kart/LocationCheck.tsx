@@ -1,4 +1,5 @@
 import axios from "axios";
+import { customerApi } from "../utils/axiosInstance";
 
 // Define types for coordinates
 interface Coordinates {

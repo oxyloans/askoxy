@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DOMPurify from "dompurify";
@@ -179,7 +180,7 @@ const ItemDisplayPage = () => {
 
   const fetchItemImages = async (id: string) => {
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/product-service/ImagesViewBasedOnItemId?itemId=${id}`,
       );
       console.log("Item images response:", response.data);
@@ -205,7 +206,7 @@ const ItemDisplayPage = () => {
 
   const fetchItemDetails = async (id: string) => {
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
       );
       const allItems = response.data.flatMap((group: any) =>
@@ -244,7 +245,7 @@ const ItemDisplayPage = () => {
 
   const fetchComboAddOns = async () => {
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/product-service/combo-offers`,
       );
       const comboItems = response.data?.content || [];
@@ -305,9 +306,8 @@ const ItemDisplayPage = () => {
     }
 
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       const customerCart: CartItem[] =
@@ -463,7 +463,7 @@ const ItemDisplayPage = () => {
     if (!itemDetails) return;
 
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
       );
 
@@ -539,17 +539,16 @@ const ItemDisplayPage = () => {
         requestBody.status = "COMBO";
       }
 
-      await axios.post(
+      await customerApi.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         requestBody,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       await fetchCartData(item.itemId);
 
       if (!isComboItem) {
         try {
-          const res = await axios.get(
+          const res = await customerApi.get(
             `${BASE_URL}/product-service/getComboInfo/${item.itemId}`,
           );
           const comboItems = res.data?.items || [];
@@ -613,10 +612,9 @@ const ItemDisplayPage = () => {
         return;
       }
 
-      await axios.patch(
+      await customerApi.patch(
         `${BASE_URL}/cart-service/cart/minusCartItem`,
         { customerId, itemId },
-        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       message.success("Item removed from cart successfully.");
@@ -649,26 +647,21 @@ const ItemDisplayPage = () => {
 
     try {
       if (!increment && cartItems[item.itemId] <= 1) {
-        await axios.patch(
+        await customerApi.patch(
           `${BASE_URL}/cart-service/cart/minusCartItem`,
           { customerId, itemId: item.itemId },
-          { headers: { Authorization: `Bearer ${token}` } },
         );
         message.success("Item removed from cart successfully.");
       } else {
-        const requestConfig = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
         const requestData = { customerId, itemId: item.itemId };
 
         if (increment) {
-          await axios.post(endpoint, requestData, requestConfig);
+          await customerApi.post(endpoint, requestData);
         } else {
           try {
-            const patchRes = await axios.patch(
+            const patchRes = await customerApi.patch(
               endpoint,
               requestData,
-              requestConfig,
             );
             console.log("PATCH success:", patchRes.status, patchRes.data);
           } catch (error) {
@@ -995,10 +988,10 @@ const ItemDisplayPage = () => {
   const fetchGoldDetails = async (id: string) => {
     try {
       const [imagesResponse, urlsResponse] = await Promise.all([
-        axios.get(
+        customerApi.get(
           `${BASE_URL}/product-service/imagePriceBasedOnItemId?itemId=${id}`,
         ),
-        axios.get(
+        customerApi.get(
           `${BASE_URL}/product-service/goldUrsBasedOnItemId?itemId=${id}`,
         ),
       ]);

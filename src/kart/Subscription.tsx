@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import Footer from "../components/Footer";
 import {
   Menu,
@@ -676,12 +677,9 @@ const Subscription: React.FC = () => {
 
     setIsHistoryLoading(true);
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/getallsubscriptionsforacustomer?customerId=${userId}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        {}
       );
 
       if (Array.isArray(response.data)) {
@@ -719,15 +717,12 @@ const Subscription: React.FC = () => {
       });
     }
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/userSubscriptionAmount`,
         {
           planId,
           customerId: localStorage.getItem("userId"),
           amount,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -912,16 +907,12 @@ const Subscription: React.FC = () => {
               data.paymentStatus == "SUCCESS" ||
               data.paymentStatus == "FAILURE"
             ) {
-              axios({
+              customerApi({
                 method: "POST",
                 url: `${BASE_URL}/order-service/userSubscriptionAmount`,
                 data: {
                   paymentId: localStorage.getItem("merchantTransactionId"),
                   paymentStatus: data.paymentStatus,
-                },
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
                 },
               })
                 .then((secondResponse) => {
@@ -983,7 +974,7 @@ const Subscription: React.FC = () => {
 
   const getPlans = async () => {
     try {
-      const response = await axios.get<SubscriptionPlan[]>(
+      const response = await customerApi.get<SubscriptionPlan[]>(
         `${BASE_URL}/order-service/getAllPlans`
       );
       // Sort with premium plan first, then by amount
@@ -1010,14 +1001,11 @@ const Subscription: React.FC = () => {
 
   const userPlanDetails = async () => {
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/getSubscriptionsDetailsForaCustomer`,
         {
           customerId: localStorage.getItem("userId"),
           active: true,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
       setPlanDetails(response.data);

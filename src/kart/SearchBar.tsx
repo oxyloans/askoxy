@@ -1,5 +1,6 @@
 // SearchBar.tsx
 import React, { useEffect, useState, useRef } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import { FaSearch, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -199,11 +200,10 @@ const SearchBar = () => {
     setIsSearching(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await axios.get<ApiResponse>(
+      const response = await customerApi.get<ApiResponse>(
         `${BASE_URL}/product-service/dynamicSearch`,
         {
           params: { q: query },
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
 

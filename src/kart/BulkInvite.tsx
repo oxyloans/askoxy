@@ -1,4 +1,5 @@
 import React, { useState, ChangeEvent, FormEvent, FC } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { Modal } from "antd";
@@ -117,10 +118,9 @@ They’ve also introduced new AI-driven features that make the platform even mor
         formData.append(key, value);
       });
 
-      const response = await axios.post(API_URL, formData, {
+      const response = await customerApi.post(API_URL, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
 

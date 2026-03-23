@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -880,8 +881,8 @@ const Ricebags: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(
-          BASE_URL + "/product-service/showGroupItemsForCustomrs",
+        const response = await customerApi.get(
+          `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
         );
         const data = response.data;
 
@@ -1048,7 +1049,7 @@ if (totalMatchingItems > 0) {
     }
 
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/cart-service/addItemsToCart`,
         {
           customerId: customerId,

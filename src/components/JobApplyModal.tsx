@@ -25,7 +25,7 @@ const JobApplicationModal: React.FC<Props> = ({
   const [fileList, setFileList] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
-
+  const formData = new FormData();
   // Upload resume as soon as a file is selected
   const handleFileChange = async (info: any) => {
     const file = info.file;
@@ -33,7 +33,6 @@ const JobApplicationModal: React.FC<Props> = ({
 
     setUploading(true);
 
-    const formData = new FormData();
     formData.append("file", file);
     formData.append("userId", userId);
     formData.append("fileType", "resume");
@@ -43,7 +42,7 @@ const JobApplicationModal: React.FC<Props> = ({
       const res = await axios.post(
         `${BASE_URL}/marketing-service/campgin/upload`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        { headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
       const fileUrl = res.data?.documentPath;
       setResumeUrl(fileUrl);

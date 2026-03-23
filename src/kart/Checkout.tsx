@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button, Divider, message, Modal, notification } from "antd";
@@ -180,10 +181,9 @@ const CheckoutPage: React.FC = () => {
     };
 
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/user-service/bmvCashBack`,
-        requestBody,
-        { headers: { Authorization: `Bearer ${token}` } },
+        requestBody
       );
       // Show how many coins were earned, if returned by backend
       if (response.data?.bmvCoinsEarned) {
@@ -463,11 +463,8 @@ const CheckoutPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const response = await axios.get(
-        `${BASE_URL}/order-service/fetchTimeSlotlist`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+      const response = await customerApi.get(
+        `${BASE_URL}/order-service/fetchTimeSlotlist`
       );
 
       if (response.data && Array.isArray(response.data)) {
@@ -539,11 +536,8 @@ const CheckoutPage: React.FC = () => {
     try {
       setCouponsLoading(true);
       console.log("Fetching coupons from API...");
-      const response = await axios.get(
-        `${BASE_URL}/order-service/getAllCoupons`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+      const response = await customerApi.get(
+        `${BASE_URL}/order-service/getAllCoupons`
       );
 
       if (response.data && Array.isArray(response.data)) {
@@ -623,12 +617,9 @@ const CheckoutPage: React.FC = () => {
         gstAmount: subGst,
       };
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/placeOrder`,
-        requestBody,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        requestBody
       );
 
       if (response.data?.status) {
@@ -646,9 +637,8 @@ const CheckoutPage: React.FC = () => {
 
   const fetchCartData = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } },
+      const response = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
       );
 
       if (response.data.customerCartResponseList) {
@@ -759,9 +749,8 @@ const CheckoutPage: React.FC = () => {
     try {
       setPricesLoading(true);
 
-      const cartResponse = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        { headers: { Authorization: `Bearer ${token}` } },
+      const cartResponse = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
       );
 
       if (cartResponse.data.customerCartResponseList) {
@@ -827,10 +816,9 @@ const CheckoutPage: React.FC = () => {
         setGrandTotalAmount(totalWithFees);
 
         try {
-          const walletResponse = await axios.post(
+          const walletResponse = await customerApi.post(
             `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
-            { customerId },
-            { headers: { Authorization: `Bearer ${token}` } },
+            { customerId }
           );
 
           const usableAmount =
@@ -893,12 +881,9 @@ const CheckoutPage: React.FC = () => {
         projectType: "ASKOXY",
       };
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        formData
       );
       localStorage.setItem("askOxyOfers", response.data.askData);
 
@@ -932,10 +917,8 @@ const CheckoutPage: React.FC = () => {
     };
     setCoupenLoading(true);
 
-    axios
-      .post(`${BASE_URL}/order-service/applycoupontocustomer`, data, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    customerApi
+      .post(`${BASE_URL}/order-service/applycoupontocustomer`, data)
       .then((response) => {
         const { discount, grandTotal } = response.data;
         message.info(response.data.message);
@@ -961,12 +944,9 @@ const CheckoutPage: React.FC = () => {
     };
 
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/applycoupontocustomer`,
-        data,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        data
       );
 
       const { discount, grandTotal } = response.data;
@@ -994,10 +974,9 @@ const CheckoutPage: React.FC = () => {
 
   const getWalletAmount = async () => {
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/applyWalletAmountToCustomer`,
-        { customerId },
-        { headers: { Authorization: `Bearer ${token}` } },
+        { customerId }
       );
 
       const usableAmount = response.data.usableWalletAmountForOrder || 0;
@@ -1198,7 +1177,7 @@ const CheckoutPage: React.FC = () => {
         "grandTotalAmount:",
         grandTotalAmount,
       );
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/orderPlacedPaymet`,
         {
           address: selectedAddress?.address,
@@ -1222,8 +1201,7 @@ const CheckoutPage: React.FC = () => {
           orderFrom: "WEB",
           paymentType: selectedPayment === "COD" ? 0 : 1,
           handlingFee: handlingFee,
-        },
-        { headers: { Authorization: `Bearer ${token}` } },
+        }
       );
 
       if (response.status === 200 && response.data) {
@@ -1488,17 +1466,10 @@ const CheckoutPage: React.FC = () => {
               }
 
               if (parsedData.paymentStatus === "SUCCESS") {
-                axios
-                  .get(
+                customerApi.get(
                     `${BASE_URL}/order-service/api/download/invoice?paymentId=${localStorage.getItem(
                       "merchantTransactionId",
-                    )}&userId=${customerId}`,
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                    },
+                    )}&userId=${customerId}`
                   )
                   .then((response) => {
                     console.log(response.data);
@@ -1508,19 +1479,13 @@ const CheckoutPage: React.FC = () => {
                   });
               }
 
-              axios
+              customerApi
                 .post(
                   `${BASE_URL}/order-service/orderPlacedPaymet`,
                   {
                     paymentId: localStorage.getItem("merchantTransactionId"),
                     paymentStatus: parsedData.paymentStatus,
-                  },
-                  {
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                    },
-                  },
+                  }
                 )
                 .then((secondResponse) => {
                   localStorage.removeItem("paymentId");

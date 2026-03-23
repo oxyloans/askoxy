@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { customerApi } from "../utils/axiosInstance";
 import { useNavigate } from 'react-router-dom';
 import Footer from "../components/Footer";
 import axios from 'axios';
@@ -50,7 +51,7 @@ const MyWalletPage: React.FC = () => {
   const getTransactions = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post(BASE_URL + '/order-service/customerWalletData', {
+      const response = await customerApi.post(`${BASE_URL}/order-service/customerWalletData`, {
         customerId: localStorage.getItem("userId")
       });
       setTransactions(response.data.walletTransactions || []);

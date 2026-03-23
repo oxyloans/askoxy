@@ -1,4 +1,4 @@
-// src/BharathAIStore/pages/Agentcreation.tsx
+﻿// src/BharathAIStore/pages/Agentcreation.tsx
 import React, {
   useCallback,
   useEffect,
@@ -49,7 +49,6 @@ const GRADIENTS = [
   "linear-gradient(135deg, #06B6D4 0%, #FF1CF7 55%, #6366F1 120%)", // teal → green → indigo
 ];
 
-// Optional: vivid border glow for components
 const BRIGHT_BORDER_GRAD =
   "linear-gradient(180deg, #FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, #7C3AED, #FF1CF7, #00E5FF) border-box";
 
@@ -357,7 +356,7 @@ const mergedSentence = (
   desc: string,
   role?: string,
   purpose?: string,
-  goal?: string
+  goal?: string,
 ) => {
   const base = cleanForTransport(desc);
   const tail = [
@@ -435,7 +434,7 @@ const Agentcreation: React.FC = () => {
   const [businessCardPreview, setBusinessCardPreview] = useState<string>("");
   const [isBusinessCardUsed, setIsBusinessCardUsed] = useState(false);
   const [cardDataId, setCardDataId] = useState<string | null>(() =>
-    localStorage.getItem("businessCardId")
+    localStorage.getItem("businessCardId"),
   );
 
   // Resolved values (if "Other", use custom text)
@@ -443,8 +442,9 @@ const Agentcreation: React.FC = () => {
   const goalResolved = goalSelect === "Other" ? goalOther.trim() : goalSelect;
   const purposeResolved =
     purposeSelect === "Other" ? purposeOther.trim() : purposeSelect;
+  const [publishedAgentType, setPublishedAgentType] = useState<string>("");
+  const [autoFetchingProfile, setAutoFetchingProfile] = useState(false);
 
-  // 🔹 When Role changes → load GOALS for that Role (dynamic)
   useEffect(() => {
     const effectiveRole = (
       roleSelect === "Other" ? roleOther : roleSelect
@@ -480,7 +480,7 @@ const Agentcreation: React.FC = () => {
               Accept: "application/json",
               ...authHeaderObj,
             },
-          }
+          },
         );
 
         if (cancelled) return;
@@ -521,7 +521,7 @@ const Agentcreation: React.FC = () => {
         }
 
         const hasOther = mapped.some(
-          (opt) => opt.value.trim().toLowerCase() === "other"
+          (opt) => opt.value.trim().toLowerCase() === "other",
         );
         const optionsWithOther = hasOther
           ? mapped
@@ -535,7 +535,7 @@ const Agentcreation: React.FC = () => {
         if (!cancelled) {
           console.error(e);
           message.error(
-            "Unable to load goals for this role. Please try again."
+            "Unable to load goals for this role. Please try again.",
           );
           setGoalOptions([]);
         }
@@ -551,7 +551,82 @@ const Agentcreation: React.FC = () => {
     };
   }, [roleSelect, roleOther]);
 
-  // 🔹 When Role + Goal selected → load PURPOSE list (dynamic)
+  const getUploadModalContent = (agentType: string) => {
+    const type = (agentType || "").toLowerCase();
+
+    if (/job|career|hire|recruit|fresher|placement/.test(type)) {
+      return {
+        title: "Upload Your Resume",
+        description:
+          "Please upload your resume or CV so your agent can represent you better during job applications.",
+        placeholder: "PDF, DOC (Resume / CV)",
+      };
+    }
+    if (/learn|study|education|course|student|tutor|training/.test(type)) {
+      return {
+        title: "Upload Your Study Material",
+        description:
+          "Upload your notes, textbooks, or reference materials so your agent can answer questions from your own content.",
+        placeholder: "PDF, DOC (Notes / Books / Study Material)",
+      };
+    }
+    if (/service|support|helpdesk|customer/.test(type)) {
+      return {
+        title: "Upload Your Services Data",
+        description:
+          "Upload your service catalogue, FAQs, or brochures so your agent can accurately answer service-related queries.",
+        placeholder: "PDF, DOC (Service Catalogue / FAQs)",
+      };
+    }
+    if (/product|sales|ecomm|store|shop|retail/.test(type)) {
+      return {
+        title: "Upload Your Product Data",
+        description:
+          "Upload your product catalogue, pricing sheet, or specifications so your agent can assist buyers effectively.",
+        placeholder: "PDF, DOC (Product Catalogue / Price List)",
+      };
+    }
+    if (/business|startup|founder|entrepreneur|venture/.test(type)) {
+      return {
+        title: "Upload Your Business Profile",
+        description:
+          "Upload your business deck, company profile, or pitch document so your agent can represent your business accurately.",
+        placeholder: "PDF, DOC (Business Profile / Pitch Deck)",
+      };
+    }
+    if (/legal|law|compliance|contract/.test(type)) {
+      return {
+        title: "Upload Your Legal Documents",
+        description:
+          "Upload your legal references, templates, or compliance documents to enhance your agent's responses.",
+        placeholder: "PDF, DOC (Legal Documents / Templates)",
+      };
+    }
+    if (/health|medical|doctor|clinic|pharma/.test(type)) {
+      return {
+        title: "Upload Your Medical Data",
+        description:
+          "Upload relevant medical references, reports, or guidelines to help your agent provide accurate health-related guidance.",
+        placeholder: "PDF, DOC (Medical References / Reports)",
+      };
+    }
+    if (/card|business.?card/.test(type)) {
+      return {
+        title: "Upload Supporting Documents",
+        description:
+          "Upload any supporting documents such as your portfolio, brochure, or company profile to strengthen your agent.",
+        placeholder: "PDF, DOC, JPG (Portfolio / Brochure)",
+      };
+    }
+    // Default fallback
+    return {
+      title: "Upload Supporting Files",
+      description:
+        "Upload relevant documents so your agent can provide more accurate and personalized responses.",
+      placeholder: "PDF, DOC, JPG (Any relevant document)",
+    };
+  };
+
   useEffect(() => {
     const effectiveRole = (
       roleSelect === "Other" ? roleOther : roleSelect
@@ -566,6 +641,9 @@ const Agentcreation: React.FC = () => {
       setPurposeLoading(false);
       return;
     }
+
+    // Skip fetching purposes if purpose is already filled (e.g. CardBased flow)
+    if (purposeSelect.trim() || purposeOther.trim()) return;
 
     let cancelled = false;
 
@@ -585,7 +663,7 @@ const Agentcreation: React.FC = () => {
               Accept: "application/json",
               ...authHeaderObj,
             },
-          }
+          },
         );
 
         if (cancelled) return;
@@ -626,7 +704,7 @@ const Agentcreation: React.FC = () => {
         }
 
         const hasOther = mapped.some(
-          (opt) => opt.value.trim().toLowerCase() === "other"
+          (opt) => opt.value.trim().toLowerCase() === "other",
         );
         const optionsWithOther = hasOther
           ? mapped
@@ -640,7 +718,7 @@ const Agentcreation: React.FC = () => {
         if (!cancelled) {
           console.error(e);
           message.error(
-            "Unable to load purposes for this Role & Goal. Please try again."
+            "Unable to load purposes for this Role & Goal. Please try again.",
           );
           setPurposeOptions([]);
         }
@@ -715,7 +793,7 @@ const Agentcreation: React.FC = () => {
 
   const handleFieldChange = (
     fieldName: keyof typeof cardDataForm,
-    value: string
+    value: string,
   ) => {
     setCardDataForm((prev) => ({
       ...prev,
@@ -923,7 +1001,7 @@ const Agentcreation: React.FC = () => {
 
   // Responsive (page width locked to mobile feel)
   const [isMobile, setIsMobile] = useState<boolean>(
-    typeof window !== "undefined" ? window.innerWidth < 768 : true
+    typeof window !== "undefined" ? window.innerWidth < 768 : true,
   );
 
   // Who added this blog? Prefer profile First + Last, then stored profileName, then "User"
@@ -995,14 +1073,14 @@ const Agentcreation: React.FC = () => {
             "Content-Type": "application/json",
             ...(auth as any),
           },
-        }
+        },
       );
 
       message.success(
-        "Your blog was added successfully. Thank you for sharing your thoughts!"
+        "Your blog was added successfully. Thank you for sharing your thoughts!",
       );
     },
-    [campaignTypeAddByName] // 👈 add dependency
+    [campaignTypeAddByName], // 👈 add dependency
   );
 
   // === BLOG IMAGE: generate image for blog preview ===
@@ -1028,7 +1106,7 @@ const Agentcreation: React.FC = () => {
               description: params.description || "",
               userId: params.userId,
             }),
-          }
+          },
         );
 
         const txt = await res.text().catch(() => "");
@@ -1046,7 +1124,7 @@ const Agentcreation: React.FC = () => {
         return null;
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -1104,7 +1182,7 @@ const Agentcreation: React.FC = () => {
           {
             params: { customerId },
             headers: { ...getAuthHeaders() },
-          }
+          },
         );
 
         const data = response?.data || {};
@@ -1124,7 +1202,7 @@ const Agentcreation: React.FC = () => {
         setAgentUserName(
           `${profileData.userFirstName || ""} ${
             profileData.userLastName || ""
-          }`.trim()
+          }`.trim(),
         );
         setEmail(profileData.customerEmail);
 
@@ -1201,7 +1279,7 @@ const Agentcreation: React.FC = () => {
           whatsappOtpSession,
           salt,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data) {
@@ -1253,7 +1331,7 @@ const Agentcreation: React.FC = () => {
           headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         });
         message.success(
-          isMandatoryGate ? "Profile saved!" : "Profile updated!"
+          isMandatoryGate ? "Profile saved!" : "Profile updated!",
         );
         setInitialFirstName(payload.userFirstName);
         setInitialLastName(payload.userLastName || "");
@@ -1266,7 +1344,7 @@ const Agentcreation: React.FC = () => {
               "profileName",
               `${payload.userFirstName || ""} ${
                 payload.userLastName || ""
-              }`.trim()
+              }`.trim(),
             );
           }
         } catch {}
@@ -1279,7 +1357,7 @@ const Agentcreation: React.FC = () => {
       message.error(
         e?.response?.data?.message ||
           e?.message ||
-          "Error updating profile. Please try again."
+          "Error updating profile. Please try again.",
       );
     } finally {
       setProfileLoading(false);
@@ -1313,13 +1391,13 @@ const Agentcreation: React.FC = () => {
     try {
       const res = await fetch(
         `${BASE_URL}/ai-service/agent/uploadBusinessCard?fileType=kyc&userId=${encodeURIComponent(
-          userId
+          userId,
         )}`,
         {
           method: "POST",
           headers: { ...auth },
           body: formData,
-        }
+        },
       );
 
       const data = await res.json();
@@ -1373,18 +1451,15 @@ const Agentcreation: React.FC = () => {
       }
 
       // ================================
-      // ✅ Set basic fields
+      // ✅ Set basic fields (name only; description/instructions left for user)
       // ================================
       setAgentName(aiData.agentName || "");
-      setDescription(aiData.description || "");
-      setInstructions(aiData.instructions || "");
-      setDescTouched(false);
 
       // ================================
       // ✅ Set role
       // ================================
       const roleMatch = ROLE_OPTS.find(
-        (opt) => opt.value.toLowerCase() === (aiData.role || "").toLowerCase()
+        (opt) => opt.value.toLowerCase() === (aiData.role || "").toLowerCase(),
       );
 
       if (roleMatch) {
@@ -1409,7 +1484,7 @@ const Agentcreation: React.FC = () => {
 
         if (goalOptions.length > 0 && pendingGoal) {
           const match = goalOptions.find(
-            (opt) => opt.value.toLowerCase() === pendingGoal.toLowerCase()
+            (opt) => opt.value.toLowerCase() === pendingGoal.toLowerCase(),
           );
 
           if (match) {
@@ -1435,7 +1510,7 @@ const Agentcreation: React.FC = () => {
       const setPurposeWhenReady = setInterval(() => {
         if (purposeOptions.length > 0 && pendingPurpose) {
           const match = purposeOptions.find(
-            (opt) => opt.value.toLowerCase() === pendingPurpose.toLowerCase()
+            (opt) => opt.value.toLowerCase() === pendingPurpose.toLowerCase(),
           );
 
           if (match) {
@@ -1566,14 +1641,14 @@ const Agentcreation: React.FC = () => {
             ...auth,
           },
           body: JSON.stringify(cardDataForm),
-        }
+        },
       );
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(
-          data.message || `Update failed with status ${res.status}`
+          data.message || `Update failed with status ${res.status}`,
         );
       }
 
@@ -1594,15 +1669,14 @@ const Agentcreation: React.FC = () => {
       notification.success({
         message: "Card Data Updated",
         description:
-          "Success! Your business card details have been updated successfully."
-
+          "Success! Your business card details have been updated successfully.",
       });
 
-      // Populate form fields with the saved/edited data
+      // Populate creator name from card; do NOT auto-fill description
       setAgentUserName(data.fullName || cardDataForm.fullName || "");
       setIsEditingCardData(false);
       setCardDataModalOpen(false);
-      suggestAgentName()
+      // User mode detection is handled by the CardBased useEffect once role/goal/purpose are set
 
       // Reset file & preview after successful update
       // setBusinessCardFile(null);
@@ -1637,7 +1711,7 @@ const Agentcreation: React.FC = () => {
     files: File[],
     addFileType: string,
     userId: string,
-    auth: HeadersInit
+    auth: HeadersInit,
   ) {
     for (const file of files) {
       // STEP 1: Upload to META upload-service
@@ -1665,11 +1739,11 @@ const Agentcreation: React.FC = () => {
       agentForm.append("file", file); // The SAME file goes again
 
       const finalUrl = `${BASE_URL}/ai-service/agent/${encodeURIComponent(
-        assistanceId
+        assistanceId,
       )}/addAgentFiles?addFileType=${encodeURIComponent(
-        addFileType
+        addFileType,
       )}&userId=${encodeURIComponent(userId)}&url=${encodeURIComponent(
-        documentPath
+        documentPath,
       )}`;
 
       const agentRes = await fetch(finalUrl, {
@@ -1683,7 +1757,7 @@ const Agentcreation: React.FC = () => {
         throw new Error(
           `addAgentFiles failed → ${agentRes.status} ${
             txt || agentRes.statusText
-          }`
+          }`,
         );
       }
     }
@@ -1702,13 +1776,13 @@ const Agentcreation: React.FC = () => {
     assistanceId: string,
     userId: string,
     auth: HeadersInit,
-    roleForUpload?: string
+    roleForUpload?: string,
   ) {
     return new Promise<boolean>((resolve) => {
       uploadResolveRef.current = resolve;
       localStorage.setItem(
         "awaitingUpload",
-        JSON.stringify({ assistanceId, userId })
+        JSON.stringify({ assistanceId, userId }),
       );
       setUploadFiles([]);
       setUploadRole(roleForUpload || ""); // ← seed UI with non-editable role
@@ -1729,7 +1803,7 @@ const Agentcreation: React.FC = () => {
         setUploadFiles([]);
         // we may not have the role offline; still open the modal
         setUploadRole(
-          (pendingUploadRef.current?.roleForUpload as string) || ""
+          (pendingUploadRef.current?.roleForUpload as string) || "",
         );
         pendingUploadRef.current = { assistanceId, userId, auth };
         setUploadOpen(true);
@@ -1764,7 +1838,7 @@ const Agentcreation: React.FC = () => {
         uploadFiles,
         finalRole, // ← pass string
         ctx.userId,
-        ctx.auth
+        ctx.auth,
       );
 
       localStorage.removeItem("awaitingUpload");
@@ -1773,7 +1847,7 @@ const Agentcreation: React.FC = () => {
       uploadResolveRef.current = null;
 
       message.success(
-        "Congratulations! File(s) uploaded. Your agent is queued for approval."
+        "Congratulations! File(s) uploaded. Your agent is queued for approval.",
       );
 
       // clear form (optional, as you had before)
@@ -1831,6 +1905,57 @@ const Agentcreation: React.FC = () => {
     } catch {}
   }, []);
 
+  // ===== User Mode Modal =====
+  const [userModeModalOpen, setUserModeModalOpen] = useState(false);
+  const [userModeText, setUserModeText] = useState("");
+  const [userModeLoading, setUserModeLoading] = useState(false);
+
+  const fetchUserModeAndShow = useCallback(
+    async (
+      overrideRole?: string,
+      overrideGoal?: string,
+      overridePurpose?: string,
+    ) => {
+      const auth = getAuthHeader() as Record<string, string>;
+      if (!auth || !auth.Authorization) return;
+      const role = overrideRole ?? roleResolved;
+      const goal = overrideGoal ?? goalResolved;
+      const purpose = overridePurpose ?? purposeResolved;
+      if (!role || !goal || !purpose) return;
+
+      setUserModeLoading(true);
+      try {
+        const res = await axios.post(
+          `${BASE_URL}/ai-service/agent/getUserModeDetails`,
+          {},
+          {
+            params: { role, goal, purpose },
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              ...auth,
+            },
+          },
+        );
+        const raw = res.data;
+        const text =
+          typeof raw === "string"
+            ? raw
+            : raw?.message ||
+              raw?.userMode ||
+              raw?.result ||
+              JSON.stringify(raw);
+        setUserModeText(text || "");
+        setUserModeModalOpen(true);
+      } catch {
+        setUserModeModalOpen(true);
+      } finally {
+        setUserModeLoading(false);
+      }
+    },
+    [roleResolved, goalResolved, purposeResolved],
+  );
+
   const [startersEdit, setStartersEdit] = useState(false);
   const [cs1Draft, setCs1Draft] = useState("");
   const [cs2Draft, setCs2Draft] = useState("");
@@ -1873,9 +1998,9 @@ const Agentcreation: React.FC = () => {
         description,
         roleResolved || "",
         purposeResolved || "",
-        goalResolved || ""
+        goalResolved || "",
       ),
-    [description, roleResolved, purposeResolved, goalResolved]
+    [description, roleResolved, purposeResolved, goalResolved],
   );
 
   const sanitizeName = (s: string) => {
@@ -1901,7 +2026,7 @@ const Agentcreation: React.FC = () => {
     if (descCount === MAX_DESC && !descMaxAlertedRef.current) {
       descMaxAlertedRef.current = true;
       message.error(
-        "Description reached 350 characters. Please shorten or refine."
+        "Description reached 350 characters. Please shorten or refine.",
       );
       setTimeout(() => (descMaxAlertedRef.current = false), 800);
     }
@@ -1911,7 +2036,7 @@ const Agentcreation: React.FC = () => {
     // 🔒 1) Block if Creator Name is empty
     if (!agentUserName?.trim()) {
       message.error(
-        "Please enter your Creator Name and save it in your profile before generating an Agent Name."
+        "Please enter your Creator Name and save it in your profile before generating an Agent Name.",
       );
 
       // Open profile modal & mark as mandatory
@@ -1977,7 +2102,7 @@ const Agentcreation: React.FC = () => {
 
     const okOrRetry5xx = async (
       res: Response | undefined,
-      again: () => Promise<Response>
+      again: () => Promise<Response>,
     ) => {
       if (!res) return undefined;
       if (res.ok) return res;
@@ -2019,7 +2144,7 @@ const Agentcreation: React.FC = () => {
           headers: { ...auth },
           mode: "cors",
           signal: ctrl.signal,
-        })
+        }),
       );
 
       // ✅ Fallback: POST x-www-form-urlencoded with name
@@ -2044,7 +2169,7 @@ const Agentcreation: React.FC = () => {
 
       if (!res) {
         message.warning(
-          "Name suggestion failed: Network/CORS. Ensure this route allows Authorization and required methods."
+          "Name suggestion failed: Network/CORS. Ensure this route allows Authorization and required methods.",
         );
         return;
       }
@@ -2055,7 +2180,7 @@ const Agentcreation: React.FC = () => {
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
         message.warning(
-          `Name suggestion failed: ${res.status} ${txt || ""}`.trim()
+          `Name suggestion failed: ${res.status} ${txt || ""}`.trim(),
         );
         return;
       }
@@ -2122,7 +2247,7 @@ const Agentcreation: React.FC = () => {
       message.error(
         e?.name === "AbortError"
           ? "Name suggestion timed out. Try again."
-          : e?.message || "Name suggestion failed."
+          : e?.message || "Name suggestion failed.",
       );
     } finally {
       clearTimeout(timeoutId);
@@ -2155,13 +2280,31 @@ const Agentcreation: React.FC = () => {
     nameSuggestInFlightRef.current = true;
     (async () => {
       try {
-        await suggestAgentName();
+        await fetchUserModeAndShow();
       } finally {
         nameSuggestInFlightRef.current = false;
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roleDeb, goalDeb, purposeDeb, isBusinessCardUsed, creationMode]); // use ONLY debounced deps
+  }, [
+    roleDeb,
+    goalDeb,
+    purposeDeb,
+    agentUserName,
+    isBusinessCardUsed,
+    creationMode,
+  ]); // use ONLY debounced deps
+
+  // CardBased: trigger user mode detection once all 3 fields are filled
+  const cardModeUserModeFiredRef = useRef(false);
+  useEffect(() => {
+    if (creationMode !== "CardBased") return;
+    if (!roleDeb || !goalDeb || !purposeDeb) return;
+    if (cardModeUserModeFiredRef.current) return;
+    cardModeUserModeFiredRef.current = true;
+    fetchUserModeAndShow(roleDeb, goalDeb, purposeDeb);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roleDeb, goalDeb, purposeDeb, creationMode]);
 
   const parseSmart = async (res: Response) => {
     const ct = (res.headers.get("content-type") || "").toLowerCase();
@@ -2413,7 +2556,7 @@ const Agentcreation: React.FC = () => {
       const prompts = parseStartersFromText(raw) || [];
       if (!prompts.length) {
         message.warning(
-          "No suggestions returned. Please tweak your Description and try again."
+          "No suggestions returned. Please tweak your Description and try again.",
         );
         return false;
       }
@@ -2431,7 +2574,7 @@ const Agentcreation: React.FC = () => {
         message.success({
           content: `Added ${Math.min(
             prompts.length,
-            2
+            2,
           )} conversation starters.`,
           key: "startersSuccess",
           duration: 2,
@@ -2462,7 +2605,7 @@ const Agentcreation: React.FC = () => {
 
       if (!res) {
         throw new Error(
-          "Network/CORS error calling starters API. Ensure POST is allowed and CORS is enabled."
+          "Network/CORS error calling starters API. Ensure POST is allowed and CORS is enabled.",
         );
       }
 
@@ -2483,7 +2626,7 @@ const Agentcreation: React.FC = () => {
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
         throw new Error(
-          `classifyStartConversation failed: ${res.status} ${txt}`
+          `classifyStartConversation failed: ${res.status} ${txt}`,
         );
       }
 
@@ -2498,7 +2641,7 @@ const Agentcreation: React.FC = () => {
       message.error(
         e?.name === "AbortError"
           ? "Starter suggestion timed out. Try again."
-          : e?.message || "Failed to fetch conversation starters."
+          : e?.message || "Failed to fetch conversation starters.",
       );
     } finally {
       clearTimeout(timeoutId);
@@ -2574,9 +2717,8 @@ const Agentcreation: React.FC = () => {
       conStarter2: (conStarter2 || "").trim(),
       conStarter3: "",
       conStarter4: "",
-
-      // ✅ New field for backend:
-      jobStatus, // "JOBAPPLYING" if from Job, otherwise null
+      interactionTone: userModeText,
+      jobStatus,
       ...(isBusinessCardUsed && { interactionMode: "BusinessCard" }),
     };
 
@@ -2593,11 +2735,11 @@ const Agentcreation: React.FC = () => {
         throw new Error(
           `Publish failed: ${res.status} ${res.statusText} ${
             txt ? "— " + txt : ""
-          }`.trim()
+          }`.trim(),
         );
       }
 
-      const data = await res.json().catch(() => ({} as any));
+      const data = await res.json().catch(() => ({}) as any);
       const assistanceId =
         data.assistanceId || data.assistantId || data.id || "";
 
@@ -2611,16 +2753,25 @@ const Agentcreation: React.FC = () => {
         "";
 
       message.success("Congratulations! Your agent is published successfully.");
-
+      const publishedAgentType = (data?.agentType || "").toLowerCase();
+      setPublishedAgentType(publishedAgentType);
       if (assistanceId) {
         localStorage.setItem(
           "awaitingUpload",
-          JSON.stringify({ assistanceId, userId })
+          JSON.stringify({ assistanceId, userId }),
         );
-        await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
+        if (isBusinessCardUsed) {
+          await fetchProfilePdfAndUpload(
+            assistanceId,
+            userId,
+            auth || {},
+            roleForUpload,
+          );
+        } else {
+          await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
+        }
       }
 
-      // Generic “has any Agent” flag (doesn't affect JOB flow logic now)
       try {
         localStorage.setItem("hasAiAgent", "true");
       } catch {
@@ -2650,15 +2801,16 @@ const Agentcreation: React.FC = () => {
         jobContext = null;
       }
 
-      if (jobContext?.fromJobId) {
-        // ✅ Clear context so next time is normal Agent flow
+      const isJobRelatedAgent =
+        /job|career|hire|recruit|fresher|placement/.test(
+          (data?.agentType || "").toLowerCase(),
+        );
+
+      if (jobContext?.fromJobId && isJobRelatedAgent) {
         try {
           localStorage.removeItem("agentJobContext");
-        } catch {
-          // ignore
-        }
+        } catch {}
 
-        // ⬅️ Go back to JobDetails and auto-open apply modal ONCE
         navigate("/main/jobdetails", {
           state: {
             id: jobContext.fromJobId,
@@ -2669,10 +2821,15 @@ const Agentcreation: React.FC = () => {
         });
         return;
       }
+      if (jobContext?.fromJobId && !isJobRelatedAgent) {
+        try {
+          localStorage.removeItem("agentJobContext");
+        } catch {}
+      }
 
       // 🧭 Default navigation (no job context → normal agent creation flow)
       navigate("/main/bharath-aistore/agents");
-      
+
       // Don't throw error here, let the success modal handle the flow
     } catch (e: any) {
       console.error(e);
@@ -2714,29 +2871,94 @@ const Agentcreation: React.FC = () => {
 
     if (!instructions.trim()) {
       message.error(
-        "Please add instructions (Preview → Generate Instructions)."
+        "Please add instructions (Preview → Generate Instructions).",
       );
       return;
     }
 
     setPublishModalOpen(true);
-  }, [
-    description,
-    instructions,
-  ]);
+  }, [description, instructions]);
+
+  const fetchProfilePdfAndUpload = useCallback(
+    async (
+      assistanceId: string,
+      userId: string,
+      auth: HeadersInit,
+      roleForUpload: string,
+    ) => {
+      setAutoFetchingProfile(true);
+      try {
+        const formData = new FormData();
+        formData.append("image", businessCardFile!); // businessCardFile is already in state
+
+        const res = await fetch(`${BASE_URL}/ai-service/generate-profile`, {
+          method: "POST",
+          headers: {
+            ...(auth as any), // only auth, NO Content-Type (browser sets multipart boundary)
+          },
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error(`generate-profile failed: ${res.status}`);
+        }
+
+        // Step 2: Response is direct PDF binary — read as blob
+        const pdfBlob = await res.blob();
+        const pdfFile = new File([pdfBlob], "Companyprofile.pdf", {
+          type: "application/pdf",
+        });
+
+        await uploadMandatoryDocOnceMulti(
+          assistanceId,
+          [pdfFile],
+          roleForUpload,
+          userId,
+          auth,
+        );
+
+        message.success("Profile document uploaded successfully!");
+        setAutoFetchingProfile(false);
+        setUploadFiles([]);
+        setUploadRole(roleForUpload || "");
+        pendingUploadRef.current = {
+          assistanceId,
+          userId,
+          auth,
+          roleForUpload,
+        };
+        setUploadOpen(true);
+      } catch (e: any) {
+        setAutoFetchingProfile(false);
+        message.error(e?.message || "Failed to fetch Company profile.");
+        setUploadFiles([]);
+        setUploadRole(roleForUpload || "");
+        pendingUploadRef.current = {
+          assistanceId,
+          userId,
+          auth,
+          roleForUpload,
+        };
+        setUploadOpen(true);
+      }
+    },
+    [businessCardFile],
+  );
 
   const handlePublishConfirm = async () => {
     setPublishModalOpen(false);
     setLoading(true);
-    
+
     try {
       await publishNow();
-      setLoading(false)
+      setLoading(false);
       setSuccessModalOpen(true);
     } catch (error: any) {
-      setErrorMessage(error?.message || "Failed to publish agent. Please try again.");
+      setErrorMessage(
+        error?.message || "Failed to publish agent. Please try again.",
+      );
       setErrorModalOpen(true);
-      setLoading(false)
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -2795,7 +3017,7 @@ const Agentcreation: React.FC = () => {
 
     const needInstr = !instructions.trim();
     const needStarters = ![conStarter1, conStarter2].some((s) =>
-      (s || "").trim()
+      (s || "").trim(),
     );
 
     if (!needInstr && !needStarters) return;
@@ -2817,7 +3039,7 @@ const Agentcreation: React.FC = () => {
             if (current !== sessionId) return;
             await suggestStartersFromAPI();
             startersInFlightRef.current = false;
-          })()
+          })(),
         );
       }
 
@@ -2871,7 +3093,7 @@ const Agentcreation: React.FC = () => {
   const otherInput = (
     value: string,
     onChange: (v: string) => void,
-    placeholder: string
+    placeholder: string,
   ) => (
     <input
       value={value}
@@ -3039,7 +3261,9 @@ const Agentcreation: React.FC = () => {
             <span
               onClick={() =>
                 setCreationMode(
-                  creationMode === "Professional" ? "CardBased" : "Professional"
+                  creationMode === "Professional"
+                    ? "CardBased"
+                    : "Professional",
                 )
               }
               style={{
@@ -3060,7 +3284,6 @@ const Agentcreation: React.FC = () => {
 
       {/* Two Card Selection */}
       <>
-       
         <style>
           {`
     
@@ -3077,7 +3300,7 @@ const Agentcreation: React.FC = () => {
         }
       }
     `}
-    </style>
+        </style>
 
         {/* Two Card Selection */}
         {!creationMode && (
@@ -3100,7 +3323,6 @@ const Agentcreation: React.FC = () => {
               Choose how to create your agent:
             </p>
 
-          
             <div className="two-card-grid">
               {/* ROLE BASED CARD */}
               <div
@@ -3650,13 +3872,13 @@ const Agentcreation: React.FC = () => {
                           onChange={setRoleSelect}
                           options={ROLE_OPTS}
                           placeholder="Select your role"
-                          loading={nameLoading}
+                          loading={nameLoading || userModeLoading}
                         />
                         {roleSelect === "Other" &&
                           otherInput(
                             roleOther,
                             setRoleOther,
-                            "Type your role…"
+                            "Type your role…",
                           )}
                       </div>
                       <Tooltip title="Examples: Student, Founder, Developer, Marketer, Lawyer">
@@ -3718,7 +3940,7 @@ const Agentcreation: React.FC = () => {
                       }}
                     >
                       <div style={labelColStyle}>
-                        {gradientText("Looking for", 1)}
+                        {gradientText("I want to", 1)}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div
@@ -3740,7 +3962,7 @@ const Agentcreation: React.FC = () => {
                           otherInput(
                             goalOther,
                             setGoalOther,
-                            "Type your goal…"
+                            "Type your goal…",
                           )}
                       </div>
                       <Tooltip title="Learn skills, Raise funding, Get a job, Grow sales, Legal help">
@@ -3801,7 +4023,9 @@ const Agentcreation: React.FC = () => {
                         minHeight: 44,
                       }}
                     >
-                      <div style={labelColStyle}>{gradientText("To", 2)}</div>
+                      <div style={labelColStyle}>
+                        {gradientText("My purpose", 2)}
+                      </div>
                       <div style={{ flex: 1 }}>
                         <div
                           onClick={() => {
@@ -3825,7 +4049,7 @@ const Agentcreation: React.FC = () => {
                           otherInput(
                             purposeOther,
                             setPurposeOther,
-                            "Type your purpose…"
+                            "Type your purpose…",
                           )}
                       </div>
                       <Tooltip title="Build agent, automate support, file a case, launch MVP">
@@ -4000,8 +4224,8 @@ const Agentcreation: React.FC = () => {
                         !agentUserName.trim()
                           ? "Add your Creator Name and save profile first"
                           : !roleResolved || !goalResolved || !purposeResolved
-                          ? "Pick Role, Goal & Purpose first"
-                          : undefined
+                            ? "Pick Role, Goal & Purpose first"
+                            : undefined
                       }
                     >
                       {nameLoading ? <Spin size="small" /> : <BulbOutlined />}
@@ -4116,7 +4340,7 @@ const Agentcreation: React.FC = () => {
                         setDescTouched(true);
                         if (descCount < MIN_DESC) {
                           message.error(
-                            `Description must be at least ${MIN_DESC} characters.`
+                            `Description must be at least ${MIN_DESC} characters.`,
                           );
                         }
                       }}
@@ -4171,8 +4395,8 @@ const Agentcreation: React.FC = () => {
                             descTouched && descCount < MIN_DESC
                               ? "#DC2626" // red when invalid
                               : descCount > MAX_DESC - 20
-                              ? "#F59E0B" // warm warning near max
-                              : "#0EA5E9", // normal
+                                ? "#F59E0B" // warm warning near max
+                                : "#0EA5E9", // normal
                         }}
                       >
                         {descCount}/{MAX_DESC}
@@ -5252,21 +5476,33 @@ const Agentcreation: React.FC = () => {
 
       <Modal
         open={uploadOpen}
-        title="Upload supporting files"
-        // ⛔ prevent closing by X, mask, or Esc
+        title={getUploadModalContent(publishedAgentType).title} // ← dynamic title
         closable={false}
         maskClosable={false}
         keyboard={false}
-        // keep onCancel defensive (won’t be triggered with closable=false, but safe)
         onCancel={() => {
           message.warning("Please complete the upload to continue.");
-          setUploadOpen(true); // re-assert open
+          setUploadOpen(true);
         }}
-        // Only your action button in content — no default footer buttons
         footer={null}
       >
         <div style={{ display: "grid", gap: 12 }}>
-          {/* Read-only role from publish response */}
+          {/* Dynamic description based on agent type */}
+          <div
+            style={{
+              background: "#F0F9FF",
+              borderLeft: "4px solid #0EA5E9",
+              padding: "8px 12px",
+              borderRadius: 6,
+              fontSize: 13,
+              color: "#0C4A6E",
+              lineHeight: 1.5,
+            }}
+          >
+            {getUploadModalContent(publishedAgentType).description}
+          </div>
+
+          {/* Read-only role */}
           <div>
             <div style={{ fontSize: 12, color: "#64748B", marginBottom: 6 }}>
               Role of user
@@ -5286,16 +5522,13 @@ const Agentcreation: React.FC = () => {
                 cursor: "not-allowed",
               }}
             />
-            <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 6 }}>
-              Sourced from publish response (<code>roleUser</code> or{" "}
-              <code>optionalRole</code>).
-            </div>
           </div>
 
           {/* File picker */}
           <div>
             <div style={{ fontSize: 12, color: "#64748B", marginBottom: 6 }}>
-              Attach files (PDF/JPG/PNG/DOC, up to 5MB each)
+              {getUploadModalContent(publishedAgentType).placeholder} — up to
+              5MB each
             </div>
             <button
               type="button"
@@ -5310,7 +5543,7 @@ const Agentcreation: React.FC = () => {
                   "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
               }}
             >
-              Choose files
+              Choose Files
             </button>
             {!!uploadFiles.length && (
               <div style={{ marginTop: 8, fontSize: 12, color: "#0F172A" }}>
@@ -5367,8 +5600,7 @@ const Agentcreation: React.FC = () => {
             >
               {uploading ? (
                 <>
-                  <Spin size="small" /> {/* from antd, already imported */}
-                  Uploading...
+                  <Spin size="small" /> Uploading...
                 </>
               ) : (
                 "Upload & Continue"
@@ -5881,6 +6113,85 @@ const Agentcreation: React.FC = () => {
         </div>
       </Modal>
 
+      {/* ===== User Mode Modal ===== */}
+      <Modal
+        open={userModeModalOpen}
+        onCancel={() => setUserModeModalOpen(false)}
+        closable={false}
+        maskClosable={false}
+        footer={null}
+        centered
+        title={
+          <div style={{ fontWeight: 800, fontSize: 16 }}>
+            This agent will help you to
+          </div>
+        }
+      >
+        <div style={{ display: "grid", gap: 14 }}>
+          <textarea
+            value={userModeText}
+            onChange={(e) => setUserModeText(e.target.value)}
+            rows={2}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: `1px solid ${BORDER}`,
+              fontSize: 14,
+              lineHeight: 1.6,
+              resize: "vertical",
+              fontFamily: "inherit",
+              outline: "none",
+              background: "#FFF",
+            }}
+          />
+          <div style={{ fontSize: 13, color: TEXT_MUTED }}>
+            We’ve understood what you’re trying to achieve. This agent will help
+            you with it. Feel free to edit if needed before proceeding.
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <button
+              onClick={() => setUserModeModalOpen(false)}
+              style={{
+                padding: "10px 18px",
+                borderRadius: 999,
+                border: `1px solid ${BORDER}`,
+                background: "#fff",
+                color: "#475569",
+                fontWeight: 800,
+                fontSize: 14,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                setUserModeModalOpen(false);
+                if (creationMode !== "CardBased") {
+                  await suggestAgentName();
+                }
+              }}
+              style={{
+                padding: "10px 22px",
+                borderRadius: 999,
+                border: "none",
+                background:
+                  "linear-gradient(90deg, #6D28D9 0%, #2563EB 50%, #FF00FF 100%)",
+                color: "#fff",
+                fontWeight: 900,
+                fontSize: 14,
+                cursor: "pointer",
+                boxShadow:
+                  "0 4px 12px rgba(109,40,217,0.25), 0 10px 28px rgba(37,99,235,0.25)",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Publish Confirmation Modal */}
       <Modal
         open={publishModalOpen}
@@ -6070,8 +6381,41 @@ const Agentcreation: React.FC = () => {
           </button>
         </div>
       </Modal>
-
-      {/* </div> */}
+      <Modal
+        open={autoFetchingProfile}
+        footer={null}
+        closable={false}
+        maskClosable={false}
+        keyboard={false}
+        centered
+        title={null}
+        width={360}
+      >
+        <div style={{ textAlign: "center", padding: "30px 20px" }}>
+          <Spin size="large" />
+          <h3
+            style={{
+              margin: "20px 0 8px 0",
+              fontSize: 18,
+              fontWeight: 800,
+              color: "#0F172A",
+            }}
+          >
+            Fetching Your Complete Details
+          </h3>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 14,
+              color: "#64748B",
+              lineHeight: 1.6,
+            }}
+          >
+            We're generating your profile document from your business card. This
+            will only take a moment...
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 };

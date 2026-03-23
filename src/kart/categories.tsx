@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { message, Modal } from "antd";
@@ -308,9 +309,8 @@ const Categories: React.FC<CategoriesProps> = ({
       }));
     }
     try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
+      const response = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`
       );
       const customerCart: CartItem[] =
         response.data?.customerCartResponseList || [];
@@ -480,9 +480,8 @@ const Categories: React.FC<CategoriesProps> = ({
   const fetchUserEligibleOffers = async (userId: string) => {
     const accessToken = localStorage.getItem("accessToken");
     try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userEligibleOffer/${userId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
+      const response = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/userEligibleOffer/${userId}`
       );
       const normalizedOffers = (response.data || []).map(
         (offer: UserEligibleOffer) => ({
@@ -503,9 +502,8 @@ const Categories: React.FC<CategoriesProps> = ({
     const accessToken = localStorage.getItem("accessToken");
     setIsFetchingOffers(true);
     try {
-      const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/activeOffers`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
+      const response = await customerApi.get(
+        `${BASE_URL}/cart-service/cart/activeOffers`
       );
       const activeOffers = response.data || [];
       const filteredOffers = activeOffers.filter((offer: Offer) => {
@@ -618,17 +616,16 @@ const Categories: React.FC<CategoriesProps> = ({
       }
 
       // ✅ Add item to cart
-      await axios.post(
+      await customerApi.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
-        requestBody,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
+        requestBody
       );
 
       await fetchCartData(item.itemId);
 
       if (!isCombo) {
         try {
-          const response = await axios.get(
+          const response = await customerApi.get(
             `${BASE_URL}/product-service/getComboInfo/${item.itemId}`,
           );
           const comboItems = response.data?.items || [];
@@ -742,8 +739,8 @@ const Categories: React.FC<CategoriesProps> = ({
 
     try {
       const endpoint = increment
-        ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
-        : `${BASE_URL}/cart-service/cart/minusCartItem`;
+        ? `/cart-service/cart/addAndIncrementCart`
+        : `/cart-service/cart/minusCartItem`;
 
       setLoadingItems((prev) => ({
         ...prev,
@@ -761,9 +758,7 @@ const Categories: React.FC<CategoriesProps> = ({
         payload.status = "COMBO";
       }
 
-      await axios[increment ? "post" : "patch"](endpoint, payload, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      await customerApi[increment ? "post" : "patch"](endpoint.replace(BASE_URL, ""), payload);
 
       await fetchCartData(item.itemId);
 

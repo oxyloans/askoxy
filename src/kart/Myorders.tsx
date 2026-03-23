@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import {
   Menu,
   X,
@@ -381,15 +382,9 @@ const MyOrders: React.FC = () => {
         userId: userId || "",
       };
 
-      await axios.patch(
+      await customerApi.patch(
         `${BASE_URL}/order-service/exchangeOrder`,
-        requestBody,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        requestBody
       );
 
       setExchangeSuccess(true);
@@ -480,15 +475,9 @@ const MyOrders: React.FC = () => {
       const token = localStorage.getItem("accessToken");
       const API_URL = `${BASE_URL}/order-service/getAllOrders_customerId`;
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         API_URL,
-        { userId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        { userId }
       );
 
       const orders = response.data || [];
@@ -544,12 +533,7 @@ const MyOrders: React.FC = () => {
       const token = localStorage.getItem("token");
       const API_URL = `${BASE_URL}/order-service/getExchangeOrders/${userId}`;
 
-      const response = await axios.get(API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await customerApi.get(API_URL);
 
       const exchangeOrders = response.data || [];
       const normalizedExchangeOrders = exchangeOrders.map((order: any) => ({
@@ -714,12 +698,9 @@ const MyOrders: React.FC = () => {
           ? `${BASE_URL}/erice-service/checkout/feedback?feedbackUserId=${customerId}&orderid=${orderId}`
           : `${BASE_URL}/order-service/feedback?feedbackUserId=${userId}&orderid=${orderId}`;
 
-      const response = await axios({
+      const response = await customerApi({
         method: "get",
         url: API_URL,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (response.data && Array.isArray(response.data)) {
@@ -765,14 +746,8 @@ const MyOrders: React.FC = () => {
   const fetchOrderDetails = async (orderId: string): Promise<void> => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${BASE_URL}/order-service/getOrdersByOrderId/${orderId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await customerApi.get(
+        `${BASE_URL}/order-service/getOrdersByOrderId/${orderId}`
       );
 
       if (response.data && response.data[0]) {
@@ -895,14 +870,8 @@ const MyOrders: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await axios.get(
-        `${BASE_URL}/order-service/fetchTimeSlotlist`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await customerApi.get(
+        `${BASE_URL}/order-service/fetchTimeSlotlist`
       );
 
       if (response.data && Array.isArray(response.data)) {
@@ -1067,13 +1036,10 @@ const MyOrders: React.FC = () => {
           ? `${BASE_URL}/erice-service/checkout/submitfeedback`
           : `${BASE_URL}/order-service/submitfeedback`;
 
-      await axios({
+      await customerApi({
         method: "post",
         url: API_URL,
         data: data,
-        headers: {
-          Authorizationcatalog: `Bearer ${token}`,
-        },
       });
 
       setFeedbackSuccess(true);
@@ -1208,11 +1174,7 @@ const MyOrders: React.FC = () => {
         userId: userId,
       };
 
-      const response = await axios.patch(requestUrl, requestBody, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      const response = await customerApi.patch(requestUrl, requestBody, {
         timeout: 10000,
       });
 
@@ -2003,15 +1965,9 @@ const MyOrders: React.FC = () => {
         residenceName: addressFormData.residenceName,
       };
 
-      await axios.patch(
+      await customerApi.patch(
         `${BASE_URL}/order-service/orderAddressUpdate`,
-        requestBody,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        requestBody
       );
 
       setAddressUpdateSuccess(true);
@@ -2118,15 +2074,9 @@ const MyOrders: React.FC = () => {
         orderStatus: normalizedStatus,
       };
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/order-service/deliveryBoyAssigneData`,
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        data
       );
 
       if (response.data && response.data[0]) {

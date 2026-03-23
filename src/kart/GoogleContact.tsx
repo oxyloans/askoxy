@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { customerApi } from "../utils/axiosInstance";
 import axios from "axios";
 import BASE_URL from "../Config";
 
@@ -38,13 +39,8 @@ const GmailContactsScreen: React.FC = () => {
   const handleGetAuthorization = async (): Promise<void> => {
     try {
       setLoading(true);
-      const res = await axios.get<GmailAuthData>(
-        `${BASE_URL}/user-service/getGmailAuthorization/gmailcontacts`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
+      const res = await customerApi.get<GmailAuthData>(
+        `${BASE_URL}/user-service/getGmailAuthorization/gmailcontacts`
       );
 
       setAuthData(res.data);
@@ -64,13 +60,8 @@ const GmailContactsScreen: React.FC = () => {
   const checkGmailConnection = async (): Promise<void> => {
     try {
       setCheckingConnection(true);
-      const res = await axios.get<Contact[]>(
-        `${BASE_URL}/user-service/gmail/contacts/${USER_ID}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
+      const res = await customerApi.get<Contact[]>(
+        `${BASE_URL}/user-service/gmail/contacts/${USER_ID}`
       );
 
       if (Array.isArray(res.data) && res.data.length > 0) {
@@ -97,14 +88,9 @@ const GmailContactsScreen: React.FC = () => {
         userType: "USER",
       };
 
-      const res = await axios.post<Contact[]>(
+      const res = await customerApi.post<Contact[]>(
         `${BASE_URL}/user-service/getContactsFromGmailAccount/${USER_ID}`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
+        payload
       );
 
       if (Array.isArray(res.data) && res.data.length > 0) {
@@ -314,17 +300,9 @@ const GmailContactsScreen: React.FC = () => {
                           }
                         );
 
-                        await axios.post(
+                        await customerApi.post(
                           `${BASE_URL}/user-service/sendInvitation/${USER_ID}`,
-                          selectedContactsData,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${localStorage.getItem(
-                                "accessToken"
-                              )}`,
-                              "Content-Type": "application/json",
-                            },
-                          }
+                          selectedContactsData
                         );
 
                         setModalType("success");
