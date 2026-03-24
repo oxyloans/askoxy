@@ -5,8 +5,10 @@ import Sidebar from "./PartnerSidebar";
 import Header from "./HeaderPartner";
 import Footer from "../components/Footer";
 import { stopTokenRefresh } from "./RefreshToken";
+import { removePartnerAccessToken, removePartnerRefreshToken } from "../utils/cookieUtils";
 import { useSessionManager } from "./useSessionManager";
 import SessionModal from "./SessionModal";
+import { getPartnerAccessToken } from "../utils/cookieUtils";
 
 const { Content, Sider, Footer: AntFooter } = Layout;
 
@@ -32,8 +34,8 @@ const PartnerHome: React.FC = () => {
     sessionStorage.removeItem("partner_orderparams");
     sessionStorage.removeItem("partner_dbName");
     sessionStorage.removeItem("partner_dbId");
-    localStorage.removeItem("partner_accesstoken");
-    sessionStorage.removeItem("partner_refreshtoken");
+    removePartnerAccessToken();
+    removePartnerRefreshToken();
     sessionStorage.removeItem("partner_type");
     sessionStorage.removeItem("partner_scrollPosition");
     navigate("/partnerlogin");
@@ -49,14 +51,14 @@ const PartnerHome: React.FC = () => {
   };
 
   useEffect(() => {
-    const tokenString = localStorage.getItem("partner_accesstoken");
+    const tokenString = getPartnerAccessToken();
     if (!tokenString) {
-      navigate("/partnerlogin");
+      navigate("/partnerlogin", { replace: true });
       return;
     }
-    const tokenObj =  sessionStorage.getItem("partner_type");
-    if (!tokenObj || tokenObj !=="SELLER") {
-      navigate("/partnerlogin");
+    const tokenObj = sessionStorage.getItem("partner_type");
+    if (!tokenObj || tokenObj !== "SELLER") {
+      navigate("/partnerlogin", { replace: true });
     }
   }, []);
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstances";
 import {
   Alert,
   Button,
@@ -41,10 +41,8 @@ const MobileNumberUpdate: React.FC<MobileNumberUpdateProps> = ({
   const [form] = Form.useForm();
 
   const userId = sessionStorage.getItem("userId") || "";
-
   const [isUpdating, setIsUpdating] = useState(false);
   const [inlineError, setInlineError] = useState<string>("");
-const accessToken = sessionStorage.getItem("taskAccessToken");
   const isMobile = useMemo(() => !screens.md, [screens.md]);
 
   useEffect(() => {
@@ -82,22 +80,17 @@ const accessToken = sessionStorage.getItem("taskAccessToken");
 
       setIsUpdating(true);
 
-      await axios.patch(
+      await employeeApi.patch(
         `${BASE_URL}/user-service/users/${userId}/empMobile`,
         null,
-        {
-          params: { mobileNumber },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        { params: { mobileNumber } }
       );
 
       message.success("Mobile number updated successfully");
       onUpdateSuccess?.();
     } catch (err: any) {
       const errorMessage =
-        axios.isAxiosError(err) && err.response?.data?.message
+        err.response?.data?.message
           ? err.response.data.message
           : "Failed to update mobile number. Please try again.";
 

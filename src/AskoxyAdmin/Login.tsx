@@ -13,13 +13,14 @@ import { adminApi as axios } from "../utils/axiosInstances";
 import { useNavigate, Link } from "react-router-dom";
 import { MailOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
+import { setAdminAccessToken, setAdminRefreshToken, getAdminAccessToken, getAdminRefreshToken } from "../utils/cookieUtils";
 
 const { Title, Text } = Typography;
 
 interface LoginResponse {
   status: string;
   token: string;
-  refreshToken: string;
+  refreshToke: string;
   id: string;
   errorMessage?: string;
   primaryType: string;
@@ -37,8 +38,11 @@ const Login: React.FC = () => {
     const handleAutoLoginforAdmin = () => {
       const id = localStorage.getItem("admin_uniquId");
       const primaryType = localStorage.getItem("admin_primaryType");
-      const acToken = localStorage.getItem("admin_acToken");
-      const refreshToken = sessionStorage.getItem("admin_refreshToken");
+      const acToken = getAdminAccessToken();
+      const refreshToken = getAdminRefreshToken();
+
+      console.log("Auto-login check:", { id, primaryType, acToken, refreshToken });
+      // Note: admin_uniquId and admin_primaryType kept in localStorage (non-sensitive metadata)
 
       if (id && primaryType && acToken && refreshToken) {
         if (primaryType === "HELPDESKSUPERADMIN") {
@@ -93,7 +97,8 @@ const Login: React.FC = () => {
           primaryType === "HELPDESKSUPERADMIN" ||
           primaryType === "HELPDESKADMIN"
         ) {
-          localStorage.setItem("admin_acToken", token);
+          setAdminAccessToken(token);
+          if (response.data.refreshToke) setAdminRefreshToken(response.data.refreshToke);
           localStorage.setItem("admin_uniquId", id);
           localStorage.setItem("admin_primaryType", primaryType);
           localStorage.setItem("admin_userName", name);

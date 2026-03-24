@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstances";
 import {
   Tabs,
   Spin,
@@ -39,8 +39,6 @@ import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import dayjs, { Dayjs } from "dayjs";
-
-const getToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -131,10 +129,9 @@ const DeliveryBoyOrders: React.FC = () => {
     try {
       // Assigned Orders
       try {
-        const assignedResponse = await axios.post(
+        const assignedResponse = await partnerApi.post(
           `${BASE_URL}/order-service/getAssignedOrdersToDeliveryBoy`,
-          { deliveryBoyId, orderStatus: 3 },
-          { headers: { Authorization: `Bearer ${getToken()}` } }
+          { deliveryBoyId, orderStatus: 3 }
         );
         assignedData = assignedResponse.data || [];
       } catch (err: any) {
@@ -146,9 +143,8 @@ const DeliveryBoyOrders: React.FC = () => {
       }
 
       try {
-        const pickedUpResponse = await axios.get(
-          `${BASE_URL}/order-service/getPickupDataBasedOnIdList?deliveryBoyId=${deliveryBoyId}`,
-          { headers: { Authorization: `Bearer ${getToken()}` } }
+        const pickedUpResponse = await partnerApi.get(
+          `${BASE_URL}/order-service/getPickupDataBasedOnIdList?deliveryBoyId=${deliveryBoyId}`
         );
         pickedUpData = pickedUpResponse.data || [];
       } catch (err) {
@@ -187,9 +183,8 @@ const DeliveryBoyOrders: React.FC = () => {
   ) => {
     setDeliveredLoading(true);
     try {
-      const deliveredResponse = await axios.get(
-        `${BASE_URL}/order-service/get_DeliverdDetails_By_DeliveryBoyId?deliveryBoyId=${deliveryBoyId}&EndData=${endDate}&StartDate=${startDate}`,
-        { headers: { Authorization: `Bearer ${getToken()}` } }
+      const deliveredResponse = await partnerApi.get(
+        `${BASE_URL}/order-service/get_DeliverdDetails_By_DeliveryBoyId?deliveryBoyId=${deliveryBoyId}&EndData=${endDate}&StartDate=${startDate}`
       );
 
       const deliveredData = deliveredResponse.data?.orderResponseList || [];
@@ -198,9 +193,8 @@ const DeliveryBoyOrders: React.FC = () => {
       const enrichedDeliveredData = await Promise.all(
         deliveredData.map(async (order: any) => {
           try {
-            const res = await axios.get(
-              `${BASE_URL}/order-service/getAllOrdersDelivered?orderId=${order.orderId}`,
-              { headers: { Authorization: `Bearer ${getToken()}` } }
+            const res = await partnerApi.get(
+              `${BASE_URL}/order-service/getAllOrdersDelivered?orderId=${order.orderId}`
             );
             return {
               ...order,

@@ -8,6 +8,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/img/logo.png";
 import { stopTokenRefresh } from "../utils/tokenRefresh";
+import {
+  removePartnerAccessToken,
+  removePartnerRefreshToken,
+} from "../utils/cookieUtils";
 
 const { Header } = Layout;
 
@@ -28,14 +32,17 @@ const PartnerHeader: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
-     stopTokenRefresh();
+    stopTokenRefresh();
+    removePartnerAccessToken();
+    removePartnerRefreshToken();
+    sessionStorage.removeItem("partner_type");
+    sessionStorage.removeItem("partner_id");
     sessionStorage.removeItem("partner_orderId");
     sessionStorage.removeItem("partner_orderparams");
     sessionStorage.removeItem("partner_dbName");
     sessionStorage.removeItem("partner_dbId");
-    localStorage.removeItem("partner_accessToken");
     sessionStorage.removeItem("partner_scrollPosition");
-    navigate("/partnerlogin");
+    navigate("/partnerlogin", { replace: true });
   };
 
   return (

@@ -11,9 +11,8 @@ import {
   Users,
   Truck,
 } from "lucide-react";
+import { partnerApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
-
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 // Types
 interface Vehicle {
@@ -188,31 +187,12 @@ const VehicleManagement: React.FC = () => {
   const fetchVehicles = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/user-service/getVehiclesReports`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/user-service/getVehiclesReports`
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        setVehicles(data.vehicles || data || []);
-      } else {
-        setMessage({
-          type: "error",
-          text: "Failed to fetch vehicles. Please try again.",
-        });
-      }
+      setVehicles(response.data.vehicles || response.data || []);
     } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Network error. Please check your connection.",
-      });
+      setMessage({ type: "error", text: "Failed to fetch vehicles. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -221,32 +201,14 @@ const VehicleManagement: React.FC = () => {
   const fetchVehicleReports = async () => {
     setIsLoadingReports(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/user-service/getAllMarketsVahicles`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/user-service/getAllMarketsVahicles`
       );
-
-      if (response.ok) {
-        const data: ApiResponse = await response.json();
-        setVehicleReports(data.content || []);
-        setFilteredReports(data.content || []);
-      } else {
-        setMessage({
-          type: "error",
-          text: "Failed to fetch vehicle reports. Please try again.",
-        });
-      }
+      const data: ApiResponse = response.data;
+      setVehicleReports(data.content || []);
+      setFilteredReports(data.content || []);
     } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Network error. Please check your connection.",
-      });
+      setMessage({ type: "error", text: "Failed to fetch vehicle reports. Please try again." });
     } finally {
       setIsLoadingReports(false);
     }
@@ -294,45 +256,18 @@ const VehicleManagement: React.FC = () => {
         payload.id = selectedVehicle.id;
       }
 
-      const response = await fetch(
+      await partnerApi.patch(
         `${BASE_URL}/user-service/vehiclesReportUpdate`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify(payload),
-        }
+        payload
       );
-
-      if (response.ok) {
-        setMessage({
-          type: "success",
-          text:
-            modalMode === "update"
-              ? "Vehicle updated successfully!"
-              : "Vehicle added successfully!",
-        });
-
-        await fetchVehicles();
-
-        setTimeout(() => {
-          closeModal();
-        }, 1500);
-      } else {
-        const errorData = await response.json();
-        setMessage({
-          type: "error",
-          text:
-            errorData.message || "Failed to save vehicle. Please try again.",
-        });
-      }
-    } catch (error) {
       setMessage({
-        type: "error",
-        text: "Network error. Please check your connection and try again.",
+        type: "success",
+        text: modalMode === "update" ? "Vehicle updated successfully!" : "Vehicle added successfully!",
       });
+      await fetchVehicles();
+      setTimeout(() => { closeModal(); }, 1500);
+    } catch (error) {
+      setMessage({ type: "error", text: "Failed to save vehicle. Please try again." });
     } finally {
       setIsSubmitting(false);
     }

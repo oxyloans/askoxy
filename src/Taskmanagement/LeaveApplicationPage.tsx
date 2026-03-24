@@ -22,8 +22,7 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import type { DatePickerProps } from "antd/es/date-picker";
-import axios from "axios";
-import { employeeApi } from "../utils/axiosInstance";
+import { employeeApi } from "../utils/axiosInstances";
 import dayjs from "dayjs";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
@@ -52,7 +51,6 @@ const LeaveApplicationPage: React.FC = () => {
   const [leaveDays, setLeaveDays] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [screenSize, setScreenSize] = useState<string>("");
-const accessToken = sessionStorage.getItem("taskAccessToken");
   useEffect(() => {
     // Get username from localStorage
     const name = sessionStorage.getItem("Name");
@@ -152,12 +150,7 @@ const accessToken = sessionStorage.getItem("taskAccessToken");
       // Make API call
       const response = await employeeApi.patch(
         `${BASE_URL}/user-service/write/requestLeaveApplication`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        payload
       );
 
       if (response.data) {

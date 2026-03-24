@@ -15,7 +15,7 @@ import {
 } from "antd";
 import { MessageOutlined, SearchOutlined } from "@ant-design/icons";
 import { MdForum } from "react-icons/md";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
 import { useNavigate } from "react-router-dom";
@@ -51,7 +51,7 @@ const EmployeeInteractions: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(API_URL);
+      const response = await employeeApi.get(API_URL);
       if (Array.isArray(response.data)) {
         // ✅ sort by updatedDate (if exists) else createdDate
         const sortedData = response.data.sort((a, b) => {
@@ -107,7 +107,7 @@ const EmployeeInteractions: React.FC = () => {
         userid: adminUserId,
       };
 
-      await axios.patch(INTERACTION_API, payload);
+      await employeeApi.patch(INTERACTION_API, payload);
       message.success("Interaction saved successfully!");
       setIsInteractionModalOpen(false);
       setInteractionRecord(null);

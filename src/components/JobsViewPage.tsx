@@ -701,9 +701,15 @@ const JobViewPage: React.FC = () => {
           </div>
         </div>
         <div className="px-4 pb-5 mt-auto flex justify-center">
-          <div className="bg-indigo-100 text-indigo-600 py-2.5 px-8 rounded-full font-bold text-sm transition-all duration-300 shadow-md">
-            View Job Details
-          </div>
+          {appliedJobIds.has(job.id) ? (
+            <div className="flex items-center justify-center gap-2 bg-green-50 text-green-600 py-2.5 px-8 rounded-full font-bold text-sm shadow-sm border border-green-100">
+              <CheckCircle2 className="w-5 h-5" /> Applied
+            </div>
+          ) : (
+            <div className="bg-indigo-100 text-indigo-600 py-2.5 px-8 rounded-full font-bold text-sm transition-all duration-300 shadow-md">
+              View Job Details
+            </div>
+          )}
         </div>
       </motion.div>
     );
@@ -1055,7 +1061,7 @@ const JobViewPage: React.FC = () => {
                       : "/viewjobdetails";
                   navigate(`${prefix}/default/${e.target.value}`);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800"
               >
                 <option value="ALL">All Jobs</option>
                 {Object.entries(companyNames)
@@ -1075,7 +1081,7 @@ const JobViewPage: React.FC = () => {
                 placeholder="Search jobs, skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
               />
             </div>
 
@@ -1084,7 +1090,7 @@ const JobViewPage: React.FC = () => {
               <select
                 value={filters.location}
                 onChange={(e) => handleFilterChange("location", e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
               >
                 <option value="">All Locations</option>
                 {uniqueLocations.map((loc) => (
@@ -1102,7 +1108,7 @@ const JobViewPage: React.FC = () => {
                 onChange={(e) =>
                   handleFilterChange("experience", e.target.value)
                 }
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
               >
                 <option value="">All Experience</option>
                 {uniqueExperience.map((exp) => (
@@ -1118,7 +1124,7 @@ const JobViewPage: React.FC = () => {
               <select
                 value={filters.industry}
                 onChange={(e) => handleFilterChange("industry", e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
               >
                 <option value="">All Industries</option>
                 {uniqueIndustries.map((ind) => (
@@ -1136,7 +1142,7 @@ const JobViewPage: React.FC = () => {
                 onChange={(e) =>
                   handleFilterChange("salaryRange", e.target.value)
                 }
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
               >
                 <option value="">All Salary Ranges</option>
                 {uniqueSalaries.map((sal) => (

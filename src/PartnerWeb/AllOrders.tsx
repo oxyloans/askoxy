@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstances";
 import {
   Typography,
   message,
@@ -53,8 +53,6 @@ const getStatusText = (status: string | null) => {
   }
 };
 
-const getToken = () => localStorage.getItem("partner_accesstoken") || "";
-      
 const getStatusColor = (status: string | null) => {
   switch (status) {
     case "1":
@@ -141,9 +139,8 @@ const AllOrders: React.FC = () => {
 
       sessionStorage.setItem("partner_orderparams", params.toString());
       
-      const response = await axios.get<Order[]>(
-        `${BASE_URL}/order-service/date-range?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${getToken()}` } },
+      const response = await partnerApi.get<Order[]>(
+        `${BASE_URL}/order-service/date-range?${params.toString()}`
       );
 
       const filteredOrders = response.data.filter((order) => !order.testUser);

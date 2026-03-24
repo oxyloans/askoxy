@@ -13,7 +13,8 @@ import {
 import axios, { AxiosError } from "axios";
 import BASE_URL from "../Config";
 import { useNavigate, Link } from "react-router-dom";
-import { setTaskTokens, getIntendedRoute, clearIntendedRoute } from "../utils/taskTokenManager";
+import { getIntendedRoute, clearIntendedRoute } from "../utils/taskTokenManager";
+import { setEmployeeAccessToken, setEmployeeRefreshToken, getEmployeeAccessToken, removeEmployeeAccessToken, removeEmployeeRefreshToken } from "../utils/cookieUtils";
 import {
   MailOutlined,
   LockOutlined,
@@ -27,7 +28,7 @@ const { Title, Text, Paragraph } = Typography;
 interface LoginResponse {
   status: string;
   token?: string;
-  refreshToken?: string;
+  refreshToke?: string;
   id?: string;
   name?: string;
   primaryType?: string;
@@ -60,7 +61,7 @@ const UserLogin: React.FC = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    const token = sessionStorage.getItem("taskAccessToken");
+    const token = getEmployeeAccessToken();
     const type = sessionStorage.getItem("primaryType");
     if (token && type === "EMPLOYEE") {
       window.history.replaceState(null, '', '/userPanelLayout');
@@ -95,10 +96,10 @@ const UserLogin: React.FC = () => {
       );
 
       if (response.data.status === "Login Successful" && response.data.token) {
-        const { token, refreshToken, id, name, primaryType } = response.data;
+        const { token, refreshToke, id, name, primaryType } = response.data;
 
-        // Store user info using token manager
-        setTaskTokens(token, refreshToken);
+        setEmployeeAccessToken(token);
+        if (refreshToke) setEmployeeRefreshToken(refreshToke);
         if (id) sessionStorage.setItem("userId", id);
         if (name) sessionStorage.setItem("Name", name);
         if (primaryType) sessionStorage.setItem("primaryType", primaryType);
@@ -127,9 +128,8 @@ const UserLogin: React.FC = () => {
           setAccessDenied(true);
           setUserType(primaryType);
 
-          // Remove tokens for non-EMPLOYEE users
-          sessionStorage.removeItem("taskAccessToken");
-          sessionStorage.removeItem("taskRefreshToken");
+          removeEmployeeAccessToken();
+          removeEmployeeRefreshToken();
         } else {
           setError("Invalid user type. Please contact support.");
         }

@@ -3,10 +3,10 @@
  *
  * One factory, four module-scoped instances:
  *
- *  customerApi   – Customer portal  (token: Redux store → localStorage "accessToken")
- *  adminApi      – Admin portal      (token: localStorage "admin_acToken")
- *  partnerApi    – Partner/Seller    (token: localStorage "partner_accesstoken")
- *  employeeApi   – Task-management   (token: sessionStorage "accessToken")
+ *  customerApi   – Customer portal  (token: cookie "c_at" / Redux store)
+ *  adminApi      – Admin portal      (token: cookie "a_at")
+ *  partnerApi    – Partner/Seller    (token: cookie "p_at")
+ *  employeeApi   – Task-management   (token: cookie "e_at")
  *
  * Every instance shares:
  *  • Content-Type: application/json
@@ -14,6 +14,7 @@
  *  • X-Request-ID per request (tracing)
  *  • Automatic Bearer token injection
  *  • 401 → token-refresh → one silent retry  (customer only; others redirect to login)
+ *  • All tokens stored in cookies (HttpOnly-safe, 7-day expiry)
  */
 
 import axios, {
@@ -23,6 +24,20 @@ import axios, {
 } from "axios";
 import { store } from "../store";
 import { refreshAccessToken } from "./tokenRefresh";
+import {
+  getCustomerAccessToken,
+  removeCustomerAccessToken,
+  removeRefreshToken,
+  getAdminAccessToken,
+  removeAdminAccessToken,
+  removeAdminRefreshToken,
+  getPartnerAccessToken,
+  removePartnerAccessToken,
+  removePartnerRefreshToken,
+  getEmployeeAccessToken,
+  removeEmployeeAccessToken,
+  removeEmployeeRefreshToken,
+} from "./cookieUtils";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -46,16 +61,13 @@ const LOGIN_ROUTES = {
 type TokenResolver = () => string | null;
 
 const customerToken: TokenResolver = () =>
-  store.getState().auth.accessToken || localStorage.getItem("accessToken");
+  store.getState().auth.accessToken || getCustomerAccessToken();
 
-const adminToken: TokenResolver = () =>
-  localStorage.getItem("admin_acToken");
+const adminToken: TokenResolver = () => getAdminAccessToken();
 
-const partnerToken: TokenResolver = () =>
-  localStorage.getItem("partner_accesstoken");
+const partnerToken: TokenResolver = () => getPartnerAccessToken();
 
-const employeeToken: TokenResolver = () =>
-  sessionStorage.getItem("accessToken");
+const employeeToken: TokenResolver = () => getEmployeeAccessToken();
 
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
@@ -70,12 +82,15 @@ interface InstanceOptions {
   on401: "refresh" | "redirect";
   /** Login page path used when on401 === "redirect" */
   loginRoute?: string;
+  /** Clears this module's tokens before redirecting on 401 */
+  clearTokens?: () => void;
 }
 
 function createInstance({
   getToken,
   on401,
   loginRoute,
+  clearTokens,
 }: InstanceOptions): AxiosInstance {
   const instance = axios.create({ headers: BASE_HEADERS });
 
@@ -120,7 +135,8 @@ function createInstance({
         }
       }
 
-      // Redirect flow (or refresh failed): send to the module's login page
+      // Redirect flow (or refresh failed): clear the module's tokens then send to login
+      if (clearTokens) clearTokens();
       if (loginRoute) {
         const currentPath = window.location.pathname + window.location.search;
         sessionStorage.setItem("redirectPath", currentPath);
@@ -144,9 +160,9 @@ function createInstance({
  */
 export const resolvePortalToken = (): string | null => {
   const path = window.location.pathname;
-  if (path.startsWith("/admn")) return localStorage.getItem("admin_acToken");
-  if (path.startsWith("/home")) return localStorage.getItem("partner_accesstoken");
-  return localStorage.getItem("admin_acToken") || localStorage.getItem("partner_accesstoken");
+  if (path.startsWith("/admn")) return getAdminAccessToken();
+  if (path.startsWith("/home")) return getPartnerAccessToken();
+  return getAdminAccessToken() || getPartnerAccessToken();
 };
 
 const resolvePortalLoginRoute = (): string => {
@@ -204,6 +220,10 @@ export const adminApi = createInstance({
   getToken: adminToken,
   on401: "redirect",
   loginRoute: LOGIN_ROUTES.admin,
+  clearTokens: () => {
+    removeAdminAccessToken();
+    removeAdminRefreshToken();
+  },
 });
 
 /** Partner / Seller portal — redirects to /partnerlogin on 401 */
@@ -211,6 +231,10 @@ export const partnerApi = createInstance({
   getToken: partnerToken,
   on401: "redirect",
   loginRoute: LOGIN_ROUTES.partner,
+  clearTokens: () => {
+    removePartnerAccessToken();
+    removePartnerRefreshToken();
+  },
 });
 
 /** Employee / Task-management portal — redirects to /userlogin on 401 */
@@ -218,6 +242,10 @@ export const employeeApi = createInstance({
   getToken: employeeToken,
   on401: "redirect",
   loginRoute: LOGIN_ROUTES.employee,
+  clearTokens: () => {
+    removeEmployeeAccessToken();
+    removeEmployeeRefreshToken();
+  },
 });
 
 // ─── Default export (backwards-compatible) ───────────────────────────────────

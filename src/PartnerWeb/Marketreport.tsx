@@ -14,8 +14,8 @@ import {
   AlertCircle,
   ShoppingCart,
 } from "lucide-react";
+import { partnerApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
-// Type definitions
 interface ListItem {
   itemId: string;
   itemName: string;
@@ -74,9 +74,6 @@ interface MarketUsersResponse {
   marketName: string;
   listMarketUserInfo: UserInfo[];
 }
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
-
-
 const MarketReport = () => {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
@@ -99,20 +96,10 @@ const MarketReport = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${BASE_URL}/product-service/getAllMarket?page=${page}&size=${size}`,
-        {
-           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/product-service/getAllMarket?page=${page}&size=${size}`
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data: MarketResponse = await response.json();
-
+      const data: MarketResponse = response.data;
       setMarkets(data.content || []);
       setTotalPages(data.totalPages || 1);
       setTotalElements(data.totalElements || 0);
@@ -129,21 +116,10 @@ const MarketReport = () => {
     setUserLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${BASE_URL}/user-service/getMarketUsers?marketId=${marketId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/user-service/getMarketUsers?marketId=${marketId}`
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data: MarketUsersResponse = await response.json();
-
-      setMarketUsers(data);
+      setMarketUsers(response.data);
       setSelectedMarket(marketId);
     } catch (error) {
       console.error("Error fetching market users:", error);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, startTransition } from "react";
 import { refreshAccessToken, startTokenRefresh, stopTokenRefresh } from "./RefreshToken";
+import { getPartnerAccessToken, getPartnerRefreshToken } from "../utils/cookieUtils";
 
 // Time in ms after which we consider the token may be expired (5 min)
 const TOKEN_EXPIRY_MS = 5 * 60 * 1000;
@@ -31,8 +32,8 @@ export const useSessionManager = (onLogout: () => void) => {
   }, [onLogout]);
 
   useEffect(() => {
-    const refreshToken = sessionStorage.getItem("partner_refreshtoken");
-    const accessToken = localStorage.getItem("partner_accesstoken");
+    const refreshToken = getPartnerRefreshToken();
+    const accessToken = getPartnerAccessToken();
 
     // If no tokens at all, don't start anything
     if (!refreshToken || !accessToken) return;
@@ -42,8 +43,8 @@ export const useSessionManager = (onLogout: () => void) => {
 
     // Handle silent background refresh failure
     const backgroundRefreshCheck = setInterval(async () => {
-      const token = localStorage.getItem("partner_accesstoken");
-      const rToken = sessionStorage.getItem("partner_refreshtoken");
+      const token = getPartnerAccessToken();
+      const rToken = getPartnerRefreshToken();
       if (!token || !rToken) {
         clearInterval(backgroundRefreshCheck);
         stopTokenRefresh();

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { partnerApi as axiosInstance } from "../utils/axiosInstances";
 import { Row, Col } from "antd";
 import { CalendarDays, Clock, AlertCircle, X, CheckCircle } from "lucide-react";
 import {
@@ -63,8 +64,6 @@ import {
 
 import BASE_URL from "../Config";
 import ProductModal from "./AllItemsModal";
-
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 const { Title, Text } = Typography;
 
@@ -229,16 +228,11 @@ const OrderDetailsPage: React.FC = () => {
     useState<boolean>(false);
 
   const fetchContainerStatus = (ordersData: Order) => {
-    axios
+    axiosInstance
       .get(
-        `${BASE_URL}/cart-service/cart/ContainerInterested/${ordersData?.customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+        `${BASE_URL}/cart-service/cart/ContainerInterested/${ordersData?.customerId}`
       )
-      .then((response) => {
+      .then((response: any) => {
         const status = response.data?.freeContainerStatus;
         setPreference(status);
         const steelContainerItem = ordersData.orderItems?.find((item) =>
@@ -271,7 +265,7 @@ const OrderDetailsPage: React.FC = () => {
           }
         }
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.log("Error fetching container status:", error);
         setShowButton(false);
       });
@@ -387,14 +381,8 @@ const OrderDetailsPage: React.FC = () => {
   const fetchAvailableTimeSlots = async (_orderId: string) => {
     setIsLoading2(true);
     try {
-      const response = await axios.get(
-        `${BASE_URL}/order-service/fetchTimeSlotlist`,
-        {
-          headers: {
-            Authorization: `Bearer ${getAccessToken()}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await axiosInstance.get(
+        `${BASE_URL}/order-service/fetchTimeSlotlist`
       );
 
       if (Array.isArray(response.data)) {
@@ -501,11 +489,7 @@ const OrderDetailsPage: React.FC = () => {
         userId,
       };
 
-      const resp = await axios.patch(requestUrl, requestBody, {
-        headers: {
-          Authorization: `Bearer ${getAccessToken()}`,
-          "Content-Type": "application/json",
-        },
+      const resp = await axiosInstance.patch(requestUrl, requestBody, {
         timeout: 10000,
       });
 
@@ -572,13 +556,9 @@ const OrderDetailsPage: React.FC = () => {
     }
 
     try {
-      await axios.patch(
+      await axiosInstance.patch(
         `${BASE_URL}/order-service/containerAddForStore`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${getAccessToken()}`,
-          }}
+        payload
       );
 
       message.success(
@@ -653,16 +633,9 @@ const OrderDetailsPage: React.FC = () => {
       orderStatus: string
     ): Promise<Order[]> {
       try {
-        const response = await axios.post<Order[]>(
+        const response = await axiosInstance.post<Order[]>(
           `${BASE_URL}/order-service/assignedOrders`,
-          { orderId, orderStatus },
-          {
-            headers: {
-              accept: "*/*",
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${getAccessToken()}`
-            },
-          }
+          { orderId, orderStatus }
         );
         return response.data;
       } catch (error) {
@@ -675,16 +648,11 @@ const OrderDetailsPage: React.FC = () => {
   const getDeliveryDetials = async (status: string) => {
     if (status === "3" || status === "4" || status === "PickedUp") {
       try {
-        const response = await axios.post(
+        const response = await axiosInstance.post(
           `${BASE_URL}/order-service/deliveryBoyAssigneData`,
           {
             orderId: orderId,
             orderStatus: status || "3",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${getAccessToken()}`,
-            },
           }
         );
         if (response.status === 200) {
@@ -709,25 +677,12 @@ const OrderDetailsPage: React.FC = () => {
   const findOrderDetails = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/order-service/getOrdersByOrderId/${orderId}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "*/*",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await axiosInstance.get(
+        `${BASE_URL}/order-service/getOrdersByOrderId/${orderId}`
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.length > 0) {
-        let status = data[0].orderStatus;
+      if (response.data.length > 0) {
+        const status = response.data[0].orderStatus;
         setOrderStatus(status);
         getDeliveryDetials(status);
         fetchOrderDetails(status);
@@ -866,25 +821,12 @@ const OrderDetailsPage: React.FC = () => {
     setdbLoading1(true);
     try {
       const url = `${BASE_URL}/user-service/deliveryBoyList`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${getAccessToken()}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        message.error(
-          "Failed to get DilveryBoy list please try after sometime."
-        );
-      }
-      const data = await response.json();
-      setDeliveryBoys(data);
+      const response = await axiosInstance.get(url);
+      setDeliveryBoys(response.data);
       setdbModalVisible(true);
     } catch (error) {
-      message.warning(
-        "Failed to get DilveryBoy list please try after sometime."
+      message.error(
+        "Failed to get DeliveryBoy list please try after sometime."
       );
     } finally {
       setdbLoading1(false);
@@ -909,16 +851,11 @@ const OrderDetailsPage: React.FC = () => {
       await rejectForm.validateFields();
       const rejectReason = rejectForm.getFieldValue("rejectReason");
       setConfirmLoading(true);
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         `${BASE_URL}/order-service/reject_orders`,
         {
           orderId: orderId,
           cancelReason: rejectReason,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
         }
       );
 
@@ -957,24 +894,11 @@ const OrderDetailsPage: React.FC = () => {
         : `${BASE_URL}/order-service/reassignOrderToDb`;
 
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${getAccessToken()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        message.error("Failed to assign to delveryboy");
-      } else {
-        message.success("Order assigned successfully!");
-        setdbModalVisible(false);
-        findOrderDetails();
-      }
+      await axiosInstance.post(apiUrl, data);
+      message.success("Order assigned successfully!");
+      setdbModalVisible(false);
+      findOrderDetails();
     } catch (error) {
-      // console.error("Error assigning order:", error);
       message.error("Failed to assign order.");
     } finally {
       setdbLoading(false);
@@ -1766,14 +1690,9 @@ const OrderDetailsPage: React.FC = () => {
               orderId: orderDetails?.orderId,
             };
 
-            await axios.patch(
+            await axiosInstance.patch(
               `${BASE_URL}/order-service/orderAddressUpdate`,
-              payload,
-              {
-                headers: {
-                  Authorization: `Bearer ${getAccessToken()}`,
-                },
-              }
+              payload
             );
 
             message.success("Address updated successfully!");

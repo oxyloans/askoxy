@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { customerApi } from '../utils/axiosInstance';
 import './OfferScreen.css';
 
 interface Offer {
@@ -22,8 +23,8 @@ const OfferScreen: React.FC = () => {
 
   const fetchOffers = async () => {
     try {
-      const response = await fetch('https://meta.oxyloans.com/api/product-service/getComboActiveInfo');
-      const data = await response.json();
+      const response = await customerApi.get('https://meta.oxyloans.com/api/product-service/getComboActiveInfo');
+      const data = response.data;
       setOffers(data);
     } catch (error) {
       console.error('Error fetching offers:', error);

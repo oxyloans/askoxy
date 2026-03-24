@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstances";
 import {
   Typography,
   message,
@@ -21,8 +21,6 @@ import {
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import { useNavigate, useNavigation } from "react-router-dom";
-
-const getToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 interface DeliveryBoy {
   userId: string;
@@ -62,9 +60,8 @@ const DeliveryBoyList: React.FC = () => {
   const fetchDeliveryBoys = async () => {
     try {
       setLoading(true);
-      const response = await axios.get<DeliveryBoy[]>(
-        `${BASE_URL}/user-service/deliveryBoyList`,
-        { headers: { Authorization: `Bearer ${getToken()}` } }
+      const response = await partnerApi.get<DeliveryBoy[]>(
+        `${BASE_URL}/user-service/deliveryBoyList`
       );
 
       const filteredDeliveryBoys = response.data.filter((boy) => !boy.testUser);
@@ -136,9 +133,8 @@ const DeliveryBoyList: React.FC = () => {
 
   const updateDeliveryBoyStatus = async (id: string, isActive: boolean) => {
     try {
-      const response = await axios.patch(`${BASE_URL}/user-service/status`,
-        { id: id, isActive: isActive.toString() },
-        { headers: { Authorization: `Bearer ${getToken()}` } }
+      const response = await partnerApi.patch(`${BASE_URL}/user-service/status`,
+        { id: id, isActive: isActive.toString() }
       );
 
       if (response.status === 200) {
@@ -179,10 +175,9 @@ const DeliveryBoyList: React.FC = () => {
         alterMobileNumber: values.alterMobileNumber,
         customerEmail: values.email,
       };
-      const response = await axios.patch(
+      const response = await partnerApi.patch(
         `${BASE_URL}/user-service/update`,
-        payload,
-        { headers: { Authorization: `Bearer ${getToken()}` } }
+        payload
       );
 
       if (response.status === 200) {

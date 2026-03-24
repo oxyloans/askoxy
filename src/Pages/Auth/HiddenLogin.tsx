@@ -23,6 +23,9 @@ import {
   Users,
 } from "lucide-react";
 import BASE_URL from "../../Config";
+import { store } from "../../store";
+import { setCustomerAccessToken, setRefreshToken } from "../../utils/cookieUtils";
+import { updateRefreshToken } from "../../store/authSlice";
 
 const HiddenLogin = () => {
   const navigate = useNavigate();
@@ -254,11 +257,23 @@ const HiddenLogin = () => {
       if (response.data) {
         setShowSuccessPopup(true);
         setMessage("User onboarded successfully!");
+                setCustomerAccessToken(response.data.accessToken);
+                
+                // Store refresh token if available
+                if (response.data.refreshToken) {
+                  setRefreshToken(response.data.refreshToken);
+                  store.dispatch(updateRefreshToken(response.data.refreshToken));
+                }
+                
+                // localStorage.setItem("primaryType", primaryType);
+                localStorage.setItem("accessToken", response.data.accessToken);
+                localStorage.setItem("token", response.data.accessToken);
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);
         localStorage.setItem("mobileNumber", response.data.mobileNumber);
         localStorage.setItem("token", response.data.accessToken); // For backward compatibility
         sessionStorage.setItem("refreshToken", response.data.refreshToken);
+
         setTimeout(() => {
           setShowSuccessPopup(false);
           setOnboardMobileNumber("");

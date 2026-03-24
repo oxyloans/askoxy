@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstances";
 import { Typography, message, Spin, Card, Button, Empty, Input } from "antd";
 import {
   EyeOutlined,
@@ -25,8 +25,6 @@ interface Address {
   pincode?: string;
 }
 
-const getToken = () => localStorage.getItem("partner_accesstoken") || "";
-
 const AcceptedOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -38,9 +36,8 @@ const AcceptedOrders: React.FC = () => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        const response = await axios.get<Order[]>(
-          `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=2`,
-          { headers: { Authorization: `Bearer ${getToken()}` } }
+        const response = await partnerApi.get<Order[]>(
+          `${BASE_URL}/order-service/getAllOrdersBasedOnStatus?orderStatus=2`
         );
 
         const filteredOrders = response.data.filter((order) => !order.testUser);

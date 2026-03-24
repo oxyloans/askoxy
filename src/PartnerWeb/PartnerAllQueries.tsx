@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstances";
 import { Layout, Select, Table, Modal, Spin } from "antd";
 import BASE_URL from "../Config";
-
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -56,10 +54,9 @@ const AllQueries: React.FC = () => {
         // userId,
       };
 
-      const response = await axios.post(
+      const response = await partnerApi.post(
         `${BASE_URL}/user-service/write/getAllQueries`,
-        requestPayload,
-        { headers: { Authorization: `Bearer ${getAccessToken()}` } }
+        requestPayload
       );
 
       setQueries(response.data);
@@ -145,17 +142,12 @@ const AllQueries: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/user-service/write/saveData`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAccessToken()}`,
-        },
+      const response = await partnerApi.post(
+        `${BASE_URL}/user-service/write/saveData`,
+        data
+      );
 
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
+      const result = response.data;
 
       if (result != null) {
         setLoading(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstances";
 import {
   Card,
   Typography,
@@ -163,7 +163,7 @@ const AssignedTasksPage: React.FC = () => {
   const fetchAssignedTasks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
+      const response = await employeeApi.get(
         `${BASE_URL}/user-service/write/getTaskData`,
         { headers: { accept: "*/*" } }
       );
@@ -235,26 +235,16 @@ const AssignedTasksPage: React.FC = () => {
 
     try {
       // Update task status
-      const response = await axios.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/user-service/write/tasks/${taskId}/status`,
         {},
-        {
-          headers: { "Content-Type": "application/json", accept: "*/*" },
-          params: { action },
-        }
+        { params: { action } }
       );
 
-      // Submit comment and link if task is completed
       if (newStatus === 4 && commentData) {
-        await axios.post(
+        await employeeApi.post(
           `${BASE_URL}/user-service/write/comments/${taskId}`,
-          {
-            comment: commentData.comment,
-            link: commentData.link || "",
-          },
-          {
-            headers: { "Content-Type": "application/json", accept: "*/*" },
-          }
+          { comment: commentData.comment, link: commentData.link || "" }
         );
         message.success({
           content: "Task completed and comment submitted!",

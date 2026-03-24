@@ -22,7 +22,7 @@ import {
   Space,
   Empty,
 } from "antd";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstances";
 import {
   ArrowLeftOutlined,
   MessageOutlined,
@@ -101,7 +101,7 @@ const RadhaInstructionView: React.FC = () => {
   const fetchInstructionData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get<InstructionData>(
+      const res = await employeeApi.get<InstructionData>(
         `${BASE_URL}/user-service/write/getRadhaInstructionId?id=${id}`
       );
       setInstructionData(res.data);
@@ -114,7 +114,7 @@ const RadhaInstructionView: React.FC = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get<Employee[]>(
+      const res = await employeeApi.get<Employee[]>(
         `${BASE_URL}/user-service/getAllEmployees`
       );
       setEmployees(res.data);
@@ -174,7 +174,7 @@ const RadhaInstructionView: React.FC = () => {
         userid: userId,
       };
 
-      await axios.patch(
+      await employeeApi.patch(
         `${BASE_URL}/user-service/write/radhaInteractions`,
         payload
       );

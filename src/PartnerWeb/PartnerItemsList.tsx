@@ -15,7 +15,7 @@ import {
   SearchOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
-import { partnerApi } from "../utils/axiosInstance";
+import { partnerApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
 
 // Define the type for the item based on the new API response
@@ -46,7 +46,6 @@ const PartnerItemsList: React.FC = () => {
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const getToken = () => localStorage.getItem("partner_accesstoken") || "";
   const [statusFilter, setStatusFilter] = useState("all");
   const [urls, setUrls] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState<string>("");
@@ -283,21 +282,14 @@ const PartnerItemsList: React.FC = () => {
         itemId: imageUpdateModal.item?.itemId || "",
       };
 
-      const response = await fetch(`${BASE_URL}/product-service/goldPrice`, {
-        method: "PATCH",
-        headers: {
-          accept: "*/*",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await partnerApi.patch(
+        `${BASE_URL}/product-service/goldPrice`,
+        payload
+      );
 
-      if (!response.ok) throw new Error("Failed to update URLs");
-
-      console.log("URLs updated successfully:", await response.json());
+      console.log("URLs updated successfully:", response.data);
       setUrls([]);
-      setUrlInput(""); // clear input on success
+      setUrlInput("");
     } catch (error) {
       console.error("Error updating URLs:", error);
     }

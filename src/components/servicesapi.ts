@@ -217,12 +217,12 @@ export const fetchAppliedJobsByUserId = async (
 ): Promise<AppliedJob[]> => {
   if (!userId) return [];
   try {
-    const { data } = await axiosInstance.get<AppliedJob[]>(
-      `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
-      { params: { userId } }
-      
+    const { data } = await axiosInstance.get<any>(
+      `${BASE_URL}/marketing-service/campgin/get-user-apply-jobs`,
+      { params: { userId } },
     );
-    return data || [];
+    // The response is { data: AppliedJob[], total: number, userId: string }
+    return data?.data || [];
   } catch {
     return [];
   }

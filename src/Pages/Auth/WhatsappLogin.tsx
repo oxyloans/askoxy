@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { FaWhatsapp, FaGoogle } from "react-icons/fa6";
+import { FaWhatsapp } from "react-icons/fa6";
 import axios, { AxiosError } from "axios";
 import axiosInstance from "../../utils/axiosInstance";
 import { store } from "../../store";
 import { updateAccessToken, updateRefreshToken, logout } from "../../store/authSlice";
-// import { getRefreshToken } from "../../utils/cookieUtils";
+import { setCustomerAccessToken, setRefreshToken } from "../../utils/cookieUtils";
 import PhoneInput, {
   isValidPhoneNumber,
   parsePhoneNumber,
@@ -152,9 +152,6 @@ const WhatsappLogin: React.FC = () => {
     }, 300);
   }, [isOtpComplete, showOtp]);
 
-  // Retrieve variables from localStorage and sessionStorage
-  const userId = localStorage.getItem("userId");
-  const accessToken = localStorage.getItem("accessToken");
   const pendingGoogleAuth = sessionStorage.getItem("pendingGoogleAuth");
   const deviceId = useRef<string>(
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -195,7 +192,7 @@ const WhatsappLogin: React.FC = () => {
       accessTokenGoogle &&
       accessTokenGoogle !== "null"
     ) {
-      localStorage.setItem("accessToken", accessTokenGoogle);
+      setCustomerAccessToken(accessTokenGoogle);
       localStorage.setItem(
         "primaryType",
         sessionStorage.getItem("primaryType") || "CUSTOMER"
@@ -590,16 +587,17 @@ const WhatsappLogin: React.FC = () => {
         requestBody
       );
       if (response.data && response.data.accessToken && response.data.userId) {
-        localStorage.setItem("accessToken", response.data.accessToken);
-        localStorage.setItem("token", response.data.accessToken);
+        setCustomerAccessToken(response.data.accessToken);
         
         // Store refresh token if available
         if (response.data.refreshToken) {
-          sessionStorage.setItem("refreshToken", response.data.refreshToken);
+          setRefreshToken(response.data.refreshToken);
           store.dispatch(updateRefreshToken(response.data.refreshToken));
         }
         
         localStorage.setItem("primaryType", primaryType);
+        localStorage.setItem("accessToken", response.data.accessToken);
+        localStorage.setItem("token", response.data.accessToken);
 
         // Fetch user details
         const userData = await fetchUserDetails(response.data.accessToken);

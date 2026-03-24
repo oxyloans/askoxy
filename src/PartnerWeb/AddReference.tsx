@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { Button, Input, Select, Card, message, Spin, Divider } from "antd";
 import { UserOutlined, PhoneOutlined, PlusOutlined } from "@ant-design/icons";
+import { partnerApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
-
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 const { Option } = Select;
 
@@ -52,25 +51,11 @@ const AddReference: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await partnerApi.post(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify({
-            number: searchInput,
-          }),
-        }
+        { number: searchInput }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user data");
-      }
-
-      const data = await response.json();
+      const data = response.data;
 
       if (data.activeUsersResponse && data.activeUsersResponse.length > 0) {
         setUserData(data.activeUsersResponse[0]);
@@ -100,23 +85,11 @@ const AddReference: React.FC = () => {
 
     setReferenceLoading(true);
     try {
-      const response = await fetch(
+      const response = await partnerApi.patch(
         `${BASE_URL}/reference-service/add_reference_mapping`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify(referenceData),
-        }
+        referenceData
       );
-
-      const result = await response.json();
-
-      if (!response.ok || result.success === false) {
-        throw new Error(result.message || "Failed to add reference");
-      }
+      const result = response.data;
 
       message.success(result.message || "Reference added successfully");
 

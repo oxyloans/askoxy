@@ -25,8 +25,7 @@ import {
   SortAscendingOutlined,
   SortDescendingOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
-import { employeeApi } from "../utils/axiosInstance";
+import { employeeApi } from "../utils/axiosInstances";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 
@@ -54,7 +53,6 @@ const AdminTasks: React.FC = () => {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const userId = sessionStorage.getItem("userId") || "";
-  const accessToken = sessionStorage.getItem("taskAccessToken")
   const [searchText, setSearchText] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
@@ -136,12 +134,7 @@ const AdminTasks: React.FC = () => {
     setLoading(true);
     try {
       const response = await employeeApi.get(
-        `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`
       );
 
       const reversedTasks = response.data.slice().reverse();
@@ -254,12 +247,7 @@ const AdminTasks: React.FC = () => {
     try {
       await employeeApi.patch(
         `${BASE_URL}/ai-service/agent/taskUpdate?id=${id}&status=${newStatus}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        {}
       );
       message.success(`Task marked as ${newStatus}`);
       fetchTasks();
@@ -323,17 +311,12 @@ const AdminTasks: React.FC = () => {
       return;
     }
     try {
-      await employeeApi.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/ai-service/agent/userAndRadhaSirComments`,
         {
           taskId: selectedTask?.id,
           comments,
           commentsBy: "EMPLOYEE",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
         }
       );
       message.success("Comments added successfully!");
@@ -359,9 +342,6 @@ const AdminTasks: React.FC = () => {
         `${BASE_URL}/ai-service/agent/taskedIdBasedOnComments`,
         {
           params: { taskId: task.id },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
         }
       );
       setCommentsData(response.data || []);

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import { partnerApi } from "../utils/axiosInstances";
 
 import BASE_URL from "../Config";
 
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 // Define types for our data
 interface Product {
   barcode: string;
@@ -185,16 +184,11 @@ const BarcodeScanner: React.FC = () => {
 
   const checkProfileCompletion = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`,
-        {
-          headers: { Authorization: `Bearer ${getAccessToken()}` },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`
       );
-
       if (response.status === 200) {
-        const profileData = response.data;
-        setUserData(profileData);
+        setUserData(response.data);
       }
     } catch (error) {
       console.error("ERROR", error);
@@ -301,16 +295,12 @@ const BarcodeScanner: React.FC = () => {
 
     setCategories(mockCategories);
 
-    axios
-      .get(BASE_URL + "/product-service/showItemsForCustomrs",
-      {
-        headers: { Authorization: `Bearer ${getAccessToken()}` }
-      }
-      )
-      .then((response) => {
+    partnerApi
+      .get(BASE_URL + "/product-service/showItemsForCustomrs")
+      .then((response: { data: Category[] }) => {
         setCategories(response.data);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         console.log(error);
         alert("Failed to fetch product data");
         setLoading(false);
@@ -670,10 +660,9 @@ const BarcodeScanner: React.FC = () => {
       console.log("payload", payload);
       console.log("Total barcodes being sent:", allBarcodes.length);
 
-      const response = await axios.post(
+      const response = await partnerApi.post(
         BASE_URL + "/product-service/individualBarcodeScanner",
-        payload,
-        { headers: { Authorization: `Bearer ${getAccessToken()}` } }
+        payload
       );
 
       // Handle the response
@@ -785,6 +774,7 @@ const BarcodeScanner: React.FC = () => {
                 />
                 <button
                   onClick={() => processBarcodeScan(barcodeInput)}
+                  aria-label="Search barcode"
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-purple-600 hover:text-purple-800"
                 >
                   <svg
@@ -1138,6 +1128,7 @@ const BarcodeScanner: React.FC = () => {
                   </h2>
                   <button
                     onClick={() => setShowProductDetail(false)}
+                    aria-label="Close product detail"
                     className="text-gray-500 hover:text-gray-700"
                   >
                     <svg
@@ -1266,6 +1257,7 @@ const BarcodeScanner: React.FC = () => {
                   </h2>
                   <button
                     onClick={() => setShowMatchesModal(false)}
+                    aria-label="Close matches modal"
                     className="text-gray-500 hover:text-gray-700"
                   >
                     <svg
@@ -1364,6 +1356,7 @@ const BarcodeScanner: React.FC = () => {
                   </h2>
                   <button
                     onClick={cancelPayment}
+                    aria-label="Close order summary"
                     className="text-gray-500 hover:text-gray-700"
                     disabled={processingPayment}
                   >

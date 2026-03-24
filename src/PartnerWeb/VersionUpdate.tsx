@@ -11,9 +11,8 @@ import {
   ShoppingCart,
   User,
 } from "lucide-react";
+import { partnerApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
-
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 interface Version {
   version: string;
@@ -38,30 +37,12 @@ const VersionUpdate: React.FC = () => {
     setError(null);
 
     try {
-      const [androidCustomerResponse, iosCustomerResponse, androidSellerResponse] = await Promise.all([
-        fetch(
-          `${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=ANDROID`,
-          { headers: { Authorization: `Bearer ${getAccessToken()}` } }
-        ),
-        fetch(
-          `${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=IOS`,
-          { headers: { Authorization: `Bearer ${getAccessToken()}` } }
-        ),
-        fetch(
-          `${BASE_URL}/product-service/getAllVersions?userType=SELLER&versionType=ANDROID`,
-          { headers: { Authorization: `Bearer ${getAccessToken()}` } }
-        ),
+      const [r1, r2, r3] = await Promise.all([
+        partnerApi.get(`${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=ANDROID`),
+        partnerApi.get(`${BASE_URL}/product-service/getAllVersions?userType=CUSTOMER&versionType=IOS`),
+        partnerApi.get(`${BASE_URL}/product-service/getAllVersions?userType=SELLER&versionType=ANDROID`),
       ]);
-
-      if (!androidCustomerResponse.ok || !iosCustomerResponse.ok || !androidSellerResponse.ok) {
-        throw new Error("Failed to fetch versions");
-      }
-
-      const androidCustomerData = await androidCustomerResponse.json();
-      const iosCustomerData = await iosCustomerResponse.json();
-      const androidSellerData = await androidSellerResponse.json();
-
-      setVersions([androidCustomerData, iosCustomerData, androidSellerData]);
+      setVersions([r1.data, r2.data, r3.data]);
     } catch (err) {
       setError("Failed to fetch current versions. Please try again.");
       console.error("Error fetching versions:", err);
@@ -81,36 +62,12 @@ const VersionUpdate: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await fetch(
+      await partnerApi.patch(
         `${BASE_URL}/product-service/versionUpdate`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify({
-            list: [
-              {
-                userType: userType,
-                version: newVersion,
-                versionType: versionType,
-              },
-            ],
-          }),
-        }
+        { list: [{ userType, version: newVersion, versionType }] }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to update version");
-      }
-
       setSuccess(`${userType} ${versionType} version updated successfully!`);
-      setEditingVersions((prev) => {
-        const newState = { ...prev };
-        delete newState[updateKey];
-        return newState;
-      });
+      setEditingVersions((prev) => { const s = { ...prev }; delete s[updateKey]; return s; });
       await fetchVersions();
     } catch (err) {
       setError(`Failed to update ${userType} ${versionType} version. Please try again.`);

@@ -11,9 +11,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
 import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 import { CartContext } from "../until/CartContext";
-import axios from "axios";
 import SearchBar from "../kart/SearchBar";
 import BASE_URL from "../Config";
+import { customerApi as axios } from "../utils/axiosInstances";
 
 interface SearchResult {
   id: string;
@@ -25,35 +25,23 @@ interface HeaderProps {
   IsMobile5: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Header: React.FC<HeaderProps> = ({
-  cartCount: propCartCount,
-  IsMobile5,
-}) => {
+const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchValue, setSearchValue] = useState("");
-  const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
-  const [isFocused, setIsFocused] = useState(false);
   const [activeButton, setActiveButton] = useState<
     "profile" | "cart" | "ai" | null
   >(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [searchPlaceholder, setSearchPlaceholder] = useState("");
   const [showValidationPopup, setShowValidationPopup] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [profileLoader, setProfileLoader] = useState(false);
-  const [whatsappVerified, setWhatsappVerified] = useState(false);
-  const [mobileVerified, setMobileVerified] = useState(false);
-  const [isLoginWithWhatsapp, setIsLoginWithWhatsapp] = useState(false);
-  const [firstName, setFirstName] = useState("");
   const [isAiHovered, setIsAiHovered] = useState(false);
 
   const toggleSidebar = () => {
     IsMobile5((prev: boolean) => !prev);
   };
 
-  const token = localStorage.getItem("accessToken");
   const customerId = localStorage.getItem("userId");
 
   const searchTexts = [
@@ -74,25 +62,10 @@ const Header: React.FC<HeaderProps> = ({
   const { count, setCount } = context;
 
   useEffect(() => {
-    if (token && customerId) {
+    if (customerId) {
       fetchCartData();
     }
-  }, [token, customerId]);
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    const animatePlaceholder = async () => {
-      const currentText = `Search for "${searchTexts[currentSearchIndex]}"`;
-      setSearchPlaceholder(currentText);
-
-      timeout = setTimeout(() => {
-        setCurrentSearchIndex((prev) => (prev + 1) % searchTexts.length);
-      }, 3000);
-    };
-
-    animatePlaceholder();
-    return () => clearTimeout(timeout);
-  }, [currentSearchIndex]);
+  }, [customerId]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -115,12 +88,7 @@ const Header: React.FC<HeaderProps> = ({
     setIsSearching(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/product-service/dynamicSearch?q=${encodeURIComponent(
-          query
-        )}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${BASE_URL}/product-service/dynamicSearch?q=${encodeURIComponent(query)}`
       );
       const flattenedProducts = (response.data.items || []).flatMap(
         (category: any) =>
@@ -152,10 +120,7 @@ const Header: React.FC<HeaderProps> = ({
   const fetchCartData = async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
       );
       setCount(response.data.length);
     } catch (error) {
@@ -163,39 +128,24 @@ const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const checkProfileCompletion = async () => {
-    setProfileLoader(true);
+  const checkProfileCompletion = async (): Promise<boolean> => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`
       );
-
       if (response.status === 200) {
         const profileData = response.data;
-
-        setWhatsappVerified(profileData.whatsappVerified);
-        setMobileVerified(profileData.mobileVerified);
-        if (profileData.whatsappVerified) {
-          setIsLoginWithWhatsapp(true);
-        }
-
-        setFirstName(profileData.firstName || "");
-
         return !!(profileData.firstName && profileData.firstName.trim() !== "");
       }
     } catch (error) {
       console.error("ERROR", error);
-    } finally {
-      setProfileLoader(false);
     }
     return false;
   };
 
-  const handleCartClick = () => {
-    if (!checkProfileCompletion()) {
+  const handleCartClick = async () => {
+    const isComplete = await checkProfileCompletion();
+    if (!isComplete) {
       setShowValidationPopup(true);
     } else {
       handleNavigation("/main/mycart");
@@ -228,20 +178,16 @@ const Header: React.FC<HeaderProps> = ({
       setIsSearchVisible(false);
       setSearchValue("");
       setSearchResults([]);
-      setIsFocused(false);
     } else {
       setIsSearchVisible(false);
       setSearchValue("");
       setSearchResults([]);
-      return;
     }
   };
 
   const handleSearchItemClick = (item: SearchResult) => {
-    // Close mobile search overlay
     setIsSearchVisible(false);
     setSearchValue("");
-    setIsFocused(false);
     setSearchResults([]);
 
     // Navigate to item details
@@ -299,14 +245,10 @@ const Header: React.FC<HeaderProps> = ({
               key={index}
               className="w-full py-3 text-left flex items-center space-x-3 transition-colors duration-200 hover:bg-purple-50 rounded-lg px-2 mb-1"
               onClick={() => {
-                setSearchValue(text);
-                setIsFocused(false);
-                // On mobile, perform search directly, on desktop navigate
                 navigate(`/main/search-main?q=${encodeURIComponent(text)}`);
                 setIsSearchVisible(false);
                 setSearchValue("");
                 setSearchResults([]);
-                setIsFocused(false);
               }}
             >
               <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
@@ -378,15 +320,10 @@ const Header: React.FC<HeaderProps> = ({
             key={index}
             className="w-full py-3 text-left flex items-center space-x-3 transition-colors duration-200 hover:bg-purple-50 rounded-lg px-2 mb-1"
             onClick={() => {
-              setSearchValue(text);
-              setIsFocused(false);
-              if (window.innerWidth < 640) {
-                searchProducts(text);
-              } else {
-                navigate(`/main/search-main?q=${encodeURIComponent(text)}`);
-                setIsSearchVisible(false);
-                setSearchResults([]);
-              }
+              navigate(`/main/search-main?q=${encodeURIComponent(text)}`);
+              setIsSearchVisible(false);
+              setSearchValue("");
+              setSearchResults([]);
             }}
           >
             <FaSearch className="text-purple-400 text-sm flex-shrink-0" />
@@ -582,6 +519,7 @@ const Header: React.FC<HeaderProps> = ({
                     setSearchResults([]);
                   }}
                   className="ml-2 text-gray-400 hover:text-red-500 flex-shrink-0"
+                  aria-label="Clear search"
                 >
                   <FaTimes size={16} />
                 </button>

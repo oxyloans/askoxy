@@ -780,35 +780,20 @@ const Subscription: React.FC = () => {
     var ciphertext = encryptEas(JsonData);
     var newCipher = ciphertext.toUpperCase();
 
-    var myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-
-    var raw = JSON.stringify({
-      mid: data.mid,
-      terminalId: data.terminalId,
-      req: newCipher,
-    });
-
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
-        {
-          method: "POST",
-          headers: myHeaders,
-          body: raw,
-          redirect: "follow",
-        }
+        { mid: data.mid, terminalId: data.terminalId, req: newCipher },
+        { headers: { "Content-Type": "application/json" } }
       );
+      const resultobj = response.data;
+      const responseurl = resultobj.response;
+      const parsed = decryptEas(responseurl);
+      const parsedData = JSON.parse(parsed);
 
-      const result = await response.text();
-      var resultobj = JSON.parse(result);
-      var responseurl = resultobj.response;
-      var data = decryptEas(responseurl);
-      data = JSON.parse(data);
-
-      localStorage.setItem("paymentId", data.paymentId);
+      localStorage.setItem("paymentId", parsedData.paymentId);
       localStorage.setItem("merchantTransactionId", mer);
-      const paymentUrl = data.paymentUrl;
+      const paymentUrl = parsedData.paymentUrl;
 
       Modal.confirm({
         title: "Proceed to Payment?",
@@ -874,28 +859,14 @@ const Subscription: React.FC = () => {
 
       var newCipher = ciphertext.toUpperCase();
 
-      var myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append(
-        "Cookie",
-        "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove"
-      );
-
-      var raw = JSON.stringify({
-        mid: Config["Getepay Mid"],
-        terminalId: Config["Getepay Terminal Id"],
-        req: newCipher,
-      });
-
-      fetch("https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus", {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow",
-      })
-        .then((response) => response.text())
-        .then((result) => {
-          var resultobj = JSON.parse(result);
+      axios
+        .post(
+          "https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus",
+          { mid: Config["Getepay Mid"], terminalId: Config["Getepay Terminal Id"], req: newCipher },
+          { headers: { "Content-Type": "application/json" } }
+        )
+        .then((response) => {
+          var resultobj = response.data;
           if (resultobj.response != null) {
             var responseurl = resultobj.response;
             var data = decryptEas(responseurl);

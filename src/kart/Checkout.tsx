@@ -1363,34 +1363,19 @@ const CheckoutPage: React.FC = () => {
     const ciphertext = encryptEas(JsonData);
     const newCipher = ciphertext.toUpperCase();
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-
-    const raw = JSON.stringify({
-      mid: data.mid,
-      terminalId: data.terminalId,
-      req: newCipher,
-    });
-
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
-        {
-          method: "POST",
-          headers: myHeaders,
-          body: raw,
-          redirect: "follow",
-        },
+        { mid: data.mid, terminalId: data.terminalId, req: newCipher },
+        { headers: { "Content-Type": "application/json" } },
       );
-      const result = await response.text();
-      const resultobj = JSON.parse(result);
+      const resultobj = response.data;
       const responseurl = resultobj.response;
       const decryptedData = decryptEas(responseurl);
-      const data = JSON.parse(decryptedData);
-      localStorage.setItem("paymentId", data.paymentId);
+      const parsed = JSON.parse(decryptedData);
+      localStorage.setItem("paymentId", parsed.paymentId);
       localStorage.setItem("merchantTransactionId", mer);
-      const paymentUrl = data.paymentUrl;
-      window.location.href = paymentUrl;
+      window.location.href = parsed.paymentUrl;
     } catch (error) {
       console.error("getepayPortal error:", error);
       message.error("Failed to generate payment invoice");
@@ -1427,28 +1412,14 @@ const CheckoutPage: React.FC = () => {
       );
       const newCipher = ciphertext.toUpperCase();
 
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append(
-        "Cookie",
-        "AWSALBAPP-0=remove; AWSALBAPP-1=remove; AWSALBAPP-2=remove; AWSALBAPP-3=remove",
-      );
-
-      const raw = JSON.stringify({
-        mid: Config["Getepay Mid"],
-        terminalId: Config["Getepay Terminal Id"],
-        req: newCipher,
-      });
-
-      fetch("https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus", {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow",
-      })
-        .then((response) => response.text())
-        .then((result) => {
-          const resultobj = JSON.parse(result);
+      axios
+        .post(
+          "https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus",
+          { mid: Config["Getepay Mid"], terminalId: Config["Getepay Terminal Id"], req: newCipher },
+          { headers: { "Content-Type": "application/json" } },
+        )
+        .then((response) => {
+          const resultobj = response.data;
           if (resultobj.response != null) {
             const responseurl = resultobj.response;
             const data = decryptEas(responseurl);

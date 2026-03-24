@@ -36,6 +36,7 @@ import {
 } from "@ant-design/icons";
 import { Truck, ShoppingBag, ShoppingCart, Store, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getPartnerAccessToken } from "../utils/cookieUtils";
 import { motion } from "framer-motion";
 import dayjs, { Dayjs } from "dayjs";
 import {
@@ -271,9 +272,10 @@ const MainPage: React.FC = () => {
   }, [loading, filteredOrders, orderDetails, pagination.pageSize]);
 
   const handleLogin = () => {
-    const accessToken = localStorage.getItem("partner_accesstoken");
-    if (!accessToken) {
-      navigate("/partnerlogin");
+    const accessToken = getPartnerAccessToken();
+    const partnerType = sessionStorage.getItem("partner_type");
+    if (!accessToken || partnerType !== "SELLER") {
+      navigate("/partnerlogin", { replace: true });
     }
   };
 

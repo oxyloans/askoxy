@@ -24,9 +24,8 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import type { UploadProps } from "antd/es/upload";
+import { partnerApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
-
-const getAccessToken = () => localStorage.getItem("partner_accesstoken") || "";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -96,18 +95,11 @@ const UpdateOffers: React.FC = () => {
   const fetchPaymentData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/order-service/getCodAndOnlinePaymetStatus`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/order-service/getCodAndOnlinePaymetStatus`
       );
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setPaymentData(data);
+      if (Array.isArray(response.data)) {
+        setPaymentData(response.data);
       } else {
         message.error("Invalid payment data received");
         setPaymentData([]);
@@ -124,18 +116,11 @@ const UpdateOffers: React.FC = () => {
   const fetchOfferImages = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/product-service/getOfferImages`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/product-service/getOfferImages`
       );
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setOfferImages(data);
+      if (Array.isArray(response.data)) {
+        setOfferImages(response.data);
       } else {
         message.error("Invalid offer image data received");
         setOfferImages([]);
@@ -151,16 +136,10 @@ const UpdateOffers: React.FC = () => {
   const fetchMinOrderAmount = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/order-service/allMinimumOrders`,
-        {
-           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        }
+      const response = await partnerApi.get(
+        `${BASE_URL}/order-service/allMinimumOrders`
       );
-      const data = await response.json();
+      const data = response.data;
       console.log("Fetched minimum order data:", data);
       if (data && data.orderAmount !== undefined && data.id) {
         setMinOrderAmount(data);
@@ -184,17 +163,11 @@ const UpdateOffers: React.FC = () => {
   const fetchBmvDescriptions = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${BASE_URL}/user-service/allBmvDiscriptionData`,{
-         headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          }
+      const response = await partnerApi.get(
+        `${BASE_URL}/user-service/allBmvDiscriptionData`
       );
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setBmvDescriptions(data);
+      if (Array.isArray(response.data)) {
+        setBmvDescriptions(response.data);
       } else {
         message.error("Invalid BMV description data received");
         setBmvDescriptions([]);
@@ -217,28 +190,12 @@ const UpdateOffers: React.FC = () => {
   // Handle payment status toggle
   const handlePaymentStatusToggle = async (record: PaymentStatus) => {
     try {
-      const response = await fetch(
+      await partnerApi.patch(
         `${BASE_URL}/order-service/onlineAndCodAtiveAndInactive`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify({
-            id: record.id,
-            paymentStatus: record.paymentStatus,
-            status: !record.status,
-          }),
-        }
+        { id: record.id, paymentStatus: record.paymentStatus, status: !record.status }
       );
-
-      if (response.ok) {
-        message.success("Payment status updated successfully");
-        fetchPaymentData();
-      } else {
-        message.error("Failed to update payment status");
-      }
+      message.success("Payment status updated successfully");
+      fetchPaymentData();
     } catch (error) {
       message.error("Error updating payment status");
     }
@@ -247,27 +204,12 @@ const UpdateOffers: React.FC = () => {
   // Handle image status toggle
   const handleImageStatusToggle = async (record: OfferImage) => {
     try {
-      const response = await fetch(
+      await partnerApi.patch(
         `${BASE_URL}/product-service/imageinactiveAndActive`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify({
-            id: record.id,
-            status: !record.status,
-          }),
-        }
+        { id: record.id, status: !record.status }
       );
-
-      if (response.ok) {
-        message.success("Image status updated successfully");
-        fetchOfferImages();
-      } else {
-        message.error("Failed to update image status");
-      }
+      message.success("Image status updated successfully");
+      fetchOfferImages();
     } catch (error) {
       message.error("Error updating image status");
     }
@@ -286,29 +228,13 @@ const UpdateOffers: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
+      await partnerApi.patch(
         `${BASE_URL}/order-service/minimumOrderAmountUpdate`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify({
-            id: minOrderAmount.id,
-            amount: newOrderAmount,
-          }),
-        }
+        { id: minOrderAmount.id, amount: newOrderAmount }
       );
-
-      if (response.ok) {
-        message.success("Minimum order amount updated successfully");
-        setOrderAmountModalVisible(false);
-        await fetchMinOrderAmount();
-      } else {
-        const errorData = await response.text();
-        message.error("Failed to update minimum order amount");
-      }
+      message.success("Minimum order amount updated successfully");
+      setOrderAmountModalVisible(false);
+      await fetchMinOrderAmount();
     } catch (error) {
       console.error("Error updating minimum order amount:", error);
       message.error("Error updating minimum order amount");
@@ -335,36 +261,16 @@ const UpdateOffers: React.FC = () => {
         payload.id = editingBmvDescription?.id;
       }
 
-      const response = await fetch(
+      await partnerApi.patch(
         `${BASE_URL}/user-service/bmvDiscriptionUpdate`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: JSON.stringify(payload),
-        }
+        payload
       );
-
-      if (response.ok) {
-        message.success(
-          `BMV description ${
-            isAddingBmvDescription ? "added" : "updated"
-          } successfully`
-        );
-        setBmvModalVisible(false);
-        setEditingBmvDescription(null);
-        setBmvDescriptionText("");
-        setIsAddingBmvDescription(false);
-        await fetchBmvDescriptions();
-      } else {
-        message.error(
-          `Failed to ${
-            isAddingBmvDescription ? "add" : "update"
-          } BMV description`
-        );
-      }
+      message.success(`BMV description ${isAddingBmvDescription ? "added" : "updated"} successfully`);
+      setBmvModalVisible(false);
+      setEditingBmvDescription(null);
+      setBmvDescriptionText("");
+      setIsAddingBmvDescription(false);
+      await fetchBmvDescriptions();
     } catch (error) {
       console.error(
         `Error ${
@@ -399,28 +305,12 @@ const UpdateOffers: React.FC = () => {
             status: values.status,
           };
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAccessToken()}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        message.success(
-          `Payment status ${editingPayment ? "updated" : "added"} successfully`
-        );
-        setPaymentModalVisible(false);
-        setEditingPayment(null);
-        setFormData({ paymentStatus: "", status: true });
-        fetchPaymentData();
-      } else {
-        message.error(
-          `Failed to ${editingPayment ? "update" : "add"} payment status`
-        );
-      }
+      await partnerApi({ method, url, data: body });
+      message.success(`Payment status ${editingPayment ? "updated" : "added"} successfully`);
+      setPaymentModalVisible(false);
+      setEditingPayment(null);
+      setFormData({ paymentStatus: "", status: true });
+      fetchPaymentData();
     } catch (error) {
       message.error("Error saving payment status");
     }
@@ -433,49 +323,23 @@ const UpdateOffers: React.FC = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("multiPart", selectedFile);
-    formData.append("fileType", "kyc");
+      const formData = new FormData();
+      formData.append("multiPart", selectedFile);
+      formData.append("fileType", "kyc");
+      formData.append("webNavigation", imageFormData.webNavigation.trim() || "null");
+      formData.append("mobileNavigation", imageFormData.mobileNavigation.trim() || "null");
+      formData.append("targetParam", imageFormData.targetParam.trim() || "null");
 
-    // Pass null if fields are empty, otherwise pass the actual value
-    formData.append(
-      "webNavigation",
-      imageFormData.webNavigation.trim() || "null"
-    );
-    formData.append(
-      "mobileNavigation",
-      imageFormData.mobileNavigation.trim() || "null"
-    );
-    formData.append("targetParam", imageFormData.targetParam.trim() || "null");
-
-    try {
-      const response = await fetch(
+      await partnerApi.post(
         `${BASE_URL}/product-service/offerImageUpload`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-          body: formData,
-        }
+        formData,
+        { headers: { "Content-Type": undefined } }
       );
-
-      if (response.ok) {
-        message.success("Image uploaded successfully");
-        setImageModalVisible(false);
-        setSelectedFile(null);
-        setImageFormData({
-          webNavigation: "",
-          mobileNavigation: "",
-          targetParam: "",
-        });
-        fetchOfferImages();
-      } else {
-        message.error("Failed to upload image");
-      }
-    } catch (error) {
-      message.error("Error uploading image");
-    }
+      message.success("Image uploaded successfully");
+      setImageModalVisible(false);
+      setSelectedFile(null);
+      setImageFormData({ webNavigation: "", mobileNavigation: "", targetParam: "" });
+      fetchOfferImages();
   };
 
   const uploadProps: UploadProps = {

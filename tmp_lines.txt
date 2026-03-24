@@ -1,0 +1,6 @@
+﻿      const response = await axios.post(`${BASE_URL}/student-service/user/chat1`, updatedMessages, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = response.data;
+      const isImageUrl = data.startsWith("http");

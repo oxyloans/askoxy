@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Card, message, Spin } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { customerApi } from "../utils/axiosInstance";
+import { customerApi } from "../utils/axiosInstances";
 import Logo from "../assets/img/logo.png";
 import BASE_URL from "../Config";
+import { setPartnerAccessToken, setPartnerRefreshToken, getPartnerAccessToken } from "../utils/cookieUtils";
 
 interface LoginFormValues {
   email: string;
@@ -40,14 +41,11 @@ const LoginPage: React.FC = () => {
     };
   }, []);
 
-  const checkAutoLogin = async () => {
-    try {
-      const token = sessionStorage.getItem("partner_refreshtoken");
-      if (token) {
-        navigate("/home");
-      }
-    } catch (error) {
-      console.error("Auto-login error:", error);
+  const checkAutoLogin = () => {
+    const accessToken = getPartnerAccessToken();
+    const partnerType = sessionStorage.getItem("partner_type");
+    if (accessToken && partnerType === "SELLER") {
+      navigate("/home", { replace: true });
     }
   };
 
@@ -70,13 +68,13 @@ const LoginPage: React.FC = () => {
         if (response.data.primaryType === "SELLER") {
           const result = response.data;
           // localStorage.setItem("partner_Token", JSON.stringify(result));
-          localStorage.setItem("partner_accesstoken", result.accessToken);
-          sessionStorage.setItem("partner_refreshtoken", result.refreshToke);
+          setPartnerAccessToken(result.accessToken);
+          setPartnerRefreshToken(result.refreshToke);
           sessionStorage.setItem("partner_type", result.primaryType);
           sessionStorage.setItem("partner_id", result.id);
 
           message.success("Login Successful! Welcome to AskOxy.AI Partner!");
-          navigate("/home");
+          navigate("/home", { replace: true });
         } else {
           message.info(
             "The credentials are incorrect for partner login. Please verify and try again.",

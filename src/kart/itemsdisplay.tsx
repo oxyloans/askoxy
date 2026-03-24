@@ -821,13 +821,11 @@ const ItemDisplayPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
-        method: "POST",
+      const response = await axios.post(`${BASE_URL}/student-service/user/chat1`, updatedMessages, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedMessages),
       });
 
-      const data = await response.text();
+      const data = response.data;
       const isImageUrl = data.startsWith("http");
 
       const assistantReply: Message = {
@@ -886,13 +884,11 @@ const ItemDisplayPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
-        method: "POST",
+      const response = await axios.post(`${BASE_URL}/student-service/user/chat1`, backendMessages, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(backendMessages), // send modified content here
       });
 
-      const data = await response.text();
+      const data = response.data;
       const isImageUrl = data.startsWith("http");
 
       const assistantReply: Message = {

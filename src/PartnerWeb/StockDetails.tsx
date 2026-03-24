@@ -9,7 +9,7 @@ import {
   Select,
   message,
 } from "antd";
-import { partnerApi } from "../utils/axiosInstance";
+import { partnerApi } from "../utils/axiosInstances";
 import type { ColumnsType } from "antd/es/table";
 import BASE_URL from "../Config";
 

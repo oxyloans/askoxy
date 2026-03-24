@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstances";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 import {
@@ -113,7 +113,7 @@ const TaskAssignedUser: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.get(
+      const response = await employeeApi.get(
         `${BASE_URL}/user-service/write/gettask/${userName}`
       );
 

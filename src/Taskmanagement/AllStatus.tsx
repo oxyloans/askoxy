@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstances";
 import {
   Card,
   Typography,
@@ -133,7 +133,7 @@ const AllStatusPage: React.FC = () => {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<"plan" | "eod" | null>(null);
   const taskId = sessionStorage.getItem("taskId");
-const accessToken = sessionStorage.getItem("taskAccessToken");
+
   useEffect(() => {
     // Get userId from localStorage
     const storedUserId = sessionStorage.getItem("userId");
@@ -190,15 +190,9 @@ const accessToken = sessionStorage.getItem("taskAccessToken");
     };
 
     try {
-      const response = await axios.patch(
+      const response = await employeeApi.patch(
         `${BASE_URL}/user-service/write/userTaskUpdate`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        payload
       );
 
       if (response.data.success) {
@@ -277,19 +271,12 @@ const accessToken = sessionStorage.getItem("taskAccessToken");
   const fetchAllTasks = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/user-service/write/getAllTaskUpdates`,
         {
           taskStatus: status,
           userId: userId,
           id: taskId,
-        },
-        {
-          headers: {
-            accept: "*/*",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
         }
       );
 
@@ -343,19 +330,12 @@ const accessToken = sessionStorage.getItem("taskAccessToken");
     try {
       const formattedDate = selectedDate.format("YYYY-MM-DD");
 
-      const response = await axios.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/user-service/write/get-task-by-date`,
         {
           taskStatus: status,
           specificDate: formattedDate,
           userId: userId,
-        },
-        {
-          headers: {
-            accept: "*/*",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
         }
       );
 

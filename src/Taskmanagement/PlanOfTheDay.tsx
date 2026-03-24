@@ -30,7 +30,7 @@ import {
   CalendarOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import { employeeApi } from "../utils/axiosInstances";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -93,7 +93,6 @@ const PlanOfTheDay: React.FC = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiResponse, setShowAiResponse] = useState(false);
   const [hasSeenAiResponse, setHasSeenAiResponse] = useState(false);
-  const token = sessionStorage.getItem("taskAccessToken");
   useEffect(() => {
     const today = new Date();
     const options: Intl.DateTimeFormatOptions = {
@@ -152,18 +151,12 @@ const PlanOfTheDay: React.FC = () => {
 
     console.log("userId", userId);
     try {
-      const response = await axios.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/user-service/write/getAllTaskUpdates`,
         {
           taskStatus: "PENDING",
           userId: userId,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        }
       );
       const tasks: Task[] = response.data;
       console.log("tasks", tasks);
@@ -257,27 +250,10 @@ const PlanOfTheDay: React.FC = () => {
         };
       }
 
-      const response = isEditMode
-        ? await axios.patch<TaskResponse>(
-            `${BASE_URL}/user-service/write/userTaskUpdate`,
-            payload,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
-        : await axios.patch<TaskResponse>(
-            `${BASE_URL}/user-service/write/userTaskUpdate`,
-            payload,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+      const response = await employeeApi.patch<TaskResponse>(
+        `${BASE_URL}/user-service/write/userTaskUpdate`,
+        payload
+      );
 
       if (response.data.success) {
         if (!isEditMode) {
@@ -339,8 +315,7 @@ const PlanOfTheDay: React.FC = () => {
   const callAiService = async (planText: string) => {
     setAiLoading(true);
     try {
-      const token = sessionStorage.getItem("accessToken") || "";
-      const response = await axios.post(
+      const response = await employeeApi.post(
         `${BASE_URL}/ai-service/agent/agentChat1`,
         {
           agentId: "d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0",
@@ -351,13 +326,7 @@ const PlanOfTheDay: React.FC = () => {
               content: `${planText} - Plan by ${userName}`,
             },
           ],
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        }
       );
 
       if (response.data.assistant_reply) {
