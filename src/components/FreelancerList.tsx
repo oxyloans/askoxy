@@ -5,6 +5,7 @@ import Logo from "../assets/img/askoxylogonew.png";
 import BASE_URL, { uploadurlwithId } from "../Config";
 import "./FreelancerList.css";
 import { FiArrowRight } from "react-icons/fi";
+import customerApi from "../utils/axiosInstances";
 
 
 interface Freelancer {
@@ -36,14 +37,15 @@ const FreelancerList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
 
-    fetch(`${BASE_URL}/ai-service/agent/getAllFreeLancers`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    customerApi
+      .get(`${BASE_URL}/ai-service/agent/getAllFreeLancers`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
+        },
+      })
+      .then((res) => {
+        const data = res.data;
         setFreelancers(Array.isArray(data) ? data : []);
         setLoading(false);
       })

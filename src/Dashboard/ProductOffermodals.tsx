@@ -5,6 +5,7 @@ import { message, Modal, Radio, Button, Tag, Space, Divider } from "antd";
 import { motion } from "framer-motion";
 import { ShoppingBag, Gift, Ticket, Info, CheckCircle } from "lucide-react";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 interface ProductItem {
   itemId?: string;
@@ -91,7 +92,7 @@ const ProductOfferModals = ({
   //   if (claimed) return true;
 
   //   try {
-  //     const response = await axios.get(
+  //     const response = await customerApi.get(
   //       `${BASE_URL}/cart-service/cart/oneKgOffer?customerId=${customerId}`,
   //       {
   //         headers: {
@@ -198,7 +199,7 @@ const ProductOfferModals = ({
         try {
           const currentQuantity = cartItems[item.itemId as string] || 1; // Use 1 as fallback since item is already added
 
-          await axios.patch(
+          await customerApi.patch(
             `${BASE_URL}/cart-service/cart/incrementCartData`,
             {
               cartQuantity: currentQuantity + 1,

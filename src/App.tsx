@@ -41,6 +41,10 @@ import TechmahindraJobsPage from "./components/TechmahindraJobsPage";
 import AllCompaniesJobsPage from "./components/AllCompaniesJobsPage";
 import BroadRidgeJobsPage from "./components/BroadRidgepage";
 import JobViewPage from "./components/JobsViewPage";
+import JobAnalysisResult from "./components/JobAnalysisResult";
+import ExamPage from "./components/ExamPage";
+import ExamQuestionPage from "./components/ExamQuestionPage";
+import ExamResultsPage from "./components/ExamResultsPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -565,7 +569,7 @@ const App: React.FC = () => {
               localStorage.getItem("admin_acToken") ||
               localStorage.getItem("partner_Token")) &&
               !isRestrictedRoute() && <FloatingCallButton />}
-            <Routes>
+            <Routes >
               {/* ===================================================== */}
               {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
               {/* ===================================================== */}
@@ -1114,6 +1118,10 @@ const App: React.FC = () => {
                   path="/main/dashboard/reviews-gpt"
                   element={<ReviewsGpt />}
                 />
+                <Route path="/main/job-analysis-result" element={<JobAnalysisResult />} />
+                <Route path="/main/exam" element={<ExamPage />} />
+                <Route path="/main/exam/question/:questionNumber" element={<ExamQuestionPage/>} />
+                <Route path="/main/exam/results" element={<ExamResultsPage />} />
                 <Route path="/main/dashboard/home" element={<Home />} />
                 <Route path="/main/dashboard/rice-gpt" element={<RiceGpt />} />
                 <Route

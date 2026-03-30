@@ -3,6 +3,7 @@ import { message as antdMessage } from "antd";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import { Mic } from "lucide-react";
+import customerApi from "../utils/axiosInstances";
 
 // New API endpoint
 const CHAT_API = `${BASE_URL}/student-service/user/askquestion`;
@@ -133,21 +134,20 @@ const AssistantAI: React.FC<AIChatWindowProps> = ({
         { role: "user" as const, content: userInput },
       ];
 
-      const response = await fetch(`${CHAT_API}?assistantId=${assistantId}`, {
-        method: "POST",
-        headers: {
-          accept: "*/*",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedHistory),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
+      const response = await customerApi.post(
+        `${CHAT_API}?assistantId=${assistantId}`,
+        updatedHistory,
+        {
+          headers: {
+            accept: "*/*",
+            "Content-Type": "application/json",
+          },
+          responseType: "text",
+        }
+      );
 
       // Get response as string
-      const aiResponse = await response.text();
+      const aiResponse = response.data;
 
       // Update conversation history with both user question and assistant response
       setConversationHistory((prev) => [

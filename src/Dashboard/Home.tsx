@@ -50,6 +50,7 @@ import gold from "../assets/img/gold.png";
 import allitems from "../assets/img/all items.png";
 import grocerie from "../assets/img/Groceries.png";
 import rice from "../assets/img/rice.png";
+import customerApi from "../utils/axiosInstances";
 
 // Define interfaces for Offer and UserEligibleOffer
 interface Offer {
@@ -263,7 +264,7 @@ const Home: React.FC = () => {
       }
 
       try {
-        const response = await axios.get(
+        const response = await customerApi.get(
           `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,{
             headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}`, },
           }
@@ -335,7 +336,7 @@ const Home: React.FC = () => {
   const fetchUserEligibleOffers = async (userId: string) => {
     const accessToken = localStorage.getItem("accessToken");
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/cart-service/cart/userEligibleOffer/${userId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
@@ -359,7 +360,7 @@ const Home: React.FC = () => {
     const accessToken = localStorage.getItem("accessToken");
     setIsFetchingOffers(true);
     try {
-      const offersResponse = await axios.get(
+      const offersResponse = await customerApi.get(
         `${BASE_URL}/cart-service/cart/activeOffers`,
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
@@ -443,7 +444,7 @@ const Home: React.FC = () => {
 
     setProductsLoading(true);
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/product-service/showGroupItemsForCustomrs`,
       );
       const data = response.data || [];
@@ -888,7 +889,7 @@ const Home: React.FC = () => {
         requestBody.status = "COMBO";
       }
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         requestBody,
         { headers: { Authorization: `Bearer ${accessToken}` } },
@@ -924,7 +925,7 @@ const Home: React.FC = () => {
 
       if (!isCombo && !hasAddedComboAddOn) {
         try {
-          const res = await axios.get(
+          const res = await customerApi.get(
             `${BASE_URL}/product-service/getComboInfo/${item.itemId}`,
             { headers: { Authorization: `Bearer ${accessToken}` } },
           );
@@ -1024,7 +1025,7 @@ const Home: React.FC = () => {
           (cart) => cart.itemId === item.itemId,
         )?.cartId;
 
-        const response = await axios.delete(
+        const response = await customerApi.delete(
           `${BASE_URL}/cart-service/cart/remove`,
           {
             data: { id: targetCartId },
@@ -1053,7 +1054,7 @@ const Home: React.FC = () => {
 
         const method = increment ? "post" : "patch";
 
-        const response = await axios[method](endpoint, requestBody, {
+        const response = await customerApi[method](endpoint, requestBody, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 

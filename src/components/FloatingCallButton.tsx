@@ -21,8 +21,8 @@
 //     setLoading(true);
 //     try {
 //       const userId = localStorage.getItem('userId') || 'default-user-id';
-//       const response = await fetch(`${BASE_URL}/user-service/callerNumberToUserMapping/${userId}`);
-//       const data = await response.json();
+//       const response = await customerApi.get(`${BASE_URL}/user-service/callerNumberToUserMapping/${userId}`);
+//       const data = response.data;
 //       setCallerInfo(data);
 //     } catch (error) {
 //       console.error('Error fetching caller info:', error);
@@ -154,9 +154,11 @@
 // export default FloatingCallButton;
 
 import React, { useState, useRef, useCallback } from "react";
+import axios from "axios";
 import { FaPhoneAlt } from "react-icons/fa";
 import { Phone, PhoneOff, Mic, Check, Copy } from "lucide-react";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 interface CallerInfo {
   callerId: string;
@@ -211,14 +213,14 @@ const FloatingCallButton: React.FC = () => {
     setLoading(true);
     try {
       const userId = localStorage.getItem("userId") || "default-user-id";
-      const response = await fetch(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/callerNumberToUserMapping/${userId}`,{
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           }
         }
       );
-      const data = await response.json();
+      const data = response.data;
       setCallerInfo(data);
     } catch (error) {
       console.error("Error fetching caller info:", error);
@@ -248,18 +250,16 @@ const FloatingCallButton: React.FC = () => {
       voicemode: string
     ): Promise<string> => {
       try {
-        const res = await fetch(
+        const { data } = await customerApi.post(
           `${BASE_URL}/student-service/user/token?assistantId=${""}&voicemode=${voicemode}`,
+          { instructions },
           {
-            method: "POST",
             headers: {
               Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ instructions }),
           }
         );
-        const data = await res.json();
         return data.client_secret.value;
       } catch (error) {
         console.error("Failed to get ephemeral token:", error);
@@ -324,19 +324,18 @@ const FloatingCallButton: React.FC = () => {
 
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await fetch(
+        const response = await customerApi.post(
           `${BASE_URL}/user-service/write/saveData`,
+          payload,
           {
-            method: "POST",
             headers: {
               Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(payload),
           }
         );
 
-        const data = await response.json();
+        const data = response.data;
 
         return data
           ? {
@@ -365,16 +364,19 @@ const FloatingCallButton: React.FC = () => {
 
       const token = localStorage.getItem("accessToken");
 
-      const res = await fetch(`${BASE_URL}/ai-service/chat1?userId=${userId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ prompt: query }),
-      });
+      const res = await customerApi.post(
+        `${BASE_URL}/ai-service/chat1?userId=${userId}`,
+        { prompt: query },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "text",
+        }
+      );
 
-      const text = await res.text();
+      const text = res.data;
 
       return {
         success: true,
@@ -556,21 +558,21 @@ const FloatingCallButton: React.FC = () => {
         await pc.setLocalDescription(offer);
 
         const model = "gpt-4o-realtime-preview-2025-06-03";
-        const sdpRes = await fetch(
+        const sdpRes = await customerApi.post(
           `https://api.openai.com/v1/realtime?model=${model}`,
+          offer.sdp,
           {
-            method: "POST",
-            body: offer.sdp,
             headers: {
               Authorization: `Bearer ${EPHEMERAL_KEY}`,
               "Content-Type": "application/sdp",
             },
+            responseType: "text",
           }
         );
 
         const answer: RTCSessionDescriptionInit = {
           type: "answer",
-          sdp: await sdpRes.text(),
+          sdp: sdpRes.data,
         };
         await pc.setRemoteDescription(answer);
 

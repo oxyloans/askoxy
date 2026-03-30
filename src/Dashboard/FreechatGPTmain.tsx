@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import ReactMarkdown from "react-markdown";
 
 import {
@@ -20,6 +19,7 @@ import {
   History,
   Send,
 } from "lucide-react";
+import customerApi from "../utils/axiosInstances";
 
 
 interface ChatMessage {
@@ -211,7 +211,7 @@ const FreeChatGPTmain: React.FC = () => {
       const apiUrl = `https://meta.oxyloans.com/api/student-service/user/globalChatGpt?prompt=${encodeURIComponent(
         queryInput
       )}${userId ? `&userId=${userId}` : ""}`;
-      const response = await axios.post(apiUrl);
+      const response = await customerApi.post(apiUrl);
 
       setMessages((prev) => [
         ...prev,

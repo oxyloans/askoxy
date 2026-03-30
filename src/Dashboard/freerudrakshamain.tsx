@@ -6,6 +6,7 @@ import Image2 from "../assets/img/R2.png";
 import { Modal, Button, Input, message, Form } from "antd";
 import Footer from '../components/Footer';
 import  BASE_URL  from "../Config";
+import customerApi from '../utils/axiosInstances';
 
 const FreeRudrakshaPage = () => {
   const navigate = useNavigate();
@@ -87,24 +88,14 @@ const FreeRudrakshaPage = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${BASE_URL}/contact-service/contact/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          ...writeToUsForm
-        }),
+      await customerApi.post(`${BASE_URL}/contact-service/contact/submit`, {
+        userId,
+        ...writeToUsForm,
       });
 
-      if (response.ok) {
-        message.success('Message sent successfully!');
-        setIsWriteToUsOpen(false);
-        setWriteToUsForm({ mobilenumber: '', email: '', message: '' });
-      } else {
-        message.error('Failed to send message. Please try again.');
-      }
+      message.success('Message sent successfully!');
+      setIsWriteToUsOpen(false);
+      setWriteToUsForm({ mobilenumber: '', email: '', message: '' });
     } catch (error) {
       console.error('Error:', error);
       message.error('An error occurred. Please try again.');
@@ -137,9 +128,9 @@ const FreeRudrakshaPage = () => {
   const fetchUserAddress = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${BASE_URL}/auth-service/auth/getuserAddress?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await customerApi.get(`${BASE_URL}/auth-service/auth/getuserAddress?userId=${userId}`);
+      if (response.data) {
+        const data = response.data;
         setSavedAddress(data.address);
         setDelivery(data.delivery);
         setModalType("success");
@@ -166,20 +157,13 @@ const FreeRudrakshaPage = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${BASE_URL}/marketing-service/campgin/rudhrakshaDistribution`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, userId }),
-      });
+      await customerApi.post(
+        `${BASE_URL}/marketing-service/campgin/rudhrakshaDistribution`,
+        { address, userId }
+      );
 
-      if (response.ok) {
-        message.success("Address saved successfully!");
-        fetchUserAddress();
-      } else {
-        const errorData = await response.json();
-        console.error("Error saving address:", errorData);
-        message.error("Failed to save the address. Please try again.");
-      }
+      message.success("Address saved successfully!");
+      fetchUserAddress();
     } catch (error) {
       console.error("Error saving address:", error);
       message.error("An error occurred. Please try again.");
@@ -205,25 +189,18 @@ const FreeRudrakshaPage = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${BASE_URL}/marketing-service/campgin/rudhrakshaDistribution`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, deliveryType }),
-      });
+      await customerApi.post(
+        `${BASE_URL}/marketing-service/campgin/rudhrakshaDistribution`,
+        { userId, deliveryType }
+      );
 
-      if (response.ok) {
-        const date = new Date().toLocaleDateString();
-        setFirstRequestDate(date);
-        setHasSubmitted(true);
-        localStorage.setItem(`${userId}_hasSubmitted`, "true");
-        localStorage.setItem(`${userId}_firstRequestDate`, date);
-        message.success("Request submitted successfully!");
-        setIsPopupVisible(false);
-      } else {
-        const errorData = await response.json();
-        console.error("Error submitting request:", errorData);
-        message.error("Failed to submit the request. Please try again.");
-      }
+      const date = new Date().toLocaleDateString();
+      setFirstRequestDate(date);
+      setHasSubmitted(true);
+      localStorage.setItem(`${userId}_hasSubmitted`, "true");
+      localStorage.setItem(`${userId}_firstRequestDate`, date);
+      message.success("Request submitted successfully!");
+      setIsPopupVisible(false);
     } catch (error) {
       console.error("Error submitting request:", error);
       message.error("An error occurred. Please try again.");

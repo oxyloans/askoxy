@@ -12,6 +12,7 @@ import Header from "./Header";
 import BASE_URL from "../Config";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import customerApi from "../utils/axiosInstances";
 
 // Type definitions
 interface Agreement {
@@ -126,10 +127,10 @@ export default function CAServicesApp() {
   const fetchAllData = async () => {
     try {
       setInitialLoading(true);
-      const response = await fetch(
+      const response = await customerApi.get(
         BASE_URL + "/product-service/getAllAgreements"
       );
-      const data: Agreement[] = await response.json();
+      const data: Agreement[] = response.data;
 
       // Filter data to only include CA SERVICE items
       const caServiceData = data.filter(
@@ -181,7 +182,7 @@ export default function CAServicesApp() {
     try {
       if (!customerId || !token) return;
 
-      const response = await axios.get(
+      const response = await customerApi.get(
         `https://meta.oxyloans.com/api/cart-service/cart/view?userId=${customerId}`,
         {
           headers: {
@@ -259,7 +260,7 @@ export default function CAServicesApp() {
         userId: customerId,
       };
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/cart-service/cart/add",
         payload,
         {

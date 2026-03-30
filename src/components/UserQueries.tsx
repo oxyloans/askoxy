@@ -15,6 +15,7 @@ import {
 } from "antd";
 
 import { UserSwitchOutlined } from "@ant-design/icons";
+import customerApi from "../utils/axiosInstances";
 
 const { Option } = Select;
 
@@ -50,7 +51,7 @@ const AllQueriesforAdmin: React.FC = () => {
       queryStatus: statusValue,
     };
     setLoader(true);
-    axios
+    customerApi
       .post(
         `https://meta.oxyloans.com/api/erice-service/writetous/getQueries`,
         data,
@@ -100,7 +101,7 @@ const AllQueriesforAdmin: React.FC = () => {
     };
 
     setApproveLoader(true);
-    axios
+    customerApi
       .post(
         `https://meta.oxyloans.com/api/erice-service/writetous/saveData`,
         data,
@@ -170,7 +171,7 @@ const AllQueriesforAdmin: React.FC = () => {
     formData.append("fileType", "kyc");
 
     // API call
-    axios
+    customerApi
       .post(
         `https://meta.oxyloans.com/api/erice-service/writetous/uploadQueryScreenShot?userId=${userId}`,
         formData,

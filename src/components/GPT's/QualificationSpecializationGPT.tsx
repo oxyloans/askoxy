@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -237,7 +238,7 @@ const QualificationSpecializationGPT: React.FC = () => {
       const apiUrl = `http://65.0.147.157:9001/api/student-service/user/classification?prompt=${encodeURIComponent(
         queryInput
       )}${userId ? `&userId=${userId}` : ""}`;
-      const response = await axios.post(apiUrl);
+      const response = await customerApi.post(apiUrl);
 
       setMessages((prev) => [
         ...prev,

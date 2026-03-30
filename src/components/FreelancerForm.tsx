@@ -4,6 +4,7 @@ import { Briefcase, FileUp, CheckCircle2} from "lucide-react";
 import axios from "axios";
 import {useNavigate} from "react-router-dom";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 type RatePeriod = 'hour' | 'day' | 'week' | 'month' | 'year';
 
@@ -49,7 +50,7 @@ const FreelancerForm: React.FC = () => {
 
   const fetchFreelancerData = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/ai-service/agent/getFreeLancersData/${userId}`,{
+      const response = await customerApi.get(`${BASE_URL}/ai-service/agent/getFreeLancersData/${userId}`,{
         headers:{
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
@@ -137,7 +138,7 @@ const FreelancerForm: React.FC = () => {
         const formData = new FormData();
         formData.append('file', file);
         
-        const response = await axios.post(
+        const response = await customerApi.post(
           `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
           formData,
           {
@@ -215,7 +216,7 @@ const FreelancerForm: React.FC = () => {
         userId
       };
 
-      await axios.patch(`${BASE_URL}/ai-service/agent/freeLancerInfo`, payload, {
+      await customerApi.patch(`${BASE_URL}/ai-service/agent/freeLancerInfo`, payload, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }

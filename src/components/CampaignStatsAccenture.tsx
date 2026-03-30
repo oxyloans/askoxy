@@ -19,6 +19,7 @@ import { toPng } from "html-to-image";
 import Logo from "../assets/img/askoxylogonew.png";
 import accenturelogo from "../assets/img/download.png";
 import globaltechlogo from "../assets/img/global logo.png";
+import customerApi from "../utils/axiosInstances";
 
 type StatsItem = { term: string; count: number };
 type CampaignStatsResponse = {
@@ -80,9 +81,8 @@ const CampaignStats: React.FC = () => {
     try {
       setStatsLoading(true);
       setStatsError("");
-      const res = await fetch(`${BASE_URL}/marketing-service/campgin/stats/ACCENTURE`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setStats(await res.json());
+      const res = await customerApi.get(`${BASE_URL}/marketing-service/campgin/stats/ACCENTURE`);
+      setStats(res.data);
     } catch (err: any) {
       setStatsError(err.message || "Failed to load campaign statistics");
     } finally {

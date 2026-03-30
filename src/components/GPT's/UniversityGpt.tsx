@@ -98,7 +98,7 @@
 //            )}`;
 
 //      // Make API request to the specified endpoint with Authorization header
-//      const response = await axios.post(
+//      const response = await customerApi.post(
 //        apiurl,
 //        {}, // If the request body is empty, pass an empty object
 //        {
@@ -139,7 +139,7 @@
 //     const userId = localStorage.getItem("userId");
 //     const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
 
-//     axios
+//     customerApi
 //       .get(apiUrl)
 //       .then((response) => {
 //         console.log(response.data);
@@ -424,6 +424,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -636,7 +637,7 @@ const University: React.FC = () => {
       const apiUrl = `https://meta.oxyloans.com/api/student-service/user/universityGpt?prompt=${encodeURIComponent(
         queryInput,
       )}${userId ? `&userId=${userId}` : ""}`;
-      const response = await axios.post(apiUrl);
+      const response = await customerApi.post(apiUrl);
 
       setMessages((prev) => [
         ...prev,

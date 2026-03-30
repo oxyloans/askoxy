@@ -25,6 +25,7 @@ import {
   SpeakerWaveIcon,
   SpeakerXMarkIcon,
 } from "@heroicons/react/24/outline";
+import customerApi from "../utils/axiosInstances";
 
 // Simple markdown parser for basic formatting
 const parseMarkdown = (text: string) => {
@@ -157,8 +158,8 @@ const OpenAi: React.FC = () => {
     const proxyUrl = "https://cors-anywhere.herokuapp.com/";
     const proxiedUrl = proxyUrl + imageUrl;
     try {
-      const response = await fetch(proxiedUrl);
-      const blob = await response.blob();
+      const response = await customerApi.get(proxiedUrl, { responseType: "blob" });
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -189,16 +190,14 @@ const OpenAi: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedMessages),
-      });
-      const data = await response.text();
-
-      if (!response.ok) {
-        throw new Error(`Error: ${data}`);
-      }
+      const response = await customerApi.post(
+        `${BASE_URL}/student-service/user/chat1`,
+        updatedMessages,
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+      const data = response.data;
 
       const isImageUrl = data.startsWith("http");
 

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -241,7 +242,7 @@ const LogisticsGpt: React.FC = () => {
           ? `https://meta.oxyloans.com/api/student-service/user/travelArrangement`
           : `https://meta.oxyloans.com/api/student-service/user/travelArrangement`;
 
-      const response = await axios.post(apiurl, payload, {
+      const response = await customerApi.post(apiurl, payload, {
         headers: {
           Authorization: `Bearer ${accessToken}`, // Include access token in header
         },

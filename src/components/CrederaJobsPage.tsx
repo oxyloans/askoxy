@@ -15,6 +15,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
+import customerApi from "../utils/axiosInstances";
 
 type Job = {
   id: string;
@@ -69,11 +70,10 @@ const CrederaJobsPage: React.FC = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await fetch(
+        const res = await customerApi.get(
           `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=CREDERA`,
         );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: Job[] = await res.json();
+        const data: Job[] = res.data;
         setJobs(data);
       } catch (err: any) {
         setError(err.message || "Failed to load jobs");

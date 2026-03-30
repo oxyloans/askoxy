@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import MarkdownRenderer from "../GenOxy/components/MarkdownRenderer";
 import { MessageSquare, X, Send, Settings, Users, Search } from "lucide-react";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 interface Assistant {
   name: string;
@@ -49,16 +50,14 @@ const ChatInterface2: React.FC = () => {
       let url = `${API_BASE}/getAllAssistants?limit=50`;
       if (after) url += `&after=${after}`;
 
-      const response = await fetch(url, {
-        method: "GET",
+      const response = await customerApi.get(url, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const json = await response.json();
+      const json = response.data;
 
       if (Array.isArray(json.data)) {
         const newAssistants: Assistant[] = json.data
@@ -148,21 +147,14 @@ const ChatInterface2: React.FC = () => {
         sequential: true,
       };
 
-      const res = await fetch(EXCHANGE_API, {
-        method: "POST",
+      const res = await customerApi.post(EXCHANGE_API, payload, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`HTTP ${res.status}: ${err}`);
-      }
-
-      const result = await res.json();
+      const result = res.data;
 
       if (result.finalMessage) {
         const firstAssistantName =

@@ -32,6 +32,7 @@ import {
 
 import BASE_URL,{uploadurlwithId} from "../Config";
 import type { FormInstance } from "antd/es/form";
+import customerApi from "../utils/axiosInstances";
 
 const PAGE_SIZE = 100;
 
@@ -160,20 +161,18 @@ const AgentStoreManager: React.FC = () => {
       formData.append("view", view);
       formData.append("file", fileObj);
 
-      const res = await fetch(
+      const res = await customerApi.post(
         `${BASE_URL}/ai-service/agent/uploadMultiAgents1`,
+        formData,
         {
-          method: "POST",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: formData,
         }
       );
 
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Upload failed");
+      if (!res.data) {
+        throw new Error("Upload failed");
       }
 
       message.success("Agents uploaded successfully");
@@ -202,14 +201,14 @@ const AgentStoreManager: React.FC = () => {
   const fetchStores = async (): Promise<void> => {
     setLoading(true);
     try {
-      const res: Response = await fetch(
+      const res = await customerApi.get(
         `${BASE_URL}/ai-service/agent/getAiStoreAllAgents`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
-      const result: any = await res.json();
+      const result: any = res.data;
 
       // ✅ Handle both array and {data: []} response safely (NO reverse here)
       const data: any[] = Array.isArray(result)
@@ -291,15 +290,14 @@ const AgentStoreManager: React.FC = () => {
         page > 1 && lastId ? `&after=${lastId}` : ""
       }`;
 
-      const res: Response = await fetch(url, {
-        method: "GET",
+      const res = await customerApi.get(url, {
         headers: {
           ...getAuthHeader(),
           Accept: "application/json",
         },
       });
 
-      const json: any = await res.json();
+      const json: any = res.data;
       const rawList: any[] = json.data || [];
 
       const mapped: Agent[] = rawList.map((item: any) => ({
@@ -365,19 +363,17 @@ const AgentStoreManager: React.FC = () => {
         inactiveType: "STOREAGENT",
       };
 
-      const res: Response = await fetch(
+      const res = await customerApi.post(
         `${BASE_URL}/ai-service/agent/activeInactiveStoreAgents`,
+        payload,
         {
-          method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(payload),
         }
       );
 
-      if (!res.ok) throw new Error("Status update failed");
+      if (!res.data) throw new Error("Status update failed");
 
       message.success(`Agent status updated to ${newStatus}`);
       await fetchStores();
@@ -428,19 +424,17 @@ const AgentStoreManager: React.FC = () => {
             }),
           };
 
-      const res: Response = await fetch(
+      const res = await customerApi.patch(
         `${BASE_URL}/ai-service/agent/agentStoreCreation`,
+        payload,
         {
-          method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(payload),
         }
       );
 
-      if (!res.ok) throw new Error("Failed to save store");
+      if (!res.data) throw new Error("Failed to save store");
 
       message.success(
         isEditMode ? "Store updated successfully" : "Store created successfully"
@@ -481,19 +475,17 @@ const AgentStoreManager: React.FC = () => {
     };
 
     try {
-      const res: Response = await fetch(
+      const res = await customerApi.post(
         `${BASE_URL}/ai-service/agent/saveAgentsInStore`,
+        payload,
         {
-          method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(payload),
         }
       );
 
-      if (!res.ok) throw new Error("Failed to save agents");
+      if (!res.data) throw new Error("Failed to save agents");
 
       message.success("Agents added to store successfully");
       setIsAgentsModal(false);
@@ -542,19 +534,17 @@ const AgentStoreManager: React.FC = () => {
             inactiveType: "STORE",
           };
 
-          const res = await fetch(
+          const res = await customerApi.post(
             `${BASE_URL}/ai-service/agent/activeInactiveStoreAgents`,
+            payload,
             {
-              method: "POST",
               headers: {
-                "Content-Type": "application/json",
                 Authorization: `Bearer ${accessToken}`,
               },
-              body: JSON.stringify(payload),
             }
           );
 
-          if (!res.ok) throw new Error("Status update failed");
+          if (!res.data) throw new Error("Status update failed");
 
           message.success(
             `Store "${storeName}" successfully marked as ${newStatus}`
@@ -1208,13 +1198,11 @@ const AgentStoreManager: React.FC = () => {
                   formData.append("file", file);
 
                   try {
-                    const res: Response = await fetch(uploadUrl, {
-                      method: "POST",
+                    const res = await customerApi.post(uploadUrl, formData, {
                       headers: { Authorization: `Bearer ${accessToken}` },
-                      body: formData,
                     });
 
-                    const json: any = await res.json();
+                    const json: any = res.data;
                     if (!json.documentPath) {
                       return message.error("Upload failed");
                     }

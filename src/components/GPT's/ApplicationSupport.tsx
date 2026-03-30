@@ -96,7 +96,7 @@
 //           ? `https://meta.oxyloans.com/api/student-service/user/endToEnd`
 //           : `https://meta.oxyloans.com/api/student-service/user/endToEnd`;
 
-//       const response = await axios.post(apiurl, payload, {
+//       const response = await customerApi.post(apiurl, payload, {
 //         headers: {
 //           Authorization: `Bearer ${accessToken}`, // Include access token in header
 //         },
@@ -132,7 +132,7 @@
 //     const userId = localStorage.getItem("userId");
 //     const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
 
-//     axios
+//     customerApi
 //       .get(apiUrl)
 //       .then((response) => {
 //         console.log(response.data);
@@ -413,6 +413,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -629,7 +630,7 @@ const ApplicationSupport: React.FC = () => {
           ? `https://meta.oxyloans.com/api/student-service/user/endToEnd`
           : `https://meta.oxyloans.com/api/student-service/user/endToEnd`;
 
-      const response = await axios.post(apiurl, payload, {
+      const response = await customerApi.post(apiurl, payload, {
         headers: {
           Authorization: `Bearer ${accessToken}`, // Include access token in header
         },

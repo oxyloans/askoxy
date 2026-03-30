@@ -6,6 +6,7 @@ import BASE_URL from "../Config";
 import { message } from "antd";
 import { FaAmazon } from "react-icons/fa";
 import axios from "axios";
+import customerApi from "../utils/axiosInstances";
 
 
 const FreeAiBook: React.FC = () => {
@@ -30,7 +31,7 @@ const FreeAiBook: React.FC = () => {
 
       try {
         setIsLoading(true);
-        const response = await axios.post(
+        const response = await customerApi.post(
           `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
           {
             askOxyOfers: "FREEAIBOOK",

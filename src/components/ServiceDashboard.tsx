@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { customerApi } from "../utils/axiosInstance";
 
 // Types
 interface Order {
@@ -81,7 +82,7 @@ const ServiceDashboard: React.FC = () => {
 
     setProfileLoading(true);
     try {
-      const response = await axios({
+      const response = await customerApi({
         method: "GET",
         url: `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`,
         headers: {
@@ -143,7 +144,7 @@ const ServiceDashboard: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(getOrdersApiUrl(userId));
+      const response = await customerApi.get(getOrdersApiUrl(userId));
       setOrders(response.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -163,7 +164,7 @@ const ServiceDashboard: React.FC = () => {
         cacsOrderId: orderId,
       };
 
-      const response = await axios.post(getApproveOrderApiUrl(), requestBody, {
+      const response = await customerApi.post(getApproveOrderApiUrl(), requestBody, {
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
@@ -205,7 +206,7 @@ const ServiceDashboard: React.FC = () => {
         ...(notes.trim() && { additionalNotes: notes.trim() }),
       };
 
-      const response = await axios.post(getRejectOrderApiUrl(), requestBody, {
+      const response = await customerApi.post(getRejectOrderApiUrl(), requestBody, {
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),

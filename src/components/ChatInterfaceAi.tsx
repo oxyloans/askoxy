@@ -13,6 +13,7 @@ import {
   Plus,
 } from "lucide-react";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 interface Message {
   id: string;
@@ -117,29 +118,25 @@ const ChatInterface: React.FC = () => {
         selectedRole.instruction
       }`;
 
-      const response = await fetch(
+      const response = await customerApi.post(
         `${BASE_URL}/student-service/user/askquestion?assistantId=${
           selectedAssistant.id
         }&instruction=${encodeURIComponent(instruction)}`,
+        payload,
         {
-          method: "POST",
           headers: { accept: "*/*", "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          responseType: "text",
         }
       );
 
-      if (response.ok) {
-        const data = await response.text();
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data || "Sorry, I couldn't process your request.",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        throw new Error("Failed to get response");
-      }
+      const data = response.data;
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data || "Sorry, I couldn't process your request.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),

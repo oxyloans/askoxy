@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Star, AlertCircle, CheckCircle, X, MessageSquare } from "lucide-react";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 const Feedback = () => {
   const [feedbackData, setFeedbackData] = useState({
     comments: "",
@@ -97,10 +98,10 @@ const Feedback = () => {
 
   const checkExistingFeedback = async (orderId: string, userId: string) => {
     try {
-      const res = await fetch(
+      const res = await customerApi.get(
         `${BASE_URL}/order-service/feedbackbasedonorderanduserid?orderid=${orderId}&feedbackUserId=${userId}`
       );
-      const data = await res.json();
+      const data = res.data;
       if (data.status === true) {
         setIsSubmitted(true);
       }
@@ -139,20 +140,12 @@ const Feedback = () => {
 
     setIsLoading(true);
     try {
-      const res = await fetch(
+      await customerApi.post(
         `${BASE_URL}/order-service/submitfeedback`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(feedbackData),
-        }
+        feedbackData
       );
 
-      if (res.ok) {
-        setIsSubmitted(true);
-      } else {
-        throw new Error("Submission failed");
-      }
+      setIsSubmitted(true);
     } catch (err) {
       setError(
         "Unable to submit feedback at the moment. Please try again later."

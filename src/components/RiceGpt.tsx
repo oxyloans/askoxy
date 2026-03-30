@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import { customerApi } from "../utils/axiosInstance";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -235,7 +236,7 @@ const RiceGpt: React.FC = () => {
       const apiUrl = `https://meta.oxyloans.com/api/student-service/user/Erice?userId=${userId}&prompt=${encodeURIComponent(
         queryInput
       )}`;
-      const response = await axios.post(apiUrl);
+      const response = await customerApi.post(apiUrl);
 
       setMessages((prev) => [
         ...prev,

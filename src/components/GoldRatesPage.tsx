@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ModalContent } from "./ModalSection";
+import customerApi from "../utils/axiosInstances";
 
 const BASE_URL = "https://meta.oxyloans.com/api";
 const REFRESH_MS = 300000;
@@ -104,7 +105,7 @@ const GoldRatesPage: React.FC = () => {
     manual ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`${BASE_URL}/product-service/all-different-gold-rates`);
+      const res = await customerApi.get(`${BASE_URL}/product-service/all-different-gold-rates`);
       const list: GoldRate[] = Array.isArray(res.data) ? res.data : [];
       const now = Date.now();
       const minutesSinceLast = (now - lastFetchTimeRef.current) / 60000;

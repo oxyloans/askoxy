@@ -101,7 +101,7 @@
 //            : `https://meta.oxyloans.com/api/student-service/user/reviews`;
 
 //        // Make API request to the specified endpoint with Authorization header
-//        const response = await axios.post(
+//        const response = await customerApi.post(
 //          apiurl,
 //          payload,
 //          // If the request body is empty, pass an empty object
@@ -143,7 +143,7 @@
 //     const userId = localStorage.getItem("userId");
 //     const apiUrl = `https://meta.oxyloans.com/api/student-service/user/profile?id=${userId}`;
 
-//     axios
+//     customerApi
 //       .get(apiUrl)
 //       .then((response) => {
 //         console.log(response.data);
@@ -428,6 +428,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -647,7 +648,7 @@ const ReviewsGpt: React.FC = () => {
           ? `https://meta.oxyloans.com/api/student-service/user/reviews`
           : `https://meta.oxyloans.com/api/student-service/user/reviews`;
 
-      const response = await axios.post(apiurl, payload, {
+      const response = await customerApi.post(apiurl, payload, {
         headers: {
           Authorization: `Bearer ${accessToken}`, // Include access token in header
         },

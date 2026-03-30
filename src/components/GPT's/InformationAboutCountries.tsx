@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -242,7 +243,7 @@ const InformationAboutCountries: React.FC = () => {
               queryInput,
             )}`;
 
-      const response = await axios.post(apiurl);
+      const response = await customerApi.post(apiurl);
 
       setMessages((prev) => [
         ...prev,

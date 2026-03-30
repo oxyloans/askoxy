@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import axios from "axios";
 import Sidebar from "./SidebarMain";
 import Header from "./HeaderMain";
 import Tabview from "./Tabview";
 import AIChatWindow from "./AIWindow";
 import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 const Content1: React.FC = () => {
   // Sidebar starts collapsed by default (desktop)
@@ -94,7 +94,7 @@ const Content1: React.FC = () => {
 
   const fetchProfileData = async () => {
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/customerProfileDetails`,
         {
           params: { customerId },

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import customerApi from "../utils/axiosInstances";
 
 // ========== CAPS GOLD TYPES ==========
 type ParsedRowcapsgold = {
@@ -133,13 +134,11 @@ const GoldRates: React.FC = () => {
 
   const fetchDatadpgold = async () => {
     try {
-      const res = await fetch(API_URL_DP_GOLD, {
+      const res = await customerApi.get(API_URL_DP_GOLD, {
         headers: { Accept: "text/plain, */*; q=0.01" },
       });
 
-      if (!res.ok) throw new Error("DP Gold API request failed");
-
-      const text = await res.text();
+      const text = res.data;
       const newRows = parseResponsedpgold(text);
 
       setRowsDP((prevRows) => {
@@ -248,12 +247,10 @@ const GoldRates: React.FC = () => {
   // ========== CAPS GOLD FETCH ==========
   const fetchDatacapsgold = async () => {
     try {
-      const res = await fetch(API_URL_CAPS_GOLD, {
+      const res = await customerApi.get(API_URL_CAPS_GOLD, {
         headers: { Accept: "text/plain, */*; q=0.01" },
       });
-      if (!res.ok) throw new Error("API request failed");
-
-      const text = await res.text();
+      const text = res.data;
       const newRows = parseResponsecapsgold(text);
 
       setRowsCaps((prevRows) => {
@@ -288,10 +285,8 @@ const GoldRates: React.FC = () => {
   // ========== IBJA FETCH ==========
   const fetchIBJARates = async () => {
     try {
-      const res = await fetch(API_URL_IBJA);
-      if (!res.ok) throw new Error("IBJA API request failed");
-
-      const data: IBJAResponse = await res.json();
+      const res = await customerApi.get(API_URL_IBJA);
+      const data: IBJAResponse = res.data;
 
       console.log("===== IBJA RESPONSE =====", data);
 

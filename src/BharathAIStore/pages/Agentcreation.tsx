@@ -1,4 +1,4 @@
-﻿// src/BharathAIStore/pages/Agentcreation.tsx
+// src/BharathAIStore/pages/Agentcreation.tsx
 import React, {
   useCallback,
   useEffect,
@@ -28,7 +28,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import BASE_URL from "../../Config";
-import axios from "axios";
+import { customerApi as axios } from "../../utils/axiosInstances";
 import { ArrowRight } from "lucide-react";
 import VendorCreationModal from "../components/VendorCreationModal";
 import SRJImage from "../../assets/img/SRJ1.jpg";
@@ -475,11 +475,6 @@ const Agentcreation: React.FC = () => {
           {},
           {
             params: { role: effectiveRole },
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              ...authHeaderObj,
-            },
           },
         );
 
@@ -658,11 +653,6 @@ const Agentcreation: React.FC = () => {
           {},
           {
             params: { role: effectiveRole, goal: effectiveGoal },
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              ...authHeaderObj,
-            },
           },
         );
 
@@ -1067,13 +1057,6 @@ const Agentcreation: React.FC = () => {
       await axios.patch(
         `${BASE_URL}/marketing-service/campgin/addCampaignTypes`,
         requestPayload,
-        {
-          headers: {
-            accept: "*/*",
-            "Content-Type": "application/json",
-            ...(auth as any),
-          },
-        },
       );
 
       message.success(
@@ -1096,27 +1079,15 @@ const Agentcreation: React.FC = () => {
         return null;
       }
       try {
-        const res = await fetch(
+        const res = await axios.patch(
           `${BASE_URL}/ai-service/agent/generateProfilePic`,
           {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json", ...(auth as any) },
-            body: JSON.stringify({
-              agentName: params.agentName || "AI Agent",
-              description: params.description || "",
-              userId: params.userId,
-            }),
+            agentName: params.agentName || "AI Agent",
+            description: params.description || "",
+            userId: params.userId,
           },
         );
-
-        const txt = await res.text().catch(() => "");
-        if (!res.ok) {
-          let msg = `Generate failed (${res.status})`;
-          if (txt) msg += `: ${txt}`;
-          throw new Error(msg);
-        }
-        const json = txt ? JSON.parse(txt) : {};
-        const url: string | null = json?.imageUrl || null;
+        const url: string | null = res.data?.imageUrl || null;
         if (!url) throw new Error("No imageUrl in response.");
         return url as string;
       } catch (e: any) {
@@ -1181,7 +1152,6 @@ const Agentcreation: React.FC = () => {
           `${BASE_URL}/user-service/customerProfileDetails`,
           {
             params: { customerId },
-            headers: { ...getAuthHeaders() },
           },
         );
 
@@ -1279,7 +1249,6 @@ const Agentcreation: React.FC = () => {
           whatsappOtpSession,
           salt,
         },
-        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data) {
@@ -1327,9 +1296,7 @@ const Agentcreation: React.FC = () => {
 
       // Only PATCH if mandatory or user changed something
       if (isMandatoryGate || isDirty) {
-        await axios.patch(`${BASE_URL}/user-service/profileUpdate`, payload, {
-          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-        });
+        await axios.patch(`${BASE_URL}/user-service/profileUpdate`, payload);
         message.success(
           isMandatoryGate ? "Profile saved!" : "Profile updated!",
         );
@@ -1389,34 +1356,18 @@ const Agentcreation: React.FC = () => {
     setBusinessCardUploading(true);
 
     try {
-      const res = await fetch(
-        `${BASE_URL}/ai-service/agent/uploadBusinessCard?fileType=kyc&userId=${encodeURIComponent(
-          userId,
-        )}`,
-        {
-          method: "POST",
-          headers: { ...auth },
-          body: formData,
-        },
+      const res = await axios.post(
+        `${BASE_URL}/ai-service/agent/uploadBusinessCard?fileType=kyc&userId=${encodeURIComponent(userId)}`,
+        formData,
       );
 
-      const data = await res.json();
+      const data = res.data;
 
       // ❌ Backend returned error
       if (data.status === "FAILED" || data.message) {
         notification.error({
           message: "Processing Failed",
           description: data.message || "Failed to process business card.",
-        });
-        return;
-      }
-
-      // ❌ Network / server-level error
-      if (!res.ok) {
-        notification.error({
-          message: "Upload Error",
-          description:
-            data.message || `Upload failed with status ${res.status}`,
         });
         return;
       }
@@ -1632,27 +1583,12 @@ const Agentcreation: React.FC = () => {
     setCardDataSaving(true);
     console.log("Updating card data with:", cardDataForm);
     try {
-      const res = await fetch(
+      const res = await axios.patch(
         `${BASE_URL}/ai-service/agent/updateBusinessCardData`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            ...auth,
-          },
-          body: JSON.stringify(cardDataForm),
-        },
+        cardDataForm,
       );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(
-          data.message || `Update failed with status ${res.status}`,
-        );
-      }
-
-      // const data: BusinessCardData = await res.json();
+      const data = res.data;
 
       // Save id from response
       if (data.id) {
@@ -1721,14 +1657,8 @@ const Agentcreation: React.FC = () => {
       const uploadUrl =
         "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar";
 
-      const uploadRes = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { ...auth },
-        body: uploadForm,
-      });
-
-      const uploadData = await uploadRes.json();
-      const documentPath = uploadData?.documentPath;
+      const uploadRes = await axios.post(uploadUrl, uploadForm);
+      const documentPath = uploadRes.data?.documentPath;
 
       if (!documentPath) {
         throw new Error("No documentPath returned from upload-service");
@@ -1746,20 +1676,7 @@ const Agentcreation: React.FC = () => {
         documentPath,
       )}`;
 
-      const agentRes = await fetch(finalUrl, {
-        method: "POST",
-        headers: { ...auth },
-        body: agentForm,
-      });
-
-      if (!agentRes.ok) {
-        const txt = await agentRes.text().catch(() => "");
-        throw new Error(
-          `addAgentFiles failed → ${agentRes.status} ${
-            txt || agentRes.statusText
-          }`,
-        );
-      }
+      await axios.post(finalUrl, agentForm);
     }
   }
 
@@ -1929,12 +1846,7 @@ const Agentcreation: React.FC = () => {
           `${BASE_URL}/ai-service/agent/getUserModeDetails`,
           {},
           {
-            params: { role, goal, purpose },
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              ...auth,
-            },
+            params: { role, goal, purpose }
           },
         );
         const raw = res.data;
@@ -2085,38 +1997,8 @@ const Agentcreation: React.FC = () => {
       return "";
     };
 
-    const parseFlexible = async (res: Response) => {
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
-      if (ct.includes("application/json")) {
-        try {
-          return await res.json();
-        } catch {}
-      }
-      const t = await res.text();
-      try {
-        return JSON.parse(t);
-      } catch {
-        return t;
-      }
-    };
-
-    const okOrRetry5xx = async (
-      res: Response | undefined,
-      again: () => Promise<Response>,
-    ) => {
-      if (!res) return undefined;
-      if (res.ok) return res;
-      if ([500, 502, 503, 504].includes(res.status)) {
-        await new Promise((r) => setTimeout(r, 500));
-        return again();
-      }
-      return res;
-    };
-
     setNameLoading(true);
     try {
-      let res: Response | undefined;
-
       // Common query params object
       const queryParams = {
         role: roleResolved,
@@ -2125,68 +2007,26 @@ const Agentcreation: React.FC = () => {
         name: displayName,
       };
 
-      // ✅ Preferred: POST with query params (no body, like your curl)
+      let axiosData: any;
       try {
-        res = await fetch(`${baseUrl}?${qs(queryParams)}`, {
-          method: "POST",
-          headers: { ...auth },
-          mode: "cors",
-          signal: ctrl.signal,
-        });
-      } catch {
-        res = undefined;
-      }
-
-      // Retry 5xx with SAME params (including name)
-      res = await okOrRetry5xx(res, () =>
-        fetch(`${baseUrl}?${qs(queryParams)}`, {
-          method: "POST",
-          headers: { ...auth },
-          mode: "cors",
-          signal: ctrl.signal,
-        }),
-      );
-
-      // ✅ Fallback: POST x-www-form-urlencoded with name
-      if (!res || !res.ok) {
+        const axiosRes = await axios.post(`${baseUrl}?${qs(queryParams)}`, {}, { signal: ctrl.signal });
+        axiosData = axiosRes.data;
+      } catch (err: any) {
+        if (err?.name === "AbortError" || err?.code === "ERR_CANCELED") throw err;
+        // fallback: form-urlencoded
         try {
-          const form = new URLSearchParams(queryParams);
-          res = await fetch(baseUrl, {
-            method: "POST",
-            headers: {
-              Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
-              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-              ...auth,
-            },
-            body: form.toString(),
-            mode: "cors",
+          const axiosRes2 = await axios.post(baseUrl, new URLSearchParams(queryParams), {
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
             signal: ctrl.signal,
           });
+          axiosData = axiosRes2.data;
         } catch {
-          res = undefined;
+          message.warning("Name suggestion failed: Network/CORS. Ensure this route allows Authorization and required methods.");
+          return;
         }
       }
 
-      if (!res) {
-        message.warning(
-          "Name suggestion failed: Network/CORS. Ensure this route allows Authorization and required methods.",
-        );
-        return;
-      }
-      if (res.status === 204) {
-        message.warning("No content returned from server.");
-        return;
-      }
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        message.warning(
-          `Name suggestion failed: ${res.status} ${txt || ""}`.trim(),
-        );
-        return;
-      }
-
-      const data = await parseFlexible(res);
-      const suggestion = sanitizeName(extractName(data));
+      const suggestion = sanitizeName(extractName(axiosData));
       if (!suggestion) {
         message.warning("No valid name returned. Please try again.");
         return;
@@ -2306,31 +2146,6 @@ const Agentcreation: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleDeb, goalDeb, purposeDeb, creationMode]);
 
-  const parseSmart = async (res: Response) => {
-    const ct = (res.headers.get("content-type") || "").toLowerCase();
-    if (ct.includes("application/json")) {
-      const data = await res.json();
-      return typeof data === "string"
-        ? data
-        : (data as any).name ||
-            (data as any).instructions ||
-            (data as any).message ||
-            JSON.stringify(data);
-    }
-    let raw = await res.text();
-    try {
-      const maybe = JSON.parse(raw);
-      return typeof maybe === "string"
-        ? maybe
-        : (maybe as any).name ||
-            (maybe as any).instructions ||
-            (maybe as any).message ||
-            raw;
-    } catch {
-      return raw.replace(/^#{1,6}\s?.*$/gm, "").trim();
-    }
-  };
-
   const suggestAgentDescription = useCallback(async () => {
     const auth = getAuthHeader() as Record<string, string>;
     if (!auth || !auth.Authorization) {
@@ -2351,28 +2166,15 @@ const Agentcreation: React.FC = () => {
 
     setDescSuggestLoading(true);
     try {
-      let res: Response | undefined;
-
-      // POST with query
-      if (!res || !res.ok) {
-        try {
-          res = await fetch(`${baseUrl}?${qs.toString()}`, {
-            method: "POST",
-            headers: { ...auth },
-          });
-        } catch {}
-      }
-
-      if (!res || !res.ok) {
-        const status = res?.status ?? "network";
-        const txt = res
-          ? await res.text().catch(() => "")
-          : "Network / CORS error";
-        message.warning(`Description suggestion failed: ${status} ${txt}`);
+      let raw: string;
+      try {
+        const axiosRes = await axios.post(`${baseUrl}?${qs.toString()}`, {});
+        const d = axiosRes.data;
+        raw = typeof d === "string" ? d : d?.name || d?.instructions || d?.message || JSON.stringify(d);
+      } catch (e: any) {
+        message.warning(`Description suggestion failed: ${e?.response?.status ?? "network"} ${e?.message ?? ""}`);
         return;
       }
-
-      const raw = (await parseSmart(res))?.toString() ?? "";
       const proposed = cleanForTransport(raw).slice(0, MAX_DESC);
 
       Modal.confirm({
@@ -2446,28 +2248,15 @@ const Agentcreation: React.FC = () => {
 
     try {
       setGenLoading(true);
-      let res: Response | undefined;
-
-      // POST ?query
-      if (!res || !res.ok) {
-        try {
-          res = await fetch(`${baseUrl}?${qs.toString()}`, {
-            method: "POST",
-            headers: { ...auth },
-            signal: ctrl.signal,
-          });
-        } catch {}
-      }
-
-      if (!res || !res.ok) {
-        const status = res?.status ?? "network";
-        const txt = res
-          ? await res.text().catch(() => "")
-          : "Network / CORS error";
+      let raw: string;
+      try {
+        const axiosRes = await axios.post(`${baseUrl}?${qs.toString()}`, {}, { signal: ctrl.signal });
+        const d = axiosRes.data;
+        raw = typeof d === "string" ? d : d?.name || d?.instructions || d?.message || JSON.stringify(d);
+      } catch (e: any) {
+        if (e?.name === "AbortError" || e?.code === "ERR_CANCELED") throw e;
         throw new Error();
       }
-
-      const raw = await parseSmart(res);
       const cleaned = cleanInstructionText(raw);
       const seed =
         cleaned ||
@@ -2518,40 +2307,6 @@ const Agentcreation: React.FC = () => {
       return p.toString();
     };
 
-    const parseFlexible = async (res: Response) => {
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
-      if (ct.includes("application/json")) {
-        const data = await res.json();
-        if (Array.isArray(data)) return data.join("\n");
-        if (data && typeof data === "object") {
-          return (
-            (data as any).questions ||
-            (data as any).message ||
-            (data as any).result ||
-            (data as any).text ||
-            JSON.stringify(data)
-          );
-        }
-        return String(data ?? "");
-      }
-      let txt = await res.text();
-      try {
-        const maybe = JSON.parse(txt);
-        if (Array.isArray(maybe)) return maybe.join("\n");
-        if (maybe && typeof maybe === "object") {
-          return (
-            (maybe as any).questions ||
-            (maybe as any).message ||
-            (maybe as any).result ||
-            txt
-          );
-        }
-        return String(maybe ?? txt);
-      } catch {
-        return txt;
-      }
-    };
-
     const applyPrompts = (raw: string) => {
       const prompts = parseStartersFromText(raw) || [];
       if (!prompts.length) {
@@ -2584,59 +2339,20 @@ const Agentcreation: React.FC = () => {
     };
 
     try {
-      let res: Response | undefined;
-
-      // Retry: POST with query
-      if (!res || (!res.ok && (res.status === 400 || res.status === 415))) {
-        try {
-          const url = `${urlBase}?${qs({
-            description: descClean,
-            agentId: agentId || undefined,
-          })}`;
-          res = await fetch(url, {
-            method: "POST",
-            headers: authHeaders,
-            signal: ctrl.signal,
-          });
-        } catch {
-          res = undefined;
-        }
+      let startersRaw: string;
+      try {
+        const url = `${urlBase}?${qs({ description: descClean, agentId: agentId || undefined })}`;
+        const axiosRes = await axios.post(url, {}, { signal: ctrl.signal });
+        const d = axiosRes.data;
+        if (Array.isArray(d)) startersRaw = d.join("\n");
+        else if (d && typeof d === "object") startersRaw = (d as any).questions || (d as any).message || (d as any).result || (d as any).text || JSON.stringify(d);
+        else startersRaw = String(d ?? "");
+      } catch (e: any) {
+        if (e?.name === "AbortError" || e?.code === "ERR_CANCELED") throw e;
+        throw new Error("Network/CORS error calling starters API. Ensure POST is allowed and CORS is enabled.");
       }
 
-      if (!res) {
-        throw new Error(
-          "Network/CORS error calling starters API. Ensure POST is allowed and CORS is enabled.",
-        );
-      }
-
-      // One retry for transient 5xx
-      if (!res.ok && [500, 502, 503, 504].includes(res.status)) {
-        await new Promise((r) => setTimeout(r, 500));
-        const url = `${urlBase}?${qs({
-          description: descClean,
-          agentId: agentId || undefined,
-        })}`;
-        res = await fetch(url, {
-          method: "POST",
-          headers: authHeaders,
-          signal: ctrl.signal,
-        });
-      }
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(
-          `classifyStartConversation failed: ${res.status} ${txt}`,
-        );
-      }
-
-      if (res.status === 204) {
-        message.warning("No content returned from server.");
-        return;
-      }
-
-      const raw = await parseFlexible(res);
-      if (!applyPrompts(raw)) return;
+      if (!applyPrompts(startersRaw)) return;
     } catch (e: any) {
       message.error(
         e?.name === "AbortError"
@@ -2724,22 +2440,8 @@ const Agentcreation: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/ai-service/agent/newAgentPublish`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", ...auth },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(
-          `Publish failed: ${res.status} ${res.statusText} ${
-            txt ? "— " + txt : ""
-          }`.trim(),
-        );
-      }
-
-      const data = await res.json().catch(() => ({}) as any);
+      const res = await axios.patch(`${BASE_URL}/ai-service/agent/newAgentPublish`, body);
+      const data = res.data ?? {};
       const assistanceId =
         data.assistanceId || data.assistantId || data.id || "";
 
@@ -2891,20 +2593,12 @@ const Agentcreation: React.FC = () => {
         const formData = new FormData();
         formData.append("image", businessCardFile!); // businessCardFile is already in state
 
-        const res = await fetch(`${BASE_URL}/ai-service/generate-profile`, {
-          method: "POST",
-          headers: {
-            ...(auth as any), // only auth, NO Content-Type (browser sets multipart boundary)
-          },
-          body: formData,
+        const res = await axios.post(`${BASE_URL}/ai-service/generate-profile`, formData, {
+          responseType: "blob",
         });
 
-        if (!res.ok) {
-          throw new Error(`generate-profile failed: ${res.status}`);
-        }
-
         // Step 2: Response is direct PDF binary — read as blob
-        const pdfBlob = await res.blob();
+        const pdfBlob = res.data as Blob;
         const pdfFile = new File([pdfBlob], "Companyprofile.pdf", {
           type: "application/pdf",
         });

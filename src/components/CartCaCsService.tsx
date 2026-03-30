@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import customerApi from "../utils/axiosInstances";
 
 // Types
 interface CartItem {
@@ -69,7 +70,7 @@ const CartCaCsService: React.FC = () => {
 
     setProfileLoading(true);
     try {
-      const response = await axios({
+      const response = await customerApi({
         method: "GET",
         url: `https://meta.oxyloans.com/api/user-service/customerProfileDetails?customerId=${customerId}`,
         headers: {
@@ -121,7 +122,7 @@ const CartCaCsService: React.FC = () => {
         setLoading(true);
       }
 
-      const response = await axios.get(
+      const response = await customerApi.get(
         `https://meta.oxyloans.com/api/cart-service/cart/view?userId=${userId}`,
         {
           headers: {
@@ -189,7 +190,7 @@ const CartCaCsService: React.FC = () => {
     try {
       setRemoveLoading(prev => ({ ...prev, [cartItemId]: true }));
 
-      const response = await axios.delete(
+      const response = await customerApi.delete(
         `https://meta.oxyloans.com/api/cart-service/cart/remove/${cartItemId}`,
         {
           headers: {
@@ -346,7 +347,7 @@ const CartCaCsService: React.FC = () => {
 
       console.log("Placing order with data:", orderData);
 
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/order-service/CACSOrderPlace",
         orderData,
         {

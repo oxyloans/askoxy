@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import axios from "axios";
 import { message } from "antd";
+import customerApi from "../utils/axiosInstances";
 
 interface AuthorInfoProps {
   name: string;
@@ -100,7 +101,7 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({
     }
 
     try {
-      const response = await axios.patch(
+      const response = await customerApi.patch(
         "https://meta.oxyloans.com/api/student-service/user/profile/update",
         {
           userId,

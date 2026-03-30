@@ -17,6 +17,7 @@ import { Modal, Button, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
 
 import BASE_URL from "../../Config";
+import customerApi from "../../utils/axiosInstances";
 
 const Freerudraksha: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>("");
@@ -145,7 +146,7 @@ const Freerudraksha: React.FC = () => {
     if (!userId) return;
 
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
         { userId }
       );
@@ -319,7 +320,7 @@ const Freerudraksha: React.FC = () => {
 
     try {
       // Sending the POST request to the API
-      const response = await axios.post(apiUrl, payload, { headers: headers });
+      const response = await customerApi.post(apiUrl, payload, { headers: headers });
 
       // Check if the response was successful
       if (response.data) {

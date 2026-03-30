@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
+import customerApi from "../utils/axiosInstances";
 
 const ModalComponent: React.FC = () => {
   const [show, setShow] = useState(true);
@@ -26,7 +27,7 @@ const ModalComponent: React.FC = () => {
   const sendWhatsappOtp = async () => {
     setError(""); // Reset error state
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/auth-service/auth/sendWhatsappOtp",
         {
           chatId: mobileNumber,
@@ -53,7 +54,7 @@ const ModalComponent: React.FC = () => {
   const sendEmailOtp = async () => {
     setError(""); // Reset error state
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/auth-service/auth/sendEmailOtp",
         {
           email: email,
@@ -79,7 +80,7 @@ const ModalComponent: React.FC = () => {
   const sendPanOtp = async () => {
     setError(""); // Reset error state
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/auth-service/auth/sendPanOtp",
         {
           pan: pan, // Pass the PAN number for verification
@@ -101,7 +102,7 @@ const ModalComponent: React.FC = () => {
   const verifyWhatsappOtp = async () => {
     setError(""); // Reset error state
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/auth-service/auth/verifyWhatsappOtp",
         {
           id: localStorage.getItem("userId"),
@@ -122,7 +123,7 @@ const ModalComponent: React.FC = () => {
   const verifyEmailOtp = async () => {
     setError(""); // Reset error state
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/auth-service/auth/verifyEmailOtp",
         {
           // email: email,
@@ -147,7 +148,7 @@ const ModalComponent: React.FC = () => {
   const verifyPanOtp = async () => {
     setError(""); // Reset error state
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://meta.oxyloans.com/api/auth-service/auth/verifyPanOtp",
         {
           pan: pan,
@@ -171,7 +172,7 @@ const ModalComponent: React.FC = () => {
   const verifyPanWithCashfree = async () => {
     setError(""); // Reset error state
     try {
-      const response = await axios.post(
+      const response = await customerApi.post(
         "https://api.cashfree.com/verification/pan",
         {
           name: panName,

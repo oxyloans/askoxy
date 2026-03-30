@@ -20,6 +20,7 @@ import BASE_URL from "../Config";
 import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
 import { Button, message, Select } from "antd";
 import JobApplicationModal from "./JobApplyModal";
+import ResumeUploadModal from "./ResumeUploadModal";
 
 interface Job {
   id: string;
@@ -59,6 +60,8 @@ type FilterKey =
 const { Option } = Select;
 
 const JobViewPage: React.FC = () => {
+    const [showResumeModal, setShowResumeModal] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { id: urlId, company } = useParams<{ id: string; company: string }>();
@@ -96,6 +99,7 @@ const JobViewPage: React.FC = () => {
   } | null>(null);
   const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
   const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>({});
+
 
   const uniqueLocations = Array.from(
     new Set(
@@ -316,24 +320,31 @@ const JobViewPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (location.state?.openApplyModal && selectedJob) {
-      // ✅ Open JobApplicationModal ONCE
-      setApplySelectedJob({
-        jobDesignation: selectedJob.jobDesignation,
-        companyName: selectedJob.companyName,
-      });
+useEffect(() => {
+  const isPassed = sessionStorage.getItem("examPassed") === "true";
+
+  if (location.state?.openApplyModal && selectedJob) {
+    setApplySelectedJob({
+      jobDesignation: selectedJob.jobDesignation,
+      companyName: selectedJob.companyName,
+    });
+
+    if (isPassed) {
+      // ✅ AFTER EXAM PASS → FULL FORM
       setIsModalOpen(true);
-
-      // 🧹 Remove the flag from this history entry
-      const { openApplyModal, ...restState } = (location.state as any) || {};
-
-      navigate(location.pathname, {
-        replace: true,
-        state: restState, // ⬅ same state, but without openApplyModal
-      });
+    } else {
+      // 🔥 FIRST TIME → RESUME UPLOAD
+      setShowResumeModal(true);
     }
-  }, [location.key, location.state, selectedJob, navigate]);
+
+    const { openApplyModal, ...restState } = location.state || {};
+
+    navigate(location.pathname, {
+      replace: true,
+      state: restState,
+    });
+  }
+}, [location.state, selectedJob]);
 
   useEffect(() => {
     filterJobs();
@@ -472,15 +483,23 @@ const JobViewPage: React.FC = () => {
 
     const hasAgent = await checkUserHasAgent();
 
-    if (!hasAgent) {
-      setShowNoAgentPopup(true);
-      return;
-    }
+  if (!hasAgent) {
+    setShowNoAgentPopup(true);
+    return;
+  }
 
-    // ✅ Has agent → open Apply modal directly
-    setApplySelectedJob({ jobDesignation, companyName });
+ const isPassed = sessionStorage.getItem("examPassed") === "true";
+
+  setApplySelectedJob({ jobDesignation, companyName });
+
+  if (isPassed) {
+    // ✅ AFTER PASS → FULL FORM
     setIsModalOpen(true);
-    setShowNoAgentPopup(false);
+  } else {
+    // ✅ FIRST TIME → RESUME
+    setShowResumeModal(true);
+  }
+
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -651,8 +670,8 @@ const JobViewPage: React.FC = () => {
     return (
       <motion.div
         variants={itemVariants}
-        className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl 
-        transition-all duration-300 transform hover:-translate-y-1 cursor-pointer 
+        className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl
+        transition-all duration-300 transform hover:-translate-y-1 cursor-pointer
         flex flex-col border border-gray-100 ${isCompact ? "m-1" : "m-2"}`}
         onClick={() => handleJobSelect(job)}
       >
@@ -1422,6 +1441,20 @@ const JobViewPage: React.FC = () => {
           userId={userId || ""}
         />
       )}
+
+
+            {showResumeModal && selectedJob && (
+  <ResumeUploadModal
+    open={showResumeModal}
+    onClose={() => setShowResumeModal(false)}
+    userId={userId || ""}
+    jobId={selectedJob.id}
+    jobDesignation={selectedJob.jobDesignation}
+    companyName={selectedJob.companyName}
+  />
+)}
+
+
 
       {showNoAgentPopup && (
         <div

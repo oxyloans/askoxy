@@ -13,7 +13,7 @@ import AskOxyLogo from "../assets/img/askoxylogoblack.png";
 import { CartContext } from "../until/CartContext";
 import SearchBar from "../kart/SearchBar";
 import BASE_URL from "../Config";
-import { customerApi as axios } from "../utils/axiosInstances";
+import customerApi, { customerApi as axios } from "../utils/axiosInstances";
 
 interface SearchResult {
   id: string;
@@ -87,7 +87,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
 
     setIsSearching(true);
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/product-service/dynamicSearch?q=${encodeURIComponent(query)}`
       );
       const flattenedProducts = (response.data.items || []).flatMap(
@@ -119,7 +119,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
 
   const fetchCartData = async () => {
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
       );
       setCount(response.data.length);
@@ -130,7 +130,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
 
   const checkProfileCompletion = async (): Promise<boolean> => {
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`
       );
       if (response.status === 200) {

@@ -28,6 +28,7 @@ import {
   ShieldX,
   Ban
 } from "lucide-react";
+import { customerApi } from "../utils/axiosInstance";
 
 const API_BASE_URL = "https://meta.oxyloans.com";
 
@@ -239,7 +240,7 @@ const ServiceCAList: React.FC = () => {
       const url = `${API_BASE_URL}/api/order-service/CACSUser/${userId}`;
       console.log("Fetching from URL:", url);
 
-      const response = await axios({
+      const response = await customerApi({
         method: "get",
         url: url,
         headers: {

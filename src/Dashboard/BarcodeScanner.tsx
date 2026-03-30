@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+
 import BASE_URL from "../Config";
+import customerApi from '../utils/axiosInstances';
 
 interface BarcodeDetector {
   detect: (canvas: HTMLCanvasElement) => Promise<Array<{ rawValue: string }>>;
@@ -204,7 +205,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   const checkProfileCompletion = async () => {
     try {
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -242,7 +243,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     
     setCategories(mockCategories);
     
-    axios.get(BASE_URL + "/product-service/showItemsForCustomrs")
+    customerApi.get(BASE_URL + "/product-service/showItemsForCustomrs")
       .then((response) => setCategories(response.data))
       .catch((error) => {
         console.log(error);
@@ -518,7 +519,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         status: "DELIVERED"
       };
       
-      const response = await axios.post(
+      const response = await customerApi.post(
         BASE_URL + "/product-service/individualBarcodeScanner",
         payload
       );

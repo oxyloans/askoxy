@@ -5,6 +5,7 @@ import { Modal } from "antd";
 
 import { fetchCampaigns, Campaign } from "./servicesapi";
 import BASE_URL,{uploadurlwithId} from "../Config";
+import customerApi from "../utils/axiosInstances";
 type Freelancer = {
   id: string;
   email: string;
@@ -60,16 +61,15 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
 
   const fetchJobs = async () => {
     try {
-      const response = await fetch(
+      const response = await customerApi.get(
         `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
         {
-          method: "GET",
           headers: {
-            authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
-      const jobsData = await response.json();
+      const jobsData = response.data;
       if (Array.isArray(jobsData)) {
         setJobs(jobsData);
       } else {
@@ -100,10 +100,9 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
   };
   const fetchFreelancers = async () => {
     try {
-      const response = await fetch(
+      const response = await customerApi.get(
         `${BASE_URL}/ai-service/agent/getAllFreeLancers`,
         {
-          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
@@ -111,7 +110,7 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
         },
       );
 
-      const freelancersData = await response.json();
+      const freelancersData = response.data;
 
       if (Array.isArray(freelancersData)) {
         // ✅ filter junk + keep only clean rows

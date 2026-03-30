@@ -20,6 +20,7 @@ import BASE_URL from "../Config";
 import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
 import { message } from "antd";
 import JobApplicationModal from "./JobApplyModal";
+import customerApi from "../utils/axiosInstances";
 
 interface Job {
   id: string;
@@ -108,7 +109,7 @@ const JobDetails: React.FC = () => {
   };
 
   // 🔐 Read accessToken directly (same as other pages)
-  const buildAuthHeaders = (): HeadersInit => {
+  const buildAuthHeaders = (): Record<string, string> => {
     if (typeof window === "undefined") return {};
 
     const token = localStorage.getItem("accessToken");
@@ -124,10 +125,9 @@ const JobDetails: React.FC = () => {
     if (!userId) return false;
 
     try {
-      const res = await fetch(
+      const res = await customerApi.get(
         `${BASE_URL}/ai-service/agent/allAgentDataList?userId=${encodeURIComponent(userId)}`,
         {
-          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -136,9 +136,7 @@ const JobDetails: React.FC = () => {
         },
       );
 
-      if (!res.ok) return false;
-
-      const data = await res.json();
+      const data = res.data;
       const hasAssistants =
         data?.assistants &&
         Array.isArray(data.assistants) &&
@@ -248,10 +246,10 @@ const JobDetails: React.FC = () => {
 
   const fetchJobs = async () => {
     try {
-      const response = await fetch(
+      const response = await customerApi.get(
         `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
       );
-      const data = await response.json();
+      const data = response.data;
       const filteredJobs = data.filter((job: Job) => job.jobStatus === true);
       setJobs(filteredJobs);
       const matchedJob = data.find((job: Job) => job.id === id);

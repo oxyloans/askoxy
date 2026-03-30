@@ -274,15 +274,9 @@ const ApiDocs = () => {
   const generateJavaScriptCode = (api: any) => {
     const baseUrl = baseUrls[selectedEnv];
     if (api.requestType === "body") {
-      return `const response = await fetch('${baseUrl}${api.path}', {
-  method: '${api.method}',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(${JSON.stringify(api.example, null, 2)})
-});
+      return `const response = await customerApi.post('${baseUrl}${api.path}', ${JSON.stringify(api.example, null, 2)});
 
-const data = await response.json();
+const data = response.data;
 console.log(data);`;
     } else {
       const params =
@@ -291,11 +285,9 @@ console.log(data);`;
           : Object.entries(api.example)
               .map(([k, v]) => `${k}=${v}`)
               .join("&");
-      return `const response = await fetch('${baseUrl}${api.path}?${params}', {
-  method: '${api.method}'
-});
+      return `const response = await customerApi.get('${baseUrl}${api.path}?${params}');
 
-const data = await response.text();
+const data = response.data;
 console.log(data);`;
     }
   };

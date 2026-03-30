@@ -26,6 +26,7 @@ import "./SearchMain.css";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
+import customerApi from "../utils/axiosInstances";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -177,7 +178,7 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get<ApiResponse>(
+      const response = await customerApi.get<ApiResponse>(
         `${BASE_URL}/product-service/dynamicSearch`,
         {
           params: { q },
@@ -209,7 +210,7 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
     const fetchCartData = async () => {
       if (!customerId || !token) return;
       try {
-        const response = await axios.get(
+        const response = await customerApi.get(
           `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
@@ -259,14 +260,14 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
     }));
 
     try {
-      await axios.post(
+      await customerApi.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         { customerId, itemId: item.itemId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       message.success("Item added to cart successfully.");
 
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -322,21 +323,21 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
           (cart) => cart.itemId === item.itemId,
         )?.cartId;
         if (targetCartId) {
-          await axios.delete(`${BASE_URL}/cart-service/cart/remove`, {
+          await customerApi.delete(`${BASE_URL}/cart-service/cart/remove`, {
             data: { id: targetCartId },
             headers: { Authorization: `Bearer ${token}` },
           });
           message.success("Item removed from cart successfully.");
         }
       } else {
-        await axios[method](
+        await customerApi[method](
           endpoint,
           { customerId, itemId: item.itemId },
           { headers: { Authorization: `Bearer ${token}` } },
         );
       }
 
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );

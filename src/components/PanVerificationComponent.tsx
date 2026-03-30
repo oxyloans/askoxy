@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Form, Alert } from 'react-bootstrap';
 import axios from 'axios';
+import customerApi from '../utils/axiosInstances';
 
 const PanVerificationComponent: React.FC = () => {
     const [name, setName] = useState('');
@@ -22,7 +23,7 @@ const PanVerificationComponent: React.FC = () => {
         };
 
         try {
-            const response = await axios.post(url, body, { headers });
+            const response = await customerApi.post(url, body, { headers });
             return response.data; // Return response data for further processing
         } catch (error) {
             console.error('Error verifying PAN:', error);

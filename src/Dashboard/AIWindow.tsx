@@ -4,6 +4,7 @@ import BASE_URL from "../Config";
 import { message } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import customerApi from "../utils/axiosInstances";
 
 const parseMarkdown = (text: string) => {
   if (!text) return "";
@@ -168,19 +169,11 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       voicemode: string
     ): Promise<string> => {
       try {
-        const res = await fetch(
-          `${BASE_URL}/student-service/user/token?assistantId=${""}&voicemode=${voicemode}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ instructions }),
-          }
+        const { data } = await customerApi.post(
+          `${BASE_URL}/student-service/user/token?assistantId=${assistantId}&voicemode=${voicemode}`,
+          { instructions }
         );
-        const data = await res.json();
-        return data.client_secret.value;
+        return data?.client_secret?.value;
       } catch (error) {
         console.error("Failed to get ephemeral token:", error);
         throw error;
@@ -283,23 +276,16 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         return { error: "User not found" };
       }
 
-      const token = localStorage.getItem("accessToken");
-
-      const res = await fetch(`${BASE_URL}/ai-service/chat1?userId=${userId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ prompt: query }),
-      });
-
-      const text = await res.text();
+      const { data } = await customerApi.post(
+        `${BASE_URL}/ai-service/chat1?userId=${userId}`,
+        { prompt: query },
+        { responseType: "text" }
+      );
 
       // 🔥 IMPORTANT: return plain text or structured object
       return {
         success: true,
-        data: text,
+        data,
       };
     },
     []
@@ -445,21 +431,21 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         await pc.setLocalDescription(offer);
 
         const model = "gpt-4o-realtime-preview-2025-06-03";
-        const sdpRes = await fetch(
+        const sdpRes = await customerApi.post(
           `https://api.openai.com/v1/realtime?model=${model}`,
+          offer.sdp,
           {
-            method: "POST",
-            body: offer.sdp,
             headers: {
               Authorization: `Bearer ${EPHEMERAL_KEY}`,
               "Content-Type": "application/sdp",
             },
+            responseType: "text",
           }
         );
 
         const answer: RTCSessionDescriptionInit = {
           type: "answer",
-          sdp: await sdpRes.text(),
+          sdp: sdpRes.data,
         };
         await pc.setRemoteDescription(answer);
 
@@ -644,28 +630,22 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       }
 
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(
+      const response = await customerApi.post(
         `${BASE_URL}/ai-service/chat1?userId=${userId}`,
+        { prompt: userInput },
         {
-          method: "POST",
           headers: {
             accept: "*/*",
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ prompt: userInput }),
+          responseType: "text",
         }
       );
 
       console.log("Response status:", response.status);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API error response:", errorText);
-        throw new Error(`API call failed: ${response.statusText}`);
-      }
-
-      const aiResponse = await response.text();
+      const aiResponse = response.data;
       // console.log("AI Response received:", aiResponse);
 
       if (!aiResponse || aiResponse.trim() === "") {

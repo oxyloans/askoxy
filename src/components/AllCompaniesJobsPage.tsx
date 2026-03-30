@@ -14,6 +14,7 @@ import {
   Clock3,
   Briefcase,
 } from "lucide-react";
+import customerApi from "../utils/axiosInstances";
 
 type Job = {
   id: string;
@@ -105,11 +106,8 @@ const AllCompaniesJobsPage: React.FC = () => {
            url = `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(selectedCompany)}`;
          }
 
-         const response = await fetch(url);
-
-         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-         const data: Job[] = await response.json();
+         const response = await customerApi.get(url);
+         const data: Job[] = response.data;
 
         setJobs(Array.isArray(data) ? data : []);
       } catch (err: any) {
@@ -134,10 +132,10 @@ const AllCompaniesJobsPage: React.FC = () => {
 
  const fetchCompanyNames = async () => {
    try {
-     const response = await fetch(
+     const response = await customerApi.get(
        `${BASE_URL}/marketing-service/campgin/distinct-company-names`,
      );
-     const data = await response.json();
+     const data = response.data;
      setCompanyNames(data || {});
    } catch (error) {
      console.error("Error fetching company names:", error);

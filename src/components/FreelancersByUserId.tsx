@@ -23,6 +23,7 @@ import {
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import customerApi from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -97,7 +98,7 @@ const FreelancersByUserId: React.FC = () => {
     console.log("Using token:", token.substring(0, 10) + "...");
 
     try {
-      const res = await axios.get<Freelancer[]>(API_URL, {
+      const res = await customerApi.get<Freelancer[]>(API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

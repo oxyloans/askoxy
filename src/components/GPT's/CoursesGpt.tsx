@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import AskOxyLogo from "../../assets/img/askoxylogonew.png";
+import customerApi from "../../utils/axiosInstances";
 
 interface ChatMessage {
   type: "question" | "answer";
@@ -236,7 +237,7 @@ const CoursesGpt: React.FC = () => {
       const apiUrl = `https://meta.oxyloans.com/api/student-service/user/chat?InfoType=${encodeURIComponent(
         queryInput
       )}${userId ? `&userId=${userId}` : ""}`;
-      const response = await axios.post(apiUrl);
+      const response = await customerApi.post(apiUrl);
 
       setMessages((prev) => [
         ...prev,

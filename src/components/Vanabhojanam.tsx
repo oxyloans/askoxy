@@ -19,6 +19,7 @@ import img4 from "../assets/img/image4.png";
 import img5 from "../assets/img/image5.png";
 import img6 from "../assets/img/image6.png";
 import { Modal, Button, Input,message } from "antd";
+import customerApi from "../utils/axiosInstances";
 const images = [
   { src: img1, alt: "Image 1" },
   { src: img2, alt: "Image 2" },
@@ -137,7 +138,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
     try {
       // Make both requests concurrently using Promise.all
       await Promise.all([
-        axios.post(
+        customerApi.post(
           "https://meta.oxyloans.com/api/auth-service/auth/rudhrakshaDistribution",
           {
             userId: userId,
@@ -145,7 +146,7 @@ const [showConfirmationModal, setShowConfirmationModal] = useState(false);
             familyCount,
           }
         ),
-        axios.patch(
+        customerApi.patch(
           "https://meta.oxyloans.com/api/student-service/user/profile/update",
           {
             userId: userId, // Example of data to send

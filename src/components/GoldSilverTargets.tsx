@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { EditOutlined, GoldOutlined } from "@ant-design/icons";
 import Swal from "sweetalert2";
+import customerApi from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -79,9 +80,8 @@ const GoldSilverTargets: React.FC = () => {
     setTargetsLoading(true);
     setTargetsError(null);
     try {
-      const res = await fetch(API_URL_TARGETS);
-      if (!res.ok) throw new Error("Targets API request failed");
-      const data: TargetData[] = await res.json();
+      const res = await customerApi.get(API_URL_TARGETS);
+      const data: TargetData[] = res.data;
       setTargetsData(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error("Targets API Error:", err);
@@ -138,13 +138,9 @@ const GoldSilverTargets: React.FC = () => {
         isActive: editingTarget.isActive,
       };
 
-      const res = await fetch(API_URL_SAVE_TARGET, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await customerApi.post(API_URL_SAVE_TARGET, payload);
 
-      if (!res.ok) throw new Error("Failed to save target");
+      if (!res.data) throw new Error("Failed to save target");
 
       await fetchTargets();
       handleCloseModal();

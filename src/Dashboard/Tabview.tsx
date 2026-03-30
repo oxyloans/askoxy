@@ -17,6 +17,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import BASE_URL from "../Config";
 import BMVICON from "../assets/img/bmvlogo.png"; // Make sure to import the BMVICON
+import customerApi from "../utils/axiosInstances";
 
 
 const Tabview = () => {
@@ -83,7 +84,7 @@ const Tabview = () => {
   const fetchUserData = async () => {
     try {
       const userId = localStorage.getItem("userId");
-      const response = await axios.get(
+      const response = await customerApi.get(
         `${BASE_URL}/user-service/getProfile/${userId}`,
         {
           headers: {
@@ -166,7 +167,7 @@ const Tabview = () => {
       setTransferStatus({ loading: true, success: false, error: null });
 
       const token = localStorage.getItem("token");
-      const response = await axios.post(
+      const response = await customerApi.post(
         `${BASE_URL}/user-service/assetTransfer`,
         {
           from_mobile: userMobileNumber,

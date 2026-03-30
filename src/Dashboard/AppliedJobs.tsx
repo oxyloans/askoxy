@@ -10,13 +10,13 @@ import {
   Modal,
   Grid,
 } from "antd";
-import axios from "axios";
 import BASE_URL from "../Config";
 import {
   PlusOutlined,
   ExclamationCircleOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
+import customerApi from "../utils/axiosInstances";
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
@@ -61,7 +61,7 @@ const AppliedJobs: React.FC = () => {
     try {
       setLoading(true);
       const userId = localStorage.getItem("userId") || "";
-      const res = await axios.get(
+      const res = await customerApi.get(
         `${BASE_URL}/marketing-service/campgin/getuserandallusersappliedjobs?page=${pg}&size=${size}&userId=${userId}`
       );
 
@@ -106,19 +106,13 @@ const AppliedJobs: React.FC = () => {
         try {
           setUpdateLoading(jobId);
 
-          const response = await fetch(
+          await customerApi.post(
             `${BASE_URL}/marketing-service/campgin/updatejobstatus`,
             {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: jobId,
-                jobStatus: !currentStatus,
-              }),
+              id: jobId,
+              jobStatus: !currentStatus,
             }
           );
-
-          if (!response.ok) throw new Error("Failed to update job status");
 
           setJobs((prev) =>
             prev.map((job) =>
