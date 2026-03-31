@@ -26,7 +26,8 @@ import {
  
   WhatsAppOutlined,
 } from "@ant-design/icons";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
 import moment from "moment";
@@ -322,7 +323,7 @@ const AssignedDataPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const response = await axios.post<ApiResponse>(
+      const response = await adminApi.post<ApiResponse>(
         `${BASE_URL}/user-service/assigned-users//${storedUniqueId}`,
         {
           pageNo: currentPage,
@@ -420,7 +421,7 @@ const AssignedDataPage: React.FC = () => {
   const fetchOrderDetails = async (userId: string) => {
     setLoader(true);
     try {
-      const response = await axios.post(
+      const response = await adminApi.post(
         BASE_URL + "/order-service/getAllOrders_customerId1",
         { userId },
         {
@@ -428,7 +429,7 @@ const AssignedDataPage: React.FC = () => {
             "Content-Type": "application/json",
             accept: "*/*",
           },
-        }
+        },
       );
 
       setUserOrders(response.data);
@@ -898,7 +899,7 @@ const AssignedDataPage: React.FC = () => {
     setLoading(true);
     try {
       const payload = { number: whatsappNumber };
-      const { data } = await axios.post<ApiResponse>(
+      const { data } = await adminApi.post<ApiResponse>(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         payload,
         { headers: { "Content-Type": "application/json" } }

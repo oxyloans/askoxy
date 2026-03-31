@@ -166,7 +166,7 @@ const CreateAssistant: React.FC = () => {
       const created = await createAssistant(payload);
 
       message.success(`Assistant "${created.name}" created!`);
-      navigate(`/admn/conversation/${created.id}`);
+      navigate(`/admin/conversation/${created.id}`);
     } catch (e) {
       console.error(e);
       message.error("Failed to create assistant");
@@ -435,8 +435,8 @@ const CreateAssistant: React.FC = () => {
                             const v = e.target.value;
                             setMetadataList((ms) =>
                               ms.map((x, idx) =>
-                                idx === i ? { ...x, key: v } : x
-                              )
+                                idx === i ? { ...x, key: v } : x,
+                              ),
                             );
                           }}
                           size="large"
@@ -451,8 +451,8 @@ const CreateAssistant: React.FC = () => {
                             const v = e.target.value;
                             setMetadataList((ms) =>
                               ms.map((x, idx) =>
-                                idx === i ? { ...x, value: v } : x
-                              )
+                                idx === i ? { ...x, value: v } : x,
+                              ),
                             );
                           }}
                           size="large"
@@ -464,7 +464,7 @@ const CreateAssistant: React.FC = () => {
                           icon={<CloseOutlined />}
                           onClick={() =>
                             setMetadataList((ms) =>
-                              ms.filter((_, idx) => idx !== i)
+                              ms.filter((_, idx) => idx !== i),
                             )
                           }
                           danger

@@ -82,7 +82,7 @@ const AddBlog: React.FC = () => {
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
 
@@ -108,7 +108,7 @@ const AddBlog: React.FC = () => {
     if (name === "socialMediaCaption") {
       if (value.length < 25) {
         setSocialMediaCaptionErrorMessage(
-          "Please enter a social media caption with at least 25 characters."
+          "Please enter a social media caption with at least 25 characters.",
         );
       } else {
         setSocialMediaCaptionErrorMessage("");
@@ -134,7 +134,7 @@ const AddBlog: React.FC = () => {
   };
 
   const handleMediaChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     if (!files) return;
@@ -143,7 +143,7 @@ const AddBlog: React.FC = () => {
       const file = files[i];
 
       const isAlreadyUploaded = formData.mediaUrls.some(
-        (item) => item.fileName === file.name
+        (item) => item.fileName === file.name,
       );
 
       if (isAlreadyUploaded) {
@@ -166,7 +166,7 @@ const AddBlog: React.FC = () => {
           uploadFormData,
           {
             headers: { "Content-Type": "multipart/form-data" },
-          }
+          },
         );
 
         if (response.data.uploadStatus === "UPLOADED") {
@@ -187,13 +187,13 @@ const AddBlog: React.FC = () => {
           setMediaErrorMessage("");
         } else {
           setMediaErrorMessage(
-            `Failed to upload ${file.name}. Please try again. and check your file format and size`
+            `Failed to upload ${file.name}. Please try again. and check your file format and size`,
           );
         }
       } catch (error) {
         console.error("Error uploading file:", error);
         setMediaErrorMessage(
-          `Failed to upload ${file.name}. Please try again. and check your file format and size`
+          `Failed to upload ${file.name}. Please try again. and check your file format and size`,
         );
       } finally {
         setIsUploading(false);
@@ -275,12 +275,12 @@ const AddBlog: React.FC = () => {
             accept: "*/*",
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data) {
         message.success(
-          "Your blog was added successfully. Thank you for sharing your thoughts!"
+          "Your blog was added successfully. Thank you for sharing your thoughts!",
         );
 
         setFormData({
@@ -292,7 +292,7 @@ const AddBlog: React.FC = () => {
           campainInputType: "SERVICE",
         });
         if (primaryType === "HELPDESKSUPERADMIN") {
-          navigate("/admn/allcampaignsdetails");
+          navigate("/admin/allcampaignsdetails");
         } else {
           if (userId) {
             navigate("/main/dashboard/myblogs");
@@ -300,18 +300,18 @@ const AddBlog: React.FC = () => {
         }
       } else {
         setErrorMessage(
-          "Something went wrong while adding your blog. Kindly try again after some time."
+          "Something went wrong while adding your blog. Kindly try again after some time.",
         );
         message.error(
-          "Something went wrong while adding your blog. Kindly try again after some time."
+          "Something went wrong while adding your blog. Kindly try again after some time.",
         );
       }
     } catch (error) {
       setErrorMessage(
-        "Something went wrong while adding your blog. Kindly try again after some time."
+        "Something went wrong while adding your blog. Kindly try again after some time.",
       );
       message.error(
-        "Something went wrong while adding your blog. Kindly try again after some time."
+        "Something went wrong while adding your blog. Kindly try again after some time.",
       );
     } finally {
       setIsSubmitting(false);
@@ -336,7 +336,7 @@ const AddBlog: React.FC = () => {
       isValid = false;
     } else if (formData.socialMediaCaption.length < 25) {
       setSocialMediaCaptionErrorMessage(
-        "Social Media Caption must be between 25 and 30 characters"
+        "Social Media Caption must be between 25 and 30 characters",
       );
       isValid = false;
     }
@@ -518,8 +518,8 @@ const AddBlog: React.FC = () => {
                             onClick={() =>
                               handleDeleteMedia(
                                 formData.mediaUrls.findIndex(
-                                  (item) => item === image
-                                )
+                                  (item) => item === image,
+                                ),
                               )
                             }
                             className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
@@ -584,8 +584,8 @@ const AddBlog: React.FC = () => {
                             onClick={() =>
                               handleDeleteMedia(
                                 formData.mediaUrls.findIndex(
-                                  (item) => item === video
-                                )
+                                  (item) => item === video,
+                                ),
                               )
                             }
                             className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"

@@ -1,7 +1,8 @@
 import { Modal, Spin, Select, Button, message, SelectProps } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import React, { useEffect, useState } from "react";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 
 interface Comment {
   adminComments: string;
@@ -239,7 +240,7 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
         requestData.isActive = isActive === "true";
       }
 
-      await axios.patch(
+      await adminApi.patch(
         `${BASE_URL}/user-service/adminUpdateComments`,
         requestData,
         { headers: { "Content-Type": "application/json" } },

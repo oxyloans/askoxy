@@ -13,7 +13,12 @@ import { adminApi as axios } from "../utils/axiosInstances";
 import { useNavigate, Link } from "react-router-dom";
 import { MailOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
 import BASE_URL from "../Config";
-import { setAdminAccessToken, setAdminRefreshToken, getAdminAccessToken, getAdminRefreshToken } from "../utils/cookieUtils";
+import {
+  setAdminAccessToken,
+  setAdminRefreshToken,
+  getAdminAccessToken,
+  getAdminRefreshToken,
+} from "../utils/cookieUtils";
 
 const { Title, Text } = Typography;
 
@@ -41,16 +46,21 @@ const Login: React.FC = () => {
       const acToken = getAdminAccessToken();
       const refreshToken = getAdminRefreshToken();
 
-      console.log("Auto-login check:", { id, primaryType, acToken, refreshToken });
+      console.log("Auto-login check:", {
+        id,
+        primaryType,
+        acToken,
+        refreshToken,
+      });
       // Note: admin_uniquId and admin_primaryType kept in localStorage (non-sensitive metadata)
 
       if (id && primaryType && acToken && refreshToken) {
         if (primaryType === "HELPDESKSUPERADMIN") {
-          navigate("/admn/helpdashboard");
+          navigate("/admin/helpdashboard");
         } else if (primaryType === "HELPDESKADMIN") {
-          navigate("/admn/dashboard");
+          navigate("/admin/dashboard");
         } else {
-          navigate("/admn/dashboard");
+          navigate("/admin/dashboard");
         }
       } else {
         navigate("/admin");
@@ -88,7 +98,7 @@ const Login: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status === "Login Successful") {
@@ -98,7 +108,8 @@ const Login: React.FC = () => {
           primaryType === "HELPDESKADMIN"
         ) {
           setAdminAccessToken(token);
-          if (response.data.refreshToke) setAdminRefreshToken(response.data.refreshToke);
+          if (response.data.refreshToke)
+            setAdminRefreshToken(response.data.refreshToke);
           localStorage.setItem("admin_uniquId", id);
           localStorage.setItem("admin_primaryType", primaryType);
           localStorage.setItem("admin_userName", name);
@@ -109,11 +120,11 @@ const Login: React.FC = () => {
             className: "custom-message-success",
           });
           if (primaryType === "HELPDESKSUPERADMIN") {
-            navigate("/admn/helpdashboard");
+            navigate("/admin/helpdashboard");
           } else if (primaryType === "HELPDESKADMIN") {
-            navigate("/admn/dashboard");
+            navigate("/admin/dashboard");
           } else {
-            navigate("/admn/dashboard");
+            navigate("/admin/dashboard");
           }
         } else {
           message.error({
@@ -128,7 +139,7 @@ const Login: React.FC = () => {
     } catch (error: any) {
       setError(
         error.response?.data?.message ||
-          "Failed to login. Please check your connection and try again."
+          "Failed to login. Please check your connection and try again.",
       );
     } finally {
       setLoading(false);

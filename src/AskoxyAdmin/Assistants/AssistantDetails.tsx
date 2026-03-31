@@ -73,7 +73,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
   const [fileLoading, setFileLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formState, setFormState] = useState<Partial<Assistant>>(
-    assistant || {}
+    assistant || {},
   );
   const [editingFunctionIndex, setEditingFunctionIndex] = useState<number>(-1);
   const [singleFunctionText, setSingleFunctionText] = useState("");
@@ -138,15 +138,15 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
 
       // Set file search options from tools
       const fileSearchTool = assistant.tools?.find(
-        (t) => t.type === "file_search"
+        (t) => t.type === "file_search",
       );
       if (fileSearchTool?.file_search?.ranking_options) {
         setFileSearchRanker(
           fileSearchTool.file_search.ranking_options.ranker ||
-            "default_2024_08_21"
+            "default_2024_08_21",
         );
         setFileSearchScoreThreshold(
-          fileSearchTool.file_search.ranking_options.score_threshold || 0
+          fileSearchTool.file_search.ranking_options.score_threshold || 0,
         );
       }
 
@@ -189,7 +189,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
           // Update tools in formState instead of separate functions property
           setFormState((prev) => {
             const nonFunctionTools = (prev.tools || []).filter(
-              (t) => t.type !== "function"
+              (t) => t.type !== "function",
             );
             const functionTools = parsed.functions.map((fn: any) => ({
               type: "function",
@@ -204,7 +204,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
           setCustomFunctionsModalVisible(false);
         } else {
           message.error(
-            'Invalid format. Please ensure you have a "functions" array.'
+            'Invalid format. Please ensure you have a "functions" array.',
           );
         }
       } else {
@@ -248,7 +248,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
 
   const initialVectorStores: string[] = useMemo(
     () => assistant?.tool_resources?.file_search?.vector_store_ids || [],
-    [assistant]
+    [assistant],
   );
   const [vectorStoreIds, setVectorStoreIds] =
     useState<string[]>(initialVectorStores);
@@ -259,20 +259,20 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
           key: k,
           value: typeof v === "string" ? v : JSON.stringify(v),
         }))
-      : []
+      : [],
   );
 
   const [fileSearchRanker, setFileSearchRanker] = useState<string>(
     () =>
       assistant?.tools?.find((t) => t.type === "file_search")?.file_search
-        ?.ranking_options?.ranker || "default_2024_08_21"
+        ?.ranking_options?.ranker || "default_2024_08_21",
   );
 
   const [fileSearchScoreThreshold, setFileSearchScoreThreshold] =
     useState<number>(
       () =>
         assistant?.tools?.find((t) => t.type === "file_search")?.file_search
-          ?.ranking_options?.score_threshold || 0
+          ?.ranking_options?.score_threshold || 0,
     );
 
   // Replace the simple change detection useEffect with this enhanced version:
@@ -285,16 +285,19 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
           ? { file_search: { vector_store_ids: vectorStoreIds } }
           : {}),
       },
-      metadata: metadataList.reduce((acc, kv) => {
-        if (kv.key.trim()) {
-          try {
-            acc[kv.key] = JSON.parse(kv.value);
-          } catch {
-            acc[kv.key] = kv.value;
+      metadata: metadataList.reduce(
+        (acc, kv) => {
+          if (kv.key.trim()) {
+            try {
+              acc[kv.key] = JSON.parse(kv.value);
+            } catch {
+              acc[kv.key] = kv.value;
+            }
           }
-        }
-        return acc;
-      }, {} as Record<string, any>),
+          return acc;
+        },
+        {} as Record<string, any>,
+      ),
     };
 
     const hasChanges =
@@ -346,7 +349,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                 },
               },
             } as Tool)
-          : t
+          : t,
       );
       return { ...prev, tools };
     });
@@ -398,7 +401,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
       await addFileToVectorStore(vectorStoreId, fileId);
 
       message.success(
-        `File "${file.name}" uploaded and attached successfully!`
+        `File "${file.name}" uploaded and attached successfully!`,
       );
     } catch (err: any) {
       message.error(err.message || "File upload failed.");
@@ -427,7 +430,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
 
           if (existingNames.includes(parsed.name)) {
             message.error(
-              `Function with name "${parsed.name}" already exists.`
+              `Function with name "${parsed.name}" already exists.`,
             );
             return;
           }
@@ -448,10 +451,10 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
           // Update existing function
           setFormState((prev) => {
             const functionTools = (prev.tools || []).filter(
-              (t) => t.type === "function"
+              (t) => t.type === "function",
             );
             const nonFunctionTools = (prev.tools || []).filter(
-              (t) => t.type !== "function"
+              (t) => t.type !== "function",
             );
 
             functionTools[editingFunctionIndex] = {
@@ -518,11 +521,11 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
           message.success("Assistant deleted successfully");
           setHasUnsavedChanges(false);
           onAssistantDeleted?.();
-          navigate("/admn/assistants");
+          navigate("/admin/assistants");
         } catch (error: any) {
           message.error(
             error?.response?.data?.error?.message ||
-              "Failed to delete assistant"
+              "Failed to delete assistant",
           );
         } finally {
           setDeleteLoading(false);
@@ -583,7 +586,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
 
       // Add function tools from formState
       const functionTools = (formState.tools || []).filter(
-        (t) => t.type === "function"
+        (t) => t.type === "function",
       );
       tools.push(...functionTools);
 
@@ -620,7 +623,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
       setHasUnsavedChanges(false);
     } catch (error: any) {
       message.error(
-        error?.response?.data?.error?.message || "Failed to update assistant"
+        error?.response?.data?.error?.message || "Failed to update assistant",
       );
     } finally {
       setLoading(false);
@@ -769,7 +772,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                     day: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
-                  }
+                  },
                 )}
               </div>
             </div>
@@ -812,12 +815,12 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                       value === 0
                         ? "Deterministic"
                         : value < 0.3
-                        ? "Focused"
-                        : value < 0.7
-                        ? "Balanced"
-                        : value < 1.2
-                        ? "Creative"
-                        : "Very Creative"
+                          ? "Focused"
+                          : value < 0.7
+                            ? "Balanced"
+                            : value < 1.2
+                              ? "Creative"
+                              : "Very Creative"
                     })`;
                   },
                 }}
@@ -853,10 +856,10 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                       value < 0.1
                         ? "Very Focused"
                         : value < 0.5
-                        ? "Focused"
-                        : value < 0.8
-                        ? "Balanced"
-                        : "Diverse"
+                          ? "Focused"
+                          : value < 0.8
+                            ? "Balanced"
+                            : "Diverse"
                     })`;
                   },
                 }}
@@ -998,7 +1001,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                       Custom Functions (
                       {
                         (formState.tools || []).filter(
-                          (t) => t.type === "function"
+                          (t) => t.type === "function",
                         ).length
                       }
                       )
@@ -1023,7 +1026,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                             .filter((t) => t.type === "function")
                             .map((tool: any) => tool.function);
                           setCustomFunctionsText(
-                            JSON.stringify({ functions }, null, 2)
+                            JSON.stringify({ functions }, null, 2),
                           );
                           setAddingNewFunction(false);
                           setEditingFunctionIndex(-1);
@@ -1064,7 +1067,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                                 onClick={() => {
                                   setEditingFunctionIndex(index);
                                   setSingleFunctionText(
-                                    JSON.stringify(tool.function, null, 2)
+                                    JSON.stringify(tool.function, null, 2),
                                   );
                                   setAddingNewFunction(false);
                                   setCustomFunctionsModalVisible(true);
@@ -1096,7 +1099,7 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                                   }));
 
                                   message.success(
-                                    "Function deleted successfully!"
+                                    "Function deleted successfully!",
                                   );
                                 }}
                                 className="flex-1 sm:flex-initial"
@@ -1258,8 +1261,8 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                   onChange={(e) =>
                     setMetadataList((prev) =>
                       prev.map((x, i) =>
-                        i === idx ? { ...x, key: e.target.value } : x
-                      )
+                        i === idx ? { ...x, key: e.target.value } : x,
+                      ),
                     )
                   }
                   className="w-full sm:flex-1 sm:max-w-xs"
@@ -1271,8 +1274,8 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
                   onChange={(e) =>
                     setMetadataList((prev) =>
                       prev.map((x, i) =>
-                        i === idx ? { ...x, value: e.target.value } : x
-                      )
+                        i === idx ? { ...x, value: e.target.value } : x,
+                      ),
                     )
                   }
                   className="w-full sm:flex-1"
@@ -1341,8 +1344,8 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
             {addingNewFunction
               ? "Add New Function"
               : editingFunctionIndex >= 0
-              ? "Edit Function"
-              : "Custom Functions Configuration"}
+                ? "Edit Function"
+                : "Custom Functions Configuration"}
           </span>
         }
         open={customFunctionsModalVisible}
@@ -1365,8 +1368,8 @@ const AssistantDetails: React.FC<AssistantDetailsProps> = ({
           addingNewFunction
             ? "Add Function"
             : editingFunctionIndex >= 0
-            ? "Update Function"
-            : "Save All Functions"
+              ? "Update Function"
+              : "Save All Functions"
         }
         cancelText="Cancel"
         className="custom-functions-modal"

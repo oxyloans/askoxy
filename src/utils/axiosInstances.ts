@@ -54,6 +54,7 @@ const LOGIN_ROUTES = {
   admin: "/admin",
   partner: "/partnerlogin",
   employee: "/userlogin",
+  freelancer: "/employee-login",
 } as const;
 
 // ─── Token resolvers ─────────────────────────────────────────────────────────
@@ -106,7 +107,7 @@ function createInstance({
       }
       return config;
     },
-    (error: AxiosError) => Promise.reject(error)
+    (error: AxiosError) => Promise.reject(error),
   );
 
   // ── Response: handle 401 ───────────────────────────────────────────────────
@@ -144,23 +145,23 @@ function createInstance({
       }
 
       return Promise.reject(error);
-    }
+    },
   );
 
   return instance;
 }
-      
+
 // ─── Shared token resolver (admin + partner dual-login safe) ─────────────────
 
 /**
  * Picks the right token based on the active URL:
- *  /admn/*  → admin_acToken
+ *  /admin/*  → admin_acToken
  *  /home/*  → partner_accesstoken
  *  fallback → whichever is present
  */
 export const resolvePortalToken = (): string | null => {
   const path = window.location.pathname;
-  if (path.startsWith("/admn")) return getAdminAccessToken();
+  if (path.startsWith("/admin")) return getAdminAccessToken();
   if (path.startsWith("/home")) return getPartnerAccessToken();
   return getAdminAccessToken() || getPartnerAccessToken();
 };
@@ -172,7 +173,7 @@ const resolvePortalLoginRoute = (): string => {
 };
 
 /**
- * Shared portal API — for pages mounted under both /admn/* and /home/*.
+ * Shared portal API — for pages mounted under both /admin/* and /home/*.
  * Built directly (not via createInstance) so there is exactly ONE
  * request interceptor and ONE response interceptor with no conflicts.
  */
@@ -189,13 +190,15 @@ sharedApi.interceptors.request.use(
     }
     return config;
   },
-  (error: AxiosError) => Promise.reject(error)
+  (error: AxiosError) => Promise.reject(error),
 );
 
 sharedApi.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const original = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       const currentPath = window.location.pathname + window.location.search;
@@ -203,7 +206,7 @@ sharedApi.interceptors.response.use(
       window.location.href = resolvePortalLoginRoute();
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // ─── Module instances ─────────────────────────────────────────────────────────
@@ -245,6 +248,19 @@ export const employeeApi = createInstance({
   clearTokens: () => {
     removeEmployeeAccessToken();
     removeEmployeeRefreshToken();
+  },
+});
+/** Freelance Marketplace portal — redirects to /employee-login on 401 */
+export const freelanceApi = createInstance({
+  getToken: employeeToken,
+  on401: "redirect",
+  loginRoute: LOGIN_ROUTES.freelancer,
+  clearTokens: () => {
+    removeEmployeeAccessToken();
+    removeEmployeeRefreshToken();
+    sessionStorage.removeItem("userId");
+    sessionStorage.removeItem("Name");
+    sessionStorage.removeItem("primaryType");
   },
 });
 

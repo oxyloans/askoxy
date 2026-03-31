@@ -25,13 +25,17 @@ import GoldSilverTargets from "./components/GoldSilverTargets";
 import FreelancerList from "./components/FreelancerList";
 import FreelancersByUserId from "./components/FreelancersByUserId";
 import DataReading from "./ChatScreen/DataReading";
-import RotaryPosterStudio from "./components/DynamicPosterDesignforRotary"
+import RotaryPosterStudio from "./components/DynamicPosterDesignforRotary";
 import RotaryLandingPage from "./components/RotaryLanding";
 import { CandidatesList } from "./AIMockInterview/admin/CandidatesList";
 import { CandidateDetail } from "./AIMockInterview/admin/CandidateDetail";
 import ImageCreation from "./BharathAIStore/pages/ImageCreation";
 import { AdminDashboard } from "./AIMockInterview/admin/AdminDashboard";
-import { FeedbackForm, MultiLevelSelection, ProctoredInterview } from "./AIMockInterview";
+import {
+  FeedbackForm,
+  MultiLevelSelection,
+  ProctoredInterview,
+} from "./AIMockInterview";
 import CampaignStats from "./components/CampaignStatsAccenture";
 import AccentureJobsPage from "./components/AccentureJobsPage";
 import AccenturePresentation from "./Dashboard/AccenturePresentation";
@@ -45,8 +49,18 @@ import JobAnalysisResult from "./components/JobAnalysisResult";
 import ExamPage from "./components/ExamPage";
 import ExamQuestionPage from "./components/ExamQuestionPage";
 import ExamResultsPage from "./components/ExamResultsPage";
+import Partnersdasboard from "./AskoxyAdmin/Freelanceradmin/Partnersdasboard";
+import AdminRequirementList from "./AskoxyAdmin/Freelanceradmin/AdminRequirementList";
+import AssignedFreelancerAdmin from "./AskoxyAdmin/Freelanceradmin/AssignedFreelancerslistAdmin";
+import EmployeeProtectedRoutes from "./auth/EmployeeProtectedRoute";
+import AssignedFreelancersPage from "./FreelanceMarketplace/AssignedFreelancersPage";
+import FreelancerProfiles from "./FreelanceMarketplace/FreelancerProfiles";
+import RequirementList from "./FreelanceMarketplace/RequirementList";
+import EmployeeDashboard from "./FreelanceMarketplace/EmployeeDashboard";
+import EmployeeLogin from "./FreelanceMarketplace/EmployeeLogin";
+import EmployeeRegister from "./FreelanceMarketplace/EmployeeRegister";
 const JobTraining90DaysPage = lazy(
-  () => import("./Jobplan/jobplanlandingpage")
+  () => import("./Jobplan/jobplanlandingpage"),
 );
 const Landingpage = lazy(() => import("./components/Landingpage"));
 // const Freerudraksha = lazy(() => import("./components/Services/Freerudraksh"));
@@ -56,7 +70,7 @@ const FreeSample = lazy(() => import("./components/Services/FreeSample"));
 const FreeAiandGenAi = lazy(() => import("./components/Services/FreeAi&GenAi"));
 
 const MachinesManufacturingServices = lazy(
-  () => import("./components/Services/Machines&ManufacturingService")
+  () => import("./components/Services/Machines&ManufacturingService"),
 );
 const LegalService = lazy(() => import("./components/Services/LegalService"));
 const MyRotaryServices = lazy(() => import("./components/Services/MyRotary"));
@@ -64,54 +78,54 @@ const HiringService = lazy(() => import("./components/Services/HiringService"));
 const DesignTemplatesPage = lazy(() => import("./Templates/Templatehome"));
 const CAServicesItems = lazy(() => import("./components/CAServicesItems"));
 const UniversityPromoCard = lazy(
-  () => import("./Templates/UniversityPromoCard")
+  () => import("./Templates/UniversityPromoCard"),
 );
 const PromoCard = lazy(() => import("./Templates/PromoCard"));
 const RiceOfferFAQs = lazy(() => import("./Dashboard/Faqs"));
 const MyCrypto = lazy(() => import("./Dashboard/MyCrypto"));
 const LoanManagementLandingPage = lazy(
-  () => import("./components/LoanManagementLandingPage")
+  () => import("./components/LoanManagementLandingPage"),
 );
 const OfferScreen = lazy(() => import("./kart/OfferScreen"));
 const AdminSidebar = lazy(() => import("./AskoxyAdmin/Sider"));
 const Home = lazy(() => import("./Dashboard/Home"));
 const CampaignsAdd = lazy(() => import("./AskoxyAdmin/CampaignsAdd"));
 const AllCampaignsDetails = lazy(
-  () => import("./AskoxyAdmin/AllCampaignDetail")
+  () => import("./AskoxyAdmin/AllCampaignDetail"),
 );
 const ForgotPasswordPage = lazy(() => import("./Pages/Auth/Forgotpage"));
 
 const InsuranceLLmVoice = lazy(
-  () => import("./GenOxy/components/InsuranceLLMVoice")
+  () => import("./GenOxy/components/InsuranceLLMVoice"),
 );
 const ScrollToTop = lazy(() => import("./components/ScrollToTop"));
 
 const AccomidationGpt = lazy(() => import("./components/GPT's/Accomadation"));
 const ApplicationSupport = lazy(
-  () => import("./components/GPT's/ApplicationSupport")
+  () => import("./components/GPT's/ApplicationSupport"),
 );
 const AccreditationsRecognization = lazy(
-  () => import("./components/GPT's/AccreditationsRecognization")
+  () => import("./components/GPT's/AccreditationsRecognization"),
 );
 const CoursesGpt = lazy(() => import("./components/GPT's/CoursesGpt"));
 const PreparationGpt = lazy(() => import("./components/GPT's/PreparationGpt"));
 const ForeignExchange = lazy(
-  () => import("./components/GPT's/ForeignExchange")
+  () => import("./components/GPT's/ForeignExchange"),
 );
 const InformationAboutCountries = lazy(
-  () => import("./components/GPT's/InformationAboutCountries")
+  () => import("./components/GPT's/InformationAboutCountries"),
 );
 const LoansGpt = lazy(() => import("./components/GPT's/LoansGpt"));
 const LogisticsGpt = lazy(() => import("./components/GPT's/LogisticsGpt"));
 const PlacementsGpt = lazy(() => import("./components/GPT's/PlacementsGpt"));
 const QualificationSpecializationGPT = lazy(
-  () => import("./components/GPT's/QualificationSpecializationGPT")
+  () => import("./components/GPT's/QualificationSpecializationGPT"),
 );
 const VisaGpt = lazy(() => import("./components/GPT's/VisaGpt"));
 const ReviewsGpt = lazy(() => import("./components/GPT's/ReviewsGpt"));
 const ScholarshipGpt = lazy(() => import("./components/GPT's/ScholarshipGpt"));
 const UniversityAgents = lazy(
-  () => import("./components/GPT's/UniversityAgents")
+  () => import("./components/GPT's/UniversityAgents"),
 );
 
 const University = lazy(() => import("./components/GPT's/UniversityGpt"));
@@ -150,7 +164,7 @@ const WomensDay = lazy(() => import("./components/WomensDay"));
 const Content2 = lazy(() => import("./FREEAIBOOK/Content"));
 const HiddenLogin = lazy(() => import("./Pages/Auth/HiddenLogin"));
 const SuperAdminComments = lazy(
-  () => import("./AskoxyAdmin/SuperAdminComments")
+  () => import("./AskoxyAdmin/SuperAdminComments"),
 );
 const TestimonialsPage = lazy(() => import("./Dashboard/TestimoinalsOXY"));
 const RiceComparison = lazy(() => import("./components/SteanRiceVsRawRice"));
@@ -170,13 +184,13 @@ const AllStatusPage = lazy(() => import("./Taskmanagement/AllStatus"));
 const AssignedTasksPage = lazy(() => import("./Taskmanagement/AssignedTasks"));
 
 const TaskAssignedUser = lazy(
-  () => import("./Taskmanagement/TaskAssignedUser")
+  () => import("./Taskmanagement/TaskAssignedUser"),
 );
 const TaskUpdate = lazy(() => import("./Taskmanagement/EndoftheDay"));
 const UserRegister = lazy(() => import("./Taskmanagement/UserRegister"));
 const UserLogin = lazy(() => import("./Taskmanagement/UserLogin"));
 const CallerHistoryPage = lazy(
-  () => import("./AskoxyAdmin/HelpdeskTodayCalls")
+  () => import("./AskoxyAdmin/HelpdeskTodayCalls"),
 );
 // *************************PARTNER START****************************//
 
@@ -197,7 +211,7 @@ const ContactUs = lazy(() => import("./kart/ContactUs"));
 const Register = lazy(() => import("./AskoxyAdmin/Register"));
 const AssignedDataPage = lazy(() => import("./AskoxyAdmin/AssignedData"));
 const HelpDeskUsersDashboard = lazy(
-  () => import("./AskoxyAdmin/HelpDeskUsers")
+  () => import("./AskoxyAdmin/HelpDeskUsers"),
 );
 const DataAssigned = lazy(() => import("./AskoxyAdmin/AskoxyUsers"));
 const ReferredData = lazy(() => import("./AskoxyAdmin/RefferedData"));
@@ -208,12 +222,12 @@ const MeyaporeMetro = lazy(() => import("./components/MeyaporeMetro"));
 const SearchMain = lazy(() => import("./Dashboard/SearchMain"));
 const OrderReport = lazy(() => import("./AskoxyAdmin/OrderReport"));
 const LeaveApplicationPage = lazy(
-  () => import("./Taskmanagement/LeaveApplicationPage")
+  () => import("./Taskmanagement/LeaveApplicationPage"),
 );
 const TeamLeaveStatus = lazy(() => import("./Taskmanagement/TeamLeaveStatus"));
 const FeedbackDashboard = lazy(() => import("./AskoxyAdmin/FeedBack"));
 const MobileNumberUpdate = lazy(
-  () => import("./Taskmanagement/EmployeeProfilePage")
+  () => import("./Taskmanagement/EmployeeProfilePage"),
 );
 const HelpDeskDashboard = lazy(() => import("./AskoxyAdmin/HelpDeskDashboard"));
 const ExchangeOrdersPage = lazy(() => import("./PartnerWeb/ExchangeOrders"));
@@ -221,7 +235,7 @@ const GSTRiceFAQ = lazy(() => import("./components/GstFAQ"));
 const LandingPage = lazy(() => import("./GLMS/LandingPage"));
 const CASDashboard = lazy(() => import("./GLMS/CAS/Pages/CASDashboard"));
 const CASRouteRenderer = lazy(
-  () => import("./GLMS/CAS/Pages/CASRouteRenderer")
+  () => import("./GLMS/CAS/Pages/CASRouteRenderer"),
 );
 const CMSRouteRenderer = lazy(() => import("./GLMS/CMS/Pages/CMSRoutes"));
 const CMSDashboard = lazy(() => import("./GLMS/CMS/Pages/CMSDashboard"));
@@ -232,34 +246,34 @@ const OrdersByPincode = lazy(() => import("./AskoxyAdmin/Pincodewiseorders"));
 const Feedback = lazy(() => import("./components/Feedback"));
 
 const AIBlockchainAndItServices = lazy(
-  () => import("./AIBlockchainAndItSev/AIBlockchainAndItServices")
+  () => import("./AIBlockchainAndItSev/AIBlockchainAndItServices"),
 );
 const CACSService = lazy(() => import("./CACSServices/CaCsServices"));
 const GoldAndSilverAndDiamond = lazy(
-  () => import("./GoldAndSilverAndDiamonds/GoldAndSilverAndDiamonds")
+  () => import("./GoldAndSilverAndDiamonds/GoldAndSilverAndDiamonds"),
 );
 const LoansInvestmentsLandingPage = lazy(
-  () => import("./LoansInvestments/LoanInvestmentsLandingPage")
+  () => import("./LoansInvestments/LoanInvestmentsLandingPage"),
 );
 const RealEstate = lazy(() => import("./Real Estate/RealEstate"));
 const Nyayagpt = lazy(() => import("./Nyayagpt/Nyayagpt/Nyayagpt"));
 const MetroLogin = lazy(() => import("./Pages/Auth/MetroLogin"));
 const Rice2RoboEcommers = lazy(
-  () => import("./Rice2RoboEcommers/Rice2RoboEcommers")
+  () => import("./Rice2RoboEcommers/Rice2RoboEcommers"),
 );
 
 const HomePage = lazy(() => import("./Retailshop/Pages/Home"));
 const ShopFormPage = lazy(() => import("./Retailshop/Pages/ShopFormPage"));
 const ShopListPage = lazy(() => import("./Retailshop/Pages/ShopListPage"));
 const CarnivalFormPage = lazy(
-  () => import("./Retailshop/Pages/CarnivalFormPage")
+  () => import("./Retailshop/Pages/CarnivalFormPage"),
 );
 const CarnivalListPage = lazy(
-  () => import("./Retailshop/Pages/CarnivalListPage")
+  () => import("./Retailshop/Pages/CarnivalListPage"),
 );
 const ShopEditForm = lazy(() => import("./Retailshop/components/ShopEditForm"));
 const CarnivalEditPage = lazy(
-  () => import("./Retailshop/Pages/CarnivalEditPage")
+  () => import("./Retailshop/Pages/CarnivalEditPage"),
 );
 
 const CreateAgentMain = lazy(() => import("./AgentStore/CreateAgentMain"));
@@ -275,19 +289,19 @@ const UniversityListPage = lazy(() => import("./StudyAbroad/Universitylist"));
 const AllUniversities = lazy(() => import("./StudyAbroad/AllUniversities"));
 const LandingPage1 = lazy(() => import("./AIServicesHub/LandingPage"));
 const StudyAbroadLandingPage = lazy(
-  () => import("./StudyAbroad/StudyAbroadLandingPage")
+  () => import("./StudyAbroad/StudyAbroadLandingPage"),
 );
 const StudentMainDashboard = lazy(
-  () => import("./StudyAbroad/StudentMainDashboard")
+  () => import("./StudyAbroad/StudentMainDashboard"),
 );
 const BlogDetails = lazy(() => import("./components/BlogDetails"));
 const GlobalProgramsPage = lazy(
-  () => import("./StudyAbroad/GlobalProgramsPage")
+  () => import("./StudyAbroad/GlobalProgramsPage"),
 );
 
 const GenOxy = lazy(() => import("./GenOxy/Genoxy"));
 const RealtimePage = lazy(
-  () => import("./GenOxy/components/RealTimeMainscreen")
+  () => import("./GenOxy/components/RealTimeMainscreen"),
 );
 const VisaVoice = lazy(() => import("./Visavoice/RealTimeMainscreen"));
 const JobDetails = lazy(() => import("./components/JobDetails"));
@@ -303,18 +317,18 @@ const FreeAiBookLandingPage = lazy(() => import("./FREEAIBOOK/LandingPage"));
 const FreeAiBook = lazy(() => import("./FREEAIBOOK/FreeAiBookLandingPage"));
 const ChatInterface = lazy(() => import("./components/ChatInterfaceAi"));
 const WalletEligibilitySlabs = lazy(
-  () => import("./PartnerWeb/CartAmountBasedOrder")
+  () => import("./PartnerWeb/CartAmountBasedOrder"),
 );
 const OurAIVideos = lazy(() => import("./FREEAIBOOK/MasterClasses"));
 
 const CreateAssistant = lazy(
-  () => import("./AskoxyAdmin/Assistants/CreatenewAssistant")
+  () => import("./AskoxyAdmin/Assistants/CreatenewAssistant"),
 );
 const AssistantDashboard = lazy(
-  () => import("./AskoxyAdmin/Assistants/Dashboard")
+  () => import("./AskoxyAdmin/Assistants/Dashboard"),
 );
 const AssistantOverview = lazy(
-  () => import("./AskoxyAdmin/Assistants/AssistantOverview")
+  () => import("./AskoxyAdmin/Assistants/AssistantOverview"),
 );
 const FaqLLMSlides = lazy(() => import("./GenOxy/FaqSildes"));
 const LLMFAQPage = lazy(() => import("./GenOxy/FaqLLM"));
@@ -322,75 +336,75 @@ const AiVideosGenerated = lazy(() => import("./FREEAIBOOK/AiVideosGenerated"));
 
 const AllAgentsPage = lazy(() => import("./AgentStore/AllAgentsPage"));
 const AssistantDetails = lazy(
-  () => import("./BharathAIStore/pages/AssistantDetails")
+  () => import("./BharathAIStore/pages/AssistantDetails"),
 );
 const ChatInterface1 = lazy(
-  () => import("./BharathAIStore/pages/ChatInterface")
+  () => import("./BharathAIStore/pages/ChatInterface"),
 );
 const AiResources = lazy(() => import("./BharathAIStore/pages/AIResources"));
 const AppRoutes = lazy(() => import("./BharathAIStore/routes/Landingpage"));
 const Layout = lazy(() => import("./BharathAIStore/routes/Landingpage"));
 const BharatAgentsStore = lazy(
-  () => import("./BharathAIStore/pages/BharatAgentsStore")
+  () => import("./BharathAIStore/pages/BharatAgentsStore"),
 );
 const BananaImageGenerate = lazy(
-  () => import("./AgentStore/BananaImageGenerate")
+  () => import("./AgentStore/BananaImageGenerate"),
 );
 const InsuranceAgentsPage = lazy(
-  () => import("./BharathAIStore/pages/InsuranceAgentsPage")
+  () => import("./BharathAIStore/pages/InsuranceAgentsPage"),
 );
 const AwardsRewardsVideo = lazy(
-  () => import("./BharathAIStore/pages/AwardsRewardsVideo")
+  () => import("./BharathAIStore/pages/AwardsRewardsVideo"),
 );
 const CartCaCsService = lazy(() => import("./components/CartCaCsService"));
 const ServiceCAList = lazy(() => import("./components/ServiceCAList"));
 const ServiceDashboard = lazy(() => import("./components/ServiceDashboard"));
 const EmployeeInteractions = lazy(
-  () => import("./Taskmanagement/EmployeeInstructions")
+  () => import("./Taskmanagement/EmployeeInstructions"),
 );
 const EmployeeViewChat = lazy(
-  () => import("./Taskmanagement/EmployeeChatView")
+  () => import("./Taskmanagement/EmployeeChatView"),
 );
 const HealthcareAgentsPage = lazy(
-  () => import("./BharathAIStore/pages/Healthcareagents")
+  () => import("./BharathAIStore/pages/Healthcareagents"),
 );
 const RemoveTrailingSlash = lazy(() => import("./auth/RemoveTrailingSlash"));
 const AdminMyAgentsPage = lazy(
-  () => import("./BharathAIStore/pages/AdminMyAgentsPage")
+  () => import("./BharathAIStore/pages/AdminMyAgentsPage"),
 );
 const RadhaHiddenAgents = lazy(
-  () => import("./BharathAIStore/pages/RadhaHiddenAgents")
+  () => import("./BharathAIStore/pages/RadhaHiddenAgents"),
 );
 const AdminTasks = lazy(() => import("./Taskmanagement/AdminTasks"));
 const AllKukatpallyDataPage = lazy(
-  () => import("./AskoxyAdmin/kukatapallyData")
+  () => import("./AskoxyAdmin/kukatapallyData"),
 );
 const ChatBasedAgent = lazy(
-  () => import("./BharathAIStore/pages/chatbasedAgent")
+  () => import("./BharathAIStore/pages/chatbasedAgent"),
 );
 const AgentEntryPage = lazy(
-  () => import("./BharathAIStore/pages/AgentEntryPage")
+  () => import("./BharathAIStore/pages/AgentEntryPage"),
 );
 const WeAreHiringAdd = lazy(() => import("./AskoxyAdmin/WeAreHiringAdd"));
 const AdvocatesDataPage = lazy(() => import("./AskoxyAdmin/Advoatedata"));
 const HiringPages = lazy(() => import("./Dashboard/hiringpages"));
 const KukatpallyAssignedDataPage = lazy(
-  () => import("./AskoxyAdmin/KukatapallyAssignedData")
+  () => import("./AskoxyAdmin/KukatapallyAssignedData"),
 );
 const CelebShieldPage = lazy(() => import("./components/celebshieldpage"));
 const QuickAgentCreate = lazy(
-  () => import("./BharathAIStore/pages/Agentcreation")
+  () => import("./BharathAIStore/pages/Agentcreation"),
 );
 const TestStore = lazy(() => import("./BharathAIStore/pages/TestStore"));
 const TestAgentDetails = lazy(
-  () => import("./BharathAIStore/pages/TestAgentDetails")
+  () => import("./BharathAIStore/pages/TestAgentDetails"),
 );
 const PaymentCashfree = lazy(() => import("./AgentStore/PaymentCashfree"));
 const AllAIStore = lazy(() => import("./AIStores/AllAistore"));
 const AllAIStores = lazy(() => import("./AIStores/AllAistores"));
 const TalwarDataPage = lazy(() => import("./AskoxyAdmin/TalwarData"));
 const TalwarAssignedDataPage = lazy(
-  () => import("./AskoxyAdmin/TalwarAssignedDataPage")
+  () => import("./AskoxyAdmin/TalwarAssignedDataPage"),
 );
 const ApiDocs = lazy(() => import("./components/ApiDocs"));
 const InterviewPage = lazy(() => import("./AIMockInterview/interview"));
@@ -400,17 +414,18 @@ const AgenticAi = lazy(() => import("./components/AgenticAi"));
 const AgentStoreManager = lazy(() => import("./components/AistoreCreation"));
 const GmailContactsScreen = lazy(() => import("./kart/GoogleContact"));
 const AgentCreationSteps = lazy(
-  () => import("./components/AgentCreationSteps")
+  () => import("./components/AgentCreationSteps"),
 );
 const TripPlanner = lazy(() => import("./AITripPlanner/TripPlanner"));
 const TaxInvoice = lazy(() => import("./components/TaxInvoice"));
-const AccentureServices = lazy(() => import("./components/CampaignStatsAccenture"));
-
+const AccentureServices = lazy(
+  () => import("./components/CampaignStatsAccenture"),
+);
 
 // Simple centered loader component
 const LoadingSpinner = React.memo(() => {
   React.useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .loader {
         width: 50px;
@@ -457,7 +472,9 @@ const LoadingSpinner = React.memo(() => {
       }}
     >
       <div className="loader" />
-      <div style={{ fontSize: "18px", color: "#333", marginTop: "16px" }}>Loading...</div>
+      <div style={{ fontSize: "18px", color: "#333", marginTop: "16px" }}>
+        Loading...
+      </div>
     </div>
   );
 });
@@ -466,22 +483,22 @@ const App: React.FC = () => {
   const location = useLocation();
   // Use the Google Analytics tracking hook
   useGtagPageView();
-  
+
   // ✅ Initialize automatic token refresh
   useTokenRefresh();
-  
+
   // ✅ Initialize task token expiry checking
   useTaskTokenExpiry();
 
-// useEffect(() => {
-//     const rt = getRefreshToken();
-//     if (rt) {
-//       console.log("Refresh token found on app load, attempting refresh...");
-//       // You can trigger an immediate token refresh here if needed
-//     } else {
-//       console.log("No refresh token found on app load.");
-//     }
-//   }, []);
+  // useEffect(() => {
+  //     const rt = getRefreshToken();
+  //     if (rt) {
+  //       console.log("Refresh token found on app load, attempting refresh...");
+  //       // You can trigger an immediate token refresh here if needed
+  //     } else {
+  //       console.log("No refresh token found on app load.");
+  //     }
+  //   }, []);
 
   useEffect(() => {
     const validEntryPoints = [
@@ -512,7 +529,7 @@ const App: React.FC = () => {
       "/allcompanies/jobs",
       "/broadridge/jobs",
       "/credera/jobs",
-      "/viewjobdetails/default/ALL"
+      "/viewjobdetails/default/ALL",
     ];
     if (validEntryPoints.includes(location.pathname)) {
       console.log("Setting entryPoint:", location.pathname); // Debug log
@@ -527,12 +544,18 @@ const App: React.FC = () => {
       currentPath === "/admin" ||
       currentPath === "/partnerlogin" ||
       currentPath === "/userlogin" ||
+      currentPath === "/employee-login" ||
+      currentPath === "/employee-register" ||
+      // Employee routes
+      currentPath === "/employee-dashboard" ||
+      currentPath === "/employee-requirement-list" ||
+      currentPath === "/employee-freelancers" ||
       // Employee/Internal routes
       currentPath.startsWith("/userPanelLayout") ||
       currentPath.startsWith("/goldrates") ||
-       currentPath.startsWith("/all-different-gold-rates") ||
-       currentPath.startsWith("/allgoldrates") ||
-       currentPath.startsWith("/smartlock")||
+      currentPath.startsWith("/all-different-gold-rates") ||
+      currentPath.startsWith("/allgoldrates") ||
+      currentPath.startsWith("/smartlock") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
@@ -545,15 +568,15 @@ const App: React.FC = () => {
       currentPath.startsWith("/allcompanies/jobs") ||
       currentPath.startsWith("/credera/jobs") ||
       currentPath.startsWith("/taskassigneduser") ||
-        currentPath.startsWith("/broadridge/jobs") ||
+      currentPath.startsWith("/broadridge/jobs") ||
       currentPath.startsWith("/usermobilenumberupdate") ||
       // Partner routes
       currentPath.startsWith("/home") ||
       // Admin routes
-      currentPath.startsWith("/admn") ||
+      currentPath.startsWith("/admin") ||
       currentPath.startsWith("/adminRegister") ||
       currentPath.startsWith("/accenture/jobs") ||
-      currentPath.startsWith("/accenturestats") || 
+      currentPath.startsWith("/accenturestats") ||
       currentPath.startsWith("/accenture-presentation")
     );
   };
@@ -569,7 +592,7 @@ const App: React.FC = () => {
               localStorage.getItem("admin_acToken") ||
               localStorage.getItem("partner_Token")) &&
               !isRestrictedRoute() && <FloatingCallButton />}
-            <Routes >
+            <Routes>
               {/* ===================================================== */}
               {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
               {/* ===================================================== */}
@@ -720,7 +743,42 @@ const App: React.FC = () => {
 
               <Route path="/userregister" element={<UserRegister />} />
               <Route path="/userlogin" element={<UserLogin />} />
-
+              {/* ✅ FREELANCE MARKETPLACE ROUTES (EMPLOYEE/COMPANY) */}
+              {/* ===================================================== */}
+              <Route path="/employee-login" element={<EmployeeLogin />} />
+              <Route path="/employee-register" element={<EmployeeRegister />} />
+              <Route
+                path="/employee-dashboard"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <EmployeeDashboard />
+                  </EmployeeProtectedRoutes>
+                }
+              />
+              <Route
+                path="/employee-requirement-list"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <RequirementList />
+                  </EmployeeProtectedRoutes>
+                }
+              />
+              <Route
+                path="/employee-freelancers/:companyId/:requirementId"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <FreelancerProfiles />
+                  </EmployeeProtectedRoutes>
+                }
+              />
+              <Route
+                path="/employee-assigned-freelancers/:companyId"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <AssignedFreelancersPage />
+                  </EmployeeProtectedRoutes>
+                }
+              />
               {/* ===================================================== */}
               {/* ✅ PUBLIC PAGES UNDER LAYOUT */}
               {/* ===================================================== */}
@@ -763,9 +821,8 @@ const App: React.FC = () => {
               <Route path="/image-creator" element={<ImageCreation />} />
               <Route path="/video-creator" element={<VideoCreationPage />} />
 
-              {/* ===================================================== */}
               {/* ✅ MORE PUBLIC ROUTES */}
-              {/* ===================================================== */}
+
               <Route path="/jobstreet" element={<JobStreet />} />
               <Route
                 path="/:id/:agentId/:agentname"
@@ -1118,10 +1175,19 @@ const App: React.FC = () => {
                   path="/main/dashboard/reviews-gpt"
                   element={<ReviewsGpt />}
                 />
-                <Route path="/main/job-analysis-result" element={<JobAnalysisResult />} />
+                <Route
+                  path="/main/job-analysis-result"
+                  element={<JobAnalysisResult />}
+                />
                 <Route path="/main/exam" element={<ExamPage />} />
-                <Route path="/main/exam/question/:questionNumber" element={<ExamQuestionPage/>} />
-                <Route path="/main/exam/results" element={<ExamResultsPage />} />
+                <Route
+                  path="/main/exam/question/:questionNumber"
+                  element={<ExamQuestionPage />}
+                />
+                <Route
+                  path="/main/exam/results"
+                  element={<ExamResultsPage />}
+                />
                 <Route path="/main/dashboard/home" element={<Home />} />
                 <Route path="/main/dashboard/rice-gpt" element={<RiceGpt />} />
                 <Route
@@ -1266,7 +1332,7 @@ const App: React.FC = () => {
               {/* ===================================================== */}
               <Route path="/admin" element={<Login />} />
               <Route path="/adminRegister" element={<Register />} />
-              <Route path="/admn" element={<AdminSidebar />}>
+              <Route path="/admin" element={<AdminSidebar />}>
                 <Route path="dashboard" element={<Admin />} />
                 <Route path="registeredUsers" element={<RegisteredUser />} />
                 <Route path="allqueries" element={<AllQueries />} />
@@ -1320,6 +1386,23 @@ const App: React.FC = () => {
                   element={<AssistantOverview />}
                 />
                 <Route path="createassistant" element={<CreateAssistant />} />
+                <Route
+                  path="partners-dashboard"
+                  element={<Partnersdasboard />}
+                />
+                <Route
+                  path="freelance-requirements"
+                  element={<AdminRequirementList />}
+                />
+                <Route
+                  path="assigned-freelancers/:companyId"
+                  element={
+                    <AssignedFreelancerAdmin
+                      companyId=""
+                      isMobileScreen={false}
+                    />
+                  }
+                />
               </Route>
 
               {/* ✅ LANDING */}

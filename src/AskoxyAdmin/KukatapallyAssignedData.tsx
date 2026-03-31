@@ -20,7 +20,8 @@ import {
   SearchOutlined,
   MailOutlined,
 } from "@ant-design/icons";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import BASE_URL from "../Config";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
@@ -234,9 +235,9 @@ const KukatpallyAssignedDataPage: React.FC = () => {
     }
     setLoading(true);
     try {
-      const resp = await axios.get<ApiResponse>(
+      const resp = await adminApi.get<ApiResponse>(
         `${BASE_URL}/user-service/assigned-kukatpally-users/${id}`,
-        { params: { page: p, size: s } }
+        { params: { page: p, size: s } },
       );
       const list = Array.isArray(resp.data?.activeUsersResponse)
         ? resp.data.activeUsersResponse
@@ -305,7 +306,7 @@ const KukatpallyAssignedDataPage: React.FC = () => {
       const params = isMobile ? { mobileNumber: q } : { userId: q };
 
       // allow either direct object or wrapped list from backend
-      const res = await axios.get<
+      const res = await adminApi.get<
         SearchUser | { activeUsersResponse: SearchUser[] } | null
       >(`${BASE_URL}/user-service/getDataWithMobileOrUserId`, { params });
 

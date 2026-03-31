@@ -11,6 +11,7 @@ export {
   customerApi,
   adminApi,
   partnerApi,
+  freelanceApi,
   employeeApi,
   sharedApi,
   resolvePortalToken,

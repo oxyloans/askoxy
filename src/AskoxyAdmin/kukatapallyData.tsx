@@ -14,7 +14,8 @@ import {
   Row,
   Col,
 } from "antd";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import BASE_URL from "../Config";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
@@ -80,7 +81,7 @@ const AllKukatpallyDataPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get<ApiResponse>(
+      const response = await adminApi.get<ApiResponse>(
         `${BASE_URL}/user-service/AllKukatpallyData`,
         {
           params: { pageNo: currentPage, pageSize },
@@ -154,7 +155,7 @@ const AllKukatpallyDataPage: React.FC = () => {
           ? "ADMIN"
           : updatedBy || "ADMIN";
 
-      await axios.patch(
+      await adminApi.patch(
         `${BASE_URL}/user-service/adminUpdateComments`,
         {
           adminComments: "Updated user active status via Kukatpally page",
@@ -267,7 +268,7 @@ const AllKukatpallyDataPage: React.FC = () => {
       setSearchState("loading");
       const isMobile = /^\d{8,}$/.test(q);
       const params = isMobile ? { mobileNumber: q } : { userId: q };
-      const res = await axios.get(
+      const res = await adminApi.get(
         `${BASE_URL}/user-service/getDataWithMobileOrUserId`,
         { params }
       );

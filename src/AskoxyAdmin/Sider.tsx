@@ -28,6 +28,7 @@ import {
   FaBlog,
   FaBoxes,
   FaRobot,
+  FaHandshake,
 } from "react-icons/fa";
 import { RiFileUserLine } from "react-icons/ri";
 import {
@@ -85,7 +86,7 @@ const Sidebar: React.FC = () => {
   const primaryType = localStorage.getItem("admin_primaryType");
 
   const handleLogout = () => {
-     stopTokenRefresh();
+    stopTokenRefresh();
     localStorage.removeItem("admin_primaryType");
     localStorage.removeItem("admin_uniquId");
     localStorage.removeItem("admin_userName");
@@ -107,19 +108,19 @@ const Sidebar: React.FC = () => {
         {
           title: "HelpDesk Dashboard",
           icon: <FaTachometerAlt className="text-blue-400" />,
-          link: "/admn/helpdashboard",
+          link: "/admin/helpdashboard",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "HelpDesk Team",
           icon: <FaConciergeBell className="text-pink-400" />,
-          link: "/admn/helpDeskUsers",
+          link: "/admin/helpDeskUsers",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Assistants Dashboard",
           icon: <FaRobot className="text-blue-400" />,
-          link: "/admn/assistants",
+          link: "/admin/assistants",
           roles: ["HELPDESKSUPERADMIN"],
         },
       ],
@@ -132,74 +133,86 @@ const Sidebar: React.FC = () => {
         {
           title: title,
           icon: <FaTachometerAlt className="text-blue-400" />,
-          link: "/admn/dashboard",
+          link: "/admin/dashboard",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "Registered Users",
           icon: <FaUser className="text-purple-400" />,
-          link: "/admn/registeredUsers",
+          link: "/admin/registeredUsers",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "Askoxy Assigned Data",
           icon: <FaClipboardList className="text-yellow-400" />,
-          link: "/admn/assignedData",
+          link: "/admin/assignedData",
           roles: ["HELPDESKADMIN"],
         },
         {
           title: "Users Recent Orders ",
           icon: <FaClipboardList className="text-yellow-400" />,
-          link: "/admn/userOrdersIntegration",
+          link: "/admin/userOrdersIntegration",
           roles: ["HELPDESKADMIN"],
         },
         {
           title: "All AskOxy Users",
           icon: <FaRegAddressCard className="text-green-400" />,
-          link: "/admn/dataAssigned",
+          link: "/admin/dataAssigned",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "All Kukatpally Data",
           icon: <EnvironmentOutlined className="text-green-400" />,
-          link: "/admn/kukatpally",
+          link: "/admin/kukatpally",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "Kukatpally Assign Data",
           icon: <RiFileUserLine className="text-yellow-400" />,
-          link: "/admn/kukatpallyassignedData",
+          link: "/admin/kukatpallyassignedData",
           roles: ["HELPDESKADMIN"],
         },
         {
           title: "Advocate Data",
           icon: <BookOutlined className="text-green-400" />,
-          link: "/admn/advocates",
+          link: "/admin/advocates",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "All Talwar Data",
           icon: <SafetyCertificateOutlined className="text-red-500" />,
-          link: "/admn/talwardata",
+          link: "/admin/talwardata",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "All Mumbai Data",
           icon: <ApartmentOutlined className="text-blue-500" />,
-          link: "/admn/mumbaidata",
+          link: "/admin/mumbaidata",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
+        {
+          title: "Freelancers Partners",
+          icon: <FaHandshake className="text-orange-400" />,
+          link: "/admin/partners-dashboard",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
+          title: "Freelance Requirements",
+          icon: <RiListUnordered className="text-blue-400" />,
+          link: "/admin/freelance-requirements",
+          roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Assigned Talwar Data",
           icon: <RiFileCheckLine className="text-red-500" />,
-          link: "/admn/assignedtalwarData",
+          link: "/admin/assignedtalwarData",
           roles: ["HELPDESKADMIN"],
         },
 
         {
           title: "Referred Data",
           icon: <FaUsers className="text-blue-500" />,
-          link: "/admn/referredData",
+          link: "/admin/referredData",
           roles: ["HELPDESKADMIN"],
         },
       ],
@@ -212,44 +225,44 @@ const Sidebar: React.FC = () => {
         {
           title: "Add Service / Product",
           icon: <FaStore className="text-green-400" />,
-          link: "/admn/campaignsadd",
+          link: "/admin/campaignsadd",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Add We are hiring",
           icon: <FaBriefcase className="text-green-400" />,
-          link: "/admn/wearehiringadd",
+          link: "/admin/wearehiringadd",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Add Blog",
           icon: <FaBlog className="text-green-400" />,
-          link: "/admn/addblogs",
+          link: "/admin/addblogs",
           roles: ["HELPDESKSUPERADMIN"],
         },
 
         {
           title: "Add Jobs",
           icon: <MdWork className="text-green-400" />,
-          link: "/admn/addjobs",
+          link: "/admin/addjobs",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "All Job Details",
           icon: <SolutionOutlined style={{ color: "#ffff" }} />,
-          link: "/admn/alljobdetails",
+          link: "/admin/alljobdetails",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Applied Jobs by Users",
           icon: <UserOutlined style={{ color: "#ffff" }} />,
-          link: "/admn/userAppliedJobs",
+          link: "/admin/userAppliedJobs",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "All Service & Blogs Details",
           icon: <RiListUnordered className="text-purple-400" />,
-          link: "/admn/allcampaignsdetails",
+          link: "/admin/allcampaignsdetails",
           roles: ["HELPDESKSUPERADMIN"],
         },
       ],
@@ -262,25 +275,25 @@ const Sidebar: React.FC = () => {
         {
           title: "Orders stats",
           icon: <FaChartBar className="text-blue-400" />,
-          link: "/admn/orderstats",
+          link: "/admin/orderstats",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Orders Report",
           icon: <FaClipboardList className="text-blue-400" />,
-          link: "/admn/orderReport",
+          link: "/admin/orderReport",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Stock update",
           icon: <FaBoxes className="text-blue-400" />,
-          link: "/admn/updatestock",
+          link: "/admin/updatestock",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
           title: "Orders by Pincode",
           icon: <RiMapPin2Line className="text-purple-400" />,
-          link: "/admn/pincodeorders",
+          link: "/admin/pincodeorders",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
       ],
@@ -293,13 +306,13 @@ const Sidebar: React.FC = () => {
         {
           title: "All Queries",
           icon: <FaDatabase className="text-yellow-400" />,
-          link: "/admn/allqueries",
+          link: "/admin/allqueries",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         // {
         //   title: "User Feedback",
         //   icon: <FaComments className="text-green-400" />,
-        //   link: "/admn/feedback",
+        //   link: "/admin/feedback",
         //   roles: ["HELPDESKSUPERADMIN"],
         // },
       ],
@@ -312,13 +325,13 @@ const Sidebar: React.FC = () => {
         {
           title: "Super Admin Comments",
           icon: <RiAdminLine className="text-purple-400" />,
-          link: "/admn/superAdminComments",
+          link: "/admin/superAdminComments",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "My Calls",
           icon: <FaPhone className="text-blue-400" />,
-          link: "/admn/todaycalls",
+          link: "/admin/todaycalls",
           roles: ["HELPDESKADMIN"],
         },
       ],
@@ -342,7 +355,7 @@ const Sidebar: React.FC = () => {
 
   const isCategoryActive = (category: SidebarCategory) => {
     return category.items.some(
-      (item) => item.roles.includes(userRole!) && isActive(item.link)
+      (item) => item.roles.includes(userRole!) && isActive(item.link),
     );
   };
 
@@ -370,8 +383,8 @@ const Sidebar: React.FC = () => {
 
     const activeCategory = sidebarCategories.find((category) =>
       category.items.some(
-        (item) => item.roles.includes(userRole) && isActive(item.link)
-      )
+        (item) => item.roles.includes(userRole) && isActive(item.link),
+      ),
     );
 
     if (activeCategory && !expandedCategories.includes(activeCategory.title)) {
@@ -453,11 +466,11 @@ const Sidebar: React.FC = () => {
   const visibleCategories = sidebarCategories.filter(
     (category) =>
       category.roles.includes(userRole) &&
-      category.items.some((item) => item.roles.includes(userRole))
+      category.items.some((item) => item.roles.includes(userRole)),
   );
 
   const visibleStandaloneItems = standaloneItems.filter((item) =>
-    item.roles.includes(userRole)
+    item.roles.includes(userRole),
   );
 
   return (
@@ -524,7 +537,7 @@ const Sidebar: React.FC = () => {
             {/* Categories */}
             {visibleCategories.map((category, categoryIndex) => {
               const categoryItems = category.items.filter((item) =>
-                item.roles.includes(userRole!)
+                item.roles.includes(userRole!),
               );
 
               if (categoryItems.length === 0) return null;
@@ -634,7 +647,7 @@ const Sidebar: React.FC = () => {
                                   className: isActive(item.link)
                                     ? "text-white"
                                     : "text-white group-hover:text-gray-800 transition-colors duration-300",
-                                }
+                                },
                               )}
                             </span>
                             <span
@@ -745,8 +758,8 @@ const Sidebar: React.FC = () => {
           marginLeft: isMobile
             ? "0"
             : collapsed && !isMobileOpen
-            ? "80px"
-            : "256px",
+              ? "80px"
+              : "256px",
           transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
         }}
       >

@@ -69,85 +69,94 @@ const percentage = result?.percentage ?? 0;
   const isPassed = percentage >= 80;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col items-center justify-center p-6">
-
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col items-center justify-start pt-8 sm:pt-16 p-4">
       {/* 🎉 HEADER */}
-      <h1 className="text-4xl font-extrabold text-center mb-8 tracking-wide">
-        🎉Congratulations Exam Completed
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-center mb-5 tracking-wide">
+        {result
+          ? isPassed
+            ? "🎉 Congratulations!"
+            : "💡 Keep Learning!"
+          : "Processing Results..."}
       </h1>
 
       {/* 🎯 RESULT CARD */}
       {result && (
-        <div className="w-full max-w-md bg-gray-900 rounded-2xl shadow-2xl p-8 text-center border border-gray-700">
+        <div className="w-full max-w-sm bg-gray-900/90 rounded-2xl shadow-xl p-6 text-center border border-gray-700/60 backdrop-blur-sm">
 
           {/* SCORE CIRCLE */}
-          <div className="relative w-32 h-32 mx-auto mb-6">
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-5 shadow-lg rounded-full">
             <div
-              className={`w-full h-full rounded-full flex items-center justify-center text-2xl font-bold
-              ${isPassed ? "bg-green-600" : "bg-red-600"}`}
+              className={`w-full h-full rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold border-4 shadow-inner ${
+                isPassed
+                  ? "bg-green-900/20 text-green-400 border-green-500/80"
+                  : "bg-red-900/20 text-red-500 border-red-500/80"
+              }`}
             >
               {Math.round(percentage)}%
             </div>
           </div>
 
           {/* SCORE DETAILS */}
-          <h2 className="text-lg text-gray-400 mb-2">
-            Your Score
+          <h2 className="text-[13px] sm:text-sm text-gray-400 mb-1 font-semibold tracking-widest uppercase">
+            Final Score
           </h2>
 
-          <h2 className="text-2xl font-bold mb-2">
-            {result.score} / {result.totalQuestions}
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-100 flex items-baseline justify-center gap-1">
+            {result.score}{" "}
+            <span className="text-lg sm:text-xl text-gray-500 font-medium">
+              / {result.totalQuestions}
+            </span>
           </h2>
 
-          <h2
-            className={`text-xl font-bold mt-4 ${
-              isPassed ? "text-green-400" : "text-red-400"
+          <div
+            className={`inline-block px-4 py-1.5 rounded-lg border font-bold tracking-wider text-xs uppercase shadow-sm ${
+              isPassed
+                ? "bg-green-500/10 border-green-500/40 text-green-400"
+                : "bg-red-500/10 border-red-500/40 text-red-400"
             }`}
           >
-            {isPassed ? "PASS ✅" : "FAIL ❌"}
-          </h2>
+            {isPassed ? "Status: Passed" : "Requirement Not Met"}
+          </div>
 
           {/* MESSAGE */}
-          <p className="mt-4 text-gray-400 text-sm">
+          <p className="mt-5 text-gray-400 text-xs sm:text-sm leading-relaxed px-1">
             {isPassed
-              ? "Great job! You have successfully passed the exam."
-              : "You need at least 80% to pass. Keep practicing!"}
+              ? "Excellent performance. You have successfully met the assessment requirements for this position."
+              : "A minimum score of 80% is required. Your current score does not meet the eligibility criteria for this application. We encourage you to keep practicing."}
           </p>
         </div>
       )}
 
       <div className="flex justify-center mt-10">
-  {result && isPassed ? (
-    <button
-       onClick={() => {
-        sessionStorage.setItem("examPassed", "true");
+        {result && isPassed ? (
+          <button
+            onClick={() => {
+              sessionStorage.setItem("examPassed", "true");
 
-        if (fileUrl) {
-          sessionStorage.setItem("resumeUrl", fileUrl);
-        }
+              if (fileUrl) {
+                sessionStorage.setItem("resumeUrl", fileUrl);
+              }
 
-        navigate(`/main/viewjobdetails/${jobId}/ALL`, {
-          state: {
-            openApplyModal: true,
-            id: jobId,
-          },
-        });
-      }}
-      className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg"
-    >
-      ✅ Complete Final Step
-    </button>
-  ) : (
-    <button
-      onClick={() => navigate("/main/viewjobdetails")}
-      className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg"
-    >
-      🔍 Go to Job Details
-    </button>
-  )}
-</div>
-
-
+              navigate(`/main/viewjobdetails/${jobId}/ALL`, {
+                state: {
+                  openApplyModal: true,
+                  id: jobId,
+                },
+              });
+            }}
+            className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg"
+          >
+            ✅ Complete Final Step
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate("/main/viewjobdetails/default/ALL")}
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg"
+          >
+            🔍 Go to Job Details
+          </button>
+        )}
+      </div>
     </div>
   );
 };

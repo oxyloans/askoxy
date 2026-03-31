@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import {
   Table,
   Layout,
@@ -212,7 +213,7 @@ const HelpDeskUsers: React.FC = () => {
       const formattedDate = date
         ? date.format("YYYY-MM-DD") + "T00:00:00.000Z"
         : dayjs().format("YYYY-MM-DD") + "T00:00:00.000Z";
-      const response = await axios.post(
+      const response = await adminApi.post(
         `${BASE_URL}/user-service/getCallersCallingDataAndCount`,
         {
           helpAdminUserId: userId,
@@ -246,7 +247,7 @@ const HelpDeskUsers: React.FC = () => {
     setAssignUserId(helpdeskUserId);
     setSelectedHelpDeskUser(helpdeskUserName);
 
-    const response = await axios.get(
+    const response = await adminApi.get(
       `${BASE_URL}/user-service/assigned-kukatpally-users/${helpdeskUserId}`,
       { params: { page, size } }
     );
@@ -277,7 +278,7 @@ const HelpDeskUsers: React.FC = () => {
   const fetchUserDetails = async (userId: string, commentIndex: number) => {
     setUserDetailsLoading((prev) => ({ ...prev, [commentIndex]: true }));
     try {
-      const response = await axios.post(
+      const response = await adminApi.post(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         {
           userId: userId,
@@ -382,7 +383,7 @@ const HelpDeskUsers: React.FC = () => {
     setAssignUserLoading(true);
     try {
       setAssignUserId(userId);
-      const response = await axios.post(
+      const response = await adminApi.post(
         `${BASE_URL}/user-service/assigned-users/${userId}`,
         {
           pageNo,
@@ -431,7 +432,7 @@ const handleAssignUserPageChange = (page: number) => {
     };
 
     try {
-      const response = await axios.patch(
+      const response = await adminApi.patch(
         `${BASE_URL}/user-service/updateTestUsers`,
         payload
       );
