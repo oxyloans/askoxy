@@ -21,6 +21,7 @@ import {
   submitWriteToUsQuery,
 } from "./servicesapi";
 import { PlusIcon } from "lucide-react";
+import { uploadurlwithId } from "../Config";
 
 const { TextArea } = Input;
 
@@ -53,19 +54,19 @@ const BlogDetails: React.FC = () => {
   const [comment, setComment] = useState("");
   const [activeReplyCommentId, setActiveReplyCommentId] = useState<
     string | null
-    >(null);
-    const [commentsError, setCommentsError] = useState<string | undefined>(
-      undefined
-    );
+  >(null);
+  const [commentsError, setCommentsError] = useState<string | undefined>(
+    undefined,
+  );
   const [isSpeaking, setIsSpeaking] = useState<{ [key: string]: boolean }>({});
   const [isLiked, setIsLiked] = useState<{ [key: string]: boolean }>({});
   const [isDisliked, setIsDisliked] = useState<{ [key: string]: boolean }>({});
   const [likeCount, setLikeCount] = useState<{ [key: string]: number }>({});
   const [dislikeCount, setDislikeCount] = useState<{ [key: string]: number }>(
-    {}
+    {},
   );
   const [isSubscribed, setIsSubscribed] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
   const [comments, setComments] = useState<{ [key: string]: Comment[] }>({});
   const [currentImageIndex, setCurrentImageIndex] = useState<{
@@ -83,7 +84,7 @@ const BlogDetails: React.FC = () => {
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState("");
   const email = JSON.parse(
-    localStorage.getItem("profileData") || "{}"
+    localStorage.getItem("profileData") || "{}",
   ).customerEmail;
   const finalMobileNumber =
     localStorage.getItem("whatsappNumber") ||
@@ -95,7 +96,7 @@ const BlogDetails: React.FC = () => {
       try {
         const allCampaigns = await fetchCampaigns();
         const activeBlogCampaigns = allCampaigns.filter(
-          (c) => c.campainInputType === "BLOG" && c.campaignStatus === true
+          (c) => c.campainInputType === "BLOG" && c.campaignStatus === true,
         );
 
         const campaignsWithDetails = await Promise.all(
@@ -144,7 +145,7 @@ const BlogDetails: React.FC = () => {
               };
             }
             return campaign;
-          })
+          }),
         );
 
         setCampaigns(campaignsWithDetails);
@@ -159,10 +160,10 @@ const BlogDetails: React.FC = () => {
   }, [userId]);
 
   const featuredCampaign = campaigns.find(
-    (campaign) => campaign.campaignId?.slice(-4) === blogId
+    (campaign) => campaign.campaignId?.slice(-4) === blogId,
   );
   const otherCampaigns = campaigns.filter(
-    (campaign) => campaign.campaignId?.slice(-4) !== blogId
+    (campaign) => campaign.campaignId?.slice(-4) !== blogId,
   );
 
   const handleLike = async (campaignId: string) => {
@@ -171,7 +172,7 @@ const BlogDetails: React.FC = () => {
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`
+        `/main/blog/${campaignId.slice(-4)}/BLOG`,
       );
       return;
     }
@@ -224,7 +225,7 @@ const BlogDetails: React.FC = () => {
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`
+        `/main/blog/${campaignId.slice(-4)}/BLOG`,
       );
       return;
     }
@@ -277,7 +278,7 @@ const BlogDetails: React.FC = () => {
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`
+        `/main/blog/${campaignId.slice(-4)}/BLOG`,
       );
       return;
     }
@@ -320,7 +321,7 @@ const BlogDetails: React.FC = () => {
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`
+        `/main/blog/${campaignId.slice(-4)}/BLOG`,
       );
       return;
     }
@@ -335,13 +336,13 @@ const BlogDetails: React.FC = () => {
         const success = await submitSubComment(
           activeReplyCommentId,
           comment,
-          userId
+          userId,
         );
         if (success) {
           message.success("Sub-comment submitted successfully!");
           const { subComments } = await fetchLikesAndComments(
             campaignId,
-            userId
+            userId,
           );
           setComments((prev) => ({ ...prev, [campaignId]: subComments }));
         } else {
@@ -358,7 +359,7 @@ const BlogDetails: React.FC = () => {
           message.success("Comment submitted successfully!");
           const { subComments } = await fetchLikesAndComments(
             campaignId,
-            userId
+            userId,
           );
           setComments((prev) => ({ ...prev, [campaignId]: subComments }));
         } else {
@@ -389,8 +390,8 @@ const BlogDetails: React.FC = () => {
       sessionStorage.setItem(
         "redirectPath",
         `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
-          campaign.campaignType
-        )}`
+          campaign.campaignType,
+        )}`,
       );
       return;
     }
@@ -420,7 +421,7 @@ const BlogDetails: React.FC = () => {
       finalMobileNumber,
       query,
       "BLOGS",
-      userId
+      userId,
     );
 
     if (success) {
@@ -642,10 +643,10 @@ const BlogDetails: React.FC = () => {
     }
   };
   /* ---------- Small helpers ---------- */
-  const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({
-    label,
-    children,
-  }) => (
+  const LabeledField: React.FC<{
+    label: string;
+    children: React.ReactNode;
+  }> = ({ label, children }) => (
     <div className="mb-4">
       <label className="block text-sm text-gray-700 font-semibold mb-1">
         {label}
@@ -746,7 +747,7 @@ const BlogDetails: React.FC = () => {
                 {isVideoUrl(
                   campaign.imageUrls[
                     currentImageIndex[campaign.campaignId] ?? 0
-                  ].imageUrl
+                  ].imageUrl,
                 ) ? (
                   <video
                     controls
@@ -755,42 +756,36 @@ const BlogDetails: React.FC = () => {
                     className="w-full h-full object-contain"
                   >
                     <source
-                      src={
-                        campaign.imageUrls[
+                      src={`${
+                        campaign.imageUrls?.[
                           currentImageIndex[campaign.campaignId] ?? 0
-                        ].imageUrl
+                        ]?.imageUrl?.startsWith("http")
+                          ? campaign.imageUrls?.[
+                              currentImageIndex[campaign.campaignId] ?? 0
+                            ]?.imageUrl
+                          : `${uploadurlwithId}${
+                              campaign.imageUrls?.[
+                                currentImageIndex[campaign.campaignId] ?? 0
+                              ]?.imageUrl || ""
+                            }`
+                      }`}
+                      type={
+                        getVideoType(
+                          campaign.imageUrls?.[
+                            currentImageIndex[campaign.campaignId] ?? 0
+                          ]?.imageUrl || "",
+                        ) || "video/mp4"
                       }
-                      type={getVideoType(
-                        campaign.imageUrls[
-                          currentImageIndex[campaign.campaignId] ?? 0
-                        ].imageUrl
-                      )}
-                    />
-                    <source
-                      src={
-                        campaign.imageUrls[
-                          currentImageIndex[campaign.campaignId] ?? 0
-                        ].imageUrl
-                      }
-                      type="video/mp4"
-                    />
-                    <source
-                      src={
-                        campaign.imageUrls[
-                          currentImageIndex[campaign.campaignId] ?? 0
-                        ].imageUrl
-                      }
-                      type="video/webm"
                     />
                     Your browser does not support the video tag.
                   </video>
                 ) : (
                   <img
-                    src={
-                      campaign.imageUrls[
+                    src={`${uploadurlwithId}${
+                      campaign.imageUrls?.[
                         currentImageIndex[campaign.campaignId] ?? 0
-                      ].imageUrl
-                    }
+                      ]?.imageUrl || ""
+                    }`}
                     alt={`${campaign.campaignType} - ${
                       (currentImageIndex[campaign.campaignId] ?? 0) + 1
                     }`}
@@ -853,82 +848,84 @@ const BlogDetails: React.FC = () => {
                   </div>
                 </>
               )}
-             {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
-          onClick={() => setIsOpen(false)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="relative bg-white rounded-xl shadow-md p-6 w-[92%] max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="absolute top-3 right-3 text-xl leading-none text-gray-500 hover:text-gray-700"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close"
-            >
-              ×
-            </button>
+              {isOpen && (
+                <div
+                  className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
+                  onClick={() => setIsOpen(false)}
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  <div
+                    className="relative bg-white rounded-xl shadow-md p-6 w-[92%] max-w-md"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      className="absolute top-3 right-3 text-xl leading-none text-gray-500 hover:text-gray-700"
+                      onClick={() => setIsOpen(false)}
+                      aria-label="Close"
+                    >
+                      ×
+                    </button>
 
-            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-800">
-              Write To Us
-            </h2>
+                    <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-800">
+                      Write To Us
+                    </h2>
 
-            <LabeledField label="Mobile Number">
-              <input
-                type="text"
-                disabled
-                value={finalMobileNumber || ""}
-                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Your mobile number"
-              />
-            </LabeledField>
+                    <LabeledField label="Mobile Number">
+                      <input
+                        type="text"
+                        disabled
+                        value={finalMobileNumber || ""}
+                        className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                        placeholder="Your mobile number"
+                      />
+                    </LabeledField>
 
-            <LabeledField label="Email">
-              <input
-                type="email"
-                value={email || ""}
-                disabled
-                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Your email"
-              />
-            </LabeledField>
+                    <LabeledField label="Email">
+                      <input
+                        type="email"
+                        value={email || ""}
+                        disabled
+                        className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                        placeholder="Your email"
+                      />
+                    </LabeledField>
 
-            <LabeledField label="Comments">
-              <textarea
-                rows={4}
-                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Type your comments here…"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  if (queryError) setQueryError("");
-                }}
-              />
-              {queryError && (
-                <p className="text-red-500 text-sm mt-1">{queryError}</p>
+                    <LabeledField label="Comments">
+                      <textarea
+                        rows={4}
+                        className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                        placeholder="Type your comments here…"
+                        value={query}
+                        onChange={(e) => {
+                          setQuery(e.target.value);
+                          if (queryError) setQueryError("");
+                        }}
+                      />
+                      {queryError && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {queryError}
+                        </p>
+                      )}
+                    </LabeledField>
+
+                    <div className="mt-4 flex items-center justify-end gap-2">
+                      <button
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all"
+                        onClick={handleWriteToUsSubmitButton}
+                      >
+                        Submit Comments
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
-            </LabeledField>
-
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                onClick={() => setIsOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all"
-                onClick={handleWriteToUsSubmitButton}
-              >
-                Submit Comments
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
               {isprofileOpen && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                   <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
@@ -1248,7 +1245,7 @@ const BlogDetails: React.FC = () => {
                     {isVideoUrl(
                       campaign.imageUrls[
                         currentImageIndex[campaign.campaignId] ?? 0
-                      ].imageUrl
+                      ].imageUrl,
                     ) ? (
                       <video
                         controls
@@ -1265,7 +1262,7 @@ const BlogDetails: React.FC = () => {
                           type={getVideoType(
                             campaign.imageUrls[
                               currentImageIndex[campaign.campaignId] ?? 0
-                            ].imageUrl
+                            ].imageUrl,
                           )}
                         />
                         <source
@@ -1288,16 +1285,24 @@ const BlogDetails: React.FC = () => {
                       </video>
                     ) : (
                       <img
-                        src={
-                          campaign.imageUrls[
-                            currentImageIndex[campaign.campaignId] ?? 0
-                          ].imageUrl
-                        }
-                        alt={`${campaign.campaignType} - ${
-                          (currentImageIndex[campaign.campaignId] ?? 0) + 1
-                        }`}
-                        className="max-w-full max-h-full object-contain"
-                      />
+  src={`${
+    campaign.imageUrls?.[
+      currentImageIndex[campaign.campaignId] ?? 0
+    ]?.imageUrl?.startsWith("http")
+      ? campaign.imageUrls?.[
+          currentImageIndex[campaign.campaignId] ?? 0
+        ]?.imageUrl
+      : `${uploadurlwithId}${
+          campaign.imageUrls?.[
+            currentImageIndex[campaign.campaignId] ?? 0
+          ]?.imageUrl || ""
+        }`
+  }`}
+  alt={`${campaign.campaignType} - ${
+    (currentImageIndex[campaign.campaignId] ?? 0) + 1
+  }`}
+  className="max-w-full max-h-full object-contain"
+/>
                     )}
                   </div>
                   {campaign.imageUrls.length > 1 && (
@@ -1370,7 +1375,7 @@ const BlogDetails: React.FC = () => {
                 {comments[campaign.campaignId]?.map(
                   (comment) =>
                     !["like", "dislike", "subscribe"].includes(
-                      comment.mainComment
+                      comment.mainComment,
                     ) && (
                       <div key={comment.mainCommentId} className="space-y-2">
                         <div className="flex gap-2 items-start">
@@ -1407,7 +1412,7 @@ const BlogDetails: React.FC = () => {
                           </div>
                         )}
                       </div>
-                    )
+                    ),
                 )}
               </div>
               <div className="p-3 border-t">
@@ -1416,7 +1421,7 @@ const BlogDetails: React.FC = () => {
                     Replying to:{" "}
                     {
                       comments[campaign.campaignId]?.find(
-                        (c) => c.mainCommentId === activeReplyCommentId
+                        (c) => c.mainCommentId === activeReplyCommentId,
                       )?.mainComment
                     }
                   </div>
