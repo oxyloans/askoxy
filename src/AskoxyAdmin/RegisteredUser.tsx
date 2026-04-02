@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "./Sider";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 import {
   Typography,
@@ -300,7 +301,7 @@ const RegisteredUser: React.FC = () => {
     setLoading(true);
     const { startDate, endDate } = getDateRange(selectedTimeFrame);
     try {
-      const response = await axios.get<ApiResponse>(
+      const response = await adminApi.get<ApiResponse>(
         `${BASE_URL}/user-service/date-rangeuserdetails?endDate=${endDate}&page=${
           pagination.current - 1
         }&size=${50}&startDate=${startDate}`
@@ -338,7 +339,7 @@ const RegisteredUser: React.FC = () => {
   const fetchOrderDetails = async (userId: string) => {
     setLoader(true);
     try {
-      const response = await axios.post(
+      const response = await adminApi.post(
         BASE_URL + "/order-service/getAllOrders_customerId1",
         { userId },
         {
@@ -434,7 +435,7 @@ const RegisteredUser: React.FC = () => {
 
   const fetchCounts = async () => {
     try {
-      const response = await axios.get(BASE_URL + "/user-service/counts");
+      const response = await adminApi.get(BASE_URL + "/user-service/counts");
       if (response.status === 200) {
         const data = response.data;
         setStaticMetrics({
@@ -926,9 +927,9 @@ const RegisteredUser: React.FC = () => {
     };
     // console.log(payload);
     try {
-      const response = await axios.patch(
+      const response = await adminApi.patch(
         `${BASE_URL}/user-service/updateTestUsers`,
-        payload
+        payload,
       );
       if (response.status === 200) {
         message.success("User status updated successfully");
@@ -964,7 +965,7 @@ const RegisteredUser: React.FC = () => {
     }
 
     try {
-      const response = await axios.patch(
+      const response = await adminApi.patch(
         `${BASE_URL}/user-service/updateMobileNumber`,
         {
           mobileNumber: mobileNumber,
@@ -1014,7 +1015,7 @@ const RegisteredUser: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(
+      const response = await adminApi.post(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         {
           number: mobileNumber1 || null,

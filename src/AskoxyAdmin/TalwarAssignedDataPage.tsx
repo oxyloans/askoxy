@@ -18,7 +18,8 @@ import {
   PhoneOutlined,
   MailOutlined,
 } from "@ant-design/icons";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import BASE_URL from "../Config";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
@@ -116,7 +117,7 @@ const TalwarAssignedDataPage: React.FC = () => {
   // ----------------------------------
   const loadTalwarMasterData = async () => {
     try {
-      const response = await axios.get<TalwarMasterApiResponse>(
+      const response = await adminApi.get<TalwarMasterApiResponse>(
         `${BASE_URL}/user-service/getAllTalwarData`,
         {
           params: { pageNo: 1, pageSize: 100000 }, // big page to build map
@@ -298,7 +299,7 @@ const TalwarAssignedDataPage: React.FC = () => {
     }
     setLoading(true);
     try {
-      const resp = await axios.get<ApiResponse>(
+      const resp = await adminApi.get<ApiResponse>(
         `${BASE_URL}/user-service/assigned-talwar-users/${id}`,
         { params: { page: p, size: s } }
       );
@@ -350,7 +351,7 @@ const TalwarAssignedDataPage: React.FC = () => {
       const isMobile = /^\d{8,}$/.test(q);
       const params = isMobile ? { mobileNumber: q } : { userId: q };
 
-      const res = await axios.get<
+      const res = await adminApi.get<
         SearchUser | { activeUsersResponse: SearchUser[] } | null
       >(`${BASE_URL}/user-service/getTalwarsDataWithMobileOrUserId`, {
         params,

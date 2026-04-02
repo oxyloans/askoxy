@@ -37,7 +37,8 @@ import {
   PlusOutlined,
   DownOutlined,
 } from "@ant-design/icons";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import { isAxiosError } from "axios";
 import BASE_URL from "../Config";
 import { ColumnsType } from "antd/es/table";
@@ -235,7 +236,7 @@ const DataAssigned: React.FC = () => {
   const fetchWalletData = async (customerId: string): Promise<void> => {
     setWalletLoading(true);
     try {
-      const { data } = await axios.post<WalletData>(
+      const { data } = await adminApi.post<WalletData>(
         `${BASE_URL}/order-service/customerWalletData`,
         { customerId }
       );
@@ -406,7 +407,7 @@ const DataAssigned: React.FC = () => {
       setLoading(true);
       const storedUniqueId = localStorage.getItem("admin_uniquId");
 
-      const response = await axios.post<ApiResponse>(
+      const response = await adminApi.post<ApiResponse>(
         `${BASE_URL}/user-service/allOxyUsersAssignedToHelpDesk`,
         {
           pageNo: currentPage,
@@ -417,7 +418,7 @@ const DataAssigned: React.FC = () => {
             "Content-Type": "application/json",
             accept: "*/*",
           },
-        }
+        },
       );
 
       setUserData(response.data.activeUsersResponse);
@@ -449,7 +450,7 @@ const DataAssigned: React.FC = () => {
   const fetchOrderDetails = async (userId: string) => {
     setLoader(true);
     try {
-      const response = await axios.post(
+      const response = await adminApi.post(
         BASE_URL + "/order-service/getAllOrders_customerId1",
         { userId },
         {
@@ -457,7 +458,7 @@ const DataAssigned: React.FC = () => {
             "Content-Type": "application/json",
             accept: "*/*",
           },
-        }
+        },
       );
 
       setUserOrders(response.data);
@@ -718,7 +719,7 @@ const DataAssigned: React.FC = () => {
     setLoading(true);
     try {
       const payload = { number: whatsappNumber };
-      const { data } = await axios.post<ApiResponse>(
+      const { data } = await adminApi.post<ApiResponse>(
         `${BASE_URL}/user-service/getDataWithMobileOrWhatsappOrUserId`,
         payload,
         { headers: { "Content-Type": "application/json" } }
@@ -749,7 +750,7 @@ const DataAssigned: React.FC = () => {
         customerId: walletRecord?.userId,
       };
 
-      const response = await axios.patch(
+      const response = await adminApi.patch(
         `${BASE_URL}/order-service/walletLoadedAdmin`,
         payload,
         {
@@ -802,7 +803,7 @@ const DataAssigned: React.FC = () => {
         reason: reason.trim(),
       };
 
-      const response = await axios.patch(
+      const response = await adminApi.patch(
         `${BASE_URL}/order-service/deductingWalletAmount`,
         payload,
         {

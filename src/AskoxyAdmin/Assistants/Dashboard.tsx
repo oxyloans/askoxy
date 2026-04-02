@@ -1,5 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Table, Button, Spin, Card, Tag, Avatar, Space, Tooltip, message } from "antd";
+import {
+  Table,
+  Button,
+  Spin,
+  Card,
+  Tag,
+  Avatar,
+  Space,
+  Tooltip,
+  message,
+} from "antd";
 import { useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -33,47 +43,55 @@ const Dashboard: React.FC = () => {
   const [pageHistory, setPageHistory] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  const fetchAssistants = useCallback(async (after?: string, isLoadMore: boolean = false) => {
-    setLoading(true);
-    try {
-      const response: AssistantsResponse = await getAssistants(pagination.pageSize, after);
-      
-      if (isLoadMore) {
-        // Load more: append to existing assistants
-        setAssistants(prev => [...prev, ...response.data]);
-      } else {
-        // Fresh load or navigation: replace assistants
-        setAssistants(response.data);
-      }
+  const fetchAssistants = useCallback(
+    async (after?: string, isLoadMore: boolean = false) => {
+      setLoading(true);
+      try {
+        const response: AssistantsResponse = await getAssistants(
+          pagination.pageSize,
+          after,
+        );
 
-      setPagination(prev => ({
-        ...prev,
-        hasMore: response.has_more,
-        firstId: response.first_id,
-        lastId: response.last_id,
-        total: isLoadMore ? prev.total + response.data.length : response.data.length,
-      }));
-    } catch (error) {
-      console.error("Error fetching assistants:", error);
-      message.error("Failed to load assistants");
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.pageSize]);
+        if (isLoadMore) {
+          // Load more: append to existing assistants
+          setAssistants((prev) => [...prev, ...response.data]);
+        } else {
+          // Fresh load or navigation: replace assistants
+          setAssistants(response.data);
+        }
+
+        setPagination((prev) => ({
+          ...prev,
+          hasMore: response.has_more,
+          firstId: response.first_id,
+          lastId: response.last_id,
+          total: isLoadMore
+            ? prev.total + response.data.length
+            : response.data.length,
+        }));
+      } catch (error) {
+        console.error("Error fetching assistants:", error);
+        message.error("Failed to load assistants");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.pageSize],
+  );
 
   useEffect(() => {
     fetchAssistants();
   }, []);
 
   const handleNavigate = (id: string) => {
-    navigate(`/admn/conversation/${id}`);
+    navigate(`/admin/conversation/${id}`);
   };
 
   const handleLoadMore = async () => {
     if (!pagination.hasMore || !pagination.lastId) return;
-    
+
     await fetchAssistants(pagination.lastId, true);
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       current: prev.current + 1,
     }));
@@ -81,14 +99,14 @@ const Dashboard: React.FC = () => {
 
   const handleNextPage = async () => {
     if (!pagination.hasMore || !pagination.lastId) return;
-    
+
     // Save current first_id for back navigation
     if (pagination.firstId) {
-      setPageHistory(prev => [...prev, pagination.firstId!]);
+      setPageHistory((prev) => [...prev, pagination.firstId!]);
     }
-    
+
     await fetchAssistants(pagination.lastId);
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       current: prev.current + 1,
     }));
@@ -96,17 +114,17 @@ const Dashboard: React.FC = () => {
 
   const handlePrevPage = async () => {
     if (pagination.current <= 1 || pageHistory.length === 0) return;
-    
+
     // Get the previous page's first_id
     const newHistory = [...pageHistory];
     const prevPageId = newHistory.pop();
     setPageHistory(newHistory);
-    
+
     // If we're going to page 1, don't pass after parameter
     const afterParam = pagination.current === 2 ? undefined : prevPageId;
-    
+
     await fetchAssistants(afterParam);
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       current: prev.current - 1,
     }));
@@ -114,7 +132,7 @@ const Dashboard: React.FC = () => {
 
   const handleRefresh = () => {
     setPageHistory([]);
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       current: 1,
       total: 0,
@@ -221,7 +239,7 @@ const Dashboard: React.FC = () => {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => navigate("/admn/createassistant")}
+              onClick={() => navigate("/admin/createassistant")}
               className="bg-purple-600 border-purple-600 rounded-md hover:bg-purple-700 hover:border-purple-700"
             >
               Create New Assistant
@@ -238,7 +256,7 @@ const Dashboard: React.FC = () => {
             </span>{" "}
             assistants (Page {pagination.current})
           </div>
-          
+
           {/* Custom Pagination Controls */}
           <div className="flex items-center space-x-2">
             <Button
@@ -250,11 +268,11 @@ const Dashboard: React.FC = () => {
             >
               Previous
             </Button>
-            
+
             <span className="text-sm text-gray-600 px-2">
               Page {pagination.current}
             </span>
-            
+
             <Button
               icon={<RightOutlined />}
               onClick={handleNextPage}
@@ -287,8 +305,8 @@ const Dashboard: React.FC = () => {
               loading={loading && assistants.length > 0}
               className="[&_.ant-table-thead>tr>th]:bg-purple-600 [&_.ant-table-thead>tr>th]:text-white [&_.ant-table-thead>tr>th]:border-b-purple-700 [&_.ant-table-thead>tr>th]:font-semibold [&_.ant-table-thead>tr>th]:py-4 [&_.ant-table-thead>tr>th]:px-3 [&_.ant-table-tbody>tr>td]:border-b-gray-200 [&_.ant-table-tbody>tr>td]:py-4 [&_.ant-table-tbody>tr>td]:px-3 [&_.ant-table]:border-gray-200"
             />
-            
-{/*             
+
+            {/*             
             {pagination.hasMore && (
               <div className="p-4 text-center border-t border-gray-200">
                 <Button
@@ -314,7 +332,7 @@ const Dashboard: React.FC = () => {
             >
               Previous Page
             </Button>
-            
+
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">
                 Page {pagination.current}
@@ -323,7 +341,7 @@ const Dashboard: React.FC = () => {
                 <span className="text-xs text-gray-400">• More available</span>
               )}
             </div>
-            
+
             <Button
               icon={<RightOutlined />}
               onClick={handleNextPage}

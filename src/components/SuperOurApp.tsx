@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { X } from "lucide-react"; // Close icon
+import { X } from "lucide-react";
 
 import s1 from "../assets/img/s1.png";
 import s2 from "../assets/img/s2.png";
@@ -31,8 +31,8 @@ export default function SuperOurApp() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCryptoModalOpen, setIsCryptoModalOpen] = useState<boolean>(false);
+  const [isFreelanceModalOpen, setIsFreelanceModalOpen] = useState<boolean>(false);
 
-  // ✅ control FAB visibility based on grid visibility
   const [showFab, setShowFab] = useState<boolean>(true);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -89,19 +89,41 @@ export default function SuperOurApp() {
     }
   };
 
-  // ✅ UPDATED ORDER:
-  // Row-1: OXYGPT, Rice2Robo, Bharat AI Store, 90 DAY JOB PLAN
-  // Row-2: Loans, BlockChain, Real Estate, Gold/Silver
-  // Row-3: Nyaya GPT, GLMS, CA&CS, Study Abroad
-  // ❌ Crypto removed from grid (now separate button below)
+  const handleFreelanceSignIn = () => {
+    setIsFreelanceModalOpen(true);
+  };
+
+  const handleFreelancerChoice = () => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/freelanceform";
+      if (userId) navigate(redirectPath);
+      else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = `${LOGIN_URL}`;
+      }
+    } catch (error) {
+      console.error("Freelancer choice error:", error);
+    } finally {
+      setIsLoading(false);
+      setIsFreelanceModalOpen(false);
+    }
+  };
+
+  const handleEmployerChoice = () => {
+    setIsFreelanceModalOpen(false);
+    navigate("/employee-login");
+  };
+
   const tiles: Tile[] = [
-    { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
     // {
     //   id: "s16",
     //   src: s16,
-    //   route: "/freelancers",
+    //   onClick: handleFreelanceSignIn,
     //   title: "Freelance Marketplace",
     // },
+    { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
     {
       id: "s7",
       src: s7,
@@ -120,7 +142,6 @@ export default function SuperOurApp() {
       route: "/90dayjobplan",
       title: "90 Day\nJob Plan",
     },
-
     {
       id: "s4",
       src: s4,
@@ -140,7 +161,6 @@ export default function SuperOurApp() {
       route: "/goldandsilveranddiamonds",
       title: "Gold, Silver\n& Diamonds",
     },
-
     { id: "s5", src: s5, route: "/nyayagpt", title: "Nyaya GPT" },
     { id: "s8", src: s8, route: "/glms", title: "GLMS, Blogs\nJob Street" },
     {
@@ -152,12 +172,10 @@ export default function SuperOurApp() {
     { id: "s9", src: s9, route: "/studyabroad", title: "Study Abroad" },
   ];
 
-  // === ASKOXY-style floating icon (like in the screenshot) ===
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
 
   return (
     <div className="w-full overflow-hidden">
-      {/* Background */}
       <div
         className="w-full"
         style={{
@@ -167,7 +185,6 @@ export default function SuperOurApp() {
       >
         <div className="mx-auto max-w-[1240px] px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-0">
           <div className="flex flex-col-reverse lg:flex-row items-center lg:items-end gap-6 sm:gap-8 lg:gap-12">
-            {/* Left: phone mockup */}
             <div className="w-full lg:w-[48%] flex justify-center lg:justify-start items-end">
               <a
                 href="https://amzn.in/d/2Ie3hEg"
@@ -185,10 +202,8 @@ export default function SuperOurApp() {
               </a>
             </div>
 
-            {/* Right: grid + crypto button */}
             <div className="w-full lg:w-[52%] pb-6 sm:pb-8 lg:pb-10">
               <div className="mx-auto max-w-[780px]" ref={gridRef}>
-                {/* 12-tile grid */}
                 <div
                   className={[
                     "grid",
@@ -226,42 +241,12 @@ export default function SuperOurApp() {
                     </div>
                   ))}
                 </div>
-
-                {/* ✅ Crypto button (like tile), but NOT inside grid */}
-                {/* <div className="mt-4 flex justify-center sm:justify-end">
-                  <div className="flex flex-col items-center">
-                    <button
-                      onClick={() => setIsCryptoModalOpen(true)}
-                      className={[
-                        "w-[96px] sm:w-[110px] md:w-[120px]",
-                        "aspect-square rounded-[18px]",
-                        "transform hover:scale-110 transition-all duration-150",
-                        "flex items-center justify-center p-2 sm:p-2.5 md:p-3",
-                      ].join(" ")}
-                      aria-label="Crypto"
-                      title="Crypto"
-                    >
-                      <img
-                        src={s12}
-                        alt="Crypto"
-                        className="w-full h-full object-contain select-none"
-                        draggable={false}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </button>
-                    <p className="mt-2 text-center text-white font-semibold leading-tight text-[11px] sm:text-[12px] md:text-[13px]">
-                      Crypto
-                    </p>
-                  </div>
-                </div> */}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Floating ASKOXY icon button (click => My Services) */}
       {showFab && !isCryptoModalOpen && (
         <div
           className="fixed z-50 pointer-events-none"
@@ -289,55 +274,109 @@ export default function SuperOurApp() {
         </div>
       )}
 
-      {/* Modal for Crypto Claim */}
       {isCryptoModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative">
             <button
               onClick={() => setIsCryptoModalOpen(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
-            <h2 className="text-xl sm:text-2xl font-bold text-center text-purple-700">
-              🎉 LIMITED TIME OFFER
-            </h2>
+            <div className="text-center mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                🎉 LIMITED TIME OFFER
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Get <span className="font-semibold">₹20 Worth of BMVCOINS</span> Free Today!
+              </p>
+            </div>
 
-            <p className="text-center text-gray-700 mt-2">
-              Get <span className="font-semibold">₹20 Worth of BMVCOINS</span>{" "}
-              Free Today!
-            </p>
-
-            <p className="text-center text-sm text-gray-600 mt-1">
-              (1 BMVCOIN = ₹0.02 • You get 1000 coins = ₹20)
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 mt-6 text-center">
-              <div className="bg-purple-100 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm">Guaranteed Minimum</p>
-                <p className="text-lg font-bold text-purple-700">₹20</p>
-                <p className="text-xs text-gray-500">(1000 BMVCOINS)</p>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+              <div className="bg-purple-50 p-4 rounded-xl text-center">
+                <p className="text-gray-600 text-xs sm:text-sm">Guaranteed Minimum</p>
+                <p className="text-lg sm:text-xl font-bold text-purple-700 mt-1">₹20</p>
+                <p className="text-xs text-gray-500 mt-1">(1000 BMVCOINS)</p>
               </div>
-              <div className="bg-purple-100 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm">Potential Maximum</p>
-                <p className="text-lg font-bold text-purple-700">₹2,000</p>
-                <p className="text-xs text-gray-500">(1,00,000 BMVCOINS)</p>
+              <div className="bg-purple-50 p-4 rounded-xl text-center">
+                <p className="text-gray-600 text-xs sm:text-sm">Potential Maximum</p>
+                <p className="text-lg sm:text-xl font-bold text-purple-700 mt-1">₹2,000</p>
+                <p className="text-xs text-gray-500 mt-1">(1,00,000 BMVCOINS)</p>
               </div>
             </div>
 
-            <p className="text-center text-sm text-gray-600 mt-4">
-              <span className="font-medium">Total Distributed:</span> ₹2,000+
-              (1,00,000 BMVCOINS)
+            <p className="text-center text-xs sm:text-sm text-gray-600 mb-6">
+              <span className="font-medium">Total Distributed:</span> ₹2,000+ (1,00,000 BMVCOINS)
             </p>
 
             <button
               onClick={handleSignIn}
-              className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg shadow-lg transition-all"
               disabled={isLoading}
+              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               🚀 {isLoading ? "Processing..." : "Claim Free Coins"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {isFreelanceModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md sm:max-w-lg p-6 sm:p-8 relative">
+            <button
+              onClick={() => setIsFreelanceModalOpen(false)}
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+            >
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <div className="text-center mb-5 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-1.5 tracking-tight">
+                Join Our Marketplace
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                Choose your role to get started
+              </p>
+            </div>
+
+            <div className="space-y-3 sm:space-y-4">
+              <button
+                onClick={handleFreelancerChoice}
+                disabled={isLoading}
+                className="w-full group flex items-center gap-3 sm:gap-4 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 hover:border-blue-300 p-3 sm:p-4 rounded-xl transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100/50 flex items-center justify-center text-blue-600 text-lg sm:text-xl flex-shrink-0 group-hover:scale-110 group-hover:bg-blue-100 transition-all">
+                  👤
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-blue-900 text-sm sm:text-base leading-tight">Job Seeker (Freelancer)</h3>
+                  <p className="text-blue-600/70 text-[11px] sm:text-xs leading-tight mt-1 font-medium">Find projects and showcase your talent</p>
+                </div>
+                <div className="text-blue-300 group-hover:text-blue-500 text-lg sm:text-xl flex-shrink-0 transition-colors">→</div>
+              </button>
+
+              <button
+                onClick={handleEmployerChoice}
+                disabled={isLoading}
+                className="w-full group flex items-center gap-3 sm:gap-4 bg-purple-50/50 hover:bg-purple-50 border border-purple-100 hover:border-purple-300 p-3 sm:p-4 rounded-xl transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-100/50 flex items-center justify-center text-purple-600 text-lg sm:text-xl flex-shrink-0 group-hover:scale-110 group-hover:bg-purple-100 transition-all">
+                  🏢
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-purple-900 text-sm sm:text-base leading-tight">Employer (CEO / HR / Company)</h3>
+                  <p className="text-purple-600/70 text-[11px] sm:text-xs leading-tight mt-1 font-medium">Hire top professionals for your projects</p>
+                </div>
+                <div className="text-purple-300 group-hover:text-purple-500 text-lg sm:text-xl flex-shrink-0 transition-colors">→</div>
+              </button>
+            </div>
+
+            <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
+              <p className="text-center text-xs sm:text-sm text-gray-500 italic">
+                "Your gateway to global opportunities and elite talent"
+              </p>
+            </div>
           </div>
         </div>
       )}

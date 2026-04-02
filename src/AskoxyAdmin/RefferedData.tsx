@@ -26,7 +26,8 @@ import {
   CommentOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi } from "../utils/axiosInstances";
+import axios from "axios";
 import BASE_URL from "../Config";
 import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 const { TextArea } = Input;
@@ -111,11 +112,11 @@ const ReferredData: React.FC = () => {
   const fetchReferrals = async () => {
     setLoading(true);
     try {
-      const response = await axios.get<ReferralData[]>(
+      const response = await adminApi.get<ReferralData[]>(
         `${BASE_URL}/reference-service/getallreferaldata`,
         {
           headers: { accept: "*/*" },
-        }
+        },
       );
       setReferrals(response.data);
       const unique = Array.from(
@@ -140,7 +141,7 @@ const ReferredData: React.FC = () => {
     setLoadingButtonId(referrerId);
 
     try {
-      const response = await axios.get<ReferralData[]>(
+      const response = await adminApi.get<ReferralData[]>(
         `${BASE_URL}/reference-service/getreferencedetails/${referrerId}`
       );
       setDetails(response.data);
@@ -201,7 +202,7 @@ const ReferredData: React.FC = () => {
 
     setSubmittingComment(true);
     try {
-      await axios.patch(
+      await adminApi.patch(
         `${BASE_URL}/user-service/adminUpdateCommen`,
         {
           adminComments: newComment,

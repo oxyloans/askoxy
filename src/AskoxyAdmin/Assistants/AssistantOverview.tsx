@@ -25,7 +25,7 @@ const AssistantOverview: React.FC = () => {
   };
   const handleAssistantDeleted = () => {
     setAssistant(null);
-    navigate("/admn/assistants");
+    navigate("/admin/assistants");
   };
 
   useEffect(() => {

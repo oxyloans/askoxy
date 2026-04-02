@@ -143,7 +143,7 @@ const AddJob: React.FC = () => {
   const [formValues, setFormValues] = useState<JobFormData | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [logoUploadType, setLogoUploadType] = useState<"upload" | "url">(
-    "upload"
+    "upload",
   );
   const navigate = useNavigate();
   const [fullPhone, setFullPhone] = useState<string | undefined>();
@@ -165,7 +165,7 @@ const AddJob: React.FC = () => {
       const response = await axios.post(
         "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
         uploadFormData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       if (response.data.uploadStatus === "UPLOADED") {
         setLogoUrl(response.data.documentPath);
@@ -217,11 +217,14 @@ const AddJob: React.FC = () => {
         jobSource: formValues.jobSource,
       };
 
-      await axios.post(`${BASE_URL}/marketing-service/campgin/postajob`, payload);
+      await axios.post(
+        `${BASE_URL}/marketing-service/campgin/postajob`,
+        payload,
+      );
       form.resetFields();
       setIsModalVisible(false);
       message.success("Job posted successfully!");
-      navigate("/admn/alljobdetails");
+      navigate("/admin/alljobdetails");
     } catch (error) {
       message.error("Failed to post job. Please try again.");
       console.error("Error posting job:", error);
@@ -287,14 +290,18 @@ const AddJob: React.FC = () => {
                 await axios.post(
                   `${BASE_URL}/marketing-service/campgin/JobsExcelUpdate`,
                   formData,
-                  { headers: { "Content-Type": "multipart/form-data" } }
+                  { headers: { "Content-Type": "multipart/form-data" } },
                 );
                 message.success("Jobs uploaded successfully from Excel!");
               } catch (error) {
                 console.error("Upload error:", error);
                 message.error("Failed to upload Excel file.");
               } finally {
-                (document.getElementById("hiddenExcelUpload") as HTMLInputElement).value = "";
+                (
+                  document.getElementById(
+                    "hiddenExcelUpload",
+                  ) as HTMLInputElement
+                ).value = "";
               }
             }}
           />
@@ -928,8 +935,8 @@ const AddJob: React.FC = () => {
                         }
                         return Promise.reject(
                           new Error(
-                            "Maximum salary must be greater than minimum salary"
-                          )
+                            "Maximum salary must be greater than minimum salary",
+                          ),
                         );
                       },
                     }),
@@ -1152,7 +1159,7 @@ const AddJob: React.FC = () => {
             <p>
               <strong>Job Source:</strong>{" "}
               {jobSources.find(
-                (source) => source.value === formValues.jobSource
+                (source) => source.value === formValues.jobSource,
               )?.label || "N/A"}
             </p>
             <p>
