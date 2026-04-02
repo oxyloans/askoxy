@@ -1,4 +1,4 @@
-// src/BharathAIStore/pages/Agentcreation.tsx
+﻿// src/BharathAIStore/pages/Agentcreation.tsx
 import React, {
   useCallback,
   useEffect,
@@ -1359,6 +1359,7 @@ const Agentcreation: React.FC = () => {
       const res = await axios.post(
         `${BASE_URL}/ai-service/agent/uploadBusinessCard?fileType=kyc&userId=${encodeURIComponent(userId)}`,
         formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
 
       const data = res.data;

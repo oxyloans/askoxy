@@ -45,6 +45,7 @@ import JobAnalysisResult from "./components/JobAnalysisResult";
 import ExamPage from "./components/ExamPage";
 import ExamQuestionPage from "./components/ExamQuestionPage";
 import ExamResultsPage from "./components/ExamResultsPage";
+import FinvibeLanding from "./Finvibe/Landing";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage")
 );
@@ -581,6 +582,8 @@ const App: React.FC = () => {
               <Route path="/90dayjobplan" element={<JobTraining90DaysPage />} />
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
+              <Route path="/finvibecodebuilder" element={<FinvibeLanding />} />
+
               <Route
                 path="/carnivals/edit/:id"
                 element={<CarnivalEditPage />}

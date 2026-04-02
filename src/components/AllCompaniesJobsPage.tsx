@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 import Logo from "../assets/img/askoxylogonew.png";
 import Footer from "./Footer";
 import {
@@ -108,8 +108,9 @@ const AllCompaniesJobsPage: React.FC = () => {
 
          const response = await customerApi.get(url);
          const data: Job[] = response.data;
-
+ console.log("Fetched jobs:", data);
         setJobs(Array.isArray(data) ? data : []);
+        
       } catch (err: any) {
         setError(err.message || "Failed to load jobs");
       } finally {
@@ -380,7 +381,7 @@ const AllCompaniesJobsPage: React.FC = () => {
                         <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 p-2">
                           <img
                             src={
-                              job.companyLogo ||
+                              `${job.companyLogo}` ||
                               "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
                             }
                             alt={job.companyName}

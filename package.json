@@ -43,6 +43,7 @@
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
+    "jszip": "^3.10.1",
     "katex": "^0.16.25",
     "libphonenumber-js": "^1.12.24",
     "lottie-react": "^2.4.1",
