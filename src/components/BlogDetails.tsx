@@ -92,6 +92,7 @@ const BlogDetails: React.FC = () => {
     "";
 
   const accessToken = localStorage.getItem("accessToken");
+  const [pageReady, setPageReady] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -253,6 +254,8 @@ const BlogDetails: React.FC = () => {
   useEffect(() => {
     const loadCampaignsAndComments = async () => {
       setIsLoading(true);
+      setPageReady(false);
+
       try {
         const [allCampaigns, allGames] = await Promise.all([
           fetchCampaigns(),
@@ -334,6 +337,9 @@ const BlogDetails: React.FC = () => {
         setCampaigns([]);
       } finally {
         setIsLoading(false);
+        setTimeout(() => {
+          setPageReady(true);
+        }, 100);
       }
     };
 
@@ -671,11 +677,11 @@ const BlogDetails: React.FC = () => {
     setQuery("");
     setQueryError("");
 
-   if (!normalizedEmail || !normalizedMobileNumber) {
-  message.warning("Please fill your Email and Phone Number to continue.");
-  setIsProfileModalOpen(true);
-  return;
-}
+    if (!normalizedEmail || !normalizedMobileNumber) {
+      message.warning("Please fill your Email and Phone Number to continue.");
+      setIsProfileModalOpen(true);
+      return;
+    }
 
     setIsWriteToUsOpen(true);
   };
@@ -686,17 +692,19 @@ const BlogDetails: React.FC = () => {
       return;
     }
 
-if (!normalizedEmail || !normalizedMobileNumber) {
-  message.error("Please update your Email and Phone Number before submitting.");
+    if (!normalizedEmail || !normalizedMobileNumber) {
+      message.error(
+        "Please update your Email and Phone Number before submitting.",
+      );
 
-  setIsWriteToUsOpen(false);
+      setIsWriteToUsOpen(false);
 
-  setTimeout(() => {
-    setIsProfileModalOpen(true);
-  }, 200); // smooth transition
+      setTimeout(() => {
+        setIsProfileModalOpen(true);
+      }, 200); // smooth transition
 
-  return;
-}
+      return;
+    }
 
     try {
       setIsSubmittingWriteToUs(true);
@@ -1259,11 +1267,10 @@ if (!normalizedEmail || !normalizedMobileNumber) {
     );
   };
 
-  if (isLoading) {
+  if (isLoading || !pageReady) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <Header1 />
-        <div className="flex min-h-[80vh] items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center">
           <Spin size="large" />
         </div>
       </div>
@@ -1273,7 +1280,7 @@ if (!normalizedEmail || !normalizedMobileNumber) {
   if (!featuredCampaign) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <Header1 />
+        {!userId && <Header1 />}
         {renderNotFoundPage()}
       </div>
     );
@@ -1281,7 +1288,13 @@ if (!normalizedEmail || !normalizedMobileNumber) {
 
   return (
     <div className="min-h-screen bg-[#f4f7fb]">
-      <Header1 />
+      <div className="mb-4 p-2">
+        {pageReady && !userId && (
+          <div className="mb-4 p-2">
+            <Header1 />
+          </div>
+        )}{" "}
+      </div>
 
       <style>
         {`
@@ -1372,14 +1385,14 @@ if (!normalizedEmail || !normalizedMobileNumber) {
             </div>
           </div>
 
-        <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-  <p className="text-sm text-gray-700">
-    <b>Email:</b> {normalizedEmail || "Not Available"}
-  </p>
-  <p className="text-sm text-gray-700 mt-1">
-    <b>Phone:</b> {normalizedMobileNumber || "Not Available"}
-  </p>
-</div>
+          <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="text-sm text-gray-700">
+              <b>Email:</b> {normalizedEmail || "Not Available"}
+            </p>
+            <p className="text-sm text-gray-700 mt-1">
+              <b>Phone:</b> {normalizedMobileNumber || "Not Available"}
+            </p>
+          </div>
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -1413,29 +1426,29 @@ if (!normalizedEmail || !normalizedMobileNumber) {
         </div>
       </ResponsiveModalWrapper>
 
-  <ResponsiveModalWrapper
-  open={isProfileModalOpen}
-  onClose={closeProfileModal}
->
-  <div className="p-6 text-center">
-    <h2 className="text-lg font-bold text-gray-800 mb-3">
-      Complete Your Profile
-    </h2>
+      <ResponsiveModalWrapper
+        open={isProfileModalOpen}
+        onClose={closeProfileModal}
+      >
+        <div className="p-6 text-center">
+          <h2 className="text-lg font-bold text-gray-800 mb-3">
+            Complete Your Profile
+          </h2>
 
-    {/* 🔥 THIS IS YOUR 4TH POINT */}
-    <p className="text-sm text-gray-600 mb-5">
-      Please update your <b>Email</b> and <b>Phone Number</b> to continue using
-      Write To Us.
-    </p>
+          {/* 🔥 THIS IS YOUR 4TH POINT */}
+          <p className="text-sm text-gray-600 mb-5">
+            Please update your <b>Email</b> and <b>Phone Number</b> to continue
+            using Write To Us.
+          </p>
 
-    <button
-      onClick={handlePopUOk}
-      className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold"
-    >
-      Update Profile
-    </button>
-  </div>
-</ResponsiveModalWrapper>
+          <button
+            onClick={handlePopUOk}
+            className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold"
+          >
+            Update Profile
+          </button>
+        </div>
+      </ResponsiveModalWrapper>
 
       <ResponsiveModalWrapper
         open={isSuccessModalOpen}

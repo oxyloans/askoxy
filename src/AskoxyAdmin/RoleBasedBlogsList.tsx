@@ -242,7 +242,7 @@ const RoleBasedBlogsList: React.FC = () => {
   const handleEdit = (item: GamesBlogItem) => {
     const normalizedId = getNormalizedId(item);
 
-    navigate("/admn/addroleblogs", {
+    navigate("/admin/addroleblogs", {
       state: {
         blogData: {
           ...item,
@@ -317,7 +317,7 @@ const RoleBasedBlogsList: React.FC = () => {
         nextStatus ? "Blog activated successfully" : "Blog inactivated successfully"
       );
 
-      navigate("/admn/allroleblogs", { replace: true });
+      navigate("/admin/allroleblogs", { replace: true });
     } catch (error: any) {
       console.error("Update status error:", error);
       const apiMessage =
@@ -348,7 +348,7 @@ const RoleBasedBlogsList: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => navigate("/admn/addroleblogs")}
+                onClick={() => navigate("/admin/addroleblogs")}
                 className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2.5 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 sm:text-sm"
               >
                 Add Poll Blog

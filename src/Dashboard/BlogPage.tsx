@@ -388,9 +388,7 @@ const BlogsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f6f8fc]">
-      <Suspense fallback={<div className="p-2" />}>
-        <Header1 />
-      </Suspense>
+         <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
 
       <div className="pageWrap">
         <div className="pageInner">
