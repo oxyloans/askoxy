@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
   FaTachometerAlt,
@@ -49,9 +49,14 @@ import {
   EnvironmentOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
-import { MdPayment, MdWork } from "react-icons/md";
+import { MdWork } from "react-icons/md";
 import { ApartmentOutlined } from "@ant-design/icons";
-import { stopTokenRefresh } from "../utils/tokenRefresh";
+import { stopTokenRefresh } from "./RefreshToken";
+import { useSessionManager } from "./useSessionManage";
+import SessionModal from "./SessionModal";
+import { removeAdminAccessToken, removeAdminRefreshToken } from "../utils/cookieUtils";
+
+import { getAdminAccessToken, getAdminRefreshToken } from "../utils/cookieUtils";
 interface SidebarSubItem {
   title: string;
   icon: React.ReactNode;
@@ -85,15 +90,49 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const primaryType = localStorage.getItem("admin_primaryType");
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     stopTokenRefresh();
     localStorage.removeItem("admin_primaryType");
     localStorage.removeItem("admin_uniquId");
     localStorage.removeItem("admin_userName");
+    removeAdminAccessToken();
+    removeAdminRefreshToken();
     localStorage.removeItem("admin_acToken");
     sessionStorage.removeItem("refreshToken");
     navigate("/admin");
-  };
+  }, [navigate]);
+
+  // Session management
+  const { showSessionModal, refreshing, handleContinueSession, handleSessionLogout } = useSessionManager(handleLogout);
+  
+  // Debug logging
+  console.log('Sider - showSessionModal:', showSessionModal);
+
+  useEffect(() => {
+    const tokenString = getAdminAccessToken();
+    const refreshToken = getAdminRefreshToken();
+    
+    // If no access token but refresh token exists, let session manager handle it
+    if (!tokenString && refreshToken) {
+      console.log('Sider - No access token but refresh token exists, letting session manager handle');
+      return;
+    }
+    
+    // If no tokens at all, redirect to login
+    if (!tokenString) {
+      navigate("/admin", { replace: true });
+      return;
+    }
+    
+    const primaryType = localStorage.getItem("admin_primaryType");
+    if (!primaryType || (primaryType !== "HELPDESKSUPERADMIN" && primaryType !== "HELPDESKADMIN")) {
+      navigate("/admin", { replace: true });
+    }
+  }, []); // ✅ Empty dependency like PartnerHome
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const title =
     primaryType === "HELPDESKSUPERADMIN" ? "Interested Users" : "Dashboard";
@@ -387,7 +426,7 @@ const Sidebar: React.FC = () => {
     }
 
     setUserRole(primaryType);
-  }, [navigate]);
+  }, []); // ✅ Empty dependency
 
   // Auto-expand category if current route matches any of its child items
   useEffect(() => {
@@ -403,29 +442,6 @@ const Sidebar: React.FC = () => {
       setExpandedCategories((prev) => [...prev, activeCategory.title]);
     }
   }, [location.pathname, userRole]);
-
-  useEffect(() => {
-    const checkAccessToken = () => {
-      const uniquId = localStorage.getItem("admin_uniquId");
-
-      if (!uniquId) {
-        message.info("Your session has expired. Please log in again.");
-        localStorage.removeItem("admin_primaryType");
-        localStorage.removeItem("admin_uniquId");
-        localStorage.removeItem("admin_userName");
-        localStorage.removeItem("admin_acToken");
-        navigate("/admin");
-      }
-    };
-
-    checkAccessToken();
-
-    window.addEventListener("focus", checkAccessToken);
-
-    return () => {
-      window.removeEventListener("focus", checkAccessToken);
-    };
-  }, [navigate]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -487,6 +503,17 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
+      {showSessionModal && (
+        <div style={{ zIndex: 9999, position: 'fixed' }}>
+          <SessionModal
+            visible={showSessionModal}
+            loading={refreshing}
+            onContinue={handleContinueSession}
+            onLogout={handleSessionLogout}
+          />
+        </div>
+      )}
+      <div>
       {isMobileOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-20 transition-opacity duration-300"
@@ -822,6 +849,7 @@ const Sidebar: React.FC = () => {
         <main className="p-6">
           <Outlet />
         </main>
+      </div>
       </div>
     </>
   );

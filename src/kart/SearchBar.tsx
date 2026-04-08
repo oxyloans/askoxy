@@ -78,6 +78,14 @@ const SearchBar = () => {
     if (location.state?.selectedItemName) {
       setSearchValue(location.state.selectedItemName);
     }
+    // Clear search when clearSearch state is received
+    if (location.state?.clearSearch) {
+      setSearchValue("");
+      setDebouncedValue("");
+      setSearchResults([]);
+      // Clear the state to prevent repeated clearing
+      navigate(location.pathname, { replace: true, state: null });
+    }
   }, [location.state]);
 
   useEffect(() => {

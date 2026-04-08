@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   FaHandsHelping,
   FaCoins,
@@ -90,12 +91,23 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleSignout = () => {
-    const entryPoint = localStorage.getItem("entryPoint") || "/";
-    // preserve entryPoint across clear
-    localStorage.clear();
-    sessionStorage.clear();
-    localStorage.setItem("entryPoint", entryPoint);
-    navigate(entryPoint);
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will be signed out of your account.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, sign out!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const entryPoint = localStorage.getItem("entryPoint") || "/";
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem("entryPoint", entryPoint);
+        navigate(entryPoint);
+      }
+    });
   };
 
   const isExpanded = showLabels || !isCollapsed || isHovering;

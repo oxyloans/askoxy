@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Logo from "../../assets/img/bharatAI.png";
@@ -62,6 +62,13 @@ useEffect(() => {
   }
 }, [hideSearch, setQuery]);
 
+
+  // Handle menu close with proper cleanup
+  const handleMenuClose = useCallback(() => {
+    setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
+    setQuery("");
+  }, [setQuery]);
 
   const handleLogin = () => {
     try {
@@ -495,7 +502,7 @@ useEffect(() => {
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
                 aria-label="Open menu"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -537,12 +544,12 @@ useEffect(() => {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[60] md:hidden overflow-hidden">
           <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute inset-0 bg-black/40 transition-opacity"
+            onClick={handleMenuClose}
           />
           <div
             ref={mobileMenuRef}
-            className="absolute right-0 top-0 h-full w-72 sm:w-80 max-w-[85%] bg-white shadow-2xl p-4 overflow-y-auto"
+            className="absolute right-0 top-0 h-full w-72 sm:w-80 max-w-[85%] bg-white shadow-2xl p-4 overflow-y-auto transform transition-transform duration-300 ease-in-out"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -550,8 +557,8 @@ useEffect(() => {
               </div>
               <button
                 aria-label="Close menu"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+                onClick={handleMenuClose}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -571,11 +578,8 @@ useEffect(() => {
                 <Link
                   key={n.to}
                   to={n.to}
-                  onClick={() => { setIsMobileMenuOpen(false);
-                  setIsMobileSearchOpen(false);
-                  setQuery("");  setIsMobileMenuOpen(false);
-                  }}
-                  className="block rounded-lg px-3 py-3 text-base font-semibold text-gray-800 hover:bg-gray-100"
+                  onClick={handleMenuClose}
+                  className="block rounded-lg px-3 py-3 text-base font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
                 >
                   {n.label}
                 </Link>
@@ -584,8 +588,11 @@ useEffect(() => {
               <hr className="my-3" />
 
               <button
-                onClick={handleLogin}
-                className="w-full rounded-full bg-purple-600 text-white font-semibold py-3 shadow shadow-purple-400/60 animate-pulse hover:bg-purple-700"
+                onClick={() => {
+                  handleLogin();
+                  handleMenuClose();
+                }}
+                className="w-full rounded-full bg-purple-600 text-white font-semibold py-3 shadow shadow-purple-400/60 animate-pulse hover:bg-purple-700 transition-colors"
               >
                 {isLoading ? "Loading…" : "Create AI Agent"}
               </button>

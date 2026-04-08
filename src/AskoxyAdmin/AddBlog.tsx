@@ -67,6 +67,15 @@ const AddBlog: React.FC = () => {
     facebook: "",
     instagram: "",
   });
+  
+  // State for show more/less functionality
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showFullCaption, setShowFullCaption] = useState(false);
+  
+  // Default display ranges
+  const DESCRIPTION_PREVIEW_LENGTH = 200;
+  const CAPTION_PREVIEW_LENGTH = 50;
+  
   const primaryType = localStorage.getItem("admin_primaryType");
   const userId = localStorage.getItem("userId");
   const [charCounts, setCharCounts] = useState<{
@@ -78,6 +87,18 @@ const AddBlog: React.FC = () => {
     campaignDescription: 0,
     socialMediaCaption: 0,
   });
+
+  // Helper functions for text preview
+  const getPreviewText = (text: string, maxLength: number, showFull: boolean) => {
+    if (showFull || text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const shouldShowToggle = (text: string, maxLength: number) => {
+    return text.length > maxLength;
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -389,18 +410,33 @@ const AddBlog: React.FC = () => {
               >
                 Blog Description
               </label>
-              <textarea
-                id="campaignDescription"
-                name="campaignDescription"
-                value={formData.campaignDescription}
-                onChange={handleInputChange}
-                rows={4}
-                maxLength={10000}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
-              ></textarea>
+              <div className="relative">
+                <textarea
+                  id="campaignDescription"
+                  name="campaignDescription"
+                  value={formData.campaignDescription}
+                  onChange={handleInputChange}
+                  rows={showFullDescription ? 8 : 4}
+                  maxLength={10000}
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-300"
+                  required
+                  style={{ resize: 'none' }}
+                ></textarea>
+                {shouldShowToggle(formData.campaignDescription, DESCRIPTION_PREVIEW_LENGTH) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="absolute bottom-2 right-2 text-xs text-blue-600 hover:text-blue-800 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm"
+                  >
+                    {showFullDescription ? 'Show Less' : 'Show More'}
+                  </button>
+                )}
+              </div>
               <div className="text-sm text-gray-500 mt-1">
                 {charCounts.campaignDescription}/10,000 characters
+                {!showFullDescription && shouldShowToggle(formData.campaignDescription, DESCRIPTION_PREVIEW_LENGTH) && (
+                  <span className="ml-2 text-blue-600">({DESCRIPTION_PREVIEW_LENGTH} chars preview)</span>
+                )}
               </div>
               {descErrormessage && (
                 <div className="text-red-500 text-sm mb-4">
@@ -416,20 +452,34 @@ const AddBlog: React.FC = () => {
               >
                 Social Media Caption
               </label>
-              <textarea
-                id="socialMediaCaption"
-                name="socialMediaCaption"
-                value={formData.socialMediaCaption}
-                onChange={handleInputChange}
-                rows={3}
-                maxLength={25}
-                placeholder="Please enter a social media caption with at least 25 characters."
-                className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
-              ></textarea>
+              <div className="relative">
+                <textarea
+                  id="socialMediaCaption"
+                  name="socialMediaCaption"
+                  value={formData.socialMediaCaption}
+                  onChange={handleInputChange}
+                  rows={showFullCaption ? 5 : 3}
+                  maxLength={25}
+                  placeholder="Please enter a social media caption with at least 25 characters."
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-300"
+                  required
+                  style={{ resize: 'none' }}
+                ></textarea>
+                {shouldShowToggle(formData.socialMediaCaption, CAPTION_PREVIEW_LENGTH) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullCaption(!showFullCaption)}
+                    className="absolute bottom-2 right-2 text-xs text-blue-600 hover:text-blue-800 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm"
+                  >
+                    {showFullCaption ? 'Show Less' : 'Show More'}
+                  </button>
+                )}
+              </div>
               <div className="text-sm text-gray-500 mt-1">
-                {charCounts.socialMediaCaption}/25 characters (minimum 25
-                required)
+                {charCounts.socialMediaCaption}/25 characters (minimum 25 required)
+                {!showFullCaption && shouldShowToggle(formData.socialMediaCaption, CAPTION_PREVIEW_LENGTH) && (
+                  <span className="ml-2 text-blue-600">({CAPTION_PREVIEW_LENGTH} chars preview)</span>
+                )}
               </div>
               {socialMediaCaptionErrorMessage && (
                 <div className="text-red-500 text-sm mb-4">

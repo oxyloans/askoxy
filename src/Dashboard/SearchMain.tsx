@@ -244,7 +244,8 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    // Clear the search query and navigate to home
+    navigate("/main/dashboard/home", { replace: true, state: { clearSearch: true } });
   };
 
   const handleAddToCart = async (item: Product) => {
@@ -504,7 +505,9 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
             type="error"
             showIcon
             action={
-              <Button onClick={() => fetchSearchData(query)}>Try Again</Button>
+              <Button onClick={() => {
+                navigate("/main/dashboard/home", { replace: true, state: { clearSearch: true } });
+              }}>Try Again</Button>
             }
           />
         )}

@@ -16,7 +16,7 @@ import {
   InputNumber,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { Search, Package, User } from "lucide-react";
+import { Search, Package, User, RotateCcw, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MdCurrencyRupee, MdScale } from "react-icons/md";
 import {
@@ -510,9 +510,20 @@ const ExchangeOrdersTable: React.FC = () => {
   return (
     <div className="p-4 md:p-6 bg-gray-50">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <Title level={4} className="mb-4 md:mb-0 text-gray-800">
-          Exchange Orders
-        </Title>
+        <div className="flex items-center gap-3 mb-4 md:mb-0">
+          <Title level={4} className="mb-0 text-gray-800 flex items-center gap-2">
+            <RotateCcw className="text-blue-600" size={20} />
+            Exchange Orders
+          </Title>
+          <Button
+            type="default"
+            icon={<Eye size={16} />}
+            className="!bg-blue-50 hover:!bg-blue-100 !text-blue-700 !border-blue-200 !rounded-full !px-4 !py-1 !text-sm !font-medium"
+            onClick={() => setSelectedStatus("All")}
+          >
+            Show All
+          </Button>
+        </div>
         <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
           <div className="relative w-full sm:w-64">
             <Input
@@ -527,6 +538,10 @@ const ExchangeOrdersTable: React.FC = () => {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex items-center gap-2 mr-4">
+          <RotateCcw className="text-gray-500" size={16} />
+          <span className="text-sm text-gray-600 font-medium">Filter by Status:</span>
+        </div>
         {[
           "All",
           "EXCHANGEREQUESTED",

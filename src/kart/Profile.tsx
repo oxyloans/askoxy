@@ -321,6 +321,13 @@ const ProfilePage = () => {
       errors.userFirstName = "First name should only contain letters";
     }
 
+    // Email validation
+    if (!formData.customerEmail.trim()) {
+      errors.customerEmail = "Email address is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail.trim())) {
+      errors.customerEmail = "Please enter a valid email address";
+    }
+
     if (formData.alterMobileNumber.trim() !== "") {
       // Alternate mobile number validation
       if (!formData.alterMobileNumber.trim()) {
@@ -698,7 +705,7 @@ const ProfilePage = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Email Address
+                      Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
