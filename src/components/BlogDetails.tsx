@@ -6,8 +6,6 @@ import {
   DislikeOutlined,
   HeartFilled,
   HeartOutlined,
-  LikeFilled,
-  LikeOutlined,
   LoadingOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -42,22 +40,52 @@ interface SubComment {
   comment: string;
 }
 
+interface ResponsiveModalWrapperProps {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
+const ResponsiveModalWrapper: React.FC<ResponsiveModalWrapperProps> = ({
+  open,
+  onClose,
+  children,
+}) => {
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[1000] bg-black/55 backdrop-blur-[2px] flex items-center justify-center px-4 py-6"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const BlogDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const pathParts = location.pathname.split("/");
   const blogId = pathParts[pathParts.indexOf("blog") + 1];
+
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
+
   const [isLoading, setIsLoading] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [comment, setComment] = useState("");
   const [activeReplyCommentId, setActiveReplyCommentId] = useState<
     string | null
   >(null);
-  const [commentsError, setCommentsError] = useState<string | undefined>(
-    undefined,
-  );
+
   const [isSpeaking, setIsSpeaking] = useState<{ [key: string]: boolean }>({});
   const [isLiked, setIsLiked] = useState<{ [key: string]: boolean }>({});
   const [isDisliked, setIsDisliked] = useState<{ [key: string]: boolean }>({});
@@ -65,9 +93,9 @@ const BlogDetails: React.FC = () => {
   const [dislikeCount, setDislikeCount] = useState<{ [key: string]: number }>(
     {},
   );
-  const [isSubscribed, setIsSubscribed] = useState<{ [key: string]: boolean }>(
-    {},
-  );
+  const [isSubscribed, setIsSubscribed] = useState<{
+    [key: string]: boolean;
+  }>({});
   const [comments, setComments] = useState<{ [key: string]: Comment[] }>({});
   const [currentImageIndex, setCurrentImageIndex] = useState<{
     [key: string]: number;
@@ -78,14 +106,22 @@ const BlogDetails: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<{
     [key: string]: { like?: boolean; dislike?: boolean; subscribe?: boolean };
   }>({});
-  const [isOpen, setIsOpen] = useState(false);
-  const [isprofileOpen, setIsprofileOpen] = useState(false);
-  const [issuccessOpen, setSuccessOpen] = useState(false);
+
+  // Updated shared modal states
+  const [isWriteToUsOpen, setIsWriteToUsOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
+    null,
+  );
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState("");
+  const [isSubmittingWriteToUs, setIsSubmittingWriteToUs] = useState(false);
+
   const email = JSON.parse(
     localStorage.getItem("profileData") || "{}",
   ).customerEmail;
+
   const finalMobileNumber =
     localStorage.getItem("whatsappNumber") ||
     localStorage.getItem("mobileNumber");
@@ -106,10 +142,11 @@ const BlogDetails: React.FC = () => {
                 likesTotalCount,
                 dislikesTotalCount,
                 subComments,
-                isLiked,
-                isDisliked,
-                isSubscribed,
+                isLiked: likedState,
+                isDisliked: dislikedState,
+                isSubscribed: subscribedState,
               } = await fetchLikesAndComments(campaign.campaignId, userId);
+
               setLikeCount((prev) => ({
                 ...prev,
                 [campaign.campaignId]: likesTotalCount,
@@ -124,24 +161,25 @@ const BlogDetails: React.FC = () => {
               }));
               setIsLiked((prev) => ({
                 ...prev,
-                [campaign.campaignId]: isLiked,
+                [campaign.campaignId]: likedState,
               }));
               setIsDisliked((prev) => ({
                 ...prev,
-                [campaign.campaignId]: isDisliked,
+                [campaign.campaignId]: dislikedState,
               }));
               setIsSubscribed((prev) => ({
                 ...prev,
-                [campaign.campaignId]: isSubscribed,
+                [campaign.campaignId]: subscribedState,
               }));
+
               return {
                 ...campaign,
                 likesTotalCount,
                 dislikesTotalCount,
                 subComments,
-                isLiked,
-                isDisliked,
-                isSubscribed,
+                isLiked: likedState,
+                isDisliked: dislikedState,
+                isSubscribed: subscribedState,
               };
             }
             return campaign;
@@ -152,16 +190,33 @@ const BlogDetails: React.FC = () => {
       } catch (error) {
         console.error("Error loading campaigns or comments:", error);
         setCampaigns([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     loadCampaignsAndComments();
   }, [userId]);
 
+  useEffect(() => {
+    const isAnyModalOpen =
+      isWriteToUsOpen || isProfileModalOpen || isSuccessModalOpen;
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isWriteToUsOpen, isProfileModalOpen, isSuccessModalOpen]);
+
   const featuredCampaign = campaigns.find(
     (campaign) => campaign.campaignId?.slice(-4) === blogId,
   );
+
   const otherCampaigns = campaigns.filter(
     (campaign) => campaign.campaignId?.slice(-4) !== blogId,
   );
@@ -198,7 +253,9 @@ const BlogDetails: React.FC = () => {
             ? (prev[campaignId] || 0) - 1
             : (prev[campaignId] || 0) + 1,
         }));
+
         setIsLiked((prev) => ({ ...prev, [campaignId]: !prev[campaignId] }));
+
         if (isDisliked[campaignId]) {
           setDislikeCount((prev) => ({
             ...prev,
@@ -251,7 +308,9 @@ const BlogDetails: React.FC = () => {
             ? (prev[campaignId] || 0) - 1
             : (prev[campaignId] || 0) + 1,
         }));
+
         setIsDisliked((prev) => ({ ...prev, [campaignId]: !prev[campaignId] }));
+
         if (isLiked[campaignId]) {
           setLikeCount((prev) => ({
             ...prev,
@@ -338,6 +397,7 @@ const BlogDetails: React.FC = () => {
           comment,
           userId,
         );
+
         if (success) {
           message.success("Sub-comment submitted successfully!");
           const { subComments } = await fetchLikesAndComments(
@@ -355,6 +415,7 @@ const BlogDetails: React.FC = () => {
           userComments: comment,
           userId,
         });
+
         if (success) {
           message.success("Comment submitted successfully!");
           const { subComments } = await fetchLikesAndComments(
@@ -396,40 +457,51 @@ const BlogDetails: React.FC = () => {
       return;
     }
 
+    setSelectedCampaign(campaign);
+    setQuery("");
+    setQueryError("");
+
     if (
       !email ||
       email === "null" ||
       !finalMobileNumber ||
       finalMobileNumber === "null"
     ) {
-      setIsprofileOpen(true);
+      setIsProfileModalOpen(true);
     } else {
-      setIsOpen(true);
+      setIsWriteToUsOpen(true);
     }
   };
 
   const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter the query before submitting.");
+    if (!query.trim()) {
+      setQueryError("Please enter your message before submitting.");
       return;
     }
 
-    const campaign = campaigns.find((c) => c.campaignId?.slice(-4) === blogId);
-    const campaignType = campaign?.campaignType || "Unknown Campaign";
-    const success = await submitWriteToUsQuery(
-      email,
-      finalMobileNumber,
-      query,
-      "BLOGS",
-      userId,
-    );
+    try {
+      setIsSubmittingWriteToUs(true);
 
-    if (success) {
-      setSuccessOpen(true);
-      setIsOpen(false);
-      setQuery("");
-    } else {
-      message.error("Failed to send query. Please try again.");
+      const success = await submitWriteToUsQuery(
+        email,
+        finalMobileNumber,
+        query.trim(),
+        "BLOGS",
+        userId,
+      );
+
+      if (success) {
+        setIsWriteToUsOpen(false);
+        setIsSuccessModalOpen(true);
+        setQuery("");
+        setQueryError("");
+      } else {
+        message.error("Failed to send query. Please try again.");
+      }
+    } catch (error) {
+      message.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmittingWriteToUs(false);
     }
   };
 
@@ -505,7 +577,7 @@ const BlogDetails: React.FC = () => {
           trimmedLine.startsWith("####");
 
         if (isHeading) {
-          let cleanText = trimmedLine
+          const cleanText = trimmedLine
             .replace(/^#+\s*/, "")
             .replace(/^\*\*|\*\*$/g, "")
             .replace(/\*/g, "")
@@ -525,16 +597,13 @@ const BlogDetails: React.FC = () => {
           trimmedLine.startsWith("•") ||
           trimmedLine.startsWith("-")
         ) {
-          // Remove all * characters except the first one (bullet symbol)
           let cleanBulletText = trimmedLine;
           const firstChar = cleanBulletText.charAt(0);
 
           if (firstChar === "*") {
-            // Keep first * as bullet, remove all other * characters
             cleanBulletText =
               firstChar + cleanBulletText.slice(1).replace(/\*/g, "");
           } else {
-            // For other bullet symbols (✅, •, -), remove all * characters
             cleanBulletText = cleanBulletText.replace(/\*/g, "");
           }
 
@@ -546,12 +615,12 @@ const BlogDetails: React.FC = () => {
             </div>
           );
         } else {
-          // Remove all * characters from regular paragraphs
           const cleanText = trimmedLine.replace(/\*/g, "");
 
           const renderTextWithLinks = (text: string) => {
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             const parts = text.split(urlRegex);
+
             return parts.map((part, i) => {
               if (urlRegex.test(part)) {
                 return (
@@ -585,6 +654,7 @@ const BlogDetails: React.FC = () => {
 
   const handleSpeakDescription = (campaignId: string) => {
     const campaign = campaigns.find((c) => c.campaignId === campaignId);
+
     if (!campaign?.campaignDescription) {
       message.error("No content to read");
       return;
@@ -610,8 +680,10 @@ const BlogDetails: React.FC = () => {
 
     utterance.onstart = () =>
       setIsSpeaking((prev) => ({ ...prev, [campaignId]: true }));
+
     utterance.onend = () =>
       setIsSpeaking((prev) => ({ ...prev, [campaignId]: false }));
+
     utterance.onerror = () => {
       setIsSpeaking((prev) => ({ ...prev, [campaignId]: false }));
       message.error("Speech synthesis stopped");
@@ -642,18 +714,6 @@ const BlogDetails: React.FC = () => {
         .catch(() => message.error("Failed to copy link"));
     }
   };
-  /* ---------- Small helpers ---------- */
-  const LabeledField: React.FC<{
-    label: string;
-    children: React.ReactNode;
-  }> = ({ label, children }) => (
-    <div className="mb-4">
-      <label className="block text-sm text-gray-700 font-semibold mb-1">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
 
   const showCommentsModal = async (campaignId: string) => {
     setIsCommentsModalOpen((prev) => ({ ...prev, [campaignId]: true }));
@@ -667,7 +727,7 @@ const BlogDetails: React.FC = () => {
   };
 
   const handlePopUOk = () => {
-    setIsprofileOpen(false);
+    setIsProfileModalOpen(false);
     navigate("/main/profile");
   };
 
@@ -679,6 +739,20 @@ const BlogDetails: React.FC = () => {
       sessionStorage.setItem("redirectPath", "/main/addblogs");
       navigate("/whatsapplogin");
     }
+  };
+
+  const closeWriteToUsModal = () => {
+    setIsWriteToUsOpen(false);
+    setQuery("");
+    setQueryError("");
+  };
+
+  const closeSuccessModal = () => {
+    setIsSuccessModalOpen(false);
+  };
+
+  const closeProfileModal = () => {
+    setIsProfileModalOpen(false);
   };
 
   const renderCampaign = (campaign: Campaign) => (
@@ -702,7 +776,7 @@ const BlogDetails: React.FC = () => {
           {campaign.campaignType}
         </h1>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-center">
           <button
             className={`px-3 py-1 text-xs sm:text-sm rounded-full transition-all flex items-center gap-1 ${
               isSubscribed[campaign.campaignId]
@@ -727,8 +801,9 @@ const BlogDetails: React.FC = () => {
               "Subscribe"
             )}
           </button>
+
           <button
-            className="px-3 py-1 text-xs sm:text-sm bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all"
+            className="px-4 py-2 text-xs sm:text-sm font-semibold bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all duration-200 shadow-sm"
             onClick={() => handleWriteToUs(campaign)}
           >
             Write To Us
@@ -781,10 +856,18 @@ const BlogDetails: React.FC = () => {
                   </video>
                 ) : (
                   <img
-                    src={`${uploadurlwithId}${
+                    src={`${
                       campaign.imageUrls?.[
                         currentImageIndex[campaign.campaignId] ?? 0
-                      ]?.imageUrl || ""
+                      ]?.imageUrl?.startsWith("http")
+                        ? campaign.imageUrls?.[
+                            currentImageIndex[campaign.campaignId] ?? 0
+                          ]?.imageUrl
+                        : `${uploadurlwithId}${
+                            campaign.imageUrls?.[
+                              currentImageIndex[campaign.campaignId] ?? 0
+                            ]?.imageUrl || ""
+                          }`
                     }`}
                     alt={`${campaign.campaignType} - ${
                       (currentImageIndex[campaign.campaignId] ?? 0) + 1
@@ -793,6 +876,7 @@ const BlogDetails: React.FC = () => {
                   />
                 )}
               </div>
+
               {campaign.imageUrls.length > 1 && (
                 <>
                   <button
@@ -811,6 +895,7 @@ const BlogDetails: React.FC = () => {
                       <polyline points="15,18 9,12 15,6"></polyline>
                     </svg>
                   </button>
+
                   <button
                     onClick={() =>
                       nextImage(campaign.campaignId, campaign.imageUrls)
@@ -827,6 +912,7 @@ const BlogDetails: React.FC = () => {
                       <polyline points="9,18 15,12 9,6"></polyline>
                     </svg>
                   </button>
+
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
                     {campaign.imageUrls.map((_, index) => (
                       <button
@@ -847,132 +933,6 @@ const BlogDetails: React.FC = () => {
                     ))}
                   </div>
                 </>
-              )}
-              {isOpen && (
-                <div
-                  className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
-                  onClick={() => setIsOpen(false)}
-                  role="dialog"
-                  aria-modal="true"
-                >
-                  <div
-                    className="relative bg-white rounded-xl shadow-md p-6 w-[92%] max-w-md"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      className="absolute top-3 right-3 text-xl leading-none text-gray-500 hover:text-gray-700"
-                      onClick={() => setIsOpen(false)}
-                      aria-label="Close"
-                    >
-                      ×
-                    </button>
-
-                    <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-800">
-                      Write To Us
-                    </h2>
-
-                    <LabeledField label="Mobile Number">
-                      <input
-                        type="text"
-                        disabled
-                        value={finalMobileNumber || ""}
-                        className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                        placeholder="Your mobile number"
-                      />
-                    </LabeledField>
-
-                    <LabeledField label="Email">
-                      <input
-                        type="email"
-                        value={email || ""}
-                        disabled
-                        className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                        placeholder="Your email"
-                      />
-                    </LabeledField>
-
-                    <LabeledField label="Comments">
-                      <textarea
-                        rows={4}
-                        className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                        placeholder="Type your comments here…"
-                        value={query}
-                        onChange={(e) => {
-                          setQuery(e.target.value);
-                          if (queryError) setQueryError("");
-                        }}
-                      />
-                      {queryError && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {queryError}
-                        </p>
-                      )}
-                    </LabeledField>
-
-                    <div className="mt-4 flex items-center justify-end gap-2">
-                      <button
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all"
-                        onClick={handleWriteToUsSubmitButton}
-                      >
-                        Submit Comments
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {isprofileOpen && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                  <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-2xl font-semibold text-blue-700">
-                        Alert!
-                      </h2>
-                      <button
-                        className="text-red-600 text-xl font-bold hover:text-red-700"
-                        onClick={() => setIsprofileOpen(false)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <p className="text-center text-gray-700 mb-6">
-                      Please fill your profile details.
-                    </p>
-                    <div className="flex justify-center">
-                      <button
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                        onClick={handlePopUOk}
-                      >
-                        OK
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {issuccessOpen && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                  <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
-                    <h2 className="text-xl font-semibold text-green-600 mb-4">
-                      Success!
-                    </h2>
-                    <p className="text-gray-700 mb-6">
-                      Query submitted successfully!
-                    </p>
-                    <div className="flex justify-center">
-                      <button
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                        onClick={() => setSuccessOpen(false)}
-                      >
-                        OK
-                      </button>
-                    </div>
-                  </div>
-                </div>
               )}
             </div>
           ) : (
@@ -1013,6 +973,7 @@ const BlogDetails: React.FC = () => {
               {likeCount[campaign.campaignId] || 0}
             </span>
           </button>
+
           <button
             className={`flex items-center gap-1 transition-all ${
               isDisliked[campaign.campaignId]
@@ -1054,6 +1015,7 @@ const BlogDetails: React.FC = () => {
               {comments[campaign.campaignId]?.length || 0}
             </span>
           </button>
+
           <button
             className="flex items-center gap-1 text-gray-700 hover:text-green-500 transition-all"
             onClick={() => handleShare(campaign)}
@@ -1074,6 +1036,7 @@ const BlogDetails: React.FC = () => {
             </svg>
           </button>
         </div>
+
         <button
           className={`flex items-center gap-1 transition-all ${
             isSpeaking[campaign.campaignId]
@@ -1126,6 +1089,7 @@ const BlogDetails: React.FC = () => {
             <line x1="9" y1="9" x2="15" y2="15"></line>
           </svg>
         </div>
+
         <h1 className="text-3xl sm:text-5xl font-bold text-gray-800 mb-4">
           404
         </h1>
@@ -1161,7 +1125,6 @@ const BlogDetails: React.FC = () => {
         >
           <div className="max-w-8xl mx-auto px-3 sm:px-4">
             <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 via-white to-purple-50 shadow-sm px-4 sm:px-6 py-4">
-              {/* Left text */}
               <div className="w-full sm:w-auto text-center sm:text-left">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-purple-500 font-semibold mb-1">
                   Creator Rewards
@@ -1178,7 +1141,6 @@ const BlogDetails: React.FC = () => {
                 </p>
               </div>
 
-              {/* Right button */}
               <div className="w-full sm:w-auto flex justify-center sm:justify-end">
                 <button
                   onClick={handleAddblog}
@@ -1192,7 +1154,9 @@ const BlogDetails: React.FC = () => {
           </div>
         </div>
       </div>
+
       <Divider className="p-1" />
+
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -1217,6 +1181,181 @@ const BlogDetails: React.FC = () => {
         </div>
       )}
 
+      {/* Shared Write To Us Modal */}
+      <ResponsiveModalWrapper
+        open={isWriteToUsOpen}
+        onClose={closeWriteToUsModal}
+      >
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-100 bg-white px-5 py-4 sm:px-6">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              Write To Us
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Share your query and our team will get back to you.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={closeWriteToUsModal}
+            aria-label="Close"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+          >
+            <span className="text-lg leading-none">×</span>
+          </button>
+        </div>
+
+        <div className="px-5 py-5 sm:px-6 sm:py-6">
+          {selectedCampaign && (
+            <div className="mb-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-blue-700">
+                Blog
+              </p>
+              <p className="mt-1 text-sm sm:text-base font-semibold text-gray-800">
+                {selectedCampaign.campaignType}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                Mobile Number
+              </label>
+              <input
+                type="text"
+                disabled
+                value={finalMobileNumber || ""}
+                className="h-11 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 text-sm text-gray-700 outline-none"
+                placeholder="Your mobile number"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                disabled
+                value={email || ""}
+                className="h-11 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 text-sm text-gray-700 outline-none"
+                placeholder="Your email"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+              Your Message
+            </label>
+            <TextArea
+              rows={5}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (queryError) setQueryError("");
+              }}
+              placeholder="Type your message here..."
+              className={`rounded-xl ${
+                queryError ? "!border-red-500 !shadow-none" : ""
+              }`}
+            />
+            {queryError && (
+              <p className="mt-1 text-sm text-red-500">{queryError}</p>
+            )}
+          </div>
+
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={closeWriteToUsModal}
+              className="h-11 rounded-xl border border-gray-300 px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={handleWriteToUsSubmitButton}
+              disabled={isSubmittingWriteToUs}
+              className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isSubmittingWriteToUs ? "Submitting..." : "Submit"}
+            </button>
+          </div>
+        </div>
+      </ResponsiveModalWrapper>
+
+      {/* Profile Modal */}
+      <ResponsiveModalWrapper
+        open={isProfileModalOpen}
+        onClose={closeProfileModal}
+      >
+        <div className="px-5 py-5 sm:px-6 sm:py-6 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+            <span className="text-2xl">⚠️</span>
+          </div>
+
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+            Complete Your Profile
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">
+            Please fill in your email and mobile number in your profile before
+            using Write To Us.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={closeProfileModal}
+              className="h-11 rounded-xl border border-gray-300 px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handlePopUOk}
+              className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Go to Profile
+            </button>
+          </div>
+        </div>
+      </ResponsiveModalWrapper>
+
+      {/* Success Modal */}
+      <ResponsiveModalWrapper
+        open={isSuccessModalOpen}
+        onClose={closeSuccessModal}
+      >
+        <div className="px-5 py-6 sm:px-6 sm:py-7 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+            <span className="text-2xl">✓</span>
+          </div>
+
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+            Submitted Successfully
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">
+            Your query has been submitted successfully. Our team will contact
+            you soon.
+          </p>
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={closeSuccessModal}
+              className="h-11 rounded-xl bg-green-600 px-6 text-sm font-semibold text-white transition hover:bg-green-700"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </ResponsiveModalWrapper>
+
+      {/* Comments Modal */}
       {campaigns.map((campaign) => (
         <Modal
           key={campaign.campaignId}
@@ -1285,26 +1424,27 @@ const BlogDetails: React.FC = () => {
                       </video>
                     ) : (
                       <img
-  src={`${
-    campaign.imageUrls?.[
-      currentImageIndex[campaign.campaignId] ?? 0
-    ]?.imageUrl?.startsWith("http")
-      ? campaign.imageUrls?.[
-          currentImageIndex[campaign.campaignId] ?? 0
-        ]?.imageUrl
-      : `${uploadurlwithId}${
-          campaign.imageUrls?.[
-            currentImageIndex[campaign.campaignId] ?? 0
-          ]?.imageUrl || ""
-        }`
-  }`}
-  alt={`${campaign.campaignType} - ${
-    (currentImageIndex[campaign.campaignId] ?? 0) + 1
-  }`}
-  className="max-w-full max-h-full object-contain"
-/>
+                        src={`${
+                          campaign.imageUrls?.[
+                            currentImageIndex[campaign.campaignId] ?? 0
+                          ]?.imageUrl?.startsWith("http")
+                            ? campaign.imageUrls?.[
+                                currentImageIndex[campaign.campaignId] ?? 0
+                              ]?.imageUrl
+                            : `${uploadurlwithId}${
+                                campaign.imageUrls?.[
+                                  currentImageIndex[campaign.campaignId] ?? 0
+                                ]?.imageUrl || ""
+                              }`
+                        }`}
+                        alt={`${campaign.campaignType} - ${
+                          (currentImageIndex[campaign.campaignId] ?? 0) + 1
+                        }`}
+                        className="max-w-full max-h-full object-contain"
+                      />
                     )}
                   </div>
+
                   {campaign.imageUrls.length > 1 && (
                     <>
                       <button
@@ -1323,6 +1463,7 @@ const BlogDetails: React.FC = () => {
                           <polyline points="15,18 9,12 15,6"></polyline>
                         </svg>
                       </button>
+
                       <button
                         onClick={() =>
                           nextImage(campaign.campaignId, campaign.imageUrls)
@@ -1339,6 +1480,7 @@ const BlogDetails: React.FC = () => {
                           <polyline points="9,18 15,12 9,6"></polyline>
                         </svg>
                       </button>
+
                       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
                         {campaign.imageUrls.map((_, index) => (
                           <button
@@ -1367,30 +1509,38 @@ const BlogDetails: React.FC = () => {
                 </div>
               )}
             </div>
+
             <div className="w-full sm:w-1/2 flex flex-col border-t sm:border-t-0 sm:border-l">
               <div className="p-3 border-b">
                 <h3 className="font-semibold text-sm sm:text-base">Comments</h3>
               </div>
+
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {comments[campaign.campaignId]?.map(
-                  (comment) =>
+                  (commentItem) =>
                     !["like", "dislike", "subscribe"].includes(
-                      comment.mainComment,
+                      commentItem.mainComment,
                     ) && (
-                      <div key={comment.mainCommentId} className="space-y-2">
+                      <div
+                        key={commentItem.mainCommentId}
+                        className="space-y-2"
+                      >
                         <div className="flex gap-2 items-start">
-                          {/* User Icon with gray-400 background */}
                           <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center">
                             <UserOutlined className="text-white text-sm" />
                           </div>
+
                           <div className="flex-1">
                             <p className="text-xs sm:text-sm font-medium text-gray-900">
-                              {comment.mainComment}
+                              {commentItem.mainComment}
                             </p>
+
                             <button
                               className="text-xs text-gray-500 hover:text-gray-700 mt-1"
                               onClick={() =>
-                                setActiveReplyCommentId(comment.mainCommentId)
+                                setActiveReplyCommentId(
+                                  commentItem.mainCommentId,
+                                )
                               }
                             >
                               Reply
@@ -1398,12 +1548,12 @@ const BlogDetails: React.FC = () => {
                           </div>
                         </div>
 
-                        {comment.subComments.length > 0 && (
+                        {commentItem.subComments.length > 0 && (
                           <div className="ml-4 space-y-1">
-                            {comment.subComments.map((sub, index) => (
+                            {commentItem.subComments.map((sub, index) => (
                               <div
                                 key={index}
-                                className="pl-8 text-xs sm:text-sm text-gray-600" // Increased left padding
+                                className="pl-8 text-xs sm:text-sm text-gray-600"
                               >
                                 <span className="font-medium">Reply:</span>{" "}
                                 {sub.comment}
@@ -1415,6 +1565,7 @@ const BlogDetails: React.FC = () => {
                     ),
                 )}
               </div>
+
               <div className="p-3 border-t">
                 {activeReplyCommentId && (
                   <div className="mb-2 text-xs sm:text-sm text-gray-600">
@@ -1426,6 +1577,7 @@ const BlogDetails: React.FC = () => {
                     }
                   </div>
                 )}
+
                 <div className="flex gap-2">
                   <TextArea
                     rows={2}
@@ -1438,6 +1590,7 @@ const BlogDetails: React.FC = () => {
                     }
                     className="flex-1 resize-none text-xs sm:text-sm"
                   />
+
                   <Button
                     type="primary"
                     onClick={() => handleOk(campaign.campaignId)}
@@ -1447,6 +1600,7 @@ const BlogDetails: React.FC = () => {
                     {activeReplyCommentId ? "Post Reply" : "Post"}
                   </Button>
                 </div>
+
                 {activeReplyCommentId && (
                   <Button
                     onClick={() => {

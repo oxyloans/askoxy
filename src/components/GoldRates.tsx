@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import customerApi from "../utils/axiosInstances";
 
 // ========== CAPS GOLD TYPES ==========
 type ParsedRowcapsgold = {
@@ -39,7 +38,7 @@ type IBJAResponse = {
 
 
 const API_URL_CAPS_GOLD =
-  "https://bcast.capsgold.net:4768/VOTSBroadcastStreaming/Services/xml/GetLiveRateByTemplateID/capsgoldTelangana";
+  "https://bcast.capsgold.net:4768/VOTSBroadcastStreaming/Services/xml/GetLiveRateByTemplateID/capsgold";
 const API_URL_IBJA =
   "https://meta.oxyloans.com/api/user-service/get-ibja-rates";
 
@@ -134,11 +133,13 @@ const GoldRates: React.FC = () => {
 
   const fetchDatadpgold = async () => {
     try {
-      const res = await customerApi.get(API_URL_DP_GOLD, {
+      const res = await fetch(API_URL_DP_GOLD, {
         headers: { Accept: "text/plain, */*; q=0.01" },
       });
 
-      const text = res.data;
+      if (!res.ok) throw new Error("DP Gold API request failed");
+
+      const text = await res.text();
       const newRows = parseResponsedpgold(text);
 
       setRowsDP((prevRows) => {
@@ -169,12 +170,10 @@ const GoldRates: React.FC = () => {
     }
   };
 
-  const parseResponsecapsgold = (response: string): ParsedRowcapsgold[] => {
+
+ const parseResponsecapsgold = (response: string): ParsedRowcapsgold[] => {
   const lines = response.split("\n");
   const parsed: ParsedRowcapsgold[] = [];
-
-
-
 
   const allLines = lines
     .map((line, index) => {
@@ -188,69 +187,70 @@ const GoldRates: React.FC = () => {
     })
     .filter(Boolean) as { index: number; arr: string[] }[];
 
-  const orderedLines = [
-    ...allLines.filter(l => l.index === 2 || l.index === 3 || l.index === 4),
-    ...allLines.filter(l => l.index === 0 || l.index === 1),
-    ...allLines.filter(
-      l => ![0, 1, 2, 3, 4].includes(l.index)
-    ),
-  ];
+    console.log("All Lines with Index:", allLines);
 
-  console.log("===== CAPS GOLD final LINES =====");
+  const orderedLines = allLines
 
-  orderedLines.forEach((line, index) => {
-    console.log(`Line ${index}:`, line);
-  });
 
-  console.log("===== CAPS GOLD REORDERED ARRAYS =====");
+
+
 
   // 🔹 Step 3: Print + keep old logic
   orderedLines.forEach(({ index, arr }) => {
-    console.log(`Original Line ${index} ARRAY:`, arr);
+
 
     let name = "";
     let price = "";
 
-    if (index === 2 || index === 3 || index === 4) {
+
+          if (index === 10 || index === 11 || index === 12) {
+  name = `${arr[1]} ${arr[2]}`;
+  price = arr[3];
+
+}
+
+
+    else if(index==0){
       name = `${arr[1]} ${arr[2]}`;
-      price = arr[3];
+      price = arr[9];
+
     }
 
-    else if (index === 1 ) {
-      name = `${arr[1]} ${arr[2]}`;
-      price = arr[4];
-    }
 
-    else if(index===6){
-      name = `${arr[1]} ${arr[2]}`;
-      price = arr[4];
-    }
-    else if(index==5){
-      name=`${arr[1]} ${arr[2]} ${arr[3]}`;
-      price=arr[4];
-    }
-    else if (index === 0) {
-      name = `${arr[1]} ${arr[2]} ${arr[3]} ${arr[4]} ${arr[5]}`;
-      price = arr[8];
-    }
+
+else if(index===6){
+  name = `${arr[1]} ${arr[2]}`;
+  price = arr[5];
+}
+
 
     if (name && price) {
       parsed.push({ name, price });
     }
   });
 
-  console.log("===== CAPS GOLD PARSED (ORDERED) =====", parsed);
+// Rearrange: move first 2 elements to end
+if (parsed.length >= 5) {
+  const reordered = [
+    ...parsed.slice(2),   // 2,3,4...
+    ...parsed.slice(0, 2) // 0,1
+  ];
 
-  return parsed;
+  return reordered;
+}
+
+return parsed;
 };
 
   // ========== CAPS GOLD FETCH ==========
   const fetchDatacapsgold = async () => {
     try {
-      const res = await customerApi.get(API_URL_CAPS_GOLD, {
+      const res = await fetch(API_URL_CAPS_GOLD, {
         headers: { Accept: "text/plain, */*; q=0.01" },
       });
-      const text = res.data;
+      if (!res.ok) throw new Error("API request failed");
+
+      const text = await res.text();
       const newRows = parseResponsecapsgold(text);
 
       setRowsCaps((prevRows) => {
@@ -285,8 +285,10 @@ const GoldRates: React.FC = () => {
   // ========== IBJA FETCH ==========
   const fetchIBJARates = async () => {
     try {
-      const res = await customerApi.get(API_URL_IBJA);
-      const data: IBJAResponse = res.data;
+      const res = await fetch(API_URL_IBJA);
+      if (!res.ok) throw new Error("IBJA API request failed");
+
+      const data: IBJAResponse = await res.json();
 
       console.log("===== IBJA RESPONSE =====", data);
 
@@ -610,7 +612,7 @@ const GoldRates: React.FC = () => {
                     {prices.SILVER_HYD ?? "--"}
                   </td>
                   <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
-                    {rowsCaps[6]?.price ?? "--"}
+                    {rowsCaps[4]?.price ?? "--"}
                   </td>
                   <td className="border border-gray-200 px-2 py-2 sm:px-3 sm:py-2.5 text-center font-bold text-gray-900 align-middle">
                     {rowsDP[6]?.price ?? "--"}

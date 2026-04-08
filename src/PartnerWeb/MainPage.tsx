@@ -49,9 +49,11 @@ import {
   fetchDeliveryBoys,
   rejectOrder,
   assignOrderToDeliveryBoy,
+  orderDelivered,
 } from "./partnerapi";
 
 import ExchangeOrdersTable from "./ExchangeOrders";
+import { set } from "lodash";
 
 type SummaryData = {
   name: string;
@@ -80,6 +82,7 @@ const MainPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<Order | null>(null);
   const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>([]);
   const [dbModalVisible, setDbModalVisible] = useState(false);
+  const [actions,setActions] = useState<string>("");
   const [isMobile] = useState<boolean>(window.innerWidth < 768);
   const [selectedDeliveryBoy, setSelectedDeliveryBoy] =
     useState<DeliveryBoy | null>(null);
@@ -409,13 +412,14 @@ const MainPage: React.FC = () => {
     }
   };
 
-  const fetchDeliveryBoysList = async (record: Order) => {
+  const fetchDeliveryBoysList = async (record: Order, action: string) => {
     setSelectedRecord(record);
     setDbLoading1(true);
     try {
       const data = await fetchDeliveryBoys();
       setDeliveryBoys(data);
       setDbModalVisible(true);
+      setActions(action);
     } catch (error: any) {
       message.error(error.message || "Failed to fetch delivery boys.");
     } finally {
@@ -446,6 +450,31 @@ const MainPage: React.FC = () => {
       setSelectedDeliveryBoy(null);
     }
   };
+
+    const handleDelivery = async (orderId: string) => {
+       if (!selectedDeliveryBoy) {
+        message.warning("Please select a delivery boy.");
+      return;
+    }
+    setDbLoading(true);
+    try {
+      await orderDelivered(
+        orderId,
+        selectedDeliveryBoy.userId,
+      );
+      message.success("Order delivered successfully!");
+      setDbModalVisible(false);
+      setActions("");
+      fetchData();
+    } catch (error: any) {
+      message.error(error.message || "Failed to assign order.");
+    } finally {
+      setDbLoading(false);
+      setDbModalVisible(false);
+      setSelectedDeliveryBoy(null);
+      setActions("");
+    }
+    }
 
   const RejectionReasonModal = ({ visible }: { visible: boolean }) => (
     <Modal
@@ -488,7 +517,7 @@ const MainPage: React.FC = () => {
               <Button
                 type="primary"
                 className={`bg-blue-500 hover:bg-blue-600 ${buttonClasses}`}
-                onClick={() => fetchDeliveryBoysList(record)}
+                onClick={() => fetchDeliveryBoysList(record, "assign")}
               >
                 <div className="flex items-center">
                   <span className="group-hover:hidden">A</span>
@@ -508,6 +537,18 @@ const MainPage: React.FC = () => {
                 </div>
               </Button>
             </div>
+            <div className="group relative">
+              <Button
+                type="primary"
+                className={`bg-green-500 hover:bg-green-600 ${buttonClasses}`}
+                onClick={() => fetchDeliveryBoysList(record,"Delivery")}
+              >
+                <div className="flex items-center">
+                  <span className="group-hover:hidden">D</span>
+                  <span className="hidden group-hover:block">Delivery</span>
+                </div>
+              </Button>
+            </div>
           </div>
         );
       case "3":
@@ -518,7 +559,7 @@ const MainPage: React.FC = () => {
               <Button
                 type="primary"
                 className={`bg-green-500 hover:bg-green-600 ${buttonClasses}`}
-                onClick={() => fetchDeliveryBoysList(record)}
+                onClick={() => fetchDeliveryBoysList(record, "reassign")}
               >
                 <div className="flex items-center">
                   <span className="group-hover:hidden">RA</span>
@@ -535,6 +576,18 @@ const MainPage: React.FC = () => {
                 <div className="flex items-center">
                   <span className="group-hover:hidden">R</span>
                   <span className="hidden group-hover:block">Reject</span>
+                </div>
+              </Button>
+            </div>
+            <div className="group relative">
+              <Button
+                type="primary"
+                className={`bg-green-500 hover:bg-green-600 ${buttonClasses}`}
+                onClick={() => fetchDeliveryBoysList(record,"Delivery")}
+              >
+                <div className="flex items-center">
+                  <span className="group-hover:hidden">D</span>
+                  <span className="hidden group-hover:block">Delivery</span>
                 </div>
               </Button>
             </div>
@@ -768,6 +821,7 @@ const MainPage: React.FC = () => {
   const handleCancelClick = () => {
     setDbModalVisible(false);
     setSelectedDeliveryBoy(null);
+    setActions("");
   };
   const todayOrdersCount = orderDetails.filter((item) =>
     dayjs(item.orderDate, ["DD-MM-YYYY", "YYYY-MM-DD"]).isSame(dayjs(), "day")
@@ -1111,15 +1165,19 @@ const MainPage: React.FC = () => {
             Cancel
           </Button>,
           <Button
-            key="assign"
+            key={actions === "Delivery" ? "delivery" : "assign"}
             type="primary"
             loading={dbLoading}
-            onClick={() =>
+            onClick={() =>{
+              actions === "Delivery" ? handleDelivery(
+                selectedRecord?.orderId || ""
+              ) :
               handleAssign(
                 selectedRecord?.orderId || "",
                 selectedRecord?.orderStatus || ""
               )
             }
+          }
           >
             Assign
           </Button>,

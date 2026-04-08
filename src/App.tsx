@@ -60,6 +60,7 @@ import EmployeeDashboard from "./FreelanceMarketplace/EmployeeDashboard";
 import EmployeeLogin from "./FreelanceMarketplace/EmployeeLogin";
 import EmployeeRegister from "./FreelanceMarketplace/EmployeeRegister";
 import FinvibeLanding from "./Finvibe/Landing";
+import Finvibe3DLanding from './Finvibe/Finvibe3DLanding';
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -606,6 +607,7 @@ const App: React.FC = () => {
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
               <Route path="/finvibecodebuilder" element={<FinvibeLanding />} />
+              <Route path="/finvibe3dlanding" element={<Finvibe3DLanding />} />
 
               <Route
                 path="/carnivals/edit/:id"

@@ -177,6 +177,12 @@ export const assignOrderToDeliveryBoy = async (
   await axiosInstance.post(url, body);
 };
 
+export const orderDelivered = async (orderId: string, deliveryBoyId: string): Promise<void> => {
+  let body: any;
+  body = { orderId, id : deliveryBoyId };
+  await axiosInstance.patch(`${BASE_URL}/order-service/weeklyMarketUpadte`, body);
+}
+
 export const assignExchangeOrder = async (
   exchangeId: string,
   deliveryBoyId: string,
