@@ -232,6 +232,8 @@ const MobileNumberUpdate = lazy(
   () => import("./Taskmanagement/EmployeeProfilePage"),
 );
 const HelpDeskDashboard = lazy(() => import("./AskoxyAdmin/HelpDeskDashboard"));
+const RoleBasedBlogsList = lazy(() => import("./AskoxyAdmin/RoleBasedBlogsList"));
+const AddRoleBasedBlog = lazy(() => import("./AskoxyAdmin/AddRoleBasedBlog"));
 const ExchangeOrdersPage = lazy(() => import("./PartnerWeb/ExchangeOrders"));
 const GSTRiceFAQ = lazy(() => import("./components/GstFAQ"));
 const LandingPage = lazy(() => import("./GLMS/LandingPage"));
@@ -1374,6 +1376,8 @@ const App: React.FC = () => {
                 <Route path="orderReport" element={<OrderReport />} />
                 <Route path="feedback" element={<FeedbackDashboard />} />
                 <Route path="helpdashboard" element={<HelpDeskDashboard />} />
+                 <Route path="allroleblogs" element={<RoleBasedBlogsList />} />
+                  <Route path="addroleblogs" element={<AddRoleBasedBlog/>} />
                 <Route path="todaycalls" element={<CallerHistoryPage />} />
                 <Route path="addblogs" element={<AddBlog />} />
                 <Route path="orderstats" element={<OrderStatsDashboard />} />

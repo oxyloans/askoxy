@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Modal } from "antd";
 
-import { fetchCampaigns, Campaign } from "./servicesapi";
-import BASE_URL,{uploadurlwithId} from "../Config";
-import customerApi from "../utils/axiosInstances";
+import { fetchCampaigns, fetchAllGames, Campaign } from "./servicesapi";
+import BASE_URL, { uploadurlwithId } from "../Config";
+
 type Freelancer = {
   id: string;
   email: string;
@@ -19,6 +19,7 @@ type Freelancer = {
   amountNegotiable: "YES" | "NO" | string;
   resumeUrl: string;
 };
+
 interface Job {
   companyLogo: string;
   jobDesignation: string;
@@ -47,46 +48,73 @@ const ServicesSlider: React.FC = () => {
   const [showAllBlogs, setShowAllBlogs] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const navigate = useNavigate();
-
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
   const [showAllFreelancers, setShowAllFreelancers] = useState(false);
-// Add these state variables at the top of your component
-const [showResumeModal, setShowResumeModal] = useState(false);
-const [currentResumeUrl, setCurrentResumeUrl] = useState("");
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [currentResumeUrl, setCurrentResumeUrl] = useState("");
+  const [resumeLoading, setResumeLoading] = useState(false);
 
+  const navigate = useNavigate();
   const accessToken = localStorage.getItem("accessToken");
+
+  const getCampaignId = (campaign: Campaign) =>
+    campaign.campaignId || campaign.id || "";
+
+  const getCampaignTitle = (campaign: Campaign) =>
+    campaign.campaignTitle || campaign.campaignType || "blog";
+
+  const slugify = (text: string) =>
+    (text || "")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 30);
+
+  const getCampaignFirstImage = (campaign: Campaign) => {
+    const firstImage =
+      typeof campaign.imageUrls?.[0] === "string"
+        ? campaign.imageUrls?.[0]
+        : campaign.imageUrls?.[0]?.imageUrl ||
+          campaign.imageUrl ||
+          campaign.images?.[0]?.imageUrl ||
+          "";
+
+    if (!firstImage) return "";
+    return firstImage.startsWith("http")
+      ? firstImage
+      : `${uploadurlwithId}${firstImage}`;
+  };
 
   const fetchJobs = async () => {
     try {
-      const response = await customerApi.get(
+      const response = await fetch(
         `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`,
         {
+          method: "GET",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            authorization: `Bearer ${accessToken}`,
           },
         },
       );
-      const jobsData = response.data;
+      const jobsData = await response.json();
       if (Array.isArray(jobsData)) {
         setJobs(jobsData);
       } else {
-        console.warn("Jobs API did not return an array:", jobsData);
         setJobs([]);
       }
     } catch (error) {
-      setJobs([]);
       console.error("Error fetching jobs:", error);
+      setJobs([]);
     }
   };
 
   const isGoodFreelancerRow = (f: Freelancer) => {
-    // ✅ show only if they are open for freelancing
     if ((f.openForFreeLancing || "").toUpperCase() !== "YES") return false;
 
-    // ✅ must have at least one valid rate
     const hasRate =
       Number(f.perHour) > 0 ||
       Number(f.perDay) > 0 ||
@@ -94,15 +122,15 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
       Number(f.perMonth) > 0 ||
       Number(f.perYear) > 0;
 
-    if (!hasRate) return false;
-
-    return true;
+    return hasRate;
   };
+
   const fetchFreelancers = async () => {
     try {
-      const response = await customerApi.get(
+      const response = await fetch(
         `${BASE_URL}/ai-service/agent/getAllFreeLancers`,
         {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${process.env.AUTH_TOKEN}`,
@@ -110,10 +138,9 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
         },
       );
 
-      const freelancersData = response.data;
+      const freelancersData = await response.json();
 
       if (Array.isArray(freelancersData)) {
-        // ✅ filter junk + keep only clean rows
         const cleaned: Freelancer[] = freelancersData
           .filter(Boolean)
           .filter((row: any) => typeof row === "object")
@@ -131,15 +158,10 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
             resumeUrl: String(row.resumeUrl || ""),
           }))
           .filter(isGoodFreelancerRow)
-          // ✅ nice sorting: highest perHour first
           .sort((a, b) => (b.perHour || 0) - (a.perHour || 0));
 
         setFreelancers(cleaned);
       } else {
-        console.warn(
-          "Freelancers API did not return an array:",
-          freelancersData,
-        );
         setFreelancers([]);
       }
     } catch (error) {
@@ -150,7 +172,6 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
 
   const services = [
     {
-      // You can replace this image with your preferred AI Agents artwork later
       image: "https://i.ibb.co/fVM4VfTF/aiagent1.png",
       title: "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
       path: "/services/6e44/ai-agents-2-earn-money-zero-in",
@@ -176,7 +197,6 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
       title: "Free AI & GEN AI Training",
       path: "/services/freeai-genai",
     },
-
     {
       image: "https://iili.io/FGomRzF.md.png",
       title: "Legal Knowledge Hub",
@@ -187,19 +207,12 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
       title: "My Rotary",
       path: "/services/myrotary",
     },
-    // {
-    //   image: "https://iili.io/FGxUkKX.md.png",
-    //   title: "Machines Manufacturing Services",
-    //   path: "/services/machines-manufacturing",
-    // },
     {
       image: "https://iili.io/FGxPrnR.md.png",
       title: "Career Guidance",
       path: "/services/we-are-hiring",
     },
   ];
-
-  const displayedServices = showAllServices ? services : services.slice(0, 4);
 
   const blogCampaigns = campaigns.filter(
     (campaign) =>
@@ -214,7 +227,6 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
   const displayedBlogs = showAllBlogs
     ? blogCampaigns
     : blogCampaigns.slice(0, 4);
-
   const displayedJobs = Array.isArray(jobs)
     ? showAllJobs
       ? jobs
@@ -225,131 +237,123 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
     ? [
         ...services,
         ...nonBlogCampaigns
-          // ✅ Hide API version of AI Agents (because we already added it manually)
           .filter(
             (campaign) =>
-              campaign.campaignType.trim() !==
+              getCampaignTitle(campaign).trim() !==
               "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
           )
           .map((campaign) => ({
-            image: `${uploadurlwithId}${campaign.imageUrls?.[0]?.imageUrl}` || "",
-            title: campaign.campaignType,
-            path: "", // Will be handled by click handler
-            campaign: campaign,
+            image: getCampaignFirstImage(campaign),
+            title: getCampaignTitle(campaign),
+            path: "",
+            campaign,
           })),
       ]
     : services.slice(0, 4);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
+    const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     const loadCampaigns = async () => {
       try {
-        const campaigns = await fetchCampaigns();
-        const campaignsWithIds = campaigns.map((campaign) => ({
-          ...campaign,
-          id: campaign.campaignId,
-        }));
-        setCampaigns(campaignsWithIds);
+        const [normalCampaigns, gameCampaigns] = await Promise.all([
+          fetchCampaigns(),
+          fetchAllGames(),
+        ]);
+        const merged = [...normalCampaigns, ...gameCampaigns];
+        const uniqueMap = new Map<string, Campaign>();
+
+        merged.forEach((campaign) => {
+          const id = getCampaignId(campaign);
+          if (!id) return;
+
+          uniqueMap.set(id, {
+            ...campaign,
+            id,
+            campaignType:
+              campaign.campaignType || campaign.campaignTitle || "Blog",
+            campaignTitle:
+              campaign.campaignTitle || campaign.campaignType || "Blog",
+          });
+        });
+
+        setCampaigns(Array.from(uniqueMap.values()));
       } catch (err) {
         console.error("Error loading campaigns:", err);
+        setCampaigns([]);
       }
     };
 
-    const loadJobs = async () => {
-      await fetchJobs();
-    };
-
-    const loadFreelancers = async () => {
-      await fetchFreelancers();
-    };
-
     loadCampaigns();
-    loadJobs();
-    loadFreelancers();
+    fetchJobs();
+    fetchFreelancers();
   }, []);
 
-  const handleServiceClick = (service: any) => {
-    // 1) Campaign click
-    if (service?.campaign) {
-      handleCampaignClick(service.campaign);
-      return;
-    }
-
-    // 2) External link
-    if (service?.external && service?.url) {
-      window.open(service.url, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    // 3) Internal route
-    if (service?.path) {
-      navigate(service.path);
-      return;
-    }
-
-    console.warn("No valid navigation for service:", service);
-  };
-
-  const slugify = (text: string) =>
-    text
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]+/g, "")
-      .replace(/--+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 30);
-
   const handleCampaignClick = (campaign: Campaign) => {
-    console.log(campaign);
+    const campaignId = getCampaignId(campaign);
+    const titleSlug = slugify(getCampaignTitle(campaign));
+
+    if (!campaignId) return;
 
     if (accessToken) {
       if (
         campaign.campainInputType === "SERVICE" ||
         campaign.campainInputType === "PRODUCT"
       ) {
-        navigate(
-          `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType,
-          )}`,
-        );
+        navigate(`/main/services/${campaignId.slice(-4)}/${titleSlug}`);
       } else {
-        navigate(
-          `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType,
-          )}`,
-        );
+        navigate(`/main/blog/${campaignId.slice(-4)}/${titleSlug}`);
       }
+    } else if (
+      campaign.campainInputType === "SERVICE" ||
+      campaign.campainInputType === "PRODUCT"
+    ) {
+      navigate(`/services/${campaignId.slice(-4)}/${titleSlug}`);
     } else {
-      if (
-        campaign.campainInputType === "SERVICE" ||
-        campaign.campainInputType === "PRODUCT"
-      ) {
-        navigate(
-          `/services/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType,
-          )}`,
-        );
-      } else {
-        navigate(
-          `/blog/${campaign.campaignId.slice(-4)}/${slugify(
-            campaign.campaignType,
-          )}`,
-        );
-      }
+      navigate(`/blog/${campaignId.slice(-4)}/${titleSlug}`);
     }
   };
+
+  const handleServiceClick = (service: any) => {
+    if (service?.campaign) {
+      handleCampaignClick(service.campaign);
+      return;
+    }
+    if (service?.external && service?.url) {
+      window.open(service.url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (service?.path) {
+      navigate(service.path);
+    }
+  };
+
+  const handleBlogNavigate = () => {
+    if (!accessToken) {
+      navigate("/myblogs");
+    } else {
+      navigate("/main/dashboard/myblogs");
+    }
+  };
+
+  const handleJobNavigate = (id: string | null) => {
+    const userId = localStorage.getItem("userId");
+    const pathPrefix = userId ? "/main/viewjobdetails" : "/viewjobdetails";
+
+    if (id) {
+      navigate(`${pathPrefix}/${id}/ALL`);
+    } else {
+      navigate(`${pathPrefix}/default/ALL`);
+    }
+  };
+
   const getNameFromEmail = (email?: string) => {
     if (!email) return "--";
-
     const cleanEmail = email.replace("mailto:", "").trim();
     const namePart = cleanEmail.split("@")[0] || "";
-
     const noNumbers = namePart.replace(/[0-9]/g, "");
     const onlyLettersSpace = noNumbers.replace(/[^a-zA-Z]/g, " ");
 
@@ -362,35 +366,12 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
     return formatted || "Freelancer";
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
+      transition: { staggerChildren: 0.1 },
     },
-  };
-
-  const handleBlogNavigate = () => {
-    if (!accessToken) {
-      navigate("/myblogs");
-    } else {
-      navigate("/main/dashboard/myblogs");
-    }
-  };
-
-  const handleJobNavigate = (id: string | null) => {
-    console.log("service slider" + id);
-    const userId = localStorage.getItem("userId");
-
-    const pathPrefix = userId ? "/main/viewjobdetails" : "/viewjobdetails";
-    if (id) {
-      navigate(`${pathPrefix}/${id}/ALL`);
-    } else {
-      navigate(`${pathPrefix}/default/ALL`);
-    }
   };
 
   const itemVariants = {
@@ -401,23 +382,24 @@ const [currentResumeUrl, setCurrentResumeUrl] = useState("");
       transition: { duration: 0.5 },
     },
   };
+
   const displayedFreelancers = showAllFreelancers
     ? freelancers
     : freelancers.slice(0, 5);
-const fmtMoney = (n: number) =>
-  new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(
-    Number(n || 0),
-  );
 
-const rateLabel = (n: number) => {
-  const val = Number(n || 0);
-  return val > 0 ? `₹${fmtMoney(val)}` : "Not Selected";
-};
+  const fmtMoney = (n: number) =>
+    new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(
+      Number(n || 0),
+    );
+
+  const rateLabel = (n: number) => {
+    const val = Number(n || 0);
+    return val > 0 ? `₹${fmtMoney(val)}` : "Not Selected";
+  };
 
   return (
-    <section className="py-10 bg-purple-50  min-h-screen  px-4 sm:px-6 lg:px-8 bg-white">
+    <section className="py-10 min-h-screen px-4 sm:px-6 lg:px-8 bg-white">
       <div className="relative z-10">
-        {/* SERVICES SECTION */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
           <div className="mb-4 sm:mb-0 text-center sm:text-left">
             <motion.div
@@ -431,13 +413,14 @@ const rateLabel = (n: number) => {
               <div className="w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full"></div>
             </motion.div>
           </div>
+
           <motion.button
             whileHover={{
               scale: 1.05,
               boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.4)",
             }}
             whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
+            className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             onClick={() => setShowAllServices(!showAllServices)}
           >
             {showAllServices ? "Show Less" : "View All Services"}
@@ -475,25 +458,17 @@ const rateLabel = (n: number) => {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
+                  if (e.key === "Enter" || e.key === " ")
                     handleServiceClick(service);
-                  }
                 }}
               >
                 <div className="w-full h-48 flex items-center justify-center mb-3">
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-full h-full object-contain rounded-lg transform group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {/* <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-md">
-                      <ExternalLink size={14} className="text-gray-600" />
-                    </div> */}
-                  </div>
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    className="w-full h-full object-contain rounded-lg transform group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
                 </div>
                 <h3 className="text-center text-lg font-semibold text-gray-800 group-hover:text-[#3c1973] transition-colors duration-300">
                   {service.title}
@@ -519,7 +494,8 @@ const rateLabel = (n: number) => {
           )}
       </div>
 
-      <hr className="p-2 mt-12"></hr>
+      <hr className="p-2 mt-12" />
+
       <div className="relative z-10">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
           <div className="mb-8 sm:mb-0 text-center sm:text-left">
@@ -542,13 +518,11 @@ const rateLabel = (n: number) => {
                 boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.4)",
               }}
               whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => handleBlogNavigate()}
+              className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={handleBlogNavigate}
             >
-              {showAllBlogs ? "Show Less" : "View All Blogs"}
-              <span className="ml-2 inline-block">
-                {showAllBlogs ? "→" : "→"}
-              </span>
+              View All Blogs
+              <span className="ml-2 inline-block">→</span>
             </motion.button>
           )}
         </div>
@@ -562,58 +536,51 @@ const rateLabel = (n: number) => {
               animate="visible"
             >
               {displayedBlogs.map((campaign) => {
-                const mediaUrl =  `${uploadurlwithId}${campaign.imageUrls?.[0]?.imageUrl}`;
-                const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(mediaUrl);
+                const mediaUrl = getCampaignFirstImage(campaign);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
 
                 return (
                   <motion.div
-                    key={campaign.campaignId}
+                    key={getCampaignId(campaign)}
                     variants={itemVariants}
-                    className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg
-              transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                    className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-100"
                     onClick={() => handleCampaignClick(campaign)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && handleCampaignClick(campaign)
-                    }
                   >
-                    <div className="relative aspect-video overflow-hidden">
-                      {isImage ? (
-                        <img
-                          src={mediaUrl}
-                          alt={campaign.campaignType}
-                          className="w-full h-full object-contain"
-                          loading="lazy"
-                        />
-                      ) : isVideo ? (
-                        <video
-                          src={mediaUrl}
-                          className="w-full h-full object-contain"
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                        />
+                    <div className="relative aspect-video overflow-hidden bg-gray-50">
+                      {mediaUrl ? (
+                        isVideo ? (
+                          <video
+                            src={mediaUrl}
+                            className="w-full h-full object-contain"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={mediaUrl}
+                            alt={getCampaignTitle(campaign)}
+                            className="w-full h-full object-contain"
+                            loading="lazy"
+                          />
+                        )
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-sm text-gray-400">
                           No media available
                         </div>
                       )}
 
-                      {campaign.campaignType && (
-                        <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
-                          <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
-                            Blog
-                          </span>
-                        </div>
-                      )}
+                      <div className="absolute top-0 left-0 w-full p-2 bg-gradient-to-b from-black/50 to-transparent">
+                        <span className="px-3 py-1 text-xs font-medium bg-white text-gray-800 rounded-full shadow-sm">
+                          Blog
+                        </span>
+                      </div>
                     </div>
 
                     <div className="p-4 flex-grow flex flex-col">
-                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
-                        {campaign.campaignType}
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2 line-clamp-2">
+                        {getCampaignTitle(campaign)}
                       </h3>
                       <p className="text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
                         {campaign.campaignDescription}
@@ -630,7 +597,7 @@ const rateLabel = (n: number) => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-md hover:shadow-lg border border-gray-100"
-                  onClick={() => handleBlogNavigate()}
+                  onClick={handleBlogNavigate}
                 >
                   View all blogs
                   <span className="ml-2">→</span>
@@ -647,7 +614,8 @@ const rateLabel = (n: number) => {
         )}
       </div>
 
-      <hr className="p-2 mt-12"></hr>
+      <hr className="p-2 mt-12" />
+
       <div className="relative z-10">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12">
           <div className="mb-8 sm:mb-0 text-center sm:text-left">
@@ -670,10 +638,8 @@ const rateLabel = (n: number) => {
                 boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.4)",
               }}
               whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => {
-                handleJobNavigate(null);
-              }}
+              className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-8 py-3.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => handleJobNavigate(null)}
             >
               View All Jobs
               <span className="ml-2 inline-block">→</span>
@@ -683,7 +649,7 @@ const rateLabel = (n: number) => {
 
         {jobs.length > 0 ? (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -695,74 +661,70 @@ const rateLabel = (n: number) => {
                 "bg-violet-50",
                 "bg-rose-50",
                 "bg-amber-50",
-                "bg-cyan-50",
-                "bg-orange-50",
-                "bg-stone-50",
               ];
-
               const bgColor =
                 lightBackgroundColors[index % lightBackgroundColors.length];
+              const companyLogo = job.companyLogo
+                ? `${uploadurlwithId}${job.companyLogo}`
+                : "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
 
               return (
                 <motion.div
                   key={job.id}
                   variants={itemVariants}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl 
-transition-all duration-300 transform hover:-translate-y-1 cursor-pointer 
-flex flex-col border border-gray-100 m-2"
+                  className="group min-w-0 h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col border border-gray-100"
                   onClick={() => handleJobNavigate(job.id)}
                 >
-                  <div className="pt-6 pb-4 flex justify-center">
-                    <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 p-2">
+                  <div className="pt-6 pb-4 px-4 flex justify-center">
+                    <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 p-2 bg-white">
                       <img
-                        src={
-                          `${uploadurlwithId}${job.companyLogo}` ||
-                          "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
-                        }
+                        src={companyLogo}
                         className="max-w-full max-h-full object-contain"
+                        alt={job.companyName || "Company Logo"}
+                        loading="lazy"
                         onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.src =
+                          e.currentTarget.src =
                             "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
                         }}
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-center px-4 pb-3">
+                  <div className="px-4 pb-3">
                     <div
-                      className={`${bgColor} py-2 px-4 rounded-xl flex justify-center items-center`}
+                      className={`${bgColor} min-h-[56px] w-full rounded-xl flex items-center justify-center px-3 py-2`}
                     >
-                      <span className="text-base font-semibold text-gray-700 text-center">
-                        {job.companyName}
+                      <span className="block w-full text-sm sm:text-base font-semibold text-gray-700 text-center leading-snug break-words line-clamp-2">
+                        {job.companyName || "Company"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="px-4 pb-1">
-                    <h3 className="text-lg font-bold text-gray-800 text-center line-clamp-2">
-                      {job.jobTitle}
+                  <div className="px-4 pb-2 min-h-[72px] flex items-start justify-center">
+                    <h3 className="w-full text-base sm:text-lg font-bold text-gray-800 text-center leading-snug break-words line-clamp-2">
+                      {job.jobTitle || "Job Title"}
                     </h3>
                   </div>
 
-                  <div className="px-2 pb-2">
-                    <div className="text-sm font-bold text-gray-700 text-center bg-gray-50 py-2 px-3 rounded-lg">
-                      💼 {job.jobDesignation}
+                  <div className="px-4 pb-3">
+                    <div className="min-h-[52px] bg-gray-50 py-2 px-3 rounded-lg flex items-center justify-center">
+                      <div className="w-full text-sm font-bold text-gray-700 text-center leading-snug break-words line-clamp-2">
+                        💼 {job.jobDesignation || "Not specified"}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="px-4 pb-3 space-y-1 text-center">
-                    <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
-                      📍 Loc: {job.jobLocations}
+                  <div className="px-4 pb-4 space-y-2 text-center">
+                    <div className="text-sm text-gray-600 leading-snug break-words line-clamp-2">
+                      📍 Loc: {job.jobLocations || "Not specified"}
                     </div>
-                    <div className="text-sm text-gray-600 truncate whitespace-nowrap overflow-hidden">
-                      ⏰ Exp: {job.experience}
+                    <div className="text-sm text-gray-600 leading-snug break-words line-clamp-2">
+                      ⏰ Exp: {job.experience || "Not specified"}
                     </div>
                   </div>
 
                   <div className="px-4 pb-5 mt-auto flex justify-center">
-                    <div className="bg-blue-100 text-blue-500 py-3 px-8 rounded-full font-semibold text-base transition-all duration-200">
+                    <div className="bg-blue-100 text-blue-600 py-3 px-8 rounded-full font-semibold text-base whitespace-nowrap">
                       View Job
                     </div>
                   </div>
@@ -779,181 +741,87 @@ flex flex-col border border-gray-100 m-2"
         )}
       </div>
 
-      {/* <hr className="p-2 mt-12"></hr>
+      {/* <hr className="p-2 mt-12" />
 
       <div className="relative z-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:justify-between sm:items-center mb-10">
           <div className="text-center sm:text-left">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-            >
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
                 Our <span className="text-yellow-500">Freelancers</span>
               </h2>
-              <div className="w-28 sm:w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full" />
+              <div className="w-28 sm:w-32 h-2 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-3 mx-auto sm:mx-0 rounded-full"></div>
             </motion.div>
           </div>
 
           {freelancers.length > 3 && (
             <motion.button
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.35)",
-              }}
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.35)" }}
               whileTap={{ scale: 0.98 }}
-              className="w-full sm:w-auto bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-6 sm:px-8 py-3.5 rounded-full
-             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => navigate("/freelancers")}
+              className="w-full sm:w-auto bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-semibold px-6 sm:px-8 py-3.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => setShowAllFreelancers(!showAllFreelancers)}
             >
-              View All Freelancers
+              {showAllFreelancers ? "Show Less" : "View All Freelancers"}
               <span className="ml-2 inline-block">→</span>
             </motion.button>
           )}
         </div>
 
         {freelancers.length > 0 ? (
-          <motion.div
-            className="
-        w-full
-        px-0
-        grid grid-cols-1
-        gap-4
-        sm:grid-cols-2 sm:gap-5
-        lg:grid-cols-3 lg:gap-6
-        xl:grid-cols-5
-      "
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {displayedFreelancers.map((f, index) => {
-              const lightBackgroundColors = [
-                "bg-slate-50",
-                "bg-emerald-50",
-                "bg-violet-50",
-                "bg-rose-50",
-                "bg-amber-50",
-                "bg-cyan-50",
-                "bg-orange-50",
-                "bg-stone-50",
-              ];
-
-              const bgColor =
-                lightBackgroundColors[index % lightBackgroundColors.length];
-              const displayEmail = f.email?.trim()
-                ? f.email
-                : "Email not provided";
-
-              const isNegotiable =
-                String(f.amountNegotiable).toUpperCase() === "YES";
-              const isOpenForFreelancer =
-                String(f.openForFreeLancing).toUpperCase() === "YES";
-              const displayName = getNameFromEmail(f.email);
-              const hasValue = (n: number) => n && n > 0;
+          <motion.div className="w-full px-0 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-5" variants={containerVariants} initial="hidden" animate="visible">
+            {displayedFreelancers.map((f) => {
+              const isNegotiable = String(f.amountNegotiable).toUpperCase() === "YES";
+              const isOpenForFreelancer = String(f.openForFreeLancing).toUpperCase() === "YES";
 
               return (
                 <motion.div
                   key={f.id}
                   variants={itemVariants}
-                  className="
-              group
-              w-full min-w-0
-              bg-white rounded-2xl overflow-hidden
-              border border-gray-100
-              shadow-sm hover:shadow-2xl
-              transition-all duration-300
-              transform hover:-translate-y-1
-              flex flex-col
-            "
+                  className="group w-full min-w-0 bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col"
                 >
-                  
                   <div className="pt-6 pb-4 flex justify-center">
                     <div className="w-28 sm:w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
                       <div className="text-3xl">🧑‍💻</div>
                     </div>
                   </div>
 
-                 
-                  <div className="px-4 pb-3 space-y-2">
-                    <div className="text-center">
-                      <span
-                        className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${isOpenForFreelancer ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
-                      >
-                        {isOpenForFreelancer
-                          ? "Open for freelance work"
-                          : "Not available for freelance work"}
-                      </span>
-                    </div>
+                  <div className="px-4 pb-2 text-center">
+                    <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">{getNameFromEmail(f.email)}</h3>
                   </div>
 
-           
-                  <div className="px-4 pb-3 space-y-2">
+                  <div className="px-4 pb-3 text-center">
+                    <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${isOpenForFreelancer ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                      {isOpenForFreelancer ? "Open for freelance work" : "Not available for freelance work"}
+                    </span>
+                  </div>
+
+                  <div className="px-4 pb-3">
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-slate-50 rounded-lg p-2 text-center">
-                        <div className="text-xs text-gray-600">Hourly</div>
-                        <div className="text-sm font-bold text-gray-900">
-                          {rateLabel(f.perHour)}
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-50 rounded-lg p-2 text-center">
-                        <div className="text-xs text-gray-600">Daily</div>
-                        <div className="text-sm font-bold text-gray-900">
-                          {rateLabel(f.perDay)}
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-50 rounded-lg p-2 text-center">
-                        <div className="text-xs text-gray-600">Weekly</div>
-                        <div className="text-sm font-bold text-gray-900">
-                          {rateLabel(f.perWeek)}
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-50 rounded-lg p-2 text-center">
-                        <div className="text-xs text-gray-600">Monthly</div>
-                        <div className="text-sm font-bold text-gray-900">
-                          {rateLabel(f.perMonth)}
-                        </div>
-                      </div>
-
-                   
-                      <div className="bg-slate-50 rounded-lg p-2 text-center col-span-2">
-                        <div className="text-xs text-gray-600">Yearly</div>
-                        <div className="text-sm font-bold text-gray-900">
-                          {rateLabel(f.perYear)}
-                        </div>
-                      </div>
+                      <div className="bg-slate-50 rounded-lg p-2 text-center"><div className="text-xs text-gray-600">Hourly</div><div className="text-sm font-bold text-gray-900">{rateLabel(f.perHour)}</div></div>
+                      <div className="bg-slate-50 rounded-lg p-2 text-center"><div className="text-xs text-gray-600">Daily</div><div className="text-sm font-bold text-gray-900">{rateLabel(f.perDay)}</div></div>
+                      <div className="bg-slate-50 rounded-lg p-2 text-center"><div className="text-xs text-gray-600">Weekly</div><div className="text-sm font-bold text-gray-900">{rateLabel(f.perWeek)}</div></div>
+                      <div className="bg-slate-50 rounded-lg p-2 text-center"><div className="text-xs text-gray-600">Monthly</div><div className="text-sm font-bold text-gray-900">{rateLabel(f.perMonth)}</div></div>
+                      <div className="bg-slate-50 rounded-lg p-2 text-center col-span-2"><div className="text-xs text-gray-600">Yearly</div><div className="text-sm font-bold text-gray-900">{rateLabel(f.perYear)}</div></div>
                     </div>
 
-                   
-                    <div className="text-center text-xs text-gray-600">
-                      Negotiable:{" "}
-                      <span
-                        className={`font-semibold ${isNegotiable ? "text-green-600" : "text-red-600"}`}
-                      >
-                        {isNegotiable ? "YES" : "NO"}
-                      </span>
+                    <div className="text-center text-xs text-gray-600 mt-2">
+                      Negotiable: <span className={`font-semibold ${isNegotiable ? "text-green-600" : "text-red-600"}`}>{isNegotiable ? "YES" : "NO"}</span>
                     </div>
                   </div>
 
-                
                   <div className="px-4 pb-5 mt-auto flex justify-center">
                     <button
+                      type="button"
                       onClick={() => {
                         if (!f.resumeUrl) {
                           alert("Resume file is invalid or not available.");
                           return;
                         }
-                        setCurrentResumeUrl(
-                          `https://docs.google.com/gview?url=${encodeURIComponent(`${uploadurlwithId}${f.resumeUrl}`)}&embedded=true`,
-                        );
+                        setCurrentResumeUrl(`https://docs.google.com/gview?url=${encodeURIComponent(`${uploadurlwithId}${f.resumeUrl}`)}&embedded=true`);
                         setShowResumeModal(true);
-                        setIsLoading(true);
+                        setResumeLoading(true);
                       }}
-                      className="w-full sm:w-auto justify-center bg-blue-100 text-blue-700 hover:bg-blue-200 py-3 px-6 rounded-full font-semibold text-sm transition-all duration-200 inline-flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                      className="w-full sm:w-auto justify-center bg-blue-100 text-blue-700 hover:bg-blue-200 py-3 px-6 rounded-full font-semibold text-sm transition-all duration-200 inline-flex items-center gap-2"
                     >
                       View Resume
                     </button>
@@ -964,29 +832,27 @@ flex flex-col border border-gray-100 m-2"
           </motion.div>
         ) : (
           <div className="text-center py-10">
-            <p className="text-gray-500 text-lg">
-              No freelancers available at the moment.
-            </p>
+            <p className="text-gray-500 text-lg">No freelancers available at the moment.</p>
           </div>
         )}
       </div> */}
 
-    
-      {/* <Modal
+      <Modal
         title="Resume Viewer"
         open={showResumeModal}
         onCancel={() => {
           setShowResumeModal(false);
-          setIsLoading(true);
+          setCurrentResumeUrl("");
+          setResumeLoading(false);
         }}
         footer={null}
         width="70%"
         style={{ top: 20 }}
-        bodyStyle={{ height: '80vh', padding: 0 }}
-        maskClosable={true}
-        keyboard={true}
+        bodyStyle={{ height: "80vh", padding: 0 }}
+        maskClosable
+        keyboard
       >
-        {isLoading && (
+        {resumeLoading && (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
           </div>
@@ -995,9 +861,9 @@ flex flex-col border border-gray-100 m-2"
           src={currentResumeUrl}
           className="w-full h-full"
           title="Resume Viewer"
-          onLoad={() => setIsLoading(false)}
+          onLoad={() => setResumeLoading(false)}
         />
-      </Modal> */}
+      </Modal>
     </section>
   );
 };

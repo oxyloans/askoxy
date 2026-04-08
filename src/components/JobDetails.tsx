@@ -366,27 +366,37 @@ const JobDetails: React.FC = () => {
     navigate("/main/profile");
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter the query before submitting.");
-      return;
-    }
+ const handleWriteToUsSubmitButton = async () => {
+  if (!query || query.trim() === "") {
+    setQueryError("Please enter the query before submitting.");
+    return;
+  }
 
-    const success = await submitWriteToUsQuery(
-      email,
-      finalMobileNumber,
-      query,
-      "FREESAMPLE",
-      userId,
-    );
+  if (!finalMobileNumber) {
+    message.error("Mobile number is required.");
+    return;
+  }
 
-    if (success) {
-      message.success("Query submitted successfully");
-      setIsOpen(false);
-    } else {
-      message.error("Failed to send query. Please try again.");
-    }
-  };
+  if (!email) {
+    message.error("Email is required.");
+    return;
+  }
+
+  const success = await submitWriteToUsQuery(
+    email,
+    finalMobileNumber, // ✅ now guaranteed string
+    query,
+    "FREESAMPLE",
+      userId || ""
+  );
+
+  if (success) {
+    message.success("Query submitted successfully");
+    setIsOpen(false);
+  } else {
+    message.error("Failed to send query. Please try again.");
+  }
+};
 
   const handleWriteToUs = () => {
     if (!userId) {

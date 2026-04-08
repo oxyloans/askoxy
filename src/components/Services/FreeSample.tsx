@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import "../StudyAbroad.css";
-import "../DiwaliPage.css";
 import { useNavigate } from "react-router-dom";
 import Header1 from "../Header";
 import Footer from "../Footer";
@@ -160,37 +158,54 @@ const FreeSample: React.FC = () => {
     navigate("/main/dashboard/barcodescanner");
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter the query before submitting.");
-      return;
-    }
+const handleWriteToUsSubmitButton = async () => {
+  if (!query || query.trim() === "") {
+    setQueryError("Please enter the query before submitting.");
+    return;
+  }
 
-    try {
-      setIsLoading(true);
-      const success = await submitWriteToUsQuery(
-        email,
-        finalMobileNumber,
-        query,
-        "FREESAMPLE",
-        userId
-      );
+  // ✅ FIX START
+  const safeEmail = email || "";
+  const safeMobile = finalMobileNumber || "";
+  const safeUserId = userId || "";
 
-      if (success) {
-        setSuccessOpen(true);
-        setIsOpen(false);
-        setQuery("");
-        setQueryError(undefined);
-      } else {
-        message.error("Failed to submit your query. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error sending the query:", error);
+  if (!safeEmail) {
+    message.error("Please update your email.");
+    return;
+  }
+
+  if (!safeMobile) {
+    message.error("Please update your mobile number.");
+    return;
+  }
+  // ✅ FIX END
+
+  try {
+    setIsLoading(true);
+
+    const success = await submitWriteToUsQuery(
+      safeEmail,
+      safeMobile,
+      query,
+      "FREESAMPLE",
+      safeUserId
+    );
+
+    if (success) {
+      setSuccessOpen(true);
+      setIsOpen(false);
+      setQuery("");
+      setQueryError(undefined);
+    } else {
       message.error("Failed to submit your query. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error sending the query:", error);
+    message.error("Failed to submit your query. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     handleLoadOffersAndCheckInterest();

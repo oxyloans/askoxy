@@ -1,11 +1,10 @@
-// src/.../campaignDetails.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import { message, Modal, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import Header1 from "./Header";
-import {uploadurlwithId} from "../Config";
+import { uploadurlwithId } from "../Config";
 
 import {
   fetchCampaigns,
@@ -13,23 +12,7 @@ import {
   checkUserInterest,
   submitInterest,
 } from "./servicesapi";
-
-interface Image {
-  imageId: string;
-  imageUrl: string;
-  status: boolean;
-}
-
-interface Campaign {
-  campaignId: string;
-  campaignType: string;
-  campaignDescription: string;
-  imageUrls: Image[];
-  campaignTypeAddBy: string;
-  campaignStatus: boolean;
-  campainInputType: "PRODUCT" | "SERVICE" | "BLOG" | string;
-  addServiceType?: string | null;
-}
+import type { Campaign } from "./servicesapi";
 
 const CampaignDetails: React.FC = () => {
   const navigate = useNavigate();
@@ -53,7 +36,6 @@ const CampaignDetails: React.FC = () => {
   const [commentsError, setCommentsError] = useState<string | undefined>(
     undefined,
   );
-  console.log({uploadurlwithId})
   const [comments, setComments] = useState("");
 
   const whatsappNumber = localStorage.getItem("whatsappNumber");
@@ -63,23 +45,26 @@ const CampaignDetails: React.FC = () => {
   const [interested, setInterested] = useState(false);
   const submitclicks = sessionStorage.getItem("submitclicks");
 
-  // Role modal state
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
   const [userRole, setUserRole] = useState<string | undefined>(undefined);
 
-  // Media carousel state — one-slide-per-view
   const mediaScrollRef = useRef<HTMLDivElement | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
+
+  const mediaItems = campaign?.imageUrls ?? [];
+  const isHiringCampaign = campaign?.addServiceType === "WEAREHIRING";
 
   useEffect(() => {
     const loadCampaign = async () => {
       setIsLoading(true);
       try {
         const allCampaigns = await fetchCampaigns();
+
         const foundCampaign = allCampaigns.find(
-          (c: Campaign) => c.campaignId.slice(-4) === campaignId,
+          (c) => c.campaignId?.slice(-4) === campaignId,
         );
+
         if (
           foundCampaign &&
           (foundCampaign.campainInputType === "PRODUCT" ||
@@ -93,8 +78,9 @@ const CampaignDetails: React.FC = () => {
       } catch (error) {
         console.error("Error loading campaign:", error);
         setCampaign(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     loadCampaign();
@@ -105,7 +91,6 @@ const CampaignDetails: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaign]);
 
-  // keep the dot index in sync when the container resizes
   useEffect(() => {
     const onResize = () => {
       if (!mediaScrollRef.current) return;
@@ -114,6 +99,18 @@ const CampaignDetails: React.FC = () => {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [currentIdx]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const slugify = (text: string) =>
     (text || "")
@@ -124,7 +121,6 @@ const CampaignDetails: React.FC = () => {
       .replace(/^-+|-+$/g, "")
       .slice(0, 50);
 
-  // --- Media helpers ---
   const isVideoUrl = (url: string): boolean => {
     const videoExtensions = [
       ".mp4",
@@ -142,7 +138,6 @@ const CampaignDetails: React.FC = () => {
     );
   };
 
-  // Scroll precisely one full container width per index
   const scrollToIndex = (idx: number, smooth = true) => {
     if (!mediaScrollRef.current) return;
     const container = mediaScrollRef.current;
@@ -151,7 +146,7 @@ const CampaignDetails: React.FC = () => {
   };
 
   const handleCarouselLeft = () => {
-    const total = campaign?.imageUrls?.length || 0;
+    const total = mediaItems.length || 0;
     if (!total) return;
     const next = (currentIdx - 1 + total) % total;
     setCurrentIdx(next);
@@ -159,34 +154,33 @@ const CampaignDetails: React.FC = () => {
   };
 
   const handleCarouselRight = () => {
-    const total = campaign?.imageUrls?.length || 0;
+    const total = mediaItems.length || 0;
     if (!total) return;
     const next = (currentIdx + 1) % total;
     setCurrentIdx(next);
     scrollToIndex(next);
   };
 
-  // compute index from full viewport-width pages
   const onMediaScroll = () => {
     const el = mediaScrollRef.current;
     if (!el) return;
     const idx = Math.round(el.scrollLeft / el.clientWidth);
-    setCurrentIdx(
-      Math.max(0, Math.min(idx, (campaign?.imageUrls?.length || 1) - 1)),
-    );
+    setCurrentIdx(Math.max(0, Math.min(idx, (mediaItems.length || 1) - 1)));
   };
 
-  // --- CTAs / Modals ---
   const handleWriteToUs = (c: Campaign) => {
     if (!accessToken || !userId) {
       message.warning("Please login to write to us.");
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/services/${c.campaignId.slice(-4)}/${slugify(c.campaignType)}`,
+        `/main/services/${c.campaignId?.slice(-4) || ""}/${slugify(
+          c.campaignType || "",
+        )}`,
       );
       return;
     }
+
     if (
       !email ||
       email === "null" ||
@@ -199,26 +193,38 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!comments || comments.trim() === "") {
-      setCommentsError("Please enter your comments before submitting.");
-      return;
-    }
-    const success = await submitWriteToUsQuery(
-      email,
-      finalMobileNumber,
-      comments,
-      "SERVICES",
-      userId,
-    );
+ const handleWriteToUsSubmitButton = async () => {
+  if (!comments || comments.trim() === "") {
+    setCommentsError("Please enter your message before submitting.");
+    return;
+  }
+
+  if (!email || !finalMobileNumber) {
+    message.error("Email and Mobile Number are required");
+    return;
+  }
+
+  try {
+const success = await submitWriteToUsQuery(
+  email || "",
+  finalMobileNumber, // ✅ no error now
+  comments.trim(),
+  "SERVICES",
+  userId || ""
+);
+
     if (success) {
       setSuccessOpen(true);
       setIsOpen(false);
       setComments("");
+      setCommentsError(undefined);
     } else {
       message.error("Failed to send comments. Please try again.");
     }
-  };
+  } catch {
+    message.error("Something went wrong. Please try again.");
+  }
+};
 
   const handleLoadOffersAndCheckInterest = async () => {
     if (!userId || !campaign?.campaignType) return;
@@ -230,18 +236,19 @@ const CampaignDetails: React.FC = () => {
 
   const handleSubmitClick = () => {
     sessionStorage.setItem("submitclicks", "true");
-    if (campaign?.campaignType)
+    if (campaign?.campaignType) {
       sessionStorage.setItem("campaigntype", campaign.campaignType);
+    }
 
     if (!userId) {
       message.warning("Please login to submit your interest.");
       navigate("/whatsappregister");
       const redirect =
         campaign?.campainInputType === "BLOG"
-          ? `/main/blog/${campaign?.campaignId.slice(-4)}/${slugify(
+          ? `/main/blog/${campaign?.campaignId?.slice(-4) || ""}/${slugify(
               campaign?.campaignType || "",
             )}`
-          : `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
+          : `/main/services/${campaign?.campaignId?.slice(-4) || ""}/${slugify(
               campaign?.campaignType || "",
             )}`;
       sessionStorage.setItem("redirectPath", redirect);
@@ -278,6 +285,7 @@ const CampaignDetails: React.FC = () => {
     } else {
       message.error("Failed to submit your interest. Please try again.");
     }
+
     sessionStorage.removeItem("submitclicks");
     sessionStorage.removeItem("campaigntype");
     setSelectedRole("");
@@ -289,18 +297,21 @@ const CampaignDetails: React.FC = () => {
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        `/main/services/${campaign?.campaignId.slice(-4)}/${slugify(
+        `/main/services/${campaign?.campaignId?.slice(-4) || ""}/${slugify(
           campaign?.campaignType || "",
         )}`,
       );
       return;
     }
+
     if (interested) {
       message.info("You have already participated. Thank you!");
       return;
     }
-    if (campaign?.campaignType)
+
+    if (campaign?.campaignType) {
       sessionStorage.setItem("campaigntype", campaign.campaignType);
+    }
 
     Modal.confirm({
       title: "Confirm Participation",
@@ -342,15 +353,12 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
-  // Render
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {/* Header (for logged-out) */}
       <div className={`px-4 ${!userId ? "pt-8 pb-4" : ""}`}>
         {!userId ? <Header1 /> : null}
       </div>
 
-      {/* Main Content */}
       <main className="flex-1 w-full px-4 pb-6">
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
@@ -400,10 +408,9 @@ const CampaignDetails: React.FC = () => {
           </div>
         ) : (
           <div className="max-w-7xl mx-auto">
-            {/* Title + actions */}
             <div className="flex flex-col mb-6 w-full">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-4">
-                {campaign.campaignType} 
+                {campaign.campaignType}
               </h1>
 
               <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-end">
@@ -432,7 +439,7 @@ const CampaignDetails: React.FC = () => {
                 </button>
 
                 <button
-                  className="px-4 py-2 bg-[#f9b91a] text-white rounded-lg shadow-lg hover:bg-[#f4a307] transition-all w-full sm:w-auto"
+                  className="px-5 py-2.5 bg-gradient-to-r from-[#f9b91a] to-[#ff9f1a] text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 w-full sm:w-auto font-semibold"
                   aria-label="Write To Us"
                   onClick={() => handleWriteToUs(campaign)}
                 >
@@ -441,16 +448,13 @@ const CampaignDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Two-column: Media (left) + Description (right) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              {/* LEFT: Media — One-per-view Carousel (Top dots, tight mobile gap, perfectly centered) */}
               <section className="lg:col-span-5 h-full">
                 <div className="relative h-full flex flex-col items-center">
-                  {/* Dots at top — reduced gap on mobile */}
-                  {campaign.imageUrls?.length > 1 && (
+                  {mediaItems.length > 1 && (
                     <div className="flex items-center justify-center mb-2 mt-1 w-full">
                       <div className="flex items-center justify-center gap-[5px] sm:gap-2">
-                        {campaign.imageUrls.map((_, i) => (
+                        {mediaItems.map((_, i) => (
                           <button
                             key={i}
                             aria-label={`Go to slide ${i + 1}`}
@@ -467,7 +471,7 @@ const CampaignDetails: React.FC = () => {
                             }}
                           >
                             <span
-                              className={`block rounded-full transition-all duration-200 ease-in-out`}
+                              className="block rounded-full transition-all duration-200 ease-in-out"
                               style={{
                                 width: currentIdx === i ? 9 : 7,
                                 height: currentIdx === i ? 9 : 7,
@@ -481,44 +485,36 @@ const CampaignDetails: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Scrollable image area */}
                   <div
                     ref={mediaScrollRef}
                     onScroll={onMediaScroll}
-                    className="
-        flex flex-nowrap overflow-x-auto snap-x snap-mandatory scroll-smooth
-        w-full h-full items-start
-        [scrollbar-width:none] [-ms-overflow-style:none]
-      "
+                    className="flex flex-nowrap overflow-x-auto snap-x snap-mandatory scroll-smooth w-full h-full items-start [scrollbar-width:none] [-ms-overflow-style:none]"
                     style={{ WebkitOverflowScrolling: "touch" }}
                   >
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
 
-                    {campaign.imageUrls.map((image, idx) => (
+                    {mediaItems.map((image, idx) => (
                       <div
                         key={image.imageId}
-                        className="
-            snap-center shrink-0 basis-full w-full
-            h-full min-h-[260px] sm:min-h-[400px] lg:min-h-[520px]
-            flex items-start justify-center
-            rounded-xl overflow-hidden
-          "
+                        className="snap-center shrink-0 basis-full w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-[520px] flex items-start justify-center rounded-xl overflow-hidden"
                       >
-                        {isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) || isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) ? (
+                        {isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) ? (
                           <video
                             controls
                             className="max-w-full max-h-full w-auto h-auto self-start"
                             preload="metadata"
                           >
-                            <source src={`${uploadurlwithId}${image.imageUrl}`} type="video/mp4" />
+                            <source
+                              src={`${uploadurlwithId}${image.imageUrl}`}
+                              type="video/mp4"
+                            />
                           </video>
                         ) : (
                           <img
                             src={`${uploadurlwithId}${image.imageUrl}`}
-                            alt={`${campaign.campaignType} - ${idx + 1}`}
+                            alt={`${campaign?.campaignType || "Campaign"} - ${idx + 1}`}
                             className="w-full h-auto object-contain sm:object-cover rounded-lg"
                             style={{
-                              maxHeight: "full", // keep full viewport usage on mobile
                               display: "block",
                               margin: "0 auto",
                             }}
@@ -528,10 +524,28 @@ const CampaignDetails: React.FC = () => {
                       </div>
                     ))}
                   </div>
+
+                  {mediaItems.length > 1 && (
+                    <div className="mt-3 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleCarouselLeft}
+                        className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
+                      >
+                        Prev
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCarouselRight}
+                        className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
                 </div>
               </section>
 
-              {/* RIGHT: Description & CA link */}
               <section className="lg:col-span-7">
                 <div className="bg-white rounded-xl shadow p-5 sm:p-6 h-full lg:max-h-[100vh] lg:overflow-y-auto lg:pr-2">
                   <div className="flex justify-end">
@@ -550,9 +564,11 @@ const CampaignDetails: React.FC = () => {
                           <button
                             onClick={() => {
                               if (userId) {
-                                if (userRole?.includes("PARTNER"))
+                                if (userRole?.includes("PARTNER")) {
                                   navigate("/main/ServiceDashboard");
-                                else navigate("/main/caserviceitems");
+                                } else {
+                                  navigate("/main/caserviceitems");
+                                }
                               } else {
                                 navigate("/whatsapplogin");
                                 sessionStorage.setItem(
@@ -587,8 +603,7 @@ const CampaignDetails: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Description formatter */}
-                  <Article description={campaign.campaignDescription} />
+                  <Article description={campaign.campaignDescription || ""} />
                 </div>
               </section>
             </div>
@@ -596,93 +611,119 @@ const CampaignDetails: React.FC = () => {
         )}
       </main>
 
-      {/* Full-width Footer pinned to bottom */}
       <footer className="mt-auto w-full border-t">
         <Footer />
       </footer>
 
-      {/* Write To Us Modal (Comments only) */}
-      {isOpen && (
+      <div
+        className={`fixed inset-0 z-[999] transition-all duration-300 ${
+          isOpen
+            ? "visible opacity-100"
+            : "invisible opacity-0 pointer-events-none"
+        }`}
+      >
         <div
-          className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
+          className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
           onClick={() => setIsOpen(false)}
-          role="dialog"
-          aria-modal="true"
-        >
+        />
+
+        <div className="absolute inset-0 flex items-center justify-center px-3 py-4 sm:px-4">
           <div
-            className="relative bg-white rounded-xl shadow-md p-6 w-[92%] max-w-md"
             onClick={(e) => e.stopPropagation()}
+            className={`relative w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 ${
+              isOpen
+                ? "translate-y-0 scale-100 opacity-100"
+                : "translate-y-3 scale-95 opacity-0"
+            }`}
           >
-            <button
-              className="absolute top-3 right-3 text-xl leading-none text-gray-500 hover:text-gray-700"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close"
-            >
-              ×
-            </button>
-
-            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-800">
-              Write To Us
-            </h2>
-
-            <LabeledField label="Mobile Number">
-              <input
-                type="text"
-                disabled
-                value={finalMobileNumber || ""}
-                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Your mobile number"
-              />
-            </LabeledField>
-
-            <LabeledField label="Email">
-              <input
-                type="email"
-                value={email || ""}
-                disabled
-                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Your email"
-              />
-            </LabeledField>
-
-            <LabeledField label="Comments">
-              <textarea
-                rows={4}
-                className="block w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="Type your comments here…"
-                value={comments}
-                onChange={(e) => {
-                  setComments(e.target.value);
-                  if (commentsError) setCommentsError(undefined);
-                }}
-              />
-              {commentsError && (
-                <p className="text-red-500 text-sm mt-1">{commentsError}</p>
-              )}
-            </LabeledField>
-
-            <div className="mt-4 flex items-center justify-end gap-2">
+            <div className="relative bg-gradient-to-r from-[#3d2a71] to-[#5a3ea6] px-4 py-4 sm:px-6 sm:py-5">
               <button
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                type="button"
                 onClick={() => setIsOpen(false)}
+                aria-label="Close"
+                className="absolute right-3 top-3 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/15 text-white text-base sm:text-lg leading-none hover:bg-white/25 transition"
               >
-                Cancel
+                ×
               </button>
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all"
-                onClick={handleWriteToUsSubmitButton}
-              >
-                Submit Comments
-              </button>
+
+              <h2 className="pr-10 text-lg sm:text-xl font-bold text-white">
+                Write To Us
+              </h2>
+              <p className="mt-1 pr-8 text-xs sm:text-sm text-white/85">
+                Share your message with us. We will get back to you soon.
+              </p>
+            </div>
+
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <LabeledField label="Mobile Number">
+                  <input
+                    type="text"
+                    disabled
+                    value={finalMobileNumber || ""}
+                    className="block w-full bg-gray-50 text-gray-700 px-3 py-2.5 sm:px-4 sm:py-3 border border-gray-200 rounded-xl text-sm sm:text-base focus:outline-none"
+                    placeholder="Your mobile number"
+                  />
+                </LabeledField>
+
+                <LabeledField label="Email">
+                  <input
+                    type="email"
+                    value={email || ""}
+                    disabled
+                    className="block w-full bg-gray-50 text-gray-700 px-3 py-2.5 sm:px-4 sm:py-3 border border-gray-200 rounded-xl text-sm sm:text-base focus:outline-none"
+                    placeholder="Your email"
+                  />
+                </LabeledField>
+              </div>
+
+              <LabeledField label="Message">
+                <textarea
+                  rows={4}
+                  value={comments}
+                  onChange={(e) => {
+                    setComments(e.target.value);
+                    if (commentsError) setCommentsError(undefined);
+                  }}
+                  className={`block w-full text-gray-700 px-3 py-2.5 sm:px-4 sm:py-3 border rounded-xl resize-none text-sm sm:text-base focus:outline-none transition-all ${
+                    commentsError
+                      ? "border-red-400 focus:ring-2 focus:ring-red-200"
+                      : "border-gray-300 focus:border-[#5a3ea6] focus:ring-2 focus:ring-purple-100"
+                  }`}
+                  placeholder="Type your message here..."
+                />
+                {commentsError && (
+                  <p className="text-red-500 text-xs sm:text-sm mt-2">
+                    {commentsError}
+                  </p>
+                )}
+              </LabeledField>
+
+              <div className="mt-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                <button
+                  type="button"
+                  className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl bg-gray-100 text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-200 transition"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl bg-gradient-to-r from-[#3d2a71] to-[#5a3ea6] text-white text-sm sm:text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                  onClick={handleWriteToUsSubmitButton}
+                >
+                  Submit Message
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Profile reminder modal */}
       {isprofileOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-semibold text-blue-700">Alert!</h2>
               <button
@@ -707,10 +748,9 @@ const CampaignDetails: React.FC = () => {
         </div>
       )}
 
-      {/* Role selection modal */}
       {isRoleModalOpen && (
-        <div className="fixed inset-0 bg-black/75 flex justify-center items-center z-50">
-          <div className="bg-white relative rounded-xl p-6 shadow-xl w-full max-w-3xl mx-4">
+        <div className="fixed inset-0 bg-black/75 flex justify-center items-center z-50 px-4">
+          <div className="bg-white relative rounded-xl p-6 shadow-xl w-full max-w-3xl">
             <button
               className="absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700"
               onClick={() => {
@@ -722,20 +762,19 @@ const CampaignDetails: React.FC = () => {
             >
               ×
             </button>
+
             <div className="text-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">
-                {campaign?.addServiceType === "WEAREHIRING"
-                  ? "Join as Employee"
-                  : "Join ASKOXY.AI"}
+                {isHiringCampaign ? "Join as Employee" : "Join ASKOXY.AI"}
               </h2>
               <p className="text-gray-600 text-sm">
-                {campaign?.addServiceType === "WEAREHIRING"
+                {isHiringCampaign
                   ? "Become part of our AI-first team."
                   : `Choose how you'd like to participate in our ${campaign?.campaignType} offer`}
               </p>
             </div>
 
-            {campaign?.addServiceType === "WEAREHIRING" ? (
+            {isHiringCampaign ? (
               <HiringEmployeeCard
                 onConfirm={handleEmployeeInterest}
                 disabled={isButtonDisabled || interested}
@@ -758,10 +797,9 @@ const CampaignDetails: React.FC = () => {
         </div>
       )}
 
-      {/* Success modal */}
       {issuccessOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm text-center">
             <h2 className="text-xl font-semibold text-green-600 mb-4">
               Success!
             </h2>
@@ -783,20 +821,18 @@ const CampaignDetails: React.FC = () => {
   );
 };
 
-/* ---------- Small helpers ---------- */
 const LabeledField: React.FC<{ label: string; children: React.ReactNode }> = ({
   label,
   children,
 }) => (
   <div className="mb-4">
-    <label className="block text-sm text-gray-700 font-semibold mb-1">
+    <label className="block text-sm sm:text-[15px] text-gray-700 font-semibold mb-2">
       {label}
     </label>
     {children}
   </div>
 );
 
-/** Formats headings, bullets, links and paragraphs */
 const Article: React.FC<{ description: string }> = ({ description }) => {
   if (!description) return null;
   const lines = description.split("\n").filter((l) => l.trim());
@@ -820,6 +856,7 @@ const Article: React.FC<{ description: string }> = ({ description }) => {
             .replace(/^\*\*|\*\*$/g, "")
             .replace(/\*/g, "")
             .trim();
+
           return (
             <h3
               key={`h-${index}`}
@@ -874,7 +911,6 @@ const Article: React.FC<{ description: string }> = ({ description }) => {
   );
 };
 
-/* Cards extracted for clarity */
 const HiringEmployeeCard: React.FC<{
   onConfirm: () => void;
   disabled?: boolean;
@@ -969,45 +1005,43 @@ const ThreeJoinCards: React.FC<{
 
       <button
         className={`p-4 text-left rounded-xl border transition-all hover:shadow ${
-          selectedRole.includes("FREELANCER")
-            ? "bg-purple-50 border-purple-400"
+          selectedRole.includes("FRANCHISE")
+            ? "bg-orange-50 border-orange-400"
             : "bg-white border-gray-200"
         }`}
-        onClick={() => setSelectedRole("FREELANCER")}
+        onClick={() => setSelectedRole("FRANCHISE")}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 text-white flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-orange-600 text-white flex items-center justify-center">
             F
           </div>
           <div>
             <div className="font-semibold text-gray-900">
-              Join as Freelancer
+              Join as Franchise
             </div>
             <div className="text-xs text-gray-600">
-              Bring partners/users & earn
+              Grow with our business network
             </div>
           </div>
         </div>
       </button>
     </div>
 
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-col sm:flex-row justify-end gap-3">
       <button
-        className="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+        type="button"
         onClick={onCancel}
+        className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
       >
         Cancel
       </button>
       <button
-        className={`py-2 px-4 rounded-lg text-white ${
-          disabled
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
-        }`}
+        type="button"
         onClick={onSubmit}
-        disabled={disabled}
+        disabled={disabled || interested}
+        className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {interested ? "Already Participated" : "Submit Interest"}
+        Submit
       </button>
     </div>
   </>

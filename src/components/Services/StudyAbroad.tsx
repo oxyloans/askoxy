@@ -1,7 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import "../StudyAbroad.css";
-import "../DiwaliPage.css";
-import "../Freerudraksha.css";
 import { ArrowLeft } from "lucide-react";
 import {
   FaUniversity,
@@ -404,38 +401,55 @@ const StudyAbroad: React.FC = () => {
     }
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter the query before submitting.");
-      return;
-    }
+ const handleWriteToUsSubmitButton = async () => {
+  if (!query || query.trim() === "") {
+    setQueryError("Please enter the query before submitting.");
+    return;
+  }
 
-    try {
-      setIsLoading(true);
-      const success = await submitWriteToUsQuery(
-        email,
-        finalMobileNumber,
-        query,
-        "STUDYABROAD",
-        userId
-      );
+  // ✅ FIX START
+  const safeEmail = email || "";
+  const safeMobile = finalMobileNumber || "";
+  const safeUserId = userId || "";
 
-      if (success) {
-        setSuccessOpen(true);
-        setIsOpen(false);
-        setQuery("");
-        setQueryError(undefined);
-      } else {
-        message.error("Failed to submit your query. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error sending the query:", error);
+  if (!safeEmail) {
+    message.error("Please update your email.");
+    return;
+  }
+
+  if (!safeMobile) {
+    message.error("Please update your mobile number.");
+    return;
+  }
+  // ✅ FIX END
+
+  try {
+    setIsLoading(true);
+
+    const success = await submitWriteToUsQuery(
+      safeEmail,
+      safeMobile,
+      query,
+      "STUDYABROAD",
+      safeUserId
+    );
+
+    if (success) {
+      setSuccessOpen(true);
+      setIsOpen(false);
+      setQuery("");
+      setQueryError(undefined);
+    } else {
       message.error("Failed to submit your query. Please try again.");
-      setQueryError("Failed to submit your query. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error sending the query:", error);
+    message.error("Failed to submit your query. Please try again.");
+    setQueryError("Failed to submit your query. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const toggleUniversity = (index: number) => {
     if (expandedUniversity === index) {

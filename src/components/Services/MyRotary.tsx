@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import "../StudyAbroad.css";
-import "../DiwaliPage.css";
 import { message, Modal } from "antd";
 import Footer from "../Footer";
 import { useNavigate } from "react-router-dom";
@@ -300,38 +298,52 @@ const MyRotaryServices: React.FC = () => {
     }
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter your query before submitting.");
-      return;
-    }
+const handleWriteToUsSubmitButton = async () => {
+  if (!query || query.trim() === "") {
+    setQueryError("Please enter your query before submitting.");
+    return;
+  }
 
-    try {
-      setIsLoading(true);
-      const success = await submitWriteToUsQuery(
-        email,
-        finalMobileNumber,
-        query,
-        "ROTARIAN",
-        userId,
-      );
+  const safeEmail = email || "";
+  const safeMobile = finalMobileNumber || "";
+  const safeUserId = userId || "";
 
-      if (success) {
-        setSuccessOpen(true);
-        setIsOpen(false);
-        setQuery("");
-        setQueryError(undefined);
-      } else {
-        message.error("Failed to submit your query. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error sending query:", error);
+  if (!safeEmail) {
+    message.error("Please update your email.");
+    return;
+  }
+
+  if (!safeMobile) {
+    message.error("Please update your mobile number.");
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+    const success = await submitWriteToUsQuery(
+      safeEmail,
+      safeMobile,
+      query,
+      "ROTARIAN",
+      safeUserId
+    );
+
+    if (success) {
+      setSuccessOpen(true);
+      setIsOpen(false);
+      setQuery("");
+      setQueryError(undefined);
+    } else {
       message.error("Failed to submit your query. Please try again.");
-      setQueryError("Failed to submit your query. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error sending query:", error);
+    message.error("Failed to submit your query. Please try again.");
+    setQueryError("Failed to submit your query. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const Pill = useMemo(
     () =>

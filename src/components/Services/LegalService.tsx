@@ -164,37 +164,54 @@ const LegalService: React.FC = () => {
     }
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter the query before submitting.");
-      return;
-    }
+const handleWriteToUsSubmitButton = async () => {
+  if (!query || query.trim() === "") {
+    setQueryError("Please enter the query before submitting.");
+    return;
+  }
 
-    try {
-      setIsLoading(true);
-      const success = await submitWriteToUsQuery(
-        email,
-        finalMobileNumber,
-        query,
-        "LEGALSERVICES",
-        userId
-      );
+  // ✅ FIX START
+  const safeEmail = email || "";
+  const safeMobile = finalMobileNumber || "";
+  const safeUserId = userId || "";
 
-      if (success) {
-        setSuccessOpen(true);
-        setIsOpen(false);
-        setQuery("");
-        setQueryError(undefined);
-      } else {
-        message.error("Failed to submit your query. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error sending the query:", error);
+  if (!safeEmail) {
+    message.error("Please update your email.");
+    return;
+  }
+
+  if (!safeMobile) {
+    message.error("Please update your mobile number.");
+    return;
+  }
+  // ✅ FIX END
+
+  try {
+    setIsLoading(true);
+
+    const success = await submitWriteToUsQuery(
+      safeEmail,
+      safeMobile,
+      query,
+      "LEGALSERVICES",
+      safeUserId
+    );
+
+    if (success) {
+      setSuccessOpen(true);
+      setIsOpen(false);
+      setQuery("");
+      setQueryError(undefined);
+    } else {
       message.error("Failed to submit your query. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error sending the query:", error);
+    message.error("Failed to submit your query. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     handleLoadOffersAndCheckInterest();

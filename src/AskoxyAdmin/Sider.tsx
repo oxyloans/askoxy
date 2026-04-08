@@ -235,6 +235,18 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
+          title: "Add Role Based Blogs",
+          icon: <FaPlusCircle className="text-yellow-400" />,
+          link: "/admin/addroleblogs",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
+          title: "All Role Based Blogs",
+          icon: <RiListUnordered className="text-purple-400" />,
+          link: "/admin/allroleblogs",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
           title: "Add Blog",
           icon: <FaBlog className="text-green-400" />,
           link: "/admin/addblogs",

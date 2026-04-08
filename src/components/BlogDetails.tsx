@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Divider, Input, message, Modal, Spin } from "antd";
+import { Input, message, Spin } from "antd";
 import {
   DislikeFilled,
   DislikeOutlined,
@@ -8,28 +8,37 @@ import {
   HeartOutlined,
   LoadingOutlined,
   UserOutlined,
+  TrophyOutlined,
+  ShareAltOutlined,
+  SoundOutlined,
+  LeftOutlined,
+  RightOutlined,
+  MessageOutlined,
+  CheckCircleFilled,
+  ClockCircleOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
-import Header1 from "./Header";
+import Header1 from "../components/Header";
 import {
   fetchCampaigns,
+  fetchAllGames,
   fetchLikesAndComments,
   submitUserInteraction,
   submitSubComment,
-  Campaign,
   submitWriteToUsQuery,
 } from "./servicesapi";
-import { PlusIcon } from "lucide-react";
+import type { Campaign } from "./servicesapi";
 import { uploadurlwithId } from "../Config";
 
 const { TextArea } = Input;
 
-interface Image {
-  imageId: string;
+interface ImageItem {
+  imageId?: string;
   imageUrl: string;
-  status: boolean;
+  status?: boolean;
 }
 
-interface Comment {
+interface CommentItem {
   mainComment: string;
   mainCommentId: string;
   subComments: SubComment[];
@@ -55,13 +64,13 @@ const ResponsiveModalWrapper: React.FC<ResponsiveModalWrapperProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[1000] bg-black/55 backdrop-blur-[2px] flex items-center justify-center px-4 py-6"
+      className="fixed inset-0 z-[1000] bg-black/55 backdrop-blur-[3px] flex items-center justify-center px-4 py-6"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-lg rounded-[24px] bg-white shadow-[0_25px_80px_rgba(15,23,42,0.22)] border border-white/70 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -76,7 +85,12 @@ const BlogDetails: React.FC = () => {
   const pathParts = location.pathname.split("/");
   const blogId = pathParts[pathParts.indexOf("blog") + 1];
 
-  const userId = localStorage.getItem("userId");
+  const userId =
+    localStorage.getItem("userId") ||
+    localStorage.getItem("customerId") ||
+    localStorage.getItem("user_id") ||
+    "";
+
   const accessToken = localStorage.getItem("accessToken");
 
   const [isLoading, setIsLoading] = useState(true);
@@ -86,28 +100,30 @@ const BlogDetails: React.FC = () => {
     string | null
   >(null);
 
-  const [isSpeaking, setIsSpeaking] = useState<{ [key: string]: boolean }>({});
-  const [isLiked, setIsLiked] = useState<{ [key: string]: boolean }>({});
-  const [isDisliked, setIsDisliked] = useState<{ [key: string]: boolean }>({});
-  const [likeCount, setLikeCount] = useState<{ [key: string]: number }>({});
-  const [dislikeCount, setDislikeCount] = useState<{ [key: string]: number }>(
+  const [isSpeaking, setIsSpeaking] = useState<Record<string, boolean>>({});
+  const [isLiked, setIsLiked] = useState<Record<string, boolean>>({});
+  const [isDisliked, setIsDisliked] = useState<Record<string, boolean>>({});
+  const [likeCount, setLikeCount] = useState<Record<string, number>>({});
+  const [dislikeCount, setDislikeCount] = useState<Record<string, number>>({});
+  const [isSubscribed, setIsSubscribed] = useState<Record<string, boolean>>({});
+  const [comments, setComments] = useState<Record<string, CommentItem[]>>({});
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState<
+    Record<string, boolean>
+  >({});
+  const [selectedVotes, setSelectedVotes] = useState<Record<string, string>>(
     {},
   );
-  const [isSubscribed, setIsSubscribed] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [comments, setComments] = useState<{ [key: string]: Comment[] }>({});
-  const [currentImageIndex, setCurrentImageIndex] = useState<{
-    [key: string]: number;
-  }>({});
-  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [actionLoading, setActionLoading] = useState<{
-    [key: string]: { like?: boolean; dislike?: boolean; subscribe?: boolean };
-  }>({});
+  const [currentMediaIndex, setCurrentMediaIndex] = useState<
+    Record<string, number>
+  >({});
 
-  // Updated shared modal states
+  const [actionLoading, setActionLoading] = useState<
+    Record<
+      string,
+      { like?: boolean; dislike?: boolean; subscribe?: boolean; vote?: boolean }
+    >
+  >({});
+
   const [isWriteToUsOpen, setIsWriteToUsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -118,59 +134,183 @@ const BlogDetails: React.FC = () => {
   const [queryError, setQueryError] = useState("");
   const [isSubmittingWriteToUs, setIsSubmittingWriteToUs] = useState(false);
 
-  const email = JSON.parse(
-    localStorage.getItem("profileData") || "{}",
-  ).customerEmail;
+  const mediaScrollRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const finalMobileNumber =
-    localStorage.getItem("whatsappNumber") ||
-    localStorage.getItem("mobileNumber");
+  const profileData = JSON.parse(localStorage.getItem("profileData") || "{}");
+
+  const normalizedEmail =
+    typeof profileData?.customerEmail === "string" &&
+    profileData.customerEmail.trim() !== "" &&
+    profileData.customerEmail !== "null" &&
+    profileData.customerEmail !== "undefined"
+      ? profileData.customerEmail.trim()
+      : "";
+
+  const whatsappNumber = localStorage.getItem("whatsappNumber");
+  const mobileNumber = localStorage.getItem("mobileNumber");
+
+  const normalizedMobileNumber =
+    typeof whatsappNumber === "string" &&
+    whatsappNumber.trim() !== "" &&
+    whatsappNumber !== "null" &&
+    whatsappNumber !== "undefined"
+      ? whatsappNumber.trim()
+      : typeof mobileNumber === "string" &&
+          mobileNumber.trim() !== "" &&
+          mobileNumber !== "null" &&
+          mobileNumber !== "undefined"
+        ? mobileNumber.trim()
+        : "";
+
+  const getCampaignId = (campaign: any) =>
+    campaign?.campaignId || campaign?.id || "";
+
+  const getCampaignTitle = (campaign: any) =>
+    campaign?.campaignTitle || campaign?.campaignType || "Blog";
+
+  const getCampaignAuthor = (campaign: any) =>
+    campaign?.authorName ||
+    campaign?.campaignAuthor ||
+    campaign?.createdBy ||
+    campaign?.userName ||
+    campaign?.name ||
+    "ASKOXY";
+
+  const slugify = (text: string) =>
+    (text || "")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 50);
+
+  const getCampaignPath = (campaign: any) => {
+    const id = getCampaignId(campaign);
+    const slug = slugify(getCampaignTitle(campaign));
+    return userId
+      ? `/main/blog/${id.slice(-4)}/${slug}`
+      : `/blog/${id.slice(-4)}/${slug}`;
+  };
+
+  const getValidTeams = (campaign: any): string[] => {
+    return [campaign?.team1, campaign?.team2, campaign?.team3, campaign?.team4]
+      .filter((item) => item !== null && item !== undefined)
+      .map((item) => String(item).trim())
+      .filter(
+        (item) =>
+          item !== "" &&
+          item !== "0" &&
+          item.toLowerCase() !== "null" &&
+          item.toLowerCase() !== "undefined",
+      );
+  };
+
+  const getPollEndTime = (campaign: any): number => {
+    const rawValue =
+      campaign?.pollEndTime ?? campaign?.pollendTime ?? campaign?.pollEndDate;
+    const parsed = Number(rawValue);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const isPollExpired = (campaign: any): boolean => {
+    const pollEnd = getPollEndTime(campaign);
+    return pollEnd > 0 && Date.now() > pollEnd;
+  };
+
+  const isVideoUrl = (url: string): boolean => {
+    const videoExtensions = [
+      ".mp4",
+      ".webm",
+      ".ogg",
+      ".avi",
+      ".mov",
+      ".wmv",
+      ".flv",
+      ".m4v",
+    ];
+    const lower = (url || "").toLowerCase();
+    return videoExtensions.some((ext) => lower.includes(ext));
+  };
+
+  const getVideoType = (url: string): string => {
+    const lower = (url || "").toLowerCase();
+    if (lower.endsWith(".mp4") || lower.endsWith(".m4v")) return "video/mp4";
+    if (lower.endsWith(".webm")) return "video/webm";
+    if (lower.endsWith(".ogg")) return "video/ogg";
+    if (lower.endsWith(".mov")) return "video/quicktime";
+    if (lower.endsWith(".avi")) return "video/x-msvideo";
+    if (lower.endsWith(".wmv")) return "video/x-ms-wmv";
+    if (lower.endsWith(".flv")) return "video/x-flv";
+    return "video/mp4";
+  };
+
+  const buildMediaUrl = (path: string) => {
+    if (!path) return "";
+    return /^https?:\/\//i.test(path) ? path : `${uploadurlwithId}${path}`;
+  };
 
   useEffect(() => {
     const loadCampaignsAndComments = async () => {
       setIsLoading(true);
       try {
-        const allCampaigns = await fetchCampaigns();
-        const activeBlogCampaigns = allCampaigns.filter(
-          (c) => c.campainInputType === "BLOG" && c.campaignStatus === true,
+        const [allCampaigns, allGames] = await Promise.all([
+          fetchCampaigns(),
+          fetchAllGames(),
+        ]);
+
+        const merged = [
+          ...((allCampaigns as any[]) || []),
+          ...((allGames as any[]) || []),
+        ];
+
+        const activeItems = merged.filter(
+          (c: any) =>
+            c?.campaignStatus === true || c?.campaignStatus === undefined,
         );
 
         const campaignsWithDetails = await Promise.all(
-          activeBlogCampaigns.map(async (campaign) => {
-            if (campaign.campaignId) {
-              const {
-                likesTotalCount,
-                dislikesTotalCount,
-                subComments,
-                isLiked: likedState,
-                isDisliked: dislikedState,
-                isSubscribed: subscribedState,
-              } = await fetchLikesAndComments(campaign.campaignId, userId);
+          activeItems.map(async (campaign: any) => {
+            const campaignId = getCampaignId(campaign);
+            if (!campaignId) return campaign;
+
+            try {
+              const details = await fetchLikesAndComments(campaignId, userId);
+
+              const likesTotalCount = details?.likesTotalCount || 0;
+              const dislikesTotalCount = details?.dislikesTotalCount || 0;
+              const subComments = details?.subComments || [];
+              const likedState = details?.isLiked || false;
+              const dislikedState = details?.isDisliked || false;
+              const subscribedState = details?.isSubscribed || false;
+              const selectedTeam =
+                details?.selectedTeam || campaign?.selectedTeam || "";
 
               setLikeCount((prev) => ({
                 ...prev,
-                [campaign.campaignId]: likesTotalCount,
+                [campaignId]: likesTotalCount,
               }));
               setDislikeCount((prev) => ({
                 ...prev,
-                [campaign.campaignId]: dislikesTotalCount,
+                [campaignId]: dislikesTotalCount,
               }));
-              setComments((prev) => ({
-                ...prev,
-                [campaign.campaignId]: subComments,
-              }));
-              setIsLiked((prev) => ({
-                ...prev,
-                [campaign.campaignId]: likedState,
-              }));
+              setComments((prev) => ({ ...prev, [campaignId]: subComments }));
+              setIsLiked((prev) => ({ ...prev, [campaignId]: likedState }));
               setIsDisliked((prev) => ({
                 ...prev,
-                [campaign.campaignId]: dislikedState,
+                [campaignId]: dislikedState,
               }));
               setIsSubscribed((prev) => ({
                 ...prev,
-                [campaign.campaignId]: subscribedState,
+                [campaignId]: subscribedState,
               }));
+
+              if (selectedTeam) {
+                setSelectedVotes((prev) => ({
+                  ...prev,
+                  [campaignId]: selectedTeam,
+                }));
+              }
 
               return {
                 ...campaign,
@@ -180,13 +320,15 @@ const BlogDetails: React.FC = () => {
                 isLiked: likedState,
                 isDisliked: dislikedState,
                 isSubscribed: subscribedState,
+                selectedTeam,
               };
+            } catch {
+              return campaign;
             }
-            return campaign;
           }),
         );
 
-        setCampaigns(campaignsWithDetails);
+        setCampaigns(campaignsWithDetails as Campaign[]);
       } catch (error) {
         console.error("Error loading campaigns or comments:", error);
         setCampaigns([]);
@@ -201,34 +343,65 @@ const BlogDetails: React.FC = () => {
   useEffect(() => {
     const isAnyModalOpen =
       isWriteToUsOpen || isProfileModalOpen || isSuccessModalOpen;
-
-    if (isAnyModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-
+    document.body.style.overflow = isAnyModalOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [isWriteToUsOpen, isProfileModalOpen, isSuccessModalOpen]);
 
-  const featuredCampaign = campaigns.find(
-    (campaign) => campaign.campaignId?.slice(-4) === blogId,
-  );
+  const featuredCampaign = useMemo(() => {
+    return campaigns.find((campaign: any) => {
+      const fullId = getCampaignId(campaign);
+      return fullId === blogId || fullId?.slice(-4) === blogId;
+    });
+  }, [campaigns, blogId]);
 
-  const otherCampaigns = campaigns.filter(
-    (campaign) => campaign.campaignId?.slice(-4) !== blogId,
-  );
+  const remainingCampaigns = useMemo(() => {
+    return campaigns.filter((campaign: any) => {
+      const fullId = getCampaignId(campaign);
+      return !(fullId === blogId || fullId?.slice(-4) === blogId);
+    });
+  }, [campaigns, blogId]);
+
+  const orderedCampaigns = useMemo(() => {
+    if (!featuredCampaign) return [];
+    return [featuredCampaign, ...remainingCampaigns];
+  }, [featuredCampaign, remainingCampaigns]);
+
+  const scrollToIndex = (campaignId: string, idx: number, smooth = true) => {
+    const container = mediaScrollRefs.current[campaignId];
+    if (!container) return;
+    const left = idx * container.clientWidth;
+    container.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
+  };
+
+  const onMediaScroll = (campaignId: string, total: number) => {
+    const el = mediaScrollRefs.current[campaignId];
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.clientWidth);
+    const safeIdx = Math.max(0, Math.min(idx, total - 1));
+    setCurrentMediaIndex((prev) => ({ ...prev, [campaignId]: safeIdx }));
+  };
+
+  const handleCarouselLeft = (campaignId: string, total: number) => {
+    if (!total) return;
+    const next = ((currentMediaIndex[campaignId] || 0) - 1 + total) % total;
+    setCurrentMediaIndex((prev) => ({ ...prev, [campaignId]: next }));
+    scrollToIndex(campaignId, next);
+  };
+
+  const handleCarouselRight = (campaignId: string, total: number) => {
+    if (!total) return;
+    const next = ((currentMediaIndex[campaignId] || 0) + 1) % total;
+    setCurrentMediaIndex((prev) => ({ ...prev, [campaignId]: next }));
+    scrollToIndex(campaignId, next);
+  };
 
   const handleLike = async (campaignId: string) => {
-    if (!accessToken) {
+    if (!accessToken || !userId) {
       message.warning("Please login to like this post.");
+      sessionStorage.setItem("redirectPath", location.pathname);
       navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`,
-      );
       return;
     }
 
@@ -239,6 +412,7 @@ const BlogDetails: React.FC = () => {
 
     try {
       const newLikeStatus = isLiked[campaignId] ? "no" : "yes";
+
       const success = await submitUserInteraction({
         campaignId,
         interavtionType: "LIKEORDISLIKE",
@@ -250,23 +424,22 @@ const BlogDetails: React.FC = () => {
         setLikeCount((prev) => ({
           ...prev,
           [campaignId]: isLiked[campaignId]
-            ? (prev[campaignId] || 0) - 1
+            ? Math.max((prev[campaignId] || 0) - 1, 0)
             : (prev[campaignId] || 0) + 1,
         }));
-
         setIsLiked((prev) => ({ ...prev, [campaignId]: !prev[campaignId] }));
 
         if (isDisliked[campaignId]) {
           setDislikeCount((prev) => ({
             ...prev,
-            [campaignId]: (prev[campaignId] || 0) - 1,
+            [campaignId]: Math.max((prev[campaignId] || 0) - 1, 0),
           }));
           setIsDisliked((prev) => ({ ...prev, [campaignId]: false }));
         }
       } else {
         message.error("Failed to like the post.");
       }
-    } catch (error) {
+    } catch {
       message.error("Failed to like the post.");
     } finally {
       setActionLoading((prev) => ({
@@ -277,13 +450,10 @@ const BlogDetails: React.FC = () => {
   };
 
   const handleDislike = async (campaignId: string) => {
-    if (!accessToken) {
+    if (!accessToken || !userId) {
       message.warning("Please login to dislike this post.");
+      sessionStorage.setItem("redirectPath", location.pathname);
       navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`,
-      );
       return;
     }
 
@@ -294,6 +464,7 @@ const BlogDetails: React.FC = () => {
 
     try {
       const newLikeStatus = isDisliked[campaignId] ? "yes" : "no";
+
       const success = await submitUserInteraction({
         campaignId,
         interavtionType: "LIKEORDISLIKE",
@@ -305,23 +476,22 @@ const BlogDetails: React.FC = () => {
         setDislikeCount((prev) => ({
           ...prev,
           [campaignId]: isDisliked[campaignId]
-            ? (prev[campaignId] || 0) - 1
+            ? Math.max((prev[campaignId] || 0) - 1, 0)
             : (prev[campaignId] || 0) + 1,
         }));
-
         setIsDisliked((prev) => ({ ...prev, [campaignId]: !prev[campaignId] }));
 
         if (isLiked[campaignId]) {
           setLikeCount((prev) => ({
             ...prev,
-            [campaignId]: (prev[campaignId] || 0) - 1,
+            [campaignId]: Math.max((prev[campaignId] || 0) - 1, 0),
           }));
           setIsLiked((prev) => ({ ...prev, [campaignId]: false }));
         }
       } else {
         message.error("Failed to dislike the post.");
       }
-    } catch (error) {
+    } catch {
       message.error("Failed to dislike the post.");
     } finally {
       setActionLoading((prev) => ({
@@ -334,11 +504,8 @@ const BlogDetails: React.FC = () => {
   const handleSubscribe = async (campaignId: string) => {
     if (!accessToken || !userId) {
       message.warning("Please login to subscribe.");
+      sessionStorage.setItem("redirectPath", location.pathname);
       navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`,
-      );
       return;
     }
 
@@ -349,6 +516,7 @@ const BlogDetails: React.FC = () => {
 
     try {
       const newSubscribedStatus = isSubscribed[campaignId] ? "no" : "yes";
+
       const success = await submitUserInteraction({
         campaignId,
         interavtionType: "SUBSCRIBE",
@@ -364,7 +532,7 @@ const BlogDetails: React.FC = () => {
       } else {
         message.error("Failed to subscribe.");
       }
-    } catch (error) {
+    } catch {
       message.error("Failed to subscribe.");
     } finally {
       setActionLoading((prev) => ({
@@ -374,18 +542,74 @@ const BlogDetails: React.FC = () => {
     }
   };
 
-  const handleOk = async (campaignId: string) => {
+  const handleVote = async (campaign: any, teamName: string) => {
+    const campaignId = getCampaignId(campaign);
+
     if (!accessToken || !userId) {
-      message.warning("Please login to add a comment.");
+      message.info("Please login to vote");
+      sessionStorage.setItem("redirectPath", getCampaignPath(campaign));
       navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/blog/${campaignId.slice(-4)}/BLOG`,
-      );
       return;
     }
 
-    if (comment.trim() === "") {
+    if (isPollExpired(campaign)) {
+      message.info("Poll ended");
+      return;
+    }
+
+    try {
+      setActionLoading((prev) => ({
+        ...prev,
+        [campaignId]: { ...prev[campaignId], vote: true },
+      }));
+
+      const success = await submitUserInteraction({
+        campaignId,
+        interavtionType: "POOLING",
+        pollAnswer: teamName,
+        userId,
+      });
+
+      if (success) {
+        setSelectedVotes((prev) => ({ ...prev, [campaignId]: teamName }));
+        setCampaigns((prev: any) =>
+          prev.map((item: any) =>
+            getCampaignId(item) === campaignId
+              ? { ...item, selectedTeam: teamName }
+              : item,
+          ),
+        );
+        message.success("Vote submitted successfully");
+
+        const details = await fetchLikesAndComments(campaignId, userId);
+        if (details?.selectedTeam) {
+          setSelectedVotes((prev) => ({
+            ...prev,
+            [campaignId]: details.selectedTeam,
+          }));
+        }
+      } else {
+        message.error("Vote submission failed");
+      }
+    } catch {
+      message.error("Something went wrong while submitting vote");
+    } finally {
+      setActionLoading((prev) => ({
+        ...prev,
+        [campaignId]: { ...prev[campaignId], vote: false },
+      }));
+    }
+  };
+
+  const handleOk = async (campaignId: string) => {
+    if (!accessToken || !userId) {
+      message.warning("Please login to add a comment.");
+      sessionStorage.setItem("redirectPath", location.pathname);
+      navigate("/whatsappregister");
+      return;
+    }
+
+    if (!comment.trim()) {
       message.error("Please enter a comment before submitting.");
       return;
     }
@@ -394,25 +618,25 @@ const BlogDetails: React.FC = () => {
       if (activeReplyCommentId) {
         const success = await submitSubComment(
           activeReplyCommentId,
-          comment,
+          comment.trim(),
           userId,
         );
 
         if (success) {
-          message.success("Sub-comment submitted successfully!");
+          message.success("Reply submitted successfully!");
           const { subComments } = await fetchLikesAndComments(
             campaignId,
             userId,
           );
-          setComments((prev) => ({ ...prev, [campaignId]: subComments }));
+          setComments((prev) => ({ ...prev, [campaignId]: subComments || [] }));
         } else {
-          message.error("Failed to submit sub-comment. Please try again.");
+          message.error("Failed to submit reply. Please try again.");
         }
       } else {
         const success = await submitUserInteraction({
           campaignId,
           interavtionType: "COMMENTS",
-          userComments: comment,
+          userComments: comment.trim(),
           userId,
         });
 
@@ -422,12 +646,12 @@ const BlogDetails: React.FC = () => {
             campaignId,
             userId,
           );
-          setComments((prev) => ({ ...prev, [campaignId]: subComments }));
+          setComments((prev) => ({ ...prev, [campaignId]: subComments || [] }));
         } else {
           message.error("Failed to submit comment. Please try again.");
         }
       }
-    } catch (error) {
+    } catch {
       message.error("Error submitting comment. Please try again.");
     } finally {
       setComment("");
@@ -435,25 +659,11 @@ const BlogDetails: React.FC = () => {
     }
   };
 
-  const slugify = (text: string) =>
-    text
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]+/g, "")
-      .replace(/--+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 50);
-
   const handleWriteToUs = (campaign: Campaign) => {
     if (!accessToken || !userId) {
       message.warning("Please login to write to us.");
+      sessionStorage.setItem("redirectPath", location.pathname);
       navigate("/whatsappregister");
-      sessionStorage.setItem(
-        "redirectPath",
-        `/main/blog/${campaign.campaignId.slice(-4)}/${slugify(
-          campaign.campaignType,
-        )}`,
-      );
       return;
     }
 
@@ -461,16 +671,13 @@ const BlogDetails: React.FC = () => {
     setQuery("");
     setQueryError("");
 
-    if (
-      !email ||
-      email === "null" ||
-      !finalMobileNumber ||
-      finalMobileNumber === "null"
-    ) {
-      setIsProfileModalOpen(true);
-    } else {
-      setIsWriteToUsOpen(true);
-    }
+   if (!normalizedEmail || !normalizedMobileNumber) {
+  message.warning("Please fill your Email and Phone Number to continue.");
+  setIsProfileModalOpen(true);
+  return;
+}
+
+    setIsWriteToUsOpen(true);
   };
 
   const handleWriteToUsSubmitButton = async () => {
@@ -479,12 +686,24 @@ const BlogDetails: React.FC = () => {
       return;
     }
 
+if (!normalizedEmail || !normalizedMobileNumber) {
+  message.error("Please update your Email and Phone Number before submitting.");
+
+  setIsWriteToUsOpen(false);
+
+  setTimeout(() => {
+    setIsProfileModalOpen(true);
+  }, 200); // smooth transition
+
+  return;
+}
+
     try {
       setIsSubmittingWriteToUs(true);
 
       const success = await submitWriteToUsQuery(
-        email,
-        finalMobileNumber,
+        normalizedEmail,
+        normalizedMobileNumber,
         query.trim(),
         "BLOGS",
         userId,
@@ -499,161 +718,100 @@ const BlogDetails: React.FC = () => {
         message.error("Failed to send query. Please try again.");
       }
     } catch (error) {
+      console.error("Write To Us error:", error);
       message.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmittingWriteToUs(false);
     }
   };
 
-  const isVideoUrl = (url: string): boolean => {
-    const videoExtensions = [
-      ".mp4",
-      ".webm",
-      ".ogg",
-      ".avi",
-      ".mov",
-      ".wmv",
-      ".flv",
-      ".m4v",
-    ];
-    const lowercaseUrl = url.toLowerCase();
-    return videoExtensions.some((ext) => lowercaseUrl.endsWith(ext));
-  };
+  const renderInlineFormattedText = (text: string) => {
+    if (!text) return null;
 
-  const getVideoType = (url: string): string => {
-    const lowercaseUrl = url.toLowerCase();
-    if (lowercaseUrl.endsWith(".mp4") || lowercaseUrl.endsWith(".m4v"))
-      return "video/mp4";
-    if (lowercaseUrl.endsWith(".webm")) return "video/webm";
-    if (lowercaseUrl.endsWith(".ogg")) return "video/ogg";
-    if (lowercaseUrl.endsWith(".mov")) return "video/quicktime";
-    if (lowercaseUrl.endsWith(".avi")) return "video/x-msvideo";
-    if (lowercaseUrl.endsWith(".wmv")) return "video/x-ms-wmv";
-    if (lowercaseUrl.endsWith(".flv")) return "video/x-flv";
-    return "video/mp4";
-  };
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
 
-  const nextImage = (campaignId: string, imageUrls: Image[]) => {
-    if (imageUrls && imageUrls.length > 0) {
-      setCurrentImageIndex((prev) => ({
-        ...prev,
-        [campaignId]:
-          (prev[campaignId] || 0) === imageUrls.length - 1
-            ? 0
-            : (prev[campaignId] || 0) + 1,
-      }));
-    }
-  };
+    return parts.map((part, partIndex) => {
+      if (/^https?:\/\//.test(part)) {
+        return (
+          <a
+            key={`url-${partIndex}`}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline break-words"
+          >
+            {part}
+          </a>
+        );
+      }
 
-  const prevImage = (campaignId: string, imageUrls: Image[]) => {
-    if (imageUrls && imageUrls.length > 0) {
-      setCurrentImageIndex((prev) => ({
-        ...prev,
-        [campaignId]:
-          (prev[campaignId] || 0) === 0
-            ? imageUrls.length - 1
-            : (prev[campaignId] || 0) - 1,
-      }));
-    }
+      const boldParts = part.split(/(\*\*.*?\*\*)/g);
+
+      return boldParts.map((segment, segIndex) => {
+        if (/^\*\*.*\*\*$/.test(segment)) {
+          const boldText = segment.replace(/^\*\*/, "").replace(/\*\*$/, "");
+          return (
+            <strong
+              key={`bold-${partIndex}-${segIndex}`}
+              className="font-semibold text-slate-900"
+            >
+              {boldText}
+            </strong>
+          );
+        }
+
+        return (
+          <React.Fragment key={`text-${partIndex}-${segIndex}`}>
+            {segment}
+          </React.Fragment>
+        );
+      });
+    });
   };
 
   const formatCampaignDescription = (description: string) => {
     if (!description) return null;
 
-    const lines = description.split("\n").filter((line) => line.trim());
+    const lines = description.split("\n").filter((line) => line.trim() !== "");
 
-    return lines
-      .map((line, index) => {
-        const trimmedLine = line.trim();
-        if (trimmedLine === "" || trimmedLine === "---") return null;
+    return lines.map((line, index) => {
+      const trimmed = line.trim();
 
-        const isHeading =
-          trimmedLine.startsWith("###") ||
-          trimmedLine.startsWith("##") ||
-          (trimmedLine.startsWith("**") &&
-            trimmedLine.endsWith("**") &&
-            trimmedLine.length > 4) ||
-          (trimmedLine.includes("###") && trimmedLine.includes("**")) ||
-          trimmedLine.startsWith("####");
+      if (!trimmed || trimmed === "---") return null;
 
-        if (isHeading) {
-          const cleanText = trimmedLine
-            .replace(/^#+\s*/, "")
-            .replace(/^\*\*|\*\*$/g, "")
-            .replace(/\*/g, "")
-            .trim();
+      const isHeadingLine =
+        trimmed.startsWith("### ") ||
+        trimmed.startsWith("## ") ||
+        trimmed.startsWith("# ");
 
-          return (
-            <h3
-              key={`heading-${index}`}
-              className="text-base sm:text-lg font-bold text-gray-800 mt-4 mb-2"
-            >
-              {cleanText}
-            </h3>
-          );
-        } else if (
-          trimmedLine.startsWith("*") ||
-          trimmedLine.startsWith("✅") ||
-          trimmedLine.startsWith("•") ||
-          trimmedLine.startsWith("-")
-        ) {
-          let cleanBulletText = trimmedLine;
-          const firstChar = cleanBulletText.charAt(0);
+      if (isHeadingLine) {
+        const cleanHeading = trimmed.replace(/^#{1,3}\s*/, "");
+        return (
+          <h3
+            key={`heading-${index}`}
+            className="text-[15px] sm:text-[16px] font-bold text-slate-900 mt-4 mb-2"
+          >
+            {renderInlineFormattedText(cleanHeading)}
+          </h3>
+        );
+      }
 
-          if (firstChar === "*") {
-            cleanBulletText =
-              firstChar + cleanBulletText.slice(1).replace(/\*/g, "");
-          } else {
-            cleanBulletText = cleanBulletText.replace(/\*/g, "");
-          }
-
-          return (
-            <div key={`bullet-${index}`} className="mb-2">
-              <span className="text-gray-600 text-sm sm:text-base">
-                {cleanBulletText}
-              </span>
-            </div>
-          );
-        } else {
-          const cleanText = trimmedLine.replace(/\*/g, "");
-
-          const renderTextWithLinks = (text: string) => {
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            const parts = text.split(urlRegex);
-
-            return parts.map((part, i) => {
-              if (urlRegex.test(part)) {
-                return (
-                  <a
-                    key={i}
-                    href={part}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline break-words"
-                  >
-                    {part}
-                  </a>
-                );
-              }
-              return <span key={i}>{part}</span>;
-            });
-          };
-
-          return (
-            <p
-              key={`para-${index}`}
-              className="text-gray-600 mb-2 text-sm sm:text-base"
-            >
-              {renderTextWithLinks(cleanText)}
-            </p>
-          );
-        }
-      })
-      .filter(Boolean);
+      return (
+        <p
+          key={`para-${index}`}
+          className="text-slate-700 mb-2 text-[13px] sm:text-[14px] leading-7"
+        >
+          {renderInlineFormattedText(trimmed)}
+        </p>
+      );
+    });
   };
 
   const handleSpeakDescription = (campaignId: string) => {
-    const campaign = campaigns.find((c) => c.campaignId === campaignId);
+    const campaign = campaigns.find(
+      (c: any) => getCampaignId(c) === campaignId,
+    );
 
     if (!campaign?.campaignDescription) {
       message.error("No content to read");
@@ -674,16 +832,14 @@ const BlogDetails: React.FC = () => {
       .trim();
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 0.8;
+    utterance.rate = 0.85;
     utterance.pitch = 1;
     utterance.volume = 1;
 
     utterance.onstart = () =>
       setIsSpeaking((prev) => ({ ...prev, [campaignId]: true }));
-
     utterance.onend = () =>
       setIsSpeaking((prev) => ({ ...prev, [campaignId]: false }));
-
     utterance.onerror = () => {
       setIsSpeaking((prev) => ({ ...prev, [campaignId]: false }));
       message.error("Speech synthesis stopped");
@@ -692,37 +848,16 @@ const BlogDetails: React.FC = () => {
     speechSynthesis.speak(utterance);
   };
 
-  const handleShare = (campaign: Campaign) => {
-    if (!campaign) return;
-
-    const shareUrl = `${
-      window.location.origin
-    }/blog/${campaign.campaignId.slice(-4)}/${slugify(campaign.campaignType)}`;
-
+  const handleShare = (campaign: any) => {
+    const shareUrl = `${window.location.origin}${getCampaignPath(campaign)}`;
     if (navigator.share) {
       navigator
-        .share({
-          title: campaign.campaignType,
-          text: campaign.campaignDescription,
-          url: shareUrl,
-        })
-        .catch(console.error);
+        .share({ title: getCampaignTitle(campaign), url: shareUrl })
+        .catch(() => {});
     } else {
       navigator.clipboard
         .writeText(shareUrl)
-        .then(() => message.success("Link copied to clipboard!"))
-        .catch(() => message.error("Failed to copy link"));
-    }
-  };
-
-  const showCommentsModal = async (campaignId: string) => {
-    setIsCommentsModalOpen((prev) => ({ ...prev, [campaignId]: true }));
-    try {
-      const { subComments } = await fetchLikesAndComments(campaignId, userId);
-      setComments((prev) => ({ ...prev, [campaignId]: subComments }));
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      message.error("Failed to load comments.");
+        .then(() => message.success("Link copied"));
     }
   };
 
@@ -735,7 +870,7 @@ const BlogDetails: React.FC = () => {
     if (userId) {
       navigate("/main/addblogs");
     } else {
-      message.info("please Login to add your blog");
+      message.info("Please Login to add your blog");
       sessionStorage.setItem("redirectPath", "/main/addblogs");
       navigate("/whatsapplogin");
     }
@@ -755,341 +890,9 @@ const BlogDetails: React.FC = () => {
     setIsProfileModalOpen(false);
   };
 
-  const renderCampaign = (campaign: Campaign) => (
-    <div
-      key={campaign.campaignId}
-      className="w-full bg-white rounded-lg shadow-lg overflow-hidden mb-6
-           max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl 2xl:max-w-7xl
-           mx-auto"
-    >
-      <div className="p-4 border-b flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="bg-gray-400 rounded-full p-2 flex items-center justify-center">
-            <UserOutlined className="text-white text-base sm:text-xl" />
-          </div>
-          <span className="text-xs sm:text-sm font-medium text-gray-600">
-            {campaign.campaignTypeAddBy || "Admin"}
-          </span>
-        </div>
-
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 text-center flex-1">
-          {campaign.campaignType}
-        </h1>
-
-        <div className="flex gap-2 flex-wrap justify-center">
-          <button
-            className={`px-3 py-1 text-xs sm:text-sm rounded-full transition-all flex items-center gap-1 ${
-              isSubscribed[campaign.campaignId]
-                ? "bg-green-500 text-white hover:bg-green-600"
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            }`}
-            onClick={() => handleSubscribe(campaign.campaignId)}
-            disabled={actionLoading[campaign.campaignId]?.subscribe}
-          >
-            {actionLoading[campaign.campaignId]?.subscribe ? (
-              <Spin
-                indicator={
-                  <LoadingOutlined
-                    style={{ fontSize: 16, color: "white" }}
-                    spin
-                  />
-                }
-              />
-            ) : isSubscribed[campaign.campaignId] ? (
-              "Subscribed"
-            ) : (
-              "Subscribe"
-            )}
-          </button>
-
-          <button
-            className="px-4 py-2 text-xs sm:text-sm font-semibold bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all duration-200 shadow-sm"
-            onClick={() => handleWriteToUs(campaign)}
-          >
-            Write To Us
-          </button>
-        </div>
-      </div>
-
-      <div className="flex flex-col lg:flex-row">
-        <div className="w-full lg:w-1/2 relative bg-gray-100 flex items-center justify-center">
-          {campaign.imageUrls &&
-          campaign.imageUrls.length > 0 &&
-          campaign.imageUrls[currentImageIndex[campaign.campaignId] ?? 0]
-            ?.imageUrl ? (
-            <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[400px]">
-              <div className="w-full h-full flex items-center justify-center">
-                {isVideoUrl(
-                  campaign.imageUrls[
-                    currentImageIndex[campaign.campaignId] ?? 0
-                  ].imageUrl,
-                ) ? (
-                  <video
-                    controls
-                    autoPlay={false}
-                    muted
-                    className="w-full h-full object-contain"
-                  >
-                    <source
-                      src={`${
-                        campaign.imageUrls?.[
-                          currentImageIndex[campaign.campaignId] ?? 0
-                        ]?.imageUrl?.startsWith("http")
-                          ? campaign.imageUrls?.[
-                              currentImageIndex[campaign.campaignId] ?? 0
-                            ]?.imageUrl
-                          : `${uploadurlwithId}${
-                              campaign.imageUrls?.[
-                                currentImageIndex[campaign.campaignId] ?? 0
-                              ]?.imageUrl || ""
-                            }`
-                      }`}
-                      type={
-                        getVideoType(
-                          campaign.imageUrls?.[
-                            currentImageIndex[campaign.campaignId] ?? 0
-                          ]?.imageUrl || "",
-                        ) || "video/mp4"
-                      }
-                    />
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <img
-                    src={`${
-                      campaign.imageUrls?.[
-                        currentImageIndex[campaign.campaignId] ?? 0
-                      ]?.imageUrl?.startsWith("http")
-                        ? campaign.imageUrls?.[
-                            currentImageIndex[campaign.campaignId] ?? 0
-                          ]?.imageUrl
-                        : `${uploadurlwithId}${
-                            campaign.imageUrls?.[
-                              currentImageIndex[campaign.campaignId] ?? 0
-                            ]?.imageUrl || ""
-                          }`
-                    }`}
-                    alt={`${campaign.campaignType} - ${
-                      (currentImageIndex[campaign.campaignId] ?? 0) + 1
-                    }`}
-                    className="w-full h-full object-contain"
-                  />
-                )}
-              </div>
-
-              {campaign.imageUrls.length > 1 && (
-                <>
-                  <button
-                    onClick={() =>
-                      prevImage(campaign.campaignId, campaign.imageUrls)
-                    }
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline points="15,18 9,12 15,6"></polyline>
-                    </svg>
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      nextImage(campaign.campaignId, campaign.imageUrls)
-                    }
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline points="9,18 15,12 9,6"></polyline>
-                    </svg>
-                  </button>
-
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {campaign.imageUrls.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() =>
-                          setCurrentImageIndex((prev) => ({
-                            ...prev,
-                            [campaign.campaignId]: index,
-                          }))
-                        }
-                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                          index ===
-                          (currentImageIndex[campaign.campaignId] ?? 0)
-                            ? "bg-white scale-125"
-                            : "bg-white bg-opacity-50 hover:bg-opacity-75"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="w-full h-64 sm:h-80 md:h-96 lg:h-[400px] flex items-center justify-center text-gray-500">
-              No media available
-            </div>
-          )}
-        </div>
-
-        <div className="w-full lg:w-1/2 flex flex-col">
-          <div className="flex-1 p-4 overflow-y-auto max-h-64 sm:max-h-80 md:max-h-96 lg:max-h-[400px]">
-            {campaign.campaignDescription && (
-              <div className="prose max-w-none text-sm sm:text-base">
-                {formatCampaignDescription(campaign.campaignDescription)}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4 border-t flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <button
-            className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-all duration-200"
-            onClick={() => handleLike(campaign.campaignId)}
-            disabled={actionLoading[campaign.campaignId]?.like}
-          >
-            {actionLoading[campaign.campaignId]?.like ? (
-              <Spin
-                indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />}
-              />
-            ) : isLiked[campaign.campaignId] ? (
-              <HeartFilled style={{ fontSize: 18, color: "#ef4444" }} />
-            ) : (
-              <HeartOutlined style={{ fontSize: 18 }} />
-            )}
-            <span className="text-xs sm:text-sm font-medium">
-              {likeCount[campaign.campaignId] || 0}
-            </span>
-          </button>
-
-          <button
-            className={`flex items-center gap-1 transition-all ${
-              isDisliked[campaign.campaignId]
-                ? "text-blue-500"
-                : "text-gray-700 hover:text-blue-500"
-            }`}
-            onClick={() => handleDislike(campaign.campaignId)}
-            disabled={actionLoading[campaign.campaignId]?.dislike}
-          >
-            {actionLoading[campaign.campaignId]?.dislike ? (
-              <Spin
-                indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />}
-              />
-            ) : isDisliked[campaign.campaignId] ? (
-              <DislikeFilled style={{ fontSize: 18 }} />
-            ) : (
-              <DislikeOutlined style={{ fontSize: 18 }} />
-            )}
-            <span className="text-xs sm:text-sm">
-              {dislikeCount[campaign.campaignId] || 0}
-            </span>
-          </button>
-
-          <button
-            className="flex items-center gap-1 text-gray-700 hover:text-blue-500 transition-all"
-            onClick={() => showCommentsModal(campaign.campaignId)}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-.9-3.8L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-            </svg>
-            <span className="text-xs sm:text-sm">
-              {comments[campaign.campaignId]?.length || 0}
-            </span>
-          </button>
-
-          <button
-            className="flex items-center gap-1 text-gray-700 hover:text-green-500 transition-all"
-            onClick={() => handleShare(campaign)}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-            </svg>
-          </button>
-        </div>
-
-        <button
-          className={`flex items-center gap-1 transition-all ${
-            isSpeaking[campaign.campaignId]
-              ? "text-orange-500"
-              : "text-gray-700 hover:text-orange-500"
-          }`}
-          onClick={() => handleSpeakDescription(campaign.campaignId)}
-        >
-          {isSpeaking[campaign.campaignId] ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="4" width="4" height="16"></rect>
-              <rect x="14" y="4" width="4" height="16"></rect>
-            </svg>
-          ) : (
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <polygon points="11 5,6 9,2 9,2 15,6 15,11 19"></polygon>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            </svg>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-
   const renderNotFoundPage = () => (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] py-10 px-4">
-      <div className="text-center">
-        <div className="mb-6 text-red-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="80"
-            height="80"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mx-auto"
-          >
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="15" y1="9" x2="9" y2="15"></line>
-            <line x1="9" y1="9" x2="15" y2="15"></line>
-          </svg>
-        </div>
-
+    <div className="min-h-[70vh] flex items-center justify-center">
+      <div className="text-center px-6">
         <h1 className="text-3xl sm:text-5xl font-bold text-gray-800 mb-4">
           404
         </h1>
@@ -1101,7 +904,7 @@ const BlogDetails: React.FC = () => {
         </p>
         <button
           onClick={() => navigate("/main")}
-          className="px-4 py-2 sm:px-6 sm:py-3 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#2a1d4e] transition-all"
+          className="px-4 py-2 sm:px-6 sm:py-3 bg-[#3d2a71] text-white rounded-xl shadow-lg hover:bg-[#2a1d4e] transition-all"
         >
           Return Home
         </button>
@@ -1109,89 +912,442 @@ const BlogDetails: React.FC = () => {
     </div>
   );
 
-  return (
-    <div className="w-full overflow-y-auto min-h-screen">
+  const renderCampaignCard = (campaign: any) => {
+    const campaignId = getCampaignId(campaign);
+
+    const imageUrls: ImageItem[] = Array.isArray(campaign?.imageUrls)
+      ? campaign.imageUrls.map((img: any) =>
+          typeof img === "string" ? { imageUrl: img } : img,
+        )
+      : campaign?.imageUrl
+        ? [{ imageUrl: campaign.imageUrl }]
+        : [];
+
+    const total = imageUrls.length;
+    const currentIdx = currentMediaIndex[campaignId] || 0;
+    const teams = getValidTeams(campaign);
+    const selectedTeam =
+      selectedVotes[campaignId] || campaign?.selectedTeam || "";
+    const pollExpired = isPollExpired(campaign);
+    const isLoadingVote = !!actionLoading[campaignId]?.vote;
+
+    return (
       <div
-        className={`p-2 ${
-          !userId ? "px-6 sm:px-8 lg:px-10" : "px-4 sm:px-6 lg:px-8"
-        }`}
+        key={campaignId}
+        className="overflow-hidden rounded-[24px] border border-[#e7eaf3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]"
       >
-        {!userId && <Header1 />}
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[linear-gradient(90deg,#f6f7ff_0%,#fcfcff_100%)] border-b border-[#edf0f7]">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef2f9] text-[#6b7280]">
+              <UserOutlined />
+            </div>
+            <div className="min-w-0">
+              <p className="m-0 text-[12px] sm:text-[13px] font-semibold uppercase tracking-wide text-slate-500">
+                {getCampaignAuthor(campaign)}
+              </p>
+            </div>
+          </div>
 
-        <div
-          className={`w-full rounded-lg bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-gray-200 px-3 md:px-6 py-1.5 ${
-            !userId ? "mt-8" : ""
-          }`}
-        >
-          <div className="max-w-8xl mx-auto px-3 sm:px-4">
-            <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 via-white to-purple-50 shadow-sm px-4 sm:px-6 py-4">
-              <div className="w-full sm:w-auto text-center sm:text-left">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-purple-500 font-semibold mb-1">
-                  Creator Rewards
-                </p>
-                <h4 className="text-lg md:text-xl font-bold text-slate-900 leading-snug">
-                  Write your blog & earn rewards
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                  Share your thoughts with the world and start earning{" "}
-                  <span className="font-semibold text-purple-600">
-                    BMVcoins
-                  </span>{" "}
-                  🚀
-                </p>
-              </div>
+          <h1 className="hidden lg:block flex-1 px-4 text-center text-[22px] xl:text-[26px] font-extrabold leading-tight text-[#111827]">
+            {getCampaignTitle(campaign)}
+          </h1>
 
-              <div className="w-full sm:w-auto flex justify-center sm:justify-end">
-                <button
-                  onClick={handleAddblog}
-                  className="inline-flex items-center justify-center gap-2 rounded-full px-4 sm:px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 whitespace-nowrap"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  <span>Add Blog Post</span>
-                </button>
-              </div>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleSubscribe(campaignId)}
+              className={`inline-flex items-center justify-center rounded-full px-4 sm:px-5 py-2.5 text-[12px] sm:text-[13px] font-semibold text-white transition-all ${
+                isSubscribed[campaignId]
+                  ? "bg-gradient-to-r from-emerald-500 to-emerald-600"
+                  : "bg-gradient-to-r from-[#3b82f6] to-[#4f46e5]"
+              }`}
+            >
+              {actionLoading[campaignId]?.subscribe ? (
+                <LoadingOutlined />
+              ) : isSubscribed[campaignId] ? (
+                "Subscribed"
+              ) : (
+                "Subscribe"
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleWriteToUs(campaign)}
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#f59e0b] to-[#fb923c] px-4 sm:px-5 py-2.5 text-[12px] sm:text-[13px] font-semibold text-white"
+            >
+              Write To Us
+            </button>
+          </div>
+        </div>
+
+        <div className="block lg:hidden px-4 sm:px-6 pt-4">
+          <h1 className="text-[21px] sm:text-[25px] font-extrabold leading-tight text-[#111827] text-center">
+            {getCampaignTitle(campaign)}
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="p-4 sm:p-6">
+            <div className="overflow-hidden rounded-[18px] border border-slate-200 bg-white">
+              {total > 0 ? (
+                <div className="relative">
+                  <div
+                    ref={(el) => {
+                      mediaScrollRefs.current[campaignId] = el;
+                    }}
+                    onScroll={() => onMediaScroll(campaignId, total)}
+                    className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none]"
+                  >
+                    <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+                    {imageUrls.map((media, idx) => {
+                      const src = buildMediaUrl(media.imageUrl || "");
+                      return (
+                        <div
+                          key={`${campaignId}-${idx}`}
+                          className="min-w-full snap-start bg-slate-100 flex items-center justify-center"
+                        >
+                          {isVideoUrl(src) ? (
+                            <video
+                              controls
+                              className="w-full h-[260px] sm:h-[420px] object-cover bg-black"
+                            >
+                              <source src={src} type={getVideoType(src)} />
+                            </video>
+                          ) : (
+                            <img
+                              src={src}
+                              alt={getCampaignTitle(campaign)}
+                              className="w-full h-[260px] sm:h-[420px] object-cover"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {total > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleCarouselLeft(campaignId, total)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md hover:bg-white"
+                      >
+                        <LeftOutlined />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCarouselRight(campaignId, total)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md hover:bg-white"
+                      >
+                        <RightOutlined />
+                      </button>
+
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/35 px-3 py-1.5 backdrop-blur">
+                        {imageUrls.map((_, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setCurrentMediaIndex((prev) => ({
+                                ...prev,
+                                [campaignId]: idx,
+                              }));
+                              scrollToIndex(campaignId, idx);
+                            }}
+                            className={`h-2.5 rounded-full transition-all ${
+                              currentIdx === idx
+                                ? "w-6 bg-white"
+                                : "w-2.5 bg-white/60"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="h-[260px] sm:h-[420px] flex items-center justify-center bg-slate-100 text-slate-400">
+                  No image available
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => handleLike(campaignId)}
+                className={`flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-medium ${
+                  isLiked[campaignId]
+                    ? "border-rose-200 bg-rose-50 text-rose-700"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
+              >
+                {actionLoading[campaignId]?.like ? (
+                  <LoadingOutlined />
+                ) : isLiked[campaignId] ? (
+                  <HeartFilled />
+                ) : (
+                  <HeartOutlined />
+                )}
+                <span>{likeCount[campaignId] || 0}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setIsCommentsModalOpen((prev) => ({
+                    ...prev,
+                    [campaignId]: true,
+                  }))
+                }
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
+              >
+                <MessageOutlined />
+                <span>{comments[campaignId]?.length || 0}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleShare(campaign)}
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
+              >
+                <ShareAltOutlined />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDislike(campaignId)}
+                className={`flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-medium ${
+                  isDisliked[campaignId]
+                    ? "border-slate-300 bg-slate-100 text-slate-700"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
+              >
+                {actionLoading[campaignId]?.dislike ? (
+                  <LoadingOutlined />
+                ) : isDisliked[campaignId] ? (
+                  <DislikeFilled />
+                ) : (
+                  <DislikeOutlined />
+                )}
+                <span>Dislike</span>
+                <span>{dislikeCount[campaignId] || 0}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSpeakDescription(campaignId)}
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
+              >
+                <SoundOutlined />
+                <span>{isSpeaking[campaignId] ? "Stop" : "Listen"}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t xl:border-t-0 xl:border-l border-[#edf0f7] bg-[#fcfdff] p-4 sm:p-6">
+            <div className="h-[260px] sm:h-[420px] xl:h-[420px] overflow-y-auto pr-2 custom-scrollbar">
+              {teams.length > 0 && (
+                <div className="mb-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrophyOutlined className="text-amber-600" />
+                    <h3 className="m-0 text-[15px] sm:text-[16px] font-semibold text-slate-900">
+                      Poll
+                    </h3>
+                  </div>
+
+                  {selectedTeam ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {teams.map((team) => {
+                          const isSelected = selectedTeam === team;
+                          return (
+                            <button
+                              key={team}
+                              type="button"
+                              disabled
+                              className={`w-full rounded-xl border px-4 py-3 text-left transition-all ${
+                                isSelected
+                                  ? "border-green-500 bg-green-50 text-green-700"
+                                  : "border-slate-200 bg-white text-slate-400"
+                              } cursor-default`}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="font-medium text-[14px]">
+                                  {team}
+                                </span>
+                                {isSelected ? (
+                                  <CheckCircleFilled className="text-green-600" />
+                                ) : null}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-[13px] sm:text-[14px] text-green-700">
+                        Your selected answer:{" "}
+                        <span className="font-semibold">{selectedTeam}</span>
+                      </div>
+                    </>
+                  ) : !pollExpired ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {teams.map((team) => (
+                        <button
+                          key={team}
+                          type="button"
+                          onClick={() => handleVote(campaign, team)}
+                          disabled={isLoadingVote || !!selectedTeam}
+                          className="w-full rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50 px-4 py-3 text-left transition-all"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-medium text-[14px]">
+                              {team}
+                            </span>
+                            {isLoadingVote ? <LoadingOutlined /> : null}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl bg-slate-100 px-4 py-3 text-[14px] text-slate-600 flex items-center gap-2">
+                      <ClockCircleOutlined />
+                      Poll ended
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {campaign?.campaignDescription && (
+                <div>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="m-0 text-[15px] sm:text-[16px] font-semibold text-slate-900">
+                      Description
+                    </h3>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakDescription(campaignId)}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] sm:text-[13px] text-slate-600 hover:bg-slate-50"
+                    >
+                      <SoundOutlined />
+                      {isSpeaking[campaignId] ? "Stop" : "Listen"}
+                    </button>
+                  </div>
+
+                  <div className="text-slate-700">
+                    {formatCampaignDescription(campaign.campaignDescription)}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={handleAddblog}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg"
+              >
+                <PlusOutlined />
+                Add Blog Post
+              </button>
             </div>
           </div>
         </div>
       </div>
+    );
+  };
 
-      <Divider className="p-1" />
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header1 />
+        <div className="flex min-h-[80vh] items-center justify-center">
+          <Spin size="large" />
+        </div>
+      </div>
+    );
+  }
 
-      {isLoading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Spin
-              indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />}
-              size="large"
-            />
-            <p className="mt-4 text-gray-600">Loading blog details...</p>
+  if (!featuredCampaign) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header1 />
+        {renderNotFoundPage()}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f4f7fb]">
+      <Header1 />
+
+      <style>
+        {`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: #edf2f7;
+            border-radius: 999px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
+        `}
+      </style>
+
+      <div className="px-3 sm:px-5 lg:px-8 py-5 sm:py-7">
+        <div className="mx-auto max-w-[1550px]">
+          <div className="mb-6 rounded-[28px] border border-[#eef1f7] bg-gradient-to-r from-white to-[#f8fafc] px-6 sm:px-10 py-6 shadow-[0_15px_40px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            {/* LEFT CONTENT */}
+            <div className="max-w-2xl">
+              <h2 className="text-[26px] sm:text-[34px] font-bold text-[#0f172a] leading-tight">
+                Creator Rewards 🚀
+              </h2>
+
+              <p className="mt-2 text-[15px] sm:text-[16px] text-[#475569] leading-relaxed">
+                Write your blog and earn exciting rewards. Share your ideas with
+                the world and start earning{" "}
+                <span className="font-semibold bg-gradient-to-r from-[#f59e0b] to-[#facc15] bg-clip-text text-transparent">
+                  BMV Coins 💰
+                </span>
+                .
+              </p>
+            </div>
+
+            {/* RIGHT BUTTON */}
+            <button
+              type="button"
+              onClick={handleAddblog}
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#9333ea] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:scale-105 transition-all duration-300"
+            >
+              <PlusOutlined />
+              Add Blog
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {orderedCampaigns.map((campaign) => renderCampaignCard(campaign))}
           </div>
         </div>
-      ) : (
-        <div className="flex flex-col gap-8 px-2 sm:px-4 lg:px-6 xl:px-8">
-          {campaigns.length === 0 || (!featuredCampaign && blogId) ? (
-            renderNotFoundPage()
-          ) : (
-            <>
-              {featuredCampaign && renderCampaign(featuredCampaign)}
-              {otherCampaigns.length > 0 &&
-                otherCampaigns.map((campaign) => renderCampaign(campaign))}
-            </>
-          )}
-        </div>
-      )}
+      </div>
 
-      {/* Shared Write To Us Modal */}
       <ResponsiveModalWrapper
         open={isWriteToUsOpen}
         onClose={closeWriteToUsModal}
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-100 bg-white px-5 py-4 sm:px-6">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 sm:px-6">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">
               Write To Us
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Share your query and our team will get back to you.
             </p>
           </div>
@@ -1200,87 +1356,56 @@ const BlogDetails: React.FC = () => {
             type="button"
             onClick={closeWriteToUsModal}
             aria-label="Close"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
           >
             <span className="text-lg leading-none">×</span>
           </button>
         </div>
 
-        <div className="px-5 py-5 sm:px-6 sm:py-6">
-          {selectedCampaign && (
-            <div className="mb-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-blue-700">
-                Blog
-              </p>
-              <p className="mt-1 text-sm sm:text-base font-semibold text-gray-800">
-                {selectedCampaign.campaignType}
-              </p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                Mobile Number
-              </label>
-              <input
-                type="text"
-                disabled
-                value={finalMobileNumber || ""}
-                className="h-11 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 text-sm text-gray-700 outline-none"
-                placeholder="Your mobile number"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                disabled
-                value={email || ""}
-                className="h-11 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 text-sm text-gray-700 outline-none"
-                placeholder="Your email"
-              />
+        <div className="px-5 py-5 sm:px-6">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-slate-700 mb-2">Blog</p>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              {selectedCampaign
+                ? getCampaignTitle(selectedCampaign)
+                : "Selected Blog"}
             </div>
           </div>
 
-          <div className="mt-4">
-            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+        <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+  <p className="text-sm text-gray-700">
+    <b>Email:</b> {normalizedEmail || "Not Available"}
+  </p>
+  <p className="text-sm text-gray-700 mt-1">
+    <b>Phone:</b> {normalizedMobileNumber || "Not Available"}
+  </p>
+</div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Your Message
             </label>
             <TextArea
-              rows={5}
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
                 if (queryError) setQueryError("");
               }}
-              placeholder="Type your message here..."
-              className={`rounded-xl ${
-                queryError ? "!border-red-500 !shadow-none" : ""
-              }`}
+              rows={5}
+              placeholder="Write your message here..."
+              className="rounded-2xl"
             />
-            {queryError && (
-              <p className="mt-1 text-sm text-red-500">{queryError}</p>
-            )}
+            {queryError ? (
+              <p className="mt-2 text-sm text-red-500">{queryError}</p>
+            ) : null}
           </div>
 
-          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={closeWriteToUsModal}
-              className="h-11 rounded-xl border border-gray-300 px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-
+          <div className="mt-5 flex justify-end">
             <button
               type="button"
               onClick={handleWriteToUsSubmitButton}
               disabled={isSubmittingWriteToUs}
-              className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg disabled:opacity-60"
             >
               {isSubmittingWriteToUs ? "Submitting..." : "Submit"}
             </button>
@@ -1288,44 +1413,30 @@ const BlogDetails: React.FC = () => {
         </div>
       </ResponsiveModalWrapper>
 
-      {/* Profile Modal */}
-      <ResponsiveModalWrapper
-        open={isProfileModalOpen}
-        onClose={closeProfileModal}
-      >
-        <div className="px-5 py-5 sm:px-6 sm:py-6 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-            <span className="text-2xl">⚠️</span>
-          </div>
+  <ResponsiveModalWrapper
+  open={isProfileModalOpen}
+  onClose={closeProfileModal}
+>
+  <div className="p-6 text-center">
+    <h2 className="text-lg font-bold text-gray-800 mb-3">
+      Complete Your Profile
+    </h2>
 
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-            Complete Your Profile
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">
-            Please fill in your email and mobile number in your profile before
-            using Write To Us.
-          </p>
+    {/* 🔥 THIS IS YOUR 4TH POINT */}
+    <p className="text-sm text-gray-600 mb-5">
+      Please update your <b>Email</b> and <b>Phone Number</b> to continue using
+      Write To Us.
+    </p>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <button
-              type="button"
-              onClick={closeProfileModal}
-              className="h-11 rounded-xl border border-gray-300 px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handlePopUOk}
-              className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              Go to Profile
-            </button>
-          </div>
-        </div>
-      </ResponsiveModalWrapper>
+    <button
+      onClick={handlePopUOk}
+      className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold"
+    >
+      Update Profile
+    </button>
+  </div>
+</ResponsiveModalWrapper>
 
-      {/* Success Modal */}
       <ResponsiveModalWrapper
         open={isSuccessModalOpen}
         onClose={closeSuccessModal}
@@ -1349,274 +1460,121 @@ const BlogDetails: React.FC = () => {
               onClick={closeSuccessModal}
               className="h-11 rounded-xl bg-green-600 px-6 text-sm font-semibold text-white transition hover:bg-green-700"
             >
-              OK
+              Okay
             </button>
           </div>
         </div>
       </ResponsiveModalWrapper>
 
-      {/* Comments Modal */}
-      {campaigns.map((campaign) => (
-        <Modal
-          key={campaign.campaignId}
-          title=""
-          open={isCommentsModalOpen[campaign.campaignId] || false}
-          onCancel={() => {
-            setIsCommentsModalOpen((prev) => ({
-              ...prev,
-              [campaign.campaignId]: false,
-            }));
-            setActiveReplyCommentId(null);
-            setComment("");
-          }}
-          footer={null}
-          width="90%"
-          className="comments-modal max-w-3xl"
-        >
-          <div className="flex flex-col sm:flex-row h-[500px] sm:h-96">
-            <div className="w-full sm:w-1/2 bg-gray-100 flex items-center justify-center relative">
-              {campaign.imageUrls &&
-              campaign.imageUrls.length > 0 &&
-              campaign.imageUrls[currentImageIndex[campaign.campaignId] ?? 0]
-                ?.imageUrl ? (
-                <div className="relative w-full h-64 sm:h-full">
-                  <div className="w-full h-full flex items-center justify-center">
-                    {isVideoUrl(
-                      campaign.imageUrls[
-                        currentImageIndex[campaign.campaignId] ?? 0
-                      ].imageUrl,
-                    ) ? (
-                      <video
-                        controls
-                        autoPlay={false}
-                        muted
-                        className="max-w-full max-h-full object-contain"
-                      >
-                        <source
-                          src={
-                            campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] ?? 0
-                            ].imageUrl
-                          }
-                          type={getVideoType(
-                            campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] ?? 0
-                            ].imageUrl,
-                          )}
-                        />
-                        <source
-                          src={
-                            campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] ?? 0
-                            ].imageUrl
-                          }
-                          type="video/mp4"
-                        />
-                        <source
-                          src={
-                            campaign.imageUrls[
-                              currentImageIndex[campaign.campaignId] ?? 0
-                            ].imageUrl
-                          }
-                          type="video/webm"
-                        />
-                        Your browser does not support the video tag.
-                      </video>
-                    ) : (
-                      <img
-                        src={`${
-                          campaign.imageUrls?.[
-                            currentImageIndex[campaign.campaignId] ?? 0
-                          ]?.imageUrl?.startsWith("http")
-                            ? campaign.imageUrls?.[
-                                currentImageIndex[campaign.campaignId] ?? 0
-                              ]?.imageUrl
-                            : `${uploadurlwithId}${
-                                campaign.imageUrls?.[
-                                  currentImageIndex[campaign.campaignId] ?? 0
-                                ]?.imageUrl || ""
-                              }`
-                        }`}
-                        alt={`${campaign.campaignType} - ${
-                          (currentImageIndex[campaign.campaignId] ?? 0) + 1
-                        }`}
-                        className="max-w-full max-h-full object-contain"
-                      />
-                    )}
-                  </div>
+      {Object.entries(isCommentsModalOpen).map(([campaignId, open]) => {
+        if (!open) return null;
 
-                  {campaign.imageUrls.length > 1 && (
-                    <>
-                      <button
-                        onClick={() =>
-                          prevImage(campaign.campaignId, campaign.imageUrls)
-                        }
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
-                      >
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <polyline points="15,18 9,12 15,6"></polyline>
-                        </svg>
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          nextImage(campaign.campaignId, campaign.imageUrls)
-                        }
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl"
-                      >
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <polyline points="9,18 15,12 9,6"></polyline>
-                        </svg>
-                      </button>
-
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                        {campaign.imageUrls.map((_, index) => (
-                          <button
-                            key={index}
-                            onClick={() =>
-                              setCurrentImageIndex((prev) => ({
-                                ...prev,
-                                [campaign.campaignId]: index,
-                              }))
-                            }
-                            className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                              index ===
-                              (currentImageIndex[campaign.campaignId] ?? 0)
-                                ? "bg-white scale-125"
-                                : "bg-white bg-opacity-50 hover:bg-opacity-75"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
-                  No media available
-                </div>
-              )}
-            </div>
-
-            <div className="w-full sm:w-1/2 flex flex-col border-t sm:border-t-0 sm:border-l">
-              <div className="p-3 border-b">
-                <h3 className="font-semibold text-sm sm:text-base">Comments</h3>
+        return (
+          <ResponsiveModalWrapper
+            key={campaignId}
+            open={open}
+            onClose={() => {
+              setIsCommentsModalOpen((prev) => ({
+                ...prev,
+                [campaignId]: false,
+              }));
+              setComment("");
+              setActiveReplyCommentId(null);
+            }}
+          >
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 sm:px-6">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+                  Comments
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Read comments and add your response.
+                </p>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                {comments[campaign.campaignId]?.map(
-                  (commentItem) =>
-                    !["like", "dislike", "subscribe"].includes(
-                      commentItem.mainComment,
-                    ) && (
-                      <div
-                        key={commentItem.mainCommentId}
-                        className="space-y-2"
-                      >
-                        <div className="flex gap-2 items-start">
-                          <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center">
-                            <UserOutlined className="text-white text-sm" />
-                          </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCommentsModalOpen((prev) => ({
+                    ...prev,
+                    [campaignId]: false,
+                  }));
+                  setComment("");
+                  setActiveReplyCommentId(null);
+                }}
+                aria-label="Close"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
 
-                          <div className="flex-1">
-                            <p className="text-xs sm:text-sm font-medium text-gray-900">
-                              {commentItem.mainComment}
-                            </p>
+            <div className="px-5 py-5 sm:px-6">
+              <div className="space-y-4 max-h-[340px] overflow-y-auto pr-1">
+                {(comments[campaignId] || []).length > 0 ? (
+                  comments[campaignId].map((item, index) => (
+                    <div
+                      key={item.mainCommentId || index}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <p className="text-sm text-slate-800 font-medium">
+                        {item.mainComment}
+                      </p>
 
-                            <button
-                              className="text-xs text-gray-500 hover:text-gray-700 mt-1"
-                              onClick={() =>
-                                setActiveReplyCommentId(
-                                  commentItem.mainCommentId,
-                                )
-                              }
+                      {item.subComments?.length > 0 && (
+                        <div className="mt-3 space-y-2 pl-4 border-l-2 border-slate-200">
+                          {item.subComments.map((sub, subIndex) => (
+                            <p
+                              key={subIndex}
+                              className="text-sm text-slate-600"
                             >
-                              Reply
-                            </button>
-                          </div>
+                              {sub.comment}
+                            </p>
+                          ))}
                         </div>
+                      )}
 
-                        {commentItem.subComments.length > 0 && (
-                          <div className="ml-4 space-y-1">
-                            {commentItem.subComments.map((sub, index) => (
-                              <div
-                                key={index}
-                                className="pl-8 text-xs sm:text-sm text-gray-600"
-                              >
-                                <span className="font-medium">Reply:</span>{" "}
-                                {sub.comment}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ),
+                      <button
+                        className="mt-3 text-sm font-semibold text-indigo-600"
+                        onClick={() =>
+                          setActiveReplyCommentId(item.mainCommentId)
+                        }
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">No comments yet.</p>
                 )}
               </div>
 
-              <div className="p-3 border-t">
-                {activeReplyCommentId && (
-                  <div className="mb-2 text-xs sm:text-sm text-gray-600">
-                    Replying to:{" "}
-                    {
-                      comments[campaign.campaignId]?.find(
-                        (c) => c.mainCommentId === activeReplyCommentId,
-                      )?.mainComment
-                    }
-                  </div>
-                )}
+              <div className="mt-5">
+                <TextArea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={4}
+                  placeholder={
+                    activeReplyCommentId
+                      ? "Write your reply..."
+                      : "Write your comment..."
+                  }
+                  className="rounded-2xl"
+                />
 
-                <div className="flex gap-2">
-                  <TextArea
-                    rows={2}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder={
-                      activeReplyCommentId
-                        ? "Enter your reply..."
-                        : "Add a comment..."
-                    }
-                    className="flex-1 resize-none text-xs sm:text-sm"
-                  />
-
-                  <Button
-                    type="primary"
-                    onClick={() => handleOk(campaign.campaignId)}
-                    disabled={!comment.trim()}
-                    className="bg-blue-500 hover:bg-blue-600 text-xs sm:text-sm"
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => handleOk(campaignId)}
+                    className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg"
                   >
-                    {activeReplyCommentId ? "Post Reply" : "Post"}
-                  </Button>
+                    {activeReplyCommentId ? "Submit Reply" : "Submit Comment"}
+                  </button>
                 </div>
-
-                {activeReplyCommentId && (
-                  <Button
-                    onClick={() => {
-                      setActiveReplyCommentId(null);
-                      setComment("");
-                    }}
-                    className="mt-2 text-xs sm:text-sm"
-                  >
-                    Cancel Reply
-                  </Button>
-                )}
               </div>
             </div>
-          </div>
-        </Modal>
-      ))}
+          </ResponsiveModalWrapper>
+        );
+      })}
     </div>
   );
 };

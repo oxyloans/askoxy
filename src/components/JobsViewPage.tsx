@@ -523,27 +523,43 @@ useEffect(() => {
     navigate("/main/profile");
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query || query.trim() === "") {
-      setQueryError("Please enter the query before submitting.");
-      return;
-    }
+ const handleWriteToUsSubmitButton = async () => {
+  if (!query || query.trim() === "") {
+    setQueryError("Please enter the query before submitting.");
+    return;
+  }
 
-    const success = await submitWriteToUsQuery(
-      email,
-      finalMobileNumber,
-      query,
-      "FREESAMPLE",
-      userId,
-    );
+  // ✅ FIX START
+  const safeMobile = finalMobileNumber || "";
+  const safeEmail = email || "";
+  const safeUserId = userId || "";
 
-    if (success) {
-      message.success("Query submitted successfully");
-      setIsOpen(false);
-    } else {
-      message.error("Failed to send query. Please try again.");
-    }
-  };
+  if (!safeMobile) {
+    message.error("Please update your mobile number");
+    return;
+  }
+
+  if (!safeEmail) {
+    message.error("Please update your email");
+    return;
+  }
+  // ✅ FIX END
+
+  const success = await submitWriteToUsQuery(
+    safeEmail,
+    safeMobile, // ✅ always string
+    query,
+    "FREESAMPLE",
+    safeUserId
+  );
+
+  if (success) {
+    message.success("Query submitted successfully");
+    setIsOpen(false);
+  } else {
+    message.error("Failed to send query. Please try again.");
+  }
+};
 
   const handleWriteToUs = () => {
     if (!userId) {
