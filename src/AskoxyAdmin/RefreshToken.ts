@@ -36,9 +36,11 @@ export const refreshAccessToken = async (): Promise<boolean> => {
     isRefreshing = false;
     return true;
   } catch (error) {
-    console.log('Token refresh failed, but not removing tokens - let session modal handle it');
+   
     isRefreshing = false;
-    // Don't remove tokens here - let the session modal handle the choice
+    // Remove tokens on failure - refresh token is also expired
+    removeAdminAccessToken();
+    removeAdminRefreshToken();
     return false;
   }
 };

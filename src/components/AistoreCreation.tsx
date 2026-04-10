@@ -870,7 +870,10 @@ const AgentStoreManager: React.FC = () => {
               <Form.Item
                 name="storeId"
                 label="Store"
-                rules={[{ required: true, message: "Please select a store" }]}
+                rules={[
+                  { required: true, message: "Please select a store" }
+                ]}
+                validateTrigger={['onChange', 'onSubmit']}
               >
                 <Select
                   placeholder="Select Store"
@@ -895,7 +898,10 @@ const AgentStoreManager: React.FC = () => {
               <Form.Item
                 name="view"
                 label="View"
-                rules={[{ required: true, message: "Please select view" }]}
+                rules={[
+                  { required: true, message: "Please select a view option" }
+                ]}
+                validateTrigger={['onChange', 'onSubmit']}
               >
                 <Select>
                   <Select.Option value="public">public</Select.Option>
@@ -1084,11 +1090,31 @@ const AgentStoreManager: React.FC = () => {
             name="storeName"
             label="Store Name"
             rules={[
-              { required: true, message: "Please enter store name" },
-              { min: 3, message: "Store name must be at least 3 characters" },
+              { required: true, message: "Store name is required" },
+              {
+                validator: (_, value) => {
+                  if (value && value.trim().length === 0) {
+                    return Promise.reject(new Error('Please enter a valid store name'));
+                  }
+                  if (value && value.trim().length > 0 && value.trim().length < 3) {
+                    return Promise.reject(new Error('Store name should be at least 3 characters'));
+                  }
+                  return Promise.resolve();
+                }
+              }
             ]}
+            validateTrigger={['onBlur', 'onSubmit']}
           >
-            <Input placeholder="Enter store name" size="large" />
+            <Input 
+              placeholder="Enter store name" 
+              size="large"
+              onBlur={(e) => {
+                const trimmed = e.target.value.trim();
+                if (trimmed !== e.target.value) {
+                  form.setFieldsValue({ storeName: trimmed });
+                }
+              }}
+            />
           </Form.Item>
 
           {/* Description */}
@@ -1096,14 +1122,33 @@ const AgentStoreManager: React.FC = () => {
             name="description"
             label="Description"
             rules={[
-              { required: true, message: "Please enter description" },
+              { required: true, message: "Description is required" },
               {
-                min: 10,
-                message: "Description must be at least 10 characters",
-              },
+                validator: (_, value) => {
+                  if (value && value.trim().length === 0) {
+                    return Promise.reject(new Error('Please enter a valid description'));
+                  }
+                  if (value && value.trim().length > 0 && value.trim().length < 10) {
+                    return Promise.reject(new Error('Description should be at least 10 characters'));
+                  }
+                  return Promise.resolve();
+                }
+              }
             ]}
+            validateTrigger={['onBlur', 'onSubmit']}
           >
-            <Input.TextArea rows={4} showCount maxLength={500} />
+            <Input.TextArea 
+              rows={4} 
+              showCount 
+              maxLength={500}
+              placeholder="Describe your store..."
+              onBlur={(e) => {
+                const trimmed = e.target.value.trim();
+                if (trimmed !== e.target.value) {
+                  form.setFieldsValue({ description: trimmed });
+                }
+              }}
+            />
           </Form.Item>
 
           {/* ✅ NEW: Company Store Toggle */}
@@ -1135,15 +1180,32 @@ const AgentStoreManager: React.FC = () => {
                   rules={[
                     {
                       required: true,
-                      message: "Company Name is mandatory for Company Store",
+                      message: "Company name is required",
                     },
                     {
-                      min: 2,
-                      message: "Company Name must be at least 2 characters",
-                    },
+                      validator: (_, value) => {
+                        if (value && value.trim().length === 0) {
+                          return Promise.reject(new Error('Please enter a valid company name'));
+                        }
+                        if (value && value.trim().length > 0 && value.trim().length < 2) {
+                          return Promise.reject(new Error('Company name should be at least 2 characters'));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
                   ]}
+                  validateTrigger={['onBlur', 'onSubmit']}
                 >
-                  <Input placeholder="Enter Company Name" size="large" />
+                  <Input 
+                    placeholder="Enter company name" 
+                    size="large"
+                    onBlur={(e) => {
+                      const trimmed = e.target.value.trim();
+                      if (trimmed !== e.target.value) {
+                        form.setFieldsValue({ companyName: trimmed });
+                      }
+                    }}
+                  />
                 </Form.Item>
               ) : null
             }

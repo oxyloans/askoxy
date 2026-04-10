@@ -8,6 +8,7 @@ interface TaskProtectedRouteProps {
 
 const TaskProtectedRoute: React.FC<TaskProtectedRouteProps> = ({ children }) => {
   const accessToken = getEmployeeAccessToken();
+  
   const primaryType = sessionStorage.getItem('primaryType');
 
   if (!accessToken || primaryType !== 'EMPLOYEE') {

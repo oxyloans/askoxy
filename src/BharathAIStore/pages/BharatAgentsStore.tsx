@@ -1175,8 +1175,8 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
                       </button>
                     )}
 
-                    {/* Explore AI Stores */}
-                    <button
+                  
+                    {/* <button
                       onClick={handleAistoresClick}
                       className={[
                         "shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition",
@@ -1188,7 +1188,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
                       aria-pressed={tab === "AISTORES"}
                     >
                       Explore AI Stores
-                    </button>
+                    </button> */}
 
                     {/* Create AI Agent */}
                     <button

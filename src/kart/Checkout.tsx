@@ -288,12 +288,17 @@ const CheckoutPage: React.FC = () => {
       const todaySlot = timeSlots.find((slot) => slot.date === formattedToday);
 
       if (todaySlot) {
-        // Try to auto-select the first available time slot
-        const availableTimeSlot =
-          todaySlot.timeSlot1 ||
-          todaySlot.timeSlot2 ||
-          todaySlot.timeSlot3 ||
-          todaySlot.timeSlot4;
+        // Try to auto-select the first available time slot based on status (false = available)
+        let availableTimeSlot = null;
+        if (todaySlot.slot1Status === false && todaySlot.timeSlot1) {
+          availableTimeSlot = todaySlot.timeSlot1;
+        } else if (todaySlot.slot2Status === false && todaySlot.timeSlot2) {
+          availableTimeSlot = todaySlot.timeSlot2;
+        } else if (todaySlot.slot3Status === false && todaySlot.timeSlot3) {
+          availableTimeSlot = todaySlot.timeSlot3;
+        } else if (todaySlot.slot4Status === false && todaySlot.timeSlot4) {
+          availableTimeSlot = todaySlot.timeSlot4;
+        }
 
         if (availableTimeSlot) {
           handleSelectTimeSlot(
@@ -480,6 +485,10 @@ const CheckoutPage: React.FC = () => {
           timeSlot3: string | null;
           timeSlot4: string | null;
           isAvailable: boolean;
+          slot1Status?: boolean;
+          slot2Status?: boolean;
+          slot3Status?: boolean;
+          slot4Status?: boolean;
         }
 
         const formattedTimeSlots: ExtendedTimeSlot[] = [];
@@ -487,29 +496,43 @@ const CheckoutPage: React.FC = () => {
           const matchingSlot = response.data.find(
             (slot: ApiTimeSlot) =>
               slot.dayOfWeek === dayInfo.dayOfWeek &&
-              slot.isAvailable === false,
+              slot.isAvailable === false, // false means available for delivery
           );
 
           if (matchingSlot) {
-            const hasTimeSlot =
-              matchingSlot.timeSlot1 ||
-              matchingSlot.timeSlot2 ||
-              matchingSlot.timeSlot3 ||
-              matchingSlot.timeSlot4;
+            // Get available time slots based on status flags (false = available)
+            const availableSlots = [];
+            if (matchingSlot.slot1Status === false && matchingSlot.timeSlot1) {
+              availableSlots.push(matchingSlot.timeSlot1);
+            }
+            if (matchingSlot.slot2Status === false && matchingSlot.timeSlot2) {
+              availableSlots.push(matchingSlot.timeSlot2);
+            }
+            if (matchingSlot.slot3Status === false && matchingSlot.timeSlot3) {
+              availableSlots.push(matchingSlot.timeSlot3);
+            }
+            if (matchingSlot.slot4Status === false && matchingSlot.timeSlot4) {
+              availableSlots.push(matchingSlot.timeSlot4);
+            }
 
-            if (hasTimeSlot) {
+            // Only add if there are available slots
+            if (availableSlots.length > 0) {
               formattedTimeSlots.push({
                 id: matchingSlot.id,
                 dayOfWeek: dayInfo.dayOfWeek,
                 expectedDeliveryDate: dayInfo.date,
-                timeSlot1: matchingSlot.timeSlot1,
-                timeSlot2: matchingSlot.timeSlot2,
-                timeSlot3: matchingSlot.timeSlot3,
-                timeSlot4: matchingSlot.timeSlot4,
-                isAvailable: false,
+                timeSlot1: matchingSlot.slot1Status === false ? matchingSlot.timeSlot1 : null,
+                timeSlot2: matchingSlot.slot2Status === false ? matchingSlot.timeSlot2 : null,
+                timeSlot3: matchingSlot.slot3Status === false ? matchingSlot.timeSlot3 : null,
+                timeSlot4: matchingSlot.slot4Status === false ? matchingSlot.timeSlot4 : null,
+                isAvailable: false, // Keep original value
                 isToday: false,
                 date: dayInfo.date,
                 formattedDay: dayInfo.formattedDay,
+                slot1Status: matchingSlot.slot1Status,
+                slot2Status: matchingSlot.slot2Status,
+                slot3Status: matchingSlot.slot3Status,
+                slot4Status: matchingSlot.slot4Status,
               });
             }
           }

@@ -258,6 +258,23 @@ const AllAgentsPage: React.FC = () => {
 
   // ⬇️ place with the other React.useState hooks (top of component)
   const [avatarMenuFor, setAvatarMenuFor] = useState<string | null>(null);
+  
+  // Close avatar menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (avatarMenuFor) {
+        setAvatarMenuFor(null);
+      }
+    };
+    
+    if (avatarMenuFor) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [avatarMenuFor]);
   const [genLoadingFor, setGenLoadingFor] = useState<string | null>(null);
   const [genPreviewUrl, setGenPreviewUrl] = useState<string | null>(null);
   const [genPreviewAssistantId, setGenPreviewAssistantId] = useState<
@@ -1869,7 +1886,10 @@ const AllAgentsPage: React.FC = () => {
 
                                 {/* tiny action sheet */}
                                 {avatarMenuFor === a.id && (
-                                  <div className="absolute z-20 left-1/2 -translate-x-1/2 bottom-8 w-[180px] rounded-xl bg-white border border-purple-200 shadow-lg p-2">
+                                  <div 
+                                    className="absolute z-20 left-1/2 -translate-x-1/2 bottom-8 w-[180px] rounded-xl bg-white border border-purple-200 shadow-lg p-2"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <button
                                       onClick={() => {
                                         // OPEN native file picker (your upload image API)
@@ -1877,15 +1897,17 @@ const AllAgentsPage: React.FC = () => {
                                           `img_${a.id}`
                                         ) as HTMLInputElement | null;
                                         if (el) el.click();
+                                        setAvatarMenuFor(null);
                                       }}
                                       className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-purple-50"
                                     >
                                       Upload Profile…
                                     </button>
                                     <button
-                                      onClick={() =>
-                                        generateProfilePicForAssistant(a)
-                                      }
+                                      onClick={() => {
+                                        generateProfilePicForAssistant(a);
+                                        setAvatarMenuFor(null);
+                                      }}
                                       className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-purple-50"
                                       disabled={!!genLoadingFor}
                                     >

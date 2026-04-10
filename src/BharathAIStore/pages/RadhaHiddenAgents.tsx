@@ -1,8 +1,8 @@
 // src/BharathAIStore/pages/RadhaHiddenAgents.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bot } from "lucide-react";
-
+import BASE_URL from "../../Config";
 // ------------------ Types ------------------
 export interface Assistant {
   id?: string;
@@ -140,101 +140,50 @@ const HiddenAssistantCard: React.FC<{
   );
 };
 
-// ------------------ Static Agents ------------------
-const staticAgents: Assistant[] = [
-  {
-    id: "MyCBS Data Assistant",
-    assistantId: "MyCBS Data Assistant",
-    agentId: "MyCBS Data Assistant*",
-    name: "MyCBS Data Assistant",
-    description:
-      "The CBS Data Analyst agent is designed to support data professionals by conducting thorough analyses of datasets to identify trends and insights. Its primary purpose is to enhance the accuracy of data interpretations, aiding users in making informed business decisions. — for CBS Data Analyst, to Improve accuracy, aimed at Analyze.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/asst_3JtI3qfOaJFi31V9247UuAQh/90a2142e-1c32-422b-a6fb-7e94cdd2286e/MyCBS%20Data%20Assistant",
-  },
-  {
-    id: "Tie Data Analyst",
-    assistantId: "Tie Data Analyst",
-    agentId: "Tie Data Analyst",
-    name: "Tie Data Analyst",
-    description:
-      "This AI agent assists data analysts in improving accuracy by analyzing datasets for trends, anomalies, and patterns. It streamlines data interpretation, offers insights for refinement, and supports decision-making processes, ensuring precise outcomes. — for Data Analyst, to Improve accuracy, aimed at Analyze.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/asst_gO1AvaQNoiW9yucgpWSLvgol/b1c61254-198b-44d5-b00b-943bb6ab76bc/Tie%20Data%20Analyst",
-  },
-  {
-    id: "OXY <> Jobs",
-    assistantId: "OXY <> Jobs",
-    agentId: "OXY <> Jobs",
-    name: "OXY <> Jobs",
-    description:
-      "A centralized hub of AI agents for job data analysis, recruitment insights, and workforce information retrieval.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/ai-store/oxy-jobs",
-  },
-  {
-    id: "TCS 360*",
-    assistantId: "TCS 360*",
-    agentId: "TCS 360*",
-    name: "TCS 360*",
-    description:
-      "As a Hiring Manager, you seamlessly onboard new talent, ensuring a welcoming transition into our team. Your goal is to foster lasting relationships, cultivate a collaborative environment, and support each individual's growth, strengthening our organization from the inside out. — for Hiring Manager, to Relationship Building, aimed at Onboard.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/asst_EMGqe1uGtWU0IQDsxmjqA3Ps/a6f777a5-1ebd-41a4-be40-d76f101086e9/TCS%20360*",
-  },
-  {
-    id: "ftcci-agent-static",
-    assistantId: "ftcci-agent-static",
-    agentId: "ftcci-agent-static",
-    name: "FTCCI Agent",
-    description:
-      "AI Agent that organizes and retrieves FTCCI Federation contacts across industries. Provides quick access to business leaders, policymakers, and professionals, enabling networking, partnerships, and opportunities in Telangana and beyond.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/asst_CjeprnghuYO8OsMdCD8JIx8A/3bf72057-bdc0-4864-afac-51f39f6a7524/ftcci-agent",
-  },
-  {
-    id: "oxygroup-task-management-static",
-    assistantId: "oxygroup-task-management-static",
-    agentId: "oxygroup-task-management-static",
-    name: "OXYGroup Task Management",
-    description:
-      "An intelligent agent monitors employees' daily task updates, verifies authenticity, detects duplicate submissions, flags errors, and ensures accurate and genuine reporting of morning plans and end-of-day reports.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/asst_V41gWq69vrfVyCc4rTMScxIE/d1bc5d31-6c7b-4412-9aae-fa8070ad9ff0/oxygroup-task-management",
-  },
-  // {
-  //   id: "AI SkillPulse",
-  //   assistantId: "AI SkillPulse",
-  //   agentId: "AI SkillPulse",
-  //   name: "AI SkillPulse",
-  //   description:
-  //     "As an AI Digital Marketing Specialist, I am dedicated to enhancing skill sets while streamlining marketing processes. My goal is to automate and optimize digital strategies, ensuring creative and data-driven solutions for a more efficient and impactful marketing journey. — for AI Digital Marketing Specialist, to Automate, aimed at Upskilling.",
-  //   imageUrl: "",
-  //   hideAgent: true,
-  //   link: "/asst_98JoVhODSw0lZ85v9UsnQMGh/b650b8a5-e1a5-49ed-b236-d6ef6cf8d6c4/AI%20SkillPulse",
-  // },
-  {
-    id: "Rotary District 3150 AI Agent",
-    assistantId: "Rotary District 3150 AI Agent",
-    agentId: "Rotary District 3150 AI Agent",
-    name: "Rotary District 3150 AI Agent",
-    description:
-      "Expertly organizing projects with precision, this Project Manager ensures flawless documentation accuracy. By streamlining processes and maintaining meticulous records, they elevate project success, ensuring all details are captured for seamless execution and accountability. — for Project Manager, to Documentation Accuracy, aimed at Organizing.",
-    imageUrl: "",
-    hideAgent: true,
-    link: "/asst_Sfq4w0aKDtLKXMVFfZxhb6mJ/1b9efd8e-b77a-4d2c-976e-c29697ca3b0c/Rotary%20District5203150",
-  },
-];
+
 
 // ------------------ Page ------------------
 const RadhaHiddenAgents: React.FC = () => {
   const navigate = useNavigate();
+  const [dynamicAgents, setDynamicAgents] = useState<Assistant[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/ai-service/agent/get-all-radha-agents`);
+        const data = await response.json();
+        
+        const agents: Assistant[] = data
+          .filter((agent: any) => agent.viewToRadha === true)
+          .sort((a: any, b: any) => {
+            const dateA = new Date(a.updatedAt).getTime();
+            const dateB = new Date(b.updatedAt).getTime();
+            console.log(`Sorting: ${a.agentName} (${a.updatedAt}) vs ${b.agentName} (${b.updatedAt})`);
+            return dateB - dateA;
+          })
+          .map((agent: any) => ({
+            id: agent.id,
+            assistantId: agent.assistantId,
+            agentId: agent.id,
+            name: agent.agentName || agent.name,
+            description: agent.description,
+            imageUrl: agent.imageUrl,
+            hideAgent: agent.hideAgent
+          }));
+        
+        setDynamicAgents(agents);
+      } catch (error) {
+        console.error('Failed to fetch agents:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, []);
+
+  const allAgents = dynamicAgents;
 
   const slugify = (s: string) =>
     (s || "agent")
@@ -243,13 +192,7 @@ const RadhaHiddenAgents: React.FC = () => {
       .replace(/^-+|-+$/g, "");
 
   const handleOpen = (a: Assistant) => {
-    // For static agents with direct links, navigate directly
-    if (a.link) {
-      window.location.href = a.link;
-      return;
-    }
-
-    // Fallback for dynamic agents (though we don't have any now)
+    // For dynamic agents
     const fullAssistantId = (a.assistantId || a.id || a.agentId || "")
       .toString()
       .trim();
@@ -320,16 +263,22 @@ const RadhaHiddenAgents: React.FC = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
-        {staticAgents.map((a) => (
-          <div
-            key={a.assistantId || a.id || a.agentId || ""}
-            className="h-full flex flex-col"
-          >
-            <HiddenAssistantCard assistant={a} onOpen={() => handleOpen(a)} />
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="text-gray-500">Loading agents...</div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 items-stretch">
+          {allAgents.map((a) => (
+            <div
+              key={a.assistantId || a.id || a.agentId || ""}
+              className="h-full flex flex-col"
+            >
+              <HiddenAssistantCard assistant={a} onOpen={() => handleOpen(a)} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

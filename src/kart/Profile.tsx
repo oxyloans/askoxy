@@ -321,11 +321,16 @@ const ProfilePage = () => {
       errors.userFirstName = "First name should only contain letters";
     }
 
-    // Email validation
-    if (!formData.customerEmail.trim()) {
+    // Email validation - improved regex and trimming
+    const emailValue = formData.customerEmail.trim();
+    if (!emailValue) {
       errors.customerEmail = "Email address is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail.trim())) {
-      errors.customerEmail = "Please enter a valid email address";
+    } else {
+      // More comprehensive email regex
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(emailValue)) {
+        errors.customerEmail = "Please enter a valid email address";
+      }
     }
 
     if (formData.alterMobileNumber.trim() !== "") {
@@ -710,12 +715,24 @@ const ProfilePage = () => {
                     <input
                       type="email"
                       value={formData.customerEmail}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const newEmail = e.target.value;
                         setFormData({
                           ...formData,
-                          customerEmail: e.target.value,
-                        })
-                      }
+                          customerEmail: newEmail,
+                        });
+                        
+                        // Clear email validation error if email becomes valid
+                        if (validationErrors.customerEmail && newEmail.trim()) {
+                          const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                          if (emailRegex.test(newEmail.trim())) {
+                            setValidationErrors(prev => ({
+                              ...prev,
+                              customerEmail: ""
+                            }));
+                          }
+                        }
+                      }}
                       className={`w-full px-4 py-3 rounded-lg border transition-all
                                      ${
                                        validationErrors.customerEmail

@@ -27,9 +27,8 @@ export const useSessionManager = (onLogout: () => void) => {
   }, [onLogout]);
 
   const handleSessionLogout = useCallback(() => {
-    console.log('Session Manager - User chose to logout, cleaning up tokens');
     setShowSessionModal(false);
-    // Clean up tokens when user explicitly chooses to logout
+    // Clean up tokens when user explicitly chooses to logout from session modal
     removeAdminAccessToken();
     removeAdminRefreshToken();
     onLogout();
@@ -39,31 +38,33 @@ export const useSessionManager = (onLogout: () => void) => {
     const refreshToken = getAdminRefreshToken();
     const accessToken = getAdminAccessToken();
 
-    console.log('Session Manager - Tokens:', { refreshToken: !!refreshToken, accessToken: !!accessToken });
-
     // If no tokens at all, don't start anything
-    if (!refreshToken || !accessToken) {
-      console.log('Session Manager - No tokens found, not starting session management');
-      return;
-    }
+    if (!refreshToken || !accessToken) return;
 
-    console.log('Session Manager - Starting session management');
     // Start background auto-refresh while user is active
     startTokenRefresh();
 
-    // Handle silent background refresh failure
+    // Handle silent background refresh failure - this is critical!
     const backgroundRefreshCheck = setInterval(async () => {
       const token = getAdminAccessToken();
       const rToken = getAdminRefreshToken();
-      if (!token || !rToken) {
-        console.log('Session Manager - Tokens missing, showing session modal instead of logout');
+      
+      // If no refresh token, user was logged out completely
+      if (!rToken) {
         clearInterval(backgroundRefreshCheck);
+        stopTokenRefresh();
+        onLogout();
+        return;
+      }
+      
+      // If access token missing but refresh token exists, show modal
+      if (!token && rToken && !showSessionModal) {
         stopTokenRefresh();
         startTransition(() => {
           setShowSessionModal(true);
         });
       }
-    }, 10 * 1000); // check every 10s if tokens got wiped
+    }, 10 * 1000); // check every 10s
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -77,7 +78,6 @@ export const useSessionManager = (onLogout: () => void) => {
 
           if (awayDuration >= TOKEN_EXPIRY_MS) {
             // User was away long enough that token may have expired
-            console.log('Session Manager - User away too long, showing session modal');
             stopTokenRefresh();
             startTransition(() => {
               setShowSessionModal(true);
@@ -99,7 +99,7 @@ export const useSessionManager = (onLogout: () => void) => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       stopTokenRefresh();
     };
-  }, []);
+  }, [showSessionModal]);
 
   return {
     showSessionModal,

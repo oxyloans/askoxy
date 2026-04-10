@@ -105,21 +105,14 @@ const Sidebar: React.FC = () => {
   // Session management
   const { showSessionModal, refreshing, handleContinueSession, handleSessionLogout } = useSessionManager(handleLogout);
   
-  // Debug logging
-  console.log('Sider - showSessionModal:', showSessionModal);
+  
 
   useEffect(() => {
     const tokenString = getAdminAccessToken();
-    const refreshToken = getAdminRefreshToken();
-    
-    // If no access token but refresh token exists, let session manager handle it
-    if (!tokenString && refreshToken) {
-      console.log('Sider - No access token but refresh token exists, letting session manager handle');
-      return;
-    }
+    // const refreshToken = getAdminRefreshToken();
     
     // If no tokens at all, redirect to login
-    if (!tokenString) {
+    if (!tokenString ) {
       navigate("/admin", { replace: true });
       return;
     }

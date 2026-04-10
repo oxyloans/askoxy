@@ -1351,13 +1351,16 @@ const ItemDisplayPage = () => {
                           </button>
                         )}
 
-                        <button
-                          onClick={() => navigate("/main/checkout")}
-                          className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-green-800 text-white py-3 px-6 rounded-lg hover:from-green-700 hover:to-green-900 transition-all transform hover:scale-105 mt-3"
-                        >
-                          <ShoppingCart className="w-5 h-5" />
-                          <span>Proceed to Checkout</span>
-                        </button>
+                        {/* Show Proceed to Checkout button only when user has items in cart */}
+                        {isItemUserAdded(itemDetails.itemId) && (
+                          <button
+                            onClick={() => navigate("/main/checkout")}
+                            className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-green-800 text-white py-3 px-6 rounded-lg hover:from-green-700 hover:to-green-900 transition-all transform hover:scale-105 mt-3"
+                          >
+                            <ShoppingCart className="w-5 h-5" />
+                            <span>Proceed to Checkout</span>
+                          </button>
+                        )}
 
                         {isMaxStockReached(itemDetails) && (
                           <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 p-3 rounded-lg">

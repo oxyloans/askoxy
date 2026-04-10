@@ -62,6 +62,7 @@ const FreelancersByUserId: React.FC = () => {
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [currentResumeUrl, setCurrentResumeUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [resumeError, setResumeError] = useState(false);
 
   const getAccessToken = (): string | null => {
     return localStorage.getItem("accessToken");
@@ -213,7 +214,10 @@ const FreelancersByUserId: React.FC = () => {
           disabled={!r.resumeUrl}
           onClick={() => {
             if (!r.resumeUrl) {
-              alert("Resume file is invalid or not available.");
+              Modal.error({
+                title: 'Resume Not Available',
+                content: 'This freelancer has not uploaded a resume yet.',
+              });
               return;
             }
             const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
@@ -222,6 +226,7 @@ const FreelancersByUserId: React.FC = () => {
             setCurrentResumeUrl(viewerUrl);
             setShowResumeModal(true);
             setIsLoading(true);
+            setResumeError(false);
           }}
           style={{
             background: PRIMARY,
@@ -326,32 +331,52 @@ const FreelancersByUserId: React.FC = () => {
         </div>
       )}
 
-      {/* Ant Design Modal */}
       <Modal
         title="Resume Viewer"
         open={showResumeModal}
         onCancel={() => {
           setShowResumeModal(false);
           setIsLoading(true);
+          setResumeError(false);
         }}
-        footer={null}
-        width="70%"
+        footer={[
+          <Button key="close" onClick={() => setShowResumeModal(false)}>
+            Close
+          </Button>
+        ]}
+        width={isMobile ? "90%" : "60%"}
         style={{ top: 20 }}
-        bodyStyle={{ height: '80vh', padding: 0 }}
+        bodyStyle={{ height: isMobile ? '70vh' : '75vh', padding: 0 }}
         maskClosable={true}
         keyboard={true}
       >
-        {isLoading && (
+        {isLoading && !resumeError && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <Spin size="large" tip="Loading resume..." />
+            <Spin size="large" tip="Loading..." />
           </div>
         )}
-        <iframe
-          src={currentResumeUrl}
-          style={{ width: '100%', height: '100%', border: 'none' }}
-          title="Resume Viewer"
-          onLoad={() => setIsLoading(false)}
-        />
+        {resumeError && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 20 }}>
+            <Alert
+              type="error"
+              message="Failed to load resume"
+              description="The resume file could not be displayed."
+              showIcon
+            />
+          </div>
+        )}
+        {!resumeError && (
+          <iframe
+            src={currentResumeUrl}
+            style={{ width: '100%', height: '100%', border: 'none', display: isLoading ? 'none' : 'block' }}
+            title="Resume Viewer"
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+              setIsLoading(false);
+              setResumeError(true);
+            }}
+          />
+        )}
       </Modal>
     </div>
   );
