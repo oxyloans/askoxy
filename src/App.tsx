@@ -61,6 +61,8 @@ import EmployeeLogin from "./FreelanceMarketplace/EmployeeLogin";
 import EmployeeRegister from "./FreelanceMarketplace/EmployeeRegister";
 import FinvibeLanding from "./Finvibe/Landing";
 import Finvibe3DLanding from './Finvibe/Finvibe3DLanding';
+import OxyGPT  from "./Finvibe/components/Oxyclaude";
+import CodeExplorer from "./Finvibe/components/CodeExplorer";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -608,8 +610,17 @@ const App: React.FC = () => {
               <Route path="/90dayjobplan" element={<JobTraining90DaysPage />} />
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
-              <Route path="/finvibecodebuilder" element={<FinvibeLanding />} />
-              <Route path="/finvibe3dlanding" element={<Finvibe3DLanding />} />
+              <Route path="/Oxygpt" element={<OxyGPT />} />
+              <Route path="/oxybfsai" element={<Finvibe3DLanding />} />
+              <Route path="/bfsi-projects" element={<CodeExplorer />} />
+              <Route
+                path="/finvibe-code-builder"
+                element={<FinvibeLanding />}
+              />
+              <Route
+                path="/insurvibe-code-builder"
+                element={<FinvibeLanding />}
+              />
 
               <Route
                 path="/carnivals/edit/:id"

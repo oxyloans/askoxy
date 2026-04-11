@@ -447,7 +447,7 @@ const AddGamesBlog: React.FC = () => {
         isEditMode ? "Vote blog updated successfully" : "Vote blog added successfully"
       );
 
-      navigate("/admin/allroleblogs", { replace: true });
+      navigate("/admn/allroleblogs", { replace: true });
     } catch (error: any) {
       console.error("Submit games blog error:", error);
 
@@ -502,7 +502,7 @@ const AddGamesBlog: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => navigate("/admin/allroleblogs")}
+                onClick={() => navigate("/admn/allroleblogs")}
                 className="inline-flex items-center justify-center rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/25 border border-white/25"
               >
                 All Poll Blogs
@@ -748,13 +748,6 @@ Russell and Narine can change the game.`}
                     : "Add Poll Blog"}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => navigate("/admin/allroleblogs")}
-                  className="rounded-2xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                >
-                  /admn/allroleblogs
-                </button>
               </div>
             </div>
           </form>

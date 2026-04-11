@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 // ── Utility
 const clamp = (v: number, min: number, max: number): number =>
@@ -15,6 +16,7 @@ interface SectionCardProps {
   side: "left" | "right"; title: string; description: string;
   stats?: StatItem[]; categories?: CategoryItem[];
   ctaLabel: string; ctaColor: string; icon: string;
+  onCta: () => void;
 }
 interface AnimCounterProps { target: number; suffix?: string; duration?: number; }
 interface TiltCardProps { children: React.ReactNode; style?: React.CSSProperties; }
@@ -48,6 +50,7 @@ function useGreetingSpeech() {
   useEffect(() => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     const hour = new Date().getHours();
+   
     const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
     const greet = () => {
       const voices = window.speechSynthesis.getVoices();
@@ -241,7 +244,7 @@ function StatBadge({number, label, color="#00f5ff"}: {number:string; label:strin
 }
 
 // ── Section Card
-function SectionCard({side,title,description,stats,categories,ctaLabel,ctaColor,icon}: SectionCardProps) {
+function SectionCard({side,title,description,stats,categories,ctaLabel,ctaColor,icon,onCta}: SectionCardProps) {
   const isLeft = side === "left";
   return (
     <TiltCard style={{flex:1,minWidth:0}}>
@@ -251,13 +254,15 @@ function SectionCard({side,title,description,stats,categories,ctaLabel,ctaColor,
         position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",gap:20}}>
         <div style={{position:"absolute",top:-70,[isLeft?"left":"right"]:-70,width:180,height:180,borderRadius:"50%",
           background:`radial-gradient(circle,${ctaColor}18 0%,transparent 70%)`,pointerEvents:"none"}}/>
-        <div style={{width:56,height:56,borderRadius:14,background:`linear-gradient(135deg,${ctaColor}28,${ctaColor}0a)`,
-          border:`1px solid ${ctaColor}38`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.8rem"}}>{icon}</div>
-        <div>
-          <div style={{fontSize:".68rem",letterSpacing:".2em",color:ctaColor,textTransform:"uppercase",marginBottom:6,fontFamily:"'Orbitron',monospace"}}>
-            {isLeft?"Banking":"Insurance"} · AI Platform
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <div style={{width:56,height:56,borderRadius:14,background:`linear-gradient(135deg,${ctaColor}28,${ctaColor}0a)`,
+            border:`1px solid ${ctaColor}38`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.8rem",flexShrink:0}}>{icon}</div>
+          <div>
+            <div style={{fontSize:".68rem",letterSpacing:".2em",color:ctaColor,textTransform:"uppercase",marginBottom:6,fontFamily:"'Orbitron',monospace"}}>
+              {isLeft?"Banking":"Insurance"} · AI Platform
+            </div>
+            <h2 style={{fontSize:"1.6rem",fontWeight:800,color:"#fff",fontFamily:"'Orbitron',monospace",margin:0}}>{title}</h2>
           </div>
-          <h2 style={{fontSize:"1.6rem",fontWeight:800,color:"#fff",fontFamily:"'Orbitron',monospace",margin:0}}>{title}</h2>
         </div>
         <p style={{color:"rgba(255,255,255,.6)",fontSize:".88rem",lineHeight:1.72,margin:0}}>{description}</p>
         {stats && <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>{stats.map((s,i) => <StatBadge key={i} number={s.number} label={s.label} color={ctaColor}/>)}</div>}
@@ -274,6 +279,7 @@ function SectionCard({side,title,description,stats,categories,ctaLabel,ctaColor,
           ))}
         </div>}
         <button
+          onClick={onCta}
           style={{marginTop:"auto",padding:"12px 28px",borderRadius:12,border:`1px solid ${ctaColor}55`,
             background:`linear-gradient(135deg,${ctaColor}18,${ctaColor}05)`,color:ctaColor,
             fontFamily:"'Orbitron',monospace",fontWeight:700,fontSize:".82rem",letterSpacing:".1em",
@@ -290,6 +296,7 @@ function SectionCard({side,title,description,stats,categories,ctaLabel,ctaColor,
 // ── Navbar
 function Navbar({activeSection, setActiveSection}: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
+   const navigate =useNavigate()
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", h);
@@ -314,14 +321,42 @@ function Navbar({activeSection, setActiveSection}: NavbarProps) {
             onMouseLeave={e=>(e.currentTarget.style.color="rgba(255,255,255,.65)")}>{item}</a>
         ))}
       </div>
-      <div style={{display:"flex",gap:10}}>
-        {([{label:"Banking",color:"#00f5ff"},{label:"Insurance",color:"#a855f7"}] as {label:string;color:string}[]).map(btn => (
-          <button key={btn.label} onClick={()=>setActiveSection(btn.label.toLowerCase())}
-            style={{padding:"7px 18px",borderRadius:8,border:`1px solid ${btn.color}48`,cursor:"pointer",
-              background:activeSection===btn.label.toLowerCase()?`linear-gradient(135deg,${btn.color}28,${btn.color}0a)`:"transparent",
-              color:btn.color,fontFamily:"'Orbitron',monospace",fontWeight:700,fontSize:".72rem",transition:"all .3s"}}>{btn.label}</button>
-        ))}
-      </div>
+  <div style={{display:"flex",gap:10}}>
+  {([
+    {label:"Banking",color:"#00f5ff"},
+    {label:"Insurance",color:"#a855f7"}
+  ] as {label:string;color:string}[]).map(btn => (
+    <button
+      key={btn.label}
+      onClick={() => {
+        const section = btn.label.toLowerCase();
+        setActiveSection(section);
+
+        if (section === "banking") {
+          navigate("/finvibe-code-builder", { state: { mode: "banking" } });
+        } else if (section === "insurance") {
+          navigate("/insurvibe-code-builder", { state: { mode: "insurance" } });
+        }
+      }}
+      style={{
+        padding:"7px 18px",
+        borderRadius:8,
+        border:`1px solid ${btn.color}48`,
+        cursor:"pointer",
+        background:activeSection===btn.label.toLowerCase()
+          ? `linear-gradient(135deg,${btn.color}28,${btn.color}0a)`
+          : "transparent",
+        color:btn.color,
+        fontFamily:"'Orbitron',monospace",
+        fontWeight:700,
+        fontSize:".72rem",
+        transition:"all .3s"
+      }}
+    >
+      {btn.label}
+    </button>
+  ))}
+</div>
     </nav>
   );
 }
@@ -482,11 +517,11 @@ function RoadmapSection() {
   );
 }
 
-// ── Main App
 export default function App() {
   const [activeSection, setActiveSection] = useState("banking");
   useForceBodyDark();
   const speaking = useGreetingSpeech();
+   const navigate =useNavigate()
 
   return (
     <div style={{background:"#020414",minHeight:"100vh",color:"#fff",fontFamily:"'Sora',sans-serif",overflowX:"hidden"}}>
@@ -522,7 +557,6 @@ export default function App() {
 
       <Navbar activeSection={activeSection} setActiveSection={setActiveSection}/>
 
-      {/* ── HERO */}
       <section style={{position:"relative",zIndex:2,minHeight:"60vh",display:"flex",flexDirection:"column",
         alignItems:"center",justifyContent:"center",padding:"80px 40px 40px",textAlign:"center",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,zIndex:-1,
@@ -577,14 +611,16 @@ export default function App() {
           <SectionCard side="left" title="Banking Intelligence"
             description="Empowering financial institutions with scalable AI-driven solutions, automation frameworks, and deep analytics — from compliance intelligence to real-time transaction monitoring."
             stats={[{number:"253+",label:"Master Directions"},{number:"51+",label:"Banking Use Cases"}]}
-            ctaLabel="Explore Banking" ctaColor="#00f5ff" icon="🏦"/>
+            ctaLabel="Explore Banking" ctaColor="#00f5ff" icon="🏦"
+            onCta={() => navigate("/finvibe-code-builder", { state: { mode: "banking" } })}/>
           <SectionCard side="right" title="Insurance Intelligence"
             description="Revolutionizing insurance ecosystems with intelligent product mapping, automation, and real-time insights — from policy lifecycle to claims intelligence and risk scoring."
             categories={[
               {name:"🛡️ Life Insurance",stats:[{number:"28+",label:"Companies"},{number:"2800+",label:"Products"}]},
               {name:"🔒 General Insurance",stats:[{number:"30+",label:"Providers"},{number:"1200+",label:"Products"}]}
             ]}
-            ctaLabel="Explore Insurance" ctaColor="#a855f7" icon="🛡️"/>
+            ctaLabel="Explore Insurance" ctaColor="#a855f7" icon="🛡️"
+            onCta={() => navigate("/insurvibe-code-builder", { state: { mode: "insurance" } })}/>
         </div>
       </section>
 
@@ -641,6 +677,64 @@ export default function App() {
         </div>
       </section>
 
+      <section style={{position:"relative",zIndex:2,padding:"0 40px 60px"}}>
+        <div style={{maxWidth:1080,margin:"0 auto"}}>
+          <div style={{
+            background:"linear-gradient(135deg,rgba(0,245,255,.06) 0%,rgba(124,58,237,.08) 50%,rgba(168,85,247,.06) 100%)",
+            border:"1px solid rgba(0,245,255,.18)",
+            borderRadius:20,
+            padding:"28px 36px",
+            display:"flex",
+            alignItems:"center",
+            justifyContent:"space-between",
+            gap:24,
+            flexWrap:"wrap" as const,
+            boxShadow:"0 0 40px rgba(0,245,255,.06)",
+          }}>
+            <div style={{display:"flex",alignItems:"center",gap:16}}>
+              <div style={{
+                width:48,height:48,borderRadius:13,flexShrink:0,
+                background:"linear-gradient(135deg,rgba(0,245,255,.18),rgba(124,58,237,.18))",
+                border:"1px solid rgba(0,245,255,.28)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.5rem",
+              }}>📦</div>
+              <div>
+                <p style={{fontSize:".68rem",letterSpacing:".16em",textTransform:"uppercase" as const,
+                  color:"rgba(0,245,255,.7)",fontFamily:"'Orbitron',monospace",fontWeight:600,margin:"0 0 4px"}}>Community Showcase</p>
+                <h3 style={{fontFamily:"'Orbitron',monospace",fontWeight:800,fontSize:"clamp(.95rem,2vw,1.2rem)",
+                  color:"#fff",margin:"0 0 5px",letterSpacing:"-.01em"}}>Explore Already Generated Code</h3>
+                <p style={{fontSize:".8rem",color:"rgba(255,255,255,.45)",margin:0,lineHeight:1.6,fontFamily:"sans-serif"}}>
+                  Browse real BFSI apps built by OXYBFS.AI — full backend, frontend &amp; database code, ready to use.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate("/bfsi-projects")}
+              style={{
+                padding:"12px 28px",borderRadius:11,border:"1px solid rgba(0,245,255,.5)",
+                background:"linear-gradient(135deg,rgba(0,245,255,.14),rgba(124,58,237,.1))",
+                color:"#00f5ff",fontFamily:"'Orbitron',monospace",fontWeight:700,
+                fontSize:".78rem",letterSpacing:".08em",cursor:"pointer",
+                transition:"all .25s",whiteSpace:"nowrap" as const,flexShrink:0,
+                boxShadow:"0 0 20px rgba(0,245,255,.1)",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(0,245,255,.28),rgba(124,58,237,.2))";
+                (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 28px rgba(0,245,255,.22)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(0,245,255,.14),rgba(124,58,237,.1))";
+                (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 0 20px rgba(0,245,255,.1)";
+              }}
+            >
+              Let's Start →
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA */}
       <section style={{position:"relative",zIndex:2,padding:"70px 40px",textAlign:"center",
         background:"linear-gradient(135deg,rgba(0,245,255,.035) 0%,rgba(124,58,237,.06) 50%,rgba(168,85,247,.035) 100%)",
@@ -654,20 +748,44 @@ export default function App() {
           Join leading banks and insurers leveraging OXYBFS.AI to build the future of intelligent financial services.
         </p>
         <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-          {([
-            // {label:"Get Started Free",bg:"linear-gradient(135deg,#00f5ff,#2563eb)",color:"#000",shadow:"0 0 32px rgba(0,245,255,.4)"},
-            {label:"Get Started with Banking",bg:"transparent",color:"#00f5ff",border:"1px solid rgba(0,245,255,.5)",shadow:"none"},
-            {label:"Get Started with Insurance",bg:"transparent",color:"#a855f7",border:"1px solid rgba(168,85,247,.5)",shadow:"none"},
-          ] as {label:string;bg:string;color:string;border?:string;shadow:string}[]).map((btn,i) => (
-            <button key={i} style={{padding:"13px 30px",borderRadius:11,background:btn.bg,color:btn.color,
-              border:btn.border??"none",fontFamily:"'Orbitron',monospace",fontWeight:700,fontSize:".8rem",
-              cursor:"pointer",boxShadow:btn.shadow,letterSpacing:".08em",transition:"all .28s"}}
-              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px) scale(1.02)";}}
-              onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0) scale(1)";}}>
-              {btn.label}
-            </button>
-          ))}
-        </div>
+  {([
+    {label:"Get Started with Banking",bg:"transparent",color:"#00f5ff",border:"1px solid rgba(0,245,255,.5)",shadow:"none"},
+    {label:"Get Started with Insurance",bg:"transparent",color:"#a855f7",border:"1px solid rgba(168,85,247,.5)",shadow:"none"},
+  ] as {label:string;bg:string;color:string;border?:string;shadow:string}[]).map((btn,i) => (
+    <button
+      key={i}
+      style={{
+        padding:"13px 30px",
+        borderRadius:11,
+        background:btn.bg,
+        color:btn.color,
+        border:btn.border??"none",
+        fontFamily:"'Orbitron',monospace",
+        fontWeight:700,
+        fontSize:".8rem",
+        cursor:"pointer",
+        boxShadow:btn.shadow,
+        letterSpacing:".08em",
+        transition:"all .28s"
+      }}
+      onClick={() => {
+        if (btn.label === "Get Started with Banking") {
+          navigate("/finvibe-code-builder", { state: { mode: "banking" } });
+        } else if (btn.label === "Get Started with Insurance") {
+          navigate("/insurvibe-code-builder", { state: { mode: "insurance" } });
+        }
+      }}
+      onMouseEnter={e=>{
+        e.currentTarget.style.transform="translateY(-3px) scale(1.02)";
+      }}
+      onMouseLeave={e=>{
+        e.currentTarget.style.transform="translateY(0) scale(1)";
+      }}
+    >
+      {btn.label}
+    </button>
+  ))}
+</div>
       </section>
 
       {/* ── FOOTER */}

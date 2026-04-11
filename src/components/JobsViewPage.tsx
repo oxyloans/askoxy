@@ -101,20 +101,190 @@ const JobViewPage: React.FC = () => {
   const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>({});
 
 
+  const cleanLocation = (location: string): string => {
+    if (!location) return '';
+    
+    // Remove all unwanted patterns more aggressively
+    let cleaned = location
+      .replace(/\b\d{6}\b/g, '') // Remove 6-digit pincodes
+      .replace(/\b\d{5}\b/g, '') // Remove 5-digit codes
+      .replace(/\b[A-Z]{2,3}\b/g, '') // Remove state codes like AP, TS, etc
+      .replace(/\bnodioa\b/gi, '') // Remove "nodioa"
+      .replace(/\b\d+th\s+floor\b/gi, '') // Remove "10th floor" etc
+      .replace(/\bfloor\b/gi, '') // Remove "floor"
+      .replace(/\bdoor\s+no\b/gi, '') // Remove "door no"
+      .replace(/\bplot\s+no\b/gi, '') // Remove "plot no"
+      .replace(/\bplot\b/gi, '') // Remove "plot"
+      .replace(/\b\d+-\d+\b/g, '') // Remove number ranges like "12-34"
+      .replace(/\b\d+\b/g, '') // Remove all standalone numbers
+      .replace(/[,\s]+/g, ' ') // Replace multiple commas/spaces with single space
+      .replace(/[^a-zA-Z\s]/g, '') // Remove all non-alphabetic characters except spaces
+      .trim();
+    
+    // Only accept known major cities
+    const validCities = {
+      'hyderabad': 'Hyderabad',
+      'bangalore': 'Bangalore',
+      'bengaluru': 'Bangalore',
+      'chennai': 'Chennai',
+      'mumbai': 'Mumbai',
+      'delhi': 'Delhi',
+      'pune': 'Pune',
+      'kolkata': 'Kolkata',
+      'ahmedabad': 'Ahmedabad',
+      'surat': 'Surat',
+      'jaipur': 'Jaipur',
+      'lucknow': 'Lucknow',
+      'kanpur': 'Kanpur',
+      'nagpur': 'Nagpur',
+      'indore': 'Indore',
+      'thane': 'Thane',
+      'bhopal': 'Bhopal',
+      'visakhapatnam': 'Visakhapatnam',
+      'pimpri': 'Pimpri-Chinchwad',
+      'patna': 'Patna',
+      'vadodara': 'Vadodara',
+      'ghaziabad': 'Ghaziabad',
+      'ludhiana': 'Ludhiana',
+      'agra': 'Agra',
+      'nashik': 'Nashik',
+      'faridabad': 'Faridabad',
+      'meerut': 'Meerut',
+      'rajkot': 'Rajkot',
+      'kalyan': 'Kalyan-Dombivli',
+      'vasai': 'Vasai-Virar',
+      'varanasi': 'Varanasi',
+      'srinagar': 'Srinagar',
+      'aurangabad': 'Aurangabad',
+      'dhanbad': 'Dhanbad',
+      'amritsar': 'Amritsar',
+      'navi mumbai': 'Navi Mumbai',
+      'allahabad': 'Allahabad',
+      'ranchi': 'Ranchi',
+      'howrah': 'Howrah',
+      'coimbatore': 'Coimbatore',
+      'jabalpur': 'Jabalpur',
+      'gwalior': 'Gwalior',
+      'vijayawada': 'Vijayawada',
+      'jodhpur': 'Jodhpur',
+      'madurai': 'Madurai',
+      'raipur': 'Raipur',
+      'kota': 'Kota',
+      'guwahati': 'Guwahati',
+      'chandigarh': 'Chandigarh',
+      'solapur': 'Solapur',
+      'hubli': 'Hubli-Dharwad',
+      'tiruchirappalli': 'Tiruchirappalli',
+      'bareilly': 'Bareilly',
+      'mysore': 'Mysore',
+      'tiruppur': 'Tiruppur',
+      'gurgaon': 'Gurgaon',
+      'aligarh': 'Aligarh',
+      'jalandhar': 'Jalandhar',
+      'bhubaneswar': 'Bhubaneswar',
+      'salem': 'Salem',
+      'warangal': 'Warangal',
+      'guntur': 'Guntur',
+      'bhiwandi': 'Bhiwandi',
+      'saharanpur': 'Saharanpur',
+      'gorakhpur': 'Gorakhpur',
+      'bikaner': 'Bikaner',
+      'amravati': 'Amravati',
+      'noida': 'Noida',
+      'jamshedpur': 'Jamshedpur',
+      'bhilai': 'Bhilai',
+      'cuttack': 'Cuttack',
+      'firozabad': 'Firozabad',
+      'kochi': 'Kochi',
+      'nellore': 'Nellore',
+      'bhavnagar': 'Bhavnagar',
+      'dehradun': 'Dehradun',
+      'durgapur': 'Durgapur',
+      'asansol': 'Asansol',
+      'rourkela': 'Rourkela',
+      'nanded': 'Nanded',
+      'kolhapur': 'Kolhapur',
+      'ajmer': 'Ajmer',
+      'akola': 'Akola',
+      'gulbarga': 'Gulbarga',
+      'jamnagar': 'Jamnagar',
+      'ujjain': 'Ujjain',
+      'loni': 'Loni',
+      'siliguri': 'Siliguri',
+      'jhansi': 'Jhansi',
+      'ulhasnagar': 'Ulhasnagar',
+      'jammu': 'Jammu',
+      'sangli': 'Sangli-Miraj & Kupwad',
+      'mangalore': 'Mangalore',
+      'erode': 'Erode',
+      'belgaum': 'Belgaum',
+      'ambattur': 'Ambattur',
+      'tirunelveli': 'Tirunelveli',
+      'malegaon': 'Malegaon',
+      'gaya': 'Gaya',
+      'jalgaon': 'Jalgaon',
+      'udaipur': 'Udaipur',
+      'maheshtala': 'Maheshtala'
+    };
+    
+    const lowerCleaned = cleaned.toLowerCase();
+    
+    // Check if it matches any valid city
+    for (const [key, value] of Object.entries(validCities)) {
+      if (lowerCleaned.includes(key)) {
+        return value;
+      }
+    }
+    
+    // If no valid city found, return empty string (will be filtered out)
+    return '';
+  };
+
+  const cleanExperience = (experience: string): string => {
+    if (!experience) return '';
+    
+    // Remove unwanted patterns
+    let cleaned = experience
+      .replace(/\bgood\s+years?\b/gi, '') // Remove "good years"
+      .replace(/\bprofessional\b/gi, '') // Remove "professional"
+      .replace(/\bexperience\b/gi, '') // Remove "experience"
+      .replace(/[,\s]+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+    
+    // Only accept valid experience patterns
+    const validPatterns = [
+      /^\d+-\d+\s*years?$/i, // "1-3 years", "2-5 years"
+      /^\d+\s*years?$/i, // "2 years", "5 years"
+      /^\d+\+\s*years?$/i, // "5+ years"
+      /^fresher$/i, // "fresher"
+      /^entry\s*level$/i, // "entry level"
+      /^senior$/i, // "senior"
+      /^junior$/i // "junior"
+    ];
+    
+    // Check if cleaned experience matches any valid pattern
+    const isValid = validPatterns.some(pattern => pattern.test(cleaned));
+    
+    if (isValid) {
+      // Standardize the format
+      if (/^\d+$/.test(cleaned)) {
+        return `${cleaned} years`;
+      }
+      return cleaned;
+    }
+    
+    // If no valid pattern found, return empty string (will be filtered out)
+    return '';
+  };
+
   const uniqueLocations = Array.from(
     new Set(
       jobs.flatMap((job) => {
         if (!job.jobLocations?.trim()) return [];
         return job.jobLocations
           .split(",")
-          .map((loc) => loc.trim())
-          .filter(
-            (loc) =>
-              loc &&
-              loc.length > 1 &&
-              loc.toLowerCase() !== "null" &&
-              loc.toLowerCase() !== "undefined",
-          );
+          .map((loc) => cleanLocation(loc.trim()))
+          .filter((loc) => loc && loc.length > 0); // Only keep valid cities
       }),
     ),
   ).sort((a, b) => a.localeCompare(b));
@@ -122,20 +292,14 @@ const JobViewPage: React.FC = () => {
   const uniqueExperience = Array.from(
     new Set(
       jobs
-        .map((job) => job.experience?.trim())
-        .filter(
-          (exp): exp is string =>
-            !!exp &&
-            exp.length > 0 &&
-            exp.toLowerCase() !== "null" &&
-            exp.toLowerCase() !== "undefined",
-        ),
+        .map((job) => cleanExperience(job.experience?.trim() || ''))
+        .filter((exp) => exp && exp.length > 0) // Only keep valid experience
     ),
   ).sort();
 
   const uniqueIndustries = Array.from(
     new Set(
-      jobs
+      ["AI Jobs", ...jobs
         .map((job) => job.industry?.trim())
         .filter(
           (ind): ind is string =>
@@ -143,7 +307,7 @@ const JobViewPage: React.FC = () => {
             ind.length > 0 &&
             ind.toLowerCase() !== "null" &&
             ind.toLowerCase() !== "undefined",
-        ),
+        )]
     ),
   ).sort();
 
@@ -357,6 +521,8 @@ useEffect(() => {
       let url = "";
       if (compName === "ALL") {
         url = `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid`;
+      } else if (compName === "AI Jobs") {
+        url = `${BASE_URL}/marketing-service/campgin/get-ai-jobs`;
       } else {
         url = `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(compName)}`;
       }
@@ -412,19 +578,21 @@ useEffect(() => {
     }
 
     if (filters.location) {
-      filtered = filtered.filter((job) =>
-        job.jobLocations
-          ?.toLowerCase()
-          .includes(filters.location.toLowerCase()),
-      );
+      filtered = filtered.filter((job) => {
+        const cleanedJobLocation = cleanLocation(job.jobLocations || '');
+        return cleanedJobLocation
+          .toLowerCase()
+          .includes(filters.location.toLowerCase());
+      });
     }
 
     if (filters.experience) {
-      filtered = filtered.filter((job) =>
-        job.experience
-          ?.toLowerCase()
-          .includes(filters.experience.toLowerCase()),
-      );
+      filtered = filtered.filter((job) => {
+        const cleanedJobExperience = cleanExperience(job.experience || '');
+        return cleanedJobExperience
+          .toLowerCase()
+          .includes(filters.experience.toLowerCase());
+      });
     }
 
     if (filters.salaryRange) {
@@ -503,6 +671,14 @@ useEffect(() => {
   };
 
   const handleFilterChange = (key: string, value: string) => {
+    if (key === "industry" && value === "AI Jobs") {
+      // When AI Jobs is selected from industry filter, navigate to AI Jobs company page
+      const token = localStorage.getItem("accessToken");
+      const userId = localStorage.getItem("userId");
+      const prefix = token && userId ? "/main/viewjobdetails" : "/viewjobdetails";
+      navigate(`${prefix}/default/AI Jobs`);
+      return;
+    }
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -516,6 +692,14 @@ useEffect(() => {
       skills: "",
     });
     setSearchTerm("");
+    
+    // Reset to All Jobs if not already there
+    if (currentCompany !== "ALL") {
+      const token = localStorage.getItem("accessToken");
+      const userId = localStorage.getItem("userId");
+      const prefix = token && userId ? "/main/viewjobdetails" : "/viewjobdetails";
+      navigate(`${prefix}/default/ALL`);
+    }
   };
 
   const handlePopUOk = () => {
@@ -1096,14 +1280,15 @@ useEffect(() => {
                       : "/viewjobdetails";
                   navigate(`${prefix}/default/${e.target.value}`);
                 }}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
-                <option value="ALL">All Jobs</option>
+                <option value="ALL"> All Companies Jobs</option>
+                <option value="AI Jobs">AI Jobs</option>
                 {Object.entries(companyNames)
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([label, value]) => (
                     <option key={value} value={value}>
-                      {label}
+                       {label}
                     </option>
                   ))}
               </select>
@@ -1113,10 +1298,10 @@ useEffect(() => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search jobs, skills..."
+                placeholder=" Search jobs, skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 hover:border-blue-300 transition-colors"
               />
             </div>
 
@@ -1125,12 +1310,12 @@ useEffect(() => {
               <select
                 value={filters.location}
                 onChange={(e) => handleFilterChange("location", e.target.value)}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
-                <option value="">All Locations</option>
+                <option value=""> All Locations</option>
                 {uniqueLocations.map((loc) => (
                   <option key={loc} value={loc}>
-                    {loc}
+                   {loc}
                   </option>
                 ))}
               </select>
@@ -1143,26 +1328,27 @@ useEffect(() => {
                 onChange={(e) =>
                   handleFilterChange("experience", e.target.value)
                 }
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
-                <option value="">All Experience</option>
+                <option value=""> All Experience</option>
                 {uniqueExperience.map((exp) => (
                   <option key={exp} value={exp}>
-                    {exp}
+                     {exp}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="relative">
-              <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
                 value={filters.industry}
                 onChange={(e) => handleFilterChange("industry", e.target.value)}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
                 <option value="">All Industries</option>
-                {uniqueIndustries.map((ind) => (
+                {/* <option value="AI Jobs">AI Jobs</option> */}
+                {uniqueIndustries.filter(ind => ind !== "AI Jobs").map((ind) => (
                   <option key={ind} value={ind}>
                     {ind}
                   </option>
@@ -1177,19 +1363,29 @@ useEffect(() => {
                 onChange={(e) =>
                   handleFilterChange("salaryRange", e.target.value)
                 }
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
                 <option value="">All Salary Ranges</option>
                 {uniqueSalaries.map((sal) => (
                   <option key={sal} value={sal}>
-                    {sal}
+                   {sal}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Action Row */}
+          {/* Clear Filters Button */}
+          {(searchTerm || Object.values(filters).some(f => f)) && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={clearFilters}
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center gap-2"
+              >
+                ✨ Clear All Filters
+              </button>
+            </div>
+          )}
         </div>
         {selectedJob ? (
           <div className={`grid grid-cols-1 lg:grid-cols-4 pt-2 gap-4`}>

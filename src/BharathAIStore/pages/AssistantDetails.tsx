@@ -435,8 +435,15 @@ const AssistantDetails: React.FC = () => {
         if (!isXs && rows.length > 0 && !sidebarOpen) {
           setTimeout(() => setSidebarOpen(true), 100);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to fetch history:", err);
+        
+        if (err?.response?.status === 500) {
+          message.warning("Unable to load chat history. The service will retry automatically.");
+        } else if (err?.response?.status === 401 || err?.response?.status === 403) {
+          message.warning("Session expired. Please refresh the page.");
+        }
+        
         setHistoryById({});
         setHistory([]);
       } finally {
@@ -1075,8 +1082,15 @@ const AssistantDetails: React.FC = () => {
       // Cache and display
       setHistoryById((prev) => ({ ...prev, [hid]: messages }));
       setMessages(messages);
-    } catch (err) {
+    } catch (err: any) {
       console.error("[openHistoryChat] Error:", err);
+      
+      if (err?.response?.status === 500) {
+        message.warning("Unable to load this chat. Please try selecting it again.");
+      } else if (err?.response?.status === 404) {
+        message.warning("This chat is no longer available.");
+      }
+      
       setMessages([]);
       setThreadId(null);
     }
@@ -1463,7 +1477,24 @@ const AssistantDetails: React.FC = () => {
           setSidebarOpen(true);
         }
       } catch (e: any) {
-        message.error(e?.message || "Failed to contact assistant.");
+        console.error('Chat error:', e);
+        let errorMessage = "I'm having trouble responding right now. Please try again in a moment.";
+        
+        if (e?.response?.status === 500) {
+          errorMessage = "The AI service is temporarily unavailable. Please try again shortly.";
+        } else if (e?.response?.status === 429) {
+          errorMessage = "Too many requests. Please wait a moment before trying again.";
+        } else if (e?.response?.status === 401 || e?.response?.status === 403) {
+          errorMessage = "Authentication issue. Please refresh the page and try again.";
+        } else if (e?.message?.toLowerCase().includes('network')) {
+          errorMessage = "Network connection issue. Please check your internet and try again.";
+        }
+        
+        // Show error as assistant message in chat
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: `⚠️ ${errorMessage}` },
+        ]);
       } finally {
         setLoading(false);
       }
@@ -1586,7 +1617,22 @@ const AssistantDetails: React.FC = () => {
         setSidebarOpen(true);
       }
     } catch (e: any) {
-      message.error(e?.message || "Failed to contact assistant.");
+      console.error('Edit save error:', e);
+      let errorMessage = "I'm having trouble processing your edit. Please try again.";
+      
+      if (e?.response?.status === 500) {
+        errorMessage = "The AI service is temporarily unavailable. Please try again shortly.";
+      } else if (e?.response?.status === 429) {
+        errorMessage = "Too many requests. Please wait a moment before trying again.";
+      } else if (e?.response?.status === 401 || e?.response?.status === 403) {
+        errorMessage = "Authentication issue. Please refresh the page and try again.";
+      }
+      
+      // Show error as assistant message in chat
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `⚠️ ${errorMessage}` },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -1833,11 +1879,28 @@ const AssistantDetails: React.FC = () => {
       // clear after success
       setSelectedFiles([]);
       return newThreadId || null;
-    } catch (error) {
+    } catch (error: any) {
       console.error("File upload/search failed:", error);
+      
+      let userMessage = "I'm having trouble processing your file. Please try again.";
+      let assistantMessage = "⚠️ File processing failed. Please try again in a moment.";
+      
+      if (error?.response?.status === 500) {
+        userMessage = "The file processing service is temporarily unavailable. Please try again shortly.";
+        assistantMessage = "⚠️ File processing service is temporarily down. Please try again in a few minutes.";
+      } else if (error?.response?.status === 413) {
+        userMessage = "Your file is too large. Please try with a smaller file.";
+        assistantMessage = "⚠️ File too large. Please upload a smaller file.";
+      } else if (error?.response?.status === 429) {
+        userMessage = "Too many file uploads. Please wait a moment before trying again.";
+        assistantMessage = "⚠️ Upload limit reached. Please wait before uploading more files.";
+      }
+      
+      message.error(userMessage);
+      
       const errorMessage: ChatMessage = {
         role: "assistant",
-        content: "⚠️ File upload failed. Please try again after a few seconds.",
+        content: assistantMessage,
       };
       setMessages((prev) => [...prev, errorMessage]);
       return null;
@@ -1899,7 +1962,11 @@ const AssistantDetails: React.FC = () => {
           { role: "assistant", content: cleanContent(answer) },
         ]);
       } catch {
-        message.error("Failed to contact file chat.");
+        console.error('File chat followup error');
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "⚠️ I'm having trouble processing your request. Please try again." },
+        ]);
       } finally {
         setLoading(false);
       }
@@ -1946,11 +2013,19 @@ const AssistantDetails: React.FC = () => {
               ...prev,
               { role: "assistant", content: cleanContent(answer) },
             ]);
-          } catch (err) {
-            message.error("Failed to contact file chat.");
+          } catch (err: any) {
+            console.error('File followup error:', err);
+            let errorMessage = "I'm having trouble processing your request. Please try again.";
+            
+            if (err?.response?.status === 500) {
+              errorMessage = "The service is temporarily unavailable. Please try again shortly.";
+            } else if (err?.response?.status === 429) {
+              errorMessage = "Too many requests. Please wait a moment before trying again.";
+            }
+            
             setMessages((prev) => [
               ...prev,
-              { role: "assistant", content: "Sorry, something went wrong." },
+              { role: "assistant", content: `⚠️ ${errorMessage}` },
             ]);
           } finally {
             setLoading(false);
@@ -2486,7 +2561,7 @@ ${url}`.trim();
                   textAlign: "center",
                 }}
               >
-                Share this {shareTitle.toLowerCase().includes("history") ? "full conversation" : "message"} with your friends via WhatsApp or Email.
+                Share this {shareTitle.toLowerCase().includes("history") ? "full conversation" : "message"} with your friends via WhatsApp.
               </p>
 
               <div

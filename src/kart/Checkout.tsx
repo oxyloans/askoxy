@@ -933,8 +933,28 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handleApplyCoupon = () => {
+    // Validate coupon code - trim whitespace and check if empty
+    const trimmedCouponCode = couponCode.trim();
+    
+    if (!trimmedCouponCode) {
+      message.error("Please enter a valid coupon code");
+      return;
+    }
+    
+    // Check if coupon code contains only spaces
+    if (trimmedCouponCode.length === 0) {
+      message.error("Coupon code cannot be empty or contain only spaces");
+      return;
+    }
+    
+    // Additional validation for minimum length
+    if (trimmedCouponCode.length < 3) {
+      message.error("Please enter a valid coupon code (minimum 3 characters)");
+      return;
+    }
+    
     const data = {
-      couponCode: couponCode,
+      couponCode: trimmedCouponCode.toUpperCase(), // Convert to uppercase for consistency
       customerId: customerId,
       subTotal: grandTotal,
     };
@@ -948,20 +968,31 @@ const CheckoutPage: React.FC = () => {
         setCoupenDetails(discount || 0);
         setCoupenApplied(response.data.couponApplied);
         setCoupenLoading(false);
+        
+        // Update the coupon code state with the trimmed and uppercase version
+        setCouponCode(trimmedCouponCode.toUpperCase());
       })
       .catch((error) => {
         console.error("Error in applying coupon:", error);
-        message.error("Failed to apply coupon");
+        message.error("Failed to apply coupon. Please check the coupon code and try again.");
         setCoupenLoading(false);
       });
   };
 
   const handleSelectCoupon = async (coupon: Coupon) => {
-    setCouponCode(coupon.couponCode);
+    // Validate coupon code
+    const trimmedCouponCode = coupon.couponCode.trim();
+    
+    if (!trimmedCouponCode) {
+      message.error("Invalid coupon code");
+      return;
+    }
+    
+    setCouponCode(trimmedCouponCode.toUpperCase());
     setCoupenLoading(true);
 
     const data = {
-      couponCode: coupon.couponCode,
+      couponCode: trimmedCouponCode.toUpperCase(),
       customerId: customerId,
       subTotal: grandTotal,
     };
@@ -973,13 +1004,13 @@ const CheckoutPage: React.FC = () => {
       );
 
       const { discount, grandTotal } = response.data;
-      message.success(`Coupon ${coupon.couponCode} applied successfully`);
+      message.success(`Coupon ${trimmedCouponCode.toUpperCase()} applied successfully`);
       setCoupenDetails(discount || 0);
       setCoupenApplied(response.data.couponApplied);
       setShowCouponsModal(false);
     } catch (error) {
       console.error("Error applying coupon:", error);
-      message.error("Failed to apply coupon");
+      message.error("Failed to apply coupon. Please try again.");
     } finally {
       setCoupenLoading(false);
     }
@@ -1318,13 +1349,13 @@ const CheckoutPage: React.FC = () => {
 
             getepayPortal(paymentData);
           } else {
-            message.error("Order failed");
+            message.error("Unable to process payment. Please try again.");
           }
         }
       } else {
-        message.error("Failed to place order");
+        message.error("Unable to place order. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment error:", error);
       message.error("Payment failed. Please try again.");
     } finally {
@@ -1995,8 +2026,8 @@ const CheckoutPage: React.FC = () => {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleApplyCoupon}
-                            disabled={!couponCode || coupenLoading}
-                            className="w-full sm:w-auto px-4 py-2 bg-purple-500 text-white rounded-md sm:rounded-l-none hover:bg-purple-600 disabled:bg-purple-300 transition-colors"
+                            disabled={!couponCode.trim() || couponCode.trim().length < 3 || coupenLoading}
+                            className="w-full sm:w-auto px-4 py-2 bg-purple-500 text-white rounded-md sm:rounded-l-none hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors"
                           >
                             {coupenLoading ? (
                               <Loader2 className="w-5 h-5 animate-spin mx-auto" />

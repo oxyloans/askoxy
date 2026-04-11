@@ -3,10 +3,11 @@ import { GenerationResult } from "../type/types";
 
 interface CodeViewProps {
   result: GenerationResult;
+  defaultTab?: "backend" | "frontend" | "database";
   onBack: () => void;
 }
 
-export function CodeView({ result, onBack }: CodeViewProps) {
+export function CodeView({ result, defaultTab, onBack }: CodeViewProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div
@@ -44,7 +45,7 @@ export function CodeView({ result, onBack }: CodeViewProps) {
         </div>
       </div>
       <div className="flex-1 overflow-hidden">
-        <FileExplorer result={result} />
+        <FileExplorer result={result} defaultTab={defaultTab} />
       </div>
     </div>
   );

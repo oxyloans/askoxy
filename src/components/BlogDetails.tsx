@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Input, message, Spin } from "antd";
+import { Input, message, Modal, Spin } from "antd";
 import {
   DislikeFilled,
   DislikeOutlined,
@@ -92,6 +92,8 @@ const BlogDetails: React.FC = () => {
     "";
 
   const accessToken = localStorage.getItem("accessToken");
+  const BLOGS_DASHBOARD_PATH = "/main/blogs";
+  const LOGIN_ROUTE = "/whatsappregister";
   const [pageReady, setPageReady] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -251,6 +253,11 @@ const BlogDetails: React.FC = () => {
     return /^https?:\/\//i.test(path) ? path : `${uploadurlwithId}${path}`;
   };
 
+  const redirectToLogin = (redirectPath: string = BLOGS_DASHBOARD_PATH) => {
+    sessionStorage.setItem("redirectPath", redirectPath);
+    navigate(LOGIN_ROUTE);
+  };
+
   useEffect(() => {
     const loadCampaignsAndComments = async () => {
       setIsLoading(true);
@@ -406,8 +413,7 @@ const BlogDetails: React.FC = () => {
   const handleLike = async (campaignId: string) => {
     if (!accessToken || !userId) {
       message.warning("Please login to like this post.");
-      sessionStorage.setItem("redirectPath", location.pathname);
-      navigate("/whatsappregister");
+      redirectToLogin(BLOGS_DASHBOARD_PATH);
       return;
     }
 
@@ -458,8 +464,7 @@ const BlogDetails: React.FC = () => {
   const handleDislike = async (campaignId: string) => {
     if (!accessToken || !userId) {
       message.warning("Please login to dislike this post.");
-      sessionStorage.setItem("redirectPath", location.pathname);
-      navigate("/whatsappregister");
+      redirectToLogin(BLOGS_DASHBOARD_PATH);
       return;
     }
 
@@ -510,8 +515,7 @@ const BlogDetails: React.FC = () => {
   const handleSubscribe = async (campaignId: string) => {
     if (!accessToken || !userId) {
       message.warning("Please login to subscribe.");
-      sessionStorage.setItem("redirectPath", location.pathname);
-      navigate("/whatsappregister");
+      redirectToLogin(BLOGS_DASHBOARD_PATH);
       return;
     }
 
@@ -548,20 +552,8 @@ const BlogDetails: React.FC = () => {
     }
   };
 
-  const handleVote = async (campaign: any, teamName: string) => {
+  const submitVote = async (campaign: any, teamName: string) => {
     const campaignId = getCampaignId(campaign);
-
-    if (!accessToken || !userId) {
-      message.info("Please login to vote");
-      sessionStorage.setItem("redirectPath", getCampaignPath(campaign));
-      navigate("/whatsappregister");
-      return;
-    }
-
-    if (isPollExpired(campaign)) {
-      message.info("Poll ended");
-      return;
-    }
 
     try {
       setActionLoading((prev) => ({
@@ -607,11 +599,32 @@ const BlogDetails: React.FC = () => {
     }
   };
 
+  const handleVote = (campaign: any, teamName: string) => {
+    if (!accessToken || !userId) {
+      message.info("Please login to vote");
+      redirectToLogin(BLOGS_DASHBOARD_PATH);
+      return;
+    }
+
+    if (isPollExpired(campaign)) {
+      message.info("Poll ended");
+      return;
+    }
+
+    Modal.confirm({
+      title: "Are you sure?",
+      content: `Do you want to vote for ${teamName}?`,
+      okText: "Yes",
+      cancelText: "No",
+      centered: true,
+      onOk: () => submitVote(campaign, teamName),
+    });
+  };
+
   const handleOk = async (campaignId: string) => {
     if (!accessToken || !userId) {
       message.warning("Please login to add a comment.");
-      sessionStorage.setItem("redirectPath", location.pathname);
-      navigate("/whatsappregister");
+      redirectToLogin(BLOGS_DASHBOARD_PATH);
       return;
     }
 
@@ -668,8 +681,7 @@ const BlogDetails: React.FC = () => {
   const handleWriteToUs = (campaign: Campaign) => {
     if (!accessToken || !userId) {
       message.warning("Please login to write to us.");
-      sessionStorage.setItem("redirectPath", location.pathname);
-      navigate("/whatsappregister");
+      redirectToLogin(BLOGS_DASHBOARD_PATH);
       return;
     }
 
