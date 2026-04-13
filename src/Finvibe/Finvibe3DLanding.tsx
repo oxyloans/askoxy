@@ -709,7 +709,7 @@ export default function App() {
               </div>
             </div>
             <button
-              onClick={() => navigate("/bfsi-projects")}
+              onClick={() => window.open("https://vibecoding-finvibe.vercel.app/", "_blank")}
               style={{
                 padding:"12px 28px",borderRadius:11,border:"1px solid rgba(0,245,255,.5)",
                 background:"linear-gradient(135deg,rgba(0,245,255,.14),rgba(124,58,237,.1))",

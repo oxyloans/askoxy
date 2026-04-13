@@ -116,7 +116,35 @@ function buildResult(
   };
 }
 
-// ── Collapsed output viewer ───────────────────────────────────────────────────
+// ── Parse files directly from raw token text ────────────────────────────────
+function parseFilesFromTokens(text: string): CodeFile[] {
+  if (!text) return [];
+  const results: CodeFile[] = [];
+  const seen = new Set<string>();
+  let depth = 0, start = -1;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '{') { if (depth === 0) start = i; depth++; }
+    else if (text[i] === '}') {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        try {
+          const obj = JSON.parse(text.slice(start, i + 1));
+          if (Array.isArray(obj?.files)) {
+            for (const f of obj.files) {
+              if (f?.path && f?.content && f.content !== '' && f.content !== 'null' && !seen.has(f.path)) {
+                seen.add(f.path);
+                results.push({ path: f.path, content: f.content });
+              }
+            }
+          }
+        } catch { /* incomplete chunk */ }
+        start = -1;
+      }
+    }
+  }
+  return results;
+}
+
 
 function CollapsedTokenView({ tokens, accent }: { tokens: string; accent: string }) {
   return (
@@ -168,7 +196,7 @@ function TokenStream({ tokens, accent }: { tokens: string; accent: string }) {
 
 function StepCard({
   step, idx, isLastStep, tokens, expandedSteps, toggleStep,
-  steps, partialResult, result, onViewCode,
+  builtResult, onViewCode,
 }: {
   step: PipelineStep;
   idx: number;
@@ -176,10 +204,7 @@ function StepCard({
   tokens: string;
   expandedSteps: Set<number>;
   toggleStep: (i: number) => void;
-  /** All steps in the current turn — needed to build the full result */
-  steps: PipelineStep[];
-  partialResult: Partial<GenerationResult>;
-  result: GenerationResult | null;
+  builtResult: GenerationResult;
   onViewCode: (r: GenerationResult, tab?: CodeTab) => void;
 }) {
   const isActive = step.status === "streaming";
@@ -197,9 +222,20 @@ function StepCard({
     return "backend";
   };
 
+  const tab = getTabForStep();
+  // Parse files directly from the token stream — works even before partialResult is populated
+  const tabFiles: CodeFile[] = isCodeStep && isDone
+    ? (builtResult[tab].length > 0 ? builtResult[tab] : parseFilesFromTokens(tokens))
+    : [];
+
   const handleViewCode = () => {
-    const fullResult = buildResult(steps, partialResult, result);
-    onViewCode(fullResult, getTabForStep());
+    const files = tabFiles;
+    const viewResult: GenerationResult = {
+      backend:  tab === "backend"  ? files : builtResult.backend,
+      frontend: tab === "frontend" ? files : builtResult.frontend,
+      database: tab === "database" ? files : builtResult.database,
+    };
+    onViewCode(viewResult, tab);
   };
 
   return (
@@ -270,7 +306,7 @@ function StepCard({
                 </button>
               )}
 
-              {isCodeStep && (
+              {isCodeStep && isDone && tabFiles.length > 0 && (
                 <button
                   onClick={handleViewCode}
                   className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all text-white"
@@ -362,9 +398,7 @@ function ConversationTurnView({ turn, onViewCode }: {
           tokens={turn.stepTokens[step.step] ?? ""}
           expandedSteps={expandedSteps}
           toggleStep={toggleStep}
-          steps={turn.steps}
-          partialResult={turn.partialResult}
-          result={turn.result}
+          builtResult={displayResult}
           onViewCode={onViewCode}
         />
       ))}
@@ -493,9 +527,7 @@ function LiveTurnView({
           tokens={stepTokens[step.step] ?? ""}
           expandedSteps={expandedSteps}
           toggleStep={toggleStep}
-          steps={steps}
-          partialResult={partialResult}
-          result={result}
+          builtResult={builtResult}
           onViewCode={onViewCode}
         />
       ))}
