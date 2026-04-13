@@ -2,7 +2,7 @@
   import { PipelineStep, GenerationResult, CodeFile } from "../type/types";
   import BASE_URL from "../../Config";
 
-  const BASE = `http://localhost:9876/api/vibecode-service`;
+  const BASE = `${BASE_URL}/vibecode-service`;
 
   const STEPS = [
     { name: "planning", step: 1, label: "Planning" },
