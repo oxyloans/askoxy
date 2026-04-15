@@ -55,7 +55,7 @@ interface Product {
   savePercentage: number | null;
   itemPrice: number;
   bmvCoins: number;
-  quantity: number;
+  quantity: number | null;
   barcodeValue: any;
 }
 
@@ -69,6 +69,11 @@ interface ApiResponse {
   agents: Agent[];
   items: Category[];
   empty: boolean;
+}
+interface VoiceSearchResponse {
+  transcript?: string;
+  keyword?: string;
+  products?: Category[];
 }
 
 interface CartItem {
@@ -90,6 +95,11 @@ const SearchMain: React.FC = () => {
 
   const { setCount } = context;
   const query = searchParams.get("q") || "";
+  const voicePayload = location.state?.voiceSearchData as
+    | VoiceSearchResponse
+    | undefined;
+  const voiceSearchPending = Boolean(location.state?.voiceSearchPending);
+  const isVoiceSearchMode = voicePayload !== undefined;
   const [data, setData] = useState<ApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,24 +149,35 @@ const SearchMain: React.FC = () => {
   };
   useEffect(() => {
     const trimmedQuery = query.trim();
+    if (isVoiceSearchMode) {
+      setData({
+        agents: [],
+        items: voicePayload?.products || [],
+        empty: (voicePayload?.products || []).length === 0,
+      });
+      setError(null);
+      return;
+    }
     if (trimmedQuery && trimmedQuery.length >= MIN_SEARCH_LENGTH) {
       fetchSearchData(trimmedQuery);
     } else {
       setData(null);
       setError("Search query too short (min 3 characters)");
     }
-  }, [query, searchParams]);
+  }, [query, searchParams, voicePayload, isVoiceSearchMode]);
   // Helper function to sort products: higher quantity first, then alphabetically by name
-const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
-  return [...items].sort((a, b) => {
-    // Primary sort: quantity descending (higher quantity first, e.g., 2 > 0)
-    if (a.quantity !== b.quantity) {
-      return b.quantity - a.quantity; // Descending order
-    }
-    // Secondary sort: itemName ascending (alphabetical)
-    return a.itemName.localeCompare(b.itemName);
-  });
-};
+  const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
+    return [...items].sort((a, b) => {
+      const quantityA = Number(a.quantity ?? -1);
+      const quantityB = Number(b.quantity ?? -1);
+      // Primary sort: quantity descending when available
+      if (quantityA !== quantityB) {
+        return quantityB - quantityA;
+      }
+      // Secondary sort: itemName ascending (alphabetical)
+      return a.itemName.localeCompare(b.itemName);
+    });
+  };
   const handleCategorySelect = (categoryName: string | null) => {
     setSelectedCategory(categoryName);
 
@@ -245,7 +266,10 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
 
   const handleBack = () => {
     // Clear the search query and navigate to home
-    navigate("/main/dashboard/home", { replace: true, state: { clearSearch: true } });
+    navigate("/main/dashboard/home", {
+      replace: true,
+      state: { clearSearch: true },
+    });
   };
 
   const handleAddToCart = async (item: Product) => {
@@ -388,7 +412,7 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
   const hasNoResults =
     data?.empty || (!data?.agents.length && !data?.items.length);
 
-  // CRITICAL FILTER: Remove items with itemPrice <= 0 OR itemMrp <= 0 OR quantity <= 0
+  // Keep voice-search products even when quantity is not provided by the API.
   const filteredData = useMemo(() => {
     if (!data) return null;
 
@@ -399,27 +423,24 @@ const sortItemsByQuantityAndName = (items: Product[]): Product[] => {
           ? cat.itemsResponseDtoList
           : [];
 
-       const cleanedItems = items.filter((prod) => {
-         // ✅ don’t show if price/mrp is 0.0 or null or undefined
-         if (!isValidNumber(prod.itemPrice)) return false;
-         if (!isValidNumber(prod.itemMrp)) return false;
-         if (!isValidText(prod.itemName)) return false; // ✅ show even if price is 0
+        const cleanedItems = items.filter((prod) => {
+          // ✅ don’t show if price/mrp is 0.0 or null or undefined
+          if (!isValidNumber(prod.itemPrice)) return false;
+          if (!isValidNumber(prod.itemMrp)) return false;
+          if (!isValidText(prod.itemName)) return false; // ✅ show even if price is 0
 
-         // If you want to hide out-of-stock, enable this:
-         if (!isValidNumber(prod.quantity)) return false;
-
-         return true;
-       });
-const sortedCleanedItems = sortItemsByQuantityAndName(cleanedItems);
+          return true;
+        });
+        const sortedCleanedItems = sortItemsByQuantityAndName(cleanedItems);
         // Filter and prioritize ASKOXY items first within each category
-       // Prioritize ASKOXY items first within the sorted list
-const askoxyItems = sortedCleanedItems.filter((item) =>
-  item.itemName?.toLowerCase().includes("askoxy"),
-);
-const otherItems = sortedCleanedItems.filter(
-  (item) => !item.itemName?.toLowerCase().includes("askoxy"),
-);
-const finalSortedItems = [...askoxyItems, ...otherItems];
+        // Prioritize ASKOXY items first within the sorted list
+        const askoxyItems = sortedCleanedItems.filter((item) =>
+          item.itemName?.toLowerCase().includes("askoxy"),
+        );
+        const otherItems = sortedCleanedItems.filter(
+          (item) => !item.itemName?.toLowerCase().includes("askoxy"),
+        );
+        const finalSortedItems = [...askoxyItems, ...otherItems];
         return {
           ...cat,
           // ✅ hide logo if invalid (we’ll also hide while rendering)
@@ -458,7 +479,11 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
     );
   }, [filteredData]);
 
-  if (!query || query.trim().length < MIN_SEARCH_LENGTH) {
+  if (
+    !voiceSearchPending &&
+    !isVoiceSearchMode &&
+    (!query || query.trim().length < MIN_SEARCH_LENGTH)
+  ) {
     return (
       <div style={{ padding: "40px 24px", textAlign: "center" }}>
         <Alert
@@ -490,40 +515,75 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
             style={{ color: "#5c3391", cursor: "pointer" }}
           />
           <ChevronRight size={16} color="#999" />
-          <Text>Search: "{query}"</Text>
+          <Text>
+            {isVoiceSearchMode ? "Voice" : "Search"}: "
+            {voicePayload?.keyword || voicePayload?.transcript || query}"
+          </Text>
         </Space>
+        {/* Voice Search Alert */}
+        {/* {isVoiceSearchMode && (
+          <Alert
+            style={{ marginBottom: 12 }}
+            type="info"
+            showIcon
+            message={`Voice search: "${voicePayload?.transcript || voicePayload?.keyword || query}"`}
+            description={
+              voicePayload?.keyword && voicePayload?.transcript
+                ? `Matched keyword: ${voicePayload.keyword}`
+                : undefined
+            }
+          />
+        )} */}
 
-        {isLoading && (
+        {(isLoading || voiceSearchPending) && (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <Spin size="large" tip="Loading results..." />
+            <Spin
+              size="large"
+              tip={
+                voiceSearchPending
+                  ? "Processing your voice search..."
+                  : "Loading results..."
+              }
+            />
           </div>
         )}
 
-        {error && !isLoading && (
+        {error && !isLoading && !voiceSearchPending && (
           <Alert
             message={error}
             type="error"
             showIcon
             action={
-              <Button onClick={() => {
-                navigate("/main/dashboard/home", { replace: true, state: { clearSearch: true } });
-              }}>Try Again</Button>
+              <Button
+                onClick={() => {
+                  navigate("/main/dashboard/home", {
+                    replace: true,
+                    state: { clearSearch: true },
+                  });
+                }}
+              >
+                Try Again
+              </Button>
             }
           />
         )}
 
-        {!isLoading && hasNoResults && (
+        {!isLoading && !voiceSearchPending && hasNoResults && (
           <Empty
-            description="No results found. Try a different search term."
+            description={
+              isVoiceSearchMode
+                ? "No products found for your voice search. Try speaking again with a different query."
+                : "No results found. Try a different search term."
+            }
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           >
             <Button type="primary" onClick={handleBack}>
-              New Search
+              {isVoiceSearchMode ? "Try Voice Search Again" : "New Search"}
             </Button>
           </Empty>
         )}
 
-        {!isLoading && !hasNoResults && filteredData && (
+        {!isLoading && !voiceSearchPending && !hasNoResults && filteredData && (
           <>
             {/* Products Section */}
             {filteredData.items.length > 0 && (
@@ -722,18 +782,28 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
                           ? product.units
                           : "";
                         const showCoins = isValidNumber(product.bmvCoins);
-                        const availableQty = Number(product.quantity ?? 0);
-                        const isOutOfStock = availableQty <= 0;
+                        const availableQty =
+                          product.quantity === null ||
+                          product.quantity === undefined
+                            ? null
+                            : Number(product.quantity);
+                        const isOutOfStock =
+                          availableQty !== null && availableQty <= 0;
                         return (
                           <div
                             key={product.itemId}
                             className="search-grid-item"
                           >
                             <Badge.Ribbon
-                              text={isOutOfStock ? "SOLD OUT" : `${discount}% Off`}
+                              text={
+                                isOutOfStock ? "SOLD OUT" : `${discount}% Off`
+                              }
                               color={isOutOfStock ? "#d4a574" : "#8b3eea"}
                               style={{
-                                display: discount > 0 || isOutOfStock ? "block" : "none",
+                                display:
+                                  discount > 0 || isOutOfStock
+                                    ? "block"
+                                    : "none",
                                 fontSize: 13,
                                 fontWeight: 600,
                                 color: isOutOfStock ? "#fff" : "white",
@@ -945,8 +1015,9 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
                                             handleQuantityChange(product, true)
                                           }
                                           disabled={
+                                            availableQty !== null &&
                                             (cartItems[product.itemId] || 0) >=
-                                            Number(product.quantity || 0)
+                                              availableQty
                                           }
                                           loading={
                                             loadingItems.items[product.itemId]
@@ -1021,8 +1092,13 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
                             ? product.units
                             : "";
                           const showCoins = isValidNumber(product.bmvCoins);
-                          const availableQty = Number(product.quantity ?? 0);
-                          const isOutOfStock = availableQty <= 0;
+                          const availableQty =
+                            product.quantity === null ||
+                            product.quantity === undefined
+                              ? null
+                              : Number(product.quantity);
+                          const isOutOfStock =
+                            availableQty !== null && availableQty <= 0;
                           // ✅ SAME CARD UI (copy-pasted exactly like above)
                           return (
                             <div
@@ -1030,10 +1106,15 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
                               className="search-grid-item"
                             >
                               <Badge.Ribbon
-                                text={isOutOfStock ? "SOLD OUT" : `${discount}% Off`}
+                                text={
+                                  isOutOfStock ? "SOLD OUT" : `${discount}% Off`
+                                }
                                 color={isOutOfStock ? "#d4a574" : "#8b3eea"}
                                 style={{
-                                  display: discount > 0 || isOutOfStock ? "block" : "none",
+                                  display:
+                                    discount > 0 || isOutOfStock
+                                      ? "block"
+                                      : "none",
                                   fontSize: 13,
                                   fontWeight: 600,
                                   color: isOutOfStock ? "#fff" : "white",
@@ -1256,9 +1337,9 @@ const finalSortedItems = [...askoxyItems, ...otherItems];
                                               )
                                             }
                                             disabled={
+                                              availableQty !== null &&
                                               (cartItems[product.itemId] ||
-                                                0) >=
-                                              Number(product.quantity || 0)
+                                                0) >= availableQty
                                             }
                                             loading={
                                               loadingItems.items[product.itemId]

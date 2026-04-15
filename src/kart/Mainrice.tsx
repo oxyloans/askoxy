@@ -1038,35 +1038,46 @@ if (totalMatchingItems > 0) {
 
   // Add to cart function
   const addToCart = async (item: Item) => {
-    if (!customerId) {
-      // Handle case when user is not logged in
+    const accessToken = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
+
+    if (!accessToken || !userId) {
       alert("Please login to add items to cart");
       return;
     }
+
     if (item.quantity !== undefined && item.quantity <= 0) {
       alert("Out of stock");
       return;
     }
 
     try {
+      const requestBody = {
+        customerId: userId,
+        itemId: item.itemId,
+        quantity: 1,
+      };
+
       const response = await customerApi.post(
-        `${BASE_URL}/cart-service/addItemsToCart`,
-        {
-          customerId: customerId,
-          itemId: item.itemId,
-          quantity: 1,
-        },
+        `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
+        requestBody,
       );
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         setCart((prev) => ({
           ...prev,
           [item.itemId]: (prev[item.itemId] || 0) + 1,
         }));
         setCount(count + 1);
+        console.log("Item added to cart successfully");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding item to cart:", error);
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        alert("Session expired. Please login again.");
+      } else {
+        alert("Error updating item quantity. Please try again.");
+      }
     }
   };
 

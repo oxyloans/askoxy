@@ -7,7 +7,7 @@
 } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSearch } from "../BharathAIStore/context/SearchContext";
-import BASE_URL,{uploadurlwithId} from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 import axiosInstance from "../utils/axiosInstance";
 import axios from "axios";
 import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
@@ -180,7 +180,7 @@ const AllAIStore: React.FC = () => {
     setSearchError(null);
     // Simple local filter; replace with API call if needed
     const filtered = visibleAgents.filter((agent) =>
-      agent.agentName.toLowerCase().includes(term.toLowerCase())
+      agent.agentName.toLowerCase().includes(term.toLowerCase()),
     );
     setSearchResults(filtered);
     setSearchLoading(false);
@@ -222,7 +222,6 @@ const AllAIStore: React.FC = () => {
     localStorage.getItem("user_id") ||
     "";
   console.log("AccessToken:", accessToken);
-
 
   // ✅ Tabs
   const [activeTab, setActiveTab] = useState<TabKey>("AGENTS");
@@ -312,10 +311,12 @@ const AllAIStore: React.FC = () => {
     setContactChecking(true);
     try {
       const url = `${BASE_URL}/marketing-service/campgin/get-company-contact?userId=${encodeURIComponent(
-        customerId
+        customerId,
       )}`;
 
-      const res = await axiosInstance.get(url, { validateStatus: (s) => s < 500 });
+      const res = await axiosInstance.get(url, {
+        validateStatus: (s) => s < 500,
+      });
 
       // ✅ If 404 → details not submitted yet
       if (res.status === 404) {
@@ -326,8 +327,9 @@ const AllAIStore: React.FC = () => {
         return "";
       }
 
-      if (res.status < 200 || res.status >= 300) throw new Error("Failed to check company contact");
-           const data: any = res.data;
+      if (res.status < 200 || res.status >= 300)
+        throw new Error("Failed to check company contact");
+      const data: any = res.data;
 
       const id = (data?.id || "").toString();
       const isEmp = data?.isEmployee === true;
@@ -393,7 +395,7 @@ const AllAIStore: React.FC = () => {
       sessionStorage.setItem("openCompanyVerificationAfterLogin", "1");
 
       window.location.href = `/whatsapplogin?redirect=${encodeURIComponent(
-        fullPath
+        fullPath,
       )}`;
       return;
     }
@@ -463,7 +465,10 @@ const AllAIStore: React.FC = () => {
         name: "User",
       };
 
-      const res = await axiosInstance.post(`${BASE_URL}/marketing-service/campgin/add-company-info`, payload);
+      const res = await axiosInstance.post(
+        `${BASE_URL}/marketing-service/campgin/add-company-info`,
+        payload,
+      );
 
       const json = res.data;
 
@@ -530,7 +535,10 @@ const AllAIStore: React.FC = () => {
         emailOtpSession,
       };
 
-      const res = await axiosInstance.post(`${BASE_URL}/marketing-service/campgin/add-company-info`, payload);
+      const res = await axiosInstance.post(
+        `${BASE_URL}/marketing-service/campgin/add-company-info`,
+        payload,
+      );
 
       const json = res.data;
 
@@ -571,7 +579,7 @@ const AllAIStore: React.FC = () => {
 
     try {
       const url = `${BASE_URL}/marketing-service/campgin/all-jobs-by-name?companyName=${encodeURIComponent(
-        name
+        name,
       )}`;
       const res = await axiosInstance.get(url);
 
@@ -579,8 +587,8 @@ const AllAIStore: React.FC = () => {
       const jobs: CompanyJob[] = Array.isArray(json)
         ? json
         : Array.isArray(json?.data)
-        ? json.data
-        : [];
+          ? json.data
+          : [];
       setCompanyJobs(jobs);
     } catch (e: any) {
       setCompanyJobs([]);
@@ -595,14 +603,16 @@ const AllAIStore: React.FC = () => {
     setBlogsError(null);
 
     try {
-      const res = await axiosInstance.get(`${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`);
+      const res = await axiosInstance.get(
+        `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`,
+      );
 
       const json = res.data;
       const list: CampaignBlog[] = Array.isArray(json)
         ? json
         : Array.isArray(json?.data)
-        ? json.data
-        : [];
+          ? json.data
+          : [];
 
       const onlyBlogs = list.filter((x) => {
         const inputType = (x?.campainInputType || "").toUpperCase();
@@ -633,7 +643,7 @@ const AllAIStore: React.FC = () => {
   const visibleBlogs = useMemo(() => {
     if (blogTab === "MY") {
       return blogs.filter(
-        (b) => (b.createdPersonId || "").toString() === (customerId || "")
+        (b) => (b.createdPersonId || "").toString() === (customerId || ""),
       );
     }
     return blogs;
@@ -656,14 +666,16 @@ const AllAIStore: React.FC = () => {
     setError(null);
 
     try {
-      const res = await axiosInstance.get(`${BASE_URL}/ai-service/agent/getAiStoreAllAgents`);
+      const res = await axiosInstance.get(
+        `${BASE_URL}/ai-service/agent/getAiStoreAllAgents`,
+      );
 
       const json = res.data;
       const list: StoreDetail[] = Array.isArray(json)
         ? json
         : Array.isArray(json?.data)
-        ? json.data
-        : [];
+          ? json.data
+          : [];
 
       const key = (idOrSlug || "").trim();
       const slugFromUrl = (storeSlug || "").trim().toLowerCase();
@@ -672,7 +684,7 @@ const AllAIStore: React.FC = () => {
       const found =
         list.find((s: any) => (s?.storeId || "").trim() === key) ||
         list.find(
-          (s: any) => slugifyName(s?.storeName) === key.toLowerCase()
+          (s: any) => slugifyName(s?.storeName) === key.toLowerCase(),
         ) ||
         list.find((s: any) => slugifyName(s?.storeName) === slugFromUrl);
 
@@ -723,7 +735,7 @@ const AllAIStore: React.FC = () => {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
 
       const documentPath = response?.data?.documentPath;
@@ -731,11 +743,11 @@ const AllAIStore: React.FC = () => {
         throw new Error("Upload successful but documentPath missing");
 
       setBlogImages((prev) =>
-        Array.from(new Set([...prev, documentPath].filter(Boolean)))
+        Array.from(new Set([...prev, documentPath].filter(Boolean))),
       );
     } catch (error: any) {
       setBlogImageUploadError(
-        error?.response?.data?.message || "Image upload failed"
+        error?.response?.data?.message || "Image upload failed",
       );
     } finally {
       setBlogImageUploading(false);
@@ -797,7 +809,10 @@ const AllAIStore: React.FC = () => {
         ],
       };
 
-      const res = await axiosInstance.patch(`${BASE_URL}/marketing-service/campgin/addCampaignTypes`, payload);
+      const res = await axiosInstance.patch(
+        `${BASE_URL}/marketing-service/campgin/addCampaignTypes`,
+        payload,
+      );
 
       const json = res.data;
 
@@ -837,7 +852,7 @@ const AllAIStore: React.FC = () => {
       message.warning(
         `Only employees of ${
           store?.companyName || "this company"
-        } can add jobs. Please verify first.`
+        } can add jobs. Please verify first.`,
       );
       setCompanyVerifyOpen(true);
       return;
@@ -864,7 +879,7 @@ const AllAIStore: React.FC = () => {
     const ccId = companyContactId || (await ensureCompanyContactId());
     if (!ccId) {
       message.warning(
-        "Company contact person ID not found. Please complete company verification first."
+        "Company contact person ID not found. Please complete company verification first.",
       );
       return;
     }
@@ -892,7 +907,10 @@ const AllAIStore: React.FC = () => {
         companyName: (store?.companyName || "").trim() || undefined,
       };
 
-      const res = await axiosInstance.post(`${BASE_URL}/marketing-service/campgin/add-job-company-person`, payload);
+      const res = await axiosInstance.post(
+        `${BASE_URL}/marketing-service/campgin/add-job-company-person`,
+        payload,
+      );
 
       const json = res.data;
 
@@ -1079,16 +1097,9 @@ const AllAIStore: React.FC = () => {
                         <span className="font-semibold text-violet-800">
                           15,000 regulated institutions
                         </span>
-                        , with around{" "}
-                        <span className="font-semibold text-violet-800">
-                          9,000 NBFCs
-                        </span>{" "}
-                        and nearly{" "}
-                        <span className="font-semibold text-violet-800">
-                          6,000 banks and cooperative entities
-                        </span>
-                        . All of these are governed by the Reserve Bank of India
-                        through{" "}
+                        , with around 9,000 NBFCs and nearly 6,000 banks and
+                        cooperative entities . All of these are governed by the
+                        Reserve Bank of India through{" "}
                         <span className="font-semibold text-violet-800">
                           243 Master Directions
                         </span>{" "}
@@ -1138,12 +1149,23 @@ const AllAIStore: React.FC = () => {
                                     storeName: store?.storeName,
                                   },
                                 },
-                              }
+                              },
                             );
                           }}
                           className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-lg hover:from-violet-700 hover:to-purple-700 hover:shadow-xl transition-all"
                         >
                           Explore RBI Master Directions AI
+                        </button>
+                        <button
+                          onClick={() =>
+                            window.open(
+                              "https://drive.google.com/file/d/1YazmszAor3Xxwy4LafV6rYpThl-hootM/preview",
+                              "_blank",
+                            )
+                          }
+                          className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-slate-600 to-slate-700 px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-lg hover:from-slate-700 hover:to-slate-800 hover:shadow-xl transition-all"
+                        >
+                          NBFCs Banks 9000+
                         </button>
                       </div>
                     </div>
@@ -1252,8 +1274,8 @@ const AllAIStore: React.FC = () => {
                         {searchLoading
                           ? "Searching…"
                           : (q || "").trim()
-                          ? "No agents found"
-                          : "No agents available yet"}
+                            ? "No agents found"
+                            : "No agents available yet"}
                       </p>
                       {searchError && (
                         <p className="mt-2 text-red-500">{searchError}</p>
@@ -1265,7 +1287,7 @@ const AllAIStore: React.FC = () => {
                   ) : (
                     <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {((q || "").trim()
-                        ? searchResults ?? []
+                        ? (searchResults ?? [])
                         : visibleAgents
                       ).map((agent) => {
                         const hasValidImage =
@@ -1293,7 +1315,7 @@ const AllAIStore: React.FC = () => {
                                     storeSlug,
                                     storeName: store?.storeName,
                                   },
-                                }
+                                },
                               )
                             }
                             className="group relative cursor-pointer rounded-3xl border border-slate-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-100 active:scale-[0.99]"
@@ -1387,7 +1409,7 @@ const AllAIStore: React.FC = () => {
                                           storeName: store?.storeName,
                                         },
                                       },
-                                    }
+                                    },
                                   );
                                 }}
                                 className="mt-5 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:shadow-violet-200 active:scale-95"
@@ -1487,7 +1509,7 @@ const AllAIStore: React.FC = () => {
                                         style={{ background: banner }}
                                       >
                                         {getInitials(
-                                          job.companyName || store.companyName
+                                          job.companyName || store.companyName,
                                         )}
                                       </div>
 
@@ -1914,7 +1936,10 @@ const AllAIStore: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="blogImageUpload" className="mb-1 block text-sm font-semibold text-slate-700">
+                  <label
+                    htmlFor="blogImageUpload"
+                    className="mb-1 block text-sm font-semibold text-slate-700"
+                  >
                     Blog Image (optional)
                   </label>
 
@@ -2032,9 +2057,10 @@ const AllAIStore: React.FC = () => {
 
             <div className="mt-5 space-y-4">
               <div>
-
-
-                <label htmlFor="companyEmailId" className="mb-2 text-sm font-bold text-slate-700">
+                <label
+                  htmlFor="companyEmailId"
+                  className="mb-2 text-sm font-bold text-slate-700"
+                >
                   Company Email ID
                 </label>
                 <input
@@ -2049,7 +2075,10 @@ const AllAIStore: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="personRole" className="mb-2 text-sm font-bold text-slate-700">
+                <label
+                  htmlFor="personRole"
+                  className="mb-2 text-sm font-bold text-slate-700"
+                >
                   Your Role
                 </label>
                 <select
@@ -2132,7 +2161,9 @@ const AllAIStore: React.FC = () => {
             </div>
 
             <div className="mt-5 space-y-4">
-              <label htmlFor="otpInput" className="sr-only">Enter OTP</label>
+              <label htmlFor="otpInput" className="sr-only">
+                Enter OTP
+              </label>
               <input
                 id="otpInput"
                 type="text"

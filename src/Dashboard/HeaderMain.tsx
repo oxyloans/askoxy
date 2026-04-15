@@ -6,6 +6,9 @@ import {
   FaUserCircle,
   FaTimes,
   FaShoppingCart,
+  FaMicrophone,
+  FaMicrophoneSlash,
+  FaSpinner,
 } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import ValidationPopup from "../kart/ValidationPopup";
@@ -18,6 +21,11 @@ import customerApi, { customerApi as axios } from "../utils/axiosInstances";
 interface SearchResult {
   id: string;
   productName: string;
+}
+interface VoiceSearchResponse {
+  transcript?: string;
+  keyword?: string;
+  products?: any[];
 }
 
 interface HeaderProps {
@@ -37,6 +45,14 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isAiHovered, setIsAiHovered] = useState(false);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const [voiceStatus, setVoiceStatus] = useState<
+    "idle" | "listening" | "processing"
+  >("idle");
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const audioChunksRef = React.useRef<Blob[]>([]);
 
   const toggleSidebar = () => {
     IsMobile5((prev: boolean) => !prev);
@@ -88,7 +104,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
     setIsSearching(true);
     try {
       const response = await customerApi.get(
-        `${BASE_URL}/product-service/dynamicSearch?q=${encodeURIComponent(query)}`
+        `${BASE_URL}/product-service/dynamicSearch?q=${encodeURIComponent(query)}`,
       );
       const flattenedProducts = (response.data.items || []).flatMap(
         (category: any) =>
@@ -97,12 +113,12 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
               (product: any) =>
                 product.itemPrice > 0 &&
                 product.itemMrp > 0 &&
-                product.quantity > 0
+                product.quantity > 0,
             )
             .map((product: any) => ({
               id: product.itemId,
               productName: product.itemName,
-            }))
+            })),
       );
       setSearchResults(flattenedProducts.slice(0, 5));
     } catch (error) {
@@ -120,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   const fetchCartData = async () => {
     try {
       const response = await customerApi.get(
-        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`
+        `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${customerId}`,
       );
       setCount(response.data.length);
     } catch (error) {
@@ -131,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   const checkProfileCompletion = async (): Promise<boolean> => {
     try {
       const response = await customerApi.get(
-        `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`
+        `${BASE_URL}/user-service/customerProfileDetails?customerId=${customerId}`,
       );
       if (response.status === 200) {
         const profileData = response.data;
@@ -203,7 +219,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
       setSearchResults([]);
       setTimeout(() => {
         const searchInput = document.querySelector(
-          ".mobile-search-input"
+          ".mobile-search-input",
         ) as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();
@@ -217,6 +233,92 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
     setSearchValue("");
     setSearchResults([]);
     navigate("/main/dashboard/home");
+  };
+  const submitVoiceFile = async (audioFile: File | Blob) => {
+    setVoiceError("");
+    setVoiceStatus("processing");
+    setIsVoiceLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", audioFile, `voice-${Date.now()}.webm`);
+      formData.append("language", "en");
+      const response = await fetch(`${BASE_URL}/product-service/voice-search`, {
+        method: "POST",
+        headers: { accept: "*/*" },
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error("Unable to process voice search");
+      }
+      const voiceData = (await response.json()) as VoiceSearchResponse;
+      if (location.pathname !== "/main/search-main") {
+        navigate("/main/search-main", {
+          state: { voiceSearchData: voiceData },
+        });
+      } else {
+        navigate("/main/search-main", {
+          state: { voiceSearchData: voiceData },
+          replace: true,
+        });
+      }
+      setVoiceStatus("idle");
+    } catch (error) {
+      console.error("Voice search failed:", error);
+      setVoiceError("Voice search failed. Please try again in a moment.");
+      setVoiceStatus("idle");
+    } finally {
+      setIsVoiceLoading(false);
+    }
+  };
+
+  const startVoiceRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setVoiceError("Voice recording is not supported on this browser.");
+      return;
+    }
+    setVoiceError("");
+    setVoiceStatus("listening");
+    setIsRecording(true);
+    setIsSearchVisible(false);
+    setSearchValue("");
+    setSearchResults([]);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        stream.getTracks().forEach((track) => track.stop());
+        if (!audioBlob.size) {
+          setVoiceError("No voice captured. Please try again.");
+          setVoiceStatus("idle");
+          return;
+        }
+        await submitVoiceFile(audioBlob);
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+    } catch (error) {
+      console.error("Microphone permission denied or unavailable:", error);
+      setVoiceError("Unable to access microphone. Please allow permission.");
+      setVoiceStatus("idle");
+      setIsRecording(false);
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      setVoiceStatus("processing");
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
   };
 
   useEffect(() => {
@@ -450,8 +552,8 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   location.pathname === "/main/profile"
                     ? "text-purple-600"
                     : activeButton === "profile"
-                    ? "text-purple-500"
-                    : "text-white"
+                      ? "text-purple-500"
+                      : "text-white"
                 }`}
               />
               <span className="ml-1 hidden sm:block text-sm font-medium">
@@ -477,8 +579,8 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   location.pathname === "/main/mycart"
                     ? "text-purple-700"
                     : activeButton === "cart"
-                    ? "text-purple-400"
-                    : "text-white"
+                      ? "text-purple-400"
+                      : "text-white"
                 }`}
               />
               <span className="hidden sm:inline text-sm">Cart</span>
@@ -524,6 +626,32 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   <FaTimes size={16} />
                 </button>
               )}
+              <button
+                type="button"
+                onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                className={`ml-2 rounded-full transition-all duration-200 ${
+                  isRecording
+                    ? "bg-red-50 text-red-500 hover:bg-red-100"
+                    : "bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-500"
+                } ${isVoiceLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                title={
+                  isVoiceLoading
+                    ? "Processing voice search"
+                    : isRecording
+                      ? "Stop recording"
+                      : "Start voice search"
+                }
+                disabled={isVoiceLoading}
+                aria-pressed={isRecording}
+              >
+                {isVoiceLoading ? (
+                  <FaSpinner className="animate-spin text-base" />
+                ) : isRecording ? (
+                  <FaMicrophoneSlash className="text-base" />
+                ) : (
+                  <FaMicrophone className="text-base" />
+                )}
+              </button>
             </form>
             <button
               onClick={closeSearch}
@@ -536,6 +664,15 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
 
           {/* Search Results - Scrollable */}
           <div className="flex-1 overflow-y-auto bg-white">
+            {(voiceError || voiceStatus !== "idle") && (
+              <p className="px-4 pt-3 pb-1 text-xs text-gray-600">
+                {voiceStatus === "listening"
+                  ? "Listening... speak clearly and tap the mic again to stop."
+                  : voiceStatus === "processing"
+                    ? "Processing voice search... please wait."
+                    : voiceError}
+              </p>
+            )}
             {renderSearchResults()}
           </div>
         </div>

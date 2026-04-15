@@ -821,7 +821,7 @@ const GenOxy: React.FC = () => {
     <div className="w-full">
       <div className="max-w-4xl mx-auto w-full px-3 sm:px-4 md:px-6 py-5 md:py-7">
         <div
-          className="  p-5 sm:p-6 md:p-7  text-center  bg-white 
+          className="  p-5 sm:p-6 md:p-7  text-center  bg-white
                    dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
         >
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">
@@ -853,9 +853,9 @@ const GenOxy: React.FC = () => {
                     content: q,
                   });
                 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
-                   dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
-                   hover:border-purple-300 dark:hover:border-purple-500 
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white
+                   dark:bg-gray-800 border border-gray-200 dark:border-gray-600
+                   hover:border-purple-300 dark:hover:border-purple-500
                    hover:shadow-sm transition text-left"
                 aria-label={`Ask: ${q}`}
               >
@@ -1096,9 +1096,9 @@ const GenOxy: React.FC = () => {
                     content: q,
                   });
                 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
-                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
-                 hover:border-purple-300 dark:hover:border-purple-500 
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white
+                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600
+                 hover:border-purple-300 dark:hover:border-purple-500
                  hover:shadow transition text-left max-w-sm w-full"
               >
                 <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
@@ -1156,9 +1156,9 @@ const GenOxy: React.FC = () => {
                     content: q,
                   });
                 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white 
-                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 
-                 hover:border-purple-300 dark:hover:border-purple-500 
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white
+                 dark:bg-gray-800 border border-gray-200 dark:border-gray-600
+                 hover:border-purple-300 dark:hover:border-purple-500
                  hover:shadow transition text-left max-w-sm w-full"
               >
                 <span className="inline-block w-2 h-2 rounded-full bg-purple-500" />
@@ -1225,13 +1225,13 @@ const GenOxy: React.FC = () => {
         {/* ===== Insurance AI LLM – Polished, Mobile-First UI (drop-in) ===== */}
         <div className="max-w-6xl mx-auto w-full px-3 sm:px-5 py-5">
           <div
-            className="rounded-2xl  bg-white 
+            className="rounded-2xl  bg-white
                    dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 p-3 sm:p-7 "
           >
             {/* Header */}
             <div className="flex items-center justify-between gap-3">
               <h2
-                className="text-lg sm:text-2xl font-bold  bg-white 
+                className="text-lg sm:text-2xl font-bold  bg-white
                    dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
               >
                 Insurance AI LLM
@@ -1252,11 +1252,11 @@ const GenOxy: React.FC = () => {
             {insuranceLanding && (
               <div className="mt-4">
                 <div
-                  className="rounded-xl border border-gray-200  bg-white  
+                  className="rounded-xl border border-gray-200  bg-white
                    dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200 p-3 sm:p-4 shadow-xs"
                 >
                   <div
-                    className="text-[11px] sm:text-sm  bg-white 
+                    className="text-[11px] sm:text-sm  bg-white
                    dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
                   >
                     {BIMA_STRIP}
@@ -1264,7 +1264,7 @@ const GenOxy: React.FC = () => {
                 </div>
 
                 <div
-                  className="mt-3 text-xs sm:text-sm leading-relaxed  bg-white 
+                  className="mt-3 text-xs sm:text-sm leading-relaxed  bg-white
                    dark:bg-gray-800 text-purple-700 hover:text-purple-800 dark:text-white dark:hover:text-purple-200"
                 >
                   <p>
@@ -1273,12 +1273,56 @@ const GenOxy: React.FC = () => {
                   </p>
                   <p className="mt-2">
                     The Insurance Regulatory and Development Authority of India
-                    (IRDAI) has approved <strong>61 companies</strong>:
+                    (IRDAI) has approved
+                    <strong> 61 insurance companies</strong> and{" "}
+                    <strong>841 Broking Firms</strong>:
                   </p>
-                  <ul className="list-disc pl-5 mt-1 space-y-1">
-                    <li>26 Life Insurance Companies</li>
-                    <li>33 General Insurance Companies</li>
-                    <li>2 Reinsurance Companies</li>
+
+                  <ul className="list-disc pl-5 mt-1 space-y-1 text-decoration-none">
+                    <li>
+                      <a
+                        href="https://drive.google.com/file/d/1MNmIyvoJYfTarkGw99LwvzGVvIfDz6Bc/preview"
+                      
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 no-underline cursor-pointer"
+                      >
+                        26 Life Insurance Companies
+                      </a>
+                    </li>
+
+                    <li>
+                      <a
+                        href="https://drive.google.com/file/d/1QtZxNo8jolGm7f7md-_C50sRdCc7RW3F/preview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 no-underline cursor-pointer"
+                      >
+                        33 General Insurance Companies
+                      </a>
+                    </li>
+
+                    <li>
+                      <a
+                        href="https://drive.google.com/file/d/1zotBbOxqlhHvlXV1ssisZxIhYml4Aetm/preview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 no-underline cursor-pointer"
+                      >
+                        2 Reinsurance Companies
+                      </a>
+                    </li>
+
+                    <li>
+                      <a
+                        href="https://drive.google.com/file/d/14bKSpJzpXYbn1p8WTEH2IczXc2NzfCVB/preview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 no-underline cursor-pointer"
+                      >
+                        841 Brokers Companies
+                      </a>
+                    </li>
                   </ul>
                   <p className="mt-2">
                     Citizens buy policies directly from{" "}
@@ -1327,8 +1371,8 @@ const GenOxy: React.FC = () => {
                   {/* Life Insurance */}
                   <button
                     onClick={() => pickType("Life Insurance")}
-                    className="group w-full rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 
-               hover:border-indigo-400 hover:shadow-md transition 
+                    className="group w-full rounded-2xl border border-gray-200 bg-white p-4 sm:p-5
+               hover:border-indigo-400 hover:shadow-md transition
                active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <div className="flex items-center gap-4">
@@ -1352,8 +1396,8 @@ const GenOxy: React.FC = () => {
                   {/* General Insurance */}
                   <button
                     onClick={() => pickType("General Insurance")}
-                    className="group w-full rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 
-               hover:border-indigo-400 hover:shadow-md transition 
+                    className="group w-full rounded-2xl border border-gray-200 bg-white p-4 sm:p-5
+               hover:border-indigo-400 hover:shadow-md transition
                active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <div className="flex items-center gap-4">
@@ -1509,14 +1553,14 @@ const GenOxy: React.FC = () => {
                       <div className="text-sm font-semibold text-indigo-700">
                         {
                           GENERAL_CATEGORIES.find(
-                            (x) => x.key === generalCategory
+                            (x) => x.key === generalCategory,
                           )?.title
                         }
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                         {GENERAL_CATEGORIES.find(
-                          (x) => x.key === generalCategory
+                          (x) => x.key === generalCategory,
                         )!
                           .prompts.slice(0, 4)
                           .map((q) => (
@@ -1525,8 +1569,8 @@ const GenOxy: React.FC = () => {
                               onClick={() =>
                                 sendText(`[${generalCategory}] ${q}`)
                               }
-                              className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-gray-200 
-                   hover:border-indigo-400 hover:shadow-md transition 
+                              className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-gray-200
+                   hover:border-indigo-400 hover:shadow-md transition
                    text-left active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                               <span className="inline-block w-3 h-3 rounded-full bg-indigo-500 flex-shrink-0" />
