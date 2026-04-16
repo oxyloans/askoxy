@@ -60,7 +60,7 @@ type FilterKey =
 const { Option } = Select;
 
 const JobViewPage: React.FC = () => {
-    const [showResumeModal, setShowResumeModal] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -98,159 +98,160 @@ const JobViewPage: React.FC = () => {
     companyName: string;
   } | null>(null);
   const [displayedJobsCount, setDisplayedJobsCount] = useState(20);
-  const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>({});
-
+  const [companyNames, setCompanyNames] = useState<{ [key: string]: string }>(
+    {},
+  );
 
   const cleanLocation = (location: string): string => {
-    if (!location) return '';
-    
+    if (!location) return "";
+
     // Remove all unwanted patterns more aggressively
     let cleaned = location
-      .replace(/\b\d{6}\b/g, '') // Remove 6-digit pincodes
-      .replace(/\b\d{5}\b/g, '') // Remove 5-digit codes
-      .replace(/\b[A-Z]{2,3}\b/g, '') // Remove state codes like AP, TS, etc
-      .replace(/\bnodioa\b/gi, '') // Remove "nodioa"
-      .replace(/\b\d+th\s+floor\b/gi, '') // Remove "10th floor" etc
-      .replace(/\bfloor\b/gi, '') // Remove "floor"
-      .replace(/\bdoor\s+no\b/gi, '') // Remove "door no"
-      .replace(/\bplot\s+no\b/gi, '') // Remove "plot no"
-      .replace(/\bplot\b/gi, '') // Remove "plot"
-      .replace(/\b\d+-\d+\b/g, '') // Remove number ranges like "12-34"
-      .replace(/\b\d+\b/g, '') // Remove all standalone numbers
-      .replace(/[,\s]+/g, ' ') // Replace multiple commas/spaces with single space
-      .replace(/[^a-zA-Z\s]/g, '') // Remove all non-alphabetic characters except spaces
+      .replace(/\b\d{6}\b/g, "") // Remove 6-digit pincodes
+      .replace(/\b\d{5}\b/g, "") // Remove 5-digit codes
+      .replace(/\b[A-Z]{2,3}\b/g, "") // Remove state codes like AP, TS, etc
+      .replace(/\bnodioa\b/gi, "") // Remove "nodioa"
+      .replace(/\b\d+th\s+floor\b/gi, "") // Remove "10th floor" etc
+      .replace(/\bfloor\b/gi, "") // Remove "floor"
+      .replace(/\bdoor\s+no\b/gi, "") // Remove "door no"
+      .replace(/\bplot\s+no\b/gi, "") // Remove "plot no"
+      .replace(/\bplot\b/gi, "") // Remove "plot"
+      .replace(/\b\d+-\d+\b/g, "") // Remove number ranges like "12-34"
+      .replace(/\b\d+\b/g, "") // Remove all standalone numbers
+      .replace(/[,\s]+/g, " ") // Replace multiple commas/spaces with single space
+      .replace(/[^a-zA-Z\s]/g, "") // Remove all non-alphabetic characters except spaces
       .trim();
-    
+
     // Only accept known major cities
     const validCities = {
-      'hyderabad': 'Hyderabad',
-      'bangalore': 'Bangalore',
-      'bengaluru': 'Bangalore',
-      'chennai': 'Chennai',
-      'mumbai': 'Mumbai',
-      'delhi': 'Delhi',
-      'pune': 'Pune',
-      'kolkata': 'Kolkata',
-      'ahmedabad': 'Ahmedabad',
-      'surat': 'Surat',
-      'jaipur': 'Jaipur',
-      'lucknow': 'Lucknow',
-      'kanpur': 'Kanpur',
-      'nagpur': 'Nagpur',
-      'indore': 'Indore',
-      'thane': 'Thane',
-      'bhopal': 'Bhopal',
-      'visakhapatnam': 'Visakhapatnam',
-      'pimpri': 'Pimpri-Chinchwad',
-      'patna': 'Patna',
-      'vadodara': 'Vadodara',
-      'ghaziabad': 'Ghaziabad',
-      'ludhiana': 'Ludhiana',
-      'agra': 'Agra',
-      'nashik': 'Nashik',
-      'faridabad': 'Faridabad',
-      'meerut': 'Meerut',
-      'rajkot': 'Rajkot',
-      'kalyan': 'Kalyan-Dombivli',
-      'vasai': 'Vasai-Virar',
-      'varanasi': 'Varanasi',
-      'srinagar': 'Srinagar',
-      'aurangabad': 'Aurangabad',
-      'dhanbad': 'Dhanbad',
-      'amritsar': 'Amritsar',
-      'navi mumbai': 'Navi Mumbai',
-      'allahabad': 'Allahabad',
-      'ranchi': 'Ranchi',
-      'howrah': 'Howrah',
-      'coimbatore': 'Coimbatore',
-      'jabalpur': 'Jabalpur',
-      'gwalior': 'Gwalior',
-      'vijayawada': 'Vijayawada',
-      'jodhpur': 'Jodhpur',
-      'madurai': 'Madurai',
-      'raipur': 'Raipur',
-      'kota': 'Kota',
-      'guwahati': 'Guwahati',
-      'chandigarh': 'Chandigarh',
-      'solapur': 'Solapur',
-      'hubli': 'Hubli-Dharwad',
-      'tiruchirappalli': 'Tiruchirappalli',
-      'bareilly': 'Bareilly',
-      'mysore': 'Mysore',
-      'tiruppur': 'Tiruppur',
-      'gurgaon': 'Gurgaon',
-      'aligarh': 'Aligarh',
-      'jalandhar': 'Jalandhar',
-      'bhubaneswar': 'Bhubaneswar',
-      'salem': 'Salem',
-      'warangal': 'Warangal',
-      'guntur': 'Guntur',
-      'bhiwandi': 'Bhiwandi',
-      'saharanpur': 'Saharanpur',
-      'gorakhpur': 'Gorakhpur',
-      'bikaner': 'Bikaner',
-      'amravati': 'Amravati',
-      'noida': 'Noida',
-      'jamshedpur': 'Jamshedpur',
-      'bhilai': 'Bhilai',
-      'cuttack': 'Cuttack',
-      'firozabad': 'Firozabad',
-      'kochi': 'Kochi',
-      'nellore': 'Nellore',
-      'bhavnagar': 'Bhavnagar',
-      'dehradun': 'Dehradun',
-      'durgapur': 'Durgapur',
-      'asansol': 'Asansol',
-      'rourkela': 'Rourkela',
-      'nanded': 'Nanded',
-      'kolhapur': 'Kolhapur',
-      'ajmer': 'Ajmer',
-      'akola': 'Akola',
-      'gulbarga': 'Gulbarga',
-      'jamnagar': 'Jamnagar',
-      'ujjain': 'Ujjain',
-      'loni': 'Loni',
-      'siliguri': 'Siliguri',
-      'jhansi': 'Jhansi',
-      'ulhasnagar': 'Ulhasnagar',
-      'jammu': 'Jammu',
-      'sangli': 'Sangli-Miraj & Kupwad',
-      'mangalore': 'Mangalore',
-      'erode': 'Erode',
-      'belgaum': 'Belgaum',
-      'ambattur': 'Ambattur',
-      'tirunelveli': 'Tirunelveli',
-      'malegaon': 'Malegaon',
-      'gaya': 'Gaya',
-      'jalgaon': 'Jalgaon',
-      'udaipur': 'Udaipur',
-      'maheshtala': 'Maheshtala'
+      hyderabad: "Hyderabad",
+      bangalore: "Bangalore",
+      bengaluru: "Bangalore",
+      chennai: "Chennai",
+      mumbai: "Mumbai",
+      delhi: "Delhi",
+      pune: "Pune",
+      kolkata: "Kolkata",
+      ahmedabad: "Ahmedabad",
+      surat: "Surat",
+      jaipur: "Jaipur",
+      lucknow: "Lucknow",
+      kanpur: "Kanpur",
+      nagpur: "Nagpur",
+      indore: "Indore",
+      thane: "Thane",
+      bhopal: "Bhopal",
+      visakhapatnam: "Visakhapatnam",
+      pimpri: "Pimpri-Chinchwad",
+      patna: "Patna",
+      vadodara: "Vadodara",
+      ghaziabad: "Ghaziabad",
+      ludhiana: "Ludhiana",
+      agra: "Agra",
+      nashik: "Nashik",
+      faridabad: "Faridabad",
+      meerut: "Meerut",
+      rajkot: "Rajkot",
+      kalyan: "Kalyan-Dombivli",
+      vasai: "Vasai-Virar",
+      varanasi: "Varanasi",
+      srinagar: "Srinagar",
+      aurangabad: "Aurangabad",
+      dhanbad: "Dhanbad",
+      amritsar: "Amritsar",
+      "navi mumbai": "Navi Mumbai",
+      allahabad: "Allahabad",
+      ranchi: "Ranchi",
+      howrah: "Howrah",
+      coimbatore: "Coimbatore",
+      jabalpur: "Jabalpur",
+      gwalior: "Gwalior",
+      vijayawada: "Vijayawada",
+      jodhpur: "Jodhpur",
+      madurai: "Madurai",
+      raipur: "Raipur",
+      kota: "Kota",
+      guwahati: "Guwahati",
+      chandigarh: "Chandigarh",
+      solapur: "Solapur",
+      hubli: "Hubli-Dharwad",
+      tiruchirappalli: "Tiruchirappalli",
+      bareilly: "Bareilly",
+      mysore: "Mysore",
+      tiruppur: "Tiruppur",
+      gurgaon: "Gurgaon",
+      aligarh: "Aligarh",
+      jalandhar: "Jalandhar",
+      bhubaneswar: "Bhubaneswar",
+      salem: "Salem",
+      warangal: "Warangal",
+      guntur: "Guntur",
+      bhiwandi: "Bhiwandi",
+      saharanpur: "Saharanpur",
+      gorakhpur: "Gorakhpur",
+      bikaner: "Bikaner",
+      amravati: "Amravati",
+      noida: "Noida",
+      jamshedpur: "Jamshedpur",
+      bhilai: "Bhilai",
+      cuttack: "Cuttack",
+      firozabad: "Firozabad",
+      kochi: "Kochi",
+      nellore: "Nellore",
+      bhavnagar: "Bhavnagar",
+      dehradun: "Dehradun",
+      durgapur: "Durgapur",
+      asansol: "Asansol",
+      rourkela: "Rourkela",
+      nanded: "Nanded",
+      kolhapur: "Kolhapur",
+      ajmer: "Ajmer",
+      akola: "Akola",
+      gulbarga: "Gulbarga",
+      jamnagar: "Jamnagar",
+      ujjain: "Ujjain",
+      loni: "Loni",
+      siliguri: "Siliguri",
+      jhansi: "Jhansi",
+      ulhasnagar: "Ulhasnagar",
+      jammu: "Jammu",
+      sangli: "Sangli-Miraj & Kupwad",
+      mangalore: "Mangalore",
+      erode: "Erode",
+      belgaum: "Belgaum",
+      ambattur: "Ambattur",
+      tirunelveli: "Tirunelveli",
+      malegaon: "Malegaon",
+      gaya: "Gaya",
+      jalgaon: "Jalgaon",
+      udaipur: "Udaipur",
+      maheshtala: "Maheshtala",
     };
-    
+
     const lowerCleaned = cleaned.toLowerCase();
-    
+
     // Check if it matches any valid city
     for (const [key, value] of Object.entries(validCities)) {
       if (lowerCleaned.includes(key)) {
         return value;
       }
     }
-    
+
     // If no valid city found, return empty string (will be filtered out)
-    return '';
+    return "";
   };
 
   const cleanExperience = (experience: string): string => {
-    if (!experience) return '';
-    
+    if (!experience) return "";
+
     // Remove unwanted patterns
     let cleaned = experience
-      .replace(/\bgood\s+years?\b/gi, '') // Remove "good years"
-      .replace(/\bprofessional\b/gi, '') // Remove "professional"
-      .replace(/\bexperience\b/gi, '') // Remove "experience"
-      .replace(/[,\s]+/g, ' ') // Replace multiple spaces with single space
+      .replace(/\bgood\s+years?\b/gi, "") // Remove "good years"
+      .replace(/\bprofessional\b/gi, "") // Remove "professional"
+      .replace(/\bexperience\b/gi, "") // Remove "experience"
+      .replace(/[,\s]+/g, " ") // Replace multiple spaces with single space
       .trim();
-    
+
     // Only accept valid experience patterns
     const validPatterns = [
       /^\d+-\d+\s*years?$/i, // "1-3 years", "2-5 years"
@@ -259,12 +260,12 @@ const JobViewPage: React.FC = () => {
       /^fresher$/i, // "fresher"
       /^entry\s*level$/i, // "entry level"
       /^senior$/i, // "senior"
-      /^junior$/i // "junior"
+      /^junior$/i, // "junior"
     ];
-    
+
     // Check if cleaned experience matches any valid pattern
-    const isValid = validPatterns.some(pattern => pattern.test(cleaned));
-    
+    const isValid = validPatterns.some((pattern) => pattern.test(cleaned));
+
     if (isValid) {
       // Standardize the format
       if (/^\d+$/.test(cleaned)) {
@@ -272,9 +273,9 @@ const JobViewPage: React.FC = () => {
       }
       return cleaned;
     }
-    
+
     // If no valid pattern found, return empty string (will be filtered out)
-    return '';
+    return "";
   };
 
   const uniqueLocations = Array.from(
@@ -292,14 +293,15 @@ const JobViewPage: React.FC = () => {
   const uniqueExperience = Array.from(
     new Set(
       jobs
-        .map((job) => cleanExperience(job.experience?.trim() || ''))
-        .filter((exp) => exp && exp.length > 0) // Only keep valid experience
+        .map((job) => cleanExperience(job.experience?.trim() || ""))
+        .filter((exp) => exp && exp.length > 0), // Only keep valid experience
     ),
   ).sort();
 
   const uniqueIndustries = Array.from(
-    new Set(
-      ["AI Jobs", ...jobs
+    new Set([
+      "AI Jobs",
+      ...jobs
         .map((job) => job.industry?.trim())
         .filter(
           (ind): ind is string =>
@@ -307,8 +309,8 @@ const JobViewPage: React.FC = () => {
             ind.length > 0 &&
             ind.toLowerCase() !== "null" &&
             ind.toLowerCase() !== "undefined",
-        )]
-    ),
+        ),
+    ]),
   ).sort();
 
   const formatLPA = (num: number) => {
@@ -484,31 +486,31 @@ const JobViewPage: React.FC = () => {
     }
   };
 
-useEffect(() => {
-  const isPassed = sessionStorage.getItem("examPassed") === "true";
+  useEffect(() => {
+    const isPassed = sessionStorage.getItem("examPassed") === "true";
 
-  if (location.state?.openApplyModal && selectedJob) {
-    setApplySelectedJob({
-      jobDesignation: selectedJob.jobDesignation,
-      companyName: selectedJob.companyName,
-    });
+    if (location.state?.openApplyModal && selectedJob) {
+      setApplySelectedJob({
+        jobDesignation: selectedJob.jobDesignation,
+        companyName: selectedJob.companyName,
+      });
 
-    if (isPassed) {
-      // ✅ AFTER EXAM PASS → FULL FORM
-      setIsModalOpen(true);
-    } else {
-      // 🔥 FIRST TIME → RESUME UPLOAD
-      setShowResumeModal(true);
+      if (isPassed) {
+        // ✅ AFTER EXAM PASS → FULL FORM
+        setIsModalOpen(true);
+      } else {
+        // 🔥 FIRST TIME → RESUME UPLOAD
+        setShowResumeModal(true);
+      }
+
+      const { openApplyModal, ...restState } = location.state || {};
+
+      navigate(location.pathname, {
+        replace: true,
+        state: restState,
+      });
     }
-
-    const { openApplyModal, ...restState } = location.state || {};
-
-    navigate(location.pathname, {
-      replace: true,
-      state: restState,
-    });
-  }
-}, [location.state, selectedJob]);
+  }, [location.state, selectedJob]);
 
   useEffect(() => {
     filterJobs();
@@ -579,7 +581,7 @@ useEffect(() => {
 
     if (filters.location) {
       filtered = filtered.filter((job) => {
-        const cleanedJobLocation = cleanLocation(job.jobLocations || '');
+        const cleanedJobLocation = cleanLocation(job.jobLocations || "");
         return cleanedJobLocation
           .toLowerCase()
           .includes(filters.location.toLowerCase());
@@ -588,7 +590,7 @@ useEffect(() => {
 
     if (filters.experience) {
       filtered = filtered.filter((job) => {
-        const cleanedJobExperience = cleanExperience(job.experience || '');
+        const cleanedJobExperience = cleanExperience(job.experience || "");
         return cleanedJobExperience
           .toLowerCase()
           .includes(filters.experience.toLowerCase());
@@ -651,23 +653,22 @@ useEffect(() => {
 
     const hasAgent = await checkUserHasAgent();
 
-  if (!hasAgent) {
-    setShowNoAgentPopup(true);
-    return;
-  }
+    if (!hasAgent) {
+      setShowNoAgentPopup(true);
+      return;
+    }
 
- const isPassed = sessionStorage.getItem("examPassed") === "true";
+    const isPassed = sessionStorage.getItem("examPassed") === "true";
 
-  setApplySelectedJob({ jobDesignation, companyName });
+    setApplySelectedJob({ jobDesignation, companyName });
 
-  if (isPassed) {
-    // ✅ AFTER PASS → FULL FORM
-    setIsModalOpen(true);
-  } else {
-    // ✅ FIRST TIME → RESUME
-    setShowResumeModal(true);
-  }
-
+    if (isPassed) {
+      // ✅ AFTER PASS → FULL FORM
+      setIsModalOpen(true);
+    } else {
+      // ✅ FIRST TIME → RESUME
+      setShowResumeModal(true);
+    }
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -675,7 +676,8 @@ useEffect(() => {
       // When AI Jobs is selected from industry filter, navigate to AI Jobs company page
       const token = localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
-      const prefix = token && userId ? "/main/viewjobdetails" : "/viewjobdetails";
+      const prefix =
+        token && userId ? "/main/viewjobdetails" : "/viewjobdetails";
       navigate(`${prefix}/default/AI Jobs`);
       return;
     }
@@ -692,12 +694,13 @@ useEffect(() => {
       skills: "",
     });
     setSearchTerm("");
-    
+
     // Reset to All Jobs if not already there
     if (currentCompany !== "ALL") {
       const token = localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
-      const prefix = token && userId ? "/main/viewjobdetails" : "/viewjobdetails";
+      const prefix =
+        token && userId ? "/main/viewjobdetails" : "/viewjobdetails";
       navigate(`${prefix}/default/ALL`);
     }
   };
@@ -707,43 +710,43 @@ useEffect(() => {
     navigate("/main/profile");
   };
 
- const handleWriteToUsSubmitButton = async () => {
-  if (!query || query.trim() === "") {
-    setQueryError("Please enter the query before submitting.");
-    return;
-  }
+  const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter the query before submitting.");
+      return;
+    }
 
-  // ✅ FIX START
-  const safeMobile = finalMobileNumber || "";
-  const safeEmail = email || "";
-  const safeUserId = userId || "";
+    // ✅ FIX START
+    const safeMobile = finalMobileNumber || "";
+    const safeEmail = email || "";
+    const safeUserId = userId || "";
 
-  if (!safeMobile) {
-    message.error("Please update your mobile number");
-    return;
-  }
+    if (!safeMobile) {
+      message.error("Please update your mobile number");
+      return;
+    }
 
-  if (!safeEmail) {
-    message.error("Please update your email");
-    return;
-  }
-  // ✅ FIX END
+    if (!safeEmail) {
+      message.error("Please update your email");
+      return;
+    }
+    // ✅ FIX END
 
-  const success = await submitWriteToUsQuery(
-    safeEmail,
-    safeMobile, // ✅ always string
-    query,
-    "FREESAMPLE",
-    safeUserId
-  );
+    const success = await submitWriteToUsQuery(
+      safeEmail,
+      safeMobile, // ✅ always string
+      query,
+      "FREESAMPLE",
+      safeUserId,
+    );
 
-  if (success) {
-    message.success("Query submitted successfully");
-    setIsOpen(false);
-  } else {
-    message.error("Failed to send query. Please try again.");
-  }
-};
+    if (success) {
+      message.success("Query submitted successfully");
+      setIsOpen(false);
+    } else {
+      message.error("Failed to send query. Please try again.");
+    }
+  };
 
   const handleWriteToUs = () => {
     if (!userId) {
@@ -880,14 +883,14 @@ useEffect(() => {
             <img
               src={
                 job.companyLogo ||
-                "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
+                "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png"
               }
               className="w-40 h-20 object-contain transition-transform duration-300"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.onerror = null;
                 target.src =
-                  "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+                  "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png";
               }}
             />
           </div>
@@ -972,9 +975,7 @@ useEffect(() => {
     };
 
     return (
-      <div
-        className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden transition-all duration-500 hover:shadow-2xl"
-      >
+      <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden transition-all duration-500 hover:shadow-2xl">
         {/* Banner/Header Segment */}
         <div className="p-6 md:p-8 border-b border-gray-100 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -983,14 +984,14 @@ useEffect(() => {
                 <img
                   src={
                     job.companyLogo ||
-                    "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
+                    "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png"
                   }
                   alt={job.companyName}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;
                     target.src =
-                      "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+                      "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png";
                   }}
                   className="max-w-full max-h-full object-contain"
                 />
@@ -1283,12 +1284,12 @@ useEffect(() => {
                 className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
               >
                 <option value="ALL"> All Companies Jobs</option>
-                <option value="AI Jobs">AI Jobs</option>
+                {/* <option value="AI Jobs">AI Jobs</option> */}
                 {Object.entries(companyNames)
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([label, value]) => (
                     <option key={value} value={value}>
-                       {label}
+                      {label}
                     </option>
                   ))}
               </select>
@@ -1304,7 +1305,28 @@ useEffect(() => {
                 className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 hover:border-blue-300 transition-colors"
               />
             </div>
+            {/* AI Jobs Button*/}
+            <div className="relative">
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <button
+                onClick={() => {
+                  const token = localStorage.getItem("accessToken");
+                  const userId = localStorage.getItem("userId");
+                  const prefix =
+                    token && userId
+                      ? "/main/viewjobdetails"
+                      : "/viewjobdetails";
 
+                  navigate(`${prefix}/default/AI Jobs`);
+                }}
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg 
+    text-left text-gray-800 bg-white 
+    hover:border-blue-300 focus:ring-2 focus:ring-blue-500 
+    focus:border-transparent transition-colors"
+              >
+                AI Jobs
+              </button>
+            </div>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
@@ -1315,7 +1337,7 @@ useEffect(() => {
                 <option value=""> All Locations</option>
                 {uniqueLocations.map((loc) => (
                   <option key={loc} value={loc}>
-                   {loc}
+                    {loc}
                   </option>
                 ))}
               </select>
@@ -1333,7 +1355,7 @@ useEffect(() => {
                 <option value=""> All Experience</option>
                 {uniqueExperience.map((exp) => (
                   <option key={exp} value={exp}>
-                     {exp}
+                    {exp}
                   </option>
                 ))}
               </select>
@@ -1348,15 +1370,17 @@ useEffect(() => {
               >
                 <option value="">All Industries</option>
                 {/* <option value="AI Jobs">AI Jobs</option> */}
-                {uniqueIndustries.filter(ind => ind !== "AI Jobs").map((ind) => (
-                  <option key={ind} value={ind}>
-                    {ind}
-                  </option>
-                ))}
+                {uniqueIndustries
+                  .filter((ind) => ind !== "AI Jobs")
+                  .map((ind) => (
+                    <option key={ind} value={ind}>
+                      {ind}
+                    </option>
+                  ))}
               </select>
             </div>
 
-            <div className="relative">
+            {/* <div className="relative">
               <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
                 value={filters.salaryRange}
@@ -1372,11 +1396,11 @@ useEffect(() => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
           </div>
 
           {/* Clear Filters Button */}
-          {(searchTerm || Object.values(filters).some(f => f)) && (
+          {(searchTerm || Object.values(filters).some((f) => f)) && (
             <div className="flex justify-center mt-4">
               <button
                 onClick={clearFilters}
@@ -1654,19 +1678,16 @@ useEffect(() => {
         />
       )}
 
-
-            {showResumeModal && selectedJob && (
-  <ResumeUploadModal
-    open={showResumeModal}
-    onClose={() => setShowResumeModal(false)}
-    userId={userId || ""}
-    jobId={selectedJob.id}
-    jobDesignation={selectedJob.jobDesignation}
-    companyName={selectedJob.companyName}
-  />
-)}
-
-
+      {showResumeModal && selectedJob && (
+        <ResumeUploadModal
+          open={showResumeModal}
+          onClose={() => setShowResumeModal(false)}
+          userId={userId || ""}
+          jobId={selectedJob.id}
+          jobDesignation={selectedJob.jobDesignation}
+          companyName={selectedJob.companyName}
+        />
+      )}
 
       {showNoAgentPopup && (
         <div

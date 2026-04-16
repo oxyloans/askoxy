@@ -1,8 +1,7 @@
-import {notification } from "antd";
+import { notification } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Finvibe3DLanding from "../Finvibe3DLanding";
-import { CheckCircleOutlined, WarningOutlined } from "@ant-design/icons";
 
 const plans = [
   {
@@ -74,62 +73,57 @@ const insurvibeFeatures = [
   "Frontend + Backend + Database Code — Ready to Deploy",
 ];
 
-
+// 🔒 Team emails — only these get access
+const TEAM_EMAILS = ["oxybfsai@askoxy.ai"];
 
 export default function OxybfsiPricing() {
-  const [subscribed, setSubscribed] = useState(false);
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const navigate = useNavigate();
-   const [showLanding, setShowLanding] = useState(false);
+  const [showLanding, setShowLanding] = useState(false);
 
+  // Team login state — hidden panel
+  const [logoClickCount, setLogoClickCount] = useState(0);
+  const [showTeamLogin, setShowTeamLogin] = useState(false);
+  const [teamEmail, setTeamEmail] = useState("");
+  const [teamError, setTeamError] = useState("");
+
+  const handleLogoClick = () => {
+    const next = logoClickCount + 1;
+    setLogoClickCount(next);
+    // 3 rapid clicks on the logo reveals the team login
+    if (next >= 3) {
+      setShowTeamLogin(true);
+      setLogoClickCount(0);
+    }
+  };
+
+  const handleTeamLogin = () => {
+    if (!teamEmail.trim()) {
+      setTeamError("Please enter your email.");
+      return;
+    }
+    if (TEAM_EMAILS.includes(teamEmail.trim())) {
+      setShowTeamLogin(false);
+      setTeamEmail("");
+      setTeamError("");
+      setTimeout(() => setShowLanding(true), 300);
+    } else {
+      setTeamError("Access denied. This email is not authorised.");
+    }
+  };
+
+  const handlepayment = () => {
+    notification.info({
+      message: "Subscription Support",
+      description:
+        "Please contact the AskOxy.AI support team for subscription assistance at support@askoxy.ai",
+      placement: "topRight",
+      duration: 5,
+    });
+  };
 
   if (showLanding) {
-  return <Finvibe3DLanding />;
-}
-
-const handlepayment = () => {
-  notification.info({
-    message: "Subscription Support",
-    description:
-      "Please contact the AskOxy.AI support team for subscription assistance at support@askoxy.ai",
-    placement: "topRight",
-    duration: 5,
-  });
-};
-
-const handleSubscribe = () => {
-  if (!email.trim()) {
-   
-notification.warning({
-  message: "Invalid Email",
-  description: "Please enter a valid email address.",
-  placement: "topRight",
-  duration: 4,
-  icon: <WarningOutlined style={{ color: "#faad14" }} />,
-});
-    return;
+    return <Finvibe3DLanding />;
   }
 
-  if (email.trim() === "oxybfsai@askoxy.ai") {
-    setSubscribed(true);
-    setSubmitted(true);
-
-    setTimeout(() => {
-      setShowLanding(true); // ✅ SWITCH UI
-    }, 500);
-  } else {
-  notification.success({
-  message: "Subscription Successful",
-  description: "Subscription completed! Proceed to billing.",
-  placement: "topRight",
-  duration: 4,
-  icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
-});
-    setSubscribed(true);
-    setSubmitted(true);
-  }
-};
   return (
     <div className="min-h-screen bg-[#050a14] text-white font-sans overflow-x-hidden">
       {/* Background grid */}
@@ -146,81 +140,91 @@ notification.warning({
       <div className="fixed top-[-200px] left-[-200px] w-[600px] h-[600px] rounded-full bg-cyan-500 opacity-[0.06] blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-200px] right-[-200px] w-[600px] h-[600px] rounded-full bg-indigo-500 opacity-[0.06] blur-[120px] pointer-events-none" />
 
+      {/* ─── Hidden Team Login Modal ─── */}
+      {showTeamLogin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#0d1a2a] border border-cyan-500/30 rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white">Team Access</h2>
+              <button
+                onClick={() => {
+                  setShowTeamLogin(false);
+                  setTeamEmail("");
+                  setTeamError("");
+                }}
+                className="text-slate-500 hover:text-white text-xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-5">
+              Enter your authorised team email to continue.
+            </p>
+            <input
+              type="email"
+              placeholder="team@askoxy.ai"
+              value={teamEmail}
+              onChange={(e) => {
+                setTeamEmail(e.target.value);
+                setTeamError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleTeamLogin()}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors mb-3"
+            />
+            {teamError && (
+              <p className="text-red-400 text-xs mb-3">{teamError}</p>
+            )}
+            <button
+              onClick={handleTeamLogin}
+              className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold py-3 rounded-xl text-sm transition-all"
+            >
+              Submit →
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-16">
         {/* ─── Header ─── */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5 mb-6">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5 mb-4">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
             <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">
               Responsible AI Platform
             </span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-none mb-4">
+          {/* 🔒 5-click secret trigger on the logo title */}
+          <h1
+            className="text-5xl md:text-7xl font-black tracking-tight leading-none mb-3 cursor-default select-none"
+            onClick={handleLogoClick}
+          >
             <span className="text-white">OXY</span>
             <span className="text-cyan-400">BFSI</span>
           </h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
+          <p className="text-slate-400 text-base max-w-lg mx-auto leading-relaxed mb-8">
             AI-powered compliance-grade application generation for India's
             regulated financial sector.
           </p>
-        </div>
 
-        {/* ─── Subscribe Gate ─── */}
-        <div className="mb-20">
-          {!subscribed ? (
-            <div className="max-w-lg mx-auto bg-white/[0.03] border border-white/10 rounded-2xl p-8 text-center backdrop-blur-sm">
-              <p className="text-slate-300 text-sm mb-1 uppercase tracking-widest font-semibold">
-                Step 1
-              </p>
-              <h2 className="text-2xl font-bold mb-2 text-white">
-                Subscribe to Proceed
-              </h2>
-              <p className="text-slate-400 text-sm mb-6">
-                Enter your email to unlock pricing and build access.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
-                />
-                <button
-                  onClick={handleSubscribe}
-                  className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold px-6 py-3 rounded-xl transition-all text-sm whitespace-nowrap"
-                >
-                  Subscribe →
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-lg mx-auto bg-cyan-500/10 border border-cyan-500/30 rounded-2xl p-6 text-center">
-              <div className="text-3xl mb-2">✓</div>
-              <p className="text-cyan-400 font-bold">
-                Subscribed successfully!
-              </p>
-              <p className="text-slate-400 text-sm mt-1">
-                You now have access to all pricing tiers below.
-              </p>
-            </div>
-          )}
+          {/* Seamless divider into products */}
+          <div className="flex items-center gap-4 justify-center mb-2">
+            <div className="h-px w-16 bg-white/10" />
+            <p className="text-slate-500 text-xs uppercase tracking-widest font-semibold">
+              Powered By
+            </p>
+            <div className="h-px w-16 bg-white/10" />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-black text-white mb-1">
+            Two Vertical Engines
+          </h2>
+          <p className="text-slate-400 max-w-xl mx-auto text-sm mb-10">
+            One prompt. Complete compliance-grade application. Download and deploy.
+          </p>
         </div>
 
         {/* ─── Products Section ─── */}
         <div className="mb-20">
-          <div className="text-center mb-12">
-            <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 font-semibold">
-              Powered By
-            </p>
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
-              Two Vertical Engines
-            </h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-sm">
-              One prompt. Complete compliance-grade application. Download and
-              deploy.
-            </p>
-          </div>
+
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* FinVibe */}
@@ -245,9 +249,7 @@ notification.warning({
                     key={i}
                     className="flex items-start gap-3 text-sm text-slate-300"
                   >
-                    <span className="text-cyan-400 mt-0.5 flex-shrink-0">
-                      ◆
-                    </span>
+                    <span className="text-cyan-400 mt-0.5 flex-shrink-0">◆</span>
                     <span>{f}</span>
                   </li>
                 ))}
@@ -293,9 +295,7 @@ notification.warning({
                     key={i}
                     className="flex items-start gap-3 text-sm text-slate-300"
                   >
-                    <span className="text-indigo-400 mt-0.5 flex-shrink-0">
-                      ◆
-                    </span>
+                    <span className="text-indigo-400 mt-0.5 flex-shrink-0">◆</span>
                     <span>{f}</span>
                   </li>
                 ))}
@@ -366,17 +366,12 @@ notification.warning({
                     </span>
                   </div>
                   <p className="text-slate-500 text-xs">{plan.period}</p>
-                  {/* <p
-                    className={`text-xs font-semibold mt-1 ${plan.highlight ? "text-cyan-400" : "text-slate-500"}`}
-                  >
-                    {plan.inr}
-                  </p> */}
                 </div>
                 <p className="text-slate-400 text-xs leading-relaxed mb-5 flex-1">
                   {plan.description}
                 </p>
                 <button
-                onClick={handlepayment}
+                  onClick={handlepayment}
                   className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all ${
                     plan.highlight
                       ? "bg-cyan-500 hover:bg-cyan-400 text-black"
@@ -404,18 +399,21 @@ notification.warning({
             <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
               <div>
                 <span className="inline-block bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full mb-4 tracking-widest uppercase">
-                  ROI Calculator
+                  The OxybFSI Advantage
                 </span>
                 <h2 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
-                  ₹3 Crore+ in
+                  What <span className="text-emerald-400">60 Engineers</span> build
                   <br />
-                  <span className="text-emerald-400">6 Months of Work.</span>
+                  in <span className="text-emerald-400">6 Months</span> for
                   <br />
-                  One Prompt.
+                  <span className="text-white">₹3 Crore+</span>
+                  <br />
+                  <span className="text-cyan-400 text-2xl md:text-3xl">— done with One Prompt.</span>
                 </h2>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  What traditionally requires a team of 60 engineers working for
-                  6 months — OxybFSI delivers in a single generation.
+                <p className="text-slate-400 text-sm leading-relaxed mt-3">
+                  Stop burning crores on large engineering teams and endless sprints.
+                  OxybFSI collapses months of regulated financial software development
+                  into a single AI generation — fully compliant, fully coded, ready to deploy.
                 </p>
               </div>
               <div className="space-y-4">
@@ -441,10 +439,10 @@ notification.warning({
                     key={item.label}
                     className="flex items-center gap-4 bg-white/[0.04] border border-white/8 rounded-xl px-4 py-3"
                   >
-                    <span className="text-2xl ">{item.icon}</span>
+                    <span className="text-2xl">{item.icon}</span>
                     <div>
                       <p className="text-slate-300 text-xs">{item.label}</p>
-                      <p className="text-green-600 font-bold text-sm">
+                      <p className="text-green-400 font-bold text-sm">
                         {item.value}
                       </p>
                     </div>
