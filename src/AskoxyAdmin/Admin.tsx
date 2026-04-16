@@ -91,6 +91,13 @@ const tagColor = (offer: string | undefined) => {
   return "blue";
 };
 
+const normalizeOffer = (value: string | undefined | null): string => {
+  return (value || "")
+    .toUpperCase()
+    .replace(/[\s_-]+/g, "")
+    .replace(/SERVICES$/g, "SERVICE");
+};
+
 /** ================= Component ================== */
 const Admin: React.FC = () => {
   const screens = useBreakpoint();
@@ -214,9 +221,9 @@ const Admin: React.FC = () => {
         return false;
       }
       if (serviceFilter.length > 0 && !serviceFilter.includes("WEAREHIRING")) {
-        const val = (o.askOxyOfers || "").trim().toUpperCase();
+        const val = normalizeOffer(o.askOxyOfers);
         const matchesFilter = serviceFilter.some(
-          (f) => val === f.toUpperCase()
+          (f) => val === normalizeOffer(f)
         );
         if (!matchesFilter) return false;
       }

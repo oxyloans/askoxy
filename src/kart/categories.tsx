@@ -583,6 +583,14 @@ const Categories: React.FC<CategoriesProps> = ({
   const handleAddToCart = async (item: Item & { status?: string }) => {
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
+
+    // ✅ Validate item has required fields
+    if (!item?.itemId) {
+      console.error("Invalid item: missing itemId", item);
+      message.error("Invalid item. Please try again.");
+      return;
+    }
+
     if (item.quantity <= 0) {
       message.warning("This item is currently out of stock");
       return;
@@ -615,11 +623,15 @@ const Categories: React.FC<CategoriesProps> = ({
         requestBody.status = "COMBO";
       }
 
+      console.log("Adding to cart with request body:", requestBody);
+
       // ✅ Add item to cart
-      await customerApi.post(
+      const addResponse = await customerApi.post(
         `${BASE_URL}/cart-service/cart/addAndIncrementCart`,
         requestBody
       );
+
+      console.log("Add to cart response:", addResponse.status, addResponse.data);
 
       await fetchCartData(item.itemId);
 
@@ -658,13 +670,25 @@ const Categories: React.FC<CategoriesProps> = ({
           }
         } catch (comboErr) {
           console.error("Error fetching combo offer:", comboErr);
+          // Don't fail if combo fetch fails - item was already added
         }
       }
 
       message.success("Item added to cart successfully.");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding to cart:", error);
-      message.error("Failed to add item to cart.");
+      
+      // ✅ Better error logging
+      if (error?.response?.status === 404) {
+        message.error("Item not found. Please refresh and try again.");
+      } else if (error?.response?.status === 400) {
+        message.error("Invalid item data. Please refresh the page.");
+      } else if (error?.response?.status === 401 || error?.response?.status === 403) {
+        message.error("Session expired. Please login again.");
+      } else {
+        message.error("Failed to add item to cart. Please try again.");
+      }
+
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -725,6 +749,13 @@ const Categories: React.FC<CategoriesProps> = ({
     increment: boolean,
     status: string,
   ) => {
+    // ✅ Validate item has required fields
+    if (!item?.itemId) {
+      console.error("Invalid item: missing itemId", item);
+      message.error("Invalid item. Please try again.");
+      return;
+    }
+
     if (cartItems[item.itemId] === item.quantity && increment) {
       message.warning("Sorry, Maximum quantity reached.");
       return;
@@ -739,8 +770,8 @@ const Categories: React.FC<CategoriesProps> = ({
 
     try {
       const endpoint = increment
-        ? `/cart-service/cart/addAndIncrementCart`
-        : `/cart-service/cart/minusCartItem`;
+        ? `${BASE_URL}/cart-service/cart/addAndIncrementCart`
+        : `${BASE_URL}/cart-service/cart/minusCartItem`;
 
       setLoadingItems((prev) => ({
         ...prev,
@@ -758,7 +789,9 @@ const Categories: React.FC<CategoriesProps> = ({
         payload.status = "COMBO";
       }
 
-      await customerApi[increment ? "post" : "patch"](endpoint.replace(BASE_URL, ""), payload);
+      console.log("Quantity change payload:", payload, "Endpoint:", endpoint);
+
+      await customerApi[increment ? "post" : "patch"](endpoint, payload);
 
       await fetchCartData(item.itemId);
 
@@ -769,14 +802,25 @@ const Categories: React.FC<CategoriesProps> = ({
 
       message.success(
         increment
-          ? "Item quantity increased"
+          ? "Item added to cart successfully."
           : cartItems[item.itemId] <= 1
             ? "Item removed from cart successfully."
             : "Item quantity decreased",
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating quantity:", error);
-      message.error("Error updating item quantity");
+      
+      // ✅ Better error logging
+      if (error?.response?.status === 404) {
+        message.error("Item not found. Please refresh and try again.");
+      } else if (error?.response?.status === 400) {
+        message.error("Invalid item data. Please refresh the page.");
+      } else if (error?.response?.status === 401 || error?.response?.status === 403) {
+        message.error("Session expired. Please login again.");
+      } else {
+        message.error("Error updating item quantity");
+      }
+
       setLoadingItems((prev) => ({
         ...prev,
         items: { ...prev.items, [item.itemId]: false },
@@ -1255,7 +1299,13 @@ const Categories: React.FC<CategoriesProps> = ({
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          onClick={() => handleAddToCart(item)}
+                          onClick={() => {
+                            if (!item?.itemId) {
+                              message.error("Invalid item. Please refresh the page.");
+                              return;
+                            }
+                            handleAddToCart(item);
+                          }}
                           disabled={isSoldOut || isLoading}
                           className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm hover:from-purple-700 hover:to-purple-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1 sm:space-x-2"
                         >

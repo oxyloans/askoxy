@@ -60,7 +60,7 @@ import EmployeeDashboard from "./FreelanceMarketplace/EmployeeDashboard";
 import EmployeeLogin from "./FreelanceMarketplace/EmployeeLogin";
 import EmployeeRegister from "./FreelanceMarketplace/EmployeeRegister";
 import FinvibeLanding from "./Finvibe/Landing";
-import Finvibe3DLanding from './Finvibe/Finvibe3DLanding';
+import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
 import OxyGPT from "./Finvibe/components/Oxyclaude";
 import Billing from "./Finvibe/components/Billing";
 const JobTraining90DaysPage = lazy(
@@ -234,7 +234,9 @@ const MobileNumberUpdate = lazy(
   () => import("./Taskmanagement/EmployeeProfilePage"),
 );
 const HelpDeskDashboard = lazy(() => import("./AskoxyAdmin/HelpDeskDashboard"));
-const RoleBasedBlogsList = lazy(() => import("./AskoxyAdmin/RoleBasedBlogsList"));
+const RoleBasedBlogsList = lazy(
+  () => import("./AskoxyAdmin/RoleBasedBlogsList"),
+);
 const AddRoleBasedBlog = lazy(() => import("./AskoxyAdmin/AddRoleBasedBlog"));
 const ExchangeOrdersPage = lazy(() => import("./PartnerWeb/ExchangeOrders"));
 const GSTRiceFAQ = lazy(() => import("./components/GstFAQ"));
@@ -612,7 +614,7 @@ const App: React.FC = () => {
               <Route path="/carnival-list" element={<CarnivalListPage />} />
               <Route path="/Oxygpt" element={<OxyGPT />} />
               <Route path="/oxybfsai" element={<Billing />} />
-              
+
               <Route
                 path="/finvibe-code-builder"
                 element={<FinvibeLanding />}
@@ -1387,8 +1389,8 @@ const App: React.FC = () => {
                 <Route path="orderReport" element={<OrderReport />} />
                 <Route path="feedback" element={<FeedbackDashboard />} />
                 <Route path="helpdashboard" element={<HelpDeskDashboard />} />
-                 <Route path="allroleblogs" element={<RoleBasedBlogsList />} />
-                  <Route path="addroleblogs" element={<AddRoleBasedBlog/>} />
+                <Route path="allroleblogs" element={<RoleBasedBlogsList />} />
+                <Route path="addroleblogs" element={<AddRoleBasedBlog />} />
                 <Route path="todaycalls" element={<CallerHistoryPage />} />
                 <Route path="addblogs" element={<AddBlog />} />
                 <Route path="orderstats" element={<OrderStatsDashboard />} />
@@ -1442,4 +1444,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

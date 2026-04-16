@@ -1,8 +1,13 @@
 // SearchBar.tsx
 import React, { useEffect, useState, useRef } from "react";
 import { customerApi } from "../utils/axiosInstance";
-import { FaSearch, FaTimes } from "react-icons/fa";
-import axios from "axios";
+import {
+  FaSearch,
+  FaTimes,
+  FaMicrophone,
+  FaMicrophoneSlash,
+  FaSpinner,
+} from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import BASE_URL from "../Config";
 
@@ -49,6 +54,12 @@ interface SearchItem {
   categoryName: string;
   isDefaultSuggestion?: boolean;
 }
+interface VoiceSearchResponse {
+  transcript?: string;
+  keyword?: string;
+  productIds?: string[];
+  products?: Category[];
+}
 
 const defaultSuggestions = [
   "Basmati Rice",
@@ -67,12 +78,23 @@ const SearchBar = () => {
   const [debouncedValue, setDebouncedValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const [voiceStatus, setVoiceStatus] = useState<
+    "idle" | "listening" | "processing"
+  >("idle");
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const skipAutoSearchRef = useRef(false);
 
   const MIN_SEARCH_LENGTH = 3;
-  const token = localStorage.getItem("accessToken");
+  const isVoicePendingRoute = Boolean(location.state?.voiceSearchPending);
+  const hasVoiceResponseRoute = Boolean(location.state?.voiceSearchData);
+  const isVoiceRouteActive = isVoicePendingRoute || hasVoiceResponseRoute;
 
   useEffect(() => {
     if (location.state?.selectedItemName) {
@@ -86,7 +108,7 @@ const SearchBar = () => {
       // Clear the state to prevent repeated clearing
       navigate(location.pathname, { replace: true, state: null });
     }
-  }, [location.state]);
+  }, [location.state, location.pathname, navigate]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -97,6 +119,10 @@ const SearchBar = () => {
 
   // ⭐ AUTO-SEARCH: MOBILE = SHOW RESULTS, DESKTOP = NAVIGATE TO SEARCH PAGE
   useEffect(() => {
+    if (skipAutoSearchRef.current) {
+      skipAutoSearchRef.current = false;
+      return;
+    }
     if (debouncedValue.trim().length >= MIN_SEARCH_LENGTH) {
       // Detect if mobile device
       const isMobile = window.innerWidth < 640;
@@ -109,13 +135,14 @@ const SearchBar = () => {
         setIsFocused(false); // ⭐ closes dropdown when navigation happens
         setSearchResults([]); // ⭐ avoid blank dropdown area
         navigate(
-          `/main/search-main?q=${encodeURIComponent(debouncedValue.trim())}`
+          `/main/search-main?q=${encodeURIComponent(debouncedValue.trim())}`,
         );
       }
     }
-  }, [debouncedValue]);
+  }, [debouncedValue, navigate]);
 
   useEffect(() => {
+    if (isVoiceRouteActive) return;
     // Only run this auto-back logic when the SearchBar itself is active
     if (!isFocused) return;
 
@@ -131,10 +158,11 @@ const SearchBar = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchValue, location.pathname, isFocused]);
+  }, [searchValue, location.pathname, isFocused, isVoiceRouteActive, navigate]);
   // ✅ AUTO-REDIRECT TO HOME WHEN USER CLEARS / BACKSPACES BELOW 3 CHARS
   // But keep dropdown visible for suggestions
   useEffect(() => {
+    if (isVoiceRouteActive) return;
     const trimmed = searchValue.trim();
 
     if (
@@ -146,7 +174,7 @@ const SearchBar = () => {
       // setSearchResults([]); // Remove this line to keep dropdown visible
       navigate("/main/dashboard/home", { replace: true, state: null });
     }
-  }, [searchValue, location.pathname]);
+  }, [searchValue, location.pathname, isVoiceRouteActive, navigate]);
 
   useEffect(() => {
     if (isFocused && searchValue.trim() === "") {
@@ -166,7 +194,7 @@ const SearchBar = () => {
           quantity: null,
           categoryName: "",
           isDefaultSuggestion: true,
-        }))
+        })),
       );
     } else if (!isFocused || (searchValue.trim() !== "" && !isFocused)) {
       // Clear results when not focused
@@ -207,12 +235,11 @@ const SearchBar = () => {
 
     setIsSearching(true);
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await customerApi.get<ApiResponse>(
         `${BASE_URL}/product-service/dynamicSearch`,
         {
           params: { q: query },
-        }
+        },
       );
 
       const products = (response.data.items || []).flatMap(
@@ -222,7 +249,7 @@ const SearchBar = () => {
             .map((product: Product) => ({
               ...product,
               categoryName: category.categoryName,
-            }))
+            })),
       );
 
       const mapped = products.map((p) => ({
@@ -266,6 +293,12 @@ const SearchBar = () => {
   const handleClearSearch = () => {
     setSearchValue("");
     setDebouncedValue(""); // ✅ important: stop auto effect
+    if (location.pathname === "/main/search-main") {
+      navigate("/main/dashboard/home", {
+        replace: true,
+        state: { clearSearch: true },
+      });
+    }
     // Keep dropdown open to show default suggestions
     // The useEffect will automatically show default suggestions when searchValue becomes empty
   };
@@ -278,7 +311,8 @@ const SearchBar = () => {
     const isDefaultSuggestion =
       item.isDefaultSuggestion ||
       defaultSuggestions.some(
-        (suggestion) => suggestion.toLowerCase() === item.itemName.toLowerCase()
+        (suggestion) =>
+          suggestion.toLowerCase() === item.itemName.toLowerCase(),
       );
 
     if (isDefaultSuggestion) {
@@ -296,6 +330,107 @@ const SearchBar = () => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleSearchSubmit(e);
+    }
+  };
+
+  const submitVoiceFile = async (audioFile: File | Blob) => {
+    setVoiceError("");
+    setVoiceStatus("processing");
+    setIsVoiceLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", audioFile, `voice-${Date.now()}.webm`);
+      const response = await fetch(`${BASE_URL}/product-service/voice-search`, {
+        method: "POST",
+        headers: {
+          accept: "*/*",
+        },
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error("Unable to process voice search");
+      }
+      const voiceData = (await response.json()) as VoiceSearchResponse;
+      const voiceQuery =
+        voiceData.keyword?.trim() || voiceData.transcript?.trim() || "";
+      if (!voiceData.products?.length) {
+        setVoiceError(
+          "No products found for this voice search. Please try speaking again.",
+        );
+        setVoiceStatus("idle");
+      } else {
+        skipAutoSearchRef.current = true;
+        // setSearchValue(voiceData.transcript || voiceQuery); // Remove to prevent triggering text search
+        if (location.pathname !== "/main/search-main") {
+          navigate("/main/search-main", {
+            state: { voiceSearchData: voiceData },
+          });
+        } else {
+          navigate("/main/search-main", {
+            state: { voiceSearchData: voiceData },
+            replace: true,
+          });
+        }
+        setIsFocused(false);
+        setSearchResults([]);
+        setVoiceStatus("idle");
+      }
+    } catch (error) {
+      console.error("Voice search failed:", error);
+      setVoiceError("Voice search failed. Please try again in a moment.");
+      setVoiceStatus("idle");
+    } finally {
+      setIsVoiceLoading(false);
+    }
+  };
+
+  const startVoiceRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setVoiceError("Voice recording is not supported on this browser.");
+      return;
+    }
+    setVoiceError("");
+    setVoiceStatus("listening");
+    setIsRecording(true);
+    setIsFocused(false);
+    setSearchResults([]);
+    inputRef.current?.blur();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        stream.getTracks().forEach((track) => track.stop());
+        if (!audioBlob.size) {
+          setVoiceError("No voice captured. Please try again.");
+          setVoiceStatus("idle");
+          return;
+        }
+        await submitVoiceFile(audioBlob);
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+    } catch (error) {
+      console.error("Microphone permission denied or unavailable:", error);
+      setVoiceError("Unable to access microphone. Please allow permission.");
+      setVoiceStatus("idle");
+      setIsRecording(false);
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      setVoiceStatus("processing");
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
   };
 
@@ -323,6 +458,32 @@ const SearchBar = () => {
               <FaTimes className="text-base" />
             </button>
           )}
+          {/* <button
+            type="button"
+            onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+            className={`p-1 rounded-full transition-all duration-200 ${
+              isRecording
+                ? "bg-red-50 text-red-500 hover:bg-red-100"
+                : "bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-500"
+            } ${isVoiceLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+            title={
+              isVoiceLoading
+                ? "Processing voice search"
+                : isRecording
+                  ? "Stop recording"
+                  : "Start voice search"
+            }
+            disabled={isVoiceLoading}
+            aria-pressed={isRecording}
+          >
+            {isVoiceLoading ? (
+              <FaSpinner className="animate-spin text-base" />
+            ) : isRecording ? (
+              <FaMicrophoneSlash className="text-base" />
+            ) : (
+              <FaMicrophone className="text-base" />
+            )}
+          </button> */}
           <button
             type="submit"
             className="p-1 text-gray-400 hover:text-purple-500 transition-all duration-200"
@@ -331,6 +492,15 @@ const SearchBar = () => {
           </button>
         </div>
       </form>
+      {(voiceError || voiceStatus !== "idle") && (
+        <p className="mt-2 text-xs text-gray-600">
+          {voiceStatus === "listening"
+            ? "Listening... speak clearly and tap the mic again to stop."
+            : voiceStatus === "processing"
+              ? "Processing voice search... please wait."
+              : voiceError}
+        </p>
+      )}
 
       {/* Dropdown Results */}
       {searchResults.length > 0 && (
