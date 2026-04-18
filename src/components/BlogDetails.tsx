@@ -99,9 +99,7 @@ const BlogDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [comment, setComment] = useState("");
-  const [activeReplyCommentId, setActiveReplyCommentId] = useState<
-    string | null
-  >(null);
+  const [activeReplyCommentId, setActiveReplyCommentId] = useState<string | null>(null);
 
   const [isSpeaking, setIsSpeaking] = useState<Record<string, boolean>>({});
   const [isLiked, setIsLiked] = useState<Record<string, boolean>>({});
@@ -110,29 +108,18 @@ const BlogDetails: React.FC = () => {
   const [dislikeCount, setDislikeCount] = useState<Record<string, number>>({});
   const [isSubscribed, setIsSubscribed] = useState<Record<string, boolean>>({});
   const [comments, setComments] = useState<Record<string, CommentItem[]>>({});
-  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState<
-    Record<string, boolean>
-  >({});
-  const [selectedVotes, setSelectedVotes] = useState<Record<string, string>>(
-    {},
-  );
-  const [currentMediaIndex, setCurrentMediaIndex] = useState<
-    Record<string, number>
-  >({});
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState<Record<string, boolean>>({});
+  const [selectedVotes, setSelectedVotes] = useState<Record<string, string>>({});
+  const [currentMediaIndex, setCurrentMediaIndex] = useState<Record<string, number>>({});
 
   const [actionLoading, setActionLoading] = useState<
-    Record<
-      string,
-      { like?: boolean; dislike?: boolean; subscribe?: boolean; vote?: boolean }
-    >
+    Record<string, { like?: boolean; dislike?: boolean; subscribe?: boolean; vote?: boolean }>
   >({});
 
   const [isWriteToUsOpen, setIsWriteToUsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
-    null,
-  );
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [query, setQuery] = useState("");
   const [queryError, setQueryError] = useState("");
   const [isSubmittingWriteToUs, setIsSubmittingWriteToUs] = useState(false);
@@ -159,14 +146,13 @@ const BlogDetails: React.FC = () => {
     whatsappNumber !== "undefined"
       ? whatsappNumber.trim()
       : typeof mobileNumber === "string" &&
-          mobileNumber.trim() !== "" &&
-          mobileNumber !== "null" &&
-          mobileNumber !== "undefined"
-        ? mobileNumber.trim()
-        : "";
+        mobileNumber.trim() !== "" &&
+        mobileNumber !== "null" &&
+        mobileNumber !== "undefined"
+      ? mobileNumber.trim()
+      : "";
 
-  const getCampaignId = (campaign: any) =>
-    campaign?.campaignId || campaign?.id || "";
+  const getCampaignId = (campaign: any) => campaign?.campaignId || campaign?.id || "";
 
   const getCampaignTitle = (campaign: any) =>
     campaign?.campaignTitle || campaign?.campaignType || "Blog";
@@ -191,9 +177,7 @@ const BlogDetails: React.FC = () => {
   const getCampaignPath = (campaign: any) => {
     const id = getCampaignId(campaign);
     const slug = slugify(getCampaignTitle(campaign));
-    return userId
-      ? `/main/blog/${id.slice(-4)}/${slug}`
-      : `/blog/${id.slice(-4)}/${slug}`;
+    return userId ? `/main/blog/${id.slice(-4)}/${slug}` : `/blog/${id.slice(-4)}/${slug}`;
   };
 
   const getValidTeams = (campaign: any): string[] => {
@@ -205,7 +189,7 @@ const BlogDetails: React.FC = () => {
           item !== "" &&
           item !== "0" &&
           item.toLowerCase() !== "null" &&
-          item.toLowerCase() !== "undefined",
+          item.toLowerCase() !== "undefined"
       );
   };
 
@@ -222,16 +206,7 @@ const BlogDetails: React.FC = () => {
   };
 
   const isVideoUrl = (url: string): boolean => {
-    const videoExtensions = [
-      ".mp4",
-      ".webm",
-      ".ogg",
-      ".avi",
-      ".mov",
-      ".wmv",
-      ".flv",
-      ".m4v",
-    ];
+    const videoExtensions = [".mp4", ".webm", ".ogg", ".avi", ".mov", ".wmv", ".flv", ".m4v"];
     const lower = (url || "").toLowerCase();
     return videoExtensions.some((ext) => lower.includes(ext));
   };
@@ -275,8 +250,7 @@ const BlogDetails: React.FC = () => {
         ];
 
         const activeItems = merged.filter(
-          (c: any) =>
-            c?.campaignStatus === true || c?.campaignStatus === undefined,
+          (c: any) => c?.campaignStatus === true || c?.campaignStatus === undefined
         );
 
         const campaignsWithDetails = await Promise.all(
@@ -293,8 +267,7 @@ const BlogDetails: React.FC = () => {
               const likedState = details?.isLiked || false;
               const dislikedState = details?.isDisliked || false;
               const subscribedState = details?.isSubscribed || false;
-              const selectedTeam =
-                details?.selectedTeam || campaign?.selectedTeam || "";
+              const selectedTeam = details?.selectedTeam || campaign?.selectedTeam || "";
 
               setLikeCount((prev) => ({
                 ...prev,
@@ -306,14 +279,8 @@ const BlogDetails: React.FC = () => {
               }));
               setComments((prev) => ({ ...prev, [campaignId]: subComments }));
               setIsLiked((prev) => ({ ...prev, [campaignId]: likedState }));
-              setIsDisliked((prev) => ({
-                ...prev,
-                [campaignId]: dislikedState,
-              }));
-              setIsSubscribed((prev) => ({
-                ...prev,
-                [campaignId]: subscribedState,
-              }));
+              setIsDisliked((prev) => ({ ...prev, [campaignId]: dislikedState }));
+              setIsSubscribed((prev) => ({ ...prev, [campaignId]: subscribedState }));
 
               if (selectedTeam) {
                 setSelectedVotes((prev) => ({
@@ -335,7 +302,7 @@ const BlogDetails: React.FC = () => {
             } catch {
               return campaign;
             }
-          }),
+          })
         );
 
         setCampaigns(campaignsWithDetails as Campaign[]);
@@ -574,8 +541,8 @@ const BlogDetails: React.FC = () => {
           prev.map((item: any) =>
             getCampaignId(item) === campaignId
               ? { ...item, selectedTeam: teamName }
-              : item,
-          ),
+              : item
+          )
         );
         message.success("Vote submitted successfully");
 
@@ -638,15 +605,12 @@ const BlogDetails: React.FC = () => {
         const success = await submitSubComment(
           activeReplyCommentId,
           comment.trim(),
-          userId,
+          userId
         );
 
         if (success) {
           message.success("Reply submitted successfully!");
-          const { subComments } = await fetchLikesAndComments(
-            campaignId,
-            userId,
-          );
+          const { subComments } = await fetchLikesAndComments(campaignId, userId);
           setComments((prev) => ({ ...prev, [campaignId]: subComments || [] }));
         } else {
           message.error("Failed to submit reply. Please try again.");
@@ -661,10 +625,7 @@ const BlogDetails: React.FC = () => {
 
         if (success) {
           message.success("Comment submitted successfully!");
-          const { subComments } = await fetchLikesAndComments(
-            campaignId,
-            userId,
-          );
+          const { subComments } = await fetchLikesAndComments(campaignId, userId);
           setComments((prev) => ({ ...prev, [campaignId]: subComments || [] }));
         } else {
           message.error("Failed to submit comment. Please try again.");
@@ -698,52 +659,59 @@ const BlogDetails: React.FC = () => {
     setIsWriteToUsOpen(true);
   };
 
-  const handleWriteToUsSubmitButton = async () => {
-    if (!query.trim()) {
-      setQueryError("Please enter your message before submitting.");
-      return;
-    }
+const handleWriteToUsSubmitButton = async () => {
+  const trimmedQuery = query.trim();
 
-    if (!normalizedEmail || !normalizedMobileNumber) {
-      message.error(
-        "Please update your Email and Phone Number before submitting.",
-      );
+  if (!trimmedQuery) {
+    setQueryError("Please enter your message before submitting.");
+    return;
+  }
 
+  if (!normalizedEmail || !normalizedMobileNumber) {
+    message.error("Please update your Email and Phone Number before submitting.");
+    setIsWriteToUsOpen(false);
+
+    setTimeout(() => {
+      setIsProfileModalOpen(true);
+    }, 200);
+
+    return;
+  }
+
+  if (!userId) {
+    message.error("User details not found. Please login again.");
+    redirectToLogin(BLOGS_DASHBOARD_PATH);
+    return;
+  }
+
+  try {
+    setIsSubmittingWriteToUs(true);
+    setQueryError("");
+
+    const response = await submitWriteToUsQuery(
+      normalizedEmail,
+      normalizedMobileNumber,
+      trimmedQuery,
+      "BLOGS",
+      userId
+    );
+
+    if (response.success) {
       setIsWriteToUsOpen(false);
-
-      setTimeout(() => {
-        setIsProfileModalOpen(true);
-      }, 200); // smooth transition
-
-      return;
+      setIsSuccessModalOpen(true);
+      setQuery("");
+      setQueryError("");
+      message.success(response.message || "Query submitted successfully.");
+    } else {
+      message.error(response.message || "Failed to send query. Please try again.");
     }
-
-    try {
-      setIsSubmittingWriteToUs(true);
-
-      const success = await submitWriteToUsQuery(
-        normalizedEmail,
-        normalizedMobileNumber,
-        query.trim(),
-        "BLOGS",
-        userId,
-      );
-
-      if (success) {
-        setIsWriteToUsOpen(false);
-        setIsSuccessModalOpen(true);
-        setQuery("");
-        setQueryError("");
-      } else {
-        message.error("Failed to send query. Please try again.");
-      }
-    } catch (error) {
-      console.error("Write To Us error:", error);
-      message.error("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmittingWriteToUs(false);
-    }
-  };
+  } catch (error) {
+    console.error("Write To Us error:", error);
+    message.error("Something went wrong while submitting your query.");
+  } finally {
+    setIsSubmittingWriteToUs(false);
+  }
+};
 
   const renderInlineFormattedText = (text: string) => {
     if (!text) return null;
@@ -829,9 +797,7 @@ const BlogDetails: React.FC = () => {
   };
 
   const handleSpeakDescription = (campaignId: string) => {
-    const campaign = campaigns.find(
-      (c: any) => getCampaignId(c) === campaignId,
-    );
+    const campaign = campaigns.find((c: any) => getCampaignId(c) === campaignId);
 
     if (!campaign?.campaignDescription) {
       message.error("No content to read");
@@ -875,9 +841,7 @@ const BlogDetails: React.FC = () => {
         .share({ title: getCampaignTitle(campaign), url: shareUrl })
         .catch(() => {});
     } else {
-      navigator.clipboard
-        .writeText(shareUrl)
-        .then(() => message.success("Link copied"));
+      navigator.clipboard.writeText(shareUrl).then(() => message.success("Link copied"));
     }
   };
 
@@ -910,12 +874,21 @@ const BlogDetails: React.FC = () => {
     setIsProfileModalOpen(false);
   };
 
+  const showCommentsModal = async (campaignId: string) => {
+    setIsCommentsModalOpen((prev) => ({ ...prev, [campaignId]: true }));
+    try {
+      const { subComments } = await fetchLikesAndComments(campaignId, userId);
+      setComments((prev) => ({ ...prev, [campaignId]: subComments || [] }));
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      message.error("Failed to load comments.");
+    }
+  };
+
   const renderNotFoundPage = () => (
     <div className="min-h-[70vh] flex items-center justify-center">
       <div className="text-center px-6">
-        <h1 className="text-3xl sm:text-5xl font-bold text-gray-800 mb-4">
-          404
-        </h1>
+        <h1 className="text-3xl sm:text-5xl font-bold text-gray-800 mb-4">404</h1>
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-700 mb-4">
           Blog Not Found
         </h2>
@@ -937,17 +910,16 @@ const BlogDetails: React.FC = () => {
 
     const imageUrls: ImageItem[] = Array.isArray(campaign?.imageUrls)
       ? campaign.imageUrls.map((img: any) =>
-          typeof img === "string" ? { imageUrl: img } : img,
+          typeof img === "string" ? { imageUrl: img } : img
         )
       : campaign?.imageUrl
-        ? [{ imageUrl: campaign.imageUrl }]
-        : [];
+      ? [{ imageUrl: campaign.imageUrl }]
+      : [];
 
     const total = imageUrls.length;
     const currentIdx = currentMediaIndex[campaignId] || 0;
     const teams = getValidTeams(campaign);
-    const selectedTeam =
-      selectedVotes[campaignId] || campaign?.selectedTeam || "";
+    const selectedTeam = selectedVotes[campaignId] || campaign?.selectedTeam || "";
     const pollExpired = isPollExpired(campaign);
     const isLoadingVote = !!actionLoading[campaignId]?.vote;
 
@@ -1076,9 +1048,7 @@ const BlogDetails: React.FC = () => {
                               scrollToIndex(campaignId, idx);
                             }}
                             className={`h-2.5 rounded-full transition-all ${
-                              currentIdx === idx
-                                ? "w-6 bg-white"
-                                : "w-2.5 bg-white/60"
+                              currentIdx === idx ? "w-6 bg-white" : "w-2.5 bg-white/60"
                             }`}
                           />
                         ))}
@@ -1093,18 +1063,64 @@ const BlogDetails: React.FC = () => {
               )}
             </div>
 
+            {teams.length > 0 && (
+              <div className="mt-4 rounded-[18px] border border-[#eceff5] bg-[#fafbff] p-4 sm:p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrophyOutlined className="text-[#f59e0b]" />
+                  <h3 className="m-0 text-[15px] sm:text-[16px] font-bold text-slate-800">
+                    Vote Now
+                  </h3>
+                  {pollExpired ? (
+                    <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-600">
+                      <ClockCircleOutlined />
+                      Poll Ended
+                    </span>
+                  ) : (
+                    <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-600">
+                      <CheckCircleFilled />
+                      Live Poll
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {teams.map((teamName, idx) => {
+                    const isSelected = selectedTeam === teamName;
+                    return (
+                      <button
+                        key={`${campaignId}-team-${idx}`}
+                        type="button"
+                        disabled={pollExpired || isLoadingVote}
+                        onClick={() => handleVote(campaign, teamName)}
+                        className={`rounded-2xl border px-4 py-3 text-left transition-all ${
+                          isSelected
+                            ? "border-[#4f46e5] bg-[#eef2ff] text-[#312e81]"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-[#c7d2fe]"
+                        } ${pollExpired || isLoadingVote ? "opacity-70 cursor-not-allowed" : ""}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-[14px]">{teamName}</span>
+                          {isLoadingVote && isSelected ? <LoadingOutlined /> : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => handleLike(campaignId)}
-                className={`flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-medium ${
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
                   isLiked[campaignId]
-                    ? "border-rose-200 bg-rose-50 text-rose-700"
-                    : "border-slate-200 bg-white text-slate-700"
+                    ? "border-rose-200 bg-rose-50 text-rose-600"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:text-rose-600"
                 }`}
               >
                 {actionLoading[campaignId]?.like ? (
-                  <LoadingOutlined />
+                  <Spin indicator={<LoadingOutlined spin />} size="small" />
                 ) : isLiked[campaignId] ? (
                   <HeartFilled />
                 ) : (
@@ -1115,13 +1131,27 @@ const BlogDetails: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() =>
-                  setIsCommentsModalOpen((prev) => ({
-                    ...prev,
-                    [campaignId]: true,
-                  }))
-                }
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
+                onClick={() => handleDislike(campaignId)}
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
+                  isDisliked[campaignId]
+                    ? "border-blue-200 bg-blue-50 text-blue-600"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:text-blue-600"
+                }`}
+              >
+                {actionLoading[campaignId]?.dislike ? (
+                  <Spin indicator={<LoadingOutlined spin />} size="small" />
+                ) : isDisliked[campaignId] ? (
+                  <DislikeFilled />
+                ) : (
+                  <DislikeOutlined />
+                )}
+                <span>{dislikeCount[campaignId] || 0}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => showCommentsModal(campaignId)}
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 transition-all hover:border-[#c7d2fe] hover:text-[#4f46e5]"
               >
                 <MessageOutlined />
                 <span>{comments[campaignId]?.length || 0}</span>
@@ -1129,249 +1159,232 @@ const BlogDetails: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => handleShare(campaign)}
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
-              >
-                <ShareAltOutlined />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDislike(campaignId)}
-                className={`flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-medium ${
-                  isDisliked[campaignId]
-                    ? "border-slate-300 bg-slate-100 text-slate-700"
-                    : "border-slate-200 bg-white text-slate-700"
-                }`}
-              >
-                {actionLoading[campaignId]?.dislike ? (
-                  <LoadingOutlined />
-                ) : isDisliked[campaignId] ? (
-                  <DislikeFilled />
-                ) : (
-                  <DislikeOutlined />
-                )}
-                <span>Dislike</span>
-                <span>{dislikeCount[campaignId] || 0}</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => handleSpeakDescription(campaignId)}
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
+                  isSpeaking[campaignId]
+                    ? "border-amber-200 bg-amber-50 text-amber-600"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-amber-200 hover:text-amber-600"
+                }`}
               >
                 <SoundOutlined />
                 <span>{isSpeaking[campaignId] ? "Stop" : "Listen"}</span>
               </button>
-            </div>
-          </div>
 
-          <div className="border-t xl:border-t-0 xl:border-l border-[#edf0f7] bg-[#fcfdff] p-4 sm:p-6">
-            <div className="h-[260px] sm:h-[420px] xl:h-[420px] overflow-y-auto pr-2 custom-scrollbar">
-              {teams.length > 0 && (
-                <div className="mb-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <TrophyOutlined className="text-amber-600" />
-                    <h3 className="m-0 text-[15px] sm:text-[16px] font-semibold text-slate-900">
-                      Poll
-                    </h3>
-                  </div>
-
-                  {selectedTeam ? (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {teams.map((team) => {
-                          const isSelected = selectedTeam === team;
-                          return (
-                            <button
-                              key={team}
-                              type="button"
-                              disabled
-                              className={`w-full rounded-xl border px-4 py-3 text-left transition-all ${
-                                isSelected
-                                  ? "border-green-500 bg-green-50 text-green-700"
-                                  : "border-slate-200 bg-white text-slate-400"
-                              } cursor-default`}
-                            >
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="font-medium text-[14px]">
-                                  {team}
-                                </span>
-                                {isSelected ? (
-                                  <CheckCircleFilled className="text-green-600" />
-                                ) : null}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="mt-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-[13px] sm:text-[14px] text-green-700">
-                        Your selected answer:{" "}
-                        <span className="font-semibold">{selectedTeam}</span>
-                      </div>
-                    </>
-                  ) : !pollExpired ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {teams.map((team) => (
-                        <button
-                          key={team}
-                          type="button"
-                          onClick={() => handleVote(campaign, team)}
-                          disabled={isLoadingVote || !!selectedTeam}
-                          className="w-full rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50 px-4 py-3 text-left transition-all"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="font-medium text-[14px]">
-                              {team}
-                            </span>
-                            {isLoadingVote ? <LoadingOutlined /> : null}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl bg-slate-100 px-4 py-3 text-[14px] text-slate-600 flex items-center gap-2">
-                      <ClockCircleOutlined />
-                      Poll ended
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {campaign?.campaignDescription && (
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="m-0 text-[15px] sm:text-[16px] font-semibold text-slate-900">
-                      Description
-                    </h3>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSpeakDescription(campaignId)}
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] sm:text-[13px] text-slate-600 hover:bg-slate-50"
-                    >
-                      <SoundOutlined />
-                      {isSpeaking[campaignId] ? "Stop" : "Listen"}
-                    </button>
-                  </div>
-
-                  <div className="text-slate-700">
-                    {formatCampaignDescription(campaign.campaignDescription)}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-5 flex justify-end">
               <button
                 type="button"
-                onClick={handleAddblog}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg"
+                onClick={() => handleShare(campaign)}
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 transition-all hover:border-[#c7d2fe] hover:text-[#4f46e5]"
               >
-                <PlusOutlined />
-                Add Blog Post
+                <ShareAltOutlined />
+                <span>Share</span>
               </button>
             </div>
           </div>
+
+          <div className="p-4 sm:p-6 xl:pl-0">
+            <div className="rounded-[18px] border border-[#eceff5] bg-white h-full">
+              <div className="border-b border-[#edf0f7] px-4 sm:px-5 py-4">
+                <h3 className="m-0 text-[16px] sm:text-[18px] font-bold text-slate-900">
+                  Description
+                </h3>
+              </div>
+
+              <div className="px-4 sm:px-5 py-4 max-h-[520px] overflow-y-auto custom-scrollbar">
+                {campaign?.campaignDescription ? (
+                  <div>{formatCampaignDescription(campaign.campaignDescription)}</div>
+                ) : (
+                  <p className="text-slate-500 text-sm">No description available.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
+
+        <Modal
+          open={!!isCommentsModalOpen[campaignId]}
+          onCancel={() =>
+            setIsCommentsModalOpen((prev) => ({ ...prev, [campaignId]: false }))
+          }
+          footer={null}
+          centered
+          width={700}
+          title={
+            <div className="text-[16px] sm:text-[18px] font-bold text-slate-900">
+              Comments
+            </div>
+          }
+        >
+          <div className="max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+            {(comments[campaignId] || []).length === 0 ? (
+              <div className="py-10 text-center text-slate-500 text-sm">
+                No comments yet.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {(comments[campaignId] || []).map((item, index) => (
+                  <div key={item.mainCommentId || index} className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+                    <div className="text-sm text-slate-800">{item.mainComment}</div>
+
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-[#4f46e5] hover:underline"
+                        onClick={() => setActiveReplyCommentId(item.mainCommentId)}
+                      >
+                        Reply
+                      </button>
+                    </div>
+
+                    {item.subComments?.length > 0 && (
+                      <div className="mt-3 ml-4 space-y-2 border-l border-slate-200 pl-4">
+                        {item.subComments.map((sub, subIndex) => (
+                          <div key={subIndex} className="text-xs sm:text-sm text-slate-600">
+                            <span className="font-semibold text-slate-800">Reply:</span>{" "}
+                            {sub.comment}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 border-t border-slate-200 pt-4">
+            {activeReplyCommentId && (
+              <div className="mb-2 text-xs sm:text-sm text-slate-600">
+                Replying to:{" "}
+                {
+                  comments[campaignId]?.find(
+                    (c) => c.mainCommentId === activeReplyCommentId
+                  )?.mainComment
+                }
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <TextArea
+                rows={3}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={
+                  activeReplyCommentId ? "Enter your reply..." : "Add a comment..."
+                }
+                className="flex-1 resize-none"
+              />
+              <button
+                type="button"
+                onClick={() => handleOk(campaignId)}
+                disabled={!comment.trim()}
+                className="rounded-xl bg-gradient-to-r from-[#3b82f6] to-[#4f46e5] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {activeReplyCommentId ? "Post Reply" : "Post"}
+              </button>
+            </div>
+
+            {activeReplyCommentId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveReplyCommentId(null);
+                  setComment("");
+                }}
+                className="mt-3 text-sm font-semibold text-slate-600 hover:text-slate-900"
+              >
+                Cancel Reply
+              </button>
+            )}
+          </div>
+        </Modal>
       </div>
     );
   };
 
-  if (isLoading || !pageReady) {
+  if (!isLoading && !featuredCampaign) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="flex min-h-screen items-center justify-center">
-          <Spin size="large" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!featuredCampaign) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        {!userId && <Header1 />}
+      <div className="min-h-screen bg-[#f8fafc]">
+        <Header1 />
         {renderNotFoundPage()}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb]">
-      <div className="mb-4 p-2">
-        {pageReady && !userId && (
-          <div className="mb-4 p-2">
-            <Header1 />
-          </div>
-        )}{" "}
-      </div>
+    <div className="min-h-screen bg-[#f8fafc]">
+      <Header1 />
 
-      <style>
-        {`
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: #edf2f7;
-            border-radius: 999px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 999px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-          }
-        `}
-      </style>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.08),transparent_30%)] pointer-events-none" />
 
-      <div className="px-3 sm:px-5 lg:px-8 py-5 sm:py-7">
-        <div className="mx-auto max-w-[1550px]">
-          <div className="mb-6 rounded-[28px] border border-[#eef1f7] bg-gradient-to-r from-white to-[#f8fafc] px-6 sm:px-10 py-6 shadow-[0_15px_40px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            {/* LEFT CONTENT */}
-            <div className="max-w-2xl">
-              <h2 className="text-[26px] sm:text-[34px] font-bold text-[#0f172a] leading-tight">
-                Creator Rewards 🚀
-              </h2>
+        <style>
+          {`
+            .custom-scrollbar::-webkit-scrollbar {
+              width: 8px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+              background: #edf2f7;
+              border-radius: 999px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+              background: #cbd5e1;
+              border-radius: 999px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: #94a3b8;
+            }
+          `}
+        </style>
 
-              <p className="mt-2 text-[15px] sm:text-[16px] text-[#475569] leading-relaxed">
-                Write your blog and earn exciting rewards. Share your ideas with
-                the world and start earning{" "}
-                <span className="font-semibold bg-gradient-to-r from-[#f59e0b] to-[#facc15] bg-clip-text text-transparent">
-                  BMV Coins 💰
-                </span>
-                .
-              </p>
+        <div className="px-3 sm:px-5 lg:px-8 py-5 sm:py-7">
+          <div className="mx-auto max-w-[1550px]">
+            <div className="mb-6 rounded-[28px] border border-[#eef1f7] bg-gradient-to-r from-white to-[#f8fafc] px-6 sm:px-10 py-6 shadow-[0_15px_40px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="max-w-2xl">
+                <h2 className="text-[26px] sm:text-[34px] font-bold text-[#0f172a] leading-tight">
+                  Creator Rewards 🚀
+                </h2>
+
+                <p className="mt-2 text-[15px] sm:text-[16px] text-[#475569] leading-relaxed">
+                  Write your blog and earn exciting rewards. Share your ideas with
+                  the world and start earning{" "}
+                  <span className="font-semibold bg-gradient-to-r from-[#f59e0b] to-[#facc15] bg-clip-text text-transparent">
+                    BMV Coins 💰
+                  </span>
+                  .
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddblog}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#9333ea] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:scale-105 transition-all duration-300"
+              >
+                <PlusOutlined />
+                Add Blog
+              </button>
             </div>
 
-            {/* RIGHT BUTTON */}
-            <button
-              type="button"
-              onClick={handleAddblog}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#9333ea] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:scale-105 transition-all duration-300"
-            >
-              <PlusOutlined />
-              Add Blog
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {orderedCampaigns.map((campaign) => renderCampaignCard(campaign))}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-24">
+                <Spin size="large" />
+              </div>
+            ) : (
+              <div
+                className={`space-y-6 transition-all duration-500 ${
+                  pageReady ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                }`}
+              >
+                {orderedCampaigns.map((campaign) => renderCampaignCard(campaign))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <ResponsiveModalWrapper
-        open={isWriteToUsOpen}
-        onClose={closeWriteToUsModal}
-      >
+      <ResponsiveModalWrapper open={isWriteToUsOpen} onClose={closeWriteToUsModal}>
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 sm:px-6">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-              Write To Us
-            </h2>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Write To Us</h2>
             <p className="mt-1 text-sm text-slate-500">
               Share your query and our team will get back to you.
             </p>
@@ -1391,9 +1404,7 @@ const BlogDetails: React.FC = () => {
           <div className="mb-4">
             <p className="text-sm font-semibold text-slate-700 mb-2">Blog</p>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              {selectedCampaign
-                ? getCampaignTitle(selectedCampaign)
-                : "Selected Blog"}
+              {selectedCampaign ? getCampaignTitle(selectedCampaign) : "Selected Blog"}
             </div>
           </div>
 
@@ -1438,16 +1449,10 @@ const BlogDetails: React.FC = () => {
         </div>
       </ResponsiveModalWrapper>
 
-      <ResponsiveModalWrapper
-        open={isProfileModalOpen}
-        onClose={closeProfileModal}
-      >
+      <ResponsiveModalWrapper open={isProfileModalOpen} onClose={closeProfileModal}>
         <div className="p-6 text-center">
-          <h2 className="text-lg font-bold text-gray-800 mb-3">
-            Complete Your Profile
-          </h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-3">Complete Your Profile</h2>
 
-          {/* 🔥 THIS IS YOUR 4TH POINT */}
           <p className="text-sm text-gray-600 mb-5">
             Please update your <b>Email</b> and <b>Phone Number</b> to continue
             using Write To Us.
@@ -1462,10 +1467,7 @@ const BlogDetails: React.FC = () => {
         </div>
       </ResponsiveModalWrapper>
 
-      <ResponsiveModalWrapper
-        open={isSuccessModalOpen}
-        onClose={closeSuccessModal}
-      >
+      <ResponsiveModalWrapper open={isSuccessModalOpen} onClose={closeSuccessModal}>
         <div className="px-5 py-6 sm:px-6 sm:py-7 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
             <span className="text-2xl">✓</span>
@@ -1475,8 +1477,7 @@ const BlogDetails: React.FC = () => {
             Submitted Successfully
           </h2>
           <p className="mt-2 text-sm sm:text-base text-gray-600">
-            Your query has been submitted successfully. Our team will contact
-            you soon.
+            Your query has been submitted successfully. Our team will contact you soon.
           </p>
 
           <div className="mt-6">
@@ -1490,116 +1491,6 @@ const BlogDetails: React.FC = () => {
           </div>
         </div>
       </ResponsiveModalWrapper>
-
-      {Object.entries(isCommentsModalOpen).map(([campaignId, open]) => {
-        if (!open) return null;
-
-        return (
-          <ResponsiveModalWrapper
-            key={campaignId}
-            open={open}
-            onClose={() => {
-              setIsCommentsModalOpen((prev) => ({
-                ...prev,
-                [campaignId]: false,
-              }));
-              setComment("");
-              setActiveReplyCommentId(null);
-            }}
-          >
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 sm:px-6">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                  Comments
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Read comments and add your response.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCommentsModalOpen((prev) => ({
-                    ...prev,
-                    [campaignId]: false,
-                  }));
-                  setComment("");
-                  setActiveReplyCommentId(null);
-                }}
-                aria-label="Close"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                <span className="text-lg leading-none">×</span>
-              </button>
-            </div>
-
-            <div className="px-5 py-5 sm:px-6">
-              <div className="space-y-4 max-h-[340px] overflow-y-auto pr-1">
-                {(comments[campaignId] || []).length > 0 ? (
-                  comments[campaignId].map((item, index) => (
-                    <div
-                      key={item.mainCommentId || index}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <p className="text-sm text-slate-800 font-medium">
-                        {item.mainComment}
-                      </p>
-
-                      {item.subComments?.length > 0 && (
-                        <div className="mt-3 space-y-2 pl-4 border-l-2 border-slate-200">
-                          {item.subComments.map((sub, subIndex) => (
-                            <p
-                              key={subIndex}
-                              className="text-sm text-slate-600"
-                            >
-                              {sub.comment}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        className="mt-3 text-sm font-semibold text-indigo-600"
-                        onClick={() =>
-                          setActiveReplyCommentId(item.mainCommentId)
-                        }
-                      >
-                        Reply
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-slate-500">No comments yet.</p>
-                )}
-              </div>
-
-              <div className="mt-5">
-                <TextArea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={4}
-                  placeholder={
-                    activeReplyCommentId
-                      ? "Write your reply..."
-                      : "Write your comment..."
-                  }
-                  className="rounded-2xl"
-                />
-
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => handleOk(campaignId)}
-                    className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg"
-                  >
-                    {activeReplyCommentId ? "Submit Reply" : "Submit Comment"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </ResponsiveModalWrapper>
-        );
-      })}
     </div>
   );
 };

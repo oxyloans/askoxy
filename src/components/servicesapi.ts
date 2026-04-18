@@ -82,6 +82,12 @@ export interface CampaignLikesAndCommentsResponse {
   pollEndTime?: number | null;
 }
 
+export interface WriteToUsResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
 const isValidPollValue = (value: any): boolean => {
   if (value === null || value === undefined) return false;
   const normalized = String(value).trim();
@@ -249,15 +255,15 @@ export const fetchLikesAndComments = async (
 };
 
 export const submitWriteToUsQuery = async (
-  email: string,
-  mobileNumber: string,
+  email: string | null,
+  mobileNumber: string | null,
   query: string,
   campaignType: string,
-  userId: string
-): Promise<boolean> => {
+  userId: string | null
+): Promise<WriteToUsResponse> => {
   try {
-    const { data } = await axiosInstance.post(
-      `${BASE_URL}/marketing-service/campgin/addAskOxyQueries`,
+    const { data, status } = await axiosInstance.post(
+      `${BASE_URL}/user-service/write/saveData`,
       {
         email,
         mobileNumber,
@@ -275,10 +281,25 @@ export const submitWriteToUsQuery = async (
         userId,
       }
     );
-    return !!data;
-  } catch (error) {
-    console.error("submitWriteToUsQuery error:", error);
-    return false;
+
+    return {
+      success: status === 200 || status === 201,
+      message:
+        data?.message ||
+        data?.responseMessage ||
+        data?.msg ||
+        "Query submitted successfully.",
+      data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message ||
+        error?.response?.data?.responseMessage ||
+        error?.response?.data?.msg ||
+        "Failed to send query. Please try again.",
+    };
   }
 };
 

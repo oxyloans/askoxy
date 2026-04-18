@@ -63,6 +63,8 @@ import FinvibeLanding from "./Finvibe/Landing";
 import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
 import OxyGPT from "./Finvibe/components/Oxyclaude";
 import Billing from "./Finvibe/components/Billing";
+import SendPollBasedRewards from "./AskoxyAdmin/SendPollBasedRewards";
+import ViewPollBasedRewards from "./AskoxyAdmin/ViewPollBasedRewards";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -1369,6 +1371,13 @@ const App: React.FC = () => {
                 <Route
                   path="assignedtalwarData"
                   element={<TalwarAssignedDataPage />}
+                /><Route
+                  path="sendpollbasedrewards"
+                  element={<SendPollBasedRewards />}
+                />
+                <Route
+                  path="viewpollbasedrewards"
+                  element={<ViewPollBasedRewards />}
                 />
                 <Route path="assignedData" element={<AssignedDataPage />} />
                 <Route

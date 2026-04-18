@@ -13,12 +13,10 @@ import {
   FaBriefcase,
   FaHeadset,
   FaUsers,
-  FaFileAlt,
   FaComments,
   FaConciergeBell,
   FaPhone,
   FaRegAddressCard,
-  FaTags,
   FaChevronDown,
   FaChevronRight,
   FaServer,
@@ -29,11 +27,12 @@ import {
   FaBoxes,
   FaRobot,
   FaHandshake,
+  FaGift,
+  FaTrophy,
 } from "react-icons/fa";
 import { RiFileUserLine } from "react-icons/ri";
 import {
   RiAdminLine,
-  RiBriefcaseLine,
   RiListUnordered,
   RiMapPin2Line,
   RiFileCheckLine,
@@ -45,7 +44,6 @@ import {
   BookOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
-  HomeOutlined,
   EnvironmentOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
@@ -54,9 +52,12 @@ import { ApartmentOutlined } from "@ant-design/icons";
 import { stopTokenRefresh } from "./RefreshToken";
 import { useSessionManager } from "./useSessionManage";
 import SessionModal from "./SessionModal";
-import { removeAdminAccessToken, removeAdminRefreshToken } from "../utils/cookieUtils";
+import {
+  removeAdminAccessToken,
+  removeAdminRefreshToken,
+  getAdminAccessToken,
+} from "../utils/cookieUtils";
 
-import { getAdminAccessToken, getAdminRefreshToken } from "../utils/cookieUtils";
 interface SidebarSubItem {
   title: string;
   icon: React.ReactNode;
@@ -102,26 +103,30 @@ const Sidebar: React.FC = () => {
     navigate("/admin");
   }, [navigate]);
 
-  // Session management
-  const { showSessionModal, refreshing, handleContinueSession, handleSessionLogout } = useSessionManager(handleLogout);
-  
-  
+  const {
+    showSessionModal,
+    refreshing,
+    handleContinueSession,
+    handleSessionLogout,
+  } = useSessionManager(handleLogout);
 
   useEffect(() => {
     const tokenString = getAdminAccessToken();
-    // const refreshToken = getAdminRefreshToken();
-    
-    // If no tokens at all, redirect to login
-    if (!tokenString ) {
+
+    if (!tokenString) {
       navigate("/admin", { replace: true });
       return;
     }
-    
+
     const primaryType = localStorage.getItem("admin_primaryType");
-    if (!primaryType || (primaryType !== "HELPDESKSUPERADMIN" && primaryType !== "HELPDESKADMIN")) {
+    if (
+      !primaryType ||
+      (primaryType !== "HELPDESKSUPERADMIN" &&
+        primaryType !== "HELPDESKADMIN")
+    ) {
       navigate("/admin", { replace: true });
     }
-  }, []); // ✅ Empty dependency like PartnerHome
+  }, [navigate]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -130,7 +135,6 @@ const Sidebar: React.FC = () => {
   const title =
     primaryType === "HELPDESKSUPERADMIN" ? "Interested Users" : "Dashboard";
 
-  // Categories with subcategories
   const sidebarCategories: SidebarCategory[] = [
     {
       title: "Helpdesk Dashboard",
@@ -240,7 +244,6 @@ const Sidebar: React.FC = () => {
           link: "/admin/assignedtalwarData",
           roles: ["HELPDESKADMIN"],
         },
-
         {
           title: "Referred Data",
           icon: <FaUsers className="text-blue-500" />,
@@ -279,12 +282,23 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
+          title: "Send Poll Based Rewards",
+          icon: <FaGift className="text-amber-400" />,
+          link: "/admin/sendpollbasedrewards",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
+          title: "View Poll Based Rewards",
+          icon: <FaTrophy className="text-yellow-400" />,
+          link: "/admin/viewpollbasedrewards",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
           title: "Add Blog",
           icon: <FaBlog className="text-green-400" />,
           link: "/admin/addblogs",
           roles: ["HELPDESKSUPERADMIN"],
         },
-
         {
           title: "Add Jobs",
           icon: <MdWork className="text-green-400" />,
@@ -353,12 +367,6 @@ const Sidebar: React.FC = () => {
           link: "/admin/allqueries",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
-        // {
-        //   title: "User Feedback",
-        //   icon: <FaComments className="text-green-400" />,
-        //   link: "/admin/feedback",
-        //   roles: ["HELPDESKSUPERADMIN"],
-        // },
       ],
     },
     {
@@ -382,7 +390,6 @@ const Sidebar: React.FC = () => {
     },
   ];
 
-  // Standalone items that don't belong to categories
   const standaloneItems: SidebarItem[] = [
     {
       title: "Logout",
@@ -399,7 +406,7 @@ const Sidebar: React.FC = () => {
 
   const isCategoryActive = (category: SidebarCategory) => {
     return category.items.some(
-      (item) => item.roles.includes(userRole!) && isActive(item.link),
+      (item) => item.roles.includes(userRole!) && isActive(item.link)
     );
   };
 
@@ -411,7 +418,8 @@ const Sidebar: React.FC = () => {
     if (
       !primaryType ||
       primaryType === undefined ||
-      (primaryType !== "HELPDESKSUPERADMIN" && primaryType !== "HELPDESKADMIN")
+      (primaryType !== "HELPDESKSUPERADMIN" &&
+        primaryType !== "HELPDESKADMIN")
     ) {
       message.info("Your not Supposed to Login to the SuperAdmin");
       navigate("/admin");
@@ -419,22 +427,21 @@ const Sidebar: React.FC = () => {
     }
 
     setUserRole(primaryType);
-  }, []); // ✅ Empty dependency
+  }, [navigate, primaryType]);
 
-  // Auto-expand category if current route matches any of its child items
   useEffect(() => {
     if (!userRole) return;
 
     const activeCategory = sidebarCategories.find((category) =>
       category.items.some(
-        (item) => item.roles.includes(userRole) && isActive(item.link),
-      ),
+        (item) => item.roles.includes(userRole) && isActive(item.link)
+      )
     );
 
     if (activeCategory && !expandedCategories.includes(activeCategory.title)) {
       setExpandedCategories((prev) => [...prev, activeCategory.title]);
     }
-  }, [location.pathname, userRole]);
+  }, [location.pathname, userRole, expandedCategories, sidebarCategories]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -470,10 +477,8 @@ const Sidebar: React.FC = () => {
   const toggleCategory = (categoryTitle: string) => {
     setExpandedCategories((prev) => {
       if (prev.includes(categoryTitle)) {
-        // If clicking on an already expanded category, collapse it
         return prev.filter((cat) => cat !== categoryTitle);
       } else {
-        // If clicking on a collapsed category, expand it (allow multiple open)
         return [...prev, categoryTitle];
       }
     });
@@ -483,21 +488,20 @@ const Sidebar: React.FC = () => {
     return null;
   }
 
-  // Filter categories and items based on user role
   const visibleCategories = sidebarCategories.filter(
     (category) =>
       category.roles.includes(userRole) &&
-      category.items.some((item) => item.roles.includes(userRole)),
+      category.items.some((item) => item.roles.includes(userRole))
   );
 
   const visibleStandaloneItems = standaloneItems.filter((item) =>
-    item.roles.includes(userRole),
+    item.roles.includes(userRole)
   );
 
   return (
     <>
       {showSessionModal && (
-        <div style={{ zIndex: 9999, position: 'fixed' }}>
+        <div style={{ zIndex: 9999, position: "fixed" }}>
           <SessionModal
             visible={showSessionModal}
             loading={refreshing}
@@ -506,343 +510,332 @@ const Sidebar: React.FC = () => {
           />
         </div>
       )}
+
       <div>
-      {isMobileOpen && isMobile && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 transition-opacity duration-300"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
+        {isMobileOpen && isMobile && (
+          <div
+            className="fixed inset-0 z-20 bg-black bg-opacity-50 transition-opacity duration-300"
+            onClick={() => setIsMobileOpen(false)}
+          />
+        )}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-30 bg-gray-800 transform transition-all duration-300 ease-in-out
-          ${
-            isMobile
-              ? isMobileOpen
-                ? "translate-x-0"
-                : "-translate-x-full"
-              : "translate-x-0"
-          }
-          ${collapsed && !isMobileOpen ? "w-20" : "w-64"}
-        `}
-        style={{
-          boxShadow: "2px 0 15px rgba(0,0,0,0.15)",
-        }}
-      >
-        <div className="flex flex-col items-center justify-center h-16 border-b border-gray-700 bg-gray-900">
-          <div className="text-center font-bold">
-            <span className="text-gray-50 text-xl">
-              {collapsed && !isMobileOpen ? "OXY" : "ASKOXY.AI"}
-            </span>
+        <aside
+          className={`fixed inset-y-0 left-0 z-30 transform bg-gray-800 transition-all duration-300 ease-in-out
+            ${
+              isMobile
+                ? isMobileOpen
+                  ? "translate-x-0"
+                  : "-translate-x-full"
+                : "translate-x-0"
+            }
+            ${collapsed && !isMobileOpen ? "w-20" : "w-64"}
+          `}
+          style={{
+            boxShadow: "2px 0 15px rgba(0,0,0,0.15)",
+          }}
+        >
+          <div className="flex h-16 flex-col items-center justify-center border-b border-gray-700 bg-gray-900">
+            <div className="text-center font-bold">
+              <span className="text-xl text-gray-50">
+                {collapsed && !isMobileOpen ? "OXY" : "ASKOXY.AI"}
+              </span>
+            </div>
+            <div className="mt-1 text-center font-bold">
+              {userRole === "HELPDESKADMIN" ? (
+                <>
+                  <span className="text-green-400">
+                    {collapsed && !isMobileOpen ? "H" : "HELPDESK"}
+                  </span>{" "}
+                  <span className="text-yellow-400">
+                    {collapsed && !isMobileOpen ? "" : "PANEL"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-green-400">
+                    {collapsed && !isMobileOpen ? "A" : "ADMIN"}
+                  </span>{" "}
+                  <span className="text-yellow-400">
+                    {collapsed && !isMobileOpen ? "" : "PANEL"}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-          <div className="text-center font-bold mt-1">
-            {userRole === "HELPDESKADMIN" ? (
-              <>
-                <span className="text-green-400">
-                  {collapsed && !isMobileOpen ? "H" : "HELPDESK"}
-                </span>{" "}
-                <span className="text-yellow-400">
-                  {collapsed && !isMobileOpen ? "" : "PANEL"}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="text-green-400">
-                  {collapsed && !isMobileOpen ? "A" : "ADMIN"}
-                </span>{" "}
-                <span className="text-yellow-400">
-                  {collapsed && !isMobileOpen ? "" : "PANEL"}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
 
-        <nav className="mt-2 px-2">
-          <ul
-            className="space-y-1 overflow-y-auto pr-1 overflow-x-hidden
-               max-h-[calc(100vh-100px)] 
-               sm:max-h-[calc(100vh-120px)] 
-               md:max-h-[calc(100vh-140px)]"
-          >
-            {/* Categories */}
-            {visibleCategories.map((category, categoryIndex) => {
-              const categoryItems = category.items.filter((item) =>
-                item.roles.includes(userRole!),
-              );
+          <nav className="mt-2 px-2">
+            <ul
+              className="max-h-[calc(100vh-100px)] space-y-1 overflow-x-hidden overflow-y-auto pr-1
+              sm:max-h-[calc(100vh-120px)]
+              md:max-h-[calc(100vh-140px)]"
+            >
+              {visibleCategories.map((category, categoryIndex) => {
+                const categoryItems = category.items.filter((item) =>
+                  item.roles.includes(userRole!)
+                );
 
-              if (categoryItems.length === 0) return null;
+                if (categoryItems.length === 0) return null;
 
-              const isExpanded = isCategoryExpanded(category.title);
-              const isActiveCat = isCategoryActive(category);
+                const isExpanded = isCategoryExpanded(category.title);
+                const isActiveCat = isCategoryActive(category);
 
-              return (
-                <li key={categoryIndex} className="mb-1">
-                  {/* Category Header */}
-                  <div
-                    className={`flex items-center px-3 py-2 rounded-lg transition-all duration-300 cursor-pointer text-sm group hover:shadow-md relative overflow-hidden
+                return (
+                  <li key={categoryIndex} className="mb-1">
+                    <div
+                      className={`group relative flex cursor-pointer items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
+                        ${
+                          isActiveCat
+                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                            : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                        }`}
+                      onClick={() => !collapsed && toggleCategory(category.title)}
+                    >
+                      <span
+                        className={`z-10 text-lg transition-all duration-300 ${
+                          collapsed ? "ml-1" : "ml-0"
+                        }`}
+                      >
+                        {React.cloneElement(category.icon as React.ReactElement, {
+                          className: isActiveCat
+                            ? "text-white"
+                            : "text-white group-hover:text-gray-800 transition-colors duration-300",
+                        })}
+                      </span>
+
+                      {collapsed && !isMobileOpen ? (
+                        <span className="pointer-events-none absolute left-full z-50 ml-2 whitespace-nowrap rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100">
+                          {category.title}
+                        </span>
+                      ) : (
+                        <>
+                          <span
+                            className={`z-10 ml-2 flex-1 truncate transition-colors duration-300 ${
+                              isActiveCat
+                                ? "text-white"
+                                : "text-white group-hover:text-gray-800"
+                            }`}
+                          >
+                            {category.title}
+                          </span>
+                          <span className="z-10 ml-2 transition-all duration-300">
+                            {isExpanded ? (
+                              <FaChevronDown
+                                className={`text-sm transition-all duration-300 ${
+                                  isActiveCat
+                                    ? "text-white"
+                                    : "text-white group-hover:text-gray-800"
+                                }`}
+                              />
+                            ) : (
+                              <FaChevronRight
+                                className={`text-sm transition-all duration-300 ${
+                                  isActiveCat
+                                    ? "text-white"
+                                    : "text-white group-hover:text-gray-800"
+                                }`}
+                              />
+                            )}
+                          </span>
+                        </>
+                      )}
+
+                      {!isActiveCat && (
+                        <div className="absolute inset-0 rounded-lg bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                      )}
+                    </div>
+
+                    <div
+                      className={`overflow-hidden transition-all duration-400 ease-in-out ${
+                        isExpanded && !collapsed
+                          ? "mt-1 max-h-[1000px] opacity-100"
+                          : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <ul className="ml-4 space-y-1 border-l-2 border-gray-600 pl-3">
+                        {categoryItems.map((item, itemIndex) => (
+                          <li key={itemIndex}>
+                            <Link
+                              to={item.link}
+                              className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
+                                ${
+                                  isActive(item.link)
+                                    ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
+                                    : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
+                                }`}
+                              onClick={(e) => {
+                                if (item.onClick) {
+                                  e.preventDefault();
+                                  item.onClick();
+                                } else if (isMobile && isMobileOpen) {
+                                  setIsMobileOpen(false);
+                                }
+                              }}
+                            >
+                              <span className="z-10 mr-3 text-sm transition-all duration-300">
+                                {React.cloneElement(
+                                  item.icon as React.ReactElement,
+                                  {
+                                    className: isActive(item.link)
+                                      ? "text-white"
+                                      : "text-white group-hover:text-gray-800 transition-colors duration-300",
+                                  }
+                                )}
+                              </span>
+                              <span
+                                className={`z-10 truncate text-sm font-medium transition-colors duration-300 ${
+                                  isActive(item.link)
+                                    ? "text-white"
+                                    : "text-white group-hover:text-gray-800"
+                                }`}
+                              >
+                                {item.title}
+                              </span>
+                              {isActive(item.link) && (
+                                <div className="absolute right-2 z-10 h-6 w-1 rounded-full bg-blue-300" />
+                              )}
+
+                              {!isActive(item.link) && (
+                                <div className="absolute inset-0 rounded-lg bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                              )}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </li>
+                );
+              })}
+
+              {visibleStandaloneItems.map((item, index) => (
+                <li key={`standalone-${index}`} className="mt-4">
+                  <Link
+                    to={item.link}
+                    className={`group relative flex items-center overflow-hidden rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:shadow-md
                       ${
-                        isActiveCat
-                          ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                        isActive(item.link)
+                          ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
                           : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                       }`}
-                    onClick={() => !collapsed && toggleCategory(category.title)}
+                    onClick={(e) => {
+                      if (item.onClick) {
+                        e.preventDefault();
+                        item.onClick();
+                      } else if (isMobile && isMobileOpen) {
+                        setIsMobileOpen(false);
+                      }
+                    }}
                   >
                     <span
-                      className={`text-lg ${
+                      className={`z-10 text-lg transition-all duration-300 ${
                         collapsed ? "ml-1" : "ml-0"
-                      } transition-all duration-300 z-10`}
+                      }`}
                     >
-                      {React.cloneElement(category.icon as React.ReactElement, {
-                        className: isActiveCat
+                      {React.cloneElement(item.icon as React.ReactElement, {
+                        className: isActive(item.link)
                           ? "text-white"
                           : "text-white group-hover:text-gray-800 transition-colors duration-300",
                       })}
                     </span>
-
                     {collapsed && !isMobileOpen ? (
-                      <span className="absolute left-full ml-2 bg-gray-900 text-white px-3 py-2 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 pointer-events-none shadow-lg border border-gray-600 transition-all duration-300">
-                        {category.title}
+                      <span className="pointer-events-none absolute left-full z-50 ml-2 whitespace-nowrap rounded-md border border-gray-600 bg-gray-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100">
+                        {item.title}
                       </span>
                     ) : (
-                      <>
-                        <span
-                          className={`ml-2 truncate flex-1 z-10 transition-colors duration-300 ${
-                            isActiveCat
-                              ? "text-white"
-                              : "text-white group-hover:text-gray-800"
-                          }`}
-                        >
-                          {category.title}
-                        </span>
-                        <span className="ml-2 transition-all duration-300 z-10">
-                          {isExpanded ? (
-                            <FaChevronDown
-                              className={`text-sm transition-all duration-300 ${
-                                isActiveCat
-                                  ? "text-white"
-                                  : "text-white group-hover:text-gray-800"
-                              }`}
-                            />
-                          ) : (
-                            <FaChevronRight
-                              className={`text-sm transition-all duration-300 ${
-                                isActiveCat
-                                  ? "text-white"
-                                  : "text-white group-hover:text-gray-800"
-                              }`}
-                            />
-                          )}
-                        </span>
-                      </>
+                      <span
+                        className={`z-10 ml-3 truncate text-base font-medium transition-colors duration-300 ${
+                          isActive(item.link)
+                            ? "text-white"
+                            : "text-white group-hover:text-gray-800"
+                        }`}
+                      >
+                        {item.title}
+                      </span>
+                    )}
+                    {isActive(item.link) && !collapsed && (
+                      <div className="absolute right-3 z-10 h-6 w-1 rounded-full bg-blue-300" />
                     )}
 
-                    {/* Hover background effect */}
-                    {!isActiveCat && (
-                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+                    {!isActive(item.link) && (
+                      <div className="absolute inset-0 rounded-lg bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     )}
-                  </div>
-
-                  {/* Category Items with smooth expand/collapse */}
-                  <div
-                    className={`overflow-hidden transition-all duration-400 ease-in-out ${
-                      isExpanded && !collapsed
-                        ? "max-h-[1000px] opacity-100 mt-1"
-                        : "max-h-0 opacity-0"
-                    }`}
-                  >
-                    <ul className="ml-4 space-y-1 border-l-2 border-gray-600 pl-3">
-                      {categoryItems.map((item, itemIndex) => (
-                        <li key={itemIndex}>
-                          <Link
-                            to={item.link}
-                            className={`flex items-center px-3 py-2 rounded-lg transition-all duration-300 relative group text-sm hover:shadow-md overflow-hidden
-                              ${
-                                isActive(item.link)
-                                  ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
-                                  : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
-                              }`}
-                            onClick={(e) => {
-                              if (item.onClick) {
-                                e.preventDefault();
-                                item.onClick();
-                              } else if (isMobile && isMobileOpen) {
-                                setIsMobileOpen(false);
-                              }
-                            }}
-                          >
-                            <span className="text-sm mr-3 transition-all duration-300 z-10">
-                              {React.cloneElement(
-                                item.icon as React.ReactElement,
-                                {
-                                  className: isActive(item.link)
-                                    ? "text-white"
-                                    : "text-white group-hover:text-gray-800 transition-colors duration-300",
-                                },
-                              )}
-                            </span>
-                            <span
-                              className={`font-medium truncate text-sm z-10 transition-colors duration-300 ${
-                                isActive(item.link)
-                                  ? "text-white"
-                                  : "text-white group-hover:text-gray-800"
-                              }`}
-                            >
-                              {item.title}
-                            </span>
-                            {isActive(item.link) && (
-                              <div className="absolute right-2 w-1 h-6 bg-blue-300 rounded-full z-10"></div>
-                            )}
-
-                            {/* Hover background effect */}
-                            {!isActive(item.link) && (
-                              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-                            )}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  </Link>
                 </li>
-              );
-            })}
+              ))}
+            </ul>
+          </nav>
 
-            {/* Standalone Items */}
-            {visibleStandaloneItems.map((item, index) => (
-              <li key={`standalone-${index}`} className="mt-4">
-                <Link
-                  to={item.link}
-                  className={`flex items-center px-3 py-2 rounded-lg transition-all duration-300 relative group text-sm hover:shadow-md overflow-hidden
-                    ${
-                      isActive(item.link)
-                        ? "bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-lg"
-                        : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
-                    }`}
-                  onClick={(e) => {
-                    if (item.onClick) {
-                      e.preventDefault();
-                      item.onClick();
-                    } else if (isMobile && isMobileOpen) {
-                      setIsMobileOpen(false);
-                    }
-                  }}
-                >
-                  <span
-                    className={`text-lg ${
-                      collapsed ? "ml-1" : "ml-0"
-                    } transition-all duration-300 z-10`}
-                  >
-                    {React.cloneElement(item.icon as React.ReactElement, {
-                      className: isActive(item.link)
-                        ? "text-white"
-                        : "text-white group-hover:text-gray-800 transition-colors duration-300",
-                    })}
-                  </span>
-                  {collapsed && !isMobileOpen ? (
-                    <span className="absolute left-full ml-2 bg-gray-900 text-white px-3 py-2 rounded-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 z-50 pointer-events-none shadow-lg border border-gray-600 transition-all duration-300">
-                      {item.title}
-                    </span>
-                  ) : (
-                    <span
-                      className={`ml-3 font-medium truncate text-base z-10 transition-colors duration-300 ${
-                        isActive(item.link)
-                          ? "text-white"
-                          : "text-white group-hover:text-gray-800"
-                      }`}
-                    >
-                      {item.title}
-                    </span>
-                  )}
-                  {isActive(item.link) && !collapsed && (
-                    <div className="absolute right-3 w-1 h-6 bg-blue-300 rounded-full z-10"></div>
-                  )}
-
-                  {/* Hover background effect */}
-                  {!isActive(item.link) && (
-                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {(!collapsed || isMobileOpen) && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-600 bg-gray-800">
-            <div className="flex items-center px-3 py-3 text-sm text-white bg-gray-700 rounded-lg">
-              <FaUserCircle className="mr-3 text-blue-400 text-lg" />
-              <span className="font-semibold">
-                {localStorage.getItem("admin_userName")?.toUpperCase()}
-              </span>
+          {(!collapsed || isMobileOpen) && (
+            <div className="absolute bottom-0 left-0 right-0 border-t border-gray-600 bg-gray-800 p-4">
+              <div className="flex items-center rounded-lg bg-gray-700 px-3 py-3 text-sm text-white">
+                <FaUserCircle className="mr-3 text-lg text-blue-400" />
+                <span className="font-semibold">
+                  {localStorage.getItem("admin_userName")?.toUpperCase()}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-      </aside>
+          )}
+        </aside>
 
-      {/* Header */}
-      <header
-        className="bg-white shadow-lg h-16 fixed top-0 right-0 z-20 flex items-center justify-between px-6 border-b border-gray-200"
-        style={{
-          width: isMobile
-            ? "100%"
-            : `calc(100% - ${collapsed && !isMobileOpen ? "80px" : "256px"})`,
-          marginLeft: isMobile
-            ? "0"
-            : collapsed && !isMobileOpen
+        <header
+          className="fixed top-0 right-0 z-20 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-lg"
+          style={{
+            width: isMobile
+              ? "100%"
+              : `calc(100% - ${collapsed && !isMobileOpen ? "80px" : "256px"})`,
+            marginLeft: isMobile
+              ? "0"
+              : collapsed && !isMobileOpen
               ? "80px"
               : "256px",
-          transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
-        }}
-      >
-        <div className="flex items-center">
-          <button
-            onClick={isMobile ? toggleMobileMenu : toggleCollapse}
-            className="p-3 rounded-xl hover:bg-gray-100 transition-all duration-300 text-gray-600 hover:text-gray-900 hover:shadow-md transform hover:scale-105"
-            aria-label={isMobile ? "Toggle mobile menu" : "Toggle sidebar"}
-          >
-            {isMobile ? (
-              isMobileOpen ? (
-                <FaTimes className="h-5 w-5" />
+            transition: "margin-left 0.3s ease-in-out, width 0.3s ease-in-out",
+          }}
+        >
+          <div className="flex items-center">
+            <button
+              onClick={isMobile ? toggleMobileMenu : toggleCollapse}
+              className="rounded-xl p-3 text-gray-600 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md hover:scale-105"
+              aria-label={isMobile ? "Toggle mobile menu" : "Toggle sidebar"}
+            >
+              {isMobile ? (
+                isMobileOpen ? (
+                  <FaTimes className="h-5 w-5" />
+                ) : (
+                  <FaBars className="h-5 w-5" />
+                )
+              ) : collapsed ? (
+                <MenuUnfoldOutlined style={{ fontSize: "20px" }} />
               ) : (
-                <FaBars className="h-5 w-5" />
-              )
-            ) : collapsed ? (
-              <MenuUnfoldOutlined style={{ fontSize: "20px" }} />
-            ) : (
-              <MenuFoldOutlined style={{ fontSize: "20px" }} />
-            )}
-          </button>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <div
-            onClick={handleLogout}
-            className="flex items-center text-gray-600 hover:text-gray-900 cursor-pointer px-4 py-2 rounded-lg hover:bg-gray-100 transition-all duration-300 hover:shadow-md transform hover:scale-105"
-          >
-            <FaSignOutAlt className="mr-2" />
-            <span className="text-sm font-medium">Log out</span>
+                <MenuFoldOutlined style={{ fontSize: "20px" }} />
+              )}
+            </button>
           </div>
+
+          <div className="flex items-center space-x-4">
+            <div
+              onClick={handleLogout}
+              className="flex cursor-pointer items-center rounded-lg px-4 py-2 text-gray-600 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md hover:scale-105"
+            >
+              <FaSignOutAlt className="mr-2" />
+              <span className="text-sm font-medium">Log out</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="h-16 w-full" />
+
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"
+          }`}
+          style={{
+            minHeight: "calc(100vh - 64px)",
+            paddingBottom: "2rem",
+          }}
+        >
+          <main className="p-6">
+            <Outlet />
+          </main>
         </div>
-      </header>
-
-      {/* Content Spacer */}
-      <div className="h-16 w-full" />
-
-      {/* Main Content Area with Outlet */}
-      <div
-        className={`transition-all duration-300 ease-in-out 
-          ${isMobile ? "ml-0" : collapsed ? "md:ml-20" : "md:ml-64"}
-        `}
-        style={{
-          minHeight: "calc(100vh - 64px)",
-          paddingBottom: "2rem",
-        }}
-      >
-        <main className="p-6">
-          <Outlet />
-        </main>
-      </div>
       </div>
     </>
   );

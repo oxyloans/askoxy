@@ -33,6 +33,15 @@ interface HeaderProps {
   IsMobile5: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+const VoiceBars = () => (
+  <span className="voice-bars" aria-hidden="true">
+    <span />
+    <span />
+    <span />
+    <span />
+  </span>
+);
+
 const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -232,7 +241,6 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
     setIsSearchVisible(false);
     setSearchValue("");
     setSearchResults([]);
-    navigate("/main/dashboard/home");
   };
   const submitVoiceFile = async (audioFile: File | Blob) => {
     setVoiceError("");
@@ -457,6 +465,28 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   .sparkle-rotate {
     animation: sparkleRotate 3s linear infinite;
   }
+  @keyframes voiceWave {
+    0%, 100% { transform: scaleY(0.45); opacity: 0.7; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+  .voice-bars {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: 16px;
+  }
+  .voice-bars span {
+    width: 2px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+    animation: voiceWave 0.85s ease-in-out infinite;
+    transform-origin: center bottom;
+  }
+  .voice-bars span:nth-child(2) { animation-delay: 0.1s; height: 10px; }
+  .voice-bars span:nth-child(3) { animation-delay: 0.2s; height: 12px; }
+  .voice-bars span:nth-child(4) { animation-delay: 0.3s; height: 9px; }
 `}</style>
 
       <header
@@ -493,7 +523,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
               className="sm:hidden p-2 text-white hover:text-gray-200 transition"
               aria-label="Toggle search"
             >
-              <FaSearch className="w-5 h-5" />
+              <FaSearch className="w-6 h-6" />
             </button>
 
             {/* AI Button */}
@@ -604,7 +634,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
               className="flex-1 flex items-center relative rounded-full bg-gray-100 px-4 py-2.5"
               onSubmit={handleSearchSubmit}
             >
-              <FaSearch className="text-gray-400 text-sm flex-shrink-0" />
+              <FaSearch className="text-gray-400 text-base flex-shrink-0" />
               <input
                 type="text"
                 value={searchValue}
@@ -626,7 +656,7 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   <FaTimes size={16} />
                 </button>
               )}
-              <button
+              {/* <button
                 type="button"
                 onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
                 className={`ml-2 rounded-full transition-all duration-200 ${
@@ -647,11 +677,11 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                 {isVoiceLoading ? (
                   <FaSpinner className="animate-spin text-base" />
                 ) : isRecording ? (
-                  <FaMicrophoneSlash className="text-base" />
+                  <VoiceBars />
                 ) : (
                   <FaMicrophone className="text-base" />
                 )}
-              </button>
+              </button> */}
             </form>
             <button
               onClick={closeSearch}
@@ -664,15 +694,6 @@ const Header: React.FC<HeaderProps> = ({ IsMobile5 }) => {
 
           {/* Search Results - Scrollable */}
           <div className="flex-1 overflow-y-auto bg-white">
-            {(voiceError || voiceStatus !== "idle") && (
-              <p className="px-4 pt-3 pb-1 text-xs text-gray-600">
-                {voiceStatus === "listening"
-                  ? "Listening... speak clearly and tap the mic again to stop."
-                  : voiceStatus === "processing"
-                    ? "Processing voice search... please wait."
-                    : voiceError}
-              </p>
-            )}
             {renderSearchResults()}
           </div>
         </div>

@@ -1165,7 +1165,7 @@ const AllAIStore: React.FC = () => {
                           }
                           className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-slate-600 to-slate-700 px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-lg hover:from-slate-700 hover:to-slate-800 hover:shadow-xl transition-all"
                         >
-                          NBFCs Banks 9000+
+                         9000+ NBFCs
                         </button>
                       </div>
                     </div>

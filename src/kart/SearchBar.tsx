@@ -5,7 +5,6 @@ import {
   FaSearch,
   FaTimes,
   FaMicrophone,
-  FaMicrophoneSlash,
   FaSpinner,
 } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -70,6 +69,15 @@ const defaultSuggestions = [
   "SonaMasoori",
   "P2P Lending AI Agent",
 ];
+
+const VoiceBars = () => (
+  <span className="voice-bars" aria-hidden="true">
+    <span />
+    <span />
+    <span />
+    <span />
+  </span>
+);
 
 const SearchBar = () => {
   const navigate = useNavigate();
@@ -163,6 +171,7 @@ const SearchBar = () => {
   // But keep dropdown visible for suggestions
   useEffect(() => {
     if (isVoiceRouteActive) return;
+    if (!isFocused) return;
     const trimmed = searchValue.trim();
 
     if (
@@ -174,7 +183,13 @@ const SearchBar = () => {
       // setSearchResults([]); // Remove this line to keep dropdown visible
       navigate("/main/dashboard/home", { replace: true, state: null });
     }
-  }, [searchValue, location.pathname, isVoiceRouteActive, navigate]);
+  }, [
+    searchValue,
+    location.pathname,
+    isVoiceRouteActive,
+    isFocused,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (isFocused && searchValue.trim() === "") {
@@ -283,7 +298,7 @@ const SearchBar = () => {
       navigate(`/main/search-main?q=${encodeURIComponent(trimmed)}`);
       setIsFocused(false);
       // Don't clear searchResults - let default suggestions remain
-      // setSearchResults([]);
+      setSearchResults([]);
     } else {
       // For empty or short searches, keep dropdown open with suggestions
       // Don't navigate away or close dropdown
@@ -301,6 +316,23 @@ const SearchBar = () => {
     }
     // Keep dropdown open to show default suggestions
     // The useEffect will automatically show default suggestions when searchValue becomes empty
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextValue = e.target.value;
+    setSearchValue(nextValue);
+
+    // When user clears by backspace, reset search page immediately.
+    if (
+      location.pathname === "/main/search-main" &&
+      nextValue.trim().length === 0
+    ) {
+      setDebouncedValue("");
+      navigate("/main/dashboard/home", {
+        replace: true,
+        state: { clearSearch: true },
+      });
+    }
   };
 
   const handleItemClick = (item: SearchItem) => {
@@ -351,30 +383,21 @@ const SearchBar = () => {
         throw new Error("Unable to process voice search");
       }
       const voiceData = (await response.json()) as VoiceSearchResponse;
-      const voiceQuery =
-        voiceData.keyword?.trim() || voiceData.transcript?.trim() || "";
-      if (!voiceData.products?.length) {
-        setVoiceError(
-          "No products found for this voice search. Please try speaking again.",
-        );
-        setVoiceStatus("idle");
+      skipAutoSearchRef.current = true;
+      // setSearchValue(voiceData.transcript || voiceQuery); // Remove to prevent triggering text search
+      if (location.pathname !== "/main/search-main") {
+        navigate("/main/search-main", {
+          state: { voiceSearchData: voiceData },
+        });
       } else {
-        skipAutoSearchRef.current = true;
-        // setSearchValue(voiceData.transcript || voiceQuery); // Remove to prevent triggering text search
-        if (location.pathname !== "/main/search-main") {
-          navigate("/main/search-main", {
-            state: { voiceSearchData: voiceData },
-          });
-        } else {
-          navigate("/main/search-main", {
-            state: { voiceSearchData: voiceData },
-            replace: true,
-          });
-        }
-        setIsFocused(false);
-        setSearchResults([]);
-        setVoiceStatus("idle");
+        navigate("/main/search-main", {
+          state: { voiceSearchData: voiceData },
+          replace: true,
+        });
       }
+      setIsFocused(false);
+      setSearchResults([]);
+      setVoiceStatus("idle");
     } catch (error) {
       console.error("Voice search failed:", error);
       setVoiceError("Voice search failed. Please try again in a moment.");
@@ -436,12 +459,36 @@ const SearchBar = () => {
 
   return (
     <div className="relative w-full">
+      <style>{`
+        @keyframes voiceWave {
+          0%, 100% { transform: scaleY(0.45); opacity: 0.7; }
+          50% { transform: scaleY(1); opacity: 1; }
+        }
+        .voice-bars {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          height: 16px;
+        }
+        .voice-bars span {
+          width: 2px;
+          height: 7px;
+          border-radius: 999px;
+          background: currentColor;
+          animation: voiceWave 0.85s ease-in-out infinite;
+          transform-origin: center bottom;
+        }
+        .voice-bars span:nth-child(2) { animation-delay: 0.1s; height: 10px; }
+        .voice-bars span:nth-child(3) { animation-delay: 0.2s; height: 12px; }
+        .voice-bars span:nth-child(4) { animation-delay: 0.3s; height: 9px; }
+      `}</style>
       <form onSubmit={handleSearchSubmit} className="relative w-full">
         <input
           ref={inputRef}
           type="text"
           value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
           className="w-full pl-4 pr-12 py-2.5 border-2 border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 hover:border-purple-400 hover:shadow-md"
@@ -458,10 +505,10 @@ const SearchBar = () => {
               <FaTimes className="text-base" />
             </button>
           )}
-          {/* <button
+          <button
             type="button"
             onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
-            className={`p-1 rounded-full transition-all duration-200 ${
+            className={`p-1.5 rounded-full transition-all duration-200 ${
               isRecording
                 ? "bg-red-50 text-red-500 hover:bg-red-100"
                 : "bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-500"
@@ -477,31 +524,21 @@ const SearchBar = () => {
             aria-pressed={isRecording}
           >
             {isVoiceLoading ? (
-              <FaSpinner className="animate-spin text-base" />
+              <FaSpinner className="animate-spin text-lg" />
             ) : isRecording ? (
-              <FaMicrophoneSlash className="text-base" />
+              <VoiceBars />
             ) : (
-              <FaMicrophone className="text-base" />
+              <FaMicrophone className="text-lg" />
             )}
-          </button> */}
+          </button>
           <button
             type="submit"
-            className="p-1 text-gray-400 hover:text-purple-500 transition-all duration-200"
+            className="p-1.5 text-gray-400 hover:text-purple-500 transition-all duration-200"
           >
-            <FaSearch className="text-base" />
+            <FaSearch className="text-lg" />
           </button>
         </div>
       </form>
-      {(voiceError || voiceStatus !== "idle") && (
-        <p className="mt-2 text-xs text-gray-600">
-          {voiceStatus === "listening"
-            ? "Listening... speak clearly and tap the mic again to stop."
-            : voiceStatus === "processing"
-              ? "Processing voice search... please wait."
-              : voiceError}
-        </p>
-      )}
-
       {/* Dropdown Results */}
       {searchResults.length > 0 && (
         <div

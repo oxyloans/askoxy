@@ -7,7 +7,7 @@ import {
   MapPin,
   Mail,
   Phone,
-  ArrowUp,
+  
   Youtube,
 } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6"; // Updated Twitter (X) logo
@@ -290,7 +290,7 @@ const Footer: React.FC = () => {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png"
+                  src="https://s2.rdbuz.com/web/images/homeV2/appinstall/playStore.svg"
                   alt="Get it on Google Play"
                   className="w-28 sm:w-32"
                 />

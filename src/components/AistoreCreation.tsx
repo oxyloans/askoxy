@@ -210,7 +210,7 @@ const AgentStoreManager: React.FC = () => {
 
       const result: any = res.data;
 
-      // ✅ Handle both array and {data: []} response safely (NO reverse here)
+     
       const data: any[] = Array.isArray(result)
         ? result
         : Array.isArray(result?.data)
@@ -223,7 +223,7 @@ const AgentStoreManager: React.FC = () => {
         (store: any) => store && store.storeId && store.userId === userId
       );
 
-      // ✅ Sort: latest updated/created store first
+     
       const getSortTime = (s: any) => {
         const val =
           s?.updatedAt ||
@@ -250,7 +250,7 @@ const AgentStoreManager: React.FC = () => {
 
       setStoreData(sortedStores);
 
-      // 🔥 keep modal store in sync after reload
+   
       if (selectedStore) {
         const updatedStore: Store | undefined = sortedStores.find(
           (s: Store) => s.storeId === selectedStore.storeId
