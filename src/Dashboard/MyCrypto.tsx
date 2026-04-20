@@ -41,7 +41,7 @@ interface Transfer {
   txChainAddress: string;
   rxChainAddress: string;
   amountTransfer: number;
-  transferAt?: string;   // 👈 add this
+  transferAt?: string;
   type?: string;
   status?: string | null;
 }
@@ -101,11 +101,61 @@ dayjs.extend(timezone);
 const formatIST = (dateString?: string) => {
   if (!dateString) return "—";
 
-  return dayjs
-    .utc(dateString) // treat API time as UTC
-    .tz("Asia/Kolkata") // convert to IST
-    .format("DD MMM YYYY • hh:mm A");
-};
+  return dayjs(dateString).format("DD MMM YYYY");
+  };
+
+  const getTransferDirection = (transfer: Transfer) => {
+    const apiType = (transfer.type || "").toLowerCase();
+
+    if (apiType === "debit") {
+      return {
+        isSent: true,
+        label: "Debited",
+        amountPrefix: "-",
+        amountColor: "text-red-600",
+        iconBg: "bg-red-100",
+        iconColor: "text-red-600",
+        Icon: Minus,
+        counterparty: transfer.rxMobileNumber || "Unknown",
+      };
+    }
+
+    if (apiType === "credit") {
+      return {
+        isSent: false,
+        label: "Credited",
+        amountPrefix: "+",
+        amountColor: "text-green-600",
+        iconBg: "bg-green-100",
+        iconColor: "text-green-600",
+        Icon: Plus,
+        counterparty: transfer.txMobileNumber || "Unknown",
+      };
+    }
+
+    const fallbackSent = transfer.txMobileNumber === userMobileNumber;
+
+    return {
+      isSent: fallbackSent,
+      label: fallbackSent ? "Debited" : "Credited",
+      amountPrefix: fallbackSent ? "-" : "+",
+      amountColor: fallbackSent ? "text-red-600" : "text-green-600",
+      iconBg: fallbackSent ? "bg-red-100" : "bg-green-100",
+      iconColor: fallbackSent ? "text-red-600" : "text-green-600",
+      Icon: fallbackSent ? Minus : Plus,
+      counterparty: fallbackSent
+        ? transfer.rxMobileNumber || "Unknown"
+        : transfer.txMobileNumber || "Unknown",
+    };
+  };
+
+  const sortTransfersByDate = (items: Transfer[]) => {
+    return [...items].sort((a, b) => {
+      const dateA = a.transferAt ? new Date(a.transferAt).getTime() : 0;
+      const dateB = b.transferAt ? new Date(b.transferAt).getTime() : 0;
+      return dateB - dateA;
+    });
+  };
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -148,20 +198,27 @@ const formatIST = (dateString?: string) => {
     fetchUserData();
   }, []);
 
-  // Filter transfers
-  useEffect(() => {
-    if (transfers.length > 0) {
-      const filtered = transfers.filter((transfer) => {
-        const isSent = transfer.txMobileNumber === userMobileNumber;
-        if (transferFilter === "sent") return isSent;
-        if (transferFilter === "received") return !isSent;
-        return true;
-      });
-      setFilteredTransfers(filtered);
-    } else {
-      setFilteredTransfers([]);
-    }
-  }, [transfers, transferFilter, userMobileNumber]);
+useEffect(() => {
+  if (transfers.length > 0) {
+    const filtered = transfers.filter((transfer) => {
+      const apiType = (transfer.type || "").toLowerCase();
+      const isSent =
+        apiType === "debit"
+          ? true
+          : apiType === "credit"
+            ? false
+            : transfer.txMobileNumber === userMobileNumber;
+
+      if (transferFilter === "sent") return isSent;
+      if (transferFilter === "received") return !isSent;
+      return true;
+    });
+
+    setFilteredTransfers(sortTransfersByDate(filtered));
+  } else {
+    setFilteredTransfers([]);
+  }
+}, [transfers, transferFilter, userMobileNumber]);
 
   const closeTransfersModal = () => {
     setShowTransfersModal(false);
@@ -760,8 +817,8 @@ const formatIST = (dateString?: string) => {
           <div className="flex flex-wrap gap-2">
             {[
               { key: "all", label: "All" },
-              { key: "sent", label: "Sent" },
-              { key: "received", label: "Received" },
+  { key: "sent", label: "Sent" },
+  { key: "received", label: "Received" },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -809,92 +866,84 @@ const formatIST = (dateString?: string) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredTransfers
-                .sort((a, b) => {
-                  const dateA = new Date(a.transferAt ?? "").getTime();
-                  const dateB = new Date(b.transferAt ?? "").getTime();
-                  return dateB - dateA; // 🟢 Newest date first
-                })
-                .map((transfer, index) => {
-                  const isSent = transfer.txMobileNumber === userMobileNumber;
-                  const isExpanded = expandedTxId === index;
+              {filteredTransfers.map((transfer, index) => {
+  const meta = getTransferDirection(transfer);
+  const isExpanded = expandedTxId === index;
+  const IconComponent = meta.Icon;
+  return (
+    <div
+      key={index}
+      className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow"
+    >
+      <div
+        className="flex items-start justify-between gap-3 cursor-pointer"
+        onClick={() => toggleExpand(index)}
+      >
+        <div className="flex items-start gap-3 min-w-0">
+          <div className={`p-2.5 rounded-2xl ${meta.iconBg}`}>
+            <IconComponent className={`h-5 w-5 ${meta.iconColor}`} />
+          </div>
 
-                  return (
-                    <div
-                      key={index}
-                      className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow"
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleExpand(index)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-full ${
-                              isSent ? "bg-red-100" : "bg-green-100"
-                            }`}
-                          >
-                            {isSent ? (
-                              <Minus className="h-6 w-6 text-red-600" />
-                            ) : (
-                              <Plus className="h-6 w-6 text-green-600" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800">
-                              {isSent ? "Sent to" : "Received from"}{" "}
-                              {isSent
-                                ? transfer.rxMobileNumber
-                                : transfer.txMobileNumber}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {transfer.amountTransfer} BMVCOINS
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {formatIST(transfer.transferAt)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-xl font-bold ${
-                              isSent ? "text-red-600" : "text-green-600"
-                            }`}
-                          >
-                            {isSent ? "-" : "+"}
-                            {transfer.amountTransfer}
-                          </span>
-                          {isExpanded ? (
-                            <ChevronUp className="h-5 w-5 text-gray-400" />
-                          ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-400" />
-                          )}
-                        </div>
-                      </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-gray-800 text-sm sm:text-base">
+              {meta.label}
+            </p>
 
-                      {isExpanded && (
-                        <div className="mt-5 pt-5 border-t border-gray-100">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
-                            <div>
-                              <p className="text-gray-500 mb-1">
-                                From Address:
-                              </p>
-                              <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
-                                {transfer.txChainAddress}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500 mb-1">To Address:</p>
-                              <p className="font-mono text-gray-800 break-all bg-gray-50 p-2.5 rounded-lg">
-                                {transfer.rxChainAddress}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+            <p className="text-sm text-gray-500 mt-0.5">
+              {meta.isSent ? "To" : "From"} {meta.counterparty}
+            </p>
+
+            <p className="text-xs text-gray-400 mt-1">
+              {formatIST(transfer.transferAt)}
+            </p>
+
+            {transfer.status && (
+              <span className="inline-block mt-2 px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                {transfer.status}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="text-right">
+            <p className={`text-lg sm:text-xl font-bold ${meta.amountColor}`}>
+              {meta.amountPrefix}
+              {transfer.amountTransfer}
+            </p>
+            <p className="text-[11px] text-gray-400">BMVCOINS</p>
+          </div>
+
+          {isExpanded ? (
+            <ChevronUp className="h-5 w-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-gray-400" />
+          )}
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-500 mb-1">From Address</p>
+              <p className="font-mono text-gray-800 break-all bg-gray-50 p-3 rounded-xl">
+                {transfer.txChainAddress || "—"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-gray-500 mb-1">To Address</p>
+              <p className="font-mono text-gray-800 break-all bg-gray-50 p-3 rounded-xl">
+                {transfer.rxChainAddress || "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+})}
             </div>
           )}
         </div>
@@ -1178,49 +1227,46 @@ const formatIST = (dateString?: string) => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredTransfers.slice(0, 3).map((transfer, index) => {
-                    const isSent = transfer.txMobileNumber === userMobileNumber;
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:shadow-sm transition-shadow"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-xl ${
-                              isSent ? "bg-red-100" : "bg-green-100"
-                            }`}
-                          >
-                            {isSent ? (
-                              <Minus className="h-5 w-5 text-red-600" />
-                            ) : (
-                              <Plus className="h-5 w-5 text-green-600" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800">
-                              {isSent ? "Sent to" : "Received from"}{" "}
-                              {isSent
-                                ? transfer.rxMobileNumber
-                                : transfer.txMobileNumber}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {new Date().toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <span
-                          className={`text-lg font-bold ${
-                            isSent ? "text-red-600" : "text-green-600"
-                          }`}
-                        >
-                          {isSent ? "-" : "+"}
-                          {transfer.amountTransfer}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+  {sortTransfersByDate(filteredTransfers)
+    .slice(0, 3)
+    .map((transfer, index) => {
+      const meta = getTransferDirection(transfer);
+      const IconComponent = meta.Icon;
+
+      return (
+        <div
+          key={index}
+          className="flex items-center justify-between p-4 border border-gray-200 rounded-2xl hover:shadow-sm transition-shadow"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`p-2.5 rounded-xl ${meta.iconBg}`}>
+              <IconComponent className={`h-5 w-5 ${meta.iconColor}`} />
+            </div>
+
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                {meta.label}
+              </p>
+              <p className="text-sm text-gray-500 truncate">
+                {meta.isSent ? "To" : "From"} {meta.counterparty}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {formatIST(transfer.transferAt)}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right flex-shrink-0">
+            <p className={`text-lg font-bold ${meta.amountColor}`}>
+              {meta.amountPrefix}
+              {transfer.amountTransfer}
+            </p>
+            <p className="text-[11px] text-gray-400">BMVCOINS</p>
+          </div>
+        </div>
+      );
+    })}
+</div>
               )}
             </div>
           </div>

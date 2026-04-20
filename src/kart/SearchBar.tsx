@@ -110,13 +110,26 @@ const SearchBar = () => {
     }
     // Clear search when clearSearch state is received
     if (location.state?.clearSearch) {
+      // Prevent stale debounced value from re-triggering search navigation.
+      skipAutoSearchRef.current = true;
       setSearchValue("");
       setDebouncedValue("");
       setSearchResults([]);
+      setIsFocused(false);
+      inputRef.current?.blur();
       // Clear the state to prevent repeated clearing
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location.state, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (location.pathname !== "/main/search-main") {
+      setSearchValue("");
+      setDebouncedValue("");
+      setSearchResults([]);
+      setIsFocused(false);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,6 +144,8 @@ const SearchBar = () => {
       skipAutoSearchRef.current = false;
       return;
     }
+    // Only auto-search while user is actively interacting with search input.
+    if (!isFocused) return;
     if (debouncedValue.trim().length >= MIN_SEARCH_LENGTH) {
       // Detect if mobile device
       const isMobile = window.innerWidth < 640;
@@ -147,7 +162,7 @@ const SearchBar = () => {
         );
       }
     }
-  }, [debouncedValue, navigate]);
+  }, [debouncedValue, isFocused, navigate]);
 
   useEffect(() => {
     if (isVoiceRouteActive) return;

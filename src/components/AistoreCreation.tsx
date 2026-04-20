@@ -141,6 +141,11 @@ const AgentStoreManager: React.FC = () => {
     return e?.fileList;
   };
 
+  const isXlsxFile = (file: File) => {
+    const lowerName = file.name.toLowerCase();
+    return lowerName.endsWith(".xlsx");
+  };
+
   const handleMultiAgentUpload = async (values: any) => {
     try {
       const storeId = values?.storeId;
@@ -150,6 +155,9 @@ const AgentStoreManager: React.FC = () => {
       if (!storeId) return message.error("Please select a store");
       if (!view) return message.error("Please select view");
       if (!fileObj) return message.error("Please choose a file");
+      if (!isXlsxFile(fileObj)) {
+        return message.error("Only .xlsx files are allowed");
+      }
       if (!userId)
         return message.error("UserId not found. Please login again.");
 
@@ -167,6 +175,8 @@ const AgentStoreManager: React.FC = () => {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Accept: "*/*",
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -1012,10 +1022,20 @@ const AgentStoreManager: React.FC = () => {
                   { required: true, message: "Please upload Excel file" },
                 ]}
               >
-                <Upload.Dragger beforeUpload={() => false} maxCount={1}>
+                <Upload.Dragger
+                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  beforeUpload={(file) => {
+                    if (!isXlsxFile(file as File)) {
+                      message.error("Only .xlsx files are allowed");
+                      return Upload.LIST_IGNORE;
+                    }
+                    return false;
+                  }}
+                  maxCount={1}
+                >
                   <p className="ant-upload-drag-icon" />
                   <p className="ant-upload-text">
-                    Click or drag Excel file to upload
+                    Click or drag .xlsx file to upload
                   </p>
                 </Upload.Dragger>
               </Form.Item>
