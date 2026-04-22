@@ -151,7 +151,7 @@ const normalizeCampaign = (item: any): Campaign => {
     campaignTypeAddBy: item?.campaignTypeAddBy || "ADMIN",
     campaignStatus: item?.campaignStatus !== false,
     campainInputType: item?.campainInputType || "BLOG",
-    createdAt: item?.createdAt || Date.now(),
+    createdAt: item?.createdAt || 0,
     createdPersonId: item?.createdPersonId || "",
     addServiceType: item?.addServiceType || "",
     team1: item?.team1 ?? "",

@@ -36,11 +36,8 @@ export const refreshAccessToken = async (): Promise<boolean> => {
     isRefreshing = false;
     return true;
   } catch (error) {
-   
     isRefreshing = false;
-    // Remove tokens on failure - refresh token is also expired
-    removeAdminAccessToken();
-    removeAdminRefreshToken();
+    // Don't remove tokens here - let session manager handle it
     return false;
   }
 };

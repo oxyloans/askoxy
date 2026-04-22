@@ -158,7 +158,15 @@ const AllCampaignsDetails: React.FC = () => {
       const filteredCampaigns = response.data.filter(
         (campaign: Campaign) => campaign.campaignStatus !== null
       );
-      setCampaigns(filteredCampaigns);
+      
+      // Sort by most recent date first
+      const sortedCampaigns = filteredCampaigns.sort((a: Campaign, b: Campaign) => {
+        const dateA = Number(a.createdAt) || 0;
+        const dateB = Number(b.createdAt) || 0;
+        return dateB - dateA; // Most recent first
+      });
+      
+      setCampaigns(sortedCampaigns);
     } catch (error) {
       console.error("Error fetching campaigns:", error);
       message.error("Failed to load campaign details. Please try again.");

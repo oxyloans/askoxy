@@ -371,12 +371,12 @@ const ProfilePage = () => {
       pincode: "",
     };
 
-    if (!addressFormData.flatNo.trim())
+    if (!addressFormData.flatNo?.trim())
       errors.flatNo = "Flat/House number is required";
-    if (!addressFormData.landmark.trim())
+    if (!addressFormData.landmark?.trim())
       errors.landmark = "Landmark is required";
-    if (!addressFormData.address.trim()) errors.address = "Address is required";
-    if (!addressFormData.pincode.trim())
+    if (!addressFormData.address?.trim()) errors.address = "Address is required";
+    if (!addressFormData.pincode?.trim())
       errors.pincode = "PIN code is required";
     else if (!/^\d{6}$/.test(addressFormData.pincode))
       errors.pincode = "Please enter a valid 6-digit PIN code";
@@ -471,7 +471,7 @@ const ProfilePage = () => {
       };
 
       if (editingAddressId) {
-        await customerApi.put(
+        await customerApi.patch(
           `${BASE_URL}/user-service/updateAddress/${editingAddressId}`,
           data
         );
@@ -968,22 +968,16 @@ const ProfilePage = () => {
                                 PIN: {address.pincode}
                               </p>
                             </div>
-                            <div className="absolute top-4 right-4 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                            {/* <div className="absolute top-4 right-4">
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => handleEditAddress(address)}
-                                  className="p-2 text-gray-600 hover:text-purple-600 rounded-full hover:bg-purple-50"
+                                  className="p-2 text-gray-600 hover:text-purple-600 rounded-full hover:bg-purple-50 transition-colors"
                                 >
-                                  {/* <FaPen className="w-4 h-4" /> */}
+                                  <FaPen className="w-4 h-4" />
                                 </button>
-                                {/* <button
-                                                                    onClick={() => address.id && handleDeleteAddress(address.id)}
-                                                                    className="p-2 text-gray-600 hover:text-red-600 rounded-full hover:bg-red-50"
-                                                                >
-                                                                    <FaTrash className="w-4 h-4" />
-                                                                </button> */}
                               </div>
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       ))}

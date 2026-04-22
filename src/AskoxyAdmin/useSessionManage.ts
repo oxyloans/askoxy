@@ -21,7 +21,9 @@ export const useSessionManager = (onLogout: () => void) => {
       // Restart the background refresh interval
       startTokenRefresh();
     } else {
-      // Refresh token also expired — force logout
+      // Refresh token also expired — clean up and force logout
+      removeAdminAccessToken();
+      removeAdminRefreshToken();
       onLogout();
     }
   }, [onLogout]);
@@ -44,27 +46,16 @@ export const useSessionManager = (onLogout: () => void) => {
     // Start background auto-refresh while user is active
     startTokenRefresh();
 
-    // Handle silent background refresh failure - this is critical!
+    // Handle silent background refresh failure
     const backgroundRefreshCheck = setInterval(async () => {
       const token = getAdminAccessToken();
       const rToken = getAdminRefreshToken();
-      
-      // If no refresh token, user was logged out completely
-      if (!rToken) {
+      if (!token || !rToken) {
         clearInterval(backgroundRefreshCheck);
         stopTokenRefresh();
         onLogout();
-        return;
       }
-      
-      // If access token missing but refresh token exists, show modal
-      if (!token && rToken && !showSessionModal) {
-        stopTokenRefresh();
-        startTransition(() => {
-          setShowSessionModal(true);
-        });
-      }
-    }, 10 * 1000); // check every 10s
+    }, 10 * 1000); // check every 10s if tokens got wiped
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -99,7 +90,7 @@ export const useSessionManager = (onLogout: () => void) => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       stopTokenRefresh();
     };
-  }, [showSessionModal]);
+  }, []);
 
   return {
     showSessionModal,

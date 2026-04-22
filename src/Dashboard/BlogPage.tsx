@@ -5,7 +5,7 @@ import {
   fetchAllGames,
   Campaign,
 } from "../components/servicesapi";
-import { message, Empty, Button, Tooltip } from "antd";
+import { message, Empty, Button, Tooltip, Pagination, Spin } from "antd";
 import {
   FileTextOutlined,
   UserOutlined,
@@ -25,7 +25,9 @@ const BlogsPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [games, setGames] = useState<Campaign[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("ALL");
-  const [displayCount, setDisplayCount] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10); // 6 blogs per page
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
   const prevTabRef = useRef<TabKey>("ALL");
@@ -38,6 +40,7 @@ const BlogsPage: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
       try {
         const [campaignList, gameList] = await Promise.all([
           fetchCampaigns(),
@@ -64,6 +67,8 @@ const BlogsPage: React.FC = () => {
         setGames(normalizedGames as Campaign[]);
       } catch (err) {
         console.error("Error loading data:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -192,18 +197,22 @@ const BlogsPage: React.FC = () => {
   };
 
   const blogCampaigns = useMemo(() => {
-    return (campaigns as any[])
-      .filter((c: any) => c.campaignStatus !== false && c.campainInputType === "BLOG")
-      .sort((a: any, b: any) => {
-        const dateA = new Date(a.createdAt || 0).getTime();
-        const dateB = new Date(b.createdAt || 0).getTime();
-        return dateB - dateA; // Latest first
-      });
+    const filteredCampaigns = (campaigns as any[])
+      .filter((c: any) => c.campaignStatus === true && c.campainInputType === "BLOG");
+    
+    // Sort by most recent date first (same logic as AllCampaignDetail.tsx)
+    const sortedCampaigns = filteredCampaigns.sort((a: any, b: any) => {
+      const dateA = Number(a.createdAt) || 0;
+      const dateB = Number(b.createdAt) || 0;
+      return dateB - dateA; // Most recent first
+    });
+    
+    return sortedCampaigns;
   }, [campaigns]);
 
   const gamesCampaigns = useMemo(() => {
     const filtered = (games as any[]).filter(
-      (c: any) => c.campaignStatus !== false
+      (c: any) => c.campaignStatus === true
     );
     return sortNewestFirst(filtered);
   }, [games]);
@@ -221,27 +230,23 @@ const BlogsPage: React.FC = () => {
     else if (activeTab === "GAMES") list = gamesCampaigns;
     else list = blogCampaigns;
 
-    return list.slice(0, displayCount);
-  }, [activeTab, myBlogs, gamesCampaigns, blogCampaigns, displayCount]);
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    
+    return list.slice(startIndex, endIndex);
+  }, [activeTab, myBlogs, gamesCampaigns, blogCampaigns, currentPage, pageSize]);
 
-  const hasMoreItems = useMemo(() => {
-    let total = 0;
+  const totalItems = useMemo(() => {
+    if (activeTab === "MY") return myBlogs.length;
+    else if (activeTab === "GAMES") return gamesCampaigns.length;
+    else return blogCampaigns.length;
+  }, [activeTab, myBlogs.length, gamesCampaigns.length, blogCampaigns.length]);
 
-    if (activeTab === "MY") total = myBlogs.length;
-    else if (activeTab === "GAMES") total = gamesCampaigns.length;
-    else total = blogCampaigns.length;
-
-    return displayCount < total;
-  }, [
-    activeTab,
-    myBlogs.length,
-    gamesCampaigns.length,
-    blogCampaigns.length,
-    displayCount,
-  ]);
-
-  const handleLoadMore = () => {
-    setDisplayCount((prev) => prev + 20);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const onTabClick = (tab: TabKey) => {
@@ -255,7 +260,7 @@ const BlogsPage: React.FC = () => {
 
     prevTabRef.current = tab;
     setActiveTab(tab);
-    setDisplayCount(20);
+    setCurrentPage(1); // Reset to first page when changing tabs
   };
 
   const handleShare = (campaign: any) => {
@@ -295,87 +300,88 @@ const BlogsPage: React.FC = () => {
     return (
       <div className="blogsGridWrap">
         <div className="blogsGrid">
-          {list.map((campaign) => {
+          {list.map((campaign, index) => {
             const mediaUrl = getMediaUrl(campaign);
             const showImage = !!mediaUrl && isImage(mediaUrl);
             const showVideo = !!mediaUrl && isVideo(mediaUrl);
             const campaignId = getCampaignId(campaign);
+            const createdDate = (() => {
+              // Use createdAt timestamp (same logic as AllCampaignDetail.tsx)
+              const timestamp = Number(campaign.createdAt) || 0;
+              
+              if (timestamp === 0) return '';
+              
+              // Convert timestamp to date
+              const date = new Date(timestamp);
+              
+              // Check if date is valid
+              if (isNaN(date.getTime())) return '';
+              
+              return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              });
+            })();
 
             return (
-              <div key={campaignId} className="blogCard">
-                <div
-                  className="blogMedia"
-                  onClick={() => handleCampaignClick(campaign)}
-                >
-                  {showImage ? (
-                    <img
-                      src={mediaUrl}
-                      alt={getCampaignTitle(campaign)}
-                      loading="lazy"
-                      className="blogMediaImg"
-                    />
-                  ) : showVideo ? (
-                    <video
-                      src={mediaUrl}
-                      className="blogMediaImg"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                    />
-                  ) : (
-                    <div className="blogMediaFallback">No media</div>
-                  )}
-                </div>
+              <div key={campaignId} className="blogCard" onClick={() => handleCampaignClick(campaign)}>
+                <div className={`blogContent ${index % 2 === 0 ? 'normal' : 'reverse'}`}>
+                  <div className="blogBody">
+                    <h2 className="blogTitle">
+                      {formatTitle(getCampaignTitle(campaign)).toUpperCase()}
+                    </h2>
 
-                <div className="blogBody">
-                  <div className="blogMetaRow">
-                    <span className="blogTag">
-                      {activeTab === "GAMES" ? <TrophyOutlined /> : <FileTextOutlined />}
-                      {activeTab === "GAMES" ? "IPL Blog" : "Blog"}
-                    </span>
-
-                    {campaign?.createdPersonName && (
-                      <span className="authorTag">
-                        <UserOutlined />
-                        {campaign.createdPersonName}
+                    {/* <div className="blogMeta">
+                      <span className="blogDate">
+                        {createdDate}
                       </span>
-                    )}
+                      <span className="blogCategory">
+                        {activeTab === "GAMES" ? "Agentic AI, Artificial Intelligence" : "Agentic AI, Artificial Intelligence"}
+                      </span>
+                    </div> */}
+
+                    <p className="blogDesc">
+                      {(campaign?.campaignDescription || "Click to read full details.").length > 450
+                        ? (campaign?.campaignDescription || "Click to read full details.").substring(0, 450) + "..."
+                        : (campaign?.campaignDescription || "Click to read full details.")}
+                    </p>
+
+                    <div className="blogActions">
+                      <Button
+                        className="btnReadMore"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCampaignClick(campaign);
+                        }}
+                      >
+                        Read more
+                      </Button>
+                    </div>
                   </div>
 
-                  <h3
-                    className="blogTitle"
-                    onClick={() => handleCampaignClick(campaign)}
-                  >
-                    {formatTitle(getCampaignTitle(campaign))}
-                  </h3>
-
-                  <p
-                    className="blogDesc"
-                    onClick={() => handleCampaignClick(campaign)}
-                  >
-                    {campaign?.campaignDescription ||
-                      "Click to read full details."}
-                  </p>
-
-                  <div className="blogActions">
-                    <Button
-                      className="btnOpen"
-                      icon={<ArrowRightOutlined />}
-                      onClick={() => handleCampaignClick(campaign)}
-                    >
-                      Read More
-                    </Button>
-
-                    <Tooltip title="Share">
-                      <Button
-                        className="btnShare"
-                        icon={<ShareAltOutlined />}
-                        onClick={() => handleShare(campaign)}
-                      >
-                        Share
-                      </Button>
-                    </Tooltip>
+                  <div className="blogMedia">
+                    {showImage ? (
+                      <img
+                        src={mediaUrl}
+                        alt={getCampaignTitle(campaign)}
+                        loading="lazy"
+                        className="blogMediaImg"
+                      />
+                    ) : showVideo ? (
+                      <video
+                        src={mediaUrl}
+                        className="blogMediaImg"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      />
+                    ) : (
+                      <div className="blogMediaFallback">
+                        <FileTextOutlined style={{ fontSize: '48px', color: '#ccc' }} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -444,18 +450,31 @@ const BlogsPage: React.FC = () => {
           </div>
 
           <div className="mt-4">
-            <BlogsGrid list={visibleList} />
-
-            {hasMoreItems && (
-              <div className="loadMoreSection">
-                <Button
-                  className="loadMoreBtn"
-                  onClick={handleLoadMore}
-                  size="large"
-                >
-                  Load More
-                </Button>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Spin size="large" />
               </div>
+            ) : (
+              <>
+                <BlogsGrid list={visibleList} />
+
+                {totalItems > pageSize && (
+                  <div className="paginationSection">
+                    <Pagination
+                      current={currentPage}
+                      total={totalItems}
+                      pageSize={pageSize}
+                      onChange={handlePageChange}
+                      showSizeChanger={false}
+                      showQuickJumper={false}
+                      showTotal={(total, range) => 
+                        `${range[0]}-${range[1]} of ${total} blogs`
+                      }
+                      className="customPagination"
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -474,7 +493,7 @@ const BlogsPage: React.FC = () => {
         }
 
         .pageInner {
-          max-width: 1440px;
+          max-width: 1200px;
           margin: 0 auto;
         }
 
@@ -557,61 +576,149 @@ const BlogsPage: React.FC = () => {
         }
 
         .blogsGridWrap {
-          background:
-            linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,250,255,0.98));
-          border: 1px solid rgba(226, 232, 240, 0.95);
-          border-radius: 26px;
-          padding: 20px;
-          box-shadow:
-            0 18px 40px rgba(15, 23, 42, 0.05),
-            inset 0 1px 0 rgba(255,255,255,0.8);
-          backdrop-filter: blur(12px);
+          padding: 20px 0;
         }
 
         .blogsGrid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 20px;
-          align-items: stretch;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
         }
 
         .blogCard {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
+          background: #fff;
+          border: 1px solid #e5e7eb;
           overflow: hidden;
-          border-radius: 24px;
-          background:
-            linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,249,255,0.98));
-          border: 1px solid rgba(226, 232, 240, 0.95);
-          box-shadow:
-            0 14px 32px rgba(15, 23, 42, 0.06),
-            inset 0 1px 0 rgba(255,255,255,0.9);
-          transition: transform 0.28s ease, box-shadow 0.28s ease;
+          transition: all 0.3s ease;
+          margin-bottom: 24px;
+          cursor: pointer;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .blogCard:hover {
           transform: translateY(-4px);
-          box-shadow:
-            0 22px 42px rgba(15, 23, 42, 0.10),
-            inset 0 1px 0 rgba(255,255,255,0.95);
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+          border-color: #d1d5db;
+        }
+
+        .blogContent {
+          display: flex;
+          align-items: stretch;
+          min-height: 350px;
+          gap: 20px;
+        }
+
+        .blogContent.reverse {
+          flex-direction: row-reverse;
+        }
+
+        .blogContent.normal {
+          flex-direction: row;
+        }
+
+        .blogBody {
+          flex: 1;
+          padding: 35px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+
+        .blogTitle {
+          font-size: 22px;
+          font-weight: 700;
+          color: #1f2937;
+          line-height: 1.4;
+          margin: 0 0 18px 0;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          transition: color 0.3s ease;
+        }
+
+        .blogCard:hover .blogTitle {
+          color: #4f46e5;
+        }
+
+        .blogMeta {
+          margin-bottom: 20px;
+        }
+
+        .blogDate {
+          display: flex;
+          align-items: center;
+          font-size: 12px;
+          color: #06b6d4;
+          margin-bottom: 4px;
+        }
+
+        .blogDate::before {
+          content: '25cf';
+          margin-right: 8px;
+          color: #06b6d4;
+        }
+
+        .blogCategory {
+          font-size: 12px;
+          color: #06b6d4;
+          text-decoration: none;
+        }
+
+        .blogDesc {
+          color: #4b5563;
+          font-size: 16px;
+          line-height: 1.7;
+          margin: 0 0 30px 0;
+          flex: 1;
+          transition: color 0.3s ease;
+        }
+
+        .blogCard:hover .blogDesc {
+          color: #374151;
+        }
+
+        .blogActions {
+          margin-top: auto;
+        }
+
+        .btnReadMore {
+          background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+          border: 1px solid transparent !important;
+          color: #fff !important;
+          font-size: 12px !important;
+          font-weight: 600 !important;
+          padding: 8px 20px !important;
+          height: auto !important;
+          border-radius: 8px !important;
+          transition: all 0.3s ease !important;
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+        }
+
+        .btnReadMore:hover {
+          background: linear-gradient(135deg, #3730a3, #6b21a8) !important;
+          color: #fff !important;
+          transform: translateY(-2px) !important;
+          box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4) !important;
         }
 
         .blogMedia {
-          position: relative;
-          width: 100%;
-          height: 240px;
-          overflow: hidden;
-          cursor: pointer;
-          background: linear-gradient(180deg, #eef4ff, #eaf3fb);
+          width: 400px;
+          height: 350px;
           flex-shrink: 0;
+          cursor: pointer;
+          overflow: hidden;
+          background: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 10px;
         }
 
         .blogMediaImg {
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          display: block;
+          object-fit: contain;
+          transition: transform 0.3s ease;
         }
 
         .blogMediaFallback {
@@ -620,143 +727,43 @@ const BlogsPage: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #94a3b8;
-          font-weight: 700;
-          font-size: 15px;
+          background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
         }
 
-        .blogBody {
-          padding: 18px;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-        }
-
-        .blogMetaRow {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 12px;
-          flex-wrap: wrap;
-        }
-
-        .blogTag,
-        .authorTag {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 12px;
-          font-weight: 700;
-          border-radius: 999px;
-          padding: 7px 12px;
-        }
-
-        .blogTag {
-          background: rgba(79, 70, 229, 0.10);
-          color: #4338ca;
-        }
-
-        .authorTag {
-          background: rgba(14, 165, 233, 0.10);
-          color: #0369a1;
-        }
-
-        .blogTitle {
-          font-size: 20px;
-          font-weight: 800;
-          color: #0f172a;
-          line-height: 1.35;
-          margin: 0 0 10px;
-          cursor: pointer;
-          min-height: 54px;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .blogDesc {
-          color: #64748b;
-          font-size: 14px;
-          line-height: 1.7;
-          margin: 0 0 16px;
-          cursor: pointer;
-          min-height: 72px;
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .blogActions {
-          margin-top: auto;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .btnOpen {
-          flex: 1;
-          border-radius: 14px !important;
-          height: 46px !important;
-          font-weight: 700 !important;
-          border: none !important;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
-          color: #fff !important;
-          box-shadow: 0 10px 22px rgba(79, 70, 229, 0.22) !important;
-        }
-
-        .btnShare {
-          border-radius: 14px !important;
-          height: 46px !important;
-          min-width: 92px !important;
-          font-weight: 700 !important;
-          border: 1px solid #dbe4f0 !important;
-          background: #fff !important;
-          color: #334155 !important;
-        }
-
-        .loadMoreSection {
+        .paginationSection {
           display: flex;
           justify-content: center;
-          padding: 28px 0 8px;
+          padding: 40px 0 20px;
         }
 
-        .loadMoreBtn {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
-          border: none !important;
-          color: #fff !important;
-          border-radius: 14px !important;
-          font-weight: 700 !important;
-          padding: 12px 28px !important;
-          height: auto !important;
-          box-shadow: 0 10px 22px rgba(79, 70, 229, 0.22) !important;
+        .customPagination {
+          text-align: center;
+        }
+
+        .customPagination .ant-pagination-item {
+          border: 1px solid #000;
+          margin: 0 4px;
+        }
+
+        .customPagination .ant-pagination-item-active {
+          background: #000;
+          border-color: #000;
+        }
+
+        .customPagination .ant-pagination-item-active a {
+          color: #fff;
+        }
+
+        .customPagination .ant-pagination-prev,
+        .customPagination .ant-pagination-next {
+          border: 1px solid #000;
         }
 
         .footerSection {
           margin-top: 20px;
         }
 
-        @media (min-width: 640px) {
-          .blogsGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .blogsGrid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-        }
-
-        @media (min-width: 1280px) {
-          .blogsGrid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
           .pageWrap {
             padding: 12px;
           }
@@ -767,25 +774,32 @@ const BlogsPage: React.FC = () => {
           }
 
           .blogsGridWrap {
-            padding: 14px;
-            border-radius: 20px;
+            padding: 14px 0;
+          }
+
+          .blogContent {
+            flex-direction: column !important;
+          }
+
+          .blogContent.reverse {
+            flex-direction: column !important;
           }
 
           .blogMedia {
-            height: 210px;
+            width: 100%;
+            height: 200px;
+            order: -1;
           }
 
           .blogBody {
-            padding: 16px;
+            padding: 20px;
           }
 
           .blogTitle {
-            font-size: 17px;
-            min-height: 48px;
+            font-size: 16px;
           }
 
           .blogDesc {
-            min-height: 68px;
             font-size: 13px;
           }
 
@@ -797,45 +811,19 @@ const BlogsPage: React.FC = () => {
           .tabItem:last-child {
             width: 100%;
           }
-
-          .blogActions {
-            flex-wrap: nowrap;
-            gap: 10px;
-          }
-
-          .btnOpen {
-            width: calc(100% - 96px);
-            height: 44px !important;
-            font-size: 13px !important;
-          }
-
-          .btnShare {
-            width: 86px !important;
-            min-width: 86px !important;
-            max-width: 86px !important;
-            height: 44px !important;
-            font-size: 13px !important;
-            padding: 0 10px !important;
-          }
         }
 
-        @media (max-width: 420px) {
+        @media (max-width: 480px) {
+          .blogBody {
+            padding: 16px;
+          }
+
+          .blogTitle {
+            font-size: 15px;
+          }
+
           .blogMedia {
-            height: 190px;
-          }
-
-          .blogActions {
-            gap: 8px;
-          }
-
-          .btnOpen {
-            width: calc(100% - 84px);
-          }
-
-          .btnShare {
-            width: 76px !important;
-            min-width: 76px !important;
-            max-width: 76px !important;
+            height: 180px;
           }
         }
       `}</style>

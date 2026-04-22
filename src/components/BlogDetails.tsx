@@ -17,6 +17,7 @@ import {
   CheckCircleFilled,
   ClockCircleOutlined,
   PlusOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import Header1 from "../components/Header";
 import {
@@ -860,6 +861,10 @@ const handleWriteToUsSubmitButton = async () => {
     }
   };
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   const closeWriteToUsModal = () => {
     setIsWriteToUsOpen(false);
     setQuery("");
@@ -930,6 +935,14 @@ const handleWriteToUsSubmitButton = async () => {
       >
         <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[linear-gradient(90deg,#f6f7ff_0%,#fcfcff_100%)] border-b border-[#edf0f7]">
           <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={handleGoBack}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 shadow-sm hover:shadow-md"
+              title="Go back"
+            >
+              <ArrowLeftOutlined className="text-sm" />
+            </button>
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef2f9] text-[#6b7280]">
               <UserOutlined />
             </div>
@@ -1370,11 +1383,11 @@ const handleWriteToUsSubmitButton = async () => {
               </div>
             ) : (
               <div
-                className={`space-y-6 transition-all duration-500 ${
+                className={`transition-all duration-500 ${
                   pageReady ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 }`}
               >
-                {orderedCampaigns.map((campaign) => renderCampaignCard(campaign))}
+                {featuredCampaign && renderCampaignCard(featuredCampaign)}
               </div>
             )}
           </div>
