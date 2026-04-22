@@ -33,7 +33,7 @@ const plans = [
     label: "3 Months",
     price: 699,
     currency: "USD",
-    period: "per quarter",
+    period: "3 months",
     inr: "~₹65,188",
     highlight: false,
     tag: "Save 5%",
@@ -77,7 +77,9 @@ const insurvibeFeatures = [
 const TEAM_EMAILS = ["oxybfsai@askoxy.ai"];
 
 export default function OxybfsiPricing() {
-  const [showLanding, setShowLanding] = useState(false);
+  const [showLanding, setShowLanding] = useState(
+    () => sessionStorage.getItem("finvibe_unlocked") === "true"
+  );
 
   // Team login state — hidden panel
   const [logoClickCount, setLogoClickCount] = useState(0);
@@ -104,6 +106,7 @@ export default function OxybfsiPricing() {
       setShowTeamLogin(false);
       setTeamEmail("");
       setTeamError("");
+      sessionStorage.setItem("finvibe_unlocked", "true");
       setTimeout(() => setShowLanding(true), 300);
     } else {
       setTeamError("Access denied. This email is not authorised.");
@@ -199,7 +202,7 @@ export default function OxybfsiPricing() {
             onClick={handleLogoClick}
           >
             <span className="text-white">OXY</span>
-            <span className="text-cyan-400">BFSI</span>
+            <span className="text-cyan-400">BFS{`{AI}`}</span>
           </h1>
           <p className="text-slate-400 text-base max-w-lg mx-auto leading-relaxed mb-8">
             AI-powered compliance-grade application generation for India's
@@ -208,11 +211,7 @@ export default function OxybfsiPricing() {
 
           {/* Seamless divider into products */}
           <div className="flex items-center gap-4 justify-center mb-2">
-            <div className="h-px w-16 bg-white/10" />
-            <p className="text-slate-500 text-xs uppercase tracking-widest font-semibold">
-              Powered By
-            </p>
-            <div className="h-px w-16 bg-white/10" />
+            <hr className="text-slate-300"/>
           </div>
           <h2 className="text-3xl md:text-4xl font-black text-white mb-1">
             Two Vertical Engines
@@ -365,7 +364,7 @@ export default function OxybfsiPricing() {
                       ${plan.price.toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-slate-500 text-xs">{plan.period}</p>
+                  <p className="text-slate-300 text-xs">{plan.period}</p>
                 </div>
                 <p className="text-slate-400 text-xs leading-relaxed mb-5 flex-1">
                   {plan.description}
@@ -399,20 +398,20 @@ export default function OxybfsiPricing() {
             <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
               <div>
                 <span className="inline-block bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full mb-4 tracking-widest uppercase">
-                  The OxybFSI Advantage
+                  The OXYBFS{`{AI}`} Advantage
                 </span>
                 <h2 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
-                  What <span className="text-emerald-400">60 Engineers</span> build
+                  <span className="text-emerald-400">60 Engineers</span> build
                   <br />
                   in <span className="text-emerald-400">6 Months</span> for
                   <br />
-                  <span className="text-white">₹3 Crore+</span>
+                  <span className="text-white">₹3 Crore+ Work</span>
                   <br />
                   <span className="text-cyan-400 text-2xl md:text-3xl">— done with One Prompt.</span>
                 </h2>
                 <p className="text-slate-400 text-sm leading-relaxed mt-3">
                   Stop burning crores on large engineering teams and endless sprints.
-                  OxybFSI collapses months of regulated financial software development
+                  OXYBFS{`{AI}`} collapses months of regulated financial software development
                   into a single AI generation — fully compliant, fully coded, ready to deploy.
                 </p>
               </div>
@@ -430,7 +429,7 @@ export default function OxybfsiPricing() {
                     icon: "💸",
                   },
                   {
-                    label: "With OxybFSI",
+                    label: "With OXYBFS{AI}",
                     value: "1 Prompt · 6 Minutes",
                     icon: "⚡",
                   },
@@ -466,7 +465,7 @@ export default function OxybfsiPricing() {
                 environment,{" "}
                 <strong className="text-white">2 technical resources</strong>{" "}
                 are required on your side — one for backend infrastructure and
-                one for frontend deployment. OxybFSI generates the complete
+                one for frontend deployment. OXYBFS{`{AI}`} generates the complete
                 codebase; your team handles hosting and go-live.
               </p>
             </div>
@@ -480,7 +479,7 @@ export default function OxybfsiPricing() {
               ⚠
             </span>
             <p className="text-slate-300 text-xs leading-relaxed">
-              <strong className="text-slate-200">Note:</strong> OxybFSI
+              <strong className="text-slate-200">Note:</strong> OXYBFS{`{AI}`}
               Responsible AI may make mistakes. Generated code and compliance
               mappings should be reviewed by qualified legal, technical, and
               regulatory professionals before production deployment. This
@@ -489,7 +488,7 @@ export default function OxybfsiPricing() {
             </p>
           </div>
           <p className="text-slate-100 text-xs mt-8">
-            © 2026 OxybFSI Responsible AI · All Rights Reserved
+            © 2026 OXYBFS{`{AI}`} Responsible AI · All Rights Reserved
           </p>
         </div>
       </div>

@@ -11,6 +11,7 @@ interface PipelineViewProps {
   partialResult: Partial<GenerationResult>;
   running: boolean;
   paused: boolean;
+  stopped: boolean;
   error: string | null;
   chatMessage: string | null;
   prompt: string;
@@ -21,6 +22,8 @@ interface PipelineViewProps {
   onRun: (prompt: string) => void;
   onAnswer: (answer: string) => void;
   onViewCode: (result: GenerationResult, tab?: "backend" | "frontend" | "database") => void;
+  onStop: () => void;
+  onResume: () => void;
 }
 
 export function PipelineView({
@@ -30,6 +33,7 @@ export function PipelineView({
   partialResult,
   running,
   paused,
+  stopped,
   error,
   chatMessage,
   prompt,
@@ -38,6 +42,8 @@ export function PipelineView({
   onRun,
   onAnswer,
   onViewCode,
+  onStop,
+  onResume,
 }: PipelineViewProps) {
   const [answerText, setAnswerText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -57,7 +63,7 @@ export function PipelineView({
     onAnswer(val);
   };
 
-  return (
+  return (  
     <div
       style={{
         display: "flex",
@@ -66,7 +72,6 @@ export function PipelineView({
         overflow: "hidden",
       }}
     >
-      {/* ── Feed ── */}
       <div style={{ flex: 1, overflow: "hidden" }}>
         <PipelineFeed
           steps={steps}
@@ -75,12 +80,14 @@ export function PipelineView({
           partialResult={partialResult}
           running={running}
           paused={paused}
+          stopped={stopped}
           error={error}
           chatMessage={chatMessage}
           prompt={prompt}
           history={history}
           hasPendingClarification={!!clarificationQuestion}
           onViewCode={onViewCode}
+          onResume={onResume}
         />
       </div>
 
@@ -309,6 +316,64 @@ export function PipelineView({
                 Building…
               </span>
             </div>
+          )}
+          {stopped && !running && (
+            <button
+              onClick={onResume}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 14px",
+                borderRadius: "20px",
+                flexShrink: 0,
+                background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                border: "none",
+                color: "#fff",
+                fontSize: "11px",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = "0.85";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = "1";
+              }}
+            >
+              <span>🔄</span>
+              <span>Resume</span>
+            </button>
+          )}
+          {running && (
+            <button
+              onClick={onStop}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 14px",
+                borderRadius: "20px",
+                flexShrink: 0,
+                background: "linear-gradient(135deg, #EF4444, #DC2626)",
+                border: "none",
+                color: "#fff",
+                fontSize: "11px",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = "0.85";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = "1";
+              }}
+            >
+              <span>⏹</span>
+              <span>Stop</span>
+            </button>
           )}
           {result && !running && (
             <div

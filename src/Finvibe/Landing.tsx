@@ -16,6 +16,7 @@ export default function Landing() {
     chatMessage,
     running,
     paused,
+    stopped,
     error,
     stepTokens,
     prompt,
@@ -23,19 +24,31 @@ export default function Landing() {
     history,
     run,
     answerQuestion,
+    stop,
+    resume,
+    loadHistoryTurn,
+    clearAll,
+    fetchHistory,
   } = usePipeline();
 
   const location = useLocation();
   const mode: "banking" | "insurance" =
     (location.state as any)?.mode === "insurance" ||
-    location.pathname === "/insurvibe-code-builder"
+      location.pathname === "/insurvibe-code-builder"
       ? "insurance"
       : "banking";
 
   const hasEverStartedRef = useRef(false);
-  if (running || history.length > 0 || steps.some((s) => s.status !== "idle")) {
+  const hasResultRef = useRef(false);
+
+  if (running || stopped || history.length > 0 || steps.some((s) => s.status !== "idle")) {
     hasEverStartedRef.current = true;
   }
+
+  if (result || history.some(h => h.result)) {
+    hasResultRef.current = true;
+  }
+
   const hasStarted = hasEverStartedRef.current;
 
   const [codeViewResult, setCodeViewResult] = useState<GenerationResult | null>(
@@ -89,6 +102,15 @@ export default function Landing() {
         selectedBank={selectedBank}
         onSelectBank={setSelectedBank}
         mode={mode}
+        onLoadHistory={(item) => {
+          loadHistoryTurn(item);
+          hasEverStartedRef.current = true;
+        }}
+        fetchHistory={fetchHistory}
+        onNewChat={() => {
+          clearAll();
+          hasEverStartedRef.current = false;
+        }}
       />
 
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -116,6 +138,7 @@ export default function Landing() {
             partialResult={partialResult}
             running={running}
             paused={paused}
+            stopped={stopped}
             error={error}
             chatMessage={chatMessage}
             prompt={prompt}
@@ -124,6 +147,8 @@ export default function Landing() {
             onRun={run}
             onAnswer={answerQuestion}
             onViewCode={handleViewCode}
+            onStop={stop}
+            onResume={resume}
           />
         )}
       </main>

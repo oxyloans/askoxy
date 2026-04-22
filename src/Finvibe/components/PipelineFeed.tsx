@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PipelineStep, GenerationResult, CodeFile } from "../type/types";
 import { StepTokensMap, ConversationTurn } from "../hooks/usePipeline";
+import { collectAllFiles, mergeFiles } from "../type/collectAllFiles";
 
 type CodeTab = "backend" | "frontend" | "database";
 
@@ -11,65 +12,80 @@ interface Props {
   partialResult: Partial<GenerationResult>;
   running: boolean;
   paused: boolean;
+  stopped: boolean;
   error: string | null;
   chatMessage: string | null;
   prompt: string;
   hasPendingClarification: boolean;
   history: ConversationTurn[];
   onViewCode: (result: GenerationResult, tab?: CodeTab) => void;
+  onResume?: () => void;
 }
 
 const STEP_META: Record<string, { icon: string; accent: string; summary: (data: any) => string }> = {
-  "Planning":            { icon: "🔍", accent: "#3B82F6", summary: d => d?.domain ? `${d.domain}  ·  ${(d.actors || []).join(", ")}` : "Complete" },
-  "Clarification":       { icon: "❓", accent: "#F59E0B", summary: d => d?.questions ? `${d.questions} questions sent` : "Skipped" },
-  "Tech Stack":          { icon: "🛠️", accent: "#8B5CF6", summary: d => d ? `${d.backend}  ·  ${d.frontend}  ·  ${d.database}` : "Complete" },
-  "Use Cases":           { icon: "📋", accent: "#06B6D4", summary: d => d?.count ? `${d.count} use cases identified` : "Complete" },
-  "Compliance":          { icon: "📜", accent: "#F59E0B", summary: d => d?.count ? `${d.count} compliance rules applied` : "Skipped (non-NBFC)" },
-  "System Design":       { icon: "🏗️", accent: "#F97316", summary: d => d?.apis ? `${d.modules} modules  ·  ${d.apis} APIs designed` : "Complete" },
-  "Folder Structure":    { icon: "📁", accent: "#14B8A6", summary: d => d?.count ? `${d.count} entries scaffolded` : "Complete" },
-  "Prompt Builder":      { icon: "✍️", accent: "#EC4899", summary: d => d?.length ? `${d.length.toLocaleString()} char prompt built` : "Complete" },
-  "Backend Prompt":      { icon: "🖊️", accent: "#F97316", summary: d => d?.length ? `${d.length.toLocaleString()} char prompt built` : "Complete" },
-  "Frontend Prompt":     { icon: "🖌️", accent: "#8B5CF6", summary: d => d?.length ? `${d.length.toLocaleString()} char prompt built` : "Complete" },
-  "Backend Generation":  { icon: "⚙️", accent: "#10B981", summary: d => d?.files ? `${d.files} backend files generated` : "Complete" },
-  "Frontend Generation": { icon: "🎨", accent: "#A78BFA", summary: d => d?.files ? `${d.files} frontend files generated` : "Complete" },
-  "Database Generation": { icon: "🗄️", accent: "#38BDF8", summary: d => d?.files ? `${d.files} database files generated` : "Complete" },
-  "Validation":          { icon: "🔬", accent: "#10B981", summary: d => d?.status === "PASS" ? "All checks passed ✓" : d?.issues?.length ? `${d.issues.length} issues resolved` : "Complete" },
+  "Planning": { icon: "🔍", accent: "#3B82F6", summary: d => d?.domain ? `${d.domain}  ·  ${Array.isArray(d.actors) ? d.actors.join(", ") : (d.actors ?? "")}` : "Complete" },
+  "Clarification": { icon: "❓", accent: "#F59E0B", summary: d => d?.questions ? `${d.questions} questions sent` : "Skipped" },
+  "Tech Stack": { icon: "🛠️", accent: "#8B5CF6", summary: d => d ? `${d.backend ?? ""}  ·  ${d.frontend ?? ""}  ·  ${d.database ?? ""}` : "Complete" },
+  "Use Cases": { icon: "📋", accent: "#06B6D4", summary: d => d?.count ? `${d.count} use cases identified` : (Array.isArray(d) ? `${d.length} use cases identified` : "Complete") },
+  "Compliance": { icon: "📜", accent: "#F59E0B", summary: d => d?.count ? `${d.count} compliance rules applied` : "Skipped (non-NBFC)" },
+  "System Design": { icon: "🏗️", accent: "#F97316", summary: d => {
+    const mods = typeof d?.modules === "number" ? d.modules : (Array.isArray(d?.modules) ? d.modules.length : null);
+    const apis = typeof d?.apis === "number" ? d.apis : (Array.isArray(d?.apis) ? d.apis.length : null);
+    return (mods !== null && apis !== null) ? `${mods} modules  ·  ${apis} APIs designed` : "Complete";
+  }},
+  "Folder Structure": { icon: "📁", accent: "#14B8A6", summary: d => d?.count ? `${d.count} entries scaffolded` : (Array.isArray(d) ? `${d.length} entries scaffolded` : "Complete") },
+  "Prompt Builder": { icon: "✍️", accent: "#EC4899", summary: d => d?.length ? `${d.length.toLocaleString()} char prompt built` : (typeof d === "string" ? `${d.length.toLocaleString()} char prompt built` : "Complete") },
+  "Backend Prompt": { icon: "🖊️", accent: "#F97316", summary: d => d?.length ? `${d.length.toLocaleString()} char prompt built` : "Complete" },
+  "Frontend Prompt": { icon: "🖌️", accent: "#8B5CF6", summary: d => d?.length ? `${d.length.toLocaleString()} char prompt built` : "Complete" },
+  "Backend Generation": { icon: "⚙️", accent: "#10B981", summary: d => {
+    const count = typeof d?.files === "number" ? d.files : (Array.isArray(d?.files) ? d.files.length : (Array.isArray(d?.fileList) ? d.fileList.length : null));
+    return count !== null ? `${count} backend files generated` : "Complete";
+  }},
+  "Frontend Generation": { icon: "🎨", accent: "#A78BFA", summary: d => {
+    const count = typeof d?.files === "number" ? d.files : (Array.isArray(d?.files) ? d.files.length : (Array.isArray(d?.fileList) ? d.fileList.length : null));
+    return count !== null ? `${count} frontend files generated` : "Complete";
+  }},
+  "Database Generation": { icon: "🗄️", accent: "#38BDF8", summary: d => {
+    const count = typeof d?.files === "number" ? d.files : (Array.isArray(d?.files) ? d.files.length : (Array.isArray(d?.fileList) ? d.fileList.length : null));
+    return count !== null ? `${count} database files generated` : "Complete";
+  }},
+  "Test Cases & Data": { icon: "🧪", accent: "#10B981", summary: d => {
+    const mods = Array.isArray(d?.modules) ? d.modules.length : null;
+    const tests = typeof d?.totalTests === "number" ? d.totalTests : null;
+    return mods !== null ? `${mods} modules tested` : tests !== null ? `${tests} test cases generated` : "Complete";
+  }},
 };
 
 const CODE_STEPS = new Set(["Backend Generation", "Frontend Generation", "Database Generation"]);
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/**
- * Extract files from a completed step's data.
- * The step data may carry { fileList: CodeFile[] } or { files: CodeFile[] | number }.
- */
 function extractFilesFromStep(step: PipelineStep | undefined): CodeFile[] {
   if (!step || step.status !== "completed") return [];
   const data = step.data as any;
-  // console.log('[extractFilesFromStep]', { 
-  //   label: step.label, 
-  //   data, 
-  //   dataKeys: data ? Object.keys(data) : [],
-  //   hasFileList: !!data?.fileList,
-  //   hasFiles: !!data?.files,
-  //   fileListType: typeof data?.fileList,
-  //   filesType: typeof data?.files,
-  //   fileListIsArray: Array.isArray(data?.fileList),
-  //   filesIsArray: Array.isArray(data?.files),
-  //   filesLength: Array.isArray(data?.files) ? data.files.length : 0,
-  //   firstFile: Array.isArray(data?.files) && data.files.length > 0 ? data.files[0] : null,
-  //   firstFileKeys: Array.isArray(data?.files) && data.files.length > 0 ? Object.keys(data.files[0]) : []
-  // });
+
+  // Already-parsed array forms
   if (Array.isArray(data?.fileList) && data.fileList.length > 0) return data.fileList;
   if (Array.isArray(data?.files) && data.files.length > 0) return data.files;
+
+  // Raw string from history API — may be concatenated JSON blobs
+  if (typeof data === "string" && data.length > 0) {
+    const fromStr = collectAllFiles(data);
+    if (fromStr.length > 0) return fromStr;
+  }
+
+  // data is an object but files/fileList are strings (edge case)
+  if (data && typeof data?.files === "string") {
+    const fromStr = collectAllFiles(data.files);
+    if (fromStr.length > 0) return fromStr;
+  }
+  if (data && typeof data?.fileList === "string") {
+    const fromStr = collectAllFiles(data.fileList);
+    if (fromStr.length > 0) return fromStr;
+  }
+
   return [];
 }
 
-/**
- * Build a GenerationResult from whatever sources are available,
- * prioritising: result → partialResult → step.data.fileList/files
- */
+
 function buildResult(
   steps: PipelineStep[],
   partialResult: Partial<GenerationResult>,
@@ -78,45 +94,39 @@ function buildResult(
   const findStep = (label: string) =>
     steps.find(s => s.label.split(" (")[0] === label && s.status === "completed");
 
-  const backendStep = findStep("Backend Generation");
+  const backendStep  = findStep("Backend Generation");
   const frontendStep = findStep("Frontend Generation");
   const databaseStep = findStep("Database Generation");
 
-  const backend =
-    (result?.backend?.length  ? result.backend  : null) ??
-    (partialResult?.backend?.length ? partialResult.backend : null) ??
-    extractFilesFromStep(backendStep);
+const mergeSource = (
+  fromResult: CodeFile[] | undefined,
+  fromPartial: CodeFile[] | undefined,
+  fromStep: PipelineStep | undefined,
+  fromTokens?: string            
+): CodeFile[] => {
+  const resultFiles  = fromResult?.length  ? fromResult  : [];
+  const partialFiles = fromPartial?.length ? fromPartial : [];
+  const stepFiles    = extractFilesFromStep(fromStep);
+  // Token fallback — only used when nothing else found
+  const tokenFiles   = (!stepFiles.length && !resultFiles.length && !partialFiles.length && fromTokens)
+    ? collectAllFiles(fromTokens)
+    : [];
 
-  const frontend =
-    (result?.frontend?.length ? result.frontend : null) ??
-    (partialResult?.frontend?.length ? partialResult.frontend : null) ??
-    extractFilesFromStep(frontendStep);
-
-  const database =
-    (result?.database?.length ? result.database : null) ??
-    (partialResult?.database?.length ? partialResult.database : null) ??
-    extractFilesFromStep(databaseStep);
-
-  // console.log('[buildResult]', {
-  //   resultBackend: result?.backend?.length ?? 0,
-  //   resultFrontend: result?.frontend?.length ?? 0,
-  //   resultDatabase: result?.database?.length ?? 0,
-  //   partialBackend: partialResult?.backend?.length ?? 0,
-  //   partialFrontend: partialResult?.frontend?.length ?? 0,
-  //   partialDatabase: partialResult?.database?.length ?? 0,
-  //   finalBackend: backend?.length ?? 0,
-  //   finalFrontend: frontend?.length ?? 0,
-  //   finalDatabase: database?.length ?? 0,
-  // });
-
+  const map = new Map<string, CodeFile>();
+  for (const f of tokenFiles)   map.set(f.path, f);
+  for (const f of stepFiles)    map.set(f.path, f);
+  for (const f of partialFiles) map.set(f.path, f);
+  for (const f of resultFiles)  map.set(f.path, f);
+  return Array.from(map.values());
+};
+  
   return {
-    backend:  backend  ?? [],
-    frontend: frontend ?? [],
-    database: database ?? [],
+    backend:  mergeSource(result?.backend,  partialResult?.backend,  backendStep),
+    frontend: mergeSource(result?.frontend, partialResult?.frontend, frontendStep),
+    database: mergeSource(result?.database, partialResult?.database, databaseStep),
   };
 }
 
-// ── Parse files directly from raw token text ────────────────────────────────
 function parseFilesFromTokens(text: string): CodeFile[] {
   if (!text) return [];
   const results: CodeFile[] = [];
@@ -145,6 +155,35 @@ function parseFilesFromTokens(text: string): CodeFile[] {
   return results;
 }
 
+
+// ── Helper function to download test cases as Word doc ──────────────────────
+function downloadAsWord(testData: any) {
+  let text: string;
+  if (typeof testData === "string") {
+    text = testData;
+  } else {
+    text = JSON.stringify(testData, null, 2);
+  }
+
+  // Build a simple HTML document that Word can open
+  const html = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office'
+      xmlns:w='urn:schemas-microsoft-com:office:word'
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Test Cases</title>
+<style>body{font-family:Calibri,sans-serif;font-size:11pt;white-space:pre-wrap;}</style>
+</head><body>${text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</body></html>`;
+
+  const blob = new Blob(["\uFEFF", html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `test_cases_${Date.now()}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 function CollapsedTokenView({ tokens, accent }: { tokens: string; accent: string }) {
   return (
@@ -208,13 +247,20 @@ function StepCard({
   onViewCode: (r: GenerationResult, tab?: CodeTab) => void;
 }) {
   const isActive = step.status === "streaming";
-  const isDone   = step.status === "completed";
-  const isError  = step.status === "error";
+  const isDone = step.status === "completed";
+  const isError = step.status === "error";
   const baseLabel = step.label.split(" (")[0];
   const meta = STEP_META[baseLabel];
   const accent = meta?.accent ?? "#3B82F6";
   const isExpanded = expandedSteps.has(idx);
   const isCodeStep = CODE_STEPS.has(baseLabel);
+  const isTestCaseStep = baseLabel === "Test Cases & Data";
+
+  const handleDownloadTestCases = () => {
+    if (step.data) {
+      downloadAsWord(step.data);
+    }
+  };
 
   const getTabForStep = (): CodeTab => {
     if (baseLabel === "Frontend Generation") return "frontend";
@@ -223,15 +269,24 @@ function StepCard({
   };
 
   const tab = getTabForStep();
-  // Parse files directly from the token stream — works even before partialResult is populated
-  const tabFiles: CodeFile[] = isCodeStep && isDone
-    ? (builtResult[tab].length > 0 ? builtResult[tab] : parseFilesFromTokens(tokens))
-    : [];
+
+const tabFiles: CodeFile[] = isCodeStep && isDone
+  ? (() => {
+    
+      if (builtResult[tab].length > 0) return builtResult[tab];
+      const fromData = extractFilesFromStep(step);
+      if (fromData.length > 0) return fromData;
+      if (tokens) return collectAllFiles(tokens);
+      return [];
+    })()
+  : [];
+
+  const hasFilesForTab = tabFiles.length > 0 || builtResult[tab].length > 0;
 
   const handleViewCode = () => {
-    const files = tabFiles;
+    const files = tabFiles.length > 0 ? tabFiles : builtResult[tab];
     const viewResult: GenerationResult = {
-      backend:  tab === "backend"  ? files : builtResult.backend,
+      backend: tab === "backend" ? files : builtResult.backend,
       frontend: tab === "frontend" ? files : builtResult.frontend,
       database: tab === "database" ? files : builtResult.database,
     };
@@ -253,7 +308,7 @@ function StepCard({
               style={{ borderColor: accent, borderTopColor: "transparent" }} />
           ) : isDone ? (
             <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-              <path d="M1 3.5L3.5 6L8 1" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1 3.5L3.5 6L8 1" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           ) : (
             <span style={{ fontSize: 12 }}>{meta?.icon ?? "▸"}</span>
@@ -272,6 +327,7 @@ function StepCard({
           border: isActive ? `1px solid ${accent}40` : isDone ? "1px solid #E8ECF4" : isError ? "1px solid rgba(239,68,68,0.3)" : "1px solid transparent",
           boxShadow: isActive ? `0 0 28px ${accent}0C` : "none",
         }}>
+        <>
         {/* Header */}
         <div className="flex items-center gap-2.5 px-3.5 py-2.5">
           <span style={{ fontSize: 14 }}>{meta?.icon ?? "▸"}</span>
@@ -283,7 +339,7 @@ function StepCard({
           {isActive && (
             <div className="ml-auto flex items-center gap-2">
               <span className="flex gap-0.5">
-                {[0,1,2].map(i => <span key={i} className="w-1 h-1 rounded-full animate-bounce"
+                {[0, 1, 2].map(i => <span key={i} className="w-1 h-1 rounded-full animate-bounce"
                   style={{ background: accent, animationDelay: `${i * 0.15}s`, animationDuration: "0.8s" }} />)}
               </span>
               <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full"
@@ -292,11 +348,12 @@ function StepCard({
           )}
 
           {isDone && (
-            <div className="ml-auto flex items-center gap-1.5">
+            <>
+              <div className="ml-auto flex items-center gap-1.5" />
               <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                 style={{ background: `${accent}18`, color: accent }}>Done</span>
 
-              {tokens && (
+              {(tokens || step.data) && (
                 <button onClick={() => toggleStep(idx)}
                   className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all"
                   style={{ background: "#F0F2F8", color: "#6B7A99", border: "1px solid #D8DCE8" }}
@@ -306,17 +363,31 @@ function StepCard({
                 </button>
               )}
 
-              {isCodeStep && isDone && tabFiles.length > 0 && (
+              {isTestCaseStep && step.data && (
+                <button
+                  onClick={handleDownloadTestCases}
+                  title="Download Test Cases as Excel"
+                  className="flex items-center justify-center w-6 h-6 rounded-full transition-all"
+                  style={{ background: `${accent}18`, color: accent }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = "scale(1.15)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = "scale(1)"}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                  </svg>
+                </button>
+              )}
+
+              {isCodeStep && hasFilesForTab && (
                 <button
                   onClick={handleViewCode}
                   className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all text-white"
                   style={{ background: `linear-gradient(135deg, ${accent}AA, ${accent})`, boxShadow: `0 0 10px ${accent}30` }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.85"}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}>
-                  View Code →
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = "scale(1.05)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = "scale(1)"}>
+                  View Code
                 </button>
               )}
-            </div>
+            </>
           )}
 
           {isError && (
@@ -324,16 +395,23 @@ function StepCard({
           )}
         </div>
 
-        {/* Summary */}
-        {isDone && meta && (
-          <div className="px-3.5 pb-2.5 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: `${accent}65` }} />
-            <span className="text-[11px]" style={{ color: "#6B7A99" }}>{meta.summary(step.data)}</span>
-          </div>
-        )}
+      {/* Summary */}
+      {isDone && meta && (
+        <div className="px-3.5 pb-2.5 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: `${accent}65` }} />
+          <span className="text-[11px]" style={{ color: "#6B7A99" }}>{meta.summary(step.data)}</span>
+        </div>
+      )}
 
         {isDone && isExpanded && tokens && <CollapsedTokenView tokens={tokens} accent={accent} />}
+        {isDone && isExpanded && !tokens && step.data && (
+          <CollapsedTokenView
+            tokens={typeof step.data === "string" ? step.data : JSON.stringify(step.data, null, 2)}
+            accent={accent}
+          />
+        )}
         {isActive && <TokenStream tokens={tokens} accent={accent} />}
+        </>
       </div>
     </div>
   );
@@ -341,9 +419,12 @@ function StepCard({
 
 // ── Single conversation turn (history) ────────────────────────────────────────
 
-function ConversationTurnView({ turn, onViewCode }: {
+function ConversationTurnView({ turn, onViewCode, onResume, running, stopped }: {
   turn: ConversationTurn;
   onViewCode: (r: GenerationResult, tab?: CodeTab) => void;
+  onResume?: () => void;
+  running?: boolean;
+  stopped?: boolean;
 }) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
 
@@ -352,8 +433,22 @@ function ConversationTurnView({ turn, onViewCode }: {
   const toggleStep = (idx: number) =>
     setExpandedSteps(prev => { const n = new Set(prev); n.has(idx) ? n.delete(idx) : n.add(idx); return n; });
 
-  // Build a single consolidated result for this turn
-  const displayResult = buildResult(turn.steps, turn.partialResult, turn.result);
+  const displayResult = (() => {
+    const base = buildResult(turn.steps, turn.partialResult, turn.result);
+
+    if (base.backend.length || base.frontend.length || base.database.length) return base;
+   
+
+    const findFiles = (label: string) => {
+      const s = turn.steps.find(st => st.label.split(" (")[0] === label && st.status === "completed");
+      return extractFilesFromStep(s);
+    };
+    return {
+      backend: findFiles("Backend Generation"),
+      frontend: findFiles("Frontend Generation"),
+      database: findFiles("Database Generation"),
+    };
+  })();
   const totalFiles = displayResult.backend.length + displayResult.frontend.length + displayResult.database.length;
 
   const completedLabels = new Set(
@@ -363,6 +458,12 @@ function ConversationTurnView({ turn, onViewCode }: {
     completedLabels.has("Backend Generation") ||
     completedLabels.has("Frontend Generation") ||
     completedLabels.has("Database Generation");
+
+  const completedCount = turn.steps.filter((s: PipelineStep) => s.status === "completed").length;
+  const isIncompleteHistory = !!turn.sessionId && completedCount < 12 && completedCount > 0;
+
+  // If this turn only has a chat message and no visible steps, show only the chat
+  const isChatOnly = turn.chatMessage && visibleSteps.length === 0;
 
   return (
     <div className="flex flex-col gap-2">
@@ -389,7 +490,8 @@ function ConversationTurnView({ turn, onViewCode }: {
         </div>
       )}
 
-      {visibleSteps.map((step: PipelineStep, idx: number) => (
+      {/* Only show steps if not a chat-only response */}
+      {!isChatOnly && visibleSteps.map((step: PipelineStep, idx: number) => (
         <StepCard
           key={step.step}
           step={step}
@@ -403,7 +505,30 @@ function ConversationTurnView({ turn, onViewCode }: {
         />
       ))}
 
-      {hasAnyCodeStep && totalFiles > 0 && (
+      {/* Resume banner for incomplete history sessions */}
+      {isIncompleteHistory && onResume && !running && !stopped && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+          style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.22)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "rgba(245,158,11,0.14)", border: "1px solid rgba(245,158,11,0.28)" }}>
+            <span className="text-sm">⚠️</span>
+          </div>
+          <div className="flex-1">
+            <div className="text-[12px] font-bold" style={{ color: "#0A0E1A" }}>Incomplete Generation</div>
+            <div className="text-[10px] mt-0.5" style={{ color: "#6B7A99" }}>{completedCount}/12 steps completed · Resume to finish</div>
+          </div>
+          <button
+            onClick={onResume}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white transition-all"
+            style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)", boxShadow: "0 2px 8px rgba(245,158,11,0.3)", border: "none", cursor: "pointer" }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.85"}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}>
+            🔄 Resume
+          </button>
+        </div>
+      )}
+
+      {!isChatOnly && hasAnyCodeStep && (
         <div className="mt-1">
           <div
             className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer transition-all duration-200"
@@ -431,7 +556,7 @@ function ConversationTurnView({ turn, onViewCode }: {
                 </span>
               </div>
               <div className="flex items-center gap-3 mt-0.5">
-                {displayResult.backend.length  > 0 && <span className="text-[11px]" style={{ color: "#6B7A99" }}>⚙️ {displayResult.backend.length} backend</span>}
+                {displayResult.backend.length > 0 && <span className="text-[11px]" style={{ color: "#6B7A99" }}>⚙️ {displayResult.backend.length} backend</span>}
                 {displayResult.frontend.length > 0 && <span className="text-[11px]" style={{ color: "#6B7A99" }}>🎨 {displayResult.frontend.length} frontend</span>}
                 {displayResult.database.length > 0 && <span className="text-[11px]" style={{ color: "#6B7A99" }}>🗄️ {displayResult.database.length} database</span>}
               </div>
@@ -443,7 +568,7 @@ function ConversationTurnView({ turn, onViewCode }: {
                 style={{ background: "linear-gradient(135deg, #10B981, #059669)" }}>
                 View Code
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M2 5h6M5 2l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 5h6M5 2l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
@@ -457,7 +582,7 @@ function ConversationTurnView({ turn, onViewCode }: {
 // ── In-progress live turn ─────────────────────────────────────────────────────
 
 function LiveTurnView({
-  steps, stepTokens, partialResult, result, prompt, error, chatMessage, onViewCode,
+  steps, stepTokens, partialResult, result, prompt, error, chatMessage, stopped, onViewCode, onResume,
 }: {
   steps: PipelineStep[];
   stepTokens: StepTokensMap;
@@ -466,7 +591,9 @@ function LiveTurnView({
   prompt: string;
   error: string | null;
   chatMessage: string | null;
+  stopped: boolean;
   onViewCode: (r: GenerationResult, tab?: CodeTab) => void;
+  onResume?: () => void;
 }) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const visibleSteps = steps.filter(s => s.status !== "idle");
@@ -476,7 +603,7 @@ function LiveTurnView({
   const doneLabels = new Set(
     steps.filter(s => s.status === "completed").map(s => s.label.split(" (")[0])
   );
-  const backendDone  = doneLabels.has("Backend Generation");
+  const backendDone = doneLabels.has("Backend Generation");
   const frontendDone = doneLabels.has("Frontend Generation");
   const databaseDone = doneLabels.has("Database Generation");
   const allDone = backendDone && frontendDone && databaseDone;
@@ -488,10 +615,35 @@ function LiveTurnView({
 
   // Always build from all available sources so the count is accurate
   const builtResult = buildResult(steps, partialResult, result);
-  const backendFiles  = builtResult.backend.length;
+  const backendFiles = builtResult.backend.length;
   const frontendFiles = builtResult.frontend.length;
   const databaseFiles = builtResult.database.length;
   const totalFiles = backendFiles + frontendFiles + databaseFiles;
+
+  // Check if generation was incomplete (stopped or error mid-way)
+  const hasStartedGeneration = backendDone || frontendDone || databaseDone;
+  const isIncomplete = (stopped || error) && hasStartedGeneration && !allDone;
+
+  // Only check for CHAT after Planning is completed
+  const planningStep = steps.find(s => s.label.split(" (")[0] === "Planning");
+  const planningCompleted = planningStep?.status === "completed";
+  const isChatResponse = planningCompleted && (planningStep?.data as any)?.type === "CHAT";
+
+  // Also detect CHAT from token stream if planning step data not yet set
+  const planningTokens = stepTokens[1] ?? "";
+  const chatFromTokens = (() => {
+    try {
+      const match = planningTokens.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed?.type === "CHAT") return parsed.chatResponse as string;
+      }
+    } catch { }
+    return null;
+  })();
+
+  const isChatDetected = isChatResponse || !!chatFromTokens;
+  const chatText = chatMessage || (planningStep?.data as any)?.chatResponse || chatFromTokens;
 
   return (
     <div className="flex flex-col gap-2">
@@ -504,21 +656,15 @@ function LiveTurnView({
         </div>
       )}
 
-      {chatMessage && (
+      {(chatMessage || (isChatResponse && (planningStep?.data as any)?.chatResponse)) && (
         <div className="px-4 py-3 rounded-2xl text-sm"
           style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.22)", color: "#1D4ED8" }}>
-          💬 {chatMessage}
+          💬 {chatText}
         </div>
       )}
 
-      {error && (
-        <div className="px-4 py-3 rounded-2xl text-sm font-medium"
-          style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", color: "#DC2626" }}>
-          ❌ {error}
-        </div>
-      )}
-
-      {visibleSteps.map((step, idx) => (
+      {/* Only show steps if not a chat response */}
+      {!isChatDetected && visibleSteps.map((step, idx) => (
         <StepCard
           key={step.step}
           step={step}
@@ -532,8 +678,7 @@ function LiveTurnView({
         />
       ))}
 
-      {/* Per-layer "View Code" buttons as each generation step completes */}
-      {(isGenerating || totalFiles > 0) && (
+      {!isChatDetected && (isGenerating || totalFiles > 0) && (
         <div className="flex flex-col gap-2">
           {isGenerating && (
             <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl"
@@ -601,7 +746,7 @@ function LiveTurnView({
                   </span>
                 </div>
                 <div className="flex items-center gap-3 mt-0.5">
-                  {backendFiles  > 0 && <span className="text-[10px]" style={{ color: "#6B7A99" }}>⚙️ {backendFiles} backend</span>}
+                  {backendFiles > 0 && <span className="text-[10px]" style={{ color: "#6B7A99" }}>⚙️ {backendFiles} backend</span>}
                   {frontendFiles > 0 && <span className="text-[10px]" style={{ color: "#6B7A99" }}>🎨 {frontendFiles} frontend</span>}
                   {databaseFiles > 0 && <span className="text-[10px]" style={{ color: "#6B7A99" }}>🗄️ {databaseFiles} database</span>}
                 </div>
@@ -613,10 +758,42 @@ function LiveTurnView({
                   style={{ background: "linear-gradient(135deg, #10B981, #059669)" }}>
                   View All Code
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 5h6M5 2l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 5h6M5 2l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Single status banner at the bottom — after all steps */}
+          {stopped && onResume && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+              style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.22)" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "rgba(245,158,11,0.14)", border: "1px solid rgba(245,158,11,0.28)" }}>
+                <span className="text-sm">⏸️</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-[12px] font-bold" style={{ color: "#0A0E1A" }}>Generation Stopped</div>
+                <div className="text-[10px] mt-0.5" style={{ color: "#6B7A99" }}>
+                  {!backendDone ? "Backend not generated" : !frontendDone ? "Frontend not generated" : !databaseDone ? "Database not generated" : "Stopped mid-generation"}
+                </div>
+              </div>
+              <button
+                onClick={onResume}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white transition-all"
+                style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)", boxShadow: "0 2px 8px rgba(245,158,11,0.3)", border: "none", cursor: "pointer" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.85"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}>
+                🔄 Resume
+              </button>
+            </div>
+          )}
+          {error && !stopped && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+              style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <span className="text-sm">❌</span>
+              <span className="text-[12px] font-medium flex-1" style={{ color: "#DC2626" }}>{error}</span>
             </div>
           )}
         </div>
@@ -624,8 +801,6 @@ function LiveTurnView({
     </div>
   );
 }
-
-// ── Reusable partial-completion banner ────────────────────────────────────────
 
 function PartialCodeBanner({
   icon, label, fileCount, accent, bg, border, gradient, shadow, onClick,
@@ -636,36 +811,49 @@ function PartialCodeBanner({
   onClick: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl"
-      style={{ background: bg, border: `1px solid ${border}` }}>
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+    <div
+      className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer transition-all"
+      style={{ background: bg, border: `1px solid ${border}` }}
+      onClick={onClick}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.background = `${accent}12`;
+        (e.currentTarget as HTMLElement).style.borderColor = `${accent}40`;
+        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+        (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 12px ${shadow}`;
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.background = bg;
+        (e.currentTarget as HTMLElement).style.borderColor = border;
+        (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+      }}
+    >
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
         style={{ background: `${accent}24`, border: `1px solid ${accent}38` }}>
-        <span className="text-sm">{icon}</span>
+        <span className="text-base">{icon}</span>
       </div>
       <div className="flex-1">
-        <span className="text-xs font-semibold" style={{ color: "#0A0E1A" }}>{label} Generated</span>
-        <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded-full"
-          style={{ background: "#E8ECF4", color: "#6B7A99" }}>
-          {fileCount} files
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold" style={{ color: "#0A0E1A" }}>{label} Code</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+            style={{ background: "#E8ECF4", color: "#6B7A99" }}>
+            {fileCount} files
+          </span>
+        </div>
+        <div className="text-[10px] mt-0.5" style={{ color: "#6B7A99" }}>Click to view generated code</div>
       </div>
-      <button
-        onClick={onClick}
-        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex items-center gap-1.5 transition-all"
-        style={{ background: gradient, boxShadow: `0 2px 8px ${shadow}` }}
-        onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.85"}
-        onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}>
+      <div
+        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex items-center gap-1.5"
+        style={{ background: gradient, boxShadow: `0 2px 8px ${shadow}` }}>
         View Code →
-      </button>
+      </div>
     </div>
   );
 }
 
-// ── Main PipelineFeed ─────────────────────────────────────────────────────────
-
 export function PipelineFeed({
-  steps, stepTokens, result, partialResult, running, paused,
-  error, chatMessage, prompt, hasPendingClarification, history, onViewCode,
+  steps, stepTokens, result, partialResult, running, paused, stopped,
+  error, chatMessage, prompt, hasPendingClarification, history, onViewCode, onResume,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -678,10 +866,10 @@ export function PipelineFeed({
       <div className="max-w-2xl mx-auto px-5 py-5 flex flex-col gap-5">
 
         {history.map((turn, i) => (
-          <ConversationTurnView key={i} turn={turn} onViewCode={onViewCode} />
+          <ConversationTurnView key={i} turn={turn} onViewCode={onViewCode} onResume={onResume} running={running} stopped={stopped} />
         ))}
 
-        {(running || paused || error) && (
+        {(running || paused || error || stopped || (steps.some(s => s.status !== "idle") && !running)) && (
           <LiveTurnView
             steps={steps}
             stepTokens={stepTokens}
@@ -690,7 +878,9 @@ export function PipelineFeed({
             prompt={prompt}
             error={error}
             chatMessage={chatMessage}
+            stopped={stopped}
             onViewCode={onViewCode}
+            onResume={onResume}
           />
         )}
 
