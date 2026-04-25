@@ -1346,10 +1346,140 @@ const handleWriteToUsSubmitButton = async () => {
             .custom-scrollbar::-webkit-scrollbar-thumb:hover {
               background: #94a3b8;
             }
+            
+            @media (max-width: 1024px) {
+              .grid.grid-cols-1.xl:grid-cols-\[1\.05fr_0\.95fr\] {
+                grid-template-columns: 1fr;
+              }
+            }
+            
+            @media (max-width: 768px) {
+              .px-4.sm\:px-6 {
+                padding-left: 12px;
+                padding-right: 12px;
+              }
+              
+              .py-4.sm\:py-7 {
+                padding-top: 16px;
+                padding-bottom: 16px;
+              }
+              
+              .text-\[26px\].sm\:text-\[34px\] {
+                font-size: 22px;
+              }
+              
+              .text-\[15px\].sm\:text-\[16px\] {
+                font-size: 14px;
+              }
+              
+              .h-\[260px\].sm\:h-\[420px\] {
+                height: 220px;
+              }
+              
+              .text-\[21px\].sm\:text-\[25px\] {
+                font-size: 18px;
+              }
+              
+              .text-\[12px\].sm\:text-\[13px\] {
+                font-size: 11px;
+              }
+              
+              .px-4.sm\:px-5 {
+                padding-left: 12px;
+                padding-right: 12px;
+              }
+              
+              .py-2\.5 {
+                padding-top: 8px;
+                padding-bottom: 8px;
+              }
+              
+              .gap-2.sm\:gap-3 {
+                gap: 8px;
+              }
+              
+              .flex-col.sm\:flex-row {
+                flex-direction: column;
+              }
+              
+              .items-start.sm\:items-center {
+                align-items: flex-start;
+              }
+            }
+            
+            @media (max-width: 640px) {
+              .px-3.sm\:px-5 {
+                padding-left: 8px;
+                padding-right: 8px;
+              }
+              
+              .px-6.sm\:px-10 {
+                padding-left: 16px;
+                padding-right: 16px;
+              }
+              
+              .h-\[260px\].sm\:h-\[420px\] {
+                height: 200px;
+              }
+              
+              .text-\[13px\] {
+                font-size: 12px;
+              }
+              
+              .rounded-\[24px\] {
+                border-radius: 16px;
+              }
+              
+              .rounded-\[18px\] {
+                border-radius: 12px;
+              }
+              
+              .p-4.sm\:p-6 {
+                padding: 12px;
+              }
+              
+              .px-4.py-2 {
+                padding: 6px 12px;
+              }
+              
+              .text-\[14px\] {
+                font-size: 12px;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .text-\[22px\].xl\:text-\[26px\] {
+                font-size: 18px;
+              }
+              
+              .h-\[260px\].sm\:h-\[420px\] {
+                height: 180px;
+              }
+              
+              .px-4.sm\:px-5.py-2\.5 {
+                padding: 6px 10px;
+              }
+              
+              .text-\[12px\].sm\:text-\[13px\] {
+                font-size: 10px;
+              }
+              
+              .gap-3 {
+                gap: 6px;
+              }
+              
+              .flex-wrap {
+                flex-wrap: wrap;
+              }
+              
+              .rounded-full {
+                border-radius: 20px;
+              }
+            }
           `}
         </style>
 
-        <div className="px-3 sm:px-5 lg:px-8 py-5 sm:py-7">
+        <div className="px-3 sm:px-5 lg:px-8 py-2 sm:py-4">
           <div className="mx-auto max-w-[1550px]">
             <div className="mb-6 rounded-[28px] border border-[#eef1f7] bg-gradient-to-r from-white to-[#f8fafc] px-6 sm:px-10 py-6 shadow-[0_15px_40px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div className="max-w-2xl">

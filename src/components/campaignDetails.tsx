@@ -347,9 +347,18 @@ const success = await submitWriteToUsQuery(
     if (!userId) {
       message.warning("Please login to buy now.");
       navigate("/whatsappregister");
-      sessionStorage.setItem("redirectPath", "/main/dashboard/products");
+      
+      if (window.location.href.includes("/main/services/71e3/gold-silver-diamonds")) {
+        sessionStorage.setItem("redirectPath", "/main/dashboard/products?type=GOLD");
+      } else {
+        sessionStorage.setItem("redirectPath", "/main/dashboard/products");
+      }
     } else {
-      navigate("/main/dashboard/products");
+      if (window.location.href.includes("/main/services/71e3/gold-silver-diamonds")) {
+        navigate("/main/dashboard/products?type=GOLD");
+      } else {
+        navigate("/main/dashboard/products");
+      }
     }
   };
 

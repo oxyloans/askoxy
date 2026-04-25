@@ -101,7 +101,8 @@ dayjs.extend(timezone);
 const formatIST = (dateString?: string) => {
   if (!dateString) return "—";
 
-  return dayjs(dateString).format("DD MMM YYYY");
+  // Parse the date and ensure it maintains the original date regardless of timezone
+  return dayjs(dateString).utc().format("DD MMM YYYY");
   };
 
   const getTransferDirection = (transfer: Transfer) => {

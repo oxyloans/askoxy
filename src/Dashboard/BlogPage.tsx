@@ -468,9 +468,10 @@ const BlogsPage: React.FC = () => {
                       showSizeChanger={false}
                       showQuickJumper={false}
                       showTotal={(total, range) => 
-                        `${range[0]}-${range[1]} of ${total} blogs`
+                        window.innerWidth > 768 ? `${range[0]}-${range[1]} of ${total} blogs` : ''
                       }
                       className="customPagination"
+                      responsive
                     />
                   </div>
                 )}
@@ -759,6 +760,30 @@ const BlogsPage: React.FC = () => {
           border: 1px solid #000;
         }
 
+        .customPagination .ant-pagination-total-text {
+          display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+          .customPagination .ant-pagination-total-text {
+            display: none !important;
+          }
+          
+          .customPagination .ant-pagination-item {
+            margin: 0 2px;
+            min-width: 32px;
+            height: 32px;
+            line-height: 30px;
+          }
+          
+          .customPagination .ant-pagination-prev,
+          .customPagination .ant-pagination-next {
+            min-width: 32px;
+            height: 32px;
+            line-height: 30px;
+          }
+        }
+
         .footerSection {
           margin-top: 20px;
         }
@@ -779,6 +804,7 @@ const BlogsPage: React.FC = () => {
 
           .blogContent {
             flex-direction: column !important;
+            min-height: auto;
           }
 
           .blogContent.reverse {
@@ -797,33 +823,82 @@ const BlogsPage: React.FC = () => {
 
           .blogTitle {
             font-size: 16px;
+            margin-bottom: 12px;
           }
 
           .blogDesc {
             font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 20px;
           }
 
           .tabItem {
             width: calc(50% - 6px);
             justify-content: center;
+            padding: 10px 14px;
+            font-size: 12px;
           }
 
           .tabItem:last-child {
             width: 100%;
           }
+
+          .tabsWrap {
+            gap: 8px;
+          }
+
+          .paginationSection {
+            padding: 30px 0 15px;
+          }
         }
 
         @media (max-width: 480px) {
+          .pageWrap {
+            padding: 8px;
+          }
+
+          .topSection {
+            padding: 16px 12px;
+          }
+
           .blogBody {
             padding: 16px;
           }
 
           .blogTitle {
             font-size: 15px;
+            line-height: 1.3;
+          }
+
+          .blogDesc {
+            font-size: 12px;
+            line-height: 1.5;
           }
 
           .blogMedia {
             height: 180px;
+          }
+
+          .btnReadMore {
+            font-size: 11px !important;
+            padding: 6px 16px !important;
+          }
+
+          .tabItem {
+            padding: 8px 12px;
+            font-size: 11px;
+          }
+
+          .topHeading .h1 {
+            font-size: 22px;
+          }
+
+          .topHeading .h2 {
+            font-size: 14px;
+          }
+
+          .topHeading .h3 {
+            font-size: 12px;
           }
         }
       `}</style>

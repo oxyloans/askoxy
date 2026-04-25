@@ -1,4 +1,4 @@
-﻿import React, {
+import React, {
   useEffect,
   useMemo,
   useRef,
@@ -1293,7 +1293,9 @@ const AllAIStore: React.FC = () => {
                         const hasValidImage =
                           agent.profileImageUrl &&
                           agent.profileImageUrl.trim() !== "" &&
-                          agent.profileImageUrl !== "null";
+                          agent.profileImageUrl !== "null" &&
+                          agent.profileImageUrl !== "undefined" &&
+                          !agent.profileImageUrl.includes("null");
 
                         const hue = getHueFromName(agent.agentName);
                         const bgGradient = `linear-gradient(135deg,
@@ -1332,22 +1334,20 @@ const AllAIStore: React.FC = () => {
                                     {getInitials(agent.agentName)}
                                   </span>
                                 </div>
-
+                                
                                 {/* Image on top if valid */}
                                 {hasValidImage && (
                                   <img
-                                    src={`${uploadurlwithId}${agent.profileImageUrl!}`}
+                                    src={`https://askoxy.s3.ap-south-1.amazonaws.com${agent.profileImageUrl!}`}
                                     alt={agent.agentName}
-                                    className="relative z-10 h-full w-full object-cover bg-white"
+                                    className="absolute inset-0 h-full w-full object-cover bg-white"
                                     loading="lazy"
                                     onError={(e) => {
-                                      (
-                                        e.currentTarget as HTMLImageElement
-                                      ).style.display = "none";
+                                      const img = e.currentTarget as HTMLImageElement;
+                                      img.style.display = "none";
                                     }}
                                   />
                                 )}
-
                                 {/* ✅ Small badge */}
                                 <div className="absolute right-3 top-3 z-20 rounded-full bg-black/25 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
                                   {getInitials(agent.agentName)} AGENT

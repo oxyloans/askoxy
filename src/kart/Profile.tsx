@@ -376,10 +376,13 @@ const ProfilePage = () => {
     if (!addressFormData.landmark?.trim())
       errors.landmark = "Landmark is required";
     if (!addressFormData.address?.trim()) errors.address = "Address is required";
-    if (!addressFormData.pincode?.trim())
+    if (!addressFormData.pincode?.trim()) {
       errors.pincode = "PIN code is required";
-    else if (!/^\d{6}$/.test(addressFormData.pincode))
+    } else if (!/^\d{6}$/.test(addressFormData.pincode)) {
       errors.pincode = "Please enter a valid 6-digit PIN code";
+    } else if (/^0+$/.test(addressFormData.pincode)) {
+      errors.pincode = "PIN code cannot be all zeros";
+    }
 
     setAddressFormErrors(errors);
     return !Object.values(errors).some((error) => error);

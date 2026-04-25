@@ -1436,10 +1436,10 @@ const SearchMain: React.FC = () => {
 
                       return (
                         <div key={agent.agentId} className="search-grid-item">
-                          <Badge.Ribbon
+                          {/* <Badge.Ribbon
                             text={agent.status}
                             color={agent.activeStatus ? "green" : "red"}
-                          >
+                          > */}
                             <Card
                               hoverable
                               onClick={() => handleAgentClick(agent)}
@@ -1548,7 +1548,7 @@ const SearchMain: React.FC = () => {
                                 </Button>
                               </div>
                             </Card>
-                          </Badge.Ribbon>
+                          {/* </Badge.Ribbon> */}
                         </div>
                       );
                     })}

@@ -143,7 +143,59 @@ const AgentStoreManager: React.FC = () => {
 
   const isXlsxFile = (file: File) => {
     const lowerName = file.name.toLowerCase();
-    return lowerName.endsWith(".xlsx");
+    return lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls");
+  };
+
+  const validateExcelFormat = async (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          if (workbook.SheetNames.length === 0) {
+            message.error("Excel file has no sheets");
+            resolve(false);
+            return;
+          }
+
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          
+          if (jsonData.length === 0) {
+            message.error("Excel file is empty");
+            resolve(false);
+            return;
+          }
+
+          const headers = jsonData[0] as string[];
+          const requiredHeaders = ['role', 'goal', 'purpose', 'agentName'];
+          
+          const hasValidHeaders = requiredHeaders.every(header => 
+            headers.includes(header)
+          );
+
+          if (!hasValidHeaders) {
+            message.error(`Invalid Excel format. Required headers: ${requiredHeaders.join(', ')}`);
+            resolve(false);
+            return;
+          }
+
+          if (jsonData.length < 2) {
+            message.error("Excel file must contain at least one data row");
+            resolve(false);
+            return;
+          }
+
+          resolve(true);
+        } catch (error) {
+          message.error("Failed to read Excel file");
+          resolve(false);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   const handleMultiAgentUpload = async (values: any) => {
@@ -155,9 +207,17 @@ const AgentStoreManager: React.FC = () => {
       if (!storeId) return message.error("Please select a store");
       if (!view) return message.error("Please select view");
       if (!fileObj) return message.error("Please choose a file");
+      
       if (!isXlsxFile(fileObj)) {
-        return message.error("Only .xlsx files are allowed");
+        return message.error("Only Excel files (.xlsx, .xls) are allowed");
       }
+      
+      // Validate Excel format
+      const isValidFormat = await validateExcelFormat(fileObj);
+      if (!isValidFormat) {
+        return; // Error message already shown in validateExcelFormat
+      }
+      
       if (!userId)
         return message.error("UserId not found. Please login again.");
 
@@ -175,8 +235,7 @@ const AgentStoreManager: React.FC = () => {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            Accept: "*/*",
-            "Content-Type": "multipart/form-data",
+            // Don't set Content-Type, let browser handle multipart boundary
           },
         }
       );
@@ -1009,6 +1068,10 @@ const AgentStoreManager: React.FC = () => {
                   <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
                     Note: Excel first row must be exactly:{" "}
                     <b> role, goal, purpose, agentName</b>
+                    <br />
+                    <span style={{ color: "#ff4d4f" }}>
+                      ⚠️ Only Excel files (.xlsx, .xls) with correct format are accepted
+                    </span>
                   </div>
                 </div>
               </Form.Item>
@@ -1023,19 +1086,29 @@ const AgentStoreManager: React.FC = () => {
                 ]}
               >
                 <Upload.Dragger
-                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  beforeUpload={(file) => {
+                  accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  beforeUpload={async (file) => {
                     if (!isXlsxFile(file as File)) {
-                      message.error("Only .xlsx files are allowed");
+                      message.error("Only Excel files (.xlsx, .xls) are allowed");
                       return Upload.LIST_IGNORE;
                     }
+                    
+                    // Validate Excel format
+                    const isValidFormat = await validateExcelFormat(file as File);
+                    if (!isValidFormat) {
+                      return Upload.LIST_IGNORE;
+                    }
+                    
                     return false;
                   }}
                   maxCount={1}
                 >
                   <p className="ant-upload-drag-icon" />
                   <p className="ant-upload-text">
-                    Click or drag .xlsx file to upload
+                    Click or drag Excel file (.xlsx, .xls) to upload
+                  </p>
+                  <p className="ant-upload-hint">
+                    Only Excel files with correct format are accepted
                   </p>
                 </Upload.Dragger>
               </Form.Item>
@@ -1243,74 +1316,57 @@ const AgentStoreManager: React.FC = () => {
             ]}
           >
             <div>
-              {/* Image Preview */}
-              {form.getFieldValue("storeImageUrl") && (
-                <>
-                  <p>
-                    <strong>Image Preview:</strong>
-                  </p>
-                  <img
-                    src={`${uploadurlwithId}${form.getFieldValue('storeImageUrl')}`}
-                    alt="store"
-                    style={{
-                      width: 120,
-                      height: 120,
-                      borderRadius: 8,
-                      objectFit: "cover",
-                      border: "1px solid #ddd",
-                      marginBottom: 10,
-                    }}
+              {form.getFieldValue('storeImageUrl') && (
+                <div style={{ marginBottom: 8 }}>
+                  <Image
+                    src={form.getFieldValue('storeImageUrl')}
+                    alt="Store"
+                    width={100}
+                    height={100}
+                    style={{ objectFit: 'cover', borderRadius: 8 }}
                   />
-                </>
+                </div>
               )}
-
-              {/* File upload */}
               <input
                 type="file"
                 accept="image/*"
                 onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                  const file: File | undefined = e.target.files?.[0];
+                  const file = e.target.files?.[0];
                   if (!file) return;
 
-                  const accessToken: string =
-                    localStorage.getItem("token") || "";
-                  const uploadUrl: string = `${BASE_URL}/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`;
-
-                  const formData: FormData = new FormData();
-                  formData.append("file", file);
-
                   try {
-                    const res = await customerApi.post(uploadUrl, formData, {
-                      headers: { Authorization: `Bearer ${accessToken}` },
-                    });
-
-                    const json: any = res.data;
-                    if (!json.documentPath) {
-                      return message.error("Upload failed");
-                    }
-
-                    form.setFieldsValue({ storeImageUrl: json.documentPath });
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const response = await customerApi.post(
+                      `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
+                      formData,
+                      {
+                        headers: {
+                          'Content-Type': 'multipart/form-data',
+                          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+                        }
+                      }
+                    );
+                    
+                    console.log('Upload response:', response.data);
+                    form.setFieldsValue({ storeImageUrl: response.data.documentPath });
                     form.validateFields(["storeImageUrl"]);
-                  } catch {
-                    message.error("Upload failed");
+                    message.success("Image uploaded successfully!");
+                  } catch (error) {
+                    console.error('Upload error:', error);
+                    message.error("Failed to upload image. Please try again.");
                   }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px dashed #d9d9d9',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
                 }}
               />
             </div>
-          </Form.Item>
-
-          {/* HIDDEN FIELD (MANDATORY IN CREATE MODE) */}
-          <Form.Item
-            name="storeImageUrl"
-            hidden
-            rules={[
-              {
-                required: !isEditMode,
-                message: "Please upload an image",
-              },
-            ]}
-          >
-            <Input />
           </Form.Item>
         </Form>
       </Modal>
