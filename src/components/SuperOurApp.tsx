@@ -31,7 +31,8 @@ export default function SuperOurApp() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCryptoModalOpen, setIsCryptoModalOpen] = useState<boolean>(false);
-  const [isFreelanceModalOpen, setIsFreelanceModalOpen] = useState<boolean>(false);
+  const [isGccMateModalOpen, setIsGccMateModalOpen] =
+    useState<boolean>(false);
 
   const [showFab, setShowFab] = useState<boolean>(true);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -43,7 +44,7 @@ export default function SuperOurApp() {
       ([entry]) => {
         setShowFab(entry.isIntersecting && entry.intersectionRatio >= 0.1);
       },
-      { threshold: [0, 0.1, 0.5, 1] },
+      { threshold: [0, 0.1, 0.5, 1] }
     );
 
     observer.observe(gridRef.current);
@@ -89,127 +90,108 @@ export default function SuperOurApp() {
     }
   };
 
-  const handleFreelanceSignIn = () => {
-    setIsFreelanceModalOpen(true);
-  };
-
-  const handleFreelancerChoice = () => {
-    try {
-      setIsLoading(true);
-      const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/freelanceform";
-      if (userId) navigate(redirectPath);
-      else {
-        sessionStorage.setItem("redirectPath", redirectPath);
-        window.location.href = `${LOGIN_URL}`;
-      }
-    } catch (error) {
-      console.error("Freelancer choice error:", error);
-    } finally {
-      setIsLoading(false);
-      setIsFreelanceModalOpen(false);
-    }
-  };
-
-  const handleEmployerChoice = () => {
-    setIsFreelanceModalOpen(false);
-    navigate("/employee-login");
-  };
-
   const tiles: Tile[] = [
-    // {
-    //   id: "s16",
-    //   src: s16,
-    //   onClick: handleFreelanceSignIn,
-    //   title: "Freelance Marketplace",
-    // },
     { id: "s13", src: s13, route: "/genoxy", title: "OXYGPT" },
+
     {
       id: "s7",
       src: s7,
       route: "/rice2roboecommers",
       title: "Rice 2 Robo\nE-Commerce",
     },
-    {
-      id: "s2",
-      src: s2,
-      onClick: () => navigate("/bharath-aistore"),
-      title: "Bharat AI \nStore & More",
-    },
+
     {
       id: "s11",
       src: s11,
       route: "/90dayjobplan",
       title: "90 Day\nJob Plan",
     },
-    {
-      id: "s4",
-      src: s4,
-      route: "/loansinvestments",
-      title: "Loans &\nInvestments",
-    },
+
     {
       id: "s10",
       src: s10,
       route: "/aiblockchainanditservices",
       title: "BlockChain & \ncrypto",
     },
+
     { id: "s6", src: s6, route: "/realestate", title: "Real Estate" },
-    {
-      id: "s3",
-      src: s3,
-      route: "/goldandsilveranddiamonds",
-      title: "Gold, Silver\n& Diamonds",
-    },
+
     { id: "s5", src: s5, route: "/nyayagpt", title: "Nyaya GPT" },
+
     { id: "s8", src: s8, route: "/glms", title: "GLMS, Blogs\nJob Street" },
+
     {
       id: "s1",
       src: s1,
       route: "/caandcsservices",
       title: "CA & CS\nServices",
     },
-    { id: "s9", src: s9, route: "/studyabroad", title: "Study Abroad" },
+
+    {
+      id: "s9",
+      src: s9,
+      title: "Study Abroad",
+      onClick: () => setIsGccMateModalOpen(true),
+    },
   ];
 
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
 
   return (
     <div className="w-full overflow-hidden">
-      <div
-        className="w-full"
-        style={{
-          background:
-            "linear-gradient(180deg,#5C3391 0%,#5D4086 30%,#6F4386 65%,#312C74 100%)",
-        }}
-      >
-        <div className="mx-auto max-w-[1240px] px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-0">
-          <div className="flex flex-col-reverse lg:flex-row items-center lg:items-end gap-6 sm:gap-8 lg:gap-12">
-            <div className="w-full lg:w-[48%] flex justify-center lg:justify-start items-end">
+      <div className="relative w-full overflow-hidden bg-[#f7f7f7] text-[#1a1a1a]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(120,170,255,0.22),transparent_16%),radial-gradient(circle_at_top_right,rgba(255,94,189,0.18),transparent_16%),radial-gradient(circle_at_bottom_left,rgba(255,219,115,0.18),transparent_14%),radial-gradient(circle_at_70%_35%,rgba(177,112,255,0.12),transparent_12%),linear-gradient(180deg,#ffffff_0%,#fafafa_40%,#f5f5f6_100%)]" />
+
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.20]"
+          style={{
+            backgroundImage: `
+              linear-gradient(30deg, rgba(170,170,170,0.18) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.14) 87.5%, rgba(170,170,170,0.14)),
+              linear-gradient(150deg, rgba(170,170,170,0.18) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.14) 87.5%, rgba(170,170,170,0.14)),
+              linear-gradient(90deg, rgba(170,170,170,0.06) 2%, transparent 2.5%, transparent 97%, rgba(170,170,170,0.06) 97.5%, rgba(170,170,170,0.06))
+            `,
+            backgroundSize: "42px 72px",
+            backgroundPosition: "0 0, 0 0, 21px 36px",
+          }}
+        />
+
+        <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(circle,rgba(0,0,0,0.14)_1px,transparent_1px)] [background-size:24px_24px]" />
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[180px] bg-gradient-to-b from-white via-white/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[180px] bg-gradient-to-t from-white via-white/80 to-transparent" />
+
+        <div className="pointer-events-none absolute -left-10 top-0 h-28 w-28 rounded-full bg-[#84B6FF]/35 blur-3xl md:h-36 md:w-36" />
+        <div className="pointer-events-none absolute right-4 top-[130px] h-36 w-36 rounded-full bg-[#FF67C0]/22 blur-3xl md:h-56 md:w-56" />
+        <div className="pointer-events-none absolute left-10 bottom-10 h-24 w-24 rounded-full bg-[#FFD963]/22 blur-3xl md:h-36 md:w-36" />
+        <div className="pointer-events-none absolute right-[33%] top-[34%] h-20 w-20 rounded-full bg-[#B86FFF]/14 blur-3xl md:h-28 md:w-28" />
+
+        <div className="relative z-10 mx-auto max-w-[1240px] px-3 pt-6 pb-0 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10">
+          <div className="flex flex-col-reverse items-center gap-6 sm:gap-8 lg:flex-row lg:items-end lg:gap-12">
+            <div className="flex w-full items-end justify-center lg:w-[48%] lg:justify-start">
               <a
                 href="https://amzn.in/d/2Ie3hEg"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Open AI book on Amazon"
-                className="w-full block"
+                className="block w-full"
               >
                 <img
                   src={leftImage}
                   alt="ASKOXY.AI Super App"
-                  className="max-w-[320px] sm:max-w-[380px] md:max-w-[440px] lg:max-w-[520px] w-full object-contain drop-shadow-2xl select-none block cursor-pointer"
+                  className="block w-full max-w-[320px] cursor-pointer select-none object-contain drop-shadow-2xl sm:max-w-[380px] md:max-w-[440px] lg:max-w-[520px]"
                   draggable={false}
                 />
               </a>
             </div>
 
-            <div className="w-full lg:w-[52%] pb-6 sm:pb-8 lg:pb-10">
+            <div className="w-full pb-6 sm:pb-8 lg:w-[52%] lg:pb-10">
               <div className="mx-auto max-w-[780px]" ref={gridRef}>
                 <div
                   className={[
                     "grid",
-                    "grid-cols-3 sm:grid-cols-3 lg:grid-cols-4",
-                    "gap-x-3 sm:gap-x-3 lg:gap-x-3",
-                    "gap-y-3 sm:gap-y-3 lg:gap-y-3",
+                    "grid-cols-3 sm:grid-cols-3 lg:grid-cols-3",
+                    "gap-x-2 sm:gap-x-3 lg:gap-x-4",
+                    "gap-y-2 sm:gap-y-3 lg:gap-y-4",
                   ].join(" ")}
                 >
                   {tiles.map((t) => (
@@ -220,22 +202,23 @@ export default function SuperOurApp() {
                           else if (t.route) go(t.route);
                         }}
                         className={[
-                          "w-full aspect-square rounded-[18px]",
-                          "transform hover:scale-110 transition-all duration-150",
-                          "flex items-center justify-center p-2 sm:p-2.5 md:p-3",
+                          "w-[85%] sm:w-[90%] lg:w-[85%] aspect-square rounded-[16px]",
+                          "transform hover:scale-105 transition-all duration-150",
+                          "flex items-center justify-center p-2",
                         ].join(" ")}
-                        aria-label={t.title.replace(/\n/g, " ")}
                       >
                         <img
                           src={t.src}
                           alt={t.title}
-                          className="w-full h-full object-contain select-none"
+                          className="w-[85%] h-[85%] object-contain"
                           draggable={false}
-                          loading="lazy"
-                          decoding="async"
                         />
                       </button>
-                      <p className="mt-2 sm:mt-2.5 text-center text-white font-semibold leading-tight whitespace-pre-line text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px]">
+                      <p
+                        className="mt-2 text-center text-black font-semibold leading-snug whitespace-pre-line 
+text-[14px] sm:text-[14px] md:text-[16px] 
+max-w-[110px] sm:max-w-[120px] break-words"
+                      >
                         {t.title}
                       </p>
                     </div>
@@ -247,7 +230,7 @@ export default function SuperOurApp() {
         </div>
       </div>
 
-      {showFab && !isCryptoModalOpen && (
+      {showFab && !isCryptoModalOpen && !isGccMateModalOpen && (
         <div
           className="fixed z-50 pointer-events-none"
           style={{
@@ -258,14 +241,14 @@ export default function SuperOurApp() {
         >
           <button
             onClick={() => navigate("/wearehiring")}
-            className="pointer-events-auto active:scale-95 transition"
+            className="pointer-events-auto transition active:scale-95"
             aria-label="My Services"
             title="My Services"
           >
             <img
               src={ASK_OXY_ICON_URL}
               alt="ASKOXY.AI"
-              className="right-0 h-16 w-auto md:h-20 select-none"
+              className="right-0 h-16 w-auto select-none md:h-20"
               draggable={false}
               loading="lazy"
               decoding="async"
@@ -274,109 +257,103 @@ export default function SuperOurApp() {
         </div>
       )}
 
-      {isCryptoModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative">
+      {isGccMateModalOpen && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/55 px-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-[430px] overflow-hidden rounded-[30px] bg-white p-6 text-center shadow-2xl sm:p-7">
             <button
-              onClick={() => setIsCryptoModalOpen(false)}
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-gray-600 transition-colors"
+              onClick={() => setIsGccMateModalOpen(false)}
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200"
+              type="button"
+              aria-label="Close"
             >
-              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+              <X className="h-5 w-5" />
             </button>
 
-            <div className="text-center mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                🎉 LIMITED TIME OFFER
+            <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-[#5543C8]/20 blur-2xl" />
+            <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-[#D71D8E]/20 blur-2xl" />
+
+            <div className="relative z-10">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#5543C8] via-[#7B4DFF] to-[#D71D8E] shadow-[0_14px_35px_rgba(85,67,200,0.35)]">
+                <img src={s9} alt="GCC Mate" className="h-16 w-16 object-contain" />
+              </div>
+
+              <div className="mt-5 inline-flex rounded-full bg-[#F2EEFF] px-4 py-1 text-[12px] font-bold uppercase tracking-[0.18em] text-[#5543C8]">
+                New Launch
+              </div>
+
+              <h2 className="mt-4 text-[28px] font-extrabold tracking-tight text-[#1a1a1a]">
+                GCC MATE
               </h2>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Get <span className="font-semibold">₹20 Worth of BMVCOINS</span> Free Today!
+
+              <p className="mt-2 text-[20px] font-bold text-[#D71D8E]">
+                Coming Soon...!
               </p>
+
+              <p className="mx-auto mt-3 max-w-[330px] text-[14px] leading-6 text-gray-600">
+                A smart experience for global capability centers is getting ready.
+                Stay tuned for the launch.
+              </p>
+
+              <button
+                onClick={() => setIsGccMateModalOpen(false)}
+                className="mt-7 w-full rounded-full bg-gradient-to-r from-[#5543C8] to-[#D71D8E] px-6 py-3 text-[15px] font-bold text-white shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
+                type="button"
+              >
+                Okay, Got It
+              </button>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
-              <div className="bg-purple-50 p-4 rounded-xl text-center">
-                <p className="text-gray-600 text-xs sm:text-sm">Guaranteed Minimum</p>
-                <p className="text-lg sm:text-xl font-bold text-purple-700 mt-1">₹20</p>
-                <p className="text-xs text-gray-500 mt-1">(1000 BMVCOINS)</p>
-              </div>
-              <div className="bg-purple-50 p-4 rounded-xl text-center">
-                <p className="text-gray-600 text-xs sm:text-sm">Potential Maximum</p>
-                <p className="text-lg sm:text-xl font-bold text-purple-700 mt-1">₹2,000</p>
-                <p className="text-xs text-gray-500 mt-1">(1,00,000 BMVCOINS)</p>
-              </div>
-            </div>
-
-            <p className="text-center text-xs sm:text-sm text-gray-600 mb-6">
-              <span className="font-medium">Total Distributed:</span> ₹2,000+ (1,00,000 BMVCOINS)
-            </p>
-
-            <button
-              onClick={handleSignIn}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-            >
-              🚀 {isLoading ? "Processing..." : "Claim Free Coins"}
-            </button>
           </div>
         </div>
       )}
 
-      {isFreelanceModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md sm:max-w-lg p-6 sm:p-8 relative">
+      {isCryptoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <button
-              onClick={() => setIsFreelanceModalOpen(false)}
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+              onClick={() => setIsCryptoModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
             >
-              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+              <X className="h-5 w-5" />
             </button>
 
-            <div className="text-center mb-5 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-1.5 tracking-tight">
-                Join Our Marketplace
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                Choose your role to get started
-              </p>
+            <h2 className="text-center text-xl font-bold text-purple-700 sm:text-2xl">
+              🎉 LIMITED TIME OFFER
+            </h2>
+
+            <p className="mt-2 text-center text-gray-700">
+              Get <span className="font-semibold">₹20 Worth of BMVCOINS</span>{" "}
+              Free Today!
+            </p>
+
+            <p className="mt-1 text-center text-sm text-gray-600">
+              (1 BMVCOIN = ₹0.02 • You get 1000 coins = ₹20)
+            </p>
+
+            <div className="mt-6 grid grid-cols-2 gap-4 text-center">
+              <div className="rounded-lg bg-purple-100 p-4">
+                <p className="text-sm text-gray-600">Guaranteed Minimum</p>
+                <p className="text-lg font-bold text-purple-700">₹20</p>
+                <p className="text-xs text-gray-500">(1000 BMVCOINS)</p>
+              </div>
+              <div className="rounded-lg bg-purple-100 p-4">
+                <p className="text-sm text-gray-600">Potential Maximum</p>
+                <p className="text-lg font-bold text-purple-700">₹2,000</p>
+                <p className="text-xs text-gray-500">(1,00,000 BMVCOINS)</p>
+              </div>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
-              <button
-                onClick={handleFreelancerChoice}
-                disabled={isLoading}
-                className="w-full group flex items-center gap-3 sm:gap-4 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 hover:border-blue-300 p-3 sm:p-4 rounded-xl transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100/50 flex items-center justify-center text-blue-600 text-lg sm:text-xl flex-shrink-0 group-hover:scale-110 group-hover:bg-blue-100 transition-all">
-                  👤
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-blue-900 text-sm sm:text-base leading-tight">Job Seeker (Freelancer)</h3>
-                  <p className="text-blue-600/70 text-[11px] sm:text-xs leading-tight mt-1 font-medium">Find projects and showcase your talent</p>
-                </div>
-                <div className="text-blue-300 group-hover:text-blue-500 text-lg sm:text-xl flex-shrink-0 transition-colors">→</div>
-              </button>
+            <p className="mt-4 text-center text-sm text-gray-600">
+              <span className="font-medium">Total Distributed:</span> ₹2,000+
+              (1,00,000 BMVCOINS)
+            </p>
 
-              <button
-                onClick={handleEmployerChoice}
-                disabled={isLoading}
-                className="w-full group flex items-center gap-3 sm:gap-4 bg-purple-50/50 hover:bg-purple-50 border border-purple-100 hover:border-purple-300 p-3 sm:p-4 rounded-xl transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-100/50 flex items-center justify-center text-purple-600 text-lg sm:text-xl flex-shrink-0 group-hover:scale-110 group-hover:bg-purple-100 transition-all">
-                  🏢
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-purple-900 text-sm sm:text-base leading-tight">Employer (CEO / HR / Company)</h3>
-                  <p className="text-purple-600/70 text-[11px] sm:text-xs leading-tight mt-1 font-medium">Hire top professionals for your projects</p>
-                </div>
-                <div className="text-purple-300 group-hover:text-purple-500 text-lg sm:text-xl flex-shrink-0 transition-colors">→</div>
-              </button>
-            </div>
-
-            <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
-              <p className="text-center text-xs sm:text-sm text-gray-500 italic">
-                "Your gateway to global opportunities and elite talent"
-              </p>
-            </div>
+            <button
+              onClick={handleSignIn}
+              className="mt-6 w-full rounded-lg bg-purple-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-purple-700"
+              disabled={isLoading}
+            >
+              🚀 {isLoading ? "Processing..." : "Claim Free Coins"}
+            </button>
           </div>
         </div>
       )}

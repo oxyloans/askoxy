@@ -1,10 +1,7 @@
-// CurrentLandingPage.tsx
 import React from "react";
-import { createPortal } from "react-dom";
 import Header from "./Header";
 import ServicesSlider from "./ServicesSlider";
 import FreeGPTs from "./FreeGPTs";
-
 import OXYGroupCompanies from "./OXYGroupCompanies";
 import Footer from "./Footer";
 import OurPeople from "./OurTeam";
@@ -14,9 +11,7 @@ import AwardPage from "./Award";
 import FreeAiBook from "./FreeAiBook";
 import ScrollToTop from "./ScrollToTop";
 import BMVCoinPromo from "./BMVCoinPromo";
-
-// Import the background (still exported from SuperOurApp.tsx)
-// import { AnimatedDiwaliBackground } from "./SuperOurApp";
+import Whiteboardtheme from "./whiteboardtheme";
 
 const CurrentLandingPage: React.FC = () => {
   const heroRef = React.useRef<HTMLDivElement | null>(null);
@@ -24,33 +19,72 @@ const CurrentLandingPage: React.FC = () => {
 
   React.useEffect(() => {
     if (!heroRef.current) return;
+
     const io = new IntersectionObserver(
       ([entry]) => setShowFireworks(entry.isIntersecting),
-      { threshold: 0.35, rootMargin: "0px 0px -10% 0px" }
+      {
+        threshold: 0.35,
+        rootMargin: "0px 0px -10% 0px",
+      }
     );
+
     io.observe(heroRef.current);
+
     return () => io.disconnect();
   }, []);
 
   return (
     <>
-        <ScrollToTop />
-      {/* Everything else sits above the fixed background */}
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <section><Header /></section>
+      <ScrollToTop />
 
-        {/* SuperOurApp hero (the observed section) */}
-        <section ref={heroRef}><UnicornGrid /></section>
+      <div className="relative z-[1] overflow-visible">
+        <Header />
 
-        <section><FreeAiBook /></section>
-        <section><ServicesSlider /></section>
-        <section><BMVCoinPromo /></section>
-        <section><FreeGPTs /></section>
-        <section><AwardPage /></section>
-        <section><OurPeople /></section>
-        <section><PdfPages /></section>
-        <section><OXYGroupCompanies /></section>
-        <section><Footer /></section>
+        <div className="pt-[60px] overflow-visible">
+          <section className="relative z-[1] overflow-visible">
+            <Whiteboardtheme />
+          </section>
+
+          <section className="relative z-[5] overflow-visible">
+            <OXYGroupCompanies />
+          </section>
+
+          <section ref={heroRef} className="relative z-[1]">
+            <UnicornGrid />
+          </section>
+
+          <section>
+            <FreeAiBook />
+          </section>
+
+          <section>
+            <ServicesSlider />
+          </section>
+
+          <section>
+            <BMVCoinPromo />
+          </section>
+
+          <section>
+            <FreeGPTs />
+          </section>
+
+          <section>
+            <AwardPage />
+          </section>
+
+          <section>
+            <OurPeople />
+          </section>
+
+          <section>
+            <PdfPages />
+          </section>
+
+          <section>
+            <Footer />
+          </section>
+        </div>
       </div>
     </>
   );

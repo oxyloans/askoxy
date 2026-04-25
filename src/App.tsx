@@ -43,6 +43,9 @@ import MinisterMeetingPage from "./components/MinisterPage";
 import CrederaJobsPage from "./components/CrederaJobsPage";
 import TechmahindraJobsPage from "./components/TechmahindraJobsPage";
 import AllCompaniesJobsPage from "./components/AllCompaniesJobsPage";
+import LenderBorrowerPartnerLandingPage  from "./components/LenderPage";
+import GoldLandingPage  from "./components/GoldLandingPage";
+import JPLLandingPage from "./components/JPL/JPLLandingPage";
 import BroadRidgeJobsPage from "./components/BroadRidgepage";
 import JobViewPage from "./components/JobsViewPage";
 import JobAnalysisResult from "./components/JobAnalysisResult";
@@ -65,6 +68,7 @@ import OxyGPT from "./Finvibe/components/Oxyclaude";
 import Billing from "./Finvibe/components/Billing";
 import SendPollBasedRewards from "./AskoxyAdmin/SendPollBasedRewards";
 import ViewPollBasedRewards from "./AskoxyAdmin/ViewPollBasedRewards";
+import PlatformRedirect from "./components/PlatformRedirect";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -858,11 +862,15 @@ const App: React.FC = () => {
                 path="/termsandconditions"
                 element={<TermsAndConditions />}
               />
+              <Route path="/loansandinvest" element={<LenderBorrowerPartnerLandingPage  />} />
+              <Route path="/oxygold" element={<GoldLandingPage/>} />
+              <Route path ="/jobspremierleague" element={<JPLLandingPage />} />
               <Route path="/rcsconsentform" element={<RCSConsentForm />} />
               <Route
                 path="/loanmanagement"
                 element={<LoanManagementLandingPage />}
               />
+              <Route path="/platform-redirect" element={<PlatformRedirect />} />
 
               {/* LOS / Dashboards */}
               <Route path="/los" element={<CASDashboard />} />
