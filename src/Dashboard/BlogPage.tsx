@@ -248,7 +248,7 @@ const BlogsPage: React.FC = () => {
     // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+const isLoggedInUser = Boolean(userId);
   const onTabClick = (tab: TabKey) => {
     if (tab === "ADD") {
       const backTo = prevTabRef.current || "ALL";
@@ -394,9 +394,11 @@ const BlogsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f6f8fc]">
-         <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
+     <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
 
-      <div className="pageWrap">
+      <div className="pageWrap"  style={{
+    padding: isLoggedInUser ? "16px" : "72px",
+  }}>
         <div className="pageInner">
           <div className="topSection">
             <div className="topHeading">
@@ -490,7 +492,7 @@ const BlogsPage: React.FC = () => {
       <style>{`
         .pageWrap {
           width: 100%;
-          padding: 16px;
+      
         }
 
         .pageInner {
@@ -790,7 +792,7 @@ const BlogsPage: React.FC = () => {
 
         @media (max-width: 768px) {
           .pageWrap {
-            padding: 12px;
+            padding: 12px !important;
           }
 
           .topSection {

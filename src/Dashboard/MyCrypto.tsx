@@ -101,9 +101,16 @@ dayjs.extend(timezone);
 const formatIST = (dateString?: string) => {
   if (!dateString) return "—";
 
-  // Parse the date and ensure it maintains the original date regardless of timezone
-  return dayjs(dateString).utc().format("DD MMM YYYY");
-  };
+  try {
+    // Parse the date string exactly as received from API
+    const date = dayjs(dateString);
+    if (!date.isValid()) return "—";
+    return date.format("DD MMM YYYY");
+  } catch (error) {
+    console.error('Date parsing error:', error);
+    return "—";
+  }
+};
 
   const getTransferDirection = (transfer: Transfer) => {
     const apiType = (transfer.type || "").toLowerCase();

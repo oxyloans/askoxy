@@ -60,6 +60,10 @@ interface TimeSlot {
   timeSlot2: string;
   timeSlot3: string;
   timeSlot4: string;
+  slot1Status: boolean;
+  slot2Status: boolean;
+  slot3Status: boolean;
+  slot4Status: boolean;
   date?: string;
   isToday?: boolean;
 }
@@ -198,6 +202,37 @@ const MyOrders: React.FC = () => {
   const [isAddressUpdating, setIsAddressUpdating] = useState<boolean>(false);
   const [addressUpdateSuccess, setAddressUpdateSuccess] =
     useState<boolean>(false);
+
+  // Helper function to get available time slots based on slot status
+  const getAvailableTimeSlots = (slot: TimeSlot): string[] => {
+    console.log('Processing slot:', slot);
+    
+    const timeSlots = [
+      { time: slot.timeSlot1, status: slot.slot1Status },
+      { time: slot.timeSlot2, status: slot.slot2Status },
+      { time: slot.timeSlot3, status: slot.slot3Status },
+      { time: slot.timeSlot4, status: slot.slot4Status },
+    ];
+
+    console.log('Time slots array:', timeSlots);
+    console.log('isAvailable:', slot.isAvailable);
+
+    // If isAvailable is false, show only slots where status is false
+    if (!slot.isAvailable) {
+      const availableSlots = timeSlots
+        .filter(ts => !ts.status && ts.time && ts.time.trim() !== '')
+        .map(ts => ts.time);
+      console.log('Available slots when isAvailable=false:', availableSlots);
+      return availableSlots;
+    }
+    
+    // If isAvailable is true, show all non-empty slots
+    const allSlots = timeSlots
+      .filter(ts => ts.time && ts.time.trim() !== '')
+      .map(ts => ts.time);
+    console.log('All slots when isAvailable=true:', allSlots);
+    return allSlots;
+  };
 
   //helper function to check 24 hour window
   const isWithin24Hours = (placedDate: string | null): boolean => {
@@ -875,6 +910,8 @@ const MyOrders: React.FC = () => {
       );
 
       if (response.data && Array.isArray(response.data)) {
+        console.log('API Response:', response.data);
+        
         // Get potential delivery days
         const potentialDays = getNextAvailableDays();
 
@@ -893,17 +930,35 @@ const MyOrders: React.FC = () => {
             const isActuallyAvailable = !apiSlot.isAvailable;
 
             // Create a processed time slot with all information
-            allProcessedTimeSlots.push({
+            const processedSlot = {
               id: apiSlot.id,
               dayOfWeek: apiSlot.dayOfWeek,
               isAvailable: isActuallyAvailable,
-              timeSlot1: apiSlot.timeSlot1?.trim() || "",
-              timeSlot2: apiSlot.timeSlot2?.trim() || "",
-              timeSlot3: apiSlot.timeSlot3?.trim() || "",
-              timeSlot4: apiSlot.timeSlot4?.trim() || "",
+              timeSlot1: apiSlot.slot1Status === false ? (apiSlot.timeSlot1?.trim() || "") : "",
+              timeSlot2: apiSlot.slot2Status === false ? (apiSlot.timeSlot2?.trim() || "") : "",
+              timeSlot3: apiSlot.slot3Status === false ? (apiSlot.timeSlot3?.trim() || "") : "",
+              timeSlot4: apiSlot.slot4Status === false ? (apiSlot.timeSlot4?.trim() || "") : "",
+              slot1Status: apiSlot.slot1Status || false,
+              slot2Status: apiSlot.slot2Status || false,
+              slot3Status: apiSlot.slot3Status || false,
+              slot4Status: apiSlot.slot4Status || false,
               date: dayInfo.date,
               isToday: dayInfo.isToday,
-            });
+            };
+            
+            console.log('Processed slot for', dayInfo.dayOfWeek, ':', processedSlot);
+            
+            // Only add if there are available slots (at least one timeSlot is not empty)
+            const hasAvailableSlots = [
+              processedSlot.timeSlot1,
+              processedSlot.timeSlot2,
+              processedSlot.timeSlot3,
+              processedSlot.timeSlot4
+            ].some(slot => slot && slot.trim() !== '');
+            
+            if (hasAvailableSlots) {
+              allProcessedTimeSlots.push(processedSlot);
+            }
           } else {
             // If not in API response, add the day as unavailable
             allProcessedTimeSlots.push({
@@ -914,6 +969,10 @@ const MyOrders: React.FC = () => {
               timeSlot2: "",
               timeSlot3: "",
               timeSlot4: "",
+              slot1Status: false,
+              slot2Status: false,
+              slot3Status: false,
+              slot4Status: false,
               date: dayInfo.date,
               isToday: dayInfo.isToday,
             });
@@ -956,13 +1015,15 @@ const MyOrders: React.FC = () => {
             } else if (availableSlots.length > 0) {
               const firstAvailableSlot = availableSlots[0];
               setSelectedDay(firstAvailableSlot.dayOfWeek);
-              setSelectedTimeSlot(firstAvailableSlot.timeSlot1);
+              const firstAvailableTime = getAvailableTimeSlots(firstAvailableSlot)[0];
+              setSelectedTimeSlot(firstAvailableTime || "");
               setSelectedDate(firstAvailableSlot.date || "");
             }
           } else if (availableSlots.length > 0) {
             const firstAvailableSlot = availableSlots[0];
             setSelectedDay(firstAvailableSlot.dayOfWeek);
-            setSelectedTimeSlot(firstAvailableSlot.timeSlot1);
+            const firstAvailableTime = getAvailableTimeSlots(firstAvailableSlot)[0];
+            setSelectedTimeSlot(firstAvailableTime || "");
             setSelectedDate(firstAvailableSlot.date || "");
           }
         }
@@ -1516,12 +1577,44 @@ const MyOrders: React.FC = () => {
       );
     }
 
-    const availableTimeSlots = [
-      selectedSlot.timeSlot1,
-      selectedSlot.timeSlot2,
-      selectedSlot.timeSlot3,
-      selectedSlot.timeSlot4,
-    ].filter(Boolean);
+    const availableTimeSlots = getAvailableTimeSlots(selectedSlot);
+
+    if (availableTimeSlots.length === 0) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[90vh] flex flex-col">
+            <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white p-4 flex justify-between items-center rounded-t-lg">
+              <h2 className="text-xl font-semibold">No Available Time Slots</h2>
+              <button
+                onClick={() => setShowTimeSlotPopup(false)}
+                className="p-1 hover:bg-red-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <div className="mb-4">
+                <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No time slots available for this day
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  We're sorry, but there are no available time slots for {formatDayOfWeek(selectedSlot.dayOfWeek)}. Please select a different day.
+                </p>
+
+                <button
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  onClick={() => setShowTimeSlotPopup(false)}
+                >
+                  Select Another Day
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">

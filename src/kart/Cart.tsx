@@ -827,10 +827,16 @@ const CartPage: React.FC = () => {
     if (!addressFormData.landMark.trim())
       errors.landmark = "Landmark is required";
     if (!addressFormData.address.trim()) errors.address = "Address is required";
-    if (!addressFormData.pincode.trim())
-      errors.pincode = "PIN code is required";
-    else if (!/^\d{6}$/.test(addressFormData.pincode))
-      errors.pincode = "Please enter a valid 6-digit PIN code";
+   const pincode = addressFormData.pincode?.trim();
+
+  if (!pincode) {
+    errors.pincode = "Pin code is required";
+  } else if (!/^\d{6}$/.test(pincode)) {
+    errors.pincode = "Please enter a valid 6-digit pin code";
+  } else if (/^0+$/.test(pincode)) {
+    errors.pincode = "Pin code cannot be all zeros";
+  }
+
 
     setAddressFormErrors(errors);
     return !Object.values(errors).some((error) => error);
@@ -2321,7 +2327,7 @@ const CartPage: React.FC = () => {
 
                     <input
                       type="text"
-                      placeholder="PIN Code"
+                      placeholder="Pincode"
                       value={addressFormData.pincode}
                       onChange={(e) =>
                         setAddressFormData((prev) => ({

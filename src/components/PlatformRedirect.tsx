@@ -26,7 +26,7 @@ export default function PlatformRedirect() {
       } else {
         window.location.href = "/";
       }
-    }, 1500); // ⏳ slightly smoother delay
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -39,48 +39,44 @@ export default function PlatformRedirect() {
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "column",
-        background: "linear-gradient(135deg, #eef6ff, #f8fafc)",
+        background: "linear-gradient(135deg, #fff8e1, #ffffff)",
         fontFamily: "Poppins, sans-serif",
         textAlign: "center",
         padding: 24,
       }}
     >
-      {/* Loader */}
       <div
         style={{
           width: 60,
           height: 60,
-          border: "5px solid #e2e8f0",
-          borderTop: "5px solid #3b82f6",
+          border: "5px solid #f3e7bd",
+          borderTop: "5px solid #d4af37",
           borderRadius: "50%",
           animation: "spin 1s linear infinite",
         }}
       />
 
-      {/* Main Heading */}
       <h2
         style={{
           marginTop: 24,
-          fontSize: 24,
+          fontSize: 22,
           fontWeight: 700,
-          color: "#0f172a",
+          color: "#2b1800",
         }}
       >
         Redirecting to our Dedicated Platform...
       </h2>
 
-      {/* Sub text */}
       <p
         style={{
           marginTop: 10,
-          color: "#64748b",
+          color: "#7a6a45",
           fontSize: 15,
         }}
       >
-        Please wait while we securely take you there 🚀
+        Please wait while we securely take you there.
       </p>
 
-      {/* Animation */}
       <style>
         {`
           @keyframes spin {

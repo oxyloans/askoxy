@@ -9,7 +9,8 @@ import {
   HandCoins,
   Menu,
   X,
-  ChevronRight,
+  ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo1 from "../assets/img/askoxylogonew.png";
@@ -17,831 +18,741 @@ import Logo1 from "../assets/img/askoxylogonew.png";
 const platformUrl = "https://www.oxygold.ai/";
 const platformRedirectPath = "/platform-redirect?target=oxygold";
 
-const participants = [
-  {
-    title: "Gold Miners",
-    desc: "Verified sourcing from trusted mining partners.",
-    icon: Mountain,
-  },
-  {
-    title: "Refinery",
-    desc: "Certified purification for market-ready gold.",
-    icon: Factory,
-  },
-  {
-    title: "Import",
-    desc: "Structured cross-border logistics and compliance.",
-    icon: Ship,
-  },
-  {
-    title: "Jewellery",
-    desc: "Better supply access and ecosystem collaboration.",
-    icon: Gem,
-  },
-  {
-    title: "Buyer",
-    desc: "Transparent pricing and smarter sourcing decisions.",
-    icon: ShoppingBag,
-  },
-  {
-    title: "Seller",
-    desc: "Digital demand access and smoother transactions.",
-    icon: BadgeDollarSign,
-  },
-  {
-    title: "Lease",
-    desc: "Gold-backed leasing unlocking new liquidity.",
-    icon: HandCoins,
-  },
-];
-
-const chainSteps = [
-  { label: "Mine", icon: Mountain },
-  { label: "Refine", icon: Factory },
-  { label: "Import", icon: Ship },
-  { label: "Buy & Sell", icon: ShoppingBag },
-  { label: "Lease", icon: HandCoins },
-];
-
-const chainDesc = [
-  "Responsible sourcing from verified mining partners",
-  "Certified purification and quality standardization",
-  "Structured cross-border logistics and compliance",
-  "Digital access for buyers, sellers and jewellers",
-  "Gold-backed leasing unlocking fresh liquidity",
-];
-
 const logoUrl = "https://i.ibb.co/PGYYDvL9/l4.png";
+const headerImageUrl = "https://i.ibb.co/TqcX4h44/gpl-header.png";
+
+const participants = [
+  { title: "Gold Miners", desc: "Verified sourcing from trusted mining partners.", icon: Mountain },
+  { title: "Refinery", desc: "Certified purification for market-ready gold.", icon: Factory },
+  { title: "Import", desc: "Structured cross-border logistics and compliance.", icon: Ship },
+  { title: "Jewellery", desc: "Better supply access and ecosystem collaboration.", icon: Gem },
+  { title: "Buyer", desc: "Transparent pricing and smarter sourcing decisions.", icon: ShoppingBag },
+  { title: "Seller", desc: "Digital demand access and smoother transactions.", icon: BadgeDollarSign },
+  { title: "Lease", desc: "Gold-backed leasing unlocking new liquidity.", icon: HandCoins },
+];
 
 const S = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=DM+Sans:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  :root {
-    --g:  #C9942A;
-    --gl: #E8B84B;
-    --gp: #FDF6E7;
-    --gm: #F7E8C5;
-    --ink: #181410;
-    --ink2: #5C5040;
-    --ink3: #8A7B69;
-    --bg:  #FDFAF4;
-    --wh:  #FFFFFF;
-    --br:  rgba(201,148,42,.16);
-    --brs: rgba(201,148,42,.09);
-  }
+body {
+  font-family: 'Inter', sans-serif;
+  background: #fffaf0;
+  color: #20160a;
+  overflow-x: hidden;
+}
 
-  html { scroll-behavior: smooth; }
+.gold-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(245,211,108,.24), transparent 28%),
+    linear-gradient(180deg, #fffaf0 0%, #fff7e6 42%, #ffffff 100%);
+}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-  }
+.gold-page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  background: rgba(255, 250, 240, 0.9);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(212,175,55,.18);
+}
 
-  .serif { font-family: 'Cormorant Garamond', serif; }
+.header-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-  .gold-page-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 999;
-    background: rgba(253,250,244,.94);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--br);
-  }
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .gold-page-main {
-    padding-top: 72px;
-  }
+.logo-img {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  cursor: pointer;
+}
 
-  .hdr {
-    max-width: 1160px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 14px 24px;
-  }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .logo-combo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
+.primary-btn {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d4af37, #f7d976);
+  color: #2b1800;
+  padding: 12px 22px;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 14px 30px rgba(212,175,55,.25);
+  transition: all .25s ease;
+}
 
-  .logo-img {
-    height: 38px;
-    width: auto;
-    object-fit: contain;
-    display: block;
-    flex-shrink: 0;
-  }
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(212,175,55,.34);
+}
 
-  .hdr-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+.secondary-btn {
+  border: 1px solid rgba(55,37,8,.14);
+  background: #fff;
+  color: #2d1e07;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
 
-  .btn {
-    border: none;
-    cursor: pointer;
-    border-radius: 999px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    letter-spacing: .02em;
-    transition: all .2s ease;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
+.menu-btn {
+  display: none;
+  border: 1px solid rgba(212,175,55,.28);
+  background: #fff;
+  color: #3d2700;
+  border-radius: 12px;
+  padding: 9px;
+  cursor: pointer;
+}
 
-  .btn-dark {
-    background: var(--ink);
-    color: #fff;
-    padding: 11px 24px;
-    font-size: 13px;
-  }
+.mobile-menu {
+  padding: 14px 20px 20px;
+  border-top: 1px solid rgba(212,175,55,.16);
+  background: #fffdf7;
+}
 
-  .btn-dark:hover {
-    background: var(--g);
-    transform: translateY(-1px);
-  }
+.main {
+  padding-top: 72px;
+}
 
-  .btn-gold {
-    background: #D4AF37;
-    color: #2B0A59;
-    padding: 10px 22px;
-    font-size: 13px;
-    box-shadow: 0 8px 20px rgba(212,175,55,.18);
-  }
+.hero {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 72px 22px 72px;
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 46px;
+  align-items: center;
+}
 
-  .btn-gold:hover {
-    opacity: .92;
-    transform: translateY(-1px);
-  }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(212,175,55,.14);
+  border: 1px solid rgba(212,175,55,.22);
+  color: #9a6a00;
+  border-radius: 999px;
+  padding: 8px 15px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
 
-  .mob-toggle {
-    display: none;
-    background: #fff;
-    border: 1px solid var(--br);
-    border-radius: 12px;
-    padding: 8px;
-    cursor: pointer;
-    color: var(--ink2);
-    align-items: center;
-    justify-content: center;
-  }
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  background: #d4af37;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(212,175,55,.16);
+}
 
-  .mob-menu {
-    background: var(--wh);
-    border-top: 1px solid var(--br);
-    padding: 14px 20px 20px;
-  }
+.hero-title {
+  margin-top: 22px;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.7rem, 5vw, 5rem);
+  line-height: .98;
+  letter-spacing: -.04em;
+  color: #211300;
+}
 
+.hero-title span {
+  display: block;
+  color: #b98200;
+}
+
+.hero-desc {
+  margin-top: 22px;
+  max-width: 560px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #78613f;
+}
+
+.hero-points {
+  margin-top: 26px;
+  display: grid;
+  gap: 12px;
+}
+
+.hero-point {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #4b3411;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hero-point svg {
+  color: #c9942a;
+  flex-shrink: 0;
+}
+
+.hero-actions {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-image-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-image {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 22px 28px rgba(83, 55, 0, 0.16));
+}
+
+.stats-row {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 22px 70px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.stat-card {
+  background: rgba(255,255,255,.82);
+  border: 1px solid rgba(212,175,55,.18);
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 18px 44px rgba(60,40,5,.06);
+}
+
+.stat-number {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  color: #a87400;
+  font-weight: 700;
+}
+
+.stat-label {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #7c684b;
+  line-height: 1.5;
+}
+
+.section {
+  background: #fff;
+  border-top: 1px solid rgba(212,175,55,.15);
+}
+
+.section-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 82px 22px;
+}
+
+.section-head {
+  max-width: 760px;
+  margin-bottom: 34px;
+}
+
+.section-kicker {
+  color: #b98200;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  margin-top: 10px;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 3vw, 3.2rem);
+  line-height: 1.08;
+  color: #211300;
+}
+
+.section-desc {
+  margin-top: 14px;
+  color: #7b684c;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.card {
+  background: linear-gradient(180deg, #fffdf8, #ffffff);
+  border: 1px solid rgba(212,175,55,.18);
+  border-radius: 24px;
+  padding: 22px;
+  min-height: 190px;
+  transition: all .25s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 45px rgba(74,49,3,.1);
+  border-color: rgba(212,175,55,.36);
+}
+
+.icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(255,246,216,.9));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b98200;
+}
+
+.card-title {
+  margin-top: 18px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #241600;
+}
+
+.card-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #7b684c;
+}
+
+.cta {
+  background:
+    radial-gradient(circle at top right, rgba(212,175,55,.24), transparent 35%),
+    linear-gradient(135deg, #2b1800, #7a5300);
+  color: #fff;
+}
+
+.cta-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 62px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.cta-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.1;
+}
+
+.cta-desc {
+  margin-top: 10px;
+  color: rgba(255,255,255,.74);
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 620px;
+}
+
+.footer {
+  background: #fff;
+  border-top: 1px solid rgba(212,175,55,.16);
+}
+
+.footer-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.footer-logo {
+  height: 34px;
+}
+
+.copy {
+  color: #8b7656;
+  font-size: 12px;
+}
+
+@media (max-width: 1024px) {
   .hero {
-    max-width: 1160px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
-    gap: 56px;
-    align-items: center;
-    padding: 72px 24px 80px;
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 32px;
+    padding-top: 54px;
   }
 
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: var(--gm);
-    border: 1px solid var(--br);
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--g);
-    letter-spacing: .08em;
-    text-transform: uppercase;
+  .hero-image-wrap {
+    order: -1;
   }
 
-  .dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--gl);
-    animation: blink 2s infinite;
-  }
-
-  @keyframes blink {
-    0%,100% { opacity: 1; }
-    50% { opacity: .3; }
-  }
-
-  .h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.5rem,4.5vw,4.2rem);
-    font-weight: 500;
-    line-height: 1.06;
-    letter-spacing: -.02em;
-    color: var(--ink);
-    margin-top: 18px;
-  }
-
-  .h1 em {
-    font-style: italic;
-    color: var(--g);
+  .hero-image {
+    max-width: 620px;
   }
 
   .hero-desc {
-    margin-top: 18px;
-    font-size: 15px;
-    line-height: 1.85;
-    color: var(--ink3);
-    font-weight: 400;
-    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-points {
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-point {
+    justify-content: center;
   }
 
   .hero-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 30px;
-    flex-wrap: wrap;
+    justify-content: center;
   }
 
-  .panel {
-    background: var(--wh);
-    border: 1px solid var(--br);
-    border-radius: 24px;
-    padding: 26px 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.03);
-    width: 100%;
-    overflow: hidden;
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .panel-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .28em;
-    text-transform: uppercase;
-    color: var(--g);
-    margin-bottom: 20px;
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding-top: 64px;
   }
 
-  .chain-row {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none;
+  .header-inner {
+    padding: 12px 18px;
   }
 
-  .chain-row::-webkit-scrollbar {
+  .logo-img {
+    height: 31px;
+  }
+
+  .desktop-btn {
     display: none;
   }
 
-  .chain-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 7px;
-    flex-shrink: 0;
+  .menu-btn {
+    display: inline-flex;
   }
 
-  .chain-ico {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all .4s cubic-bezier(.34,1.56,.64,1);
-    border: 1.5px solid #EDE5D4;
-    background: #FAFAF7;
+  .hero {
+    padding: 32px 18px 44px;
+    gap: 24px;
   }
 
-  .chain-ico.active {
-    background: linear-gradient(135deg,var(--gl),var(--g));
-    border-color: transparent;
-    box-shadow: 0 6px 20px rgba(201,148,42,.3);
-    transform: scale(1.08) translateY(-2px);
+  .hero-title {
+    font-size: 2.5rem;
   }
 
-  .chain-ico.past {
-    background: var(--gp);
-    border-color: var(--br);
-  }
-
-  .chain-lbl {
-    font-size: 10px;
-    font-weight: 600;
-    color: #B0A090;
-    transition: color .3s;
-    letter-spacing: .04em;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  .chain-lbl.active { color: var(--g); }
-  .chain-lbl.past { color: #9A7A40; }
-
-  .chain-line {
-    flex: 1;
-    min-width: 30px;
-    height: 1px;
-    background: #EDE5D4;
-    transition: background .6s;
-    margin: 0 8px 18px;
-  }
-
-  .chain-line.on {
-    background: linear-gradient(to right,var(--gl),var(--g));
-  }
-
-  .chain-desc {
-    margin-top: 16px;
-    background: var(--gp);
-    border: 1px solid var(--brs);
-    border-radius: 13px;
-    padding: 13px 17px;
-    min-height: 48px;
-    font-size: 13px;
-    color: var(--ink2);
+  .hero-desc {
+    font-size: 14px;
     line-height: 1.7;
-    font-weight: 400;
   }
 
-  .bd { border-top: 1px solid var(--br); }
-
-  .wrap {
-    max-width: 1160px;
-    margin: 0 auto;
-    padding: 80px 24px;
+  .hero-image {
+    max-width: 100%;
+    filter: drop-shadow(0 14px 18px rgba(83, 55, 0, 0.13));
   }
 
-  .sec-h {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.9rem,3vw,2.6rem);
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: -.01em;
-    color: var(--ink);
-    margin-top: 8px;
+  .stats-row {
+    grid-template-columns: 1fr;
+    padding: 0 18px 48px;
   }
 
-  .sec-desc {
-    margin-top: 10px;
-    font-size: 14px;
-    color: var(--ink3);
-    line-height: 1.8;
-    max-width: 680px;
+  .section-inner {
+    padding: 58px 18px;
   }
 
-  .part-top {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
+  .grid {
+    grid-template-columns: 1fr;
   }
 
-  .list {
-    border: 1px solid var(--br);
-    border-radius: 22px;
-    overflow: hidden;
-    background: var(--wh);
-    box-shadow: 0 10px 30px rgba(0,0,0,.02);
+  .cta-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 52px 18px;
   }
 
-  .li {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 18px 24px;
-    border-bottom: 1px solid var(--brs);
-    transition: background .18s;
-    cursor: default;
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
   }
 
-  .li:last-child { border-bottom: none; }
-  .li:hover { background: var(--gp); }
-
-  .li-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 17px;
-    color: #D0C0A0;
-    min-width: 22px;
-    flex-shrink: 0;
+  .hero-actions {
+    width: 100%;
   }
 
-  .li-ico {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    flex-shrink: 0;
-    background: var(--gp);
-    border: 1px solid var(--br);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--g);
-    transition: transform .2s;
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
   }
-
-  .li:hover .li-ico { transform: scale(1.08); }
-
-  .li-body { flex: 1; min-width: 0; }
-
-  .li-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ink);
-  }
-
-  .li-desc {
-    font-size: 12.5px;
-    color: var(--ink3);
-    margin-top: 2px;
-    line-height: 1.55;
-    font-weight: 400;
-  }
-
-  .li-arr {
-    color: #D8CABB;
-    flex-shrink: 0;
-    transition: all .2s;
-  }
-
-  .li:hover .li-arr {
-    color: var(--g);
-    transform: translateX(3px);
-  }
-
-  footer {
-    border-top: 1px solid var(--br);
-    background: var(--wh);
-  }
-
-  .ftr {
-    max-width: 1160px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .ftr-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .ftr-logo {
-    height: 34px;
-    width: auto;
-    object-fit: contain;
-    display: block;
-  }
-
-  .ftr-copy {
-    font-size: 12px;
-    color: var(--ink3);
-  }
-
-  @media (max-width: 992px) {
-    .hero {
-      grid-template-columns: 1fr;
-      gap: 36px;
-      padding-top: 56px;
-    }
-
-    .hero-desc {
-      max-width: 100%;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .gold-page-main {
-      padding-top: 64px;
-    }
-
-    .hdr {
-      padding: 12px 18px;
-    }
-
-    .desktop-btn {
-      display: none !important;
-    }
-
-    .mob-toggle {
-      display: flex !important;
-    }
-
-    .hero {
-      padding: 46px 20px 56px;
-      gap: 28px;
-    }
-
-    .wrap {
-      padding: 56px 20px;
-    }
-
-    .part-top {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .logo-img {
-      height: 32px;
-    }
-
-    .panel {
-      padding: 22px 16px;
-    }
-
-    .chain-line {
-      min-width: 20px;
-      margin: 0 6px 18px;
-    }
-
-    .ftr {
-      flex-direction: column;
-      text-align: center;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .h1 {
-      font-size: 2.15rem;
-      line-height: 1.08;
-    }
-
-    .hero-desc {
-      font-size: 14px;
-      line-height: 1.75;
-    }
-
-    .hero-actions {
-      flex-direction: column;
-    }
-
-    .hero-actions .btn {
-      width: 100%;
-    }
-
-    .li {
-      padding: 15px 16px;
-      gap: 12px;
-    }
-
-    .li-title {
-      font-size: 13.5px;
-    }
-
-    .li-desc {
-      font-size: 12px;
-    }
-  }
+}
 `;
 
 export default function GoldLandingPage() {
   const [open, setOpen] = React.useState(false);
-  const [step, setStep] = React.useState(0);
-
   const navigate = useNavigate();
 
-const platformUrl = "https://www.oxygold.ai/";
-const platformRedirectPath = "/platform-redirect?target=oxygold";
-
 const goToLoginFirst = () => {
+  const currentPage = window.location.pathname + window.location.search;
+
+  const accessToken =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token");
+
+  const cookieToken = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("accessToken="));
+
+  const isLoggedIn = Boolean(accessToken || cookieToken);
+
+  // ✅ If already logged in, go directly to platform
+  if (isLoggedIn) {
+    window.location.href = platformUrl;
+    return;
+  }
+
+  // ✅ After login success, go to platform redirect
   sessionStorage.setItem("redirectPath", platformRedirectPath);
   sessionStorage.setItem("platformRedirectUrl", platformUrl);
   localStorage.setItem("platformRedirectUrl", platformUrl);
 
+  // ✅ If login closed, return to current page
+  sessionStorage.setItem("loginCloseReturnPath", currentPage);
+
   navigate("/whatsapplogin", {
     state: {
       from: platformRedirectPath,
+      closeReturnPath: currentPage,
     },
   });
 };
-
-  React.useEffect(() => {
-    const t = setInterval(() => {
-      setStep((p) => (p + 1) % chainSteps.length);
-    }, 1900);
-
-    return () => clearInterval(t);
-  }, []);
 
   return (
     <>
       <style>{S}</style>
 
-      <header className="gold-page-header">
-        <div className="hdr">
-          <div className="logo-combo">
-            <img
-              src={Logo1}
-              alt="AskOxy Logo"
-              onClick={() => navigate("/")}
-              className="logo-img"
-              style={{ cursor: "pointer" }}
-            />
+      <div className="gold-page">
+        <header className="gold-page-header">
+          <div className="header-inner">
+            <div className="logo-wrap">
+              <img
+                src={Logo1}
+                alt="AskOxy Logo"
+                className="logo-img"
+                onClick={() => navigate("/")}
+              />
 
-            <img
-              src={logoUrl}
-              alt="OxyGold Logo"
-              onClick={goToLoginFirst}
-              className="logo-img"
-              style={{ cursor: "pointer" }}
-            />
+              <img
+                src={logoUrl}
+                alt="OxyGold Logo"
+                className="logo-img"
+                onClick={goToLoginFirst}
+              />
+            </div>
+
+            <div className="header-actions">
+              <button
+                type="button"
+                className="primary-btn desktop-btn"
+                onClick={goToLoginFirst}
+              >
+                Get Started <ArrowRight size={15} />
+              </button>
+
+              <button
+                type="button"
+                className="menu-btn"
+                onClick={() => setOpen((prev) => !prev)}
+                aria-label="Toggle menu"
+              >
+                {open ? <X size={18} /> : <Menu size={18} />}
+              </button>
+            </div>
           </div>
 
-          <div className="hdr-right">
-            <button
-              type="button"
-              onClick={goToLoginFirst}
-              className="btn btn-gold desktop-btn"
-            >
-              Get Started
-            </button>
+          {open && (
+            <div className="mobile-menu">
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => {
+                  setOpen(false);
+                  goToLoginFirst();
+                }}
+              >
+                Get Started <ArrowRight size={15} />
+              </button>
+            </div>
+          )}
+        </header>
 
-            <button
-              className="mob-toggle"
-              onClick={() => setOpen((o) => !o)}
-              aria-label="Toggle menu"
-            >
-              {open ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-        </div>
-
-        {open && (
-          <div className="mob-menu">
-            <button
-              type="button"
-              className="btn btn-gold"
-              style={{ width: "100%" }}
-              onClick={() => {
-                setOpen(false);
-                goToLoginFirst();
-              }}
-            >
-              Get Started
-            </button>
-          </div>
-        )}
-      </header>
-
-      <main className="gold-page-main">
-        <section id="platform">
-          <div className="hero">
+        <main className="main">
+          <section className="hero">
             <div>
-              <div className="pill">
-                <span className="dot" />
+              <div className="badge">
+                <span className="badge-dot" />
                 Trusted Gold Network
               </div>
 
-              <h1 className="h1 serif">
+              <h1 className="hero-title">
                 Powering the
-                <br />
-                <em>Complete Gold Ecosystem</em>
+                <span>Complete Gold Ecosystem</span>
               </h1>
 
               <p className="hero-desc">
                 OXYGOLD.AI connects miners, refiners, importers, jewellers,
-                buyers, sellers, and leasing partners through one trusted digital
-                platform built for transparency, traceability, and growth.
+                buyers, sellers, and leasing partners through one trusted
+                digital platform built for transparency, traceability, and
+                growth.
               </p>
+
+              <div className="hero-points">
+                <div className="hero-point">
+                  <CheckCircle2 size={18} />
+                  Track & trace visibility across the value chain
+                </div>
+                <div className="hero-point">
+                  <CheckCircle2 size={18} />
+                  Digital access for buyers, sellers, and jewellers
+                </div>
+                <div className="hero-point">
+                  <CheckCircle2 size={18} />
+                  Gold-backed leasing and ecosystem liquidity
+                </div>
+              </div>
 
               <div className="hero-actions">
                 <button
                   type="button"
-                  className="btn btn-dark"
+                  className="primary-btn"
                   onClick={goToLoginFirst}
                 >
-                  Explore Platform
+                  Explore Platform <ArrowRight size={15} />
                 </button>
+
               </div>
             </div>
 
-            <div className="panel">
-              <div className="panel-label">Gold Process</div>
+            <div className="hero-image-wrap">
+              <img
+                src={headerImageUrl}
+                alt="OXYGOLD.AI Gold Ecosystem"
+                className="hero-image"
+              />
+            </div>
+          </section>
 
-              <div className="chain-row">
-                {chainSteps.map((s, i) => {
-                  const Icon = s.icon;
-                  const isActive = i === step;
-                  const isPast = i < step;
+          <section className="section">
+            <div className="section-inner">
+              <div className="section-head">
+                <div className="section-kicker">Gold Value Chain</div>
+
+                <h2 className="section-title">
+                  Track & Trace Across the Gold Network
+                </h2>
+
+                <p className="section-desc">
+                  From mine to market, every participant can connect,
+                  collaborate, and move with more visibility through a trusted
+                  digital gold ecosystem.
+                </p>
+              </div>
+
+              <div className="grid">
+                {participants.map((item) => {
+                  const Icon = item.icon;
 
                   return (
-                    <React.Fragment key={s.label}>
-                      <div className="chain-step">
-                        <div
-                          className={`chain-ico${
-                            isActive ? " active" : isPast ? " past" : ""
-                          }`}
-                        >
-                          <Icon
-                            size={16}
-                            color={
-                              isActive ? "#fff" : isPast ? "#C9942A" : "#B0A090"
-                            }
-                          />
-                        </div>
-
-                        <span
-                          className={`chain-lbl${
-                            isActive ? " active" : isPast ? " past" : ""
-                          }`}
-                        >
-                          {s.label}
-                        </span>
+                    <div className="card" key={item.title}>
+                      <div className="icon-box">
+                        <Icon size={22} />
                       </div>
 
-                      {i < chainSteps.length - 1 && (
-                        <div className={`chain-line${i < step ? " on" : ""}`} />
-                      )}
-                    </React.Fragment>
+                      <h3 className="card-title">{item.title}</h3>
+                      <p className="card-desc">{item.desc}</p>
+                    </div>
                   );
                 })}
               </div>
-
-              <div className="chain-desc">{chainDesc[step]}</div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section
-          id="participants"
-          className="bd"
-          style={{ background: "var(--wh)" }}
-        >
-          <div className="wrap">
-            <div className="part-top">
+          <section className="cta">
+            <div className="cta-inner">
               <div>
-                <h2 className="sec-h serif">
-                  Track & Trace Across the Gold Value Chain
+                <h2 className="cta-title">
+                  Build Trust. Improve Visibility. Grow with Digital Gold.
                 </h2>
 
-                <p className="sec-desc">
-                  From mine to market, every participant in the ecosystem can
-                  connect, collaborate, and move with more visibility.
+                <p className="cta-desc">
+                  Join OXYGOLD.AI to connect with the gold ecosystem and unlock
+                  smarter sourcing, selling, buying, and leasing opportunities.
                 </p>
               </div>
+
             </div>
+          </section>
 
-            <div className="list">
-              {participants.map((item, idx) => {
-                const Icon = item.icon;
+          <footer className="footer">
+            <div className="footer-inner">
+              <img src={logoUrl} alt="OxyGold Logo" className="footer-logo" />
 
-                return (
-                  <div className="li" key={item.title}>
-                    <span className="li-num serif">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-
-                    <div className="li-ico">
-                      <Icon size={15} />
-                    </div>
-
-                    <div className="li-body">
-                      <div className="li-title">{item.title}</div>
-                      <div className="li-desc">{item.desc}</div>
-                    </div>
-
-                    <ChevronRight size={14} className="li-arr" />
-                  </div>
-                );
-              })}
+              <span className="copy">
+                © 2026 OXYGOLD.AI. All rights reserved.
+              </span>
             </div>
-          </div>
-        </section>
-
-        <footer>
-          <div className="ftr">
-            <div className="ftr-left">
-              <img src={logoUrl} alt="OxyGold Logo" className="ftr-logo" />
-            </div>
-
-            <span className="ftr-copy">
-              © 2026 OXYGOLD.AI. All rights reserved.
-            </span>
-          </div>
-        </footer>
-      </main>
+          </footer>
+        </main>
+      </div>
     </>
   );
 }

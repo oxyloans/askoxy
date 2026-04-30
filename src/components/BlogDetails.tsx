@@ -1313,11 +1313,12 @@ const handleWriteToUsSubmitButton = async () => {
       </div>
     );
   };
+  const isLoggedInUser = Boolean(userId);
 
   if (!isLoading && !featuredCampaign) {
     return (
       <div className="min-h-screen bg-[#f8fafc]">
-        <Header1 />
+       {!isLoggedInUser && <Header1 />}
         {renderNotFoundPage()}
       </div>
     );
@@ -1325,7 +1326,7 @@ const handleWriteToUsSubmitButton = async () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
-      <Header1 />
+      {!isLoggedInUser && <Header1 />}
 
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.08),transparent_30%)] pointer-events-none" />
@@ -1446,7 +1447,11 @@ const handleWriteToUsSubmitButton = async () => {
                 font-size: 12px;
               }
             }
-            
+            @media (max-width: 768px) {
+  .blogDetailsWrap {
+    padding: 12px !important;
+  }
+}
             @media (max-width: 480px) {
               .text-\[22px\].xl\:text-\[26px\] {
                 font-size: 18px;
@@ -1479,8 +1484,11 @@ const handleWriteToUsSubmitButton = async () => {
           `}
         </style>
 
-        <div className="px-3 sm:px-5 lg:px-8 py-2 sm:py-4">
-          <div className="mx-auto max-w-[1550px]">
+        <div className="px-3 sm:px-5 lg:px-8 py-2 sm:py-4"  style={{
+    padding: isLoggedInUser ? "16px" : "98px",
+   
+  }}>
+          <div className="mx-auto max-w-[1550px] ">
             <div className="mb-6 rounded-[28px] border border-[#eef1f7] bg-gradient-to-r from-white to-[#f8fafc] px-6 sm:px-10 py-6 shadow-[0_15px_40px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div className="max-w-2xl">
                 <h2 className="text-[26px] sm:text-[34px] font-bold text-[#0f172a] leading-tight">

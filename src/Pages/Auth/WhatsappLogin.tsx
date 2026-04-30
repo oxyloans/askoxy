@@ -5,8 +5,15 @@ import { FaWhatsapp } from "react-icons/fa6";
 import axios, { AxiosError } from "axios";
 import axiosInstance from "../../utils/axiosInstance";
 import { store } from "../../store";
-import { updateAccessToken, updateRefreshToken, logout } from "../../store/authSlice";
-import { setCustomerAccessToken, setRefreshToken } from "../../utils/cookieUtils";
+import {
+  updateAccessToken,
+  updateRefreshToken,
+  logout,
+} from "../../store/authSlice";
+import {
+  setCustomerAccessToken,
+  setRefreshToken,
+} from "../../utils/cookieUtils";
 import PhoneInput, {
   isValidPhoneNumber,
   parsePhoneNumber,
@@ -48,7 +55,7 @@ interface ErrorResponse {
 
 const handleAuthError = (
   err: AxiosError<ErrorResponse>,
-  navigate: (path: string) => void
+  navigate: (path: string) => void,
 ): boolean => {
   if (err.response?.status === 401) {
     const existing = sessionStorage.getItem("redirectPath");
@@ -74,12 +81,12 @@ const handleAuthError = (
 // ✅ FIXED: Updated handleLoginRedirect to preserve flags
 const handleLoginRedirect = (
   navigate: (path: string) => void,
-  redirectPath?: string
+  redirectPath?: string,
 ) => {
   if (!sessionStorage.getItem("redirectPath")) {
     sessionStorage.setItem(
       "redirectPath",
-      redirectPath || window.location.pathname
+      redirectPath || window.location.pathname,
     );
   }
   if (!sessionStorage.getItem("fromAISTore")) {
@@ -156,7 +163,7 @@ const WhatsappLogin: React.FC = () => {
   const deviceId = useRef<string>(
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
       ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
   ).current;
 
   // OAuth URL for Gmail authentication
@@ -195,15 +202,15 @@ const WhatsappLogin: React.FC = () => {
       setCustomerAccessToken(accessTokenGoogle);
       localStorage.setItem(
         "primaryType",
-        sessionStorage.getItem("primaryType") || "CUSTOMER"
+        sessionStorage.getItem("primaryType") || "CUSTOMER",
       );
       localStorage.setItem(
         "receiveNotifications",
-        sessionStorage.getItem("receiveNotifications") || "false"
+        sessionStorage.getItem("receiveNotifications") || "false",
       );
       localStorage.setItem(
         "agreeToTerms",
-        sessionStorage.getItem("agreeToTerms") || "false"
+        sessionStorage.getItem("agreeToTerms") || "false",
       );
 
       fetchUserDetails(accessTokenGoogle).then((userData) => {
@@ -342,23 +349,25 @@ const WhatsappLogin: React.FC = () => {
     }
   };
 
-  const handleClose = () => {
-    setIsClosing(true);
-    // UPDATED: Handle defaultPath for AGENT similar to STUDENT
-    const defaultPath =
-      primaryType === "AGENT"
-        ? "/bharath-aistore"
-        : primaryType === "STUDENT"
-        ? "/studyabroad"
-        : "/";
-    // ✅ FIXED: Prefer stored redirectPath if available
-    const entryPoint =
-      sessionStorage.getItem("redirectPath") ||
-      localStorage.getItem("entryPoint") ||
-      defaultPath;
-    console.log("Navigating to:", entryPoint, "PrimaryType:", primaryType); // Debug log
-    setTimeout(() => navigate(entryPoint), 300);
-  };
+const handleClose = () => {
+  setIsClosing(true);
+
+  const locationState = location.state as {
+    closeReturnPath?: string;
+    from?: string;
+  } | null;
+
+  const closeReturnPath =
+    locationState?.closeReturnPath ||
+    sessionStorage.getItem("loginCloseReturnPath") ||
+    "/";
+
+  sessionStorage.removeItem("loginCloseReturnPath");
+
+  setTimeout(() => {
+    navigate(closeReturnPath, { replace: true });
+  }, 300);
+};
 
   const handleOtpChange = (value: string, index: number) => {
     autoSubmitRef.current = false;
@@ -407,7 +416,7 @@ const WhatsappLogin: React.FC = () => {
 
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
-    index: number
+    index: number,
   ) => {
     if (e.key === "Backspace") {
       if (otpMethod === "whatsapp") {
@@ -448,7 +457,6 @@ const WhatsappLogin: React.FC = () => {
       setIsLoading(false);
       return;
     }
- 
 
     try {
       const phoneWithoutCode = extractPhoneWithoutCode(phoneNumber);
@@ -465,18 +473,18 @@ const WhatsappLogin: React.FC = () => {
 
       const response = await axios.post<UserResponse>(
         `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
-        requestBody
+        requestBody,
       );
       setIsButtonEnabled(true);
       if (response.data) {
         localStorage.setItem(
           "mobileOtpSession",
-          response.data.mobileOtpSession || ""
+          response.data.mobileOtpSession || "",
         );
         localStorage.setItem("salt", response.data.salt || "");
         localStorage.setItem(
           "expiryTime",
-          response.data.otpGeneratedTime || ""
+          response.data.otpGeneratedTime || "",
         );
         localStorage.setItem("primaryType", primaryType);
 
@@ -501,7 +509,7 @@ const WhatsappLogin: React.FC = () => {
           setMessage(
             `OTP sent successfully to your ${
               otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
-            } number`
+            } number`,
           );
           setResendDisabled(true);
           setIsPhoneDisabled(true);
@@ -524,7 +532,7 @@ const WhatsappLogin: React.FC = () => {
       } else {
         setError(
           error.response?.data?.message ||
-            "An error occurred. Please try again later."
+            "An error occurred. Please try again later.",
         );
       }
     } finally {
@@ -584,17 +592,17 @@ const WhatsappLogin: React.FC = () => {
 
       const response = await axios.post<UserResponse>(
         `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
-        requestBody
+        requestBody,
       );
       if (response.data && response.data.accessToken && response.data.userId) {
         setCustomerAccessToken(response.data.accessToken);
-        
+
         // Store refresh token if available
         if (response.data.refreshToken) {
           setRefreshToken(response.data.refreshToken);
           store.dispatch(updateRefreshToken(response.data.refreshToken));
         }
-        
+
         localStorage.setItem("primaryType", primaryType);
         localStorage.setItem("accessToken", response.data.accessToken);
         localStorage.setItem("token", response.data.accessToken);
@@ -607,7 +615,7 @@ const WhatsappLogin: React.FC = () => {
           } else {
             localStorage.setItem(
               "mobileNumber",
-              phoneWithoutCode.replace(countryCode, "")
+              phoneWithoutCode.replace(countryCode, ""),
             );
           }
           localStorage.removeItem("mobileOtpSession");
@@ -644,7 +652,7 @@ const WhatsappLogin: React.FC = () => {
       const error = err as AxiosError<ErrorResponse>;
       if (error.response?.status === 401) {
         setOtpError(
-          "Unauthorized: Invalid or missing access token. Please try again."
+          "Unauthorized: Invalid or missing access token. Please try again.",
         );
         handleAuthError(error, navigate);
       } else {
@@ -677,24 +685,24 @@ const WhatsappLogin: React.FC = () => {
 
         const response = await axios.post<UserResponse>(
           `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
-          requestBody
+          requestBody,
         );
         if (response.data) {
           localStorage.setItem(
             "mobileOtpSession",
-            response.data.mobileOtpSession || ""
+            response.data.mobileOtpSession || "",
           );
           localStorage.setItem("salt", response.data.salt || "");
           localStorage.setItem(
             "expiryTime",
-            response.data.otpGeneratedTime || ""
+            response.data.otpGeneratedTime || "",
           );
 
           setShowSuccessPopup(true);
           setMessage(
             `OTP resent successfully to your ${
               otpMethod === "whatsapp" ? "WhatsApp" : "mobile"
-            } number`
+            } number`,
           );
           setCredentials((prev) => ({
             otp: otpMethod === "whatsapp" ? ["", "", "", ""] : prev.otp,
@@ -712,7 +720,7 @@ const WhatsappLogin: React.FC = () => {
         const error = err as AxiosError<ErrorResponse>;
         setError(
           error.response?.data?.message ||
-            "An error occurred. Please try again later."
+            "An error occurred. Please try again later.",
         );
       } finally {
         setIsLoading(false);
@@ -780,8 +788,8 @@ const WhatsappLogin: React.FC = () => {
               {primaryType === "STUDENT"
                 ? "Login to Study Abroad"
                 : primaryType === "AGENT"
-                ? "Login to Bharat AI Store"
-                : "Login to ASKOXY.AI"}
+                  ? "Login to Bharat AI Store"
+                  : "Login to ASKOXY.AI"}
             </h2>
           </div>
 
@@ -984,8 +992,8 @@ const WhatsappLogin: React.FC = () => {
                     isGetOtpButtonDisabled || isLoading
                       ? "bg-gray-400 opacity-60"
                       : otpMethod === "whatsapp"
-                      ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
-                      : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
+                        ? "bg-green-500 hover:bg-green-600 active:bg-green-700"
+                        : "bg-purple-600 hover:bg-purple-700 active:bg-purple-800"
                   }`}
                 >
                   {isLoading ? (

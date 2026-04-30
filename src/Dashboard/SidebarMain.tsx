@@ -280,7 +280,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           to: "/main/appliedjobs",
-          label: "My Applications",
+          label: "My Job Applications",
           icon: <FaRegCheckCircle size={16} />,
         },
       ],

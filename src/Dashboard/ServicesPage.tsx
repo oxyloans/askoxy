@@ -14,6 +14,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import Header1 from "../components/Header";
 import Footer from "../components/Footer";
+import Loader from "../components/Loader";
 import { motion } from "framer-motion";
 import { message } from "antd";
 import VideoImage from "../assets/img/Videothumb.png";
@@ -41,6 +42,7 @@ const ServicesPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<CampaignWithId[]>([]);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("SERVICES");
+  const [loading, setLoading] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,6 +51,7 @@ const ServicesPage: React.FC = () => {
 console.log({uploadurlwithId})
   useEffect(() => {
     const loadCampaigns = async () => {
+      setLoading(true);
       try {
         const data = await fetchCampaigns();
         const campaignsWithIds: CampaignWithId[] = data.map((campaign: any) => ({
@@ -59,6 +62,8 @@ console.log({uploadurlwithId})
         setCampaigns(campaignsWithIds);
       } catch (err) {
         console.error("Error loading campaigns:", err);
+      } finally {
+        setLoading(false);
       }
     };
     loadCampaigns();
@@ -281,8 +286,16 @@ console.log({uploadurlwithId})
             </div>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-8">
+              <Loader />
+            </div>
+          )}
+
           {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+          {!loading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
             {activeTab === "SERVICES" && (
               <>
                 {/* Static Services */}
@@ -366,7 +379,8 @@ console.log({uploadurlwithId})
                 ))}
               </>
             )}
-          </div>
+            </div>
+          )}
 
           {/* (Optional) Study Abroad Section kept commented in original */}
           {/* ... original section left unchanged ... */}
