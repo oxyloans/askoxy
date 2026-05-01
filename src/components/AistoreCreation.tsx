@@ -17,7 +17,6 @@ import {
   Empty,
   Spin,
   Image,
-  Upload,
   Row,
   Col,
 } from "antd";
@@ -135,11 +134,7 @@ const AgentStoreManager: React.FC = () => {
 
   const userId = localStorage.getItem("userId");
 
-  // AntD Upload -> Form normalize
-  const normFile = (e: any) => {
-    if (Array.isArray(e)) return e;
-    return e?.fileList;
-  };
+
 
   const isXlsxFile = (file: File) => {
     const lowerName = file.name.toLowerCase();
@@ -202,20 +197,21 @@ const AgentStoreManager: React.FC = () => {
     try {
       const storeId = values?.storeId;
       const view = values?.view;
-      const fileObj = values?.file?.[0]?.originFileObj; // Upload component file
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = fileInput?.files?.[0];
 
       if (!storeId) return message.error("Please select a store");
       if (!view) return message.error("Please select view");
-      if (!fileObj) return message.error("Please choose a file");
+      if (!file) return message.error("Please choose a file");
       
-      if (!isXlsxFile(fileObj)) {
+      if (!isXlsxFile(file)) {
         return message.error("Only Excel files (.xlsx, .xls) are allowed");
       }
       
       // Validate Excel format
-      const isValidFormat = await validateExcelFormat(fileObj);
+      const isValidFormat = await validateExcelFormat(file);
       if (!isValidFormat) {
-        return; // Error message already shown in validateExcelFormat
+        return;
       }
       
       if (!userId)
@@ -227,30 +223,27 @@ const AgentStoreManager: React.FC = () => {
       formData.append("storeId", storeId);
       formData.append("userId", userId);
       formData.append("view", view);
-      formData.append("file", fileObj);
+      formData.append("file", file);
 
-      const res = await customerApi.post(
-        `${BASE_URL}/ai-service/agent/uploadMultiAgents1`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            // Don't set Content-Type, let browser handle multipart boundary
-          },
-        }
-      );
+      const res = await fetch(`${BASE_URL}/ai-service/agent/uploadMultiAgents1`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: formData
+      });
 
-      if (!res.data) {
-        throw new Error("Upload failed");
+      if (res.ok) {
+        message.success("Agents uploaded successfully");
+        setIsBulkUploadModal(false);
+        uploadForm.resetFields();
+        fetchStores();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Upload failed");
       }
-
-      message.success("Agents uploaded successfully");
-      setIsBulkUploadModal(false);
-      uploadForm.resetFields();
-
-      // refresh store list
-      fetchStores();
     } catch (err: any) {
+      console.error("Upload error:", err);
       message.error(err?.message || "Failed to upload agents");
     } finally {
       setBulkUploading(false);
@@ -931,7 +924,18 @@ const AgentStoreManager: React.FC = () => {
         <Form
           form={uploadForm}
           layout="vertical"
-          onFinish={handleMultiAgentUpload}
+          onFinish={(values) => {
+            // Check if file is selected before submitting
+            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+            const file = fileInput?.files?.[0];
+            
+            if (!file) {
+              message.error("Please select a file");
+              return;
+            }
+            
+            handleMultiAgentUpload(values);
+          }}
           initialValues={{ view: "public" }}
         >
           <Row gutter={[12, 12]}>
@@ -1077,40 +1081,37 @@ const AgentStoreManager: React.FC = () => {
               </Form.Item>
 
               <Form.Item
-                name="file"
                 label="Upload Excel File"
-                valuePropName="fileList"
-                getValueFromEvent={normFile}
-                rules={[
-                  { required: true, message: "Please upload Excel file" },
-                ]}
               >
-                <Upload.Dragger
-                  accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                  beforeUpload={async (file) => {
-                    if (!isXlsxFile(file as File)) {
-                      message.error("Only Excel files (.xlsx, .xls) are allowed");
-                      return Upload.LIST_IGNORE;
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (!isXlsxFile(file)) {
+                        message.error("Only Excel files (.xlsx, .xls) are allowed");
+                        e.target.value = '';
+                        return;
+                      }
+                      
+                      const isValidFormat = await validateExcelFormat(file);
+                      if (!isValidFormat) {
+                        e.target.value = '';
+                        return;
+                      }
+                      
+                      message.success(`File "${file.name}" selected successfully`);
                     }
-                    
-                    // Validate Excel format
-                    const isValidFormat = await validateExcelFormat(file as File);
-                    if (!isValidFormat) {
-                      return Upload.LIST_IGNORE;
-                    }
-                    
-                    return false;
                   }}
-                  maxCount={1}
-                >
-                  <p className="ant-upload-drag-icon" />
-                  <p className="ant-upload-text">
-                    Click or drag Excel file (.xlsx, .xls) to upload
-                  </p>
-                  <p className="ant-upload-hint">
-                    Only Excel files with correct format are accepted
-                  </p>
-                </Upload.Dragger>
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px dashed #d9d9d9',
+                    borderRadius: '6px',
+                    background: '#fafafa'
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>

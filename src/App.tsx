@@ -69,6 +69,8 @@ import Billing from "./Finvibe/components/Billing";
 import SendPollBasedRewards from "./AskoxyAdmin/SendPollBasedRewards";
 import ViewPollBasedRewards from "./AskoxyAdmin/ViewPollBasedRewards";
 import PlatformRedirect from "./components/PlatformRedirect";
+import HiringLandingPage from "./components/HiringLandingPage";
+import DRACertificationLanding from "./components/DRACertificationLanding";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -1123,6 +1125,13 @@ const App: React.FC = () => {
               <Route
                 path="/teststore/assistant/:id/:agentId"
                 element={<TestAgentDetails />}
+              /><Route
+                path="/may2Interview"
+                element={<HiringLandingPage />}
+              />
+               <Route
+                path="/DRAcertification"
+                element={<DRACertificationLanding />}
               />
 
               {/* ===================================================== */}

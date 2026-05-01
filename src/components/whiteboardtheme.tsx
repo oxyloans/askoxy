@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
@@ -17,8 +16,7 @@ import line2 from "../assets/img/line2.png";
 import line3 from "../assets/img/line3.png";
 import line4 from "../assets/img/line4.png";
 
-import oxygold from "../assets/img/oxygoldlogo.png";
-import oxyloansLogo from "../assets/img/image1.png";
+import hiringImg from "../assets/img/wearehiring2.png";
 
 type PreviewCardData = {
   title: string;
@@ -41,53 +39,14 @@ const Whiteboardtheme: React.FC = () => {
 
   const closePreview = () => setPreviewCard(null);
 
-  const handleJobNavigate = (id: string | null) => {
-    const userId = localStorage.getItem("userId");
-    const pathPrefix = userId ? "/main/viewjobdetails" : "/viewjobdetails";
-    navigate(id ? `${pathPrefix}/${id}/ALL` : `${pathPrefix}/default/ALL`);
-  };
-
-  const mobileLogoSettings = {
-    dots: false,
-    infinite: true,
-    speed: 700,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2400,
-    arrows: false,
-    pauseOnHover: false,
-    pauseOnFocus: false,
-    swipeToSlide: true,
-  };
-
   const handleCardClick = (
-    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad",
+    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad"
   ) => {
-    if (type === "studyabroad") {
-      navigate("/studyabroad");
-      return;
-    }
-
-    if (type === "bharat") {
-      navigate("/bharath-aistore");
-      return;
-    }
-
-    if (type === "jobs") {
-      navigate("/jobspremierleague");
-      return;
-    }
-
-    if (type === "gold") {
-      navigate("/oxygold");
-      return;
-    }
-
-    if (type === "loans") {
-      navigate("/loansandinvest");
-      return;
-    }
+    if (type === "studyabroad") return navigate("/studyabroad");
+    if (type === "bharat") return navigate("/bharath-aistore");
+    if (type === "jobs") return navigate("/jobspremierleague");
+    if (type === "gold") return navigate("/oxygold");
+    if (type === "loans") return navigate("/loansandinvest");
   };
 
   const sideCards = [
@@ -229,17 +188,14 @@ const Whiteboardtheme: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-6 pt-24 sm:px-6 sm:pb-8 sm:pt-28 md:px-8 lg:px-10 lg:pb-10 lg:pt-32 xl:px-12 xl:pb-12 xl:pt-36">
+      <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-6 pt-12 sm:px-6 sm:pb-8 sm:pt-14 md:px-8 lg:px-10 lg:pb-10 lg:pt-16 xl:px-12 xl:pb-12 xl:pt-16">
         <div className="mx-auto w-full max-w-[1320px]">
           <div className="relative mx-auto max-w-[1320px] text-center">
-            <motion.h5 className="mx-auto max-w-[1320px] text-[26px] leading-[1.1] tracking-[-0.03em] text-center sm:text-[34px] md:text-[44px] lg:text-[56px] xl:text-[62px]">
+            <motion.h5 className="mx-auto max-w-[1320px] text-center text-[26px] leading-[1.1] tracking-[-0.03em] sm:text-[34px] md:text-[44px] lg:text-[56px] xl:text-[62px]">
               <span className="block font-normal text-[#5E5E5E]">
                 One Responsible{" "}
                 <motion.span
-                  animate={{
-                    scale: [1, 1.08, 1],
-                    y: [0, -2, 0],
-                  }}
+                  animate={{ scale: [1, 1.08, 1], y: [0, -2, 0] }}
                   transition={{
                     duration: 0.9,
                     repeat: Infinity,
@@ -256,10 +212,7 @@ const Whiteboardtheme: React.FC = () => {
 
               <span className="mt-2 block font-normal text-[#5E5E5E]">
                 <motion.span
-                  animate={{
-                    scale: [1, 1.08, 1],
-                    y: [0, -2, 0],
-                  }}
+                  animate={{ scale: [1, 1.08, 1], y: [0, -2, 0] }}
                   transition={{
                     duration: 0.9,
                     repeat: Infinity,
@@ -274,10 +227,7 @@ const Whiteboardtheme: React.FC = () => {
                 </motion.span>{" "}
                 Premier{" "}
                 <motion.span
-                  animate={{
-                    scale: [1, 1.08, 1],
-                    y: [0, -2, 0],
-                  }}
+                  animate={{ scale: [1, 1.08, 1], y: [0, -2, 0] }}
                   transition={{
                     duration: 0.9,
                     repeat: Infinity,
@@ -296,7 +246,7 @@ const Whiteboardtheme: React.FC = () => {
             <img
               src={arrow0}
               alt="arrow"
-              className="pointer-events-none absolute hidden lg:block object-contain"
+              className="pointer-events-none absolute hidden object-contain lg:block"
               style={{
                 left: "17%",
                 top: "120%",
@@ -324,14 +274,11 @@ const Whiteboardtheme: React.FC = () => {
                   <img
                     src={web1}
                     alt="Loans & Investments"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_22px_rgba(107,53,199,0.22)]"
+                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3
-                    className="whitespace-pre-line text-center font-medium leading-[1.12] tracking-[-0.01em] text-[#6B35C7]"
-                    style={{ fontSize: "clamp(18px, 1.28vw, 24px)" }}
-                  >
+                  <h3 className="whitespace-pre-line text-center text-[22px] font-medium leading-[1.12] text-[#6B35C7]">
                     {"Loans &\nInvestments"}
                   </h3>
                 </div>
@@ -348,14 +295,11 @@ const Whiteboardtheme: React.FC = () => {
                   <img
                     src={web2}
                     alt="Our Jobs"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_22px_rgba(11,70,151,0.22)]"
+                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3
-                    className="text-center font-medium leading-[1.12] tracking-[-0.01em] text-[#0B4697]"
-                    style={{ fontSize: "clamp(18px, 1.28vw, 24px)" }}
-                  >
+                  <h3 className="text-center text-[22px] font-medium leading-[1.12] text-[#0B4697]">
                     Our Jobs
                   </h3>
                 </div>
@@ -363,9 +307,11 @@ const Whiteboardtheme: React.FC = () => {
             </div>
 
             <div className="flex h-full items-end justify-center">
-              <div
-                onClick={() => navigate("/studyabroad")}
-                className="group flex w-full cursor-pointer flex-col items-center justify-end"
+              <button
+                onClick={() => handleCardClick("studyabroad")}
+                className="group flex w-full cursor-pointer flex-col items-center justify-end border-0 bg-transparent p-0"
+                type="button"
+                aria-label="Open Study Abroad"
               >
                 <div className="flex h-[340px] items-end justify-center">
                   <img
@@ -375,7 +321,7 @@ const Whiteboardtheme: React.FC = () => {
                   />
                 </div>
                 <div className="mt-4 h-[38px]" />
-              </div>
+              </button>
             </div>
 
             <div className="flex h-full items-end justify-center">
@@ -388,14 +334,11 @@ const Whiteboardtheme: React.FC = () => {
                   <img
                     src={web4}
                     alt="Gold"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_22px_rgba(196,138,0,0.24)]"
+                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3
-                    className="text-center font-medium leading-[1.12] tracking-[-0.01em] text-[#C48A00]"
-                    style={{ fontSize: "clamp(18px, 1.28vw, 24px)" }}
-                  >
+                  <h3 className="text-center text-[22px] font-medium leading-[1.12] text-[#C48A00]">
                     Gold
                   </h3>
                 </div>
@@ -412,14 +355,11 @@ const Whiteboardtheme: React.FC = () => {
                   <img
                     src={web5}
                     alt="Bharat AI Store"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_22px_rgba(90,90,90,0.18)]"
+                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3
-                    className="whitespace-pre-line text-center font-medium leading-[1.12] tracking-[-0.01em] text-[#5A5A5A]"
-                    style={{ fontSize: "clamp(18px, 1.28vw, 24px)" }}
-                  >
+                  <h3 className="whitespace-pre-line text-center text-[22px] font-medium leading-[1.12] text-[#5A5A5A]">
                     {"Bharat\nAI Store"}
                   </h3>
                 </div>
@@ -429,13 +369,18 @@ const Whiteboardtheme: React.FC = () => {
 
           <div className="mt-10 md:hidden">
             <div className="mb-8 flex justify-center">
-              <div className="group">
+              <button
+                onClick={() => handleCardClick("studyabroad")}
+                className="group flex w-full max-w-[260px] cursor-pointer flex-col items-center justify-center border-0 bg-transparent p-0 active:scale-[0.98]"
+                type="button"
+                aria-label="Open Study Abroad"
+              >
                 <img
                   src={web3}
-                  alt="GCCMate"
+                  alt="Study Abroad"
                   className="w-full max-w-[230px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_24px_rgba(196,40,137,0.18)]"
                 />
-              </div>
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6">
@@ -453,6 +398,7 @@ const Whiteboardtheme: React.FC = () => {
                       className={`w-full max-w-[145px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:brightness-[1.02] ${card.hoverShadow}`}
                     />
                   </div>
+
                   <div className="mt-3 flex h-[50px] items-start justify-center">
                     <h3
                       className={`whitespace-pre-line text-center font-medium leading-[1.12] tracking-[-0.01em] ${card.titleClass}`}
@@ -557,6 +503,22 @@ const Whiteboardtheme: React.FC = () => {
             </div>
           </motion.div>
         </div>
+      </div>
+
+      {/* We Are Hiring PNG - top right with more gap */}
+      <div className="fixed right-16 top-[150px] z-[998] sm:right-8 md:right-20 md:top-[175px] lg:right-24 lg:top-[190px]">
+        <button
+          onClick={() => navigate("/may2Interview")}
+          className="group flex flex-col items-center"
+          type="button"
+          aria-label="Open We Are Hiring"
+        >
+          <img
+            src={hiringImg}
+            alt="We Are Hiring"
+            className="w-[85px] object-contain drop-shadow-2xl transition duration-300 group-hover:-translate-y-1 group-hover:scale-110 sm:w-[100px] md:w-[115px] lg:w-[125px]"
+          />
+        </button>
       </div>
     </section>
   );
