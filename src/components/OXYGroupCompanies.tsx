@@ -57,7 +57,7 @@ const OXYGroupCompanies: React.FC = () => {
   };
 
   return (
-    <section className="w-full bg-white py-5 sm:py-6 md:py-6 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.03)] border-t border-[rgba(0,0,0,0.05)]">
+    <section className="w-full py-5 sm:py-6 md:py-6 bg-white">
       <div className="mx-auto max-w-[1800px] px-3 sm:px-5 md:px-8 lg:px-10">
         {/* Desktop / Tablet */}
         <div className="hidden sm:block">
@@ -68,12 +68,12 @@ const OXYGroupCompanies: React.FC = () => {
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex min-h-[92px] items-center justify-center"
+                className="flex min-h-[92px] items-center justify-center"
               >
                 <img
                   src={item.logo}
                   alt={item.name}
-                  className={`${item.desktopClass} w-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]`}
+                  className={`${item.desktopClass} w-auto max-w-full object-contain`}
                 />
               </a>
             ))}

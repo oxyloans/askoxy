@@ -86,12 +86,9 @@ const FreeAiBook: React.FC = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-purple-50 py-12 px-4 sm:px-6 md:px-12">
-      {/* ✅ background space blobs */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-300/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-40 -right-24 h-80 w-80 rounded-full bg-indigo-300/30 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-pink-300/20 blur-3xl" />
-
+    <section className="relative overflow-hidden bg-white py-12 px-4 sm:px-6 md:px-12">
+     
+    
       <div className="relative mx-auto w-full max-w-7xl">
         {/* ===== Heading ===== */}
         <div className="text-center mb-8">

@@ -85,8 +85,8 @@ const Whiteboardtheme: React.FC = () => {
   ];
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#f7f7f7] text-[#1a1a1a]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(120,170,255,0.22),transparent_16%),radial-gradient(circle_at_top_right,rgba(255,94,189,0.20),transparent_16%),radial-gradient(circle_at_bottom_left,rgba(255,219,115,0.24),transparent_14%),radial-gradient(circle_at_66%_36%,rgba(177,112,255,0.14),transparent_12%),linear-gradient(180deg,#ffffff_0%,#fafafa_40%,#f5f5f6_100%)]" />
+    <section className="relative w-full overflow-hidden bg-white text-[#1a1a1a]">
+      <div className="pointer-events-none absolute inset-0" />
 
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.22]"
@@ -101,14 +101,14 @@ const Whiteboardtheme: React.FC = () => {
         }}
       />
 
-      <div className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:radial-gradient(circle,rgba(0,0,0,0.12)_1px,transparent_1px)] [background-size:24px_24px]" />
+      {/* <div className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:radial-gradient(circle,rgba(0,0,0,0.12)_1px,transparent_1px)] [background-size:24px_24px]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[180px] bg-gradient-to-b from-white via-white/80 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[110px] bg-gradient-to-t from-white via-white/80 to-transparent" />
 
       <div className="pointer-events-none absolute -left-10 top-0 h-28 w-28 rounded-full bg-[#84B6FF]/40 blur-3xl md:h-36 md:w-36" />
       <div className="pointer-events-none absolute right-4 top-[130px] h-36 w-36 rounded-full bg-[#FF67C0]/28 blur-3xl md:h-56 md:w-56" />
       <div className="pointer-events-none absolute left-10 bottom-10 h-24 w-24 rounded-full bg-[#FFD963]/28 blur-3xl md:h-36 md:w-36" />
-      <div className="pointer-events-none absolute right-[33%] top-[34%] h-20 w-20 rounded-full bg-[#B86FFF]/18 blur-3xl md:h-28 md:w-28" />
+      <div className="pointer-events-none absolute right-[33%] top-[34%] h-20 w-20 rounded-full bg-[#B86FFF]/18 blur-3xl md:h-28 md:w-28" /> */}
 
       <AnimatePresence>
         {previewCard && (
@@ -188,7 +188,7 @@ const Whiteboardtheme: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-6 pt-12 sm:px-6 sm:pb-8 sm:pt-14 md:px-8 lg:px-10 lg:pb-10 lg:pt-16 xl:px-12 xl:pb-12 xl:pt-16">
+      <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-6 pt-6 sm:px-6 sm:pb-8 sm:pt-8 md:px-8 lg:px-10 lg:pb-10 lg:pt-10 xl:px-12 xl:pb-12 xl:pt-10">
         <div className="mx-auto w-full max-w-[1320px]">
           <div className="relative mx-auto max-w-[1320px] text-center">
             <motion.h5 className="mx-auto max-w-[1320px] text-center text-[26px] leading-[1.1] tracking-[-0.03em] sm:text-[34px] md:text-[44px] lg:text-[56px] xl:text-[62px]">
@@ -505,54 +505,21 @@ const Whiteboardtheme: React.FC = () => {
         </div>
       </div>
 
-      {/* We Are Hiring PNG - top right with more gap */}
-      <div className="mt-10 w-full pb-24 text-center sm:mt-10 sm:pb-28 md:pb-0 lg:mt-16">
-        {/* We Are Hiring - Top Right (Mobile Fixed Position inside hero) */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.7, y: -20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="
-    absolute z-[50]
-
-    /* MOBILE POSITION (your yellow area) */
-    top-[140px] right-[12px]
-
-    /* SMALL DEVICES */
-    sm:top-[150px] sm:right-[20px]
-
-    /* TABLET */
-    md:top-[170px] md:right-[60px]
-
-    /* DESKTOP (keep your original floating feel) */
-    lg:fixed lg:top-[190px] lg:right-20
-  "
+      
+      {/* <div className="fixed right-16 top-[150px] z-[998] sm:right-8 md:right-20 md:top-[175px] lg:right-24 lg:top-[190px]">
+        <button
+          onClick={() => navigate("/may2Interview")}
+          className="group flex flex-col items-center"
+          type="button"
+          aria-label="Open We Are Hiring"
         >
-          <motion.button
-            onClick={() => navigate("/may2Interview")}
-            type="button"
-            className="bg-transparent border-0 p-0"
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-          >
-            <motion.img
-              src={hiringImg}
-              alt="We Are Hiring"
-              className="w-[70px] sm:w-[85px] md:w-[110px] lg:w-[125px] object-contain
-                 drop-shadow-[0_8px_18px_rgba(0,0,0,0.18)]"
-              animate={{
-                y: [0, -6, 0],
-                rotate: [0, -2, 2, 0],
-              }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.button>
-        </motion.div>
-      </div>
+          <img
+            src={hiringImg}
+            alt="We Are Hiring"
+            className="w-[85px] object-contain drop-shadow-2xl transition duration-300 group-hover:-translate-y-1 group-hover:scale-110 sm:w-[100px] md:w-[115px] lg:w-[125px]"
+          />
+        </button>
+      </div> */}
     </section>
   );
 };

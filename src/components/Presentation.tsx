@@ -33,8 +33,8 @@ const PdfPages: React.FC = () => {
   };
 
   return (
-    <section className="bg-gradient-to-br  from-purple-50 via-gray-50 to-indigo-50 py-10 sm:py-10 px-4 sm:px-8 lg:px-16">
-      {/* Header Section */}
+    <section className="bg-white py-10 sm:py-10 px-4 sm:px-8 lg:px-16">
+     
       <div className="text-center mb-10">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-indigo-800 leading-tight mb-3">
           Explore Our Presentations

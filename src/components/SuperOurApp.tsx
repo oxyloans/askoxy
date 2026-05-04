@@ -124,23 +124,23 @@ export default function SuperOurApp() {
 
   return (
     <div className="w-full overflow-hidden">
-      <div className="relative w-full overflow-hidden bg-[#f7f7f7] text-[#1a1a1a]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(120,170,255,0.22),transparent_16%),radial-gradient(circle_at_top_right,rgba(255,94,189,0.18),transparent_16%),radial-gradient(circle_at_bottom_left,rgba(255,219,115,0.18),transparent_14%),radial-gradient(circle_at_70%_35%,rgba(177,112,255,0.12),transparent_12%),linear-gradient(180deg,#ffffff_0%,#fafafa_40%,#f5f5f6_100%)]" />
+      <div className="relative w-full overflow-hidden bg-white text-[#1a1a1a]">
+        <div className="pointer-events-none absolute inset-0 " />
 
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.20]"
-          style={{
-            backgroundImage: `
-              linear-gradient(30deg, rgba(170,170,170,0.18) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.14) 87.5%, rgba(170,170,170,0.14)),
-              linear-gradient(150deg, rgba(170,170,170,0.18) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.14) 87.5%, rgba(170,170,170,0.14)),
-              linear-gradient(90deg, rgba(170,170,170,0.06) 2%, transparent 2.5%, transparent 97%, rgba(170,170,170,0.06) 97.5%, rgba(170,170,170,0.06))
-            `,
-            backgroundSize: "42px 72px",
-            backgroundPosition: "0 0, 0 0, 21px 36px",
-          }}
+          // style={{
+          //   backgroundImage: `
+          //     linear-gradient(30deg, rgba(170,170,170,0.18) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.14) 87.5%, rgba(170,170,170,0.14)),
+          //     linear-gradient(150deg, rgba(170,170,170,0.18) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.14) 87.5%, rgba(170,170,170,0.14)),
+          //     linear-gradient(90deg, rgba(170,170,170,0.06) 2%, transparent 2.5%, transparent 97%, rgba(170,170,170,0.06) 97.5%, rgba(170,170,170,0.06))
+          //   `,
+          //   backgroundSize: "42px 72px",
+          //   backgroundPosition: "0 0, 0 0, 21px 36px",
+          // }}
         />
 
-        <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(circle,rgba(0,0,0,0.14)_1px,transparent_1px)] [background-size:24px_24px]" />
+        {/* <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(circle,rgba(0,0,0,0.14)_1px,transparent_1px)] [background-size:24px_24px]" />
 
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[180px] bg-gradient-to-b from-white via-white/80 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[180px] bg-gradient-to-t from-white via-white/80 to-transparent" />
@@ -148,7 +148,7 @@ export default function SuperOurApp() {
         <div className="pointer-events-none absolute -left-10 top-0 h-28 w-28 rounded-full bg-[#84B6FF]/35 blur-3xl md:h-36 md:w-36" />
         <div className="pointer-events-none absolute right-4 top-[130px] h-36 w-36 rounded-full bg-[#FF67C0]/22 blur-3xl md:h-56 md:w-56" />
         <div className="pointer-events-none absolute left-10 bottom-10 h-24 w-24 rounded-full bg-[#FFD963]/22 blur-3xl md:h-36 md:w-36" />
-        <div className="pointer-events-none absolute right-[33%] top-[34%] h-20 w-20 rounded-full bg-[#B86FFF]/14 blur-3xl md:h-28 md:w-28" />
+        <div className="pointer-events-none absolute right-[33%] top-[34%] h-20 w-20 rounded-full bg-[#B86FFF]/14 blur-3xl md:h-28 md:w-28" /> */}
 
         <div className="relative z-10 mx-auto max-w-[1240px] px-3 pb-0 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10">
           <div className="flex flex-col-reverse items-center gap-6 sm:gap-8 lg:flex-row lg:items-end lg:gap-12">

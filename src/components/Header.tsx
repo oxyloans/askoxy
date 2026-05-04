@@ -20,11 +20,32 @@ const Header: React.FC = () => {
     const accessToken = localStorage.getItem("accessToken");
 
     if (userId && accessToken) {
-      const redirectPath =
-        sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+      // Set current path in sessionStorage first
+      const currentPath = window.location.pathname;
+      sessionStorage.setItem("currentPath", currentPath);
+      
+      // Get current path from sessionStorage and check
+      const storedCurrentPath = sessionStorage.getItem("currentPath");
+      let redirectPath;
+      
+      if (storedCurrentPath === "/myblogs") {
+        redirectPath = "/main/dashboard/myblogs";
+      } else {
+        redirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+      }
+      
       toast.success("Welcome back! Redirecting to dashboard...");
       navigate(redirectPath);
       return;
+    }
+
+    // User is not logged in - set redirect path based on current location
+    const currentPath = window.location.pathname;
+    if (currentPath === "/myblogs") {
+      sessionStorage.setItem("redirectPath", "/main/dashboard/myblogs");
+    } else {
+      const existingRedirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+      sessionStorage.setItem("redirectPath", existingRedirectPath);
     }
 
     navigate("/whatsapplogin");

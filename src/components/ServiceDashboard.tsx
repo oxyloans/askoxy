@@ -37,7 +37,9 @@ const ServiceDashboard: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+  const [processingOrderId, setProcessingOrderId] = useState<string | null>(
+    null,
+  );
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [additionalNotes, setAdditionalNotes] = useState("");
@@ -47,17 +49,20 @@ const ServiceDashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(true);
 
   // Get userId from localStorage (this should be partnerId for this API)
-  const userId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
-  const token = typeof window !== 'undefined' ? (
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken") ||
-    localStorage.getItem("accessToken")
-  ) : null;
-  const customerId = typeof window !== 'undefined' ? (
-    localStorage.getItem("customerId") ||
-    localStorage.getItem("userId") ||
-    userId
-  ) : null;
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token") ||
+        localStorage.getItem("authToken") ||
+        localStorage.getItem("accessToken")
+      : null;
+  const customerId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("customerId") ||
+        localStorage.getItem("userId") ||
+        userId
+      : null;
 
   // API URLs
   const getOrdersApiUrl = (userId: string) => {
@@ -103,19 +108,19 @@ const ServiceDashboard: React.FC = () => {
 
   // Check if profile is complete - Check firstName
   const isProfileComplete = (profile: UserProfile | null): boolean => {
-  if (!profile) return false;
+    if (!profile) return false;
 
-  const firstName = profile.firstName;
-  const hasFirstName = Boolean(firstName && firstName.trim().length > 0);
+    const firstName = profile.firstName;
+    const hasFirstName = Boolean(firstName && firstName.trim().length > 0);
 
-  // const whatsappNumber = profile.whatsappNumber;
-  // const hasWhatsappNumber = Boolean(whatsappNumber && whatsappNumber.trim().length > 0);
+    // const whatsappNumber = profile.whatsappNumber;
+    // const hasWhatsappNumber = Boolean(whatsappNumber && whatsappNumber.trim().length > 0);
 
-  console.log("Checking firstName:", firstName, "Valid:", hasFirstName);
-  // console.log("Checking whatsappNumber:", whatsappNumber, "Valid:", hasWhatsappNumber);
+    console.log("Checking firstName:", firstName, "Valid:", hasFirstName);
+    // console.log("Checking whatsappNumber:", whatsappNumber, "Valid:", hasWhatsappNumber);
 
-  return hasFirstName ;
-}
+    return hasFirstName;
+  };
   // Handle profile check and navigation
   const handleProfileCheck = async () => {
     const profile = await getProfile();
@@ -126,7 +131,7 @@ const ServiceDashboard: React.FC = () => {
     } else {
       console.log("Profile incomplete, navigating to Profile screen");
       const proceed = window.confirm(
-        "Profile Incomplete. Please complete your profile to access the dashboard. Click OK to go to Profile."
+        "Profile Incomplete. Please complete your profile to access the dashboard. Click OK to go to Profile.",
       );
       if (proceed) {
         navigate("/main/profile");
@@ -164,12 +169,16 @@ const ServiceDashboard: React.FC = () => {
         cacsOrderId: orderId,
       };
 
-      const response = await customerApi.post(getApproveOrderApiUrl(), requestBody, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+      const response = await customerApi.post(
+        getApproveOrderApiUrl(),
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
         },
-      });
+      );
 
       if (response.data && response.data.status === "CA_APPROVED") {
         // Update local state
@@ -177,8 +186,8 @@ const ServiceDashboard: React.FC = () => {
           prevOrders.map((order) =>
             order.orderId === orderId
               ? { ...order, status: "CA_APPROVED" }
-              : order
-          )
+              : order,
+          ),
         );
 
         alert("Order approved successfully!");
@@ -189,7 +198,7 @@ const ServiceDashboard: React.FC = () => {
       console.error("Error approving order:", error);
       alert(
         error.response?.data?.message ||
-          "Failed to approve order. Please try again."
+          "Failed to approve order. Please try again.",
       );
     } finally {
       setProcessingOrderId(null);
@@ -206,12 +215,16 @@ const ServiceDashboard: React.FC = () => {
         ...(notes.trim() && { additionalNotes: notes.trim() }),
       };
 
-      const response = await customerApi.post(getRejectOrderApiUrl(), requestBody, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+      const response = await customerApi.post(
+        getRejectOrderApiUrl(),
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
         },
-      });
+      );
 
       if (response.data && response.data.status === "CA_REJECTED") {
         // Update local state
@@ -219,8 +232,8 @@ const ServiceDashboard: React.FC = () => {
           prevOrders.map((order) =>
             order.orderId === orderId
               ? { ...order, status: "CA_REJECTED" }
-              : order
-          )
+              : order,
+          ),
         );
 
         alert("Order rejected successfully!");
@@ -231,7 +244,7 @@ const ServiceDashboard: React.FC = () => {
       console.error("Error rejecting order:", error);
       alert(
         error.response?.data?.message ||
-          "Failed to reject order. Please try again."
+          "Failed to reject order. Please try again.",
       );
     } finally {
       setProcessingOrderId(null);
@@ -244,7 +257,7 @@ const ServiceDashboard: React.FC = () => {
   // Handle approve button press
   const handleApprove = (orderId: string) => {
     const confirmed = window.confirm(
-      "Are you sure you want to approve this order?"
+      "Are you sure you want to approve this order?",
     );
     if (confirmed) {
       approveOrder(orderId);
@@ -319,13 +332,18 @@ const ServiceDashboard: React.FC = () => {
 
   // Render individual order card
   const renderOrderCard = (item: Order, index: number) => (
-    <div key={item.orderId} className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+    <div
+      key={item.orderId}
+      className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
+    >
       {/* Card Header */}
       <div className="flex justify-between items-center mb-4 pb-3 border-b-2 border-gray-100">
         <div className="text-lg font-bold text-gray-900 tracking-tight">
           Order ID: ...{getLastFourDigits(item.orderId)}
         </div>
-        <div className={`px-4 py-1.5 rounded-full text-white text-xs font-bold uppercase tracking-wider min-w-20 text-center ${getStatusColorClasses(item.status)}`}>
+        <div
+          className={`px-4 py-1.5 rounded-full text-white text-xs font-bold uppercase tracking-wider min-w-20 text-center ${getStatusColorClasses(item.status)}`}
+        >
           {item.status}
         </div>
       </div>
@@ -333,49 +351,72 @@ const ServiceDashboard: React.FC = () => {
       {/* Card Body */}
       <div className="space-y-3">
         <div className="flex items-start gap-3">
-          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">User ID:</span>
-          <span className="text-sm text-gray-500">....{getLastFourDigits(item.userId)}</span>
+          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">
+            User ID:
+          </span>
+          <span className="text-sm text-gray-500">
+            ....{getLastFourDigits(item.userId)}
+          </span>
         </div>
 
         <div className="flex items-start gap-3">
-          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">Name:</span>
+          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">
+            Name:
+          </span>
           <span className="text-sm text-gray-900 font-semibold">
             {item.customerName || "N/A"}
           </span>
         </div>
 
         <div className="flex items-start gap-3">
-          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">Service:</span>
+          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">
+            Service:
+          </span>
           <span className="text-sm text-gray-700 font-medium">
             {item.agreementServiceName || "N/A"}
           </span>
         </div>
 
         <div className="flex items-start gap-3">
-          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">Mobile:</span>
+          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">
+            Mobile:
+          </span>
           <span className="text-sm text-green-600 font-semibold font-mono">
             {formatMobileNumber(item.mobileNumber)}
           </span>
         </div>
 
         <div className="flex items-start gap-3">
-          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">Address:</span>
-          <span className="text-sm text-gray-500 leading-relaxed" title={item.address || "N/A"}>
+          <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">
+            Address:
+          </span>
+          <span
+            className="text-sm text-gray-500 leading-relaxed"
+            title={item.address || "N/A"}
+          >
             {item.address || "N/A"}
           </span>
         </div>
 
         {item.price && (
           <div className="flex items-start gap-3">
-            <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">Price:</span>
-            <span className="text-base text-red-600 font-bold">₹{item.price}</span>
+            <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">
+              Price:
+            </span>
+            <span className="text-base text-red-600 font-bold">
+              ₹{item.price}
+            </span>
           </div>
         )}
 
         {item.createdAt && (
           <div className="flex items-start gap-3">
-            <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">Created:</span>
-            <span className="text-xs text-gray-500 font-mono">{formatDate(item.createdAt)}</span>
+            <span className="font-semibold text-sm text-gray-600 min-w-20 shrink-0">
+              Created:
+            </span>
+            <span className="text-xs text-gray-500 font-mono">
+              {formatDate(item.createdAt)}
+            </span>
           </div>
         )}
       </div>
@@ -385,9 +426,9 @@ const ServiceDashboard: React.FC = () => {
         <div className="flex gap-3 mt-5 pt-4 border-t-2 border-gray-100">
           <button
             className={`flex-1 py-3.5 px-5 border-none rounded-xl text-sm font-semibold cursor-pointer transition-all duration-300 min-h-12 flex items-center justify-center gap-1.5 tracking-wide ${
-              processingOrderId === item.orderId 
-                ? 'opacity-60 cursor-not-allowed' 
-                : 'hover:shadow-lg hover:-translate-y-0.5'
+              processingOrderId === item.orderId
+                ? "opacity-60 cursor-not-allowed"
+                : "hover:shadow-lg hover:-translate-y-0.5"
             } bg-green-500 text-white shadow-lg shadow-green-500/30`}
             onClick={() => handleApprove(item.orderId)}
             disabled={processingOrderId === item.orderId}
@@ -401,9 +442,9 @@ const ServiceDashboard: React.FC = () => {
 
           <button
             className={`flex-1 py-3.5 px-5 border-none rounded-xl text-sm font-semibold cursor-pointer transition-all duration-300 min-h-12 flex items-center justify-center gap-1.5 tracking-wide ${
-              processingOrderId === item.orderId 
-                ? 'opacity-60 cursor-not-allowed' 
-                : 'hover:shadow-lg hover:-translate-y-0.5'
+              processingOrderId === item.orderId
+                ? "opacity-60 cursor-not-allowed"
+                : "hover:shadow-lg hover:-translate-y-0.5"
             } bg-red-500 text-white shadow-lg shadow-red-500/30`}
             onClick={() => handleReject(item.orderId)}
             disabled={processingOrderId === item.orderId}
@@ -423,8 +464,8 @@ const ServiceDashboard: React.FC = () => {
             {item.status === "CA_APPROVED"
               ? "✅ Approved"
               : item.status === "CA_REJECTED"
-              ? "❌ Rejected"
-              : "✅ Processed"}
+                ? "❌ Rejected"
+                : "✅ Processed"}
           </span>
         </div>
       )}
@@ -441,7 +482,9 @@ const ServiceDashboard: React.FC = () => {
             <div className="w-11 h-11 rounded-full bg-white/15 backdrop-blur-xl flex justify-center items-center border-2 border-white/20">
               <span className="text-xl">🕵🏻</span>
             </div>
-            <h1 className="text-xl text-white font-bold tracking-tight">Orders Dashboard</h1>
+            <h1 className="text-xl text-white font-bold tracking-tight">
+              Orders Dashboard
+            </h1>
           </div>
           <button className="p-2.5 rounded-xl bg-white/15 backdrop-blur-xl border-2 border-white/20 min-w-12 min-h-12 flex items-center justify-center hover:bg-white/25 transition-all duration-300">
             <span className="text-lg text-white font-bold">←</span>
@@ -462,26 +505,27 @@ const ServiceDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
       {/* Fixed Header */}
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between 
-  px-5 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 backdrop-blur-md">
-  
-  <div className="flex items-center gap-3">
-    <div className="w-12 h-12 rounded-full bg-white/20 flex justify-center items-center border border-white/30">
-      <span className="text-3xl leading-none">🕵🏻</span>
-    </div>
-    <h1 className="text-xl text-white font-bold tracking-tight">
-      CA Partners Dashboard
-    </h1>
-  </div>
+      <div
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between 
+  px-5 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 backdrop-blur-md"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex justify-center items-center border border-white/30">
+            <span className="text-3xl leading-none">🕵🏻</span>
+          </div>
+          <h1 className="text-xl text-white font-bold tracking-tight">
+            CA Partners Dashboard
+          </h1>
+        </div>
 
-  <button 
-    className="p-2.5 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center 
+        <button
+          className="p-2.5 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center 
       hover:bg-white/30 transition-all duration-300"
-    onClick={() => navigate(-1)}
-  >
-    <span className="text-lg text-white font-bold">←</span>
-  </button>
-</div>
+          onClick={() => navigate(-1)}
+        >
+          <span className="text-lg text-white font-bold">←</span>
+        </button>
+      </div>
 
       {/* Scrollable Main Content with proper padding from fixed header */}
       <div className="flex-1 pt-18 overflow-y-auto">
@@ -490,22 +534,36 @@ const ServiceDashboard: React.FC = () => {
           <div className="w-full">
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex justify-around items-center">
               <div className="text-center flex-1">
-                <div className="text-4xl font-extrabold text-gray-700 mb-1 leading-none">{orders.length}</div>
-                <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Total Orders</div>
+                <div className="text-4xl font-extrabold text-gray-700 mb-1 leading-none">
+                  {orders.length}
+                </div>
+                <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">
+                  Total Orders
+                </div>
               </div>
               <div className="w-px h-10 bg-gray-200 mx-4"></div>
               <div className="text-center flex-1">
                 <div className="text-4xl font-extrabold text-gray-700 mb-1 leading-none">
-                  {orders.filter((o) => o.status === "CS_APPROVED" || o.status === "CA_APPROVED").length}
+                  {
+                    orders.filter(
+                      (o) =>
+                        o.status === "CS_APPROVED" ||
+                        o.status === "CA_APPROVED",
+                    ).length
+                  }
                 </div>
-                <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Approved</div>
+                <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">
+                  Approved
+                </div>
               </div>
               <div className="w-px h-10 bg-gray-200 mx-4"></div>
               <div className="text-center flex-1">
                 <div className="text-4xl font-extrabold text-gray-700 mb-1 leading-none">
                   {orders.filter((o) => o.status === "CA_REJECTED").length}
                 </div>
-                <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Rejected</div>
+                <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">
+                  Rejected
+                </div>
               </div>
             </div>
           </div>
@@ -513,26 +571,31 @@ const ServiceDashboard: React.FC = () => {
           {/* Orders Section */}
           <div className="flex-1 flex flex-col gap-4">
             <div className="flex justify-between items-center flex-wrap gap-3">
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Partner Orders</h2>
-<button
-  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 
-    ${refreshing 
-      ? 'bg-indigo-400 text-white cursor-not-allowed' 
-      : 'bg-indigo-500 text-white hover:bg-indigo-600'}`
-  }
-  onClick={onRefresh}
-  disabled={refreshing}
->
-  <span className="text-base">{refreshing ? "🔄" : "🔄"}</span>
-  {refreshing ? "Refreshing..." : "Refresh"}
-</button>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                Partner Orders
+              </h2>
+              <button
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 
+    ${
+      refreshing
+        ? "bg-indigo-400 text-white cursor-not-allowed"
+        : "bg-indigo-500 text-white hover:bg-indigo-600"
+    }`}
+                onClick={onRefresh}
+                disabled={refreshing}
+              >
+                <span className="text-base">{refreshing ? "🔄" : "🔄"}</span>
+                {refreshing ? "Refreshing..." : "Refresh"}
+              </button>
             </div>
 
             {orders.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-15 px-5 bg-white rounded-2xl shadow-lg text-center">
                 <div className="text-6xl mb-4">📭</div>
-                <p className="text-base text-gray-500 font-medium mb-6">No orders found</p>
-                <button 
+                <p className="text-base text-gray-500 font-medium mb-6">
+                  No orders found
+                </p>
+                <button
                   className="py-3 px-6 bg-indigo-500 text-white border-none rounded-xl cursor-pointer text-sm font-semibold hover:bg-indigo-600 transition-all duration-300"
                   onClick={fetchOrders}
                 >
@@ -550,7 +613,7 @@ const ServiceDashboard: React.FC = () => {
 
       {/* Reject Modal */}
       {rejectModalVisible && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-5 backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -563,7 +626,7 @@ const ServiceDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-90vh overflow-hidden shadow-2xl">
             <div className="flex justify-between items-center p-5 pb-5 border-b-2 border-gray-100">
               <h3 className="text-xl font-bold text-gray-900">Reject Order</h3>
-              <button 
+              <button
                 className="w-9 h-9 rounded-full bg-gray-100 border-none cursor-pointer text-xl text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-all duration-300"
                 onClick={() => {
                   setRejectModalVisible(false);
@@ -574,14 +637,14 @@ const ServiceDashboard: React.FC = () => {
                 ×
               </button>
             </div>
-            
+
             <p className="text-sm text-gray-500 mx-6 my-4 font-medium">
               Please provide additional notes for rejection (optional):
             </p>
 
             <textarea
               className="w-full mx-6 mb-6 p-3 border-2 border-gray-200 rounded-xl text-sm resize-y outline-none min-h-24 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300"
-              style={{ width: 'calc(100% - 3rem)' }}
+              style={{ width: "calc(100% - 3rem)" }}
               placeholder="Enter rejection reason..."
               value={additionalNotes}
               onChange={(e) => setAdditionalNotes(e.target.value)}
