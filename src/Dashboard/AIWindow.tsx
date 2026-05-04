@@ -431,7 +431,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         await pc.setLocalDescription(offer);
 
         const model = "gpt-4o-realtime-preview-2025-06-03";
-        const sdpRes = await customerApi.post(
+        const sdpRes = await axios.post(
           `https://api.openai.com/v1/realtime?model=${model}`,
           offer.sdp,
           {

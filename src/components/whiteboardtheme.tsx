@@ -40,7 +40,7 @@ const Whiteboardtheme: React.FC = () => {
   const closePreview = () => setPreviewCard(null);
 
   const handleCardClick = (
-    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad"
+    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad",
   ) => {
     if (type === "studyabroad") return navigate("/studyabroad");
     if (type === "bharat") return navigate("/bharath-aistore");
@@ -506,19 +506,52 @@ const Whiteboardtheme: React.FC = () => {
       </div>
 
       {/* We Are Hiring PNG - top right with more gap */}
-      <div className="fixed right-16 top-[150px] z-[998] sm:right-8 md:right-20 md:top-[175px] lg:right-24 lg:top-[190px]">
-        <button
-          onClick={() => navigate("/may2Interview")}
-          className="group flex flex-col items-center"
-          type="button"
-          aria-label="Open We Are Hiring"
+      <div className="mt-10 w-full pb-24 text-center sm:mt-10 sm:pb-28 md:pb-0 lg:mt-16">
+        {/* We Are Hiring - Top Right (Mobile Fixed Position inside hero) */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.7, y: -20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="
+    absolute z-[50]
+
+    /* MOBILE POSITION (your yellow area) */
+    top-[140px] right-[12px]
+
+    /* SMALL DEVICES */
+    sm:top-[150px] sm:right-[20px]
+
+    /* TABLET */
+    md:top-[170px] md:right-[60px]
+
+    /* DESKTOP (keep your original floating feel) */
+    lg:fixed lg:top-[190px] lg:right-20
+  "
         >
-          <img
-            src={hiringImg}
-            alt="We Are Hiring"
-            className="w-[85px] object-contain drop-shadow-2xl transition duration-300 group-hover:-translate-y-1 group-hover:scale-110 sm:w-[100px] md:w-[115px] lg:w-[125px]"
-          />
-        </button>
+          <motion.button
+            onClick={() => navigate("/may2Interview")}
+            type="button"
+            className="bg-transparent border-0 p-0"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+          >
+            <motion.img
+              src={hiringImg}
+              alt="We Are Hiring"
+              className="w-[70px] sm:w-[85px] md:w-[110px] lg:w-[125px] object-contain
+                 drop-shadow-[0_8px_18px_rgba(0,0,0,0.18)]"
+              animate={{
+                y: [0, -6, 0],
+                rotate: [0, -2, 2, 0],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          </motion.button>
+        </motion.div>
       </div>
     </section>
   );

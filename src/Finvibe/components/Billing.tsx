@@ -55,22 +55,22 @@ const plans = [
 ];
 
 const finvibeFeatures = [
+  "Covers 15,000+ RBI Regulated Entity Requirements",
+  "Follows RBI Master Directions & Guidelines — 1,00,000+ Master Circulars",
+  "Supports 11 Bank Types: Small Finance Banks, Urban Co-operative Banks, Payment Banks, Local Area Banks & more",
   "Complete Banking Application from a Single Prompt",
   "Frontend + Backend + Database Code — Ready to Deploy",
-  "Covers 1,500+ RBI Regulated Entity Requirements",
-  "Follows RBI Master Directions & Guidelines",
-  "Supports 11 Bank Types: Small Finance Banks, Urban Co-operative Banks, Payment Banks, Local Area Banks & more",
-  "One-click Download of the Full Application Codebase",
+   "One-click Download of the Full Application Codebase",
 ];
 
 const insurvibeFeatures = [
-  "Complete Insurance Application from a Single Prompt",
-  "Covers Life Insurance & General Insurance Domains",
   "Addresses 2,800+ IRDAI Products & Policy Types",
   "Supports 62 Insurance Companies",
   "Covers 638 Brokerage Firms Nationwide",
   "Full Compliance with IRDAI Regulatory Framework",
   "Frontend + Backend + Database Code — Ready to Deploy",
+    "Complete Insurance Application from a Single Prompt",
+  "Covers Life, Health, Motor & General Insurance Domains",
 ];
 
 // 🔒 Team emails — only these get access
@@ -81,7 +81,6 @@ export default function OxybfsiPricing() {
     () => sessionStorage.getItem("finvibe_unlocked") === "true"
   );
 
-  // Team login state — hidden panel
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showTeamLogin, setShowTeamLogin] = useState(false);
   const [teamEmail, setTeamEmail] = useState("");
@@ -117,7 +116,7 @@ export default function OxybfsiPricing() {
     notification.info({
       message: "Subscription Support",
       description:
-        "Please contact the AskOxy.AI support team for subscription assistance at support@askoxy.ai",
+        "Please contact the ASKOXY.AI support team for subscription assistance at support@askoxy.ai",
       placement: "topRight",
       duration: 5,
     });
@@ -223,8 +222,6 @@ export default function OxybfsiPricing() {
 
         {/* ─── Products Section ─── */}
         <div className="mb-20">
-
-
           <div className="grid md:grid-cols-2 gap-6">
             {/* FinVibe */}
             <div className="relative bg-gradient-to-br from-cyan-500/10 to-blue-600/5 border border-cyan-500/20 rounded-3xl p-8 overflow-hidden">
@@ -257,9 +254,9 @@ export default function OxybfsiPricing() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     "RBI Master Directions",
-                    "1,500+ Requirements",
+                    "15,000+ Requirements",
                     "11 Bank Types",
-                    "Full Code Output",
+                    "1,00,000+ Circulars",
                   ].map((tag) => (
                     <span
                       key={tag}
@@ -284,8 +281,8 @@ export default function OxybfsiPricing() {
                   <span className="text-white">Vibe</span>
                 </h3>
                 <p className="text-slate-400 text-sm mt-2 leading-relaxed">
-                  Build complete IRDAI-compliant insurance platforms — life &
-                  general — from one prompt.
+                  Build complete IRDAI-compliant insurance platforms — life,
+                  health, motor & general — from one prompt.
                 </p>
               </div>
               <ul className="space-y-3">
@@ -401,7 +398,7 @@ export default function OxybfsiPricing() {
                   The OXYBFS{`{AI}`} Advantage
                 </span>
                 <h2 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
-                  <span className="text-emerald-400">60 Engineers</span> build
+                  <span className="text-emerald-400">6 Engineers</span> build
                   <br />
                   in <span className="text-emerald-400">6 Months</span> for
                   <br />
@@ -419,7 +416,7 @@ export default function OxybfsiPricing() {
                 {[
                   {
                     label: "Team Size (Traditional)",
-                    value: "60 Engineers",
+                    value: "6 Engineers",
                     icon: "👥",
                   },
                   { label: "Time to Build", value: "6 Months", icon: "📅" },
