@@ -144,16 +144,16 @@ body {
 }
 
 .main {
-  padding-top: 72px;
+  padding-top: 64px;
 }
 
 .hero {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 72px 22px 72px;
+ padding: 40px 22px 60px; 
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
-  gap: 46px;
+      gap: 20px;
   align-items: center;
 }
 
@@ -541,40 +541,39 @@ export default function GoldLandingPage() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
 
-const goToLoginFirst = () => {
-  const currentPage = window.location.pathname + window.location.search;
+  const goToLoginFirst = () => {
+    const currentPage = window.location.pathname + window.location.search;
 
-  const accessToken =
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token");
+    const accessToken =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
 
-  const cookieToken = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("accessToken="));
+    const cookieToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("accessToken="));
 
-  const isLoggedIn = Boolean(accessToken || cookieToken);
+    const isLoggedIn = Boolean(accessToken || cookieToken);
 
-  // ✅ If already logged in, go directly to platform
-  if (isLoggedIn) {
-    window.location.href = platformUrl;
-    return;
-  }
+    // ✅ If already logged in, go directly to platform
+    if (isLoggedIn) {
+      window.location.href = platformUrl;
+      return;
+    }
 
-  // ✅ After login success, go to platform redirect
-  sessionStorage.setItem("redirectPath", platformRedirectPath);
-  sessionStorage.setItem("platformRedirectUrl", platformUrl);
-  localStorage.setItem("platformRedirectUrl", platformUrl);
+    // ✅ After login success, go to platform redirect
+    sessionStorage.setItem("redirectPath", platformRedirectPath);
+    sessionStorage.setItem("platformRedirectUrl", platformUrl);
+    localStorage.setItem("platformRedirectUrl", platformUrl);
 
-  // ✅ If login closed, return to current page
-  sessionStorage.setItem("loginCloseReturnPath", currentPage);
+    // ✅ If login closed, return to current page
+    sessionStorage.setItem("loginCloseReturnPath", currentPage);
 
-  navigate("/whatsapplogin", {
-    state: {
-      from: platformRedirectPath,
-      closeReturnPath: currentPage,
-    },
-  });
-};
+    navigate("/whatsapplogin", {
+      state: {
+        from: platformRedirectPath,
+        closeReturnPath: currentPage,
+      },
+    });
+  };
 
   return (
     <>
@@ -738,7 +737,6 @@ const goToLoginFirst = () => {
                   smarter sourcing, selling, buying, and leasing opportunities.
                 </p>
               </div>
-
             </div>
           </section>
 

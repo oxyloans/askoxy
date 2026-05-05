@@ -1,13 +1,15 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./Header.css";
 import Logo from "../assets/img/askoxylogonew.png";
 import SignInIcon from "../assets/img/signin.png";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import VoiceLoginPage from "./VoiceLoginPage";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
 
   useEffect(() => {
     sessionStorage.removeItem("primaryType");
@@ -52,30 +54,44 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="header">
-      <div className="header-inner">
-        <div className="logo" onClick={() => navigate("/")}>
-          <img src={Logo} alt="ASKOXY.AI" draggable={false} />
-        </div>
+    <>
+      <header className="header">
+        <div className="header-inner">
+          <div className="logo" onClick={() => navigate("/")}>
+            <img src={Logo} alt="ASKOXY.AI" draggable={false} />
+          </div>
 
-        <div className="header-actions">
-          <button
-            className="sign-in-btn"
-            aria-label="Sign In"
-            onClick={handleSignIn1}
-            type="button"
-          >
-            <img
-              src={SignInIcon}
-              alt="Sign In"
-              className="sign-in-icon"
-              draggable={false}
-            />
-            <span>Sign In</span>
-          </button>
+          <div className="header-actions">
+            <button
+              className="voice-assistant-btn"
+              type="button"
+              onClick={() => setShowVoiceAssistant(true)}
+            >
+              Voice Assistant
+            </button>
+
+            <button
+              className="sign-in-btn"
+              aria-label="Sign In"
+              onClick={handleSignIn1}
+              type="button"
+            >
+              <img
+                src={SignInIcon}
+                alt="Sign In"
+                className="sign-in-icon"
+                draggable={false}
+              />
+              <span>Sign In</span>
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {showVoiceAssistant && (
+        <VoiceLoginPage onClose={() => setShowVoiceAssistant(false)} />
+      )}
+    </>
   );
 };
 

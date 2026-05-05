@@ -71,6 +71,7 @@ import ViewPollBasedRewards from "./AskoxyAdmin/ViewPollBasedRewards";
 import PlatformRedirect from "./components/PlatformRedirect";
 import HiringLandingPage from "./components/HiringLandingPage";
 import DRACertificationLanding from "./components/DRACertificationLanding";
+import GCCMate from "./components/GCCMateLandingPage/GCCMate";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -639,6 +640,7 @@ const App: React.FC = () => {
               {/* <Route path="/freelancers" element={<FreelancerList />} /> */}
 
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
+              
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
               <Route
@@ -668,6 +670,7 @@ const App: React.FC = () => {
                 path="/it-minister-vision"
                 element={<MinisterMeetingPage />}
               />
+              <Route path ="/gccmate" element={<GCCMate />} />
               <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
               {/* <Route path="/credera/jobs" element={<CrederaJobsPage />} /> */}

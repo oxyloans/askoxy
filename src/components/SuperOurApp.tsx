@@ -38,7 +38,7 @@ export default function SuperOurApp() {
       ([entry]) => {
         setShowFab(entry.isIntersecting && entry.intersectionRatio >= 0.1);
       },
-      { threshold: [0, 0.1, 0.5, 1] }
+      { threshold: [0, 0.1, 0.5, 1] },
     );
 
     observer.observe(gridRef.current);
@@ -116,7 +116,7 @@ export default function SuperOurApp() {
       id: "s9",
       src: s9,
       title: "GCC Mate",
-      onClick: () => setIsGccMateModalOpen(true),
+      route: "/gccmate",
     },
   ];
 
