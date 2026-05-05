@@ -190,12 +190,18 @@ const AppliedJobs: React.FC = () => {
           url ? (
             <Button
               size="small"
-              type="link"
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
+              type="primary"
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'resume.pdf';
+                link.target = '_blank';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
             >
-              View Resume
+              Download
             </Button>
           ) : (
             "N/A"
@@ -276,12 +282,18 @@ const AppliedJobs: React.FC = () => {
             {job.resumeUrl ? (
               <Button
                 size="small"
-                type="link"
-                href={job.resumeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                type="primary"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = job.resumeUrl!;
+                  link.download = 'resume.pdf';
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
               >
-                Resume
+                Download Resume
               </Button>
             ) : (
               <Button size="small" disabled>

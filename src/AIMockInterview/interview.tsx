@@ -957,21 +957,21 @@ else:
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-4">
-              <img src={logo} alt="AskOxy" className="w-24 sm:w-36 h-auto object-contain" />
+              <img src={logo} alt="AskOxy" className="w-20 sm:w-24 lg:w-36 h-auto object-contain" />
               <div className="border-l border-slate-600 pl-2 sm:pl-4">
-                <h1 className="text-sm sm:text-lg font-bold text-white">AI INTERVIEW</h1>
+                <h1 className="text-xs sm:text-sm lg:text-lg font-bold text-white">AI INTERVIEW</h1>
                 <p className="text-xs text-slate-400 hidden sm:block">Technical Assessment Platform</p>
               </div>
             </div>
             {user && (
-              <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-800 border border-slate-700">
-                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-sm font-bold">
+              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg bg-slate-800 border border-slate-700">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm font-medium text-white hidden sm:inline">
+                <span className="text-xs sm:text-sm font-medium text-white hidden sm:inline">
                   {user.name}
                 </span>
               </div>
@@ -982,33 +982,33 @@ else:
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {showWelcome ? (
-          <div className="min-h-[calc(100vh-140px)] flex items-center justify-center px-4">
+          <div className="min-h-[calc(100vh-140px)] flex items-center justify-center px-3 sm:px-4 py-4 sm:py-6">
             <div className="max-w-4xl w-full">
-              <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 rounded-xl border border-emerald-500/30 overflow-hidden shadow-xl">
+              <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 rounded-lg sm:rounded-xl border border-emerald-500/30 overflow-hidden shadow-xl">
                 {/* Header Section with AI Bot */}
-                <div className="relative bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 px-6 py-6">
-                  <div className="flex items-center justify-between">
-                    {/* Left: AI Bot */}
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center animate-bounce shadow-lg border border-white/30">
-                          <div className="text-3xl">🤖</div>
+                <div className="relative bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 px-3 sm:px-6 py-4 sm:py-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+                    {/* AI Bot and Typing */}
+                    <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center animate-bounce shadow-lg border border-white/30">
+                          <div className="text-xl sm:text-3xl">🤖</div>
                         </div>
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse border-2 border-white"></div>
+                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse border-2 border-white"></div>
                       </div>
                       
-                      <div className="bg-white/15 backdrop-blur-md text-white px-4 py-2 rounded-xl shadow-lg border border-white/30">
-                        <div className="text-sm font-medium">
+                      <div className="bg-white/15 backdrop-blur-md text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl shadow-lg border border-white/30 flex-1 sm:flex-none">
+                        <div className="text-xs sm:text-sm font-medium">
                           {typingText}
                           <span className="animate-pulse">|</span>
                         </div>
                       </div>
                     </div>
                     
-                    {/* Right: Welcome Text */}
-                    <div className="text-right">
-                      <h1 className="text-2xl font-bold text-white mb-1">Welcome, {user.name}!</h1>
-                      <p className="text-emerald-100 text-sm">AI Technical Assessment</p>
+                    {/* Welcome Text */}
+                    <div className="text-center sm:text-right w-full sm:w-auto">
+                      <h1 className="text-lg sm:text-2xl font-bold text-white mb-1">Welcome, {user.name}!</h1>
+                      <p className="text-emerald-100 text-xs sm:text-sm">AI Technical Assessment</p>
                     </div>
                   </div>
                 </div>

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import aiImage from "../assets/img/gt.png";
 import { useNavigate } from "react-router-dom";
-import BASE_URL from "../Config";
-import { message } from "antd";
 import { FaAmazon } from "react-icons/fa";
-import axios from "axios";
-import customerApi from "../utils/axiosInstances";
+import { ArrowRight } from "lucide-react";
+import { message } from "antd";
 
+import aiImage from "../assets/img/gt.png";
+import BASE_URL from "../Config";
+import customerApi from "../utils/axiosInstances";
 
 const FreeAiBook: React.FC = () => {
   const navigate = useNavigate();
@@ -16,7 +16,6 @@ const FreeAiBook: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const mobileNumber = localStorage.getItem("mobileNumber");
   const whatsappNumber = localStorage.getItem("whatsappNumber");
-
 
   const jobPlanImageUrl = "https://i.ibb.co/twj7WCX3/90-dayl.png";
   const campaignId = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
@@ -31,6 +30,7 @@ const FreeAiBook: React.FC = () => {
 
       try {
         setIsLoading(true);
+
         const response = await customerApi.post(
           `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
           {
@@ -44,7 +44,7 @@ const FreeAiBook: React.FC = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -64,14 +64,13 @@ const FreeAiBook: React.FC = () => {
     setIsLoading(true);
 
     const slicedCampaignId = campaignId.slice(0, 8);
-    const redirectPath = `/campaign/${slicedCampaignId}`; // ✅ SHORT ONLY
+    const redirectPath = `/campaign/${slicedCampaignId}`;
 
-   
     sessionStorage.setItem(`campaignFull:${slicedCampaignId}`, campaignId);
-
     sessionStorage.setItem("redirectPath", redirectPath);
 
     const uid = localStorage.getItem("userId");
+
     if (uid) {
       navigate(redirectPath);
       setIsLoading(false);
@@ -81,60 +80,103 @@ const FreeAiBook: React.FC = () => {
     window.location.href = "/whatsappregister";
   };
 
-  const handleJobPlanViewMore1 = () => {
-    navigate("/celebshield");
+  const cardAnimation = {
+    hidden: { opacity: 0, y: 35 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.55, ease: "easeOut" },
+    },
   };
 
+  const imageLeftAnimation = {
+    hidden: { opacity: 0, x: -35 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
+  const imageRightAnimation = {
+    hidden: { opacity: 0, x: 35 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
+  const cardClass =
+    "mb-8 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_14px_45px_rgba(15,23,42,0.08)]";
+
+  const innerGridClass =
+    "grid min-h-[420px] items-center gap-6 p-5 sm:p-6 md:p-7 lg:grid-cols-2 lg:p-8";
+
+  const titleClass =
+    "text-xl font-bold leading-snug text-purple-950 sm:text-2xl lg:text-[28px]";
+
+  const paraClass =
+    "mt-3 text-sm leading-7 text-gray-600 sm:text-[15px] lg:text-base";
+
+  const badgeClass =
+    "mb-3 inline-flex w-fit rounded-full border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-purple-800 sm:text-sm";
+
+  const buttonClass =
+    "inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition";
+
+  const imageClass =
+    "h-[240px] w-full max-w-[470px] cursor-pointer rounded-xl object-contain transition duration-300 hover:scale-[1.02] sm:h-[300px] lg:h-[340px]";
+
   return (
-    <section className="relative overflow-hidden bg-white py-12 px-4 sm:px-6 md:px-12">
-     
-    
-      <div className="relative mx-auto w-full max-w-7xl">
-        {/* ===== Heading ===== */}
-        <div className="text-center mb-8">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-purple-900">
-            Buy The Book
-          </h3>
-          <p className="mt-2 text-sm md:text-base text-gray-600">
-            Learn AI simply. Win exciting rewards. Build your future.
-          </p>
-          <div className="w-28 h-1.5 mt-4 mx-auto rounded-full bg-gradient-to-r from-purple-300 via-indigo-300 to-pink-300" />
-        </div>
-
-        {/* ===== Card 1 ===== */}
+    <section className="relative overflow-hidden bg-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+      <div className="relative mx-auto max-w-7xl">
         <motion.div
-          className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(17,24,39,0.10)]"
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
+          transition={{ duration: 0.55 }}
+          className="mx-auto mb-10 max-w-3xl text-center"
         >
-          {/* subtle inner gradient */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-50/80 via-white/30 to-indigo-50/80" />
+          <h3 className="text-2xl font-bold leading-tight text-purple-950 sm:text-3xl md:text-4xl">
+            Learn AI. Build Skills. Protect Your Digital Future.
+          </h3>
 
-          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 sm:p-8 md:p-10">
-            {/* Image */}
-            <div className="flex items-center justify-center">
-              <div className="w-full flex justify-center">
-                <img
-                  src={aiImage}
-                  alt="AI Book"
-                  onClick={openAmazon}
-                  className="w-full max-w-xl md:max-w-2xl h-auto object-contain cursor-pointer"
-                />
-              </div>
-            </div>
+          <p className="mt-3 text-sm leading-7 text-gray-600 sm:text-base">
+            Explore our AI Book, 90 Days Job Plan, and CelebShield solutions in
+            one simple learning journey.
+          </p>
+        </motion.div>
 
-            {/* Content */}
-            <div className="flex flex-col justify-center">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-purple-900 leading-snug">
-                Enter the AI &amp; GEN AI UNIVERSE
-              </h3>
+        {/* CARD 1 */}
+        <motion.div
+          variants={cardAnimation}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.25 }}
+          className={cardClass}
+        >
+          <div className={innerGridClass}>
+            <motion.div
+              variants={imageLeftAnimation}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="flex h-full items-center justify-center"
+            >
+              <img
+                src={aiImage}
+                alt="AI Book"
+                onClick={openAmazon}
+                className={imageClass}
+              />
+            </motion.div>
 
-              <div className="mt-3 inline-flex items-center gap-2 self-start rounded-full bg-purple-100 px-4 py-1 text-sm font-semibold text-purple-800">
-                AI Book • 65 Chapters
-              </div>
+            <div className="flex h-full flex-col justify-center">
+              <span className={badgeClass}>AI Book • 65 Chapters</span>
 
-              <p className="mt-4 text-gray-700 text-justify leading-relaxed">
+              <h2 className={titleClass}>Enter the AI & GEN AI Universe</h2>
+
+              <p className={paraClass}>
                 Enter the AI & GenAI Universe is a beginner-friendly yet
                 powerful guide for anyone who wants to understand and use
                 Artificial Intelligence in real life. With 65 practical,
@@ -142,145 +184,122 @@ const FreeAiBook: React.FC = () => {
                 Prompt Engineering, Large Language Models (LLMs), how to build
                 the future with agentic AI, and future AI careers.
               </p>
-
-              {/* <div className="mt-4 rounded-2xl border bg-white p-4 sm:p-5">
-                <p className="text-gray-800 font-semibold">
-                  Special First Copy Winner Benefit
-                </p>
-                <p className="text-gray-700 mt-1 leading-relaxed">
-                  Permanent training until placement • Direct interaction with
-                  Team & CEO • Daily interview & project guidance • Continuous
-                  support until you get the job
-                </p>
-              </div> */}
-
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                {/* <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleSignIn}
-                  disabled={isLoading}
-                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? "Loading..." : "Bid Now"}
-                </motion.button> */}
-
-                {/* ✅ Buy on Amazon */}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <motion.button
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={openAmazon}
-                  className="px-5 py-3 rounded-2xl font-extrabold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg flex items-center justify-center gap-2 transition"
+                  className={buttonClass}
                 >
-                  <FaAmazon size={20} color="#FFFFFF" />
-                  <span>Buy on Amazon</span>
+                  <FaAmazon size={18} />
+                  Buy on Amazon
                 </motion.button>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* ===== Heading 2 ===== */}
-        <div className="text-center mt-14 mb-8">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-purple-900">
-            90 Days Job Plan
-          </h3>
-          <p className="mt-2 text-sm md:text-base text-gray-600">
-            One day. One use case. One step closer to your job.
-          </p>
-          <div className="w-28 h-1.5 mt-4 mx-auto rounded-full bg-gradient-to-r from-purple-300 via-indigo-300 to-pink-300" />
-        </div>
-
-        {/* ===== Card 2 ===== */}
+        {/* CARD 2 */}
         <motion.div
-          className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(17,24,39,0.10)]"
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.45 }}
+          variants={cardAnimation}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.25 }}
+          className={cardClass}
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-50/70 via-white/30 to-purple-50/70" />
+          <div className={innerGridClass}>
+            <div className="order-2 flex h-full flex-col justify-center lg:order-1">
+              <span className={badgeClass}>Job Plan • 90 Days</span>
 
-          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 sm:p-8 md:p-10">
-            {/* Content */}
-            <div className="flex flex-col justify-center order-2 md:order-1">
-              <div className="inline-flex items-center gap-2 self-start rounded-full bg-indigo-100 px-4 py-1 text-sm font-semibold text-indigo-800">
-                Job Plan • 90 Days
-              </div>
+              <h2 className={titleClass}>90 Days Job Plan</h2>
 
-              <p className="mt-4 text-gray-900 text-lg font-semibold">
-                Become job-ready in 90 days — one use case per day, one step at
-                a time.
+              <p className="mt-3 text-sm font-semibold text-gray-900 sm:text-base">
+                One day. One use case. One step closer to your job.
               </p>
 
-              <p className="mt-3 text-gray-700 text-justify leading-relaxed">
+              <p className={paraClass}>
                 The 90-Day Job Plan is a structured, discipline-driven job
                 readiness program designed to transform learners into confident,
                 job-ready professionals in just 90 days.
               </p>
 
-              <p className="mt-3 text-gray-700 text-justify leading-relaxed">
+              <p className={paraClass}>
                 Unlike traditional courses that focus on theory or certificates,
                 this program is built on daily execution, real-world use cases,
                 and practical proof of skill.
               </p>
 
               <motion.button
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => navigate("/ninetydayplan")}
-                className="mt-6 self-start px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg"
+                className={`${buttonClass} mt-5 w-fit`}
               >
                 View More
+                <ArrowRight size={17} />
               </motion.button>
             </div>
 
-            {/* Image */}
-            <div className="flex items-center justify-center order-1 md:order-2">
-              <div className="w-full flex justify-center">
-                <img
-                  src={jobPlanImageUrl}
-                  alt="90 Days Job Plan"
-                  className="w-full max-w-xl md:max-w-2xl h-auto object-contain"
-                  loading="lazy"
-                />
-              </div>
-            </div>
+            <motion.div
+              variants={imageRightAnimation}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="order-1 flex h-full items-center justify-center lg:order-2"
+            >
+              <img
+                src={jobPlanImageUrl}
+                alt="90 Days Job Plan"
+                className={imageClass}
+                loading="lazy"
+              />
+            </motion.div>
           </div>
         </motion.div>
 
-        <div className="text-center mt-10 mb-8">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-purple-900">
-            CelebShield
-          </h3>
-          <p className="mt-2 text-sm md:text-base text-gray-600">
-            Protect your fame. Secure your identity.
-          </p>
-          <div className="w-28 h-1.5 mt-4 mx-auto rounded-full bg-gradient-to-r from-purple-300 via-indigo-300 to-pink-300" />
-        </div>
+        {/* CARD 3 */}
         <motion.div
-          className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(17,24,39,0.10)]"
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.45 }}
+          variants={cardAnimation}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.25 }}
+          className={`${cardClass} mb-0`}
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-50/70 via-white/30 to-purple-50/70" />
-
-          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 sm:p-8 md:p-10">
-            {/* Content */}
-            <div className="flex flex-col justify-center order-2 md:order-1">
-              <div className="inline-flex items-center gap-2 self-start rounded-full bg-indigo-100 px-4 py-1 text-sm font-semibold text-indigo-800">
-                celebshield
+          <div className={innerGridClass}>
+            <motion.div
+              variants={imageLeftAnimation}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="flex h-full items-center justify-center"
+            >
+              <div className="aspect-video w-full max-w-[500px] overflow-hidden rounded-xl bg-black shadow-md">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/FR0y9kmy2eY"
+                  title="CelebShield"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
               </div>
+            </motion.div>
 
-              <p className="mt-4 text-gray-900 text-lg font-semibold">
-                PROTECT YOUR FAME. SECURE YOUR IDENTITY
-              </p>
+            <div className="flex h-full flex-col justify-center">
+              <span className={badgeClass}>CelebShield</span>
 
-              <p className="mt-3 text-gray-700 text-justify leading-relaxed">
+              <h2 className={titleClass}>
+                Protect Your Fame. Secure Your Identity.
+              </h2>
+
+              <p className={paraClass}>
                 We file a Writ / Civil Suit seeking protection of Personality
                 Rights.
               </p>
 
-              <p className="mt-3 text-gray-700 text-justify leading-relaxed">
+              <p className={paraClass}>
                 AI-powered legal protection against deepfakes, voice cloning,
                 false endorsements, impersonation, deceptive ads, GIF misuse,
                 domain squatting, and unauthorized food branding. Backed by
@@ -289,34 +308,17 @@ const FreeAiBook: React.FC = () => {
               </p>
 
               <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={handleJobPlanViewMore1}
-                className="mt-6 self-start px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/celebshield")}
+                className={`${buttonClass} mt-5 w-fit`}
               >
                 View More
+                <ArrowRight size={17} />
               </motion.button>
-            </div>
-
-            {/* YouTube Video */}
-            <div className="flex items-center justify-center order-1 md:order-2">
-              <div className="w-full flex justify-center">
-                <iframe
-                  width="100%"
-                  height="315"
-                  src="https://www.youtube.com/embed/FR0y9kmy2eY"
-                  title="CelebShield"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rounded-2xl shadow-lg max-w-xl md:max-w-2xl"
-                />
-              </div>
             </div>
           </div>
         </motion.div>
-
-        {/* bottom spacing */}
-        <div className="h-6" />
       </div>
     </section>
   );

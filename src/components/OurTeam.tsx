@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { FaLinkedinIn } from "react-icons/fa";
 
 // Images
@@ -73,67 +74,81 @@ const teamMembers = [
 
 const OurPeople: React.FC = () => {
   return (
-    <section className="px-4 py-10 mx-auto bg-white ">
-      <div className="max-w-xl mb-10 md:mx-auto sm:text-center lg:max-w-2xl md:mb-12">
-        
-        <h2 className="max-w-lg mb-6 font-sans text-3xl font-bold leading-none tracking-tight text-gray-900 sm:text-4xl md:mx-auto">
-          {/* <span className="relative inline-block">
-            <svg
-              viewBox="0 0 52 24"
-              fill="currentColor"
-              className="absolute top-0 left-0 z-0 hidden w-32 -mt-8 -ml-20 text-blue-gray-100 lg:w-32 lg:-ml-28 lg:-mt-10 sm:block"
-            >
-              <defs>
-                <pattern id="pattern-1" x="0" y="0" width=".135" height=".30">
-                  <circle cx="1" cy="1" r=".7" />
-                </pattern>
-              </defs>
-              <rect fill="url(#pattern-1)" width="52" height="24" />
-            </svg>
-            <span className="relative">Meet</span>
-          </span>{" "} */}
+    <section className="px-3 sm:px-4 lg:px-6 xl:px-8 py-6 sm:py-8 lg:py-10 mx-auto bg-white">
+      <motion.div 
+        className="max-w-xl mb-6 sm:mb-8 lg:mb-10 md:mx-auto sm:text-center lg:max-w-2xl"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <h2 className="max-w-lg mb-4 sm:mb-6 font-sans text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold leading-tight tracking-tight text-gray-900 md:mx-auto">
           Our Leadership Team
         </h2>
-        <p className="text-base text-gray-700 md:text-lg">
+        <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
           Passionate innovators driving AI-powered transformation with
           expertise, dedication, and a shared vision for the future.
         </p>
-      </div>
+      </motion.div>
 
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        {teamMembers.map((member) => (
-          <div
+      <motion.div 
+        className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+      >
+        {teamMembers.map((member, index) => (
+          <motion.div
             key={member.name}
-            className="group relative overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 bg-white"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ 
+              duration: 0.4, 
+              delay: 0.3 + (index * 0.05), 
+              ease: "easeOut" 
+            }}
+            whileHover={{ 
+              y: -8, 
+              transition: { duration: 0.2, ease: "easeOut" } 
+            }}
+            className="group relative overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl bg-white"
           >
             <img
-              className="object-cover w-full h-64 md:h-72 lg:h-80 transition-transform duration-500 group-hover:scale-110"
+              className="object-cover w-full h-48 sm:h-56 md:h-64 lg:h-72 transition-transform duration-300 group-hover:scale-105"
               src={member.img}
               alt={member.name}
+              loading="lazy"
             />
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black via-black/70 to-transparent opacity-0 transition-all duration-300 group-hover:opacity-100 px-6 text-center">
-              <div className="transform translate-y-8 transition-transform duration-500 group-hover:translate-y-0">
-                <h3 className="text-2xl font-bold text-white mb-1">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black via-black/70 to-transparent opacity-0 transition-all duration-300 group-hover:opacity-100 px-4 sm:px-6 text-center">
+              <motion.div 
+                className="transform translate-y-6 transition-transform duration-300 group-hover:translate-y-0"
+                initial={{ y: 20 }}
+                whileHover={{ y: 0 }}
+              >
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-1 sm:mb-2">
                   {member.name}
                 </h3>
-                <p className="text-teal-300 font-medium mb-3">{member.role}</p>
-                <p className="text-sm text-gray-200 leading-relaxed max-w-xs mx-auto mb-6">
+                <p className="text-teal-300 font-medium mb-2 sm:mb-3 text-xs sm:text-sm">
+                  {member.role}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-200 leading-relaxed max-w-xs mx-auto mb-4 sm:mb-6 line-clamp-3">
                   {member.bio}
                 </p>
-                <a
+                <motion.a
                   href={member.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full hover:bg-teal-500 transition-all duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-full hover:bg-teal-500 transition-all duration-300"
                 >
-                  <FaLinkedinIn className="w-6 h-6 text-white" />
-                </a>
-              </div>
+                  <FaLinkedinIn className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
+                </motion.a>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 };

@@ -518,14 +518,18 @@ const handleWriteToUsSubmitButton = async () => {
 
         {/* Write To Us Modal */}
         {isOpen && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
             <div className="relative bg-white rounded-lg shadow-md p-6 w-96">
-              <i
-                className="fas fa-times absolute top-3 right-3 text-xl text-gray-700 cursor-pointer hover:text-red-500"
+              <button
                 onClick={() => setIsOpen(false)}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
                 aria-label="Close"
-              />
-              <h2 className="text-xl font-bold mb-4 text-[#3d2a71]">
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h2 className="text-xl font-bold mb-4 text-[#3d2a71] pr-8">
                 Write To Us
               </h2>
               <div className="mb-4">
@@ -581,9 +585,15 @@ const handleWriteToUsSubmitButton = async () => {
                   <p className="text-red-500 text-sm mt-1">{queryError}</p>
                 )}
               </div>
-              <div className="flex justify-center">
+              <div className="flex justify-between gap-3">
                 <button
-                  className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#3d2a71] transition-all text-sm md:text-base lg:text-lg"
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-[#3d2a71] text-white rounded-lg shadow-lg hover:bg-[#2d1f5a] transition-all text-sm md:text-base lg:text-lg"
                   onClick={handleWriteToUsSubmitButton}
                   disabled={isLoading}
                 >

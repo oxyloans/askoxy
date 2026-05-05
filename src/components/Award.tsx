@@ -87,7 +87,7 @@ const AwardPage = () => {
             </p>
 
             {/* Social Icons */}
-            <div className="flex gap-4">
+            {/* <div className="flex gap-4">
               {[
                 { icon: Facebook, color: "text-blue-600", key: "facebook" },
                 { icon: Instagram, color: "text-pink-600", key: "instagram" },
@@ -104,7 +104,7 @@ const AwardPage = () => {
                   <Icon className={`w-6 h-6 ${color}`} />
                 </button>
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

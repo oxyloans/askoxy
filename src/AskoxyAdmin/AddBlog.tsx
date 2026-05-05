@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { adminApi as axios } from "../utils/axiosInstances";
 import Sidebar from "./Sider";
 import { message, Upload, Button, Modal } from "antd";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import {
   UploadOutlined,
   CopyOutlined,
   FacebookOutlined,
   InstagramOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
@@ -88,6 +91,17 @@ const AddBlog: React.FC = () => {
     socialMediaCaption: 0,
   });
 
+  // ReactQuill modules configuration
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link', 'image'],
+      ['clean'],
+    ],
+  };
+
   // Helper functions for text preview
   const getPreviewText = (text: string, maxLength: number, showFull: boolean) => {
     if (showFull || text.length <= maxLength) {
@@ -110,8 +124,7 @@ const AddBlog: React.FC = () => {
     // Define character limits
     const limits: Record<string, number> = {
       campaignType: 255,
-      campaignDescription: 10000,
-      socialMediaCaption: 25,
+      socialMediaCaption: 25, // Exactly 25 characters
     };
 
     // Check if field has a limit and enforce it
@@ -126,15 +139,26 @@ const AddBlog: React.FC = () => {
       setCharCounts((prev) => ({ ...prev, [name]: value.length }));
     }
 
-    if (name === "socialMediaCaption") {
-      if (value.length < 25) {
-        setSocialMediaCaptionErrorMessage(
-          "Please enter a social media caption with at least 25 characters.",
-        );
-      } else {
-        setSocialMediaCaptionErrorMessage("");
-      }
+    // Clear previous error messages when user starts typing
+    if (name === "campaignType") {
+      setNameErrorMessage("");
     }
+    if (name === "socialMediaCaption") {
+      setSocialMediaCaptionErrorMessage("");
+    }
+  };
+
+  // Handle ReactQuill description change
+  const handleDescriptionChange = (content: string) => {
+    const textContent = content.replace(/<[^>]*>/g, ''); // Remove HTML tags for character count
+    
+    if (textContent.length > 10000) {
+      return; // Don't update if limit exceeded
+    }
+
+    setFormData({ ...formData, campaignDescription: content });
+    setCharCounts((prev) => ({ ...prev, campaignDescription: textContent.length }));
+    setDescErrorMessage(""); // Clear error when user starts typing
   };
 
   const isVideoFile = (file: File): boolean => {
@@ -342,23 +366,37 @@ const AddBlog: React.FC = () => {
   const validateForm = () => {
     let isValid = true;
 
-    if (formData.campaignType.trim() === "") {
-      setNameErrorMessage("BLOG Name is required");
+    // Clear all previous errors
+    setNameErrorMessage("");
+    setDescErrorMessage("");
+    setSocialMediaCaptionErrorMessage("");
+    setTypeErrorMessage("");
+
+    // Validate campaign type
+    if (!formData.campaignType || formData.campaignType.trim() === "") {
+      setNameErrorMessage("Blog Name is required");
       isValid = false;
     }
 
-    if (formData.campaignDescription.trim() === "") {
-      setDescErrorMessage("BLOG description is required");
+    // Validate campaign description
+    const descriptionText = formData.campaignDescription.replace(/<[^>]*>/g, '').trim();
+    if (!descriptionText || descriptionText === "") {
+      setDescErrorMessage("Blog description is required");
       isValid = false;
     }
 
-    if (formData.socialMediaCaption.trim() === "") {
+    // Validate social media caption - exactly 25 characters
+    if (!formData.socialMediaCaption || formData.socialMediaCaption.trim() === "") {
       setSocialMediaCaptionErrorMessage("Social Media Caption is required");
       isValid = false;
-    } else if (formData.socialMediaCaption.length < 25) {
-      setSocialMediaCaptionErrorMessage(
-        "Social Media Caption must be between 25 and 30 characters",
-      );
+    } else if (formData.socialMediaCaption.length !== 25) {
+      setSocialMediaCaptionErrorMessage("Social Media Caption must be exactly 25 characters");
+      isValid = false;
+    }
+
+    // Validate campaign type added by
+    if (!formData.campaignTypeAddBy || formData.campaignTypeAddBy.trim() === "") {
+      setTypeErrorMessage("Blog Added By is required");
       isValid = false;
     }
 
@@ -410,33 +448,16 @@ const AddBlog: React.FC = () => {
               >
                 Blog Description
               </label>
-              <div className="relative">
-                <textarea
-                  id="campaignDescription"
-                  name="campaignDescription"
-                  value={formData.campaignDescription}
-                  onChange={handleInputChange}
-                  rows={showFullDescription ? 8 : 4}
-                  maxLength={10000}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-300"
-                  required
-                  style={{ resize: 'none' }}
-                ></textarea>
-                {shouldShowToggle(formData.campaignDescription, DESCRIPTION_PREVIEW_LENGTH) && (
-                  <button
-                    type="button"
-                    onClick={() => setShowFullDescription(!showFullDescription)}
-                    className="absolute bottom-2 right-2 text-xs text-blue-600 hover:text-blue-800 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm"
-                  >
-                    {showFullDescription ? 'Show Less' : 'Show More'}
-                  </button>
-                )}
-              </div>
+              <ReactQuill
+                theme="snow"
+                value={formData.campaignDescription}
+                onChange={handleDescriptionChange}
+                modules={quillModules}
+                placeholder="Enter your blog description..."
+                style={{ height: '200px', marginBottom: '50px' }}
+              />
               <div className="text-sm text-gray-500 mt-1">
                 {charCounts.campaignDescription}/10,000 characters
-                {!showFullDescription && shouldShowToggle(formData.campaignDescription, DESCRIPTION_PREVIEW_LENGTH) && (
-                  <span className="ml-2 text-blue-600">({DESCRIPTION_PREVIEW_LENGTH} chars preview)</span>
-                )}
               </div>
               {descErrormessage && (
                 <div className="text-red-500 text-sm mb-4">
@@ -453,33 +474,20 @@ const AddBlog: React.FC = () => {
                 Social Media Caption
               </label>
               <div className="relative">
-                <textarea
+                <input
+                  type="text"
                   id="socialMediaCaption"
                   name="socialMediaCaption"
                   value={formData.socialMediaCaption}
                   onChange={handleInputChange}
-                  rows={showFullCaption ? 5 : 3}
                   maxLength={25}
-                  placeholder="Please enter a social media caption with at least 25 characters."
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-300"
+                  placeholder="Enter exactly 25 characters"
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
-                  style={{ resize: 'none' }}
-                ></textarea>
-                {shouldShowToggle(formData.socialMediaCaption, CAPTION_PREVIEW_LENGTH) && (
-                  <button
-                    type="button"
-                    onClick={() => setShowFullCaption(!showFullCaption)}
-                    className="absolute bottom-2 right-2 text-xs text-blue-600 hover:text-blue-800 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm"
-                  >
-                    {showFullCaption ? 'Show Less' : 'Show More'}
-                  </button>
-                )}
+                />
               </div>
               <div className="text-sm text-gray-500 mt-1">
-                {charCounts.socialMediaCaption}/25 characters (minimum 25 required)
-                {!showFullCaption && shouldShowToggle(formData.socialMediaCaption, CAPTION_PREVIEW_LENGTH) && (
-                  <span className="ml-2 text-blue-600">({CAPTION_PREVIEW_LENGTH} chars preview)</span>
-                )}
+                {charCounts.socialMediaCaption}/25 characters (exactly 25 required)
               </div>
               {socialMediaCaptionErrorMessage && (
                 <div className="text-red-500 text-sm mb-4">
