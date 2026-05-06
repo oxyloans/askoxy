@@ -12,9 +12,9 @@ const JPLLandingPage: React.FC = () => {
   return (
     <div className="overflow-x-hidden bg-[#f5f7f4]">
       <JPLHeader />
-      <JPLHeroSection />
-      {/* <AIInterviewLanding/>
-      <PersonalizedJobMatchSection/> */}
+       <AIInterviewLanding/>
+      <JPLHeroSection />  
+      <PersonalizedJobMatchSection/> 
       <LeagueHighlightsSection />
       <JobSearchSection />
       <AIExamSection />

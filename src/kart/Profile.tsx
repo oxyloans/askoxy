@@ -798,18 +798,19 @@ const ProfilePage = () => {
                     <input
                       type="tel"
                       value={formData.mobileNumber}
-                      disabled={isMobileNumberVerified}
+                      disabled={true}
+                      readOnly
                       onChange={(e) =>
                         setFormData({
                           ...formData,
                           mobileNumber: e.target.value || "",
                         })
                       }
-                      className={`w-full px-4 py-3 rounded-lg border transition-all
+                      className={`w-full px-4 py-3 rounded-lg border transition-all bg-gray-100 text-gray-600 cursor-not-allowed
           ${
             validationErrors.mobileNumber
               ? "border-red-500 ring-1 ring-red-500"
-              : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+              : "border-gray-300"
           }
         `}
                       placeholder="Enter Primary Mobile Number"

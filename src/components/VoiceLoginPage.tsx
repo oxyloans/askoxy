@@ -33,6 +33,8 @@ type UserType = "Login" | "Register";
 type RegistrationType = "whatsapp" | "mobile";
 
 const VOICE_LOGIN_API = `${BASE_URL}/user-service/loginOrregisterThroughVoice`;
+const SILENCE_LIMIT_MS = 4000;
+const MIN_RECORDING_MS = 1200;
 
 function sanitizeBase64Audio(input?: string) {
   if (!input || typeof input !== "string") return "";
@@ -50,26 +52,60 @@ function guessAudioMimeType(base64: string) {
 }
 
 function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function formatRichText(text?: string) {
   if (!text) return "";
-  let formatted = escapeHtml(text);
-  formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  formatted = formatted.replace(/\*(.*?)\*/g, "<em>$1</em>");
-  formatted = formatted.replace(/\n/g, "<br/>");
-  return formatted;
+  return escapeHtml(text)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br/>");
+}
+
+function extractMobileNumber(text: string) {
+  const wordMap: Record<string, string> = {
+    zero: "0",
+    oh: "0",
+    o: "0",
+    one: "1",
+    won: "1",
+    two: "2",
+    to: "2",
+    too: "2",
+    three: "3",
+    tree: "3",
+    four: "4",
+    for: "4",
+    five: "5",
+    six: "6",
+    seven: "7",
+    eight: "8",
+    ate: "8",
+    nine: "9",
+  };
+
+  let cleaned = (text || "").toLowerCase();
+
+  Object.keys(wordMap).forEach((word) => {
+    cleaned = cleaned.replace(new RegExp(`\\b${word}\\b`, "g"), wordMap[word]);
+  });
+
+  cleaned = cleaned.replace(/\D/g, "");
+
+  if (cleaned.length > 10 && cleaned.startsWith("91")) {
+    cleaned = cleaned.slice(2);
+  }
+
+  if (cleaned.length > 10) {
+    cleaned = cleaned.slice(-10);
+  }
+
+  return cleaned.length === 10 ? cleaned : "";
 }
 
 function hasMeaningfulVoiceInput(text?: string, audioBlob?: Blob | null) {
-  const clean = (text || "").trim();
-  const hasText = clean.length > 0;
-  const hasAudio = !!audioBlob && audioBlob.size > 1200;
-  return hasText || hasAudio;
+  return (text || "").trim().length > 0 || (!!audioBlob && audioBlob.size > 1200);
 }
 
 const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
@@ -94,81 +130,20 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   const transcriptRef = useRef("");
   const isSubmittingRef = useRef(false);
   const hasProcessedStopRef = useRef(false);
+  const silenceTimerRef = useRef<number | null>(null);
+  const recordingStartedAtRef = useRef<number>(0);
 
-  const titleText = useMemo(() => {
-    return `${userType} via ${
-      registrationType === "whatsapp" ? "WhatsApp" : "SMS"
-    }`;
-  }, [userType, registrationType]);
+  const titleText = useMemo(
+    () => `${userType} via ${registrationType === "whatsapp" ? "WhatsApp" : "SMS"}`,
+    [userType, registrationType]
+  );
 
-  const selectionMessage = useMemo(() => {
-    return `${userType} via ${
-      registrationType === "whatsapp" ? "WhatsApp" : "SMS"
-    }`;
-  }, [userType, registrationType]);
-
-  useEffect(() => {
-    const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognitionAPI) return;
-
-    const recognition = new SpeechRecognitionAPI();
-    recognition.lang = "en-IN";
-    recognition.interimResults = true;
-    recognition.continuous = true;
-
-    recognition.onresult = (event: any) => {
-      let combinedText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        combinedText += event.results[i][0].transcript;
-      }
-      const finalText = combinedText.trim();
-      transcriptRef.current = finalText;
-      setLiveTranscript(finalText);
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
-        setIsListening(false);
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      try {
-        recognition.stop();
-      } catch {}
-    };
-  }, []);
-
-  useEffect(() => {
-    const container = chatListRef.current;
-    if (!container) return;
-
-    requestAnimationFrame(() => {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
-      });
-      chatBottomRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    });
-  }, [messages, isLoading]);
-
-  useEffect(() => {
-    return () => {
-      stopAssistantAudio();
-      stopRecordingTracks();
-    };
-  }, []);
+  const clearSilenceTimer = () => {
+    if (silenceTimerRef.current) {
+      window.clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  };
 
   const stopRecordingTracks = () => {
     mediaStreamRef.current?.getTracks()?.forEach((track) => track.stop());
@@ -186,14 +161,128 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     setIsAssistantSpeaking(false);
   };
 
+  const stopListening = () => {
+    clearSilenceTimer();
+
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
+      setIsListening(false);
+      return;
+    }
+
+    setIsListening(false);
+
+    try {
+      recognitionRef.current?.stop?.();
+    } catch {}
+
+    try {
+      mediaRecorderRef.current.requestData?.();
+      mediaRecorderRef.current.stop();
+    } catch {
+      stopRecordingTracks();
+    }
+  };
+
+  const startSilenceTimer = () => {
+    clearSilenceTimer();
+
+    silenceTimerRef.current = window.setTimeout(() => {
+      const recordedFor = Date.now() - recordingStartedAtRef.current;
+
+      if (
+        recordedFor >= MIN_RECORDING_MS &&
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === "recording" &&
+        !isSubmittingRef.current
+      ) {
+        stopListening();
+      } else {
+        startSilenceTimer();
+      }
+    }, SILENCE_LIMIT_MS);
+  };
+
+  useEffect(() => {
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) return;
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = "en-IN";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onresult = (event: any) => {
+      let combinedText = "";
+
+      for (let i = 0; i < event.results.length; i++) {
+        combinedText += event.results[i][0].transcript + " ";
+      }
+
+      const finalText = combinedText.trim();
+
+      if (finalText) {
+        transcriptRef.current = finalText;
+        setLiveTranscript(finalText);
+        startSilenceTimer();
+      }
+    };
+
+    recognition.onerror = () => {
+      startSilenceTimer();
+    };
+
+    recognition.onend = () => {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === "recording" &&
+        !isSubmittingRef.current
+      ) {
+        try {
+          recognition.start();
+        } catch {}
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      clearSilenceTimer();
+      try {
+        recognition.stop();
+      } catch {}
+    };
+  }, []);
+
+  useEffect(() => {
+    const container = chatListRef.current;
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+      chatBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+  }, [messages, isLoading]);
+
+  useEffect(() => {
+    return () => {
+      clearSilenceTimer();
+      stopAssistantAudio();
+      stopRecordingTracks();
+      try {
+        recognitionRef.current?.stop?.();
+      } catch {}
+    };
+  }, []);
+
   const playAssistantAudio = (base64Audio?: string) => {
     const clean = sanitizeBase64Audio(base64Audio);
     if (!clean) return;
 
     try {
       stopAssistantAudio();
-      const mimeType = guessAudioMimeType(clean);
-      const audio = new Audio(`data:${mimeType};base64,${clean}`);
+      const audio = new Audio(`data:${guessAudioMimeType(clean)};base64,${clean}`);
       audioRef.current = audio;
       setIsAssistantSpeaking(true);
 
@@ -217,26 +306,25 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   };
 
   const clearChat = () => {
+    clearSilenceTimer();
     setMessages([]);
     setLiveTranscript("");
     transcriptRef.current = "";
+    chunksRef.current = [];
     hasProcessedStopRef.current = false;
     stopAssistantAudio();
   };
 
-  const getOtpSuccessText = () => {
-    return registrationType === "whatsapp"
+  const getOtpSuccessText = () =>
+    registrationType === "whatsapp"
       ? "OTP sent to WhatsApp successfully"
       : "OTP sent to mobile number successfully";
-  };
 
-  const getAuthSuccessText = () => {
-    return userType === "Login" ? "Login Successfully" : "Register Successfully";
-  };
+  const getAuthSuccessText = () =>
+    userType === "Login" ? "Login Successfully" : "Register Successfully";
 
-  const containsAny = (value: string, list: string[]) => {
-    return list.some((item) => value.includes(item));
-  };
+  const containsAny = (value: string, list: string[]) =>
+    list.some((item) => value.includes(item));
 
   const isOtpActuallySent = (result: any) => {
     const combined = JSON.stringify(result || {}).toLowerCase();
@@ -256,6 +344,33 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       result?.data?.isOtpSent === true
     );
   };
+
+  const extractToken = (result: any) =>
+    result?.accessToken ||
+    result?.token ||
+    result?.jwtToken ||
+    result?.authToken ||
+    result?.data?.accessToken ||
+    result?.data?.token ||
+    result?.data?.jwtToken ||
+    result?.data?.authToken ||
+    "";
+
+  const extractRefreshToken = (result: any) =>
+    result?.refreshToken || result?.data?.refreshToken || "";
+
+  const extractUserId = (result: any) =>
+    result?.userId ||
+    result?.customerId ||
+    result?.id ||
+    result?.data?.userId ||
+    result?.data?.customerId ||
+    result?.data?.id ||
+    result?.user?.userId ||
+    result?.user?.id ||
+    result?.data?.user?.userId ||
+    result?.data?.user?.id ||
+    "";
 
   const isAuthActuallySuccessful = (result: any, token: string) => {
     const combined = JSON.stringify(result || {}).toLowerCase();
@@ -279,7 +394,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   };
 
   const buildAiMessage = (result: any) => {
-    const backendText =
+    const text =
       result?.speechText ||
       result?.message ||
       result?.statusMessage ||
@@ -288,46 +403,9 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       result?.data?.message ||
       "";
 
-    const cleanText = String(backendText || "").trim();
-
-    if (cleanText) return cleanText;
+    if (String(text || "").trim()) return String(text).trim();
     if (isOtpActuallySent(result)) return getOtpSuccessText();
-
     return "Done.";
-  };
-
-  const extractToken = (result: any) => {
-    return (
-      result?.accessToken ||
-      result?.token ||
-      result?.jwtToken ||
-      result?.authToken ||
-      result?.data?.accessToken ||
-      result?.data?.token ||
-      result?.data?.jwtToken ||
-      result?.data?.authToken ||
-      ""
-    );
-  };
-
-  const extractRefreshToken = (result: any) => {
-    return result?.refreshToken || result?.data?.refreshToken || "";
-  };
-
-  const extractUserId = (result: any) => {
-    return (
-      result?.userId ||
-      result?.customerId ||
-      result?.id ||
-      result?.data?.userId ||
-      result?.data?.customerId ||
-      result?.data?.id ||
-      result?.user?.userId ||
-      result?.user?.id ||
-      result?.data?.user?.userId ||
-      result?.data?.user?.id ||
-      ""
-    );
   };
 
   const fetchUserDetails = async (accessToken: string) => {
@@ -353,28 +431,37 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       }
 
       return userData;
-    } catch (error) {
-      console.error("Failed to fetch /me after voice auth", error);
+    } catch {
       return null;
     }
   };
 
   const startListening = async () => {
-    if (isListening || isLoading || isAssistantSpeaking || isSubmittingRef.current) {
-      return;
-    }
+    if (isListening || isLoading || isAssistantSpeaking || isSubmittingRef.current) return;
 
     try {
+      clearSilenceTimer();
       stopAssistantAudio();
+
       setLiveTranscript("");
       transcriptRef.current = "";
       chunksRef.current = [];
       hasProcessedStopRef.current = false;
+      recordingStartedAtRef.current = Date.now();
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
       mediaStreamRef.current = stream;
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
         ? "audio/webm"
         : "audio/mp4";
 
@@ -391,6 +478,8 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         if (hasProcessedStopRef.current) return;
         hasProcessedStopRef.current = true;
 
+        clearSilenceTimer();
+
         const audioBlob = new Blob(chunksRef.current, {
           type: recorder.mimeType || "audio/webm",
         });
@@ -398,38 +487,23 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         stopRecordingTracks();
 
         if (isAssistantSpeaking || isSubmittingRef.current) return;
+
         await submitVoice(audioBlob, transcriptRef.current);
       };
 
-      recorder.start();
+      recorder.start(250);
 
       try {
         recognitionRef.current?.start?.();
       } catch {}
 
       setIsListening(true);
+      startSilenceTimer();
     } catch {
       setIsListening(false);
+      clearSilenceTimer();
       stopRecordingTracks();
       message.error("Unable to access microphone.");
-    }
-  };
-
-  const stopListening = () => {
-    if (!isListening) return;
-
-    setIsListening(false);
-
-    try {
-      recognitionRef.current?.stop?.();
-    } catch {}
-
-    try {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop();
-      }
-    } catch {
-      stopRecordingTracks();
     }
   };
 
@@ -439,10 +513,14 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     if (!hasMeaningfulVoiceInput(transcript, audioBlob || null)) {
       setLiveTranscript("");
       transcriptRef.current = "";
+      chunksRef.current = [];
+      message.error("Voice not detected. Please speak your 10-digit mobile number clearly.");
       return;
     }
 
-    const userText = (transcript || "").trim() || "Voice input recorded";
+    const detectedMobileNumber = extractMobileNumber(transcript || "");
+    const userText =
+      detectedMobileNumber || (transcript || "").trim() || "Voice input recorded";
     const loadingId = `${Date.now()}-loading`;
 
     setMessages((prev) => [
@@ -473,11 +551,16 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       );
       formData.append("registrationType", registrationType);
       formData.append("userType", userType);
+      formData.append("transcript", transcript || "");
+
+      if (detectedMobileNumber) {
+        formData.append("mobileNumber", detectedMobileNumber);
+        formData.append("mobile", detectedMobileNumber);
+        formData.append("phoneNumber", detectedMobileNumber);
+      }
 
       const response = await axios.post(VOICE_LOGIN_API, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       const result = response?.data || {};
@@ -515,18 +598,15 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           "";
       }
 
-      setMessages((prev) => {
-        const withoutLoading = prev.filter((item) => item.id !== loadingId);
-        return [
-          ...withoutLoading,
-          {
-            id: `${Date.now()}-ai`,
-            type: "ai",
-            text: aiText,
-            createdAt: new Date(),
-          },
-        ];
-      });
+      setMessages((prev) => [
+        ...prev.filter((item) => item.id !== loadingId),
+        {
+          id: `${Date.now()}-ai`,
+          type: "ai",
+          text: aiText,
+          createdAt: new Date(),
+        },
+      ]);
 
       playAssistantAudio(result?.audio || result?.data?.audio);
 
@@ -553,21 +633,18 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         message.success(getOtpSuccessText());
       }
     } catch (error: any) {
-      setMessages((prev) => {
-        const withoutLoading = prev.filter((item) => item.id !== loadingId);
-        return [
-          ...withoutLoading,
-          {
-            id: `${Date.now()}-ai-error`,
-            type: "ai",
-            text:
-              error?.response?.data?.message ||
-              error?.message ||
-              "Unable to process voice authentication.",
-            createdAt: new Date(),
-          },
-        ];
-      });
+      setMessages((prev) => [
+        ...prev.filter((item) => item.id !== loadingId),
+        {
+          id: `${Date.now()}-ai-error`,
+          type: "ai",
+          text:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Unable to process voice authentication.",
+          createdAt: new Date(),
+        },
+      ]);
 
       message.error(
         error?.response?.data?.message ||
@@ -578,6 +655,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       setIsLoading(false);
       setLiveTranscript("");
       transcriptRef.current = "";
+      chunksRef.current = [];
       isSubmittingRef.current = false;
     }
   };
@@ -585,9 +663,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   return (
     <>
       <style>{`
-        * {
-          box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         .oxy-voice-root {
           position: fixed;
@@ -631,10 +707,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-        }
-
-        .oxy-voice-header-text {
-          min-width: 0;
         }
 
         .oxy-voice-header-text h3 {
@@ -769,10 +841,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           color: #1f1b2d;
         }
 
-        .oxy-voice-option:hover {
-          border-color: #cdbaf0;
-        }
-
         .oxy-voice-option.active {
           border-color: #a98cf0;
           background: #f4eeff;
@@ -795,21 +863,18 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         }
 
         .oxy-voice-option strong {
-          display: block;
           font-size: 12px;
           font-weight: 800;
-          line-height: 1.15;
           color: #1e1930;
         }
 
         .oxy-voice-option span {
-          display: block;
           font-size: 10px;
-          line-height: 1.25;
           color: #7a758c;
         }
 
-        .oxy-voice-selected {
+        .oxy-voice-selected,
+        .oxy-voice-speaking {
           margin-top: 10px;
           border-radius: 12px;
           padding: 9px 11px;
@@ -821,16 +886,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           color: #6b2ee9;
           font-size: 12px;
           font-weight: 700;
-        }
-
-        .oxy-voice-speaking {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          margin-top: 8px;
-          font-size: 11px;
-          font-weight: 700;
-          color: #6b2ee9;
         }
 
         .oxy-voice-chat {
@@ -878,7 +933,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           background: #f4f4f7;
           color: #7a7688;
           border: 1px solid #e4e4ea;
-          border-bottom-left-radius: 7px;
         }
 
         .oxy-voice-empty {
@@ -927,7 +981,8 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           box-shadow: 0 10px 22px rgba(98, 36, 220, 0.22);
         }
 
-        .oxy-voice-mic-icon-btn.start {
+        .oxy-voice-mic-icon-btn.start,
+        .oxy-voice-mic-icon-btn.loading {
           background: linear-gradient(135deg, #8b2eff 0%, #6324dc 100%);
         }
 
@@ -935,28 +990,19 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           background: linear-gradient(135deg, #ef4444 0%, #d62828 100%);
         }
 
-        .oxy-voice-mic-icon-btn.loading {
-          background: linear-gradient(135deg, #8b2eff 0%, #6324dc 100%);
-          opacity: 0.8;
-          cursor: not-allowed;
-        }
-
         .oxy-voice-mic-info {
           min-width: 0;
           flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
         }
 
         .oxy-voice-mic-info strong {
           font-size: 13px;
           font-weight: 800;
           color: #161222;
-          line-height: 1.2;
         }
 
         .oxy-voice-mic-info span {
+          display: block;
           font-size: 11px;
           line-height: 1.45;
           color: #726d82;
@@ -969,18 +1015,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         }
 
         @keyframes spin {
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-
-        .oxy-voice-scroll::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .oxy-voice-scroll::-webkit-scrollbar-thumb {
-          background: #d6d0e2;
-          border-radius: 999px;
+          100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -1014,23 +1049,12 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
             padding: 10px;
           }
 
-          .oxy-voice-bot-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-          }
-
           .oxy-voice-header-text h3 {
             font-size: 14px;
           }
 
           .oxy-voice-header-text p {
             font-size: 10px;
-          }
-
-          .oxy-voice-icon-btn {
-            width: 30px;
-            height: 30px;
           }
 
           .oxy-voice-body {
@@ -1042,27 +1066,8 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
             border-radius: 14px;
           }
 
-          .oxy-voice-grid {
-            gap: 7px;
-          }
-
           .oxy-voice-option {
             min-height: 68px;
-            border-radius: 12px;
-            padding: 9px 7px;
-          }
-
-          .oxy-voice-option-icon {
-            width: 26px;
-            height: 26px;
-          }
-
-          .oxy-voice-option strong {
-            font-size: 11.5px;
-          }
-
-          .oxy-voice-option span {
-            font-size: 9.5px;
           }
 
           .oxy-voice-mic-wrap {
@@ -1074,15 +1079,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
             width: 50px;
             height: 50px;
             min-width: 50px;
-            border-radius: 15px;
-          }
-
-          .oxy-voice-mic-info strong {
-            font-size: 12px;
-          }
-
-          .oxy-voice-mic-info span {
-            font-size: 10.5px;
           }
         }
       `}</style>
@@ -1093,29 +1089,17 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
             <div className="oxy-voice-bot-icon">
               <Bot size={18} />
             </div>
-
             <div className="oxy-voice-header-text">
               <h3>Voice Assistant</h3>
-              <p>Ask for login or registration using WhatsApp or mobile OTP</p>
+              <p>Speak naturally. After 4 seconds pause, it auto submits.</p>
             </div>
           </div>
 
           <div className="oxy-voice-header-actions">
-            <button
-              type="button"
-              className="oxy-voice-icon-btn"
-              onClick={clearChat}
-              title="Clear"
-            >
+            <button type="button" className="oxy-voice-icon-btn" onClick={clearChat}>
               <Trash2 size={14} />
             </button>
-
-            <button
-              type="button"
-              className="oxy-voice-icon-btn"
-              onClick={onClose}
-              title="Close"
-            >
+            <button type="button" className="oxy-voice-icon-btn" onClick={onClose}>
               <X size={14} />
             </button>
           </div>
@@ -1128,12 +1112,11 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                 <div className="oxy-voice-intro-icon">
                   <Sparkles size={16} />
                 </div>
-
                 <div className="oxy-voice-intro-content">
                   <h4>How can I help you?</h4>
                   <p>
-                    First choose Login or Register. Then choose WhatsApp or SMS.
-                    After that, tap the mic and speak.
+                    Choose Login or Register, then WhatsApp or SMS. Tap mic and
+                    speak your 10-digit mobile number clearly.
                   </p>
                 </div>
               </div>
@@ -1141,7 +1124,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
             <div className="oxy-voice-card">
               <h5 className="oxy-voice-section-title">Choose Action</h5>
-
               <div className="oxy-voice-grid">
                 <button
                   type="button"
@@ -1171,7 +1153,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
             <div className="oxy-voice-card">
               <h5 className="oxy-voice-section-title">Choose OTP Type</h5>
-
               <div className="oxy-voice-grid">
                 <button
                   type="button"
@@ -1204,7 +1185,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
               <div className="oxy-voice-selected">
                 <Sparkles size={13} />
-                Selected: {selectionMessage}
+                Selected: {titleText}
               </div>
 
               {isAssistantSpeaking && (
@@ -1246,13 +1227,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                 }`}
                 onClick={isListening ? stopListening : startListening}
                 disabled={isLoading}
-                title={
-                  isLoading
-                    ? "Processing"
-                    : isListening
-                    ? "Stop recording"
-                    : "Start recording"
-                }
               >
                 {isLoading ? (
                   <Loader2 size={22} className="spin" />
@@ -1273,7 +1247,8 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                 </strong>
                 <span>
                   {isListening
-                    ? liveTranscript || "Listening for your voice..."
+                    ? liveTranscript ||
+                      "Speak your 10-digit mobile number. It auto-submits after 4 seconds pause."
                     : titleText}
                 </span>
               </div>
