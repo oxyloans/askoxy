@@ -1016,20 +1016,20 @@ else:
                 {/* Content Section */}
                 <div className="p-6">
                   {/* AI Features Banner */}
-                  <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-lg p-4">
-                    <h3 className="text-emerald-400 font-bold text-base mb-3 text-center">How It Works</h3>
-                    <div className="grid grid-cols-2 gap-3">
+                  <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-lg p-3 sm:p-4">
+                    <h3 className="text-emerald-400 font-bold text-sm sm:text-base mb-3 text-center">How It Works</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       <div className="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg">
                         <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">
                           1
                         </div>
-                        <div className="text-gray-300 text-sm">Upload your resume to get started with your AI-powered mock interview.</div>
+                        <div className="text-gray-300 text-xs sm:text-sm leading-relaxed">Upload your resume to get started with your AI-powered mock interview.</div>
                       </div>
                       <div className="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg">
                         <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">
                           2
                         </div>
-                        <div className="text-gray-300 text-sm">Start by uploading your resume so our AI can understand your profile.</div>
+                        <div className="text-gray-300 text-xs sm:text-sm leading-relaxed">AI analyzes your profile and generates personalized questions.</div>
                       </div>
                       <div className="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg">
                         <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">

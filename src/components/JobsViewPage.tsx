@@ -105,24 +105,24 @@ const JobViewPage: React.FC = () => {
   const cleanLocation = (location: string): string => {
     if (!location) return "";
 
-    // Remove all unwanted patterns more aggressively
+   
     let cleaned = location
-      .replace(/\b\d{6}\b/g, "") // Remove 6-digit pincodes
-      .replace(/\b\d{5}\b/g, "") // Remove 5-digit codes
-      .replace(/\b[A-Z]{2,3}\b/g, "") // Remove state codes like AP, TS, etc
-      .replace(/\bnodioa\b/gi, "") // Remove "nodioa"
-      .replace(/\b\d+th\s+floor\b/gi, "") // Remove "10th floor" etc
-      .replace(/\bfloor\b/gi, "") // Remove "floor"
-      .replace(/\bdoor\s+no\b/gi, "") // Remove "door no"
-      .replace(/\bplot\s+no\b/gi, "") // Remove "plot no"
-      .replace(/\bplot\b/gi, "") // Remove "plot"
-      .replace(/\b\d+-\d+\b/g, "") // Remove number ranges like "12-34"
-      .replace(/\b\d+\b/g, "") // Remove all standalone numbers
-      .replace(/[,\s]+/g, " ") // Replace multiple commas/spaces with single space
-      .replace(/[^a-zA-Z\s]/g, "") // Remove all non-alphabetic characters except spaces
+      .replace(/\b\d{6}\b/g, "") 
+      .replace(/\b\d{5}\b/g, "") 
+      .replace(/\b[A-Z]{2,3}\b/g, "") 
+      .replace(/\bnodioa\b/gi, "") 
+      .replace(/\b\d+th\s+floor\b/gi, "") 
+      .replace(/\bfloor\b/gi, "") 
+      .replace(/\bdoor\s+no\b/gi, "")
+      .replace(/\bplot\s+no\b/gi, "") 
+      .replace(/\bplot\b/gi, "") 
+      .replace(/\b\d+-\d+\b/g, "") 
+      .replace(/\b\d+\b/g, "") 
+      .replace(/[,\s]+/g, " ") 
+      .replace(/[^a-zA-Z\s]/g, "")
       .trim();
 
-    // Only accept known major cities
+   
     const validCities = {
       hyderabad: "Hyderabad",
       bangalore: "Bangalore",
@@ -230,51 +230,51 @@ const JobViewPage: React.FC = () => {
 
     const lowerCleaned = cleaned.toLowerCase();
 
-    // Check if it matches any valid city
+   
     for (const [key, value] of Object.entries(validCities)) {
       if (lowerCleaned.includes(key)) {
         return value;
       }
     }
 
-    // If no valid city found, return empty string (will be filtered out)
+    
     return "";
   };
 
   const cleanExperience = (experience: string): string => {
     if (!experience) return "";
 
-    // Remove unwanted patterns
+    
     let cleaned = experience
-      .replace(/\bgood\s+years?\b/gi, "") // Remove "good years"
-      .replace(/\bprofessional\b/gi, "") // Remove "professional"
-      .replace(/\bexperience\b/gi, "") // Remove "experience"
-      .replace(/[,\s]+/g, " ") // Replace multiple spaces with single space
+      .replace(/\bgood\s+years?\b/gi, "") 
+      .replace(/\bprofessional\b/gi, "") 
+      .replace(/\bexperience\b/gi, "") 
+      .replace(/[,\s]+/g, " ") 
       .trim();
 
-    // Only accept valid experience patterns
+    
     const validPatterns = [
-      /^\d+-\d+\s*years?$/i, // "1-3 years", "2-5 years"
-      /^\d+\s*years?$/i, // "2 years", "5 years"
-      /^\d+\+\s*years?$/i, // "5+ years"
-      /^fresher$/i, // "fresher"
-      /^entry\s*level$/i, // "entry level"
-      /^senior$/i, // "senior"
-      /^junior$/i, // "junior"
+      /^\d+-\d+\s*years?$/i,
+      /^\d+\s*years?$/i, 
+      /^\d+\+\s*years?$/i, 
+      /^fresher$/i,
+      /^entry\s*level$/i, 
+      /^senior$/i, 
+      /^junior$/i, 
     ];
 
-    // Check if cleaned experience matches any valid pattern
+    
     const isValid = validPatterns.some((pattern) => pattern.test(cleaned));
 
     if (isValid) {
-      // Standardize the format
+      
       if (/^\d+$/.test(cleaned)) {
         return `${cleaned} years`;
       }
       return cleaned;
     }
 
-    // If no valid pattern found, return empty string (will be filtered out)
+    
     return "";
   };
 
@@ -285,7 +285,7 @@ const JobViewPage: React.FC = () => {
         return job.jobLocations
           .split(",")
           .map((loc) => cleanLocation(loc.trim()))
-          .filter((loc) => loc && loc.length > 0); // Only keep valid cities
+          .filter((loc) => loc && loc.length > 0); 
       }),
     ),
   ).sort((a, b) => a.localeCompare(b));
@@ -294,7 +294,7 @@ const JobViewPage: React.FC = () => {
     new Set(
       jobs
         .map((job) => cleanExperience(job.experience?.trim() || ""))
-        .filter((exp) => exp && exp.length > 0), // Only keep valid experience
+        .filter((exp) => exp && exp.length > 0), 
     ),
   ).sort();
 
@@ -332,16 +332,7 @@ const JobViewPage: React.FC = () => {
     ),
   ).sort();
 
-  // 🔐 Read auth token (same format as other pages)
-  const readAuth = () => {
-    try {
-      const raw = localStorage.getItem("auth");
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  };
+  
 
   const safeSplit = (value: any): string[] => {
     if (!value || typeof value !== "string") return [];
@@ -355,7 +346,6 @@ const JobViewPage: React.FC = () => {
       );
   };
 
-  // 🔐 Read accessToken directly (same as other pages)
   const buildAuthHeaders = (): HeadersInit => {
     if (typeof window === "undefined") return {};
 
@@ -367,7 +357,6 @@ const JobViewPage: React.FC = () => {
     };
   };
 
-  // ✅ Check if user has any assistants
   const checkUserHasAgent = async (): Promise<boolean> => {
     if (!userId) return false;
 
@@ -496,10 +485,8 @@ const JobViewPage: React.FC = () => {
       });
 
       if (isPassed) {
-        // ✅ AFTER EXAM PASS → FULL FORM
         setIsModalOpen(true);
       } else {
-        // 🔥 FIRST TIME → RESUME UPLOAD
         setShowResumeModal(true);
       }
 
@@ -514,7 +501,7 @@ const JobViewPage: React.FC = () => {
 
   useEffect(() => {
     filterJobs();
-    setDisplayedJobsCount(20); // Reset pagination when filters change
+    setDisplayedJobsCount(20); 
   }, [jobs, searchTerm, filters]);
 
   const fetchJobs = async (compName: string) => {
@@ -535,7 +522,6 @@ const JobViewPage: React.FC = () => {
       const activeJobs = jobsArray.filter((job: Job) => job.jobStatus === true);
       setJobs(activeJobs);
 
-      // If there's an ID in the URL, try to set it as selectedJob
       if (id) {
         const matchedJob = activeJobs.find((job: Job) => job.id === id);
         if (matchedJob) {
@@ -616,7 +602,7 @@ const JobViewPage: React.FC = () => {
   };
 
   const getUniqueValues = (key: keyof Job): string[] => {
-    const valueMap = new Map<string, string>(); // lowercase -> original (formatted)
+    const valueMap = new Map<string, string>(); 
 
     jobs.forEach((job) => {
       const rawValue = job[key];
@@ -627,7 +613,6 @@ const JobViewPage: React.FC = () => {
       items.forEach((item) => {
         const normalized = item.toLowerCase();
         if (!valueMap.has(normalized)) {
-          // Store only the first seen original casing
           valueMap.set(normalized, item);
         }
       });
@@ -663,17 +648,15 @@ const JobViewPage: React.FC = () => {
     setApplySelectedJob({ jobDesignation, companyName });
 
     if (isPassed) {
-      // ✅ AFTER PASS → FULL FORM
       setIsModalOpen(true);
     } else {
-      // ✅ FIRST TIME → RESUME
       setShowResumeModal(true);
     }
   };
 
   const handleFilterChange = (key: string, value: string) => {
     if (key === "industry" && value === "AI Jobs") {
-      // When AI Jobs is selected from industry filter, navigate to AI Jobs company page
+
       const token = localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       const prefix =
@@ -695,7 +678,6 @@ const JobViewPage: React.FC = () => {
     });
     setSearchTerm("");
 
-    // Reset to All Jobs if not already there
     if (currentCompany !== "ALL") {
       const token = localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
@@ -716,7 +698,6 @@ const JobViewPage: React.FC = () => {
       return;
     }
 
-    // ✅ FIX START
     const safeMobile = finalMobileNumber || "";
     const safeEmail = email || "";
     const safeUserId = userId || "";
@@ -730,11 +711,10 @@ const JobViewPage: React.FC = () => {
       message.error("Please update your email");
       return;
     }
-    // ✅ FIX END
 
     const success = await submitWriteToUsQuery(
       safeEmail,
-      safeMobile, // ✅ always string
+      safeMobile, 
       query,
       "FREESAMPLE",
       safeUserId,
@@ -770,11 +750,18 @@ const JobViewPage: React.FC = () => {
   };
 
   const formatSalary = (
-    min: number,
-    max: number,
+    min: number | null,
+    max: number | null,
     payRateFrequencyType?: string,
   ) => {
-    const salaryRange = `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+    if (!min && !max) {
+      return "Salary not specified";
+    }
+    
+    const minSalary = min || 0;
+    const maxSalary = max || 0;
+    
+    const salaryRange = `₹${minSalary.toLocaleString()} - ₹${maxSalary.toLocaleString()}`;
     return payRateFrequencyType
       ? `${salaryRange} ${payRateFrequencyType}`
       : salaryRange;
@@ -788,12 +775,6 @@ const JobViewPage: React.FC = () => {
   };
   const formatDateWithBoth = (timestamp: number) => {
     const date = new Date(timestamp);
-
-    // const ist = date.toLocaleString("en-IN", {
-    //   timeZone: "Asia/Kolkata",
-    //   dateStyle: "medium",
-    //   timeStyle: "short",
-    // });
 
     const utc = date.toLocaleString("en-IN", {
       timeZone: "UTC",
@@ -863,7 +844,6 @@ const JobViewPage: React.FC = () => {
       "bg-gradient-to-br from-fuchsia-50 to-pink-100",
     ];
 
-    // Find index of job in filteredJobs to get stable color
     const index = filteredJobs.findIndex((j) => j.id === job.id);
     const bgColor =
       lightBackgroundColors[
@@ -976,7 +956,6 @@ const JobViewPage: React.FC = () => {
 
     return (
       <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden transition-all duration-500 hover:shadow-2xl">
-        {/* Banner/Header Segment */}
         <div className="p-6 md:p-8 border-b border-gray-100 bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center md:items-start gap-5">
@@ -1551,7 +1530,7 @@ const JobViewPage: React.FC = () => {
               </div>
             ) : null;
           })()}
-        {/* No Jobs Found */}
+    
         {filteredJobs.length === 0 && (
           <div className="text-center py-16 bg-white rounded-xl shadow-sm border">
             <div className="text-5xl mb-3">🔍</div>

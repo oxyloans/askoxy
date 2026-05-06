@@ -82,13 +82,9 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   }, [searchValue]);
 
   useEffect(() => {
-    document.body.style.overflow =
-      isSearchVisible || isVoiceOpen ? "hidden" : "auto";
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isSearchVisible, isVoiceOpen]);
+    document.body.style.overflow = isVoiceOpen ? "hidden" : "auto";
+    return () => { document.body.style.overflow = "auto"; };
+  }, [isVoiceOpen]);
 
   const toggleSidebar = () => {
     IsMobile5((prev: boolean) => !prev);
@@ -191,11 +187,11 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
   const renderSearchResults = () => {
     if (!searchValue.trim()) {
       return (
-        <div className="bg-white px-4 py-3">
-          <p className="mb-3 text-xs font-semibold text-gray-500">
-            Suggested searches
+        <div className="px-4 py-4">
+          <p className="mb-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-1">
+            Popular searches
           </p>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {searchTexts.map((text, index) => (
               <button
                 key={index}
@@ -206,10 +202,12 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   setSearchValue("");
                   setSearchResults([]);
                 }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-purple-50"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-purple-50 group"
               >
-                <Search size={16} className="text-purple-500" />
-                <span className="text-sm text-gray-700">{text}</span>
+                <span className="w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-purple-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <Search size={13} className="text-gray-400 group-hover:text-purple-500" />
+                </span>
+                <span className="text-sm text-gray-700 font-medium">{text}</span>
               </button>
             ))}
           </div>
@@ -219,35 +217,47 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
 
     if (isSearching) {
       return (
-        <div className="bg-white px-4 py-8">
-          <div className="flex items-center justify-center gap-3">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
-            <span className="text-sm text-gray-600">Searching...</span>
-          </div>
+        <div className="flex items-center justify-center gap-3 py-12">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
+          <span className="text-sm text-gray-500">Searching...</span>
         </div>
       );
     }
 
     if (searchResults.length > 0) {
       return (
-        <div className="bg-white px-4 py-3">
-          <p className="mb-3 text-xs font-semibold text-gray-500">
-            Search results
+        <div className="px-4 py-4">
+          <p className="mb-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-1">
+            Results
           </p>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {searchResults.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => handleSearchItemClick(item)}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-purple-50"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-purple-50 group"
               >
-                <Search size={16} className="text-purple-500" />
-                <span className="line-clamp-2 text-sm text-gray-700">
-                  {item.productName}
+                <span className="w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-purple-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <Search size={13} className="text-gray-400 group-hover:text-purple-500" />
                 </span>
+                <span className="flex-1 text-sm text-gray-800 font-medium line-clamp-1">{item.productName}</span>
               </button>
             ))}
+          </div>
+          <div className="mt-3 border-t border-gray-100 pt-3">
+            <button
+              type="button"
+              onClick={() => {
+                navigate(`/main/search-main?q=${encodeURIComponent(searchValue.trim())}`);
+                setIsSearchVisible(false);
+                setSearchValue("");
+                setSearchResults([]);
+              }}
+              className="w-full text-center text-sm text-purple-600 font-medium py-2 hover:text-purple-800"
+            >
+              See all results for "{searchValue}" →
+            </button>
           </div>
         </div>
       );
@@ -255,10 +265,12 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
 
     if (searchValue.trim().length >= 3) {
       return (
-        <div className="bg-white px-4 py-8 text-center">
-          <p className="text-sm text-gray-500">
-            No results found for "{searchValue}"
-          </p>
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <Search size={24} className="text-gray-400" />
+          </div>
+          <p className="text-sm font-medium text-gray-700">No results for "{searchValue}"</p>
+          <p className="text-xs text-gray-400 mt-1">Try a different keyword</p>
         </div>
       );
     }
@@ -292,6 +304,100 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
         }
       `}</style>
 
+      {/* Inline search bar below header — shown on tablet/mobile when search icon clicked */}
+      {isSearchVisible && (
+        <div
+          className="fixed left-0 right-0 z-[999] bg-white border-b border-gray-200 shadow-lg lg:hidden"
+          style={{ top: 80 }}
+        >
+          <div className="mx-auto max-w-[1600px] px-4 py-3">
+            <form
+              className="flex items-center gap-2 w-full border-2 border-purple-500 rounded-full px-4 py-2.5 bg-white"
+              onSubmit={handleSearchSubmit}
+            >
+              <Search size={18} className="text-gray-400 flex-shrink-0" />
+              <input
+                autoFocus
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder="Search products, agents..."
+                className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400"
+                autoComplete="off"
+              />
+              {!!searchValue && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchValue(""); setSearchResults([]); }}
+                  className="p-1 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
+                  aria-label="Clear"
+                >
+                  <X size={15} className="text-gray-400" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setIsSearchVisible(false); setSearchValue(""); setSearchResults([]); }}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0 ml-1"
+                aria-label="Close search"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </form>
+
+            {/* Inline dropdown results */}
+            {(searchValue.trim() || searchResults.length > 0) && (
+              <div className="mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden" style={{ maxHeight: 320, overflowY: "auto" }}>
+                {isSearching ? (
+                  <div className="flex items-center justify-center gap-2 py-8">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+                    <span className="text-sm text-gray-500">Searching...</span>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="py-2">
+                    <p className="px-4 pt-2 pb-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      {searchValue.trim() ? "Results" : "Popular searches"}
+                    </p>
+                    {searchResults.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSearchItemClick(item)}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-purple-50 transition-colors group"
+                      >
+                        <span className="w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-purple-100 flex items-center justify-center flex-shrink-0">
+                          <Search size={12} className="text-gray-400 group-hover:text-purple-500" />
+                        </span>
+                        <span className="flex-1 text-sm text-gray-800 font-medium text-left line-clamp-1">{item.productName}</span>
+                      </button>
+                    ))}
+                    {searchValue.trim().length >= 3 && (
+                      <div className="border-t border-gray-100 px-4 py-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigate(`/main/search-main?q=${encodeURIComponent(searchValue.trim())}`);
+                            setIsSearchVisible(false); setSearchValue(""); setSearchResults([]);
+                          }}
+                          className="w-full text-center text-xs text-purple-600 font-medium py-1 hover:text-purple-800"
+                        >
+                          See all results for "{searchValue}" →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : searchValue.trim().length >= 3 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-gray-500">No results for "{searchValue}"</p>
+                    <p className="text-xs text-gray-400 mt-1">Try a different keyword</p>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <header className="fixed left-0 right-0 top-0 z-[1000] h-[80px] border-b border-white/10 bg-[linear-gradient(135deg,#5c3391_0%,#312c74_55%,#1f2b67_100%)] shadow-[0_10px_30px_rgba(20,20,50,0.18)]">
         <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
@@ -311,17 +417,21 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
             />
           </div>
 
-          <div className="mx-6 hidden max-w-xl flex-1 sm:flex">
+          {/* Desktop search bar — always visible on lg+ */}
+          <div className="mx-4 hidden max-w-2xl flex-1 lg:mx-6 lg:flex">
             <SearchBar />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Search icon — visible on tablet & mobile (below lg) */}
             <button
-              onClick={() => setIsSearchVisible(true)}
-              className="rounded-full p-2 text-white transition hover:bg-white/10 sm:hidden"
-              aria-label="Open search"
+              onClick={() => setIsSearchVisible((v) => !v)}
+              className={`rounded-full p-2 transition lg:hidden ${
+                isSearchVisible ? "bg-white/20 text-white" : "text-white hover:bg-white/10"
+              }`}
+              aria-label="Toggle search"
             >
-              <Search size={20} />
+              {isSearchVisible ? <X size={20} /> : <Search size={20} />}
             </button>
 
             <button
@@ -438,54 +548,6 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
       </header>
 
       {isVoiceOpen && <VoiceWindow onClose={() => setIsVoiceOpen(false)} />}
-
-      {isSearchVisible && (
-        <div className="fixed inset-0 z-[1100] flex flex-col bg-white sm:hidden">
-          <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
-            <form
-              className="flex flex-1 items-center rounded-full bg-gray-100 px-4 py-2.5"
-              onSubmit={handleSearchSubmit}
-            >
-              <Search size={16} className="text-gray-400" />
-              <input
-                autoFocus
-                type="text"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Search for products or agents"
-                className="ml-2 flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400"
-              />
-              {!!searchValue && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchValue("");
-                    setSearchResults([]);
-                  }}
-                  className="ml-2 text-gray-400"
-                  aria-label="Clear"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </form>
-
-            <button
-              onClick={() => {
-                setIsSearchVisible(false);
-                setSearchValue("");
-                setSearchResults([]);
-              }}
-              className="text-gray-500"
-              aria-label="Close"
-            >
-              <X size={22} />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">{renderSearchResults()}</div>
-        </div>
-      )}
 
       {showValidationPopup && (
         <ValidationPopup

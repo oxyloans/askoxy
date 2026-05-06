@@ -124,7 +124,7 @@ const AddBlog: React.FC = () => {
     // Define character limits
     const limits: Record<string, number> = {
       campaignType: 255,
-      socialMediaCaption: 25, // Exactly 25 characters
+      socialMediaCaption: 50, // Maximum 50 characters
     };
 
     // Check if field has a limit and enforce it
@@ -200,6 +200,9 @@ const AddBlog: React.FC = () => {
         setMediaErrorMessage(`${file.name} is not a supported file type`);
         continue;
       }
+
+      // Clear previous error message for valid files
+      setMediaErrorMessage("");
 
       try {
         setIsUploading(true);
@@ -385,12 +388,15 @@ const AddBlog: React.FC = () => {
       isValid = false;
     }
 
-    // Validate social media caption - exactly 25 characters
+    // Validate social media caption - 6 to 50 characters
     if (!formData.socialMediaCaption || formData.socialMediaCaption.trim() === "") {
       setSocialMediaCaptionErrorMessage("Social Media Caption is required");
       isValid = false;
-    } else if (formData.socialMediaCaption.length !== 25) {
-      setSocialMediaCaptionErrorMessage("Social Media Caption must be exactly 25 characters");
+    } else if (formData.socialMediaCaption.length < 6) {
+      setSocialMediaCaptionErrorMessage("Social Media Caption must be at least 6 characters");
+      isValid = false;
+    } else if (formData.socialMediaCaption.length > 50) {
+      setSocialMediaCaptionErrorMessage("Social Media Caption must not exceed 50 characters");
       isValid = false;
     }
 
@@ -481,13 +487,13 @@ const AddBlog: React.FC = () => {
                   value={formData.socialMediaCaption}
                   onChange={handleInputChange}
                   maxLength={25}
-                  placeholder="Enter exactly 25 characters"
+                  placeholder="Enter 6-50 characters"
                   className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div className="text-sm text-gray-500 mt-1">
-                {charCounts.socialMediaCaption}/25 characters (exactly 25 required)
+                {charCounts.socialMediaCaption}/50 characters (6-50 required)
               </div>
               {socialMediaCaptionErrorMessage && (
                 <div className="text-red-500 text-sm mb-4">

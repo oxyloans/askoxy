@@ -1,8 +1,7 @@
 // /src/AdminTasks.tsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
-  Spin,
   Image,
   Typography,
   Input,
@@ -10,27 +9,24 @@ import {
   Button,
   Row,
   Col,
- 
   Popconfirm,
   Tag,
   Modal,
   Space,
- 
+  Badge,
+  Tooltip,
+  Empty,
 } from "antd";
 import {
   SearchOutlined,
-  CheckOutlined,
-  CommentOutlined,
-  EyeOutlined,
-  SortAscendingOutlined,
-  SortDescendingOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { employeeApi } from "../utils/axiosInstances";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 
-const { Text } = Typography;
-const { Search } = Input;
+const { Text, Paragraph } = Typography;
+
 interface CommentType {
   commentsBy: string;
   comments: string;
@@ -44,265 +40,123 @@ interface Task {
   taskAssignBy: string;
   taskAssignTo: string[] | string;
   taskName: string;
- taskAssignedDate: string;
+  taskAssignedDate: string;
   taskCompleteDate: string;
+  tastCreatedDate?: string;
 }
-type StatusFilter =   "ASSIGNED" | "COMPLETED" | "REJECTED" | "DELETED";
+
+type StatusFilter = "ASSIGNED" | "COMPLETED" | "REJECTED" | "DELETED";
+
+const STATUS_CONFIG: Record<StatusFilter, { color: string; bg: string; border: string; label: string }> = {
+  ASSIGNED:  { color: "#008cba", bg: "#e8f6fb", border: "#008cba", label: "Assigned" },
+  COMPLETED: { color: "#1ab394", bg: "#e8f8f5", border: "#1ab394", label: "Completed" },
+  REJECTED:  { color: "#e74c3c", bg: "#fdf0ef", border: "#e74c3c", label: "Rejected" },
+  DELETED:   { color: "#95a5a6", bg: "#f4f4f4", border: "#95a5a6", label: "Deleted" },
+};
+
 const AdminTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
-  const userId = sessionStorage.getItem("userId") || "";
   const [searchText, setSearchText] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [commentsModalVisible, setCommentsModalVisible] = useState(false);
   const [commentsData, setCommentsData] = useState<CommentType[]>([]);
   const [comments, setComments] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [totalElements, setTotalElements] = useState<number>(0);
+  const [assignedCount, setAssignedCount] = useState<number>(0);
+  const [completedCount, setCompletedCount] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ASSIGNED");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const normalizeStatus = (s?: string): StatusFilter => {
-    const v = (s || "").trim().toUpperCase();
-    if (v === "ASSIGNED") return "ASSIGNED";
-    if (v === "COMPLETED") return "COMPLETED";
-
-    return "ASSIGNED";
-  };
-  const statusCounts = useMemo(() => {
-    // Filter by search text first
-    const q = searchText.trim().toLowerCase();
-    let searchFiltered = tasks;
-
-    if (q) {
-      searchFiltered = tasks.filter((task) => {
-        const taskName = (task.taskName || "").toLowerCase();
-        const taskAssignBy = (task.taskAssignBy || "").toLowerCase();
-        let assignToArr: string[] = [];
-        if (Array.isArray(task.taskAssignTo)) {
-          assignToArr = task.taskAssignTo.map((a) => (a || "").toLowerCase());
-        } else if (typeof task.taskAssignTo === "string") {
-          assignToArr = [task.taskAssignTo.toLowerCase()];
-        }
-
-        return (
-          taskName.includes(q) ||
-          taskAssignBy.includes(q) ||
-          assignToArr.some((name) => name.includes(q))
-        );
-      });
-    }
-
-    const counts: Record<StatusFilter, number> = {
-  
-      ASSIGNED: 0,
-      COMPLETED: 0,
-      REJECTED: 0,
-      DELETED: 0,
-    };
-
-    searchFiltered.forEach((t) => {
-      const ns = normalizeStatus(t.status);
-      counts[ns] += 1;
-    });
-
-    return counts;
-  }, [tasks, searchText]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-
     try {
       const date = new Date(dateString);
       if (isNaN(date as any)) return dateString;
-
-      const options: Intl.DateTimeFormatOptions = {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        weekday: "short",
-      };
-
-      return date.toLocaleDateString("en-IN", options);
-    } catch (error) {
-      return dateString;
-    }
+      return date.toLocaleDateString("en-IN", {
+        year: "numeric", month: "short", day: "numeric", weekday: "short",
+      });
+    } catch { return dateString; }
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (
+    page: number = currentPage,
+    size: number = pageSize,
+    status: string = statusFilter,
+    search: string = searchText
+  ) => {
     setLoading(true);
     try {
+      const params: any = { page: page - 1, size };
+    
       const response = await employeeApi.get(
-        `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`
+        `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`,
+        { params }
       );
 
-      const reversedTasks = response.data.slice().reverse();
-
-      // ✅ Filter out invalid rows
-      const validTasks = reversedTasks.filter((task: any) => {
+      const data = response.data;
+      const allContent: Task[] = (data.content || []).filter((task: any) => {
         const assigned = task.taskAssignTo;
-        const taskName = task.taskName;
-
-        // Check for valid taskAssignTo
-        const hasValidAssignee = (() => {
-          if (!assigned) return false;
-          if (Array.isArray(assigned))
-            return assigned.some((a) => a && a.trim() !== "");
-          if (typeof assigned === "string") return assigned.trim() !== "";
-          return false;
-        })();
-
-        // Check for valid taskName
-        const hasValidTaskName =
-          typeof taskName === "string" && taskName.trim() !== "";
-
-        // ✅ Keep only rows that have both valid taskAssignTo AND valid taskName
-        return hasValidAssignee && hasValidTaskName;
-      });
-      validTasks.sort((a: Task, b: Task): number => {
-       const dateA: Date = new Date(a.taskAssignedDate || 0);
-       const dateB: Date = new Date(b.taskAssignedDate || 0);
-
-        return sortOrder === "desc" ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
+        const hasValidAssignee = Array.isArray(assigned)
+          ? assigned.some((a: string) => a && a.trim() !== "")
+          : typeof assigned === "string" && assigned.trim() !== "";
+        const hasValidTaskName = typeof task.taskName === "string" && task.taskName.trim() !== "";
+        
+        const matchesSearch = !search.trim() || 
+          task.taskName?.toLowerCase().includes(search.toLowerCase()) ||
+          task.taskAssignBy?.toLowerCase().includes(search.toLowerCase()) ||
+          (Array.isArray(task.taskAssignTo) 
+            ? task.taskAssignTo.some((name: string) => name?.toLowerCase().includes(search.toLowerCase()))
+            : task.taskAssignTo?.toLowerCase().includes(search.toLowerCase()));
+        
+        return hasValidAssignee && hasValidTaskName && matchesSearch;
       });
 
-      setTasks(validTasks);
-      setFilteredTasks(validTasks);
-      // ✅ Reset pagination to first page on initial load
-      setCurrentPage(1);
-      setPageSize(100);
+      const assignedTasks = allContent.filter((task: any) => task.status?.toUpperCase() === "ASSIGNED");
+      const completedTasks = allContent.filter((task: any) => task.status?.toUpperCase() === "COMPLETED");
+
+      setAssignedCount(assignedTasks.length);
+      setCompletedCount(completedTasks.length);
+
+      const filteredContent = allContent.filter((task: any) => 
+        task.status?.toUpperCase() === status.toUpperCase()
+      );
+
+      setTasks(filteredContent);
+      setTotalElements(data.totalElements || 0);
     } catch (error) {
       message.error("Failed to fetch tasks");
-      console.error("Task Fetch Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
-  const getTaskAssignToText = (taskAssignTo: string | string[] | undefined) => {
-    if (!taskAssignTo) return "";
-    if (Array.isArray(taskAssignTo)) {
-      return taskAssignTo.filter(Boolean).join(", ");
-    }
-    return taskAssignTo;
-  };
-
-  // Filtering logic with useMemo at component level
-  const filtered = useMemo(() => {
-    const statusFiltered = tasks.filter((t) => normalizeStatus(t.status) === statusFilter);
-
-    const q = searchText.trim().toLowerCase();
-    if (!q) return statusFiltered;
-
-    return statusFiltered.filter((task) => {
-      const taskName = (task.taskName || "").toLowerCase();
-      const taskAssignBy = (task.taskAssignBy || "").toLowerCase();
-      let assignToArr: string[] = [];
-      if (Array.isArray(task.taskAssignTo)) {
-        assignToArr = task.taskAssignTo.map((a) => (a || "").toLowerCase());
-      } else if (typeof task.taskAssignTo === "string") {
-        assignToArr = [task.taskAssignTo.toLowerCase()];
-      }
-
-      return (
-        taskName.includes(q) ||
-        taskAssignBy.includes(q) ||
-        assignToArr.some((name) => name.includes(q))
-      );
-    });
-  }, [tasks, searchText, statusFilter]);
+    const timer = setTimeout(() => setSearchText(searchInput), 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
-    setFilteredTasks(filtered);
-  }, [filtered]);
+    fetchTasks(currentPage, pageSize, statusFilter, searchText);
+  }, [currentPage, pageSize, statusFilter, searchText]);
 
-  // Reset to page 1 whenever search text changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchText]);
-
-  // Clamp current page if data length changes and current page becomes invalid
-  useEffect(() => {
-    const totalPages = Math.ceil(filteredTasks.length / pageSize) || 1;
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [filteredTasks.length, pageSize]);
-
-  // Simplified search handler
-  const handleSearch = (value: string) => {
-    setSearchText(value);
-  };
-
-  const handleSortOrderChange = (order: "asc" | "desc") => {
-    setSortOrder(order);
-  };
+  }, [statusFilter, searchText]);
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
-    setLoading(true);
     try {
       await employeeApi.patch(
-        `${BASE_URL}/ai-service/agent/taskUpdate?id=${id}&status=${newStatus}`,
-        {}
+        `${BASE_URL}/ai-service/agent/taskUpdate?id=${id}&status=${newStatus}`, {}
       );
-      message.success(`Task marked as ${newStatus}`);
-      fetchTasks();
-    } catch (error) {
-      console.error(error);
+      message.success(`Task marked as ${newStatus.toLowerCase()}`);
+      await fetchTasks(currentPage, pageSize, statusFilter, searchText);
+    } catch {
       message.error("Failed to update task status");
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const getStatusTag = (status: string) => {
-    let color: string;
-    let text: string;
-
-    switch (status?.toLowerCase()) {
-      case "assigned":
-        color = "blue";
-        text = "Assigned";
-        break;
-      case "completed":
-        color = "green";
-        text = "Completed";
-        break;
-      case "rejected":
-        color = "red";
-        text = "Rejected";
-        break;
-      case "deleted":
-        color = "gray";
-        text = "Deleted";
-        break;
-      default:
-        color = "gold";
-        text = "Pending";
-    }
-    return (
-      <Tag
-        color={color}
-        style={{
-          fontSize: 13,
-          fontWeight: 500,
-          textTransform: "capitalize",
-          borderRadius: 8,
-          padding: "3px 10px",
-        }}
-      >
-        {text}
-      </Tag>
-    );
-  };
-
-  const handleCommentsAdd = (task: Task) => {
-    setSelectedTask(task);
-    setCommentsModalVisible(true);
   };
 
   const handleCommentsUpdate = async () => {
@@ -311,25 +165,17 @@ const AdminTasks: React.FC = () => {
       return;
     }
     try {
-      const response = await employeeApi.post(
-        `${BASE_URL}/ai-service/agent/userAndRadhaSirComments`,
-        {
-          taskId: selectedTask?.id,
-          comments,
-          commentsBy: "EMPLOYEE",
-        }
-      );
-      message.success("Comments added successfully!");
+      await employeeApi.post(`${BASE_URL}/ai-service/agent/userAndRadhaSirComments`, {
+        taskId: selectedTask?.id,
+        comments,
+        commentsBy: "EMPLOYEE",
+      });
+      message.success("Comment added successfully!");
       setCommentsModalVisible(false);
       setComments("");
-      fetchTasks();
-
-      // Automatically open view modal with refreshed comments
-      if (selectedTask) {
-        handleViewComments(selectedTask);
-      }
-    } catch (error) {
-      console.error("Update Error:", error);
+      fetchTasks(currentPage, pageSize, statusFilter, searchText);
+      if (selectedTask) handleViewComments(selectedTask);
+    } catch {
       message.error("Failed to add comment");
     }
   };
@@ -340,245 +186,170 @@ const AdminTasks: React.FC = () => {
       setSelectedTask(task);
       const response = await employeeApi.get(
         `${BASE_URL}/ai-service/agent/taskedIdBasedOnComments`,
-        {
-          params: { taskId: task.id },
-        }
+        { params: { taskId: task.id } }
       );
       setCommentsData(response.data || []);
       setViewModalVisible(true);
-    } catch (error) {
-      console.error("View Comments Error:", error);
+    } catch {
       message.error("Failed to fetch comments");
     } finally {
       setLoading(false);
     }
   };
 
+  const getAssignedToText = (taskAssignTo: string[] | string) => {
+    if (Array.isArray(taskAssignTo)) return taskAssignTo.filter(Boolean).join(", ");
+    return taskAssignTo || "";
+  };
+
+  const renderFileCell = (url?: string | null) => {
+    if (!url) return <span style={{ color: "#bbb", fontSize: 12 }}>No File</span>;
+
+    const lower = url.toLowerCase();
+    const isImage = /\.(jpg|jpeg|png|webp|gif)$/.test(lower);
+    const isPdf = lower.endsWith(".pdf");
+    const isExcel = /\.(xls|xlsx)$/.test(lower);
+
+    if (isImage) {
+      return (
+        <Image
+          width={72} height={72} src={url} preview
+          style={{ borderRadius: 8, objectFit: "cover" }}
+        />
+      );
+    }
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer"
+        style={{ fontSize: 12, color: "#008cba", fontWeight: 600 }}
+      >
+        {isPdf ? "View PDF" : isExcel ? "View Excel" : "View File"}
+      </a>
+    );
+  };
+
   const columns = [
     {
-      title: "S.NO",
+      title: "#",
       key: "serial",
+      width: 55,
       align: "center" as const,
-      render: (_: any, __: Task, index: number) =>
-        index + 1 + (currentPage - 1) * pageSize,
+      render: (_: any, __: Task, index: number) => (
+        <span style={{ fontWeight: 600, color: "#888", fontSize: 13 }}>
+          {index + 1 + (currentPage - 1) * pageSize}
+        </span>
+      ),
     },
-
     {
-      title: "Task Information",
+      title: "Task Details",
       key: "task_info",
-      align: "center" as const,
-      render: (_: any, record: any) => {
-        const hasValidAssignee =
-          Array.isArray(record.taskAssignTo) &&
-          record.taskAssignTo.length > 0 &&
-          record.taskAssignTo.some((a: any) => a && a.trim() !== "");
-
-        const assignedToText = hasValidAssignee
-          ? Array.isArray(record.taskAssignTo)
-            ? record.taskAssignTo.join(", ")
-            : record.taskAssignTo
-          : "";
-
+      render: (_: any, record: Task) => {
+        const assignedTo = getAssignedToText(record.taskAssignTo);
         return (
-          <div
-            style={{
-              padding: "8px 12px",
-              textAlign: "left",
-              display: "inline-block",
-              minWidth: 180,
-            }}
-          >
-            <div style={{ fontWeight: 600, color: "#351664", fontSize: 15 }}>
-              Task ID:{" "}
-              <span style={{ color: "rgb(0, 140, 186)" }}>
-                {record.id ? `#${record.id.slice(-4)}` : ""}
-              </span>
+          <div style={{ minWidth: 200 }}>
+            <div style={{ marginBottom: 4 }}>
+              <Tag color="geekblue" style={{ fontSize: 11, margin: 0, borderRadius: 4 }}>
+                #{record.id.slice(-6).toUpperCase()}
+              </Tag>
             </div>
-            <div style={{ color: "#555", fontSize: 13 }}>
-              Assigned By:{" "}
-              <span style={{ fontWeight: 500, color: "#1ab394" }}>
-                {record.taskAssignBy || ""}
-              </span>
+            <div style={{ marginBottom: 3 }}>
+              <span style={{ fontSize: 11, color: "#999" }}>By: </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#351664" }}>{record.taskAssignBy}</span>
             </div>
-            <div style={{ color: "#555", fontSize: 13 }}>
-              Assigned To:{" "}
-              <span style={{ fontWeight: 500, color: "#008cba" }}>
-                {assignedToText}
-              </span>
+            <div>
+              <span style={{ fontSize: 11, color: "#999" }}>To: </span>
+              <Tooltip title={assignedTo}>
+                <span style={{ fontSize: 12, fontWeight: 500, color: "#008cba" }}>
+                  {assignedTo.length > 40 ? assignedTo.slice(0, 40) + "…" : assignedTo}
+                </span>
+              </Tooltip>
             </div>
           </div>
         );
       },
     },
-
     {
-      title: "Task Name",
+      title: "Task Description",
       dataIndex: "taskName",
       key: "taskName",
-      align: "center" as const,
-      render: (text: any) => (
-        <div
-          style={{
-            width: "300px",
-            maxWidth: "300px",
-            WebkitBoxOrient: "vertical",
-            display: "-webkit-box",
-            textAlign: "center",
-            margin: "0 auto",
-            maxHeight: "11em",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            lineClamp: 3,
-          }}
-          title={text}
-        >
-          {text}
+      render: (text: string) => (
+        <Tooltip title={text} placement="topLeft">
+          <Paragraph
+            ellipsis={{ rows: 3 }}
+            style={{ margin: 0, fontSize: 13, color: "#333", maxWidth: 320, lineHeight: 1.6 }}
+          >
+            {text}
+          </Paragraph>
+        </Tooltip>
+      ),
+    },
+    {
+      title: "Date & Status",
+      key: "timeline",
+      width: 170,
+      render: (_: any, record: Task) => (
+        <div>
+          <div style={{ marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: "#555" }}>
+              {record.taskAssignedDate ? formatDate(record.taskAssignedDate) : "—"}
+            </span>
+          </div>
+          {record.tastCreatedDate && (
+            <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>
+              {record.tastCreatedDate}
+            </div>
+          )}
+          <Tag
+            style={{
+              fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "2px 10px",
+              border: `1px solid ${STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]?.border || "#d9d9d9"}`,
+              background: STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]?.bg || "#f5f5f5",
+              color: STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]?.color || "#666",
+            }}
+          >
+            {STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]?.label || record.status}
+          </Tag>
         </div>
       ),
     },
-
     {
-      title: "Task Timeline",
-      key: "task_timeline",
-      align: "center" as const,
-      render: (_: any, record: any) => {
-        const { taskAssignedDate, status } = record;
-
-        return (
-          <div
-            style={{
-              padding: "8px 12px",
-              textAlign: "left",
-              display: "inline-block",
-              minWidth: 170,
-            }}
-          >
-            <div style={{ color: "#555", fontSize: 13 }}>
-              Assigned Date:{" "}
-              <span style={{ color: "#008cba", fontWeight: 500 }}>
-                {taskAssignedDate ? formatDate(taskAssignedDate) : ""}
-              </span>
-            </div>
-
-            <div style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
-              Status: {getStatusTag(status)}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Image & Files",
+      title: "Attachment",
       dataIndex: "image",
       key: "image",
-      width: 150,
+      width: 100,
       align: "center" as const,
-      render: (url?: string) => {
-        if (!url) {
-          return <Text type="secondary">No File</Text>;
-        }
-
-        const fileUrl = url.toLowerCase();
-
-        const isImage =
-          fileUrl.endsWith(".jpg") ||
-          fileUrl.endsWith(".jpeg") ||
-          fileUrl.endsWith(".png") ||
-          fileUrl.endsWith(".webp") ||
-          fileUrl.endsWith(".gif");
-
-        const isPdf = fileUrl.endsWith(".pdf");
-
-        const isExcel = fileUrl.endsWith(".xls") || fileUrl.endsWith(".xlsx");
-
-        if (isImage) {
-          return (
-            <Image
-              width={80}
-              height={80}
-              src={url}
-              preview
-              style={{
-                borderRadius: "6px",
-                objectFit: "cover",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-              }}
-            />
-          );
-        }
-
-        return (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontWeight: 600,
-              color: "#2563EB",
-            }}
-          >
-            {isPdf && "📄 View PDF"}
-            {isExcel && "📊 View Excel"}
-            {!isPdf && !isExcel && "View File"}
-          </a>
-        );
-      },
+      render: (url?: string | null) => renderFileCell(url),
     },
     {
       title: "Actions",
       key: "actions",
+      width: 160,
       align: "center" as const,
-      width: 260,
       render: (_: any, record: Task) => (
-        <Space wrap style={{ justifyContent: "center" }}>
+        <Space direction="vertical" size={6} style={{ width: "100%" }}>
           {record.status?.toLowerCase() !== "completed" && (
             <Popconfirm
               title="Mark this task as completed?"
               onConfirm={() => handleStatusUpdate(record.id, "COMPLETED")}
-              okText="Yes"
-              cancelText="No"
+              okText="Yes" cancelText="No"
+              okButtonProps={{ style: { background: "#1ab394", borderColor: "#1ab394" } }}
             >
-              <Button
-                type="primary"
-                icon={<CheckOutlined />}
-                style={{
-                  backgroundColor: "#008cba",
-                  borderColor: "#008cba",
-                  borderRadius: 6,
-                }}
-                size="small"
+              <Button size="small" block
+                style={{ background: "#1ab394", borderColor: "#1ab394", color: "#fff", borderRadius: 6, fontWeight: 500 }}
               >
                 Complete
               </Button>
             </Popconfirm>
           )}
-
           <Button
-            icon={<CommentOutlined />}
-            style={{
-              background: "#1ab394",
-              color: "white",
-              borderColor: "#1ab394",
-              borderRadius: 6,
-            }}
-            size="small"
-            onClick={() => handleCommentsAdd(record)}
+            size="small" block
+            style={{ background: "#008cba", borderColor: "#008cba", color: "#fff", borderRadius: 6, fontWeight: 500 }}
+            onClick={() => { setSelectedTask(record); setCommentsModalVisible(true); }}
           >
-            Add Comments
+            Add Comment
           </Button>
-
           <Button
-            icon={<EyeOutlined />}
-            style={{
-              background: "#351664",
-              color: "white",
-              borderColor: "#351664",
-              borderRadius: 6,
-            }}
-            size="small"
+            size="small" block
+            style={{ background: "#351664", borderColor: "#351664", color: "#fff", borderRadius: 6, fontWeight: 500 }}
             onClick={() => handleViewComments(record)}
           >
             View Comments
@@ -588,186 +359,217 @@ const AdminTasks: React.FC = () => {
     },
   ];
 
+  const cfg = STATUS_CONFIG[statusFilter];
+
   return (
     <UserPanelLayout>
-      <div style={{ padding: 20 }}>
-       <Row
-  justify="space-between"
-  align="middle"
-  gutter={[16, 16]}
-  style={{ marginBottom: 20 }}
->
-  <Col xs={24} sm={24} md={12} lg={12}>
-    <Text strong style={{ fontSize: 20, color: "#008cba" }}>
-      Assigned Tasks Whatsapp
-    </Text>
-  </Col>
+      <div style={{ padding: "20px 16px", minHeight: "100vh" }}>
 
-  <Col xs={24} sm={24} md={12} lg={8}>
-    <Input
-      prefix={<SearchOutlined />}
-      placeholder="Search names, tasks..."
-      value={searchText}
-      onChange={(e) => handleSearch(e.target.value)}
-      allowClear
-      size="middle"
-      style={{ width: "100%" }}
-    />
-  </Col>
-</Row>
-
-<Row style={{ marginBottom: 20 }}>
-  <Col span={24}>
-    <Space size="middle">
-      <Button
-        type={statusFilter === "ASSIGNED" ? "primary" : "default"}
-        onClick={() => setStatusFilter("ASSIGNED")}
-        style={{
-          backgroundColor: statusFilter === "ASSIGNED" ? "#008cba" : "#f0f0f0",
-          borderColor: statusFilter === "ASSIGNED" ? "#008cba" : "#d9d9d9",
-          color: statusFilter === "ASSIGNED" ? "white" : "#333",
-          fontWeight: 500,
-          borderRadius: 8,
-        }}
-      >
-        Assigned ({statusCounts.ASSIGNED})
-      </Button>
-      <Button
-        type={statusFilter === "COMPLETED" ? "primary" : "default"}
-        onClick={() => setStatusFilter("COMPLETED")}
-        style={{
-          backgroundColor: statusFilter === "COMPLETED" ? "#1ab394" : "#f0f0f0",
-          borderColor: statusFilter === "COMPLETED" ? "#1ab394" : "#d9d9d9",
-          color: statusFilter === "COMPLETED" ? "white" : "#333",
-          fontWeight: 500,
-          borderRadius: 8,
-        }}
-      >
-        Completed ({statusCounts.COMPLETED})
-      </Button>
-    </Space>
-  </Col>
-</Row>
-
-
-
-
-        {loading ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: 300,
-            }}
-          >
-            <Spin tip="Loading tasks..." size="large" />
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 20,
+        }}>
+          <div>
+            <div style={{ color: "#351664", fontSize: 20, fontWeight: 700, letterSpacing: 0.3 }}>
+              WhatsApp Task Manager
+            </div>
+            <div style={{ color: "#888", fontSize: 13, marginTop: 2 }}>
+              Manage and track all assigned tasks
+            </div>
           </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={filteredTasks}
-            rowKey={(record) => record.id}
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              responsive: true,
-              showSizeChanger: true,
-              pageSizeOptions: ["20", "30", "40", "50"],
-              size: "small",
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} tasks`,
-              onChange: (page, size) => {
-                setCurrentPage(page);
-                if (size && size !== pageSize) setPageSize(size);
-              },
-              onShowSizeChange: (_page, size) => {
-                setCurrentPage(1);
-                setPageSize(size);
-              },
-            }}
-            bordered
-            scroll={{ x: true, y: 600 }}
-            style={{ width: "100%" }}
+          {/* <Badge
+            count={totalElements}
+            overflowCount={9999}
+            style={{ backgroundColor: cfg.color, fontSize: 13, fontWeight: 700, padding: "0 10px", height: 26, lineHeight: "26px", borderRadius: 13 }}
+          >
+            <div style={{ background: cfg.bg, borderRadius: 8, padding: "6px 14px", color: cfg.color, fontSize: 13, fontWeight: 600 }}>
+              {cfg.label} Tasks
+            </div>
+          </Badge> */}
+        </div>
+
+        {/* Filters Row */}
+        <div style={{
+          padding: "14px 0",
+          marginBottom: 16,
+          display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12,
+        }}>
+          {/* Status Tabs */}
+          <Space size={8} wrap>
+            {(["ASSIGNED", "COMPLETED"] as StatusFilter[]).map((s) => {
+              const c = STATUS_CONFIG[s];
+              const active = statusFilter === s;
+              const count = s === "ASSIGNED" ? assignedCount : completedCount;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  style={{
+                    padding: "7px 18px", borderRadius: 20, border: `2px solid ${active ? c.color : "#e0e0e0"}`,
+                    background: active ? c.color : "#fff", color: active ? "#fff" : "#555",
+                    fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s",
+                    boxShadow: active ? `0 2px 8px ${c.color}40` : "none",
+                  }}
+                >
+                  {c.label}
+                  {count > 0 && (
+                    <span style={{
+                      marginLeft: 7, background: active ? "rgba(255,255,255,0.3)" : c.bg,
+                      color: active ? "#fff" : c.color,
+                      borderRadius: 10, padding: "1px 7px", fontSize: 11, fontWeight: 700,
+                    }}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </Space>
+
+          {/* Search */}
+          <Input
+            prefix={<SearchOutlined style={{ color: "#bbb" }} />}
+            suffix={searchInput ? (
+              <CloseCircleOutlined
+                style={{ color: "#bbb", cursor: "pointer" }}
+                onClick={() => { 
+                  setSearchInput(""); 
+                }}
+              />
+            ) : null}
+            placeholder="Search by name, task..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            style={{ width: 260, borderRadius: 20, border: "1.5px solid #e0e0e0" }}
+            allowClear={false}
           />
-        )}
+        </div>
+
+        {/* Table */}
+        <Table
+          columns={columns}
+          dataSource={tasks}
+          rowKey={(r) => r.id}
+          loading={loading}
+          locale={{
+            emptyText: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <span style={{ color: "#aaa", fontSize: 14 }}>
+                    {searchText ? `No tasks found for "${searchText}"` : `No ${cfg.label.toLowerCase()} tasks`}
+                  </span>
+                }
+              />
+            ),
+          }}
+          pagination={{
+            current: currentPage,
+            pageSize,
+            total: totalElements,
+            showSizeChanger: true,
+            pageSizeOptions: ["50", "100", "200", "300"],
+            showTotal: (total, range) => (
+              <span style={{ fontSize: 13, color: "#666" }}>
+                {range[0]}–{range[1]} of <strong>{total}</strong> tasks
+              </span>
+            ),
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              if (size !== pageSize) { setPageSize(size); setCurrentPage(1); }
+            },
+            style: { padding: "12px 16px" },
+          }}
+          bordered={false}
+          showHeader
+          scroll={{ x: 900 }}
+          style={{ fontSize: 13 }}
+        />
       </div>
 
       {/* View Comments Modal */}
       <Modal
-        title={`Task Comments - ${
-          selectedTask ? `#${selectedTask.id.slice(-4)}` : ""
-        }`}
+        title="Comments"
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
-        footer={null}
-        width={600}
+        footer={
+          <Button
+            onClick={() => { setViewModalVisible(false); setSelectedTask(selectedTask); setCommentsModalVisible(true); }}
+            style={{ background: "#008cba", borderColor: "#008cba", color: "#fff", borderRadius: 6 }}
+          >
+            Add Comment
+          </Button>
+        }
+        width={580}
+        styles={{ body: { maxHeight: 420, overflowY: "auto", padding: "16px 20px" } }}
       >
         {commentsData.length > 0 ? (
-          commentsData.map((comment, index) => (
-            <div
-              key={index}
-              style={{
-                background: "#f9f9f9",
-                borderLeft: "4px solid #008cba",
-                borderRadius: 6,
-                padding: "10px 12px",
-                marginBottom: 10,
-              }}
-            >
-              <p style={{ margin: 0, fontWeight: 500, color: "#351664" }}>
-                Comment By:{" "}
-                <span style={{ color: "#1ab394" }}>{comment.commentsBy}</span>
-              </p>
-              <p style={{ margin: "4px 0", color: "#333" }}>
-                {comment.comments}
-              </p>
-              <Tag
-                color={
-                  comment.status?.toLowerCase() === "completed"
-                    ? "green"
-                    : comment.status?.toLowerCase() === "rejected"
-                      ? "red"
-                      : "blue"
-                }
-              >
-                {comment.status || ""}
-              </Tag>
-            </div>
-          ))
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {commentsData.map((comment, index) => (
+              <div key={index} style={{
+                background: "#f8faff", border: "1px solid #e3eaf5",
+                borderLeft: "4px solid #008cba", borderRadius: 8, padding: "12px 14px",
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: "50%", background: "#351664",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontSize: 12, fontWeight: 700,
+                    }}>
+                      {(comment.commentsBy || "?")[0].toUpperCase()}
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: 13, color: "#351664" }}>{comment.commentsBy}</span>
+                  </div>
+                  {comment.status && (
+                    <Tag
+                      color={comment.status.toLowerCase() === "completed" ? "success" : comment.status.toLowerCase() === "rejected" ? "error" : "processing"}
+                      style={{ borderRadius: 10, fontSize: 11 }}
+                    >
+                      {comment.status}
+                    </Tag>
+                  )}
+                </div>
+                <p style={{ margin: 0, fontSize: 13, color: "#444", lineHeight: 1.6 }}>{comment.comments}</p>
+              </div>
+            ))}
+          </div>
         ) : (
-          <Text type="secondary">No comments found for this task.</Text>
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No comments yet for this task." />
         )}
       </Modal>
 
-      {/* Add Comments Modal */}
+      {/* Add Comment Modal */}
       <Modal
-        title={`Add Comments for Task ${
-          selectedTask ? `#${selectedTask.id.slice(-4)}` : ""
-        }`}
+        title="Add Comment"
         open={commentsModalVisible}
-        onCancel={() => setCommentsModalVisible(false)}
+        onCancel={() => { setCommentsModalVisible(false); setComments(""); }}
         onOk={handleCommentsUpdate}
-        okText="Add Comments"
+        okText="Submit"
+        cancelText="Cancel"
         okButtonProps={{
-          style: {
-            backgroundColor: "#008cba",
-            color: "white",
-            border: "none",
-            fontWeight: 500,
-          },
+          style: { background: "#008cba", borderColor: "#008cba", borderRadius: 6, fontWeight: 600 },
         }}
+        cancelButtonProps={{ style: { borderRadius: 6 } }}
+        width={500}
       >
-        <p style={{ marginBottom: 8, fontWeight: 500 }}>Enter Comments:</p>
+        <div style={{ marginBottom: 8 }}>
+          <Text style={{ fontSize: 13, color: "#555" }}>
+            Task: <strong style={{ color: "#351664" }}>
+              {selectedTask?.taskName?.slice(0, 60)}{(selectedTask?.taskName?.length || 0) > 60 ? "…" : ""}
+            </strong>
+          </Text>
+        </div>
         <Input.TextArea
-          rows={3}
+          rows={4}
           value={comments}
           onChange={(e) => setComments(e.target.value)}
-          placeholder="Enter your comments"
+          placeholder="Write your comment here..."
+          style={{ borderRadius: 8, fontSize: 13, resize: "none" }}
+          maxLength={500}
+          showCount
         />
       </Modal>
-
-
     </UserPanelLayout>
   );
 };

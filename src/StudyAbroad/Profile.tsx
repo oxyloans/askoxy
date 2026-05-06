@@ -434,9 +434,37 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
   const validateProfileForm = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
-    // Only first name validation
+    // First name validation
     if (!formData.userFirstName.trim()) {
       errors.push("First name is required");
+    }
+
+    // Alternate mobile number validation (if provided)
+    if (formData.alterMobileNumber.trim()) {
+      if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
+        errors.push("Alternate mobile number must be 10 digits");
+      } else if (/^0+$/.test(formData.alterMobileNumber)) {
+        errors.push("Alternate mobile number cannot be all zeros");
+      }
+    }
+
+    // Primary mobile number validation (if provided)
+    if (formData.mobileNumber.trim()) {
+      if (!/^\d{10}$/.test(formData.mobileNumber)) {
+        errors.push("Primary mobile number must be 10 digits");
+      } else if (/^0+$/.test(formData.mobileNumber)) {
+        errors.push("Primary mobile number cannot be all zeros");
+      }
+    }
+
+    // WhatsApp number validation (if provided)
+    if (formData.whatsappNumber.trim()) {
+      const whatsappDigits = formData.whatsappNumber.replace(/\D/g, '');
+      if (whatsappDigits.length < 10) {
+        errors.push("WhatsApp number must be at least 10 digits");
+      } else if (/^0+$/.test(whatsappDigits)) {
+        errors.push("WhatsApp number cannot be all zeros");
+      }
     }
 
     return { isValid: errors.length === 0, errors };
@@ -865,8 +893,12 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 </select>
                 <input
                   type="tel"
+                  maxLength={10}
                   value={formData.mobileNumber}
-                  onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    handleInputChange("mobileNumber", value);
+                  }}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                   placeholder="Enter mobile number"
                   disabled={isMethodDisabled || loadingProfile || !isEditingProfile}
@@ -882,8 +914,12 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
               </label>
               <input
                 type="tel"
+                maxLength={10}
                 value={formData.alterMobileNumber}
-                onChange={(e) => handleInputChange("alterMobileNumber", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  handleInputChange("alterMobileNumber", value);
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                 placeholder="Enter alternate mobile number"
                 disabled={loadingProfile || !isEditingProfile}
@@ -908,7 +944,10 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 <input
                   type="tel"
                   value={formData.whatsappNumber}
-                  onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d+]/g, '');
+                    handleInputChange("whatsappNumber", value);
+                  }}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                   placeholder="Enter WhatsApp number"
                   disabled={isMethodDisabled || loadingProfile || !isEditingProfile}

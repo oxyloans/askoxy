@@ -335,16 +335,16 @@ const ProfilePage = () => {
 
     if (formData.alterMobileNumber.trim() !== "") {
       // Alternate mobile number validation
-      if (!formData.alterMobileNumber.trim()) {
-        errors.alterMobileNumber = "Alternate mobile number is required";
-      } else if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
+      if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
         errors.alterMobileNumber =
           "Please enter a valid 10-digit mobile number";
+      } else if (/^0+$/.test(formData.alterMobileNumber)) {
+        errors.alterMobileNumber = "Mobile number cannot be all zeros";
       } else if (formData.alterMobileNumber === formData.mobileNumber) {
         errors.alterMobileNumber =
           "Alternate and Mobile number must be different.";
         errors.mobileNumber = "Alternate and Mobile number must be different.";
-      } else if (formData.alterMobileNumber === formData.whatsappNumber) {
+      } else if (formData.alterMobileNumber === formData.whatsappNumber.replace(/\D/g, '')) {
         errors.alterMobileNumber =
           "Alternate and WhatsApp number must be different.";
         errors.whatsappNumber =
@@ -357,10 +357,51 @@ const ProfilePage = () => {
       errors.mobileNumber = "Mobile number is required";
     } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
       errors.mobileNumber = "Please enter a valid 10-digit mobile number";
+    } else if (/^0+$/.test(formData.mobileNumber)) {
+      errors.mobileNumber = "Mobile number cannot be all zeros";
     }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const validateField = (field: string, value: string, updatedFormData?: ProfileFormData) => {
+    const data = updatedFormData || formData;
+    let error = "";
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    switch (field) {
+      case "userFirstName":
+        if (!value.trim()) error = "First name is required";
+        else if (!/^[A-Za-z ]+$/.test(value.trim())) error = "First name should only contain letters";
+        break;
+      case "customerEmail":
+        if (!value.trim()) error = "Email address is required";
+        else if (!emailRegex.test(value.trim())) error = "Please enter a valid email address";
+        break;
+      case "mobileNumber":
+        if (!value.trim()) error = "Mobile number is required";
+        else if (!/^\d{10}$/.test(value)) error = "Please enter a valid 10-digit mobile number";
+        else if (/^0+$/.test(value)) error = "Mobile number cannot be all zeros";
+        break;
+      case "alterMobileNumber":
+        if (value.trim() !== "") {
+          if (!/^\d{10}$/.test(value)) error = "Please enter a valid 10-digit mobile number";
+          else if (/^0+$/.test(value)) error = "Mobile number cannot be all zeros";
+          else if (value === data.mobileNumber) error = "Alternate and Mobile number must be different";
+          else if (value === data.whatsappNumber.replace(/\D/g, "")) error = "Alternate and WhatsApp number must be different";
+        }
+        break;
+      case "whatsappNumber":
+        if (value.trim() !== "") {
+          const digits = value.replace(/\D/g, "");
+          if (/^0+$/.test(digits)) error = "WhatsApp number cannot be all zeros";
+          else if (digits === data.alterMobileNumber) error = "Alternate and WhatsApp number must be different";
+        }
+        break;
+    }
+
+    setValidationErrors((prev) => ({ ...prev, [field]: error }));
   };
 
   const validateAddressForm = () => {
@@ -421,9 +462,8 @@ const ProfilePage = () => {
       setEditStatus(true);
       localStorage.setItem("profileData", JSON.stringify(payload));
     } catch (error: any) {
-      setError(
-        error.response.data || "Error updating profile. Please try again."
-      );
+      const errorMessage = error.response?.data?.message || error.response?.data || "Error updating profile. Please try again.";
+      setError(typeof errorMessage === 'string' ? errorMessage : "Error updating profile. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -659,12 +699,11 @@ const ProfilePage = () => {
                       type="text"
                       pattern="^[A-Za-z]+$"
                       value={formData.userFirstName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          userFirstName: e.target.value,
-                        })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, userFirstName: val });
+                        validateField("userFirstName", val);
+                      }}
                       className={`w-full px-4 py-3 rounded-lg border transition-all
                                      ${
                                        validationErrors.userFirstName
@@ -720,21 +759,8 @@ const ProfilePage = () => {
                       value={formData.customerEmail}
                       onChange={(e) => {
                         const newEmail = e.target.value;
-                        setFormData({
-                          ...formData,
-                          customerEmail: newEmail,
-                        });
-                        
-                        // Clear email validation error if email becomes valid
-                        if (validationErrors.customerEmail && newEmail.trim()) {
-                          const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                          if (emailRegex.test(newEmail.trim())) {
-                            setValidationErrors(prev => ({
-                              ...prev,
-                              customerEmail: ""
-                            }));
-                          }
-                        }
+                        setFormData({ ...formData, customerEmail: newEmail });
+                        validateField("customerEmail", newEmail);
                       }}
                       className={`w-full px-4 py-3 rounded-lg border transition-all
                                      ${
@@ -763,13 +789,13 @@ const ProfilePage = () => {
                       type="text"
                       maxLength={10}
                       pattern="\d*"
-                      value={formData.alterMobileNumber.trim()}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          alterMobileNumber: e.target.value,
-                        })
-                      }
+                      value={formData.alterMobileNumber}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        const updated = { ...formData, alterMobileNumber: value };
+                        setFormData(updated);
+                        validateField("alterMobileNumber", value, updated);
+                      }}
                       className={`w-full px-4 py-3 rounded-lg border transition-all
                                      ${
                                        validationErrors.alterMobileNumber
@@ -833,11 +859,11 @@ const ProfilePage = () => {
                         international={true} // Allow country change for WhatsApp
                         value={formData.whatsappNumber}
                         onChange={(value) => {
-                          setFormData({
-                            ...formData,
-                            whatsappNumber: value || "",
-                          });
+                          const val = value || "";
+                          const updated = { ...formData, whatsappNumber: val };
+                          setFormData(updated);
                           setIsWhatsappVerified(false);
+                          validateField("whatsappNumber", val, updated);
                         }}
                         className={`flex-grow px-4 py-3 rounded-lg border transition-all
                       ${
