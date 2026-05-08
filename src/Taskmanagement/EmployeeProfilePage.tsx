@@ -73,6 +73,18 @@ const MobileNumberUpdate: React.FC<MobileNumberUpdateProps> = ({
         return;
       }
 
+      // Check if all digits are the same
+      if (/^(\d)\1{9}$/.test(mobileNumber)) {
+        setInlineError("Please enter a valid mobile number. All digits cannot be the same.");
+        return;
+      }
+
+      // Check if number starts with valid Indian mobile prefix (6-9)
+      if (!/^[6-9]/.test(mobileNumber)) {
+        setInlineError("Mobile number must start with 6, 7, 8, or 9.");
+        return;
+      }
+
       if (!userId) {
         setInlineError("User ID not found. Please login again.");
         return;
@@ -171,6 +183,18 @@ const MobileNumberUpdate: React.FC<MobileNumberUpdateProps> = ({
                             if (!v || v.length !== 10) {
                               return Promise.reject(
                                 new Error("Enter exactly 10 digits")
+                              );
+                            }
+                            // Check if all digits are the same
+                            if (/^(\d)\1{9}$/.test(v)) {
+                              return Promise.reject(
+                                new Error("All digits cannot be the same")
+                              );
+                            }
+                            // Check if number starts with valid Indian mobile prefix (6-9)
+                            if (!/^[6-9]/.test(v)) {
+                              return Promise.reject(
+                                new Error("Mobile number must start with 6, 7, 8, or 9")
                               );
                             }
                             return Promise.resolve();

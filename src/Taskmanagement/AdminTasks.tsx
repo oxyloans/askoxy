@@ -14,7 +14,6 @@ import {
   Modal,
   Space,
   Badge,
-  Tooltip,
   Empty,
 } from "antd";
 import {
@@ -242,10 +241,11 @@ const AdminTasks: React.FC = () => {
     {
       title: "Task Details",
       key: "task_info",
+      width: 200,
       render: (_: any, record: Task) => {
         const assignedTo = getAssignedToText(record.taskAssignTo);
         return (
-          <div style={{ minWidth: 200 }}>
+          <div style={{ minWidth: 200, maxHeight: 150, overflowY: "auto" }}>
             <div style={{ marginBottom: 4 }}>
               <Tag color="geekblue" style={{ fontSize: 11, margin: 0, borderRadius: 4 }}>
                 #{record.id.slice(-6).toUpperCase()}
@@ -257,11 +257,9 @@ const AdminTasks: React.FC = () => {
             </div>
             <div>
               <span style={{ fontSize: 11, color: "#999" }}>To: </span>
-              <Tooltip title={assignedTo}>
-                <span style={{ fontSize: 12, fontWeight: 500, color: "#008cba" }}>
-                  {assignedTo.length > 40 ? assignedTo.slice(0, 40) + "…" : assignedTo}
-                </span>
-              </Tooltip>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "#008cba" }}>
+                {assignedTo}
+              </span>
             </div>
           </div>
         );
@@ -271,15 +269,15 @@ const AdminTasks: React.FC = () => {
       title: "Task Description",
       dataIndex: "taskName",
       key: "taskName",
+      width: 400,
       render: (text: string) => (
-        <Tooltip title={text} placement="topLeft">
+        <div style={{ maxHeight: 150, overflowY: "auto", paddingRight: 8 }}>
           <Paragraph
-            ellipsis={{ rows: 3 }}
-            style={{ margin: 0, fontSize: 13, color: "#333", maxWidth: 320, lineHeight: 1.6 }}
+            style={{ margin: 0, fontSize: 13, color: "#333", lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
           >
             {text}
           </Paragraph>
-        </Tooltip>
+        </div>
       ),
     },
     {

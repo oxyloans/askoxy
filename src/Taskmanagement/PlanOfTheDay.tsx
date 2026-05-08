@@ -117,7 +117,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 21 * 60 + 25;
+      const closeTimeInMinutes = 21 * 60 + 30;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes,
@@ -293,7 +293,7 @@ const PlanOfTheDay: React.FC = () => {
         placement: "topRight",
       });
     } finally {
-      // ✅ MAIN FIX: stop "Updating..." after API completes
+      
       setLoading(false);
     }
   };
@@ -376,6 +376,9 @@ const PlanOfTheDay: React.FC = () => {
       onFinish={onFinish}
       className="space-y-5"
       size="large"
+      onValuesChange={() => {
+        form.validateFields(['planOftheDay']).catch(() => {});
+      }}
     >
       <Form.Item
         name="planOftheDay"
@@ -386,14 +389,18 @@ const PlanOfTheDay: React.FC = () => {
         }
         rules={[
           {
-            required: true,
-            message: "Please enter your plan for the day!",
-          },
-          {
-            min: 30,
-            message: "Your plan should be at least 30 characters",
+            validator: (_, value) => {
+              if (!value || value.trim().length === 0) {
+                return Promise.reject(new Error("Please provide your daily plan"));
+              }
+              if (value.trim().length < 30) {
+                return Promise.reject(new Error(`Minimum 30 characters required (${value.trim().length}/30)`));
+              }
+              return Promise.resolve();
+            },
           },
         ]}
+        validateTrigger="onSubmit"
       >
         <TextArea
           rows={4}
@@ -736,6 +743,9 @@ const PlanOfTheDay: React.FC = () => {
       onFinish={onFinish}
       className="space-y-5"
       size="large"
+      onValuesChange={() => {
+        form.validateFields(['planOftheDay']).catch(() => {});
+      }}
     >
       <Form.Item
         name="planOftheDay"
@@ -750,14 +760,18 @@ const PlanOfTheDay: React.FC = () => {
         }
         rules={[
           {
-            required: true,
-            message: "Please enter your plan for the day!",
-          },
-          {
-            min: 30,
-            message: "Your plan should be at least 30 characters",
+            validator: (_, value) => {
+              if (!value || value.trim().length === 0) {
+                return Promise.reject(new Error("Please provide your daily plan"));
+              }
+              if (value.trim().length < 30) {
+                return Promise.reject(new Error(`Minimum 30 characters required (${value.trim().length}/30)`));
+              }
+              return Promise.resolve();
+            },
           },
         ]}
+        validateTrigger="onSubmit"
       >
         <TextArea
           rows={4}

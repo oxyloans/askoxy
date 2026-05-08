@@ -94,7 +94,7 @@ const AddBlog: React.FC = () => {
   // ReactQuill modules configuration
   const quillModules = {
     toolbar: [
-      [{ header: [1, 2, 3, false] }],
+      // [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ list: 'ordered' }, { list: 'bullet' }],
       ['link', 'image'],
@@ -400,11 +400,11 @@ const AddBlog: React.FC = () => {
       isValid = false;
     }
 
-    // Validate campaign type added by
-    if (!formData.campaignTypeAddBy || formData.campaignTypeAddBy.trim() === "") {
-      setTypeErrorMessage("Blog Added By is required");
-      isValid = false;
-    }
+    // // Validate campaign type added by
+    // if (!formData.campaignTypeAddBy || formData.campaignTypeAddBy.trim() === "") {
+    //   setTypeErrorMessage("Blog Added By is required");
+    //   isValid = false;
+    // }
 
     return isValid;
   };

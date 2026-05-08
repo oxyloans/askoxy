@@ -310,7 +310,7 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
           className="fixed left-0 right-0 z-[999] bg-white border-b border-gray-200 shadow-lg lg:hidden"
           style={{ top: 80 }}
         >
-          <div className="mx-auto max-w-[1600px] px-4 py-3">
+          <div className="mx-auto max-w-[1800px] px-4 py-3">
             <form
               className="flex items-center gap-2 w-full border-2 border-purple-500 rounded-full px-4 py-2.5 bg-white"
               onSubmit={handleSearchSubmit}
@@ -418,7 +418,7 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
           </div>
 
           {/* Desktop search bar — always visible on lg+ */}
-          <div className="mx-4 hidden max-w-2xl flex-1 lg:mx-6 lg:flex">
+          <div className="mx-4 hidden max-w-xl flex-1 lg:mx-6 lg:flex">
             <SearchBar />
           </div>
 
@@ -444,23 +444,24 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                 activeButton === "voice" ? "scale-95" : "hover:scale-105"
               }`}
               aria-label="Voice Assistance"
+              title="Voice Assistance"
             >
               <div className="relative z-10">
-                <Mic size={18} className="text-white" />
+                <Mic size={20} className="text-white" />
                 {isVoiceHovered && (
                   <>
                     <span className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-white animate-ping"></span>
                     <span
-                      className="absolute -bottom-1 -left-1 h-1.5 w-1.5 rounded-full bg-yellow-100 animate-ping"
+                      className="absolute -bottom-1 -left-1 h-1.5 w-1.5 rounded-full bg-white animate-ping"
                       style={{ animationDelay: "0.3s" }}
                     ></span>
                   </>
                 )}
               </div>
 
-              <span className="relative z-10 hidden text-sm font-semibold sm:inline whitespace-nowrap">
+              {/* <span className="relative z-10 hidden text-sm font-semibold sm:inline whitespace-nowrap">
                 Voice Assistant
-              </span>
+              </span> */}
 
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000"></div>
             </button>
@@ -477,12 +478,13 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
               onMouseUp={() => setActiveButton(null)}
               className={`relative overflow-hidden rounded-full px-4 py-2.5 text-white transition-all duration-300 bg-gradient-to-r from-yellow-400 to-amber-500 flex items-center gap-2 ${
                 activeButton === "ai" ? "scale-95" : "hover:scale-105"
-              }`}
+                }`}
+              title="AI Mode"
               aria-label="AI Mode"
             >
               <div className="relative z-10">
                 <Sparkles
-                  size={18}
+                  size={20}
                   className="text-white sparkle-rotate"
                   fill="currentColor"
                 />
@@ -490,16 +492,16 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   <>
                     <span className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-white animate-ping"></span>
                     <span
-                      className="absolute -bottom-1 -left-1 h-1.5 w-1.5 rounded-full bg-yellow-100 animate-ping"
+                      className="absolute -bottom-1 -left-1 h-1.5 w-1.5 rounded-full bg-white animate-ping"
                       style={{ animationDelay: "0.3s" }}
                     ></span>
                   </>
                 )}
               </div>
 
-              <span className="relative z-10 hidden text-sm font-semibold sm:inline whitespace-nowrap">
+              {/* <span className="relative z-10 hidden text-sm font-semibold sm:inline whitespace-nowrap">
                 AI Mode
-              </span>
+              </span> */}
 
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000"></div>
             </button>
@@ -515,11 +517,12 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                   : "text-white hover:bg-white/10"
               }`}
               aria-label="Profile"
+              title="Profile"
             >
-              <FaUserCircle size={20} />
-              <span className="hidden text-sm font-medium sm:inline">
+              <FaUserCircle size={24} />
+              {/* <span className="hidden text-sm font-medium sm:inline">
                 Profile
-              </span>
+              </span> */}
             </button>
 
             <button
@@ -531,11 +534,12 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
                 location.pathname === "/main/mycart"
                   ? "bg-white text-purple-700"
                   : "text-white hover:bg-white/10"
-              }`}
+                }`}
+              title="Cart"
               aria-label="Cart"
             >
-              <ShoppingCart size={18} />
-              <span className="hidden text-sm font-medium sm:inline">Cart</span>
+              <ShoppingCart size={24} />
+              {/* <span className="hidden text-sm font-medium sm:inline">Cart</span> */}
 
               {count > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-pink-500 px-1 text-[10px] font-bold text-white">

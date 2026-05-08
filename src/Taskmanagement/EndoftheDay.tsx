@@ -220,7 +220,7 @@ const canUpdateTask = (task: Task): boolean => {
       notification.error({
         message: "Error",
         description:
-          "Task updates are not allowed after 8:00 PM IST or for tasks from a different day.",
+          "Task updates are not allowed after 9:00 PM IST or for tasks from a different day.",
         placement: "topRight",
       });
       return;
@@ -259,10 +259,10 @@ const canUpdateTask = (task: Task): boolean => {
           placement: "topRight",
         });
 
-        // Reset upload state after successful update
+       
         resetUploadState();
 
-        // Refresh tasks
+     
         fetchAllPendingTasks(userId);
       } else {
         notification.warning({
@@ -352,75 +352,6 @@ const canUpdateTask = (task: Task): boolean => {
   const handleDeleteUpload = () => {
     resetUploadState();
     message.success("Upload cleared successfully");
-  };
-
-  const renderUploadStatus = () => {
-    switch (uploadStatus) {
-      case "uploading":
-        return (
-          <div className="w-full">
-            <div className="flex items-center">
-              <Spin size="small" className="mr-2" />
-              <Text>{fileName}</Text>
-            </div>
-            <Progress
-              percent={uploadProgress}
-              size="small"
-              status="active"
-              strokeColor={{
-                "0%": "#108ee9",
-                "100%": "#87d068",
-              }}
-            />
-          </div>
-        );
-      case "uploaded":
-        return (
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center">
-              <FileOutlined className="mr-2 text-green-500" />
-              <Text className="mr-2">{fileName}</Text>
-              <Tag color="success" icon={<CheckCircleOutlined />}>
-                Uploaded Successfully
-              </Tag>
-            </div>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-              onClick={handleDeleteUpload}
-              className="ml-2"
-            >
-              Clear
-            </Button>
-          </div>
-        );
-      case "failed":
-        return (
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center">
-              <FileOutlined className="mr-2 text-red-500" />
-              <Text className="mr-2">{fileName}</Text>
-              <Tag color="error">Upload Failed</Tag>
-            </div>
-            <Button
-              icon={<DeleteOutlined />}
-              size="small"
-              onClick={handleDeleteUpload}
-              className="ml-2"
-            >
-              Clear
-            </Button>
-          </div>
-        );
-      default:
-        return (
-          <Text type="secondary" className="flex items-center">
-            <PaperClipOutlined className="mr-2" />
-            No file selected
-          </Text>
-        );
-    }
   };
 
   // Format date for display
@@ -702,7 +633,7 @@ const canUpdateTask = (task: Task): boolean => {
                       </span>
                     </div>
                   }
-                  className="shadow-md mb-4 sm:mb-6 rounded-lg"
+                  className="shadow-md rounded-lg"
                   headStyle={{
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
@@ -794,40 +725,99 @@ const canUpdateTask = (task: Task): boolean => {
 
                       <Form.Item
                         label={
-                          <span className="font-medium">
-                            Upload Screenshot (Optional)
+                          <span className="font-medium flex items-center">
+                            <PaperClipOutlined className="mr-2" />
+                            Attach Screenshot (Optional)
                           </span>
                         }
                       >
                         <Card
-                          className="mb-4 bg-gray-50 border border-dashed hover:border-blue-400 transition-colors"
+                          className="mb-4 bg-gradient-to-br from-blue-50 to-gray-50 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-300 hover:shadow-md"
                           size="small"
                         >
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                            <label className="cursor-pointer">
-                              <input
-                                type="file"
-                                onChange={handleFileChange}
-                                className="hidden"
-                                disabled={uploadStatus === "uploading"}
-                                accept="image/*,.pdf,.doc,.docx"
-                                key={fileInputKey} // Add key to force re-rendering
-                              />
-                              <Button
-                                icon={<UploadOutlined />}
-                                disabled={uploadStatus === "uploading"}
-                                loading={uploadStatus === "uploading"}
-                              >
-                                {uploadStatus === "uploading"
-                                  ? "Uploading..."
-                                  : "Choose File"}
-                              </Button>
-                            </label>
-
-                            <div className="flex-grow">
-                              {renderUploadStatus()}
+                          {uploadStatus === "idle" ? (
+                            <div className="text-center py-3">
+                              <CloudUploadOutlined className="text-3xl text-blue-500 mb-2" />
+                              <div className="mb-1">
+                                <Button
+                                  type="primary"
+                                  icon={<UploadOutlined />}
+                                  className="bg-[#008CBA]"
+                                  onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*,.pdf,.doc,.docx';
+                                    input.onchange = (e: any) => handleFileChange(e);
+                                    input.click();
+                                  }}
+                                >
+                                  Select File to Upload
+                                </Button>
+                              </div>
+                              <Text type="secondary" className="text-xs block">
+                                Supported: Images, PDF, DOC (Max 10MB)
+                              </Text>
                             </div>
-                          </div>
+                          ) : uploadStatus === "uploading" ? (
+                            <div className="py-3">
+                              <div className="flex items-center justify-center mb-2">
+                                <Spin />
+                                <Text className="ml-2 text-sm">Uploading {fileName}...</Text>
+                              </div>
+                              <Progress
+                                percent={uploadProgress}
+                                status="active"
+                                strokeColor={{
+                                  "0%": "#108ee9",
+                                  "100%": "#87d068",
+                                }}
+                                size="small"
+                              />
+                            </div>
+                          ) : uploadStatus === "uploaded" ? (
+                            <div className="py-3">
+                              <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                                <div className="flex items-center flex-1">
+                                  <CheckCircleOutlined className="text-xl text-green-500 mr-2" />
+                                  <div className="flex-1">
+                                    <Text strong className="block text-sm">{fileName}</Text>
+                                    <Tag color="success" className="mt-1">
+                                      Upload Successful
+                                    </Tag>
+                                  </div>
+                                </div>
+                                <Button
+                                  danger
+                                  size="small"
+                                  icon={<DeleteOutlined />}
+                                  onClick={handleDeleteUpload}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="py-3">
+                              <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                                <div className="flex items-center flex-1">
+                                  <InfoCircleOutlined className="text-xl text-red-500 mr-2" />
+                                  <div className="flex-1">
+                                    <Text strong className="block text-sm text-red-600">{fileName}</Text>
+                                    <Tag color="error" className="mt-1">
+                                    Upload Failed
+                                    </Tag>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="small"
+                                  icon={<DeleteOutlined />}
+                                  onClick={handleDeleteUpload}
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </Card>
                       </Form.Item>
 
@@ -856,7 +846,7 @@ const canUpdateTask = (task: Task): boolean => {
                           <Paragraph type="secondary">
                             This task cannot be updated because it is either
                             from a different day or the update window (before
-                            8:00 PM IST) has passed.
+                            9:00 PM IST) has passed.
                           </Paragraph>
                         </div>
                       }
@@ -876,16 +866,17 @@ const canUpdateTask = (task: Task): boolean => {
                       </span>
                     </div>
                   }
-                  className="shadow-md rounded-lg mb-4 sm:mb-6"
+                  className="shadow-md rounded-lg"
                   headStyle={{
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
                   }}
-                  style={{ height: "100%" }}
+                  bodyStyle={{
+                    maxHeight: "600px",
+                    overflowY: "auto",
+                  }}
                 >
-                  <div className="py-2 max-h-[400px] sm:max-h-[500px] overflow-y-auto">
-                    {renderPendingResponses()}
-                  </div>
+                  {renderPendingResponses()}
                 </Card>
               </div>
             </div>

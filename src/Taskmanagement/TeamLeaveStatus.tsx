@@ -44,7 +44,7 @@ const LeaveStatus: React.FC = () => {
         const response = await employeeApi.get<LeaveData[]>(
           `${BASE_URL}/user-service/write/leaves/${userId}`
         );
-        setLeaveData(response.data);
+        setLeaveData(response.data.reverse());
       } catch (err) {
         console.error(err);
         setError("Failed to fetch leave data.");

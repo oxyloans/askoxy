@@ -142,6 +142,17 @@ const AllStatusPage: React.FC = () => {
     }
   }, []);
 
+  // Auto-fetch tasks when userId, status, or activeTab changes
+  useEffect(() => {
+    if (userId) {
+      if (activeTab === "general") {
+        fetchAllTasks();
+      } else if (activeTab === "byDate" && selectedDate) {
+        fetchTasksByDate();
+      }
+    }
+  }, [userId, status, activeTab]);
+
   // Effect for filtering tasks based on search text
   useEffect(() => {
     if (tasks.length > 0) {
@@ -382,7 +393,9 @@ const AllStatusPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchText(value);
+    // Trim whitespace and reject if empty
+    const trimmedValue = value.trim();
+    setSearchText(trimmedValue);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -685,7 +698,7 @@ const AllStatusPage: React.FC = () => {
           className="shadow-md rounded-lg overflow-hidden border-0"
           bodyStyle={{ padding: 0 }}
         >
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 text-black">
+          <div className="bg-gradient-to-r from-white-50 to-blue-50 p-4 text-black">
             <Title level={4} className="text-black mb-1">
               Daily Activity Status
             </Title>
@@ -779,7 +792,10 @@ const AllStatusPage: React.FC = () => {
                     placeholder="Search in tasks..."
                     allowClear
                     value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
+                    onChange={(e) => {
+                      const trimmedValue = e.target.value.trim();
+                      setSearchText(trimmedValue);
+                    }}
                     onSearch={handleSearch}
                     style={{ width: "100%", minWidth: "250px" }}
                   />

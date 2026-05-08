@@ -344,11 +344,6 @@ const BlogDetails: React.FC = () => {
     });
   }, [campaigns, blogId]);
 
-  const orderedCampaigns = useMemo(() => {
-    if (!featuredCampaign) return [];
-    return [featuredCampaign, ...remainingCampaigns];
-  }, [featuredCampaign, remainingCampaigns]);
-
   const scrollToIndex = (campaignId: string, idx: number, smooth = true) => {
     const container = mediaScrollRefs.current[campaignId];
     if (!container) return;
@@ -1015,7 +1010,7 @@ const handleWriteToUsSubmitButton = async () => {
                           {isVideoUrl(src) ? (
                             <video
                               controls
-                              className="w-full h-[260px] sm:h-[420px] object-cover bg-black"
+                              className="w-full h-[260px] sm:h-[420px] object-contain bg-black"
                             >
                               <source src={src} type={getVideoType(src)} />
                             </video>
@@ -1023,7 +1018,7 @@ const handleWriteToUsSubmitButton = async () => {
                             <img
                               src={src}
                               alt={getCampaignTitle(campaign)}
-                              className="w-full h-[260px] sm:h-[420px] object-cover"
+                              className="w-full h-[260px] sm:h-[420px] object-contain bg-slate-100"
                             />
                           )}
                         </div>
@@ -1349,93 +1344,93 @@ const handleWriteToUsSubmitButton = async () => {
             }
             
             @media (max-width: 1024px) {
-              .grid.grid-cols-1.xl:grid-cols-\[1\.05fr_0\.95fr\] {
+              .grid.grid-cols-1.xl:grid-cols-[1.05fr_0.95fr] {
                 grid-template-columns: 1fr;
               }
             }
             
             @media (max-width: 768px) {
-              .px-4.sm\:px-6 {
+              .px-4.sm:px-6 {
                 padding-left: 12px;
                 padding-right: 12px;
               }
               
-              .py-4.sm\:py-7 {
+              .py-4.sm:py-7 {
                 padding-top: 16px;
                 padding-bottom: 16px;
               }
               
-              .text-\[26px\].sm\:text-\[34px\] {
+              .text-[26px].sm:text-[34px] {
                 font-size: 22px;
               }
               
-              .text-\[15px\].sm\:text-\[16px\] {
+              .text-[15px].sm:text-[16px] {
                 font-size: 14px;
               }
               
-              .h-\[260px\].sm\:h-\[420px\] {
+              .h-[260px].sm:h-[420px] {
                 height: 220px;
               }
               
-              .text-\[21px\].sm\:text-\[25px\] {
+              .text-[21px].sm:text-[25px] {
                 font-size: 18px;
               }
               
-              .text-\[12px\].sm\:text-\[13px\] {
+              .text-[12px].sm:text-[13px] {
                 font-size: 11px;
               }
               
-              .px-4.sm\:px-5 {
+              .px-4.sm:px-5 {
                 padding-left: 12px;
                 padding-right: 12px;
               }
               
-              .py-2\.5 {
+              .py-2.5 {
                 padding-top: 8px;
                 padding-bottom: 8px;
               }
               
-              .gap-2.sm\:gap-3 {
+              .gap-2.sm:gap-3 {
                 gap: 8px;
               }
               
-              .flex-col.sm\:flex-row {
+              .flex-col.sm:flex-row {
                 flex-direction: column;
               }
               
-              .items-start.sm\:items-center {
+              .items-start.sm:items-center {
                 align-items: flex-start;
               }
             }
             
             @media (max-width: 640px) {
-              .px-3.sm\:px-5 {
+              .px-3.sm:px-5 {
                 padding-left: 8px;
                 padding-right: 8px;
               }
               
-              .px-6.sm\:px-10 {
+              .px-6.sm:px-10 {
                 padding-left: 16px;
                 padding-right: 16px;
               }
               
-              .h-\[260px\].sm\:h-\[420px\] {
+              .h-[260px].sm\:h-[420px] {
                 height: 200px;
               }
               
-              .text-\[13px\] {
+              .text-[13px] {
                 font-size: 12px;
               }
               
-              .rounded-\[24px\] {
+              .rounded-[24px] {
                 border-radius: 16px;
               }
               
-              .rounded-\[18px\] {
+              .rounded-[18px] {
                 border-radius: 12px;
               }
               
-              .p-4.sm\:p-6 {
+              .p-4.sm:p-6 {
                 padding: 12px;
               }
               
@@ -1443,29 +1438,29 @@ const handleWriteToUsSubmitButton = async () => {
                 padding: 6px 12px;
               }
               
-              .text-\[14px\] {
+              .text-[14px] {
                 font-size: 12px;
               }
             }
             @media (max-width: 768px) {
-  .blogDetailsWrap {
-    padding: 12px !important;
-  }
-}
+              .blogDetailsWrap {
+                padding: 12px !important;
+              }
+            }
             @media (max-width: 480px) {
-              .text-\[22px\].xl\:text-\[26px\] {
+              .text-[22px].xl:text-[26px] {
                 font-size: 18px;
               }
               
-              .h-\[260px\].sm\:h-\[420px\] {
+              .h-[260px].sm:h-[420px] {
                 height: 180px;
               }
               
-              .px-4.sm\:px-5.py-2\.5 {
+              .px-4.sm:px-5.py-2.5 {
                 padding: 6px 10px;
               }
               
-              .text-\[12px\].sm\:text-\[13px\] {
+              .text-[12px].sm:text-[13px] {
                 font-size: 10px;
               }
               

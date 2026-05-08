@@ -81,9 +81,21 @@ const LeaveApplicationPage: React.FC = () => {
     };
   }, []);
 
-  // Function to disallow past dates
-  const disabledDate: DatePickerProps["disabledDate"] = (current, info) => {
-    return current && current < dayjs().startOf("day");
+  // Function to disallow past dates and future years
+  const disabledDate = (current: dayjs.Dayjs | null): boolean => {
+    if (!current) return false;
+    
+    const today = dayjs().startOf("day");
+    const currentYear = dayjs().year();
+    const selectedYear = current.year();
+    
+    // Disable past dates
+    if (current < today) return true;
+    
+    // Disable future years (only allow current year)
+    if (selectedYear > currentYear) return true;
+    
+    return false;
   };
 
   // Calculate days between dates when either date changes
@@ -267,6 +279,7 @@ const LeaveApplicationPage: React.FC = () => {
                     placeholder="Select start date"
                     onChange={handleFromDateChange}
                     allowClear={false}
+                    picker="date"
                   />
                 </Form.Item>
               </Col>
@@ -290,8 +303,9 @@ const LeaveApplicationPage: React.FC = () => {
                     style={{ width: "100%", height: "40px" }}
                     disabledDate={(current) => {
                       const fromDate = form.getFieldValue("fromDate");
+                      if (!current) return false;
                       return (
-                        disabledDate(current, { type: "date" }) ||
+                        disabledDate(current) ||
                         (fromDate && current.isBefore(fromDate))
                       );
                     }}
@@ -299,6 +313,7 @@ const LeaveApplicationPage: React.FC = () => {
                     placeholder="Select end date"
                     onChange={handleEndDateChange}
                     allowClear={false}
+                    picker="date"
                   />
                 </Form.Item>
               </Col>
@@ -337,6 +352,21 @@ const LeaveApplicationPage: React.FC = () => {
                 {
                   required: true,
                   message: "Please provide a reason for your leave",
+                },
+                {
+                  validator: (_, value) => {
+                    if (!value || value.trim().length === 0) {
+                      return Promise.reject(
+                        new Error("Reason cannot be empty or contain only spaces")
+                      );
+                    }
+                    if (value.trim().length < 10) {
+                      return Promise.reject(
+                        new Error("Reason must be at least 10 characters")
+                      );
+                    }
+                    return Promise.resolve();
+                  },
                 },
               ]}
             >
