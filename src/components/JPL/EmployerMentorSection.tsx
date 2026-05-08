@@ -1,80 +1,80 @@
 import React from "react";
 import {
-  FileText,
-  Bot,
-  BarChart3,
-  Building2,
+  Brain,
+  Lightbulb,
+  Wrench,
   Sparkles,
-  ClipboardCheck,
-  Send,
-  SearchCheck,
-  UserCheck,
-  BriefcaseBusiness,
-  BadgeCheck,
-  Clock,
+  Target,
+  Rocket,
+  FileText,
+  Presentation,
+  GraduationCap,
+  Users,
+  Bot,
+  BookOpen,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import JPLHeader from "../JPL/JPLHeader";
 
-const employerImage = "https://i.ibb.co/p6NZt2S4/Employer.png";
+const mentorImage = "https://i.ibb.co/ZzmYF6vn/mentor.png";
 
-const EmployerJobSeekerPage: React.FC = () => {
+const EmployerMentorSection: React.FC = () => {
   const roadmap = [
     {
+      icon: Target,
+      title: "Understand Job Seeker Goal",
+      desc: "Mentors understand the candidate’s target role, skills, resume, and career direction.",
+    },
+    {
+      icon: Brain,
+      title: "AI Skill Gap Analysis",
+      desc: "AI reviews skill gaps, resume readiness, and improvement areas.",
+    },
+    {
       icon: FileText,
-      title: "Upload Job Position",
-      desc: "Employer submits job title, job description, skills, and experience requirements.",
+      title: "Resume AI Tips",
+      desc: "Candidates receive practical resume improvement suggestions.",
     },
     {
-      icon: Bot,
-      title: "AI Conducts Interview",
-      desc: "AI prepares and conducts an interview based on the job description.",
+      icon: Lightbulb,
+      title: "AI Tools Guidance",
+      desc: "Mentors suggest useful AI tools for learning, practice, and productivity.",
     },
     {
-      icon: ClipboardCheck,
-      title: "Assessment Completed",
-      desc: "Job seeker completes the AI assessment for the selected role.",
+      icon: Wrench,
+      title: "Tech Stack Training",
+      desc: "Candidates learn updated technologies and skills needed for current roles.",
     },
     {
-      icon: BarChart3,
-      title: "Score Generated",
-      desc: "AI evaluates skills, job fit, and readiness based on the interview.",
-    },
-    {
-      icon: SearchCheck,
-      title: "Qualified Profile Selected",
-      desc: "Only candidates with strong scores are shortlisted.",
-    },
-    {
-      icon: Send,
-      title: "Profile Sent to Employer",
-      desc: "Qualified job seeker profiles are shared with the employer for the next interview.",
+      icon: Presentation,
+      title: "AI Sessions",
+      desc: "Mentors conduct AI sessions and practice activities to improve job readiness.",
     },
   ];
 
   const uses = [
     {
-      icon: Clock,
-      title: "Saves Employer Time",
-      desc: "Employers review only qualified profiles instead of screening every resume manually.",
+      icon: Bot,
+      title: "AI Mentor Support",
+      desc: "AI gives instant learning paths, tool suggestions, and skill-gap analysis.",
     },
     {
-      icon: UserCheck,
-      title: "Right People Connect",
-      desc: "Only job seekers who match the role and score well move to employer interaction.",
+      icon: Users,
+      title: "Human Mentor Guidance",
+      desc: "Mentors train job seekers with practical experience and interview direction.",
     },
     {
-      icon: BadgeCheck,
-      title: "Improves Job Seekers",
-      desc: "Assessment results help job seekers understand gaps and improve their skills.",
+      icon: BookOpen,
+      title: "Continuous Improvement",
+      desc: "Job seekers improve resumes, skills, confidence, and job readiness.",
     },
   ];
 
   const glossyCard =
-    "group relative overflow-hidden rounded-[26px] border border-white/80 bg-gradient-to-b from-white via-[#f8fbff] to-[#eaf3ff] p-6 shadow-[inset_0_2px_0_rgba(255,255,255,0.95),inset_0_-4px_0_rgba(147,197,253,0.35),0_8px_0_rgba(147,197,253,0.45)] backdrop-blur-xl transition-all duration-300 [transform:perspective(900px)_rotateX(5deg)_rotateY(-4deg)] hover:-translate-y-1 hover:[transform:perspective(900px)_rotateX(2deg)_rotateY(0deg)]";
+    "group relative overflow-hidden rounded-[26px] border border-white/80 bg-gradient-to-b from-white via-[#fff8f1] to-[#ffedd5] p-6 shadow-[inset_0_2px_0_rgba(255,255,255,0.95),inset_0_-4px_0_rgba(253,186,116,0.35),0_8px_0_rgba(253,186,116,0.45)] backdrop-blur-xl transition-all duration-300 [transform:perspective(900px)_rotateX(5deg)_rotateY(-4deg)] hover:-translate-y-1 hover:[transform:perspective(900px)_rotateX(2deg)_rotateY(0deg)]";
 
   const glossyIcon =
-    "relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-[#93c5fd] bg-gradient-to-b from-[#eff6ff] via-[#93c5fd] to-[#60a5fa] text-[#0f3d91] shadow-[inset_0_2px_0_rgba(255,255,255,0.85),inset_0_-3px_0_rgba(96,165,250,0.55),0_5px_0_rgba(147,197,253,0.75)]";
+    "relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-[#ea580c] bg-gradient-to-b from-[#fed7aa] via-[#f97316] to-[#c2410c] text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.42),inset_0_-3px_0_rgba(154,52,18,0.75),0_5px_0_rgba(154,52,18,0.85)]";
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#f5f7f4] text-[#0f172a]">
@@ -92,8 +92,8 @@ const EmployerJobSeekerPage: React.FC = () => {
           }}
         />
 
-        <div className="absolute -right-24 top-16 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl" />
-        <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-purple-300/20 blur-3xl" />
+        <div className="absolute -right-24 top-16 h-72 w-72 rounded-full bg-orange-300/20 blur-3xl" />
+        <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-16">
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
@@ -103,20 +103,20 @@ const EmployerJobSeekerPage: React.FC = () => {
               transition={{ duration: 0.55 }}
               className="text-center lg:text-left"
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1d4ed8] backdrop-blur-xl sm:text-xs">
-                <Building2 className="h-4 w-4" />
-                For Employers
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#f97316] backdrop-blur-xl sm:text-xs">
+                <Sparkles className="h-4 w-4" />
+                For Mentors
               </div>
 
               <h1 className="mt-5 text-[2rem] font-extrabold leading-tight text-[#0f172a] sm:text-[2.5rem] lg:text-[3rem]">
-                Hire qualified job seekers faster with{" "}
-                <span className="text-[#1d4ed8]">AI assessment</span>
+                AI mentors and human mentors for{" "}
+                <span className="text-[#f97316]">job seeker growth</span>
               </h1>
 
               <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-[#64748b] sm:text-base lg:mx-0">
-                Employers upload job positions and job descriptions. AI conducts
-                interviews based on the JD, evaluates candidates, and sends only
-                qualified job seeker profiles to the employer.
+                We onboard human mentors and AI mentors to help job seekers
+                improve skills, resumes, and interview readiness with AI tools,
+                updated tech stacks, resume tips, and practical AI sessions.
               </p>
             </motion.div>
 
@@ -127,8 +127,8 @@ const EmployerJobSeekerPage: React.FC = () => {
               className="flex justify-center lg:justify-end"
             >
               <img
-                src={employerImage}
-                alt="Employer AI hiring"
+                src={mentorImage}
+                alt="AI and human mentoring"
                 className="w-full max-w-[330px] object-contain drop-shadow-[0_24px_50px_rgba(15,23,42,0.16)] sm:max-w-[430px] lg:max-w-[560px]"
               />
             </motion.div>
@@ -138,13 +138,13 @@ const EmployerJobSeekerPage: React.FC = () => {
 
       <section className="relative mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-16 lg:pb-20">
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1d4ed8]">
-            <Sparkles className="h-4 w-4" />
-            Employer Roadmap
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#f97316]">
+            <Rocket className="h-4 w-4" />
+            Mentoring Roadmap
           </div>
 
           <h2 className="mt-4 text-[2rem] font-extrabold leading-tight text-[#0f172a] sm:text-[2.5rem] lg:text-[3rem]">
-            From job post to qualified profile
+            From skill gap to job-ready profile
           </h2>
         </div>
 
@@ -168,7 +168,7 @@ const EmployerJobSeekerPage: React.FC = () => {
                   <Icon className="relative h-5 w-5" />
                 </div>
 
-                <p className="relative mb-2 mt-5 text-xs font-extrabold text-[#1d4ed8]">
+                <p className="relative mb-2 mt-5 text-xs font-extrabold text-[#f97316]">
                   STEP {index + 1}
                 </p>
 
@@ -187,13 +187,13 @@ const EmployerJobSeekerPage: React.FC = () => {
 
       <section className="relative mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-16 lg:pb-24">
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#1d4ed8]">
-            <BriefcaseBusiness className="h-4 w-4" />
-            Employer Benefits
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#f97316]">
+            <GraduationCap className="h-4 w-4" />
+            Mentoring Benefits
           </div>
 
           <h2 className="mt-4 text-[2rem] font-extrabold leading-tight text-[#0f172a] sm:text-[2.5rem] lg:text-[3rem]">
-            Why this helps employers and job seekers
+            Why mentoring helps job seekers
           </h2>
         </div>
 
@@ -208,13 +208,13 @@ const EmployerJobSeekerPage: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.08 }}
-                className="group relative overflow-hidden rounded-[28px] border border-[#dbeafe] bg-white p-6 shadow-[0_18px_45px_rgba(30,64,175,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,64,175,0.16)]"
+                className="group relative overflow-hidden rounded-[28px] border border-[#fed7aa] bg-white p-6 shadow-[0_18px_45px_rgba(249,115,22,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(249,115,22,0.16)]"
               >
-                <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-blue-100/70 blur-2xl" />
-                <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-[#60a5fa] via-[#2563eb] to-[#1d4ed8]" />
+                <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-orange-100/80 blur-2xl" />
+                <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-[#fdba74] via-[#f97316] to-[#c2410c]" />
 
                 <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-[#bfdbfe] bg-gradient-to-b from-[#eff6ff] to-[#dbeafe] text-[#1d4ed8] shadow-[inset_0_2px_0_rgba(255,255,255,0.95),0_10px_24px_rgba(37,99,235,0.16)]">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-[#fed7aa] bg-gradient-to-b from-[#fff7ed] to-[#ffedd5] text-[#f97316] shadow-[inset_0_2px_0_rgba(255,255,255,0.95),0_10px_24px_rgba(249,115,22,0.16)]">
                     <Icon className="h-7 w-7" strokeWidth={2.3} />
                   </div>
 
@@ -238,4 +238,4 @@ const EmployerJobSeekerPage: React.FC = () => {
   );
 };
 
-export default EmployerJobSeekerPage;
+export default EmployerMentorSection;

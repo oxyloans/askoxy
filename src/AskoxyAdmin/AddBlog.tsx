@@ -3,7 +3,7 @@ import { adminApi as axios } from "../utils/axiosInstances";
 import Sidebar from "./Sider";
 import { message, Upload, Button, Modal } from "antd";
 import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+
 import {
   UploadOutlined,
   CopyOutlined,

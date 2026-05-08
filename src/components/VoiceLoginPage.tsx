@@ -16,6 +16,7 @@ import {
 import { message } from "antd";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useReactMediaRecorder } from "react-media-recorder";
 import BASE_URL from "../Config";
 
 interface VoiceLoginPageProps {
@@ -33,6 +34,7 @@ type UserType = "Login" | "Register";
 type RegistrationType = "whatsapp" | "mobile";
 
 const VOICE_LOGIN_API = `${BASE_URL}/user-service/loginOrregisterThroughVoice`;
+
 const SILENCE_LIMIT_MS = 4000;
 const MIN_RECORDING_MS = 1200;
 
@@ -52,7 +54,10 @@ function guessAudioMimeType(base64: string) {
 }
 
 function escapeHtml(value: string) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function formatRichText(text?: string) {
@@ -115,26 +120,28 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   const [userType, setUserType] = useState<UserType>("Login");
   const [registrationType, setRegistrationType] =
     useState<RegistrationType>("whatsapp");
+
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
 
   const recognitionRef = useRef<any>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const chatListRef = useRef<HTMLDivElement | null>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+
   const transcriptRef = useRef("");
   const isSubmittingRef = useRef(false);
-  const hasProcessedStopRef = useRef(false);
   const silenceTimerRef = useRef<number | null>(null);
   const recordingStartedAtRef = useRef<number>(0);
+  const shouldSubmitAfterStopRef = useRef(false);
 
   const titleText = useMemo(
-    () => `${userType} via ${registrationType === "whatsapp" ? "WhatsApp" : "SMS"}`,
+    () =>
+      `${userType} via ${
+        registrationType === "whatsapp" ? "WhatsApp" : "SMS"
+      }`,
     [userType, registrationType]
   );
 
@@ -143,11 +150,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       window.clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
     }
-  };
-
-  const stopRecordingTracks = () => {
-    mediaStreamRef.current?.getTracks()?.forEach((track) => track.stop());
-    mediaStreamRef.current = null;
   };
 
   const stopAssistantAudio = () => {
@@ -161,27 +163,65 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     setIsAssistantSpeaking(false);
   };
 
-  const stopListening = () => {
-    clearSilenceTimer();
-
-    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
-      setIsListening(false);
-      return;
-    }
-
-    setIsListening(false);
+  const playAssistantAudio = (base64Audio?: string) => {
+    const clean = sanitizeBase64Audio(base64Audio);
+    if (!clean) return;
 
     try {
-      recognitionRef.current?.stop?.();
-    } catch {}
+      stopAssistantAudio();
 
-    try {
-      mediaRecorderRef.current.requestData?.();
-      mediaRecorderRef.current.stop();
+      const audio = new Audio(`data:${guessAudioMimeType(clean)};base64,${clean}`);
+      audioRef.current = audio;
+      setIsAssistantSpeaking(true);
+
+      audio.onended = () => {
+        setIsAssistantSpeaking(false);
+        audioRef.current = null;
+      };
+
+      audio.onerror = () => {
+        setIsAssistantSpeaking(false);
+        audioRef.current = null;
+      };
+
+      audio.play().catch(() => {
+        setIsAssistantSpeaking(false);
+        audioRef.current = null;
+      });
     } catch {
-      stopRecordingTracks();
+      setIsAssistantSpeaking(false);
     }
   };
+
+  const {
+    status,
+    startRecording,
+    stopRecording,
+    clearBlobUrl,
+  } = useReactMediaRecorder({
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    },
+    blobPropertyBag: { type: "audio/webm" },
+    onStop: async (_blobUrl: string, blob: Blob) => {
+      setIsListening(false);
+      clearSilenceTimer();
+
+      try {
+        recognitionRef.current?.stop?.();
+      } catch {}
+
+      if (!shouldSubmitAfterStopRef.current) return;
+
+      shouldSubmitAfterStopRef.current = false;
+
+      if (isAssistantSpeaking || isSubmittingRef.current) return;
+
+      await submitVoice(blob, transcriptRef.current);
+    },
+  });
 
   const startSilenceTimer = () => {
     clearSilenceTimer();
@@ -191,12 +231,11 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
       if (
         recordedFor >= MIN_RECORDING_MS &&
-        mediaRecorderRef.current &&
-        mediaRecorderRef.current.state === "recording" &&
+        isListening &&
         !isSubmittingRef.current
       ) {
-        stopListening();
-      } else {
+        handleStopListening();
+      } else if (isListening) {
         startSilenceTimer();
       }
     }, SILENCE_LIMIT_MS);
@@ -204,7 +243,8 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
   useEffect(() => {
     const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) return;
 
@@ -230,15 +270,11 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     };
 
     recognition.onerror = () => {
-      startSilenceTimer();
+      if (isListening) startSilenceTimer();
     };
 
     recognition.onend = () => {
-      if (
-        mediaRecorderRef.current &&
-        mediaRecorderRef.current.state === "recording" &&
-        !isSubmittingRef.current
-      ) {
+      if (isListening && !isSubmittingRef.current) {
         try {
           recognition.start();
         } catch {}
@@ -253,7 +289,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         recognition.stop();
       } catch {}
     };
-  }, []);
+  }, [isListening]);
 
   useEffect(() => {
     const container = chatListRef.current;
@@ -261,7 +297,10 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
     requestAnimationFrame(() => {
       container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-      chatBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      chatBottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
     });
   }, [messages, isLoading]);
 
@@ -269,50 +308,22 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     return () => {
       clearSilenceTimer();
       stopAssistantAudio();
-      stopRecordingTracks();
+      clearBlobUrl();
+
       try {
         recognitionRef.current?.stop?.();
       } catch {}
     };
-  }, []);
-
-  const playAssistantAudio = (base64Audio?: string) => {
-    const clean = sanitizeBase64Audio(base64Audio);
-    if (!clean) return;
-
-    try {
-      stopAssistantAudio();
-      const audio = new Audio(`data:${guessAudioMimeType(clean)};base64,${clean}`);
-      audioRef.current = audio;
-      setIsAssistantSpeaking(true);
-
-      audio.onended = () => {
-        setIsAssistantSpeaking(false);
-        audioRef.current = null;
-      };
-
-      audio.onerror = () => {
-        setIsAssistantSpeaking(false);
-        audioRef.current = null;
-      };
-
-      audio.play().catch(() => {
-        setIsAssistantSpeaking(false);
-        audioRef.current = null;
-      });
-    } catch {
-      setIsAssistantSpeaking(false);
-    }
-  };
+  }, [clearBlobUrl]);
 
   const clearChat = () => {
     clearSilenceTimer();
     setMessages([]);
     setLiveTranscript("");
     transcriptRef.current = "";
-    chunksRef.current = [];
-    hasProcessedStopRef.current = false;
+    shouldSubmitAfterStopRef.current = false;
     stopAssistantAudio();
+    clearBlobUrl();
   };
 
   const getOtpSuccessText = () =>
@@ -328,6 +339,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
   const isOtpActuallySent = (result: any) => {
     const combined = JSON.stringify(result || {}).toLowerCase();
+
     return (
       containsAny(combined, [
         "otp sent",
@@ -374,6 +386,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
   const isAuthActuallySuccessful = (result: any, token: string) => {
     const combined = JSON.stringify(result || {}).toLowerCase();
+
     return (
       !!token ||
       result?.success === true ||
@@ -405,6 +418,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
     if (String(text || "").trim()) return String(text).trim();
     if (isOtpActuallySent(result)) return getOtpSuccessText();
+
     return "Done.";
   };
 
@@ -418,6 +432,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       });
 
       const userData = response?.data || {};
+
       const fetchedUserId =
         userData?.userId ||
         userData?.id ||
@@ -436,75 +451,53 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     }
   };
 
-  const startListening = async () => {
-    if (isListening || isLoading || isAssistantSpeaking || isSubmittingRef.current) return;
+  const handleStartListening = async () => {
+    if (
+      isListening ||
+      isLoading ||
+      isAssistantSpeaking ||
+      isSubmittingRef.current
+    ) {
+      return;
+    }
 
     try {
       clearSilenceTimer();
       stopAssistantAudio();
+      clearBlobUrl();
 
       setLiveTranscript("");
       transcriptRef.current = "";
-      chunksRef.current = [];
-      hasProcessedStopRef.current = false;
+      shouldSubmitAfterStopRef.current = true;
       recordingStartedAtRef.current = Date.now();
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-
-      mediaStreamRef.current = stream;
-
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : "audio/mp4";
-
-      const recorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        if (hasProcessedStopRef.current) return;
-        hasProcessedStopRef.current = true;
-
-        clearSilenceTimer();
-
-        const audioBlob = new Blob(chunksRef.current, {
-          type: recorder.mimeType || "audio/webm",
-        });
-
-        stopRecordingTracks();
-
-        if (isAssistantSpeaking || isSubmittingRef.current) return;
-
-        await submitVoice(audioBlob, transcriptRef.current);
-      };
-
-      recorder.start(250);
+      startRecording();
+      setIsListening(true);
 
       try {
         recognitionRef.current?.start?.();
       } catch {}
 
-      setIsListening(true);
       startSilenceTimer();
     } catch {
       setIsListening(false);
       clearSilenceTimer();
-      stopRecordingTracks();
       message.error("Unable to access microphone.");
     }
+  };
+
+  const handleStopListening = () => {
+    if (!isListening) return;
+
+    clearSilenceTimer();
+    setIsListening(false);
+    shouldSubmitAfterStopRef.current = true;
+
+    try {
+      recognitionRef.current?.stop?.();
+    } catch {}
+
+    stopRecording();
   };
 
   const submitVoice = async (audioBlob?: Blob | null, transcript?: string) => {
@@ -513,14 +506,17 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     if (!hasMeaningfulVoiceInput(transcript, audioBlob || null)) {
       setLiveTranscript("");
       transcriptRef.current = "";
-      chunksRef.current = [];
-      message.error("Voice not detected. Please speak your 10-digit mobile number clearly.");
+      message.error(
+        "Voice not detected. Please speak your 10-digit mobile number clearly."
+      );
       return;
     }
 
     const detectedMobileNumber = extractMobileNumber(transcript || "");
+
     const userText =
       detectedMobileNumber || (transcript || "").trim() || "Voice input recorded";
+
     const loadingId = `${Date.now()}-loading`;
 
     setMessages((prev) => [
@@ -544,11 +540,13 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
     try {
       const formData = new FormData();
+
       formData.append(
         "file",
         audioBlob || new Blob([], { type: "audio/webm" }),
         `voice-auth-${Date.now()}.webm`
       );
+
       formData.append("registrationType", registrationType);
       formData.append("userType", userType);
       formData.append("transcript", transcript || "");
@@ -590,6 +588,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
       if (token && !userId) {
         const userData = await fetchUserDetails(token);
+
         userId =
           userData?.userId ||
           userData?.id ||
@@ -655,15 +654,18 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       setIsLoading(false);
       setLiveTranscript("");
       transcriptRef.current = "";
-      chunksRef.current = [];
       isSubmittingRef.current = false;
+      shouldSubmitAfterStopRef.current = false;
+      clearBlobUrl();
     }
   };
 
   return (
     <>
       <style>{`
-        * { box-sizing: border-box; }
+        * {
+          box-sizing: border-box;
+        }
 
         .oxy-voice-root {
           position: fixed;
@@ -747,6 +749,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
         .oxy-voice-icon-btn:hover {
           background: rgba(255,255,255,0.22);
+          transform: translateY(-1px);
         }
 
         .oxy-voice-body {
@@ -841,6 +844,12 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           color: #1f1b2d;
         }
 
+        .oxy-voice-option:hover {
+          transform: translateY(-1px);
+          border-color: #bda7f2;
+          background: #faf7ff;
+        }
+
         .oxy-voice-option.active {
           border-color: #a98cf0;
           background: #f4eeff;
@@ -886,6 +895,12 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           color: #6b2ee9;
           font-size: 12px;
           font-weight: 700;
+        }
+
+        .oxy-voice-speaking {
+          background: #fff7ed;
+          border-color: #fed7aa;
+          color: #c2410c;
         }
 
         .oxy-voice-chat {
@@ -978,7 +993,13 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           transition: 0.2s ease;
           color: #fff;
           flex-shrink: 0;
-          box-shadow: 0 10px 22px rgba(98, 36, 220, 0.22);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.35),
+            0 10px 22px rgba(98, 36, 220, 0.22);
+        }
+
+        .oxy-voice-mic-icon-btn:hover:not(:disabled) {
+          transform: translateY(-2px) scale(1.02);
         }
 
         .oxy-voice-mic-icon-btn.start,
@@ -988,6 +1009,12 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
         .oxy-voice-mic-icon-btn.stop {
           background: linear-gradient(135deg, #ef4444 0%, #d62828 100%);
+          animation: pulseMic 1.2s infinite ease-in-out;
+        }
+
+        .oxy-voice-mic-icon-btn:disabled {
+          cursor: not-allowed;
+          opacity: 0.8;
         }
 
         .oxy-voice-mic-info {
@@ -1015,7 +1042,27 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         }
 
         @keyframes spin {
-          100% { transform: rotate(360deg); }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes pulseMic {
+          0% {
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.35),
+              0 0 0 0 rgba(239, 68, 68, 0.28);
+          }
+          70% {
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.35),
+              0 0 0 12px rgba(239, 68, 68, 0);
+          }
+          100% {
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,0.35),
+              0 0 0 0 rgba(239, 68, 68, 0);
+          }
         }
 
         @media (max-width: 768px) {
@@ -1089,6 +1136,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
             <div className="oxy-voice-bot-icon">
               <Bot size={18} />
             </div>
+
             <div className="oxy-voice-header-text">
               <h3>Voice Assistant</h3>
               <p>Speak naturally. After 4 seconds pause, it auto submits.</p>
@@ -1096,10 +1144,21 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
           </div>
 
           <div className="oxy-voice-header-actions">
-            <button type="button" className="oxy-voice-icon-btn" onClick={clearChat}>
+            <button
+              type="button"
+              className="oxy-voice-icon-btn"
+              onClick={clearChat}
+              aria-label="Clear chat"
+            >
               <Trash2 size={14} />
             </button>
-            <button type="button" className="oxy-voice-icon-btn" onClick={onClose}>
+
+            <button
+              type="button"
+              className="oxy-voice-icon-btn"
+              onClick={onClose}
+              aria-label="Close voice assistant"
+            >
               <X size={14} />
             </button>
           </div>
@@ -1112,6 +1171,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                 <div className="oxy-voice-intro-icon">
                   <Sparkles size={16} />
                 </div>
+
                 <div className="oxy-voice-intro-content">
                   <h4>How can I help you?</h4>
                   <p>
@@ -1124,11 +1184,15 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
             <div className="oxy-voice-card">
               <h5 className="oxy-voice-section-title">Choose Action</h5>
+
               <div className="oxy-voice-grid">
                 <button
                   type="button"
-                  className={`oxy-voice-option ${userType === "Login" ? "active" : ""}`}
+                  className={`oxy-voice-option ${
+                    userType === "Login" ? "active" : ""
+                  }`}
                   onClick={() => setUserType("Login")}
+                  disabled={isLoading || isListening}
                 >
                   <div className="oxy-voice-option-icon">
                     <LogIn size={14} />
@@ -1139,8 +1203,11 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
                 <button
                   type="button"
-                  className={`oxy-voice-option ${userType === "Register" ? "active" : ""}`}
+                  className={`oxy-voice-option ${
+                    userType === "Register" ? "active" : ""
+                  }`}
                   onClick={() => setUserType("Register")}
+                  disabled={isLoading || isListening}
                 >
                   <div className="oxy-voice-option-icon">
                     <UserPlus size={14} />
@@ -1153,6 +1220,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
             <div className="oxy-voice-card">
               <h5 className="oxy-voice-section-title">Choose OTP Type</h5>
+
               <div className="oxy-voice-grid">
                 <button
                   type="button"
@@ -1160,6 +1228,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                     registrationType === "whatsapp" ? "active" : ""
                   }`}
                   onClick={() => setRegistrationType("whatsapp")}
+                  disabled={isLoading || isListening}
                 >
                   <div className="oxy-voice-option-icon">
                     <MessageCircle size={14} />
@@ -1174,6 +1243,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                     registrationType === "mobile" ? "active" : ""
                   }`}
                   onClick={() => setRegistrationType("mobile")}
+                  disabled={isLoading || isListening}
                 >
                   <div className="oxy-voice-option-icon">
                     <Smartphone size={14} />
@@ -1209,6 +1279,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                     </div>
                   </div>
                 ))}
+
                 <div ref={chatBottomRef} />
               </div>
             ) : (
@@ -1225,8 +1296,9 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                 className={`oxy-voice-mic-icon-btn ${
                   isLoading ? "loading" : isListening ? "stop" : "start"
                 }`}
-                onClick={isListening ? stopListening : startListening}
-                disabled={isLoading}
+                onClick={isListening ? handleStopListening : handleStartListening}
+                disabled={isLoading || isAssistantSpeaking}
+                aria-label={isListening ? "Stop recording" : "Start recording"}
               >
                 {isLoading ? (
                   <Loader2 size={22} className="spin" />
@@ -1243,13 +1315,18 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
                     ? "Processing..."
                     : isListening
                     ? "Listening..."
+                    : isAssistantSpeaking
+                    ? "Assistant speaking..."
                     : "Tap the mic to speak"}
                 </strong>
+
                 <span>
                   {isListening
                     ? liveTranscript ||
                       "Speak your 10-digit mobile number. It auto-submits after 4 seconds pause."
-                    : titleText}
+                    : status === "idle"
+                    ? titleText
+                    : `${titleText}`}
                 </span>
               </div>
             </div>

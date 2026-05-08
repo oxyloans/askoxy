@@ -73,6 +73,7 @@ import HiringLandingPage from "./components/HiringLandingPage";
 import DRACertificationLanding from "./components/DRACertificationLanding";
 import GCCMate from "./components/GCCMateLandingPage/GCCMate";
 import EmployerJobSeekerPage from "./components/JPL/EmployerJobSeekerPage";
+import EmployerMentorSection from "./components/JPL/EmployerMentorSection";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -672,7 +673,8 @@ const App: React.FC = () => {
                 element={<MinisterMeetingPage />}
               />
               <Route path ="/gccmate" element={<GCCMate />} />
-              {/* <Route path ="/jplemployer" element={<EmployerJobSeekerPage />} /> */}
+             <Route path="/employers" element={<EmployerJobSeekerPage />} />
+<Route path="/mentors" element={<EmployerMentorSection />} />
               <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
               {/* <Route path="/credera/jobs" element={<CrederaJobsPage />} /> */}
