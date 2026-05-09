@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import "slick-carousel/slick/slick.css";
@@ -36,6 +36,14 @@ const fadeUp = {
 const Whiteboardtheme: React.FC = () => {
   const navigate = useNavigate();
   const [previewCard, setPreviewCard] = useState<PreviewCardData | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant" as ScrollBehavior,
+    });
+  }, []);
 
   const closePreview = () => setPreviewCard(null);
 

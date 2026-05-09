@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FileText,
   Bot,
@@ -19,6 +19,13 @@ import JPLHeader from "../JPL/JPLHeader";
 const employerImage = "https://i.ibb.co/p6NZt2S4/Employer.png";
 
 const EmployerJobSeekerPage: React.FC = () => {
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant" as ScrollBehavior,
+    });
+  }, []);
   const roadmap = [
     {
       icon: FileText,

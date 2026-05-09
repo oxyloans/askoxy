@@ -74,6 +74,10 @@ import DRACertificationLanding from "./components/DRACertificationLanding";
 import GCCMate from "./components/GCCMateLandingPage/GCCMate";
 import EmployerJobSeekerPage from "./components/JPL/EmployerJobSeekerPage";
 import EmployerMentorSection from "./components/JPL/EmployerMentorSection";
+import RecruitmentKnightRidersPage from "./components/JPL/RecruitmentKnightRidersPage";
+import RoyalJobSeekersPage from "./components/JPL/RoyalJobSeekersPage";
+import MarketplaceRaisersPage from "./components/JPL/MarketplaceRaisersPage";
+import TrainingInstituteGiantsPage from "./components/JPL/TalentSuperKingsPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -669,8 +673,12 @@ const App: React.FC = () => {
                 element={<MinisterMeetingPage />}
               />
               <Route path ="/gccmate" element={<GCCMate />} />
-             <Route path="/employers" element={<EmployerJobSeekerPage />} />
+            <Route path="/employers" element={<EmployerJobSeekerPage />} />
 <Route path="/mentors" element={<EmployerMentorSection />} />
+<Route path="/job-seekers" element={<RoyalJobSeekersPage />} />
+<Route path="/recruitment-knight-riders" element={<RecruitmentKnightRidersPage />} />
+<Route path="/talent-super-kings" element={<TrainingInstituteGiantsPage />} />
+<Route path="/marketplace-raisers" element={<MarketplaceRaisersPage />} />
               <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
               {/* <Route path="/credera/jobs" element={<CrederaJobsPage />} /> */}

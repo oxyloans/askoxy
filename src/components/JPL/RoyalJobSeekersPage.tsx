@@ -1,87 +1,84 @@
 import React, { useEffect } from "react";
 import {
-  Brain,
-  Lightbulb,
-  Wrench,
-  Sparkles,
-  Target,
-  Rocket,
-  FileText,
-  Presentation,
-  GraduationCap,
-  Users,
+  Upload,
   Bot,
-  BookOpen,
+  BarChart3,
+  Search,
+  BadgeCheck,
+  Sparkles,
+  Crown,
+  FileText,
+  Target,
+  Brain,
+  Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import JPLHeader from "../JPL/JPLHeader";
 
-const mentorImage = "https://i.ibb.co/ZzmYF6vn/mentor.png";
+const pageImage = "https://i.ibb.co/21dTjf9S/jobseeker.png";
 
-const EmployerMentorSection: React.FC = () => {
+const RoyalJobSeekersPage: React.FC = () => {
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant" as ScrollBehavior,
-    });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, []);
+
   const roadmap = [
     {
-      icon: Target,
-      title: "Understand Job Seeker Goal",
-      desc: "Mentors understand the candidate’s target role, skills, resume, and career direction.",
+      icon: Upload,
+      title: "Upload Resume",
+      desc: "Start the AI-powered career qualification journey by uploading a resume.",
+    },
+    {
+      icon: Bot,
+      title: "Resume Intelligence Review",
+      desc: "AI analyzes skills, experience, career fit, and profile strength.",
+    },
+    {
+      icon: BarChart3,
+      title: "Receive AI Career Score",
+      desc: "Get a clear score with skill-gap intelligence and improvement areas.",
+    },
+    {
+      icon: Search,
+      title: "Discover Matching Roles",
+      desc: "Explore job opportunities aligned with skills, experience, and readiness.",
     },
     {
       icon: Brain,
-      title: "AI Skill Gap Analysis",
-      desc: "AI reviews skill gaps, resume readiness, and improvement areas.",
+      title: "Attend JobFit AI Interview",
+      desc: "Complete role-based AI assessments designed around job requirements.",
     },
     {
-      icon: FileText,
-      title: "Resume AI Tips",
-      desc: "Candidates receive practical resume improvement suggestions.",
-    },
-    {
-      icon: Lightbulb,
-      title: "AI Tools Guidance",
-      desc: "Mentors suggest useful AI tools for learning, practice, and productivity.",
-    },
-    {
-      icon: Wrench,
-      title: "Tech Stack Training",
-      desc: "Candidates learn updated technologies and skills needed for current roles.",
-    },
-    {
-      icon: Presentation,
-      title: "AI Sessions",
-      desc: "Mentors conduct AI sessions and practice activities to improve job readiness.",
+      icon: BadgeCheck,
+      title: "Build Verified Career Profile",
+      desc: "Qualified profiles are shared with employers, recruiters, and mentors.",
     },
   ];
 
-  const uses = [
+  const benefits = [
     {
-      icon: Bot,
-      title: "AI Mentor Support",
-      desc: "AI gives instant learning paths, tool suggestions, and skill-gap analysis.",
+      icon: FileText,
+      title: "AI Career Score",
+      desc: "Understand resume strength and career readiness before applying.",
     },
     {
-      icon: Users,
-      title: "Human Mentor Guidance",
-      desc: "Mentors train job seekers with practical experience and interview direction.",
+      icon: Target,
+      title: "Skill-Gap Intelligence",
+      desc: "Identify missing skills and improve with focused preparation.",
     },
     {
-      icon: BookOpen,
-      title: "Continuous Improvement",
-      desc: "Job seekers improve resumes, skills, confidence, and job readiness.",
+      icon: Briefcase,
+      title: "Better Job Matching",
+      desc: "Apply for roles where your profile has stronger qualification chances.",
     },
   ];
 
   const glossyCard =
-    "group relative overflow-hidden rounded-[26px] border border-white/80 bg-gradient-to-b from-white via-[#fff8f1] to-[#ffedd5] p-6 shadow-[inset_0_2px_0_rgba(255,255,255,0.95),inset_0_-4px_0_rgba(253,186,116,0.35),0_8px_0_rgba(253,186,116,0.45)] backdrop-blur-xl transition-all duration-300 [transform:perspective(900px)_rotateX(5deg)_rotateY(-4deg)] hover:-translate-y-1 hover:[transform:perspective(900px)_rotateX(2deg)_rotateY(0deg)]";
+    "group relative overflow-hidden rounded-[26px] border border-white/80 bg-gradient-to-b from-white via-[#fbfaff] to-[#f0eaff] p-6 shadow-[inset_0_2px_0_rgba(255,255,255,0.95),inset_0_-4px_0_rgba(139,92,246,0.25),0_8px_0_rgba(139,92,246,0.35)] backdrop-blur-xl transition-all duration-300 [transform:perspective(900px)_rotateX(5deg)_rotateY(-4deg)] hover:-translate-y-1 hover:[transform:perspective(900px)_rotateX(2deg)_rotateY(0deg)]";
 
   const glossyIcon =
-    "relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-[#ea580c] bg-gradient-to-b from-[#fed7aa] via-[#f97316] to-[#c2410c] text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.42),inset_0_-3px_0_rgba(154,52,18,0.75),0_5px_0_rgba(154,52,18,0.85)]";
+    "relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-[#8b5cf6] bg-gradient-to-b from-[#ddd6fe] via-[#8b5cf6] to-[#6d28d9] text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-3px_0_rgba(76,29,149,0.55),0_5px_0_rgba(109,40,217,0.55)]";
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#f5f7f4] text-[#0f172a]">
@@ -99,7 +96,7 @@ const EmployerMentorSection: React.FC = () => {
           }}
         />
 
-        <div className="absolute -right-24 top-16 h-72 w-72 rounded-full bg-orange-300/20 blur-3xl" />
+        <div className="absolute -right-24 top-16 h-72 w-72 rounded-full bg-purple-300/20 blur-3xl" />
         <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-16">
@@ -110,20 +107,21 @@ const EmployerMentorSection: React.FC = () => {
               transition={{ duration: 0.55 }}
               className="text-center lg:text-left"
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#f97316] backdrop-blur-xl sm:text-xs">
-                <Sparkles className="h-4 w-4" />
-                For Mentors
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#7c3aed] backdrop-blur-xl sm:text-xs">
+                <Crown className="h-4 w-4" />
+                AI-Powered Career Qualification
               </div>
 
               <h1 className="mt-5 text-[2rem] font-extrabold leading-tight text-[#0f172a] sm:text-[2.5rem] lg:text-[3rem]">
-                AI mentors and human mentors for{" "}
-                <span className="text-[#f97316]">job seeker growth</span>
+                Build a verified AI career profile and become{" "}
+                <span className="text-[#7c3aed]">industry-ready</span>
               </h1>
 
               <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-[#64748b] sm:text-base lg:mx-0">
-                We onboard human mentors and AI mentors to help job seekers
-                improve skills, resumes, and interview readiness with AI tools,
-                updated tech stacks, resume tips, and practical AI sessions.
+                Royal Job Seekers helps candidates transform resumes into
+                AI-qualified career profiles through Resume Intelligence,
+                JobFit AI Interviews, skill-gap analysis, and role-based career
+                readiness assessments.
               </p>
             </motion.div>
 
@@ -134,8 +132,8 @@ const EmployerMentorSection: React.FC = () => {
               className="flex justify-center lg:justify-end"
             >
               <img
-                src={mentorImage}
-                alt="AI and human mentoring"
+                src={pageImage}
+                alt="Royal Job Seekers"
                 className="w-full max-w-[330px] object-contain drop-shadow-[0_24px_50px_rgba(15,23,42,0.16)] sm:max-w-[430px] lg:max-w-[560px]"
               />
             </motion.div>
@@ -145,20 +143,19 @@ const EmployerMentorSection: React.FC = () => {
 
       <section className="relative mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-16 lg:pb-20">
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#f97316]">
-            <Rocket className="h-4 w-4" />
-            Mentoring Roadmap
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#7c3aed]">
+            <Sparkles className="h-4 w-4" />
+            AI Career Qualification Journey
           </div>
 
           <h2 className="mt-4 text-[2rem] font-extrabold leading-tight text-[#0f172a] sm:text-[2.5rem] lg:text-[3rem]">
-            From skill gap to job-ready profile
+            From resume upload to verified career readiness
           </h2>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {roadmap.map((item, index) => {
             const Icon = item.icon;
-
             return (
               <motion.div
                 key={item.title}
@@ -169,20 +166,16 @@ const EmployerMentorSection: React.FC = () => {
                 className={glossyCard}
               >
                 <span className="pointer-events-none absolute -left-12 top-0 h-full w-10 rotate-12 bg-white/45 transition-all duration-700 group-hover:left-[120%]" />
-
                 <div className={glossyIcon}>
                   <span className="absolute inset-x-1 top-0 h-1/2 rounded-t-2xl bg-gradient-to-b from-white/50 to-transparent" />
                   <Icon className="relative h-5 w-5" />
                 </div>
-
-                <p className="relative mb-2 mt-5 text-xs font-extrabold text-[#f97316]">
+                <p className="relative mb-2 mt-5 text-xs font-extrabold text-[#7c3aed]">
                   STEP {index + 1}
                 </p>
-
                 <h3 className="relative text-lg font-extrabold text-[#0f172a]">
                   {item.title}
                 </h3>
-
                 <p className="relative mt-2 text-sm leading-6 text-[#64748b]">
                   {item.desc}
                 </p>
@@ -194,20 +187,19 @@ const EmployerMentorSection: React.FC = () => {
 
       <section className="relative mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-16 lg:pb-24">
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#f97316]">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#7c3aed]">
             <GraduationCap className="h-4 w-4" />
-            Mentoring Benefits
+            Career Growth Advantages
           </div>
 
           <h2 className="mt-4 text-[2rem] font-extrabold leading-tight text-[#0f172a] sm:text-[2.5rem] lg:text-[3rem]">
-            Why mentoring helps job seekers
+            Why Royal Job Seekers creates better career outcomes
           </h2>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {uses.map((item, index) => {
+          {benefits.map((item, index) => {
             const Icon = item.icon;
-
             return (
               <motion.div
                 key={item.title}
@@ -215,22 +207,18 @@ const EmployerMentorSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.08 }}
-                className="group relative overflow-hidden rounded-[28px] border border-[#fed7aa] bg-white p-6 shadow-[0_18px_45px_rgba(249,115,22,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(249,115,22,0.16)]"
+                className="group relative overflow-hidden rounded-[28px] border border-[#ddd6fe] bg-white p-6 shadow-[0_18px_45px_rgba(124,58,237,0.10)] transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-orange-100/80 blur-2xl" />
-                <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-[#fdba74] via-[#f97316] to-[#c2410c]" />
-
+                <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-purple-100/80 blur-2xl" />
+                <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-[#c4b5fd] via-[#8b5cf6] to-[#6d28d9]" />
                 <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-[#fed7aa] bg-gradient-to-b from-[#fff7ed] to-[#ffedd5] text-[#f97316] shadow-[inset_0_2px_0_rgba(255,255,255,0.95),0_10px_24px_rgba(249,115,22,0.16)]">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-[#ddd6fe] bg-gradient-to-b from-[#faf5ff] to-[#ede9fe] text-[#7c3aed]">
                     <Icon className="h-7 w-7" strokeWidth={2.3} />
                   </div>
-
                   <div>
-
                     <h3 className="text-xl font-extrabold leading-tight text-[#0f172a]">
                       {item.title}
                     </h3>
-
                     <p className="mt-3 text-sm leading-7 text-[#64748b]">
                       {item.desc}
                     </p>
@@ -245,4 +233,4 @@ const EmployerMentorSection: React.FC = () => {
   );
 };
 
-export default EmployerMentorSection;
+export default RoyalJobSeekersPage;

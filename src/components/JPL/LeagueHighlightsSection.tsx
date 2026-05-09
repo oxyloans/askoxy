@@ -9,6 +9,7 @@ import {
   Rocket,
   Search,
   Upload,
+  Sparkles,
   ClipboardCheck,
   UserCheck,
   Briefcase,
@@ -16,30 +17,29 @@ import {
   FileText,
   CheckCircle,
   BadgeCheck,
-  TrendingUp,
   Lightbulb,
   ShieldCheck,
   ArrowRight,
 } from "lucide-react";
 
+const logoIcon = "https://i.ibb.co/bRNBRBp5/logo-ideas.png";
+
 const rjsPoints = [
   { icon: Search, text: "Search the right job role" },
   { icon: Upload, text: "Upload resume for AI review" },
   { icon: ClipboardCheck, text: "Take AI-based JD exam" },
-  { icon: BadgeCheck, text: "Qualify for referral opportunities" },
 ];
 
 const ccPoints = [
   { icon: Building2, text: "Hire qualified candidates faster" },
   { icon: Briefcase, text: "Get role-based matched profiles" },
   { icon: CheckCircle, text: "Receive AI-evaluated candidates" },
-  { icon: TrendingUp, text: "Improve hiring quality and speed" },
 ];
 
 const mkPoints = [
-  { icon: Brain, text: "Human mentoring from experts" },
-  { icon: Users, text: "Guidance in BFSI and technologies" },
-  { icon: Lightbulb, text: "Improve candidate readiness" },
+  { icon: Brain, text: "AI + Human mentoring support" },
+  { icon: Users, text: "Industry expert career guidance" },
+  { icon: Lightbulb, text: "Improve job readiness and skills" },
 ];
 
 const ckrPoints = [
@@ -49,15 +49,15 @@ const ckrPoints = [
 ];
 
 const askPoints = [
-  { icon: Bot, text: "Institutions train job seekers" },
-  { icon: FileText, text: "Coaching centers improve skills" },
-  { icon: BadgeCheck, text: "Help learners get certifications" },
+  { icon: Bot, text: "Training institutes build skills" },
+  { icon: FileText, text: "Coaching platforms train learners" },
+  { icon: BadgeCheck, text: "Prepare candidates for placements" },
 ];
 
 const mrPoints = [
   { icon: Rocket, text: "Freelancers upload resume" },
   { icon: Users, text: "Add job rate card openly" },
-  { icon: TrendingUp, text: "Employers recruit freelancers" },
+  { icon: Briefcase, text: "Employers recruit freelancers" },
 ];
 
 type PointItem = {
@@ -65,7 +65,13 @@ type PointItem = {
   text: string;
 };
 
-type AccentType = "purple" | "lightBlue" | "orange" | "teal" | "yellow" | "pink";
+type AccentType =
+  | "purple"
+  | "lightBlue"
+  | "orange"
+  | "teal"
+  | "yellow"
+  | "pink";
 
 type LeagueCardProps = {
   icon: React.ElementType;
@@ -149,61 +155,62 @@ const LeagueCard: React.FC<LeagueCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`relative min-h-[330px] ${navigateTo ? "cursor-pointer" : ""}`}
+      className={`relative min-h-[315px] ${navigateTo ? "cursor-pointer" : ""}`}
       style={{ perspective: "1200px" }}
     >
       <div
-        className={`relative h-full min-h-[330px] transition-transform duration-700 [transform-style:preserve-3d] ${
-          flipped ? "[transform:rotateY(180deg)]" : ""
-        }`}
+        className={`relative h-full min-h-[315px] transition-transform duration-700 [transform-style:preserve-3d] ${
+          navigateTo ? "jpl-opening-flip" : ""
+        } ${flipped ? "[transform:rotateY(180deg)]" : ""}`}
       >
         <div
           className={`absolute inset-0 group overflow-hidden rounded-[26px] border border-white/80 bg-gradient-to-b ${theme.card} p-6 shadow-[inset_0_2px_0_rgba(255,255,255,0.95),inset_0_-4px_0_rgba(147,197,253,0.25),0_8px_0_rgba(147,197,253,0.28)] backdrop-blur-xl transition-all duration-300 [backface-visibility:hidden] [transform:perspective(900px)_rotateX(5deg)_rotateY(-4deg)] hover:-translate-y-1 hover:[transform:perspective(900px)_rotateX(2deg)_rotateY(0deg)]`}
         >
           <span className="pointer-events-none absolute -left-12 top-0 h-full w-10 rotate-12 bg-white/45 transition-all duration-700 group-hover:left-[120%]" />
 
-          <div className="relative mb-5 flex items-center gap-4">
+          <div className="relative mb-6 flex items-start gap-4">
             <div
-              className={`relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-gradient-to-b ${theme.icon} text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-3px_0_rgba(15,23,42,0.25),0_5px_0_rgba(15,23,42,0.18)]`}
+              className={`relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border bg-gradient-to-b ${theme.icon} text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-3px_0_rgba(15,23,42,0.25),0_5px_0_rgba(15,23,42,0.18)]`}
             >
               <span className="absolute inset-x-1 top-0 h-1/2 rounded-t-2xl bg-gradient-to-b from-white/50 to-transparent" />
-              <Icon className="relative h-6 w-6" />
+              <Icon className="relative h-6 w-6 shrink-0" />
             </div>
 
-            <div>
+            <div className="min-w-0 flex-1 pt-0.5">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#64748b]">
                 {shortCode}
               </p>
-              <h3 className={`mt-1 text-xl font-extrabold ${theme.text}`}>
+              <h3
+                className={`mt-1 text-xl font-extrabold leading-tight ${theme.text}`}
+              >
                 {title}
               </h3>
-              <p className="mt-1 text-sm text-[#64748b]">{subtitle}</p>
+              <p className="mt-1 text-sm leading-5 text-[#64748b]">
+                {subtitle}
+              </p>
             </div>
           </div>
 
           <div className="relative space-y-4">
-            {points.map((item, index) => {
+            {points.slice(0, 3).map((item, index) => {
               const PointIcon = item.icon;
               return (
-                <div key={index} className="flex items-start gap-3">
+                <div
+                  key={index}
+                  className="grid grid-cols-[38px_1fr] items-start gap-3"
+                >
                   <div
-                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 ${theme.text}`}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/75 ${theme.text} shadow-sm`}
                   >
-                    <PointIcon className="h-4 w-4" />
+                    <PointIcon className="h-4 w-4 shrink-0" />
                   </div>
-                  <p className="text-sm leading-6 text-[#475569]">
+                  <p className="pt-1 text-sm leading-6 text-[#475569]">
                     {item.text}
                   </p>
                 </div>
               );
             })}
           </div>
-
-          {navigateTo && (
-            <p className="relative mt-5 text-xs font-bold text-[#64748b]">
-              Click card to open page option
-            </p>
-          )}
         </div>
 
         {navigateTo && (
@@ -213,15 +220,13 @@ const LeagueCard: React.FC<LeagueCardProps> = ({
             <span className="pointer-events-none absolute -left-12 top-0 h-full w-10 rotate-12 bg-white/45" />
 
             <div
-              className={`relative mb-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border bg-gradient-to-b ${theme.icon} text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-3px_0_rgba(15,23,42,0.25),0_5px_0_rgba(15,23,42,0.18)]`}
+              className={`relative mb-5 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border bg-gradient-to-b ${theme.icon} text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-3px_0_rgba(15,23,42,0.25),0_5px_0_rgba(15,23,42,0.18)]`}
             >
               <span className="absolute inset-x-1 top-0 h-1/2 rounded-t-2xl bg-gradient-to-b from-white/50 to-transparent" />
-              <Icon className="relative h-7 w-7" />
+              <Icon className="relative h-7 w-7 shrink-0" />
             </div>
 
-            <h3 className={`text-2xl font-extrabold ${theme.text}`}>
-              {title}
-            </h3>
+            <h3 className={`text-2xl font-extrabold ${theme.text}`}>{title}</h3>
 
             <p className="mt-3 max-w-xs text-sm leading-6 text-[#64748b]">
               {flipText || "Go to this page for more details."}
@@ -235,7 +240,7 @@ const LeagueCard: React.FC<LeagueCardProps> = ({
               <span className="pointer-events-none absolute -left-10 top-0 h-full w-8 rotate-12 bg-white/35 transition-all duration-700 group-hover:left-[120%]" />
               <span className="relative flex items-center gap-2">
                 Go to Page
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 shrink-0" />
               </span>
             </button>
           </div>
@@ -247,7 +252,23 @@ const LeagueCard: React.FC<LeagueCardProps> = ({
 
 const LeagueHighlightsSection: React.FC = () => {
   return (
-    <section className="relative overflow-hidden bg-[#f5f7f4] py-16 sm:py-20 lg:py-24">
+    <section className="relative overflow-hidden bg-[#f5f7f4] py-10 sm:py-12 lg:py-14">
+      <style>
+        {`
+          @keyframes jplOpeningFlip {
+            0% { transform: rotateY(0deg); }
+            28% { transform: rotateY(-18deg); }
+            55% { transform: rotateY(14deg); }
+            78% { transform: rotateY(-7deg); }
+            100% { transform: rotateY(0deg); }
+          }
+
+          .jpl-opening-flip {
+            animation: jplOpeningFlip 1.45s ease-in-out 0.35s 1;
+          }
+        `}
+      </style>
+
       <div
         className="absolute inset-0 opacity-70"
         style={{
@@ -260,22 +281,26 @@ const LeagueHighlightsSection: React.FC = () => {
       />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-16">
-        <div className="mx-auto mb-14 max-w-4xl text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#2563eb]">
-            JPL League System
-          </p>
+        <div className="mx-auto mb-8 grid max-w-6xl items-center gap-4 lg:grid-cols-[100px_1fr] lg:text-left">
+          <div className="mx-auto flex items-center justify-center lg:mx-0">
+            <img
+              src={logoIcon}
+              alt="JPL Logo"
+              className="h-16 w-16 object-contain sm:h-48 sm:w-48 lg:h-60 lg:w-60"
+            />
+          </div>
 
-          <h2 className="mt-4 text-[2rem] font-extrabold leading-tight text-[#0f172a] sm:text-[2.5rem] lg:text-[3rem]">
-            Six powerful leagues. One smart hiring ecosystem.
-          </h2>
-
-          <p className="mt-4 text-sm leading-7 text-[#64748b] sm:text-base">
-            Jobs Premier League connects job seekers, companies, mentors,
-            employee referrals, AI qualification, and marketplace growth.
-          </p>
+          <div className="text-center lg:text-left">
+            <h2 className="text-[2.15rem] font-black leading-tight text-[#0f172a] sm:text-[2.8rem] lg:text-[3.4rem]">
+              Our Super Sixer League.
+              <span className="block bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#f97316] bg-clip-text text-transparent">
+                One Smart Hiring Ecosystem.
+              </span>
+            </h2>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-7 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 xl:grid-cols-3">
           <LeagueCard
             icon={Crown}
             shortCode="RJS"
@@ -283,28 +308,30 @@ const LeagueHighlightsSection: React.FC = () => {
             subtitle="For candidates preparing to qualify"
             accent="purple"
             points={rjsPoints}
+            navigateTo="/job-seekers"
+            flipText="Open the Royal Job Seekers page to explore Resume AI Score, JobFit AI Interview, skill-gap analysis, and AI-qualified opportunities."
           />
 
           <LeagueCard
             icon={Building2}
             shortCode="CC"
-            title="Company Capitals"
+            title="Corporate Capitals"
             subtitle="For companies hiring qualified talent"
             accent="lightBlue"
             points={ccPoints}
             navigateTo="/employers"
-            flipText="Open the Employers page to see how companies upload job positions and receive qualified AI-assessed profiles."
+            flipText="Open the Corporate Capitals page to see how companies upload job positions and receive qualified AI-assessed profiles."
           />
 
           <LeagueCard
             icon={Brain}
-            shortCode="MK"
-            title="Mentor Kings"
+            shortCode="JMK"
+            title="Job Mentor Kings"
             subtitle="For expert mentoring and guidance"
             accent="orange"
             points={mkPoints}
             navigateTo="/mentors"
-            flipText="Open the Mentors page to see how AI mentors and human mentors guide job seekers."
+            flipText="Open the Job Mentor Kings page to see how AI mentors and human mentors guide job seekers."
           />
 
           <LeagueCard
@@ -314,15 +341,19 @@ const LeagueHighlightsSection: React.FC = () => {
             subtitle="For recruiters and consulting companies"
             accent="teal"
             points={ckrPoints}
+            navigateTo="/recruitment-knight-riders"
+            flipText="Open the Recruitment Knight Riders page to manage sourcing, qualified profiles, recruitment pipelines, and recruiter operations."
           />
 
           <LeagueCard
             icon={Bot}
-            shortCode="TSK"
-            title="Talent Super Kings"
+            shortCode="TIG"
+            title="Training Institute Giants"
             subtitle="For institutions and training platforms"
             accent="yellow"
             points={askPoints}
+            navigateTo="/talent-super-kings"
+            flipText="Open the Training Institute Giants page to manage students, AI exams, certifications, training workflows, and placement readiness."
           />
 
           <LeagueCard
@@ -332,6 +363,8 @@ const LeagueHighlightsSection: React.FC = () => {
             subtitle="For freelancers and open work"
             accent="pink"
             points={mrPoints}
+            navigateTo="/marketplace-raisers"
+            flipText="Open the Marketplace Raisers page to explore freelancer profiles, rate cards, freelance jobs, and employer hiring opportunities."
           />
         </div>
       </div>
