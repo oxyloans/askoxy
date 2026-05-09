@@ -222,7 +222,7 @@ const Footer: React.FC = () => {
                     </div>
 
                     {info.type === "map" ? (
-                      <a className="text-xs sm:text-sm text-gray-600 leading-tight">
+                      <a href={info.content} target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-gray-600 leading-tight">
                         {info.content}
                       </a>
                     ) : (

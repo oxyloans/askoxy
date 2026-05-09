@@ -827,16 +827,15 @@ const CartPage: React.FC = () => {
     if (!addressFormData.landMark.trim())
       errors.landmark = "Landmark is required";
     if (!addressFormData.address.trim()) errors.address = "Address is required";
-   const pincode = addressFormData.pincode?.trim();
-
-  if (!pincode) {
-    errors.pincode = "Pin code is required";
-  } else if (!/^\d{6}$/.test(pincode)) {
-    errors.pincode = "Please enter a valid 6-digit pin code";
-  } else if (/^0+$/.test(pincode)) {
-    errors.pincode = "Pin code cannot be all zeros";
-  }
-
+    
+    const pincode = addressFormData.pincode?.trim();
+    if (!pincode) {
+      errors.pincode = "PIN code is required";
+    } else if (!/^\d{6}$/.test(pincode)) {
+      errors.pincode = "Please enter a valid 6-digit PIN code";
+    } else if (/^0+$/.test(pincode) || ['000000', '555555', '666666'].includes(pincode)) {
+      errors.pincode = "Please enter a valid PIN code";
+    }
 
     setAddressFormErrors(errors);
     return !Object.values(errors).some((error) => error);
@@ -854,9 +853,8 @@ const CartPage: React.FC = () => {
       const coordinates = await getCoordinates(fullAddress);
 
       if (!coordinates) {
-        message.error(
-          "Unable to find location coordinates. Please check the address."
-        );
+        setError("Unable to find location. Please verify your address details.");
+        setTimeout(() => setError(""), 5000);
         return;
       }
 
@@ -937,12 +935,14 @@ const CartPage: React.FC = () => {
     } catch (err) {
       setSuccessMessage("");
       const apiError = err as ApiError;
-      setError(apiError.response?.data?.message || "Failed to save address");
+      const errorMsg = apiError.response?.data?.message || "Failed to save address. Please try again.";
+      setError(errorMsg);
+      setTimeout(() => setError(""), 5000);
     } finally {
       setIsLoading(false);
-      setIsAddressModalOpen(false);
-      setSuccessMessage("");
-      setError("");
+      if (!error) {
+        setIsAddressModalOpen(false);
+      }
     }
   };
 

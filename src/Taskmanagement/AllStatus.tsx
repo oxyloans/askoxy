@@ -99,6 +99,19 @@ interface TaskData {
   endOftheDay: string | null;
 }
 
+interface PlanVideoData {
+  planOfTheDay: string | null;
+  endOfTheDay: string | null;
+  userId: string;
+  name: string | null;
+  date: string;
+}
+
+interface PlanVideoResponse {
+  name: string;
+  list: PlanVideoData[];
+}
+
 interface EditFormValues {
   planOftheDay?: string;
   endOftheDay?: string;
@@ -132,6 +145,10 @@ const AllStatusPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<"plan" | "eod" | null>(null);
+  const [planVideos, setPlanVideos] = useState<PlanVideoData[]>([]);
+  const [loadingVideos, setLoadingVideos] = useState<boolean>(false);
+  const [videoPageNo, setVideoPageNo] = useState<number>(1);
+  const [videoPageSize] = useState<number>(100);
   const taskId = sessionStorage.getItem("taskId");
 
   useEffect(() => {
@@ -139,6 +156,11 @@ const AllStatusPage: React.FC = () => {
     const storedUserId = sessionStorage.getItem("userId");
     if (storedUserId) {
       setUserId(storedUserId);
+      // Automatically call the employeUserIdSaving API when page opens
+      employeeApi.get(
+        `${BASE_URL}/ai-service/agent/employeUserIdSaving`
+      
+      ).catch(error => console.error("Error calling employeUserIdSaving:", error));
     }
   }, []);
 
@@ -147,6 +169,7 @@ const AllStatusPage: React.FC = () => {
     if (userId) {
       if (activeTab === "general") {
         fetchAllTasks();
+        fetchPlanVideos();
       } else if (activeTab === "byDate" && selectedDate) {
         fetchTasksByDate();
       }
@@ -274,10 +297,70 @@ const AllStatusPage: React.FC = () => {
     editForm.resetFields();
   };
 
+  const fetchPlanVideos = async () => {
+    setLoadingVideos(true);
+    try {
+      const response = await employeeApi.post(
+        `${BASE_URL}/ai-service/agent/planOfTheDayBasedOnUserId`,
+        {
+          pageNo: videoPageNo,
+          pageSize: videoPageSize,
+          userId: userId,
+        }
+      );
+
+      if (response.data && response.data.length > 0) {
+        setPlanVideos(response.data[0].list || []);
+      }
+    } catch (error) {
+      console.error("Error fetching plan videos:", error);
+    } finally {
+      setLoadingVideos(false);
+    }
+  };
+
   const isEditingPlan = (taskId: string) =>
     editingTaskId === taskId && editingField === "plan";
   const isEditingEod = (taskId: string) =>
     editingTaskId === taskId && editingField === "eod";
+
+  const getVideoForDate = (date: string, type: "plan" | "eod") => {
+    const video = planVideos.find((v) => v.date === date);
+    if (!video) return null;
+    return type === "plan" ? video.planOfTheDay : video.endOfTheDay;
+  };
+
+  const isVideoUrl = (url: string | null) => {
+    if (!url) return false;
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes('s3');
+  };
+
+  const renderMediaContent = (content: string | null, videoUrl: string | null, label: string) => {
+    const hasVideo = videoUrl && isVideoUrl(videoUrl);
+    
+    return (
+      <>
+        <div className="bg-white p-3 rounded-md border border-gray-100 mb-3" style={{ minHeight: "150px", maxHeight: "200px", overflowY: "auto" }}>
+          <Text className="whitespace-pre-wrap text-gray-700 text-sm">
+            {content || `No ${label.toLowerCase()} recorded`}
+          </Text>
+        </div>
+        {hasVideo && (
+          <div className="bg-white p-2 rounded-md border border-gray-100">
+            <video
+              controls
+              className="w-full rounded-lg"
+              style={{ height: "220px", objectFit: "contain", backgroundColor: "#000" }}
+            >
+              <source src={videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        )}
+      </>
+    );
+  };
 
   const fetchAllTasks = async () => {
     setLoading(true);
@@ -568,9 +651,26 @@ const AllStatusPage: React.FC = () => {
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-          <Text className="text-gray-600 font-medium block mb-2">
-            Plan of the Day:
-          </Text>
+          <div className="flex justify-between items-center mb-2">
+            <Text className="text-gray-600 font-medium">
+              📋 Plan of the Day
+            </Text>
+            <div className="flex items-center gap-2">
+              <Text className="text-xs text-gray-500">
+                📅 {dayjs(task.planCreatedAt).format("DD-MM-YYYY")}
+              </Text>
+              {!isEditingPlan(task.id) && (
+                <Button
+                  onClick={() => handleEditPlan(task)}
+                  style={editButtonStyle}
+                  size="small"
+                  icon={<EditOutlined />}
+                >
+                  Edit Plan
+                </Button>
+              )}
+            </div>
+          </div>
           {isEditingPlan(task.id) ? (
             <Form form={editForm} onFinish={handleUpdate} layout="vertical">
               <Form.Item
@@ -578,7 +678,7 @@ const AllStatusPage: React.FC = () => {
                 rules={[{ required: true, message: "Please enter your plan!" }]}
               >
                 <Input.TextArea
-                  rows={4}
+                  rows={5}
                   placeholder="Enter plan of the day..."
                   maxLength={8000}
                   showCount
@@ -597,29 +697,40 @@ const AllStatusPage: React.FC = () => {
               </Space>
             </Form>
           ) : (
-            <div className="max-h-32 overflow-y-auto bg-white p-3 rounded-md border border-gray-100">
-              <Text className="whitespace-pre-wrap text-gray-700">
-                {task.planOftheDay || "No plan recorded"}
-              </Text>
-            </div>
-          )}
-          {!isEditingPlan(task.id) && (
-            <Button
-              onClick={() => handleEditPlan(task)}
-              style={editButtonStyle}
-              size="small"
-              className="mt-2"
-              icon={<EditOutlined />}
-            >
-              Edit Plan
-            </Button>
+            <>
+              {renderMediaContent(
+                task.planOftheDay,
+                getVideoForDate(
+                  dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
+                  "plan"
+                ),
+                "Plan of the Day"
+              )}
+            </>
           )}
         </div>
 
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-          <Text className="text-gray-600 font-medium block mb-2">
-            End of the Day:
-          </Text>
+          <div className="flex justify-between items-center mb-2">
+            <Text className="text-gray-600 font-medium">
+              ✅ End of the Day
+            </Text>
+            <div className="flex items-center gap-2">
+              <Text className="text-xs text-gray-500">
+                📅 {dayjs(task.planCreatedAt).format("DD-MM-YYYY")}
+              </Text>
+              {!isEditingEod(task.id) && (
+                <Button
+                  onClick={() => handleEditEod(task)}
+                  style={editButtonStyle}
+                  size="small"
+                  icon={<EditOutlined />}
+                >
+                  Edit EOD
+                </Button>
+              )}
+            </div>
+          </div>
           {isEditingEod(task.id) ? (
             <Form form={editForm} onFinish={handleUpdate} layout="vertical">
               <Form.Item
@@ -632,7 +743,7 @@ const AllStatusPage: React.FC = () => {
                 ]}
               >
                 <Input.TextArea
-                  rows={4}
+                  rows={8}
                   placeholder="Enter end of the day report..."
                   maxLength={8000}
                   showCount
@@ -651,22 +762,16 @@ const AllStatusPage: React.FC = () => {
               </Space>
             </Form>
           ) : (
-            <div className="max-h-32 overflow-y-auto bg-white p-3 rounded-md border border-gray-100">
-              <Text className="whitespace-pre-wrap text-gray-700">
-                {task.endOftheDay || "No end-of-day report"}
-              </Text>
-            </div>
-          )}
-          {!isEditingEod(task.id) && (
-            <Button
-              onClick={() => handleEditEod(task)}
-              style={editButtonStyle}
-              size="small"
-              className="mt-2"
-              icon={<EditOutlined />}
-            >
-              Edit EOD
-            </Button>
+            <>
+              {renderMediaContent(
+                task.endOftheDay,
+                getVideoForDate(
+                  dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
+                  "eod"
+                ),
+                "End of the Day"
+              )}
+            </>
           )}
         </div>
       </div>

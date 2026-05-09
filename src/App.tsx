@@ -1,5 +1,5 @@
 import React, { useEffect, Suspense, lazy } from "react";
-import { getRefreshToken } from "./utils/cookieUtils";
+
 
 import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
@@ -27,7 +27,7 @@ import FreelancersByUserId from "./components/FreelancersByUserId";
 import DataReading from "./ChatScreen/DataReading";
 import RotaryPosterStudio from "./components/DynamicPosterDesignforRotary";
 import RotaryLandingPage from "./components/RotaryLanding";
-import { CandidatesList } from "./AIMockInterview/admin/CandidatesList";
+
 import { CandidateDetail } from "./AIMockInterview/admin/CandidateDetail";
 import ImageCreation from "./BharathAIStore/pages/ImageCreation";
 import { AdminDashboard } from "./AIMockInterview/admin/AdminDashboard";
@@ -40,7 +40,7 @@ import CampaignStats from "./components/CampaignStatsAccenture";
 import AccentureJobsPage from "./components/AccentureJobsPage";
 import AccenturePresentation from "./Dashboard/AccenturePresentation";
 import MinisterMeetingPage from "./components/MinisterPage";
-import CrederaJobsPage from "./components/CrederaJobsPage";
+
 import TechmahindraJobsPage from "./components/TechmahindraJobsPage";
 import AllCompaniesJobsPage from "./components/AllCompaniesJobsPage";
 import LenderBorrowerPartnerLandingPage  from "./components/LenderPage";
@@ -63,7 +63,7 @@ import EmployeeDashboard from "./FreelanceMarketplace/EmployeeDashboard";
 import EmployeeLogin from "./FreelanceMarketplace/EmployeeLogin";
 import EmployeeRegister from "./FreelanceMarketplace/EmployeeRegister";
 import FinvibeLanding from "./Finvibe/Landing";
-import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
+
 import OxyGPT from "./Finvibe/components/Oxyclaude";
 import Billing from "./Finvibe/components/Billing";
 import SendPollBasedRewards from "./AskoxyAdmin/SendPollBasedRewards";
@@ -113,7 +113,7 @@ const ForgotPasswordPage = lazy(() => import("./Pages/Auth/Forgotpage"));
 const InsuranceLLmVoice = lazy(
   () => import("./GenOxy/components/InsuranceLLMVoice"),
 );
-const ScrollToTop = lazy(() => import("./components/ScrollToTop"));
+
 
 const AccomidationGpt = lazy(() => import("./components/GPT's/Accomadation"));
 const ApplicationSupport = lazy(
@@ -196,7 +196,7 @@ const CurrentLandingPage = lazy(() => import("./components/CurrentLandinPage"));
 const PlanOfTheDay = lazy(() => import("./Taskmanagement/PlanOfTheDay"));
 
 const AllStatusPage = lazy(() => import("./Taskmanagement/AllStatus"));
-const AssignedTasksPage = lazy(() => import("./Taskmanagement/AssignedTasks"));
+
 
 const TaskAssignedUser = lazy(
   () => import("./Taskmanagement/TaskAssignedUser"),
@@ -314,9 +314,6 @@ const StudentMainDashboard = lazy(
   () => import("./StudyAbroad/StudentMainDashboard"),
 );
 const BlogDetails = lazy(() => import("./components/BlogDetails"));
-const GlobalProgramsPage = lazy(
-  () => import("./StudyAbroad/GlobalProgramsPage"),
-);
 
 const GenOxy = lazy(() => import("./GenOxy/Genoxy"));
 const RealtimePage = lazy(
@@ -333,7 +330,7 @@ const UserAppliedJob = lazy(() => import("./AskoxyAdmin/UserAppliedJobs"));
 const StockTable = lazy(() => import("./PartnerWeb/StockDetails"));
 const MarketReport = lazy(() => import("./PartnerWeb/Marketreport"));
 const FreeAiBookLandingPage = lazy(() => import("./FREEAIBOOK/LandingPage"));
-const FreeAiBook = lazy(() => import("./FREEAIBOOK/FreeAiBookLandingPage"));
+
 const ChatInterface = lazy(() => import("./components/ChatInterfaceAi"));
 const WalletEligibilitySlabs = lazy(
   () => import("./PartnerWeb/CartAmountBasedOrder"),
@@ -361,7 +358,7 @@ const ChatInterface1 = lazy(
   () => import("./BharathAIStore/pages/ChatInterface"),
 );
 const AiResources = lazy(() => import("./BharathAIStore/pages/AIResources"));
-const AppRoutes = lazy(() => import("./BharathAIStore/routes/Landingpage"));
+
 const Layout = lazy(() => import("./BharathAIStore/routes/Landingpage"));
 const BharatAgentsStore = lazy(
   () => import("./BharathAIStore/pages/BharatAgentsStore"),
@@ -401,14 +398,13 @@ const AllKukatpallyDataPage = lazy(
 const ChatBasedAgent = lazy(
   () => import("./BharathAIStore/pages/chatbasedAgent"),
 );
-const AgentEntryPage = lazy(
-  () => import("./BharathAIStore/pages/AgentEntryPage"),
-);
+
 const WeAreHiringAdd = lazy(() => import("./AskoxyAdmin/WeAreHiringAdd"));
 const AdvocatesDataPage = lazy(() => import("./AskoxyAdmin/Advoatedata"));
 const HiringPages = lazy(() => import("./Dashboard/hiringpages"));
 const KukatpallyAssignedDataPage = lazy(
   () => import("./AskoxyAdmin/KukatapallyAssignedData"),
+
 );
 const CelebShieldPage = lazy(() => import("./components/celebshieldpage"));
 const QuickAgentCreate = lazy(
