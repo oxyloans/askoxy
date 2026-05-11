@@ -117,7 +117,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 10 * 60 + 30;
+      const closeTimeInMinutes = 21 * 60 + 30;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes,
@@ -192,6 +192,47 @@ const PlanOfTheDay: React.FC = () => {
     } finally {
       setFetchingStatus(false);
     }
+  };
+  const validateMeaningfulPlan = (_: any, value: string) => {
+    const trimmedValue = value?.trim() || "";
+
+    if (!trimmedValue) {
+      return Promise.reject(new Error("Please provide your daily plan."));
+    }
+
+    if (trimmedValue.length < 30) {
+      return Promise.reject(
+        new Error(
+          `Minimum 30 characters required (${trimmedValue.length}/30).`,
+        ),
+      );
+    }
+
+    const lettersOnly = trimmedValue.replace(/[^a-zA-Z]/g, "");
+
+    if (lettersOnly.length < 15) {
+      return Promise.reject(
+        new Error("Please enter a meaningful plan with proper words."),
+      );
+    }
+
+    if (/^(.)\1{8,}$/i.test(lettersOnly)) {
+      return Promise.reject(
+        new Error("Invalid plan. Repeated characters are not allowed."),
+      );
+    }
+
+    const words = trimmedValue
+      .split(/\s+/)
+      .filter((word) => /^[a-zA-Z]{3,}$/.test(word));
+
+    if (words.length < 5) {
+      return Promise.reject(
+        new Error("Please enter at least 5 meaningful words in your plan."),
+      );
+    }
+
+    return Promise.resolve();
   };
 
   const onFinish = async (values: TaskFormValues) => {
@@ -377,7 +418,7 @@ const PlanOfTheDay: React.FC = () => {
       className="space-y-5"
       size="large"
       onValuesChange={() => {
-        form.validateFields(['planOftheDay']).catch(() => {});
+        form.validateFields(["planOftheDay"]).catch(() => {});
       }}
     >
       <Form.Item
@@ -389,15 +430,7 @@ const PlanOfTheDay: React.FC = () => {
         }
         rules={[
           {
-            validator: (_, value) => {
-              if (!value || value.trim().length === 0) {
-                return Promise.reject(new Error("Please provide your daily plan"));
-              }
-              if (value.trim().length < 30) {
-                return Promise.reject(new Error(`Minimum 30 characters required (${value.trim().length}/30)`));
-              }
-              return Promise.resolve();
-            },
+            validator: validateMeaningfulPlan,
           },
         ]}
         validateTrigger="onSubmit"

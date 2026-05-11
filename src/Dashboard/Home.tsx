@@ -402,7 +402,7 @@ const Home: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching offers:", error);
-      message.error("Failed to load offers.");
+      // message.error("Failed to load offers.");
       setOffers([]);
     } finally {
       setIsFetchingOffers(false);

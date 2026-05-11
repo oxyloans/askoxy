@@ -292,7 +292,7 @@ const LeagueHighlightsSection: React.FC = () => {
 
           <div className="text-center lg:text-left">
             <h2 className="text-[2.15rem] font-black leading-tight text-[#0f172a] sm:text-[2.8rem] lg:text-[3.4rem]">
-              Our Super Sixer League.
+              Our Super Sixer Teams.
               <span className="block bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#f97316] bg-clip-text text-transparent">
                 One Smart Hiring Ecosystem.
               </span>

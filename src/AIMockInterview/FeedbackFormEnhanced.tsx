@@ -33,30 +33,30 @@ export const FeedbackFormEnhanced: React.FC<FeedbackFormProps> = ({ userId, sess
 
   if (submitted) {
     return (
-      <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 text-center">
-        <div className="text-5xl mb-4">✓</div>
-        <h3 className="text-xl font-bold text-white mb-2">Thank You!</h3>
-        <p className="text-gray-400">Your feedback helps us improve the interview experience.</p>
+      <div className="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl dark:border-emerald-900/50 dark:bg-slate-900">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-4xl text-emerald-600 dark:bg-emerald-950/50">✓</div>
+        <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white">Thank You!</h3>
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Your feedback helps us improve the interview experience.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-      <h3 className="text-xl font-bold text-white mb-4">How was your experience?</h3>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">How was your experience?</h3>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Rate the interview flow and share optional feedback.</p>
+
+      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-3">Rate your experience</label>
-          <div className="flex gap-2">
+          <label className="mb-3 block text-sm font-bold text-slate-700 dark:text-slate-300">Rate your experience</label>
+          <div className="flex flex-wrap gap-2">
             {[1, 2, 3, 4, 5].map(star => (
               <button
                 key={star}
                 type="button"
                 onClick={() => setRating(star)}
-                className={`text-4xl transition-all ${
-                  star <= rating ? 'text-yellow-400' : 'text-gray-600'
-                } hover:text-yellow-400`}
+                className={`rounded-2xl px-2 text-4xl transition-all hover:scale-105 ${star <= rating ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-700'}`}
+                aria-label={`Rate ${star}`}
               >
                 ★
               </button>
@@ -65,14 +65,12 @@ export const FeedbackFormEnhanced: React.FC<FeedbackFormProps> = ({ userId, sess
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Additional comments (optional)
-          </label>
+          <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">Additional comments (optional)</label>
           <textarea
             value={comments}
             onChange={e => setComments(e.target.value)}
             placeholder="Tell us about your experience..."
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
             rows={4}
           />
         </div>
@@ -80,7 +78,7 @@ export const FeedbackFormEnhanced: React.FC<FeedbackFormProps> = ({ userId, sess
         <button
           type="submit"
           disabled={loading || rating === 0}
-          className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg font-medium"
+          className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 font-extrabold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none"
         >
           {loading ? 'Submitting...' : 'Submit Feedback'}
         </button>

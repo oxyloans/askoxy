@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { api } from './lib/api';
 
 interface LevelConfig {
   questions: number;
@@ -68,63 +67,57 @@ export const MultiLevelSelection: React.FC = () => {
   const badgeColor = percentage > 50 ? '#10b981' : percentage > 0 ? '#f59e0b' : '#ef4444';
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      {/* Attempt Status */}
-      <div 
-        className="mb-6 rounded-lg p-4 border"
-        style={{ borderColor: badgeColor + '40', backgroundColor: badgeColor + '10' }}
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-white">📊 Your Interview Status</span>
-          <span 
-            className="text-xs font-medium px-2 py-1 rounded"
-            style={{ backgroundColor: badgeColor + '20', color: badgeColor }}
-          >
-            {status?.canAttempt ? 'Available' : 'Limit Reached'}
-          </span>
-        </div>
-        <div className="text-sm text-gray-300 mt-2">
-          Attempts: <span className="font-semibold" style={{ color: badgeColor }}>
-            {status?.attemptsUsed}/{status?.maxAttempts}
-          </span> used • {status?.attemptsRemaining} remaining
-        </div>
-      </div>
-
-      {/* Level Selection */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-white mb-4">Select Interview Level</h2>
-        
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          {[3,4,5,6,7,8,9,10,11,12,13,14,15].map(level => (
-            <button
-              key={level}
-              onClick={() => setSelectedLevel(level)}
-              className={`p-4 rounded-lg border-2 transition font-medium ${
-                selectedLevel === level
-                  ? 'border-emerald-500 bg-emerald-900/30 text-emerald-400'
-                  : 'border-gray-600 bg-gray-900 text-gray-300 hover:border-gray-500'
-              }`}
+    <div className="min-h-screen bg-slate-50 p-4 text-slate-900 dark:bg-slate-950 dark:text-white sm:p-6">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-extrabold sm:text-3xl">Select Interview Level</h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose your difficulty level and start an instant interview.</p>
+            </div>
+            <span
+              className="w-fit rounded-full px-3 py-1 text-xs font-extrabold"
+              style={{ backgroundColor: badgeColor + '18', color: badgeColor }}
             >
-              Level {level}
-            </button>
-          ))}
-        </div>
+              {status?.canAttempt ? 'Available' : 'Limit Reached'}
+            </span>
+          </div>
 
-        {/* Selected Level Info */}
-        <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 mb-6">
-          <div className="text-white font-semibold mb-2">Selected: Level {selectedLevel}</div>
-          <div className="text-sm text-gray-400">
-            Questions: {levelConfig[selectedLevel].questions} • 
-            Time: {levelConfig[selectedLevel].time} min each
+          <div className="mt-5 rounded-2xl border p-4" style={{ borderColor: badgeColor + '35', backgroundColor: badgeColor + '08' }}>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+              <span className="font-bold text-slate-700 dark:text-slate-200">📊 Your Interview Status</span>
+              <span className="font-medium text-slate-500 dark:text-slate-400">
+                Attempts: <b style={{ color: badgeColor }}>{status?.attemptsUsed}/{status?.maxAttempts}</b> used • {status?.attemptsRemaining} remaining
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {[3,4,5,6,7,8,9,10,11,12,13,14,15].map(level => (
+              <button
+                key={level}
+                onClick={() => setSelectedLevel(level)}
+                className={`rounded-2xl border-2 p-4 text-left transition ${selectedLevel === level ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-500/10 dark:bg-emerald-950/30 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-600'}`}
+              >
+                <div className="font-extrabold">Level {level}</div>
+                <div className="mt-1 text-xs opacity-80">{levelConfig[level].questions} Qs • {levelConfig[level].time} min</div>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
+            <div className="font-extrabold">Selected: Level {selectedLevel}</div>
+            <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Questions: {levelConfig[selectedLevel].questions} • Time: {levelConfig[selectedLevel].time} min each
+            </div>
+          </div>
+
           <button
             onClick={startInstant}
             disabled={!status?.canAttempt || loading}
-            className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
+            className="mt-6 w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 font-extrabold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none"
           >
             {loading ? 'Starting...' : 'Start Instant Interview'}
           </button>

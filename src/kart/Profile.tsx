@@ -60,6 +60,7 @@ const ProfilePage = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [verifyLoader, setVerifyLoader] = useState(false);
+
   const [addressFormData, setAddressFormData] = useState<Address>({
     flatNo: "",
     landmark: "",
@@ -67,14 +68,18 @@ const ProfilePage = () => {
     pincode: "",
     addressType: "Home",
   });
+
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+
   const [addressFormErrors, setAddressFormErrors] = useState({
     flatNo: "",
     landmark: "",
     address: "",
     pincode: "",
   });
+
   const customerId = localStorage.getItem("userId") || "";
+
   const [formData, setFormData] = useState<ProfileFormData>({
     userFirstName: "",
     userLastName: "",
@@ -88,6 +93,7 @@ const ProfilePage = () => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+
   const [isValidationPopupOpen, setIsValidationPopupOpen] = useState(false);
   const [countryCode, setCountryCode] = useState("+91");
   const [isMethodDisabled, setIsMethodDisabled] = useState(false);
@@ -102,20 +108,19 @@ const ProfilePage = () => {
   const isFromWhatsApp = loginMethod === "whatsapp";
 
   useEffect(() => {
-    // Determine login method and set numbers accordingly
     if (loginMethod === "whatsapp") {
       const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
       setFormData((prev) => ({
         ...prev,
         whatsappNumber: whatsappNumber,
-        mobileNumber: "", // Clear mobile number
+        mobileNumber: "",
       }));
     } else if (loginMethod === "mobile") {
       const mobileNumber = localStorage.getItem("mobileNumber") || "";
       setFormData((prev) => ({
         ...prev,
         mobileNumber: mobileNumber,
-        whatsappNumber: "", // Clear WhatsApp number
+        whatsappNumber: "",
       }));
     }
   }, [loginMethod]);
@@ -126,22 +131,20 @@ const ProfilePage = () => {
     if (phoneNumber) {
       try {
         const phoneNumberS = parsePhoneNumber(phoneNumber);
-        console.log("phoneNumberS.country", phoneNumberS?.countryCallingCode);
 
         const detectedCountryCode = phoneNumberS?.countryCallingCode
           ? `+${phoneNumberS.countryCallingCode}`
-          : "+91"; // Default to India if unable to detect
+          : "+91";
 
         setCountryCode(detectedCountryCode);
-        setIsMethodDisabled(true); // Disable method selection when number is entered
+        setIsMethodDisabled(true);
       } catch (error) {
-        console.error("Error parsing phone number", error);
         setCountryCode("+91");
         setIsMethodDisabled(false);
       }
     } else {
-      setCountryCode("+91"); // Reset to default
-      setIsMethodDisabled(false); // Enable method selection when number is empty
+      setCountryCode("+91");
+      setIsMethodDisabled(false);
     }
   }, [formData.mobileNumber, formData.whatsappNumber]);
 
@@ -150,32 +153,31 @@ const ProfilePage = () => {
       setFormData((prev) => ({
         ...prev,
         whatsappNumber: localStorage.getItem("whatsappNumber") || "",
-        mobileNumber: "", // mobileNumber should be empty if from WhatsApp
+        mobileNumber: "",
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
         mobileNumber: localStorage.getItem("mobileNumber") || "",
-        whatsappNumber: "", // whatsappNumber should be empty if from Mobile login
+        whatsappNumber: "",
       }));
     }
   }, [isFromWhatsApp]);
 
   useEffect(() => {
-    // Determine login method and set numbers accordingly
     if (loginMethod === "whatsapp") {
       const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
       setFormData((prev) => ({
         ...prev,
         whatsappNumber: whatsappNumber,
-        mobileNumber: "", // Clear mobile number
+        mobileNumber: "",
       }));
     } else if (loginMethod === "mobile") {
       const mobileNumber = localStorage.getItem("mobileNumber") || "";
       setFormData((prev) => ({
         ...prev,
         mobileNumber: mobileNumber,
-        whatsappNumber: "", // Clear WhatsApp number
+        whatsappNumber: "",
       }));
     }
   }, [loginMethod]);
@@ -191,31 +193,33 @@ const ProfilePage = () => {
   const fetchProfileData = async () => {
     try {
       setIsLoading(true);
+
       const response = await customerApi.get(
         `${BASE_URL}/user-service/customerProfileDetails`,
         {
           params: { customerId },
         }
       );
+
       const data = response.data;
+
       if (!data || !data.firstName || !data.lastName || !data.email) {
         setEditStatus(false);
       } else {
         setEditStatus(true);
       }
+
       const profileData = {
         userFirstName: data.firstName || "",
         userLastName: data.lastName || "",
         customerEmail: data.email || "",
         alterMobileNumber: data.alterMobileNumber || "",
-        whatsappNumber: data.whatsappNumber || "",
+        whatsappNumber: data.whatsappNumber || data.mobileNumber || "",
         mobileNumber: data.mobileNumber || "",
         customerId: customerId || "",
       };
 
       setFormData(profileData);
-
-      // Determine WhatsApp verification status
       setIsWhatsappVerified(data.whatsappVerified);
       setIsMobileNumberVerified(data.mobileVerified);
     } catch (error) {
@@ -228,6 +232,7 @@ const ProfilePage = () => {
   const sendWhatsappOTP = async () => {
     try {
       setIsLoading(true);
+
       if (formData.whatsappNumber == "") {
         setError("Please enter whatsapp number");
         return;
@@ -269,6 +274,7 @@ const ProfilePage = () => {
   const handleWhatsappVerification = async () => {
     try {
       setIsLoading(true);
+
       const response = await customerApi.post(
         `${BASE_URL}/user-service/sendWhatsappOtpqAndVerify`,
         {
@@ -285,7 +291,6 @@ const ProfilePage = () => {
         setIsWhatsappVerified(true);
         setShowWhatsappVerificationModal(false);
         setSuccessMessage("WhatsApp number verified successfully!");
-        // Update profile with verified WhatsApp number
         await handleSaveProfile();
       } else {
         setError("Invalid verification code");
@@ -300,9 +305,11 @@ const ProfilePage = () => {
   const fetchAddresses = async () => {
     try {
       setIsLoading(true);
+
       const response = await customerApi.get(
         `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`
       );
+
       setAddresses(response.data);
     } catch (error) {
       setError("Error fetching addresses");
@@ -314,19 +321,17 @@ const ProfilePage = () => {
   const validateProfileForm = () => {
     const errors: Record<string, string> = {};
 
-    // First Name validation
     if (!formData.userFirstName.trim()) {
       errors.userFirstName = "First name is required";
     } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
       errors.userFirstName = "First name should only contain letters";
     }
 
-    // Email validation - improved regex and trimming
     const emailValue = formData.customerEmail.trim();
+
     if (!emailValue) {
       errors.customerEmail = "Email address is required";
     } else {
-      // More comprehensive email regex
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (!emailRegex.test(emailValue)) {
         errors.customerEmail = "Please enter a valid email address";
@@ -334,7 +339,6 @@ const ProfilePage = () => {
     }
 
     if (formData.alterMobileNumber.trim() !== "") {
-      // Alternate mobile number validation
       if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
         errors.alterMobileNumber =
           "Please enter a valid 10-digit mobile number";
@@ -344,7 +348,9 @@ const ProfilePage = () => {
         errors.alterMobileNumber =
           "Alternate and Mobile number must be different.";
         errors.mobileNumber = "Alternate and Mobile number must be different.";
-      } else if (formData.alterMobileNumber === formData.whatsappNumber.replace(/\D/g, '')) {
+      } else if (
+        formData.alterMobileNumber === formData.whatsappNumber.replace(/\D/g, "")
+      ) {
         errors.alterMobileNumber =
           "Alternate and WhatsApp number must be different.";
         errors.whatsappNumber =
@@ -352,7 +358,6 @@ const ProfilePage = () => {
       }
     }
 
-    // Mobile number validation
     if (!formData.mobileNumber.trim()) {
       errors.mobileNumber = "Mobile number is required";
     } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
@@ -365,7 +370,11 @@ const ProfilePage = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const validateField = (field: string, value: string, updatedFormData?: ProfileFormData) => {
+  const validateField = (
+    field: string,
+    value: string,
+    updatedFormData?: ProfileFormData
+  ) => {
     const data = updatedFormData || formData;
     let error = "";
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -373,30 +382,44 @@ const ProfilePage = () => {
     switch (field) {
       case "userFirstName":
         if (!value.trim()) error = "First name is required";
-        else if (!/^[A-Za-z ]+$/.test(value.trim())) error = "First name should only contain letters";
+        else if (!/^[A-Za-z ]+$/.test(value.trim()))
+          error = "First name should only contain letters";
         break;
+
       case "customerEmail":
         if (!value.trim()) error = "Email address is required";
-        else if (!emailRegex.test(value.trim())) error = "Please enter a valid email address";
+        else if (!emailRegex.test(value.trim()))
+          error = "Please enter a valid email address";
         break;
+
       case "mobileNumber":
         if (!value.trim()) error = "Mobile number is required";
-        else if (!/^\d{10}$/.test(value)) error = "Please enter a valid 10-digit mobile number";
-        else if (/^0+$/.test(value)) error = "Mobile number cannot be all zeros";
+        else if (!/^\d{10}$/.test(value))
+          error = "Please enter a valid 10-digit mobile number";
+        else if (/^0+$/.test(value))
+          error = "Mobile number cannot be all zeros";
         break;
+
       case "alterMobileNumber":
         if (value.trim() !== "") {
-          if (!/^\d{10}$/.test(value)) error = "Please enter a valid 10-digit mobile number";
-          else if (/^0+$/.test(value)) error = "Mobile number cannot be all zeros";
-          else if (value === data.mobileNumber) error = "Alternate and Mobile number must be different";
-          else if (value === data.whatsappNumber.replace(/\D/g, "")) error = "Alternate and WhatsApp number must be different";
+          if (!/^\d{10}$/.test(value))
+            error = "Please enter a valid 10-digit mobile number";
+          else if (/^0+$/.test(value))
+            error = "Mobile number cannot be all zeros";
+          else if (value === data.mobileNumber)
+            error = "Alternate and Mobile number must be different";
+          else if (value === data.whatsappNumber.replace(/\D/g, ""))
+            error = "Alternate and WhatsApp number must be different";
         }
         break;
+
       case "whatsappNumber":
         if (value.trim() !== "") {
           const digits = value.replace(/\D/g, "");
-          if (/^0+$/.test(digits)) error = "WhatsApp number cannot be all zeros";
-          else if (digits === data.alterMobileNumber) error = "Alternate and WhatsApp number must be different";
+          if (/^0+$/.test(digits))
+            error = "WhatsApp number cannot be all zeros";
+          else if (digits === data.alterMobileNumber)
+            error = "Alternate and WhatsApp number must be different";
         }
         break;
     }
@@ -414,9 +437,13 @@ const ProfilePage = () => {
 
     if (!addressFormData.flatNo?.trim())
       errors.flatNo = "Flat/House number is required";
+
     if (!addressFormData.landmark?.trim())
       errors.landmark = "Landmark is required";
-    if (!addressFormData.address?.trim()) errors.address = "Address is required";
+
+    if (!addressFormData.address?.trim())
+      errors.address = "Address is required";
+
     if (!addressFormData.pincode?.trim()) {
       errors.pincode = "PIN code is required";
     } else if (!/^\d{6}$/.test(addressFormData.pincode)) {
@@ -437,17 +464,16 @@ const ProfilePage = () => {
 
     try {
       setIsLoading(true);
+
       const payload = {
         ...formData,
-        whatsappNumber: formData.whatsappNumber,
+        whatsappNumber: formData.whatsappNumber || formData.mobileNumber,
         mobileNumber: formData.mobileNumber.replace(countryCode, ""),
       };
 
       await customerApi.patch(`${BASE_URL}/user-service/profileUpdate`, payload);
 
-      // Track profile update event with TypeScript-safe implementation
       if (typeof window !== "undefined" && window.gtag) {
-        // Create a type-safe list of fields that are not empty
         const updatedFields = Object.entries(payload)
           .filter(([_, value]) => value !== "")
           .map(([key, _]) => key);
@@ -462,20 +488,28 @@ const ProfilePage = () => {
       setEditStatus(true);
       localStorage.setItem("profileData", JSON.stringify(payload));
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.response?.data || "Error updating profile. Please try again.";
-      setError(typeof errorMessage === 'string' ? errorMessage : "Error updating profile. Please try again.");
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data ||
+        "Error updating profile. Please try again.";
+
+      setError(
+        typeof errorMessage === "string"
+          ? errorMessage
+          : "Error updating profile. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Auto-hide messages after 5 seconds
   React.useEffect(() => {
     if (successMessage || error) {
       const timer = setTimeout(() => {
         setSuccessMessage("");
         setError("");
       }, 2000);
+
       return () => clearTimeout(timer);
     }
   }, [successMessage, error]);
@@ -497,6 +531,7 @@ const ProfilePage = () => {
       }
 
       const withinRadius = await isWithinRadius(coordinates);
+
       if (!withinRadius) {
         setError("Sorry, we do not deliver to this location");
         return;
@@ -518,7 +553,7 @@ const ProfilePage = () => {
           `${BASE_URL}/user-service/updateAddress/${editingAddressId}`,
           data
         );
-        // Track address update event
+
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "update_address", {
             address_type: addressFormData.addressType,
@@ -530,22 +565,17 @@ const ProfilePage = () => {
       } else {
         await customerApi.post(`${BASE_URL}/user-service/addAddress`, data);
 
-        // Track new address addition event
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "add_address", {
             address_type: addressFormData.addressType,
           });
         }
+
         setSuccessMessage("Address added successfully!");
       }
 
-      // Clear error on success
       setError("");
-
-      // Fetch updated addresses
       await fetchAddresses();
-
-      // Reset form after short delay to allow user to see success message
       setTimeout(resetAddressForm, 3000);
     } catch (err) {
       setSuccessMessage("");
@@ -562,6 +592,7 @@ const ProfilePage = () => {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         address
       )}&key=${API_KEY}`;
+
       const response = await axios.get(url);
       return response.data.results[0]?.geometry.location;
     } catch (error) {
@@ -572,9 +603,11 @@ const ProfilePage = () => {
   const handleDeleteAddress = async (addressId: string) => {
     try {
       setIsLoading(true);
+
       await customerApi.delete(
         `${BASE_URL}/user-service/deleteAddress/${addressId}`
       );
+
       setSuccessMessage("Address deleted successfully!");
       await fetchAddresses();
     } catch (error) {
@@ -600,12 +633,14 @@ const ProfilePage = () => {
       pincode: "",
       addressType: "Home",
     });
+
     setAddressFormErrors({
       flatNo: "",
       landmark: "",
       address: "",
       pincode: "",
     });
+
     setEditingAddressId(null);
     setShowAddressForm(false);
   };
@@ -624,10 +659,12 @@ const ProfilePage = () => {
                 <X className="h-6 w-6" />
               </button>
             </div>
+
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
                 Enter the 4-digit verification code sent to your WhatsApp number
               </p>
+
               <input
                 type="text"
                 value={whatsappVerificationCode}
@@ -636,6 +673,7 @@ const ProfilePage = () => {
                 maxLength={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
               />
+
               <div className="flex gap-4">
                 <button
                   onClick={handleWhatsappVerification}
@@ -643,6 +681,7 @@ const ProfilePage = () => {
                 >
                   Verify
                 </button>
+
                 <button
                   onClick={() => setShowWhatsappVerificationModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
@@ -654,13 +693,11 @@ const ProfilePage = () => {
           </div>
         </div>
       )}
+
       <div className="flex-1 p-4 lg:p-6">
         <div className="flex flex-col lg:flex-row gap-6"></div>
-        {/* Mobile Navigation Bar */}
 
-        {/* Main Content */}
         <div className="pt-4 lg:pt-0 px-2 lg:px-6">
-          {/* Desktop Navigation */}
           <div className="border-b border-gray-200 mb-2">
             <div className="flex space-x-8">
               <button
@@ -673,6 +710,7 @@ const ProfilePage = () => {
               >
                 Personal Information
               </button>
+
               <button
                 className={`pb-4 px-4 ${
                   activeTab === "addresses"
@@ -687,7 +725,6 @@ const ProfilePage = () => {
           </div>
 
           <div className="max-w-7xl">
-            {/* Personal Information Form */}
             {activeTab === "personal" && (
               <div className="bg-white p-6 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
@@ -695,6 +732,7 @@ const ProfilePage = () => {
                     <label className="text-sm font-medium text-gray-700">
                       First Name <span className="text-red-500">*</span>
                     </label>
+
                     <input
                       type="text"
                       pattern="^[A-Za-z]+$"
@@ -704,15 +742,15 @@ const ProfilePage = () => {
                         setFormData({ ...formData, userFirstName: val });
                         validateField("userFirstName", val);
                       }}
-                      className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${
-                                       validationErrors.userFirstName
-                                         ? "border-red-500 ring-1 ring-red-500"
-                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                                     }`}
+                      className={`w-full px-4 py-3 rounded-lg border transition-all ${
+                        validationErrors.userFirstName
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                      }`}
                       placeholder="Enter your first name"
                       disabled={editStatus}
                     />
+
                     {validationErrors.userFirstName && (
                       <p className="text-red-500 text-sm">
                         {validationErrors.userFirstName}
@@ -724,6 +762,7 @@ const ProfilePage = () => {
                     <label className="text-sm font-medium text-gray-700">
                       Last Name
                     </label>
+
                     <input
                       type="text"
                       pattern="^[A-Za-z]+$"
@@ -734,15 +773,15 @@ const ProfilePage = () => {
                           userLastName: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${
-                                       validationErrors.userLastName
-                                         ? "border-red-500 ring-1 ring-red-500"
-                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                                     }`}
+                      className={`w-full px-4 py-3 rounded-lg border transition-all ${
+                        validationErrors.userLastName
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                      }`}
                       placeholder="Enter your last name"
                       disabled={editStatus}
                     />
+
                     {validationErrors.userLastName && (
                       <p className="text-red-500 text-sm">
                         {validationErrors.userLastName}
@@ -754,6 +793,7 @@ const ProfilePage = () => {
                     <label className="text-sm font-medium text-gray-700">
                       Email Address <span className="text-red-500">*</span>
                     </label>
+
                     <input
                       type="email"
                       value={formData.customerEmail}
@@ -762,15 +802,15 @@ const ProfilePage = () => {
                         setFormData({ ...formData, customerEmail: newEmail });
                         validateField("customerEmail", newEmail);
                       }}
-                      className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${
-                                       validationErrors.customerEmail
-                                         ? "border-red-500 ring-1 ring-red-500"
-                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                                     }`}
+                      className={`w-full px-4 py-3 rounded-lg border transition-all ${
+                        validationErrors.customerEmail
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                      }`}
                       placeholder="Enter your email"
                       disabled={editStatus}
                     />
+
                     {validationErrors.customerEmail && (
                       <p className="text-red-500 text-sm">
                         {validationErrors.customerEmail}
@@ -785,26 +825,30 @@ const ProfilePage = () => {
                         (If unavailable, we'll contact this number)
                       </span>
                     </label>
+
                     <input
                       type="text"
                       maxLength={10}
                       pattern="\d*"
                       value={formData.alterMobileNumber}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '');
-                        const updated = { ...formData, alterMobileNumber: value };
+                        const value = e.target.value.replace(/\D/g, "");
+                        const updated = {
+                          ...formData,
+                          alterMobileNumber: value,
+                        };
                         setFormData(updated);
                         validateField("alterMobileNumber", value, updated);
                       }}
-                      className={`w-full px-4 py-3 rounded-lg border transition-all
-                                     ${
-                                       validationErrors.alterMobileNumber
-                                         ? "border-red-500 ring-1 ring-red-500"
-                                         : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                                     }`}
+                      className={`w-full px-4 py-3 rounded-lg border transition-all ${
+                        validationErrors.alterMobileNumber
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
+                      }`}
                       placeholder="Enter alternate number"
                       disabled={editStatus}
                     />
+
                     {validationErrors.alterMobileNumber && (
                       <p className="text-red-500 text-sm">
                         {validationErrors.alterMobileNumber}
@@ -815,32 +859,24 @@ const ProfilePage = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Primary Mobile Number{" "}
-                      {isFromWhatsApp ? (
-                        ""
-                      ) : (
+                      {!isFromWhatsApp && (
                         <span className="text-red-500">*</span>
                       )}
                     </label>
+
                     <input
                       type="tel"
                       value={formData.mobileNumber}
                       disabled={true}
                       readOnly
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          mobileNumber: e.target.value || "",
-                        })
-                      }
-                      className={`w-full px-4 py-3 rounded-lg border transition-all bg-gray-100 text-gray-600 cursor-not-allowed
-          ${
-            validationErrors.mobileNumber
-              ? "border-red-500 ring-1 ring-red-500"
-              : "border-gray-300"
-          }
-        `}
+                      className={`w-full px-4 py-3 rounded-lg border transition-all bg-gray-100 text-gray-600 cursor-not-allowed ${
+                        validationErrors.mobileNumber
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="Enter Primary Mobile Number"
                     />
+
                     {validationErrors.mobileNumber && (
                       <p className="text-red-500 text-sm">
                         {validationErrors.mobileNumber}
@@ -852,37 +888,31 @@ const ProfilePage = () => {
                     <label className="text-sm font-medium text-gray-700">
                       WhatsApp Number
                     </label>
-                    <div className="flex items-center space-x-2">
-                      <PhoneInput
-                        defaultCountry="IN"
-                        disabled={isWhatsappVerified} // Disable input only during OTP verification
-                        international={true} // Allow country change for WhatsApp
-                        value={formData.whatsappNumber}
-                        onChange={(value) => {
-                          const val = value || "";
-                          const updated = { ...formData, whatsappNumber: val };
-                          setFormData(updated);
-                          setIsWhatsappVerified(false);
-                          validateField("whatsappNumber", val, updated);
-                        }}
-                        className={`flex-grow px-4 py-3 rounded-lg border transition-all
-                      ${
-                        validationErrors.whatsappNumber
-                          ? "border-red-500 ring-1 ring-red-500"
-                          : "border-gray-300 focus:ring-2 focus:ring-purple-500"
-                      }
-                    `}
-                        placeholder="Enter WhatsApp number"
+
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        value={formData.whatsappNumber || formData.mobileNumber}
+                        readOnly
+                        disabled
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed pr-24"
+                        placeholder="WhatsApp Number"
                       />
-                      {!isWhatsappVerified && (
-                        <button
-                          onClick={sendWhatsappOTP}
-                          className="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                        >
-                          Send OTP
-                        </button>
+
+                      {(formData.whatsappNumber || formData.mobileNumber) && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                            Verified
+                          </span>
+                        </div>
                       )}
                     </div>
+
+                    <p className="text-xs text-gray-500">
+                      If WhatsApp number is empty, primary mobile number will be
+                      used.
+                    </p>
+
                     {validationErrors.whatsappNumber && (
                       <p className="text-red-500 text-sm">
                         {validationErrors.whatsappNumber}
@@ -921,7 +951,7 @@ const ProfilePage = () => {
                       <button
                         onClick={handleSaveProfile}
                         disabled={isLoading}
-                        className="w-full md:w-auto px-6 py-3  bg-gradient-to-r from-purple-600 to-purple-400 text-white rounded-lg transition-colors shadow-md hover:bg-purple-700 disabled:opacity-50"
+                        className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-400 text-white rounded-lg transition-colors shadow-md hover:bg-purple-700 disabled:opacity-50"
                       >
                         {isLoading ? "Saving..." : "Save Changes"}
                       </button>
@@ -938,7 +968,6 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* Addresses Section */}
             {activeTab === "addresses" && (
               <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6">
                 {!showAddressForm ? (
@@ -946,12 +975,13 @@ const ProfilePage = () => {
                     <div className="flex justify-end mb-6">
                       <button
                         onClick={() => setShowAddressForm(true)}
-                        className="w-full md:w-auto inline-flex items-center justify-center gap-2  bg-gradient-to-r from-purple-600 to-purple-400 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
+                        className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-400 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
                       >
                         <FaMapMarkerAlt />
                         Add New Address
                       </button>
                     </div>
+
                     {addresses.length === 0 && (
                       <div className="text-center py-12">
                         <FaMapMarkerAlt className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -970,7 +1000,6 @@ const ProfilePage = () => {
                           key={address.id}
                           className="bg-white border border-gray-200 rounded-xl p-4 lg:p-6 hover:shadow-lg transition-shadow relative group"
                         >
-                          {/* Address card content */}
                           <div className="flex items-start gap-4">
                             <div className="p-2 bg-purple-50 rounded-lg shrink-0">
                               {address.addressType === "Home" ? (
@@ -981,43 +1010,39 @@ const ProfilePage = () => {
                                 <FaMapMarkerAlt className="text-purple-600" />
                               )}
                             </div>
+
                             <div className="flex-1 min-w-0">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                 {address.addressType}
                               </span>
+
                               <h3 className="mt-2 font-medium text-gray-900 truncate">
                                 {address.flatNo}
                               </h3>
+
                               <p className="mt-1 text-sm text-gray-500 truncate">
                                 {address.landmark}
                               </p>
+
                               <p className="mt-1 text-sm text-gray-500">
                                 {address.address}
                               </p>
+
                               <p className="mt-1 text-sm text-gray-500">
                                 PIN: {address.pincode}
                               </p>
                             </div>
-                            {/* <div className="absolute top-4 right-4">
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleEditAddress(address)}
-                                  className="p-2 text-gray-600 hover:text-purple-600 rounded-full hover:bg-purple-50 transition-colors"
-                                >
-                                  <FaPen className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div> */}
                           </div>
                         </div>
                       ))}
                     </div>
                   </>
                 ) : (
-                  <div className=" mx-auto">
+                  <div className="mx-auto">
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">
                       {editingAddressId ? "Edit Address" : "Add New Address"}
                     </h3>
+
                     <form
                       className="space-y-6"
                       onSubmit={(e) => e.preventDefault()}
@@ -1027,6 +1052,7 @@ const ProfilePage = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Flat/House Number
                           </label>
+
                           <input
                             type="text"
                             value={addressFormData.flatNo}
@@ -1039,16 +1065,19 @@ const ProfilePage = () => {
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                             placeholder="Enter flat/house number"
                           />
+
                           {addressFormErrors.flatNo && (
                             <p className="mt-1 text-sm text-red-600">
                               {addressFormErrors.flatNo}
                             </p>
                           )}
                         </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Landmark
                           </label>
+
                           <input
                             type="text"
                             value={addressFormData.landmark}
@@ -1061,6 +1090,7 @@ const ProfilePage = () => {
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                             placeholder="Enter landmark"
                           />
+
                           {addressFormErrors.landmark && (
                             <p className="mt-1 text-sm text-red-600">
                               {addressFormErrors.landmark}
@@ -1073,6 +1103,7 @@ const ProfilePage = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Complete Address
                         </label>
+
                         <textarea
                           value={addressFormData.address}
                           onChange={(e) =>
@@ -1085,6 +1116,7 @@ const ProfilePage = () => {
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
                           placeholder="Enter complete address"
                         />
+
                         {addressFormErrors.address && (
                           <p className="mt-1 text-sm text-red-600">
                             {addressFormErrors.address}
@@ -1097,6 +1129,7 @@ const ProfilePage = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             PIN Code
                           </label>
+
                           <input
                             type="text"
                             value={addressFormData.pincode}
@@ -1112,16 +1145,19 @@ const ProfilePage = () => {
                             placeholder="Enter 6-digit PIN code"
                             maxLength={6}
                           />
+
                           {addressFormErrors.pincode && (
                             <p className="mt-1 text-sm text-red-600">
                               {addressFormErrors.pincode}
                             </p>
                           )}
                         </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Address Type
                           </label>
+
                           <select
                             value={addressFormData.addressType}
                             onChange={(e) =>
@@ -1143,7 +1179,6 @@ const ProfilePage = () => {
                       </div>
 
                       <div className="space-y-4">
-                        {/* Error Message */}
                         {error && (
                           <div
                             className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg"
@@ -1153,7 +1188,6 @@ const ProfilePage = () => {
                           </div>
                         )}
 
-                        {/* Success Message */}
                         {successMessage && (
                           <div
                             className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg"
@@ -1164,9 +1198,6 @@ const ProfilePage = () => {
                           </div>
                         )}
 
-                        {/* Form Fields would go here */}
-
-                        {/* Action Buttons */}
                         <div className="flex items-center justify-end gap-4 pt-4">
                           <button
                             type="button"
@@ -1175,6 +1206,7 @@ const ProfilePage = () => {
                           >
                             Cancel
                           </button>
+
                           <button
                             type="button"
                             onClick={handleAddressSubmit}
@@ -1201,6 +1233,7 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
+
         <Footer />
       </div>
     </div>

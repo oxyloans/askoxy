@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   ChevronRight,
   BookOpen,
@@ -73,6 +73,81 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
   const flagsRowRef = useRef<HTMLDivElement | null>(null);
   const detailsRef = useRef<HTMLDivElement | null>(null);
 
+  const BASE_URL = "https://meta.oxyloans.com/api";
+
+  const getStoredValue = (key: string) =>
+    localStorage.getItem(key) || sessionStorage.getItem(key) || "";
+
+  const getAccessToken = () =>
+    getStoredValue("accessToken") ||
+    getStoredValue("token") ||
+    getStoredValue("studentAccessToken");
+
+  const redirectToLogin = () => {
+    sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+    sessionStorage.setItem("fromStudyAbroad", "true");
+    navigate("/whatsappregister?primaryType=STUDENT");
+  };
+
+  const getAuthHeaders = () => {
+    const accessToken = getAccessToken();
+
+    return {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    };
+  };
+
+  const fetchUniversities = useCallback(async () => {
+    const accessToken = getAccessToken();
+
+    if (!accessToken) {
+      setLoading(false);
+      setUniversities([]);
+      setError("Access token is missing. Please login again to view universities.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${BASE_URL}/user-service/student/universities`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          pageIndex: 0,
+          pageSize: 20,
+          filters: {},
+          sortBy: null,
+          sortOrder: "asc",
+        }),
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to load universities. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const universityList = Array.isArray(data) ? data : data?.data;
+
+      setUniversities(Array.isArray(universityList) ? universityList : []);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load universities";
+      setError(errorMessage);
+      setUniversities([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
+
   // Parse query parameter to auto-select country
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -87,110 +162,11 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     }
   }, [location.search]);
 
-  // Fetch universities from API using POST method
   useEffect(() => {
-    const fetchUniversities = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const requestBody = {
-          pageIndex: 0,
-          pageSize: 20,
-          filters: {},
-          sortBy: null,
-          sortOrder: "asc",
-        };
-
-        const response = await fetch(
-          "https://meta.oxyloans.com/api/user-service/student/universities",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data: ApiResponse = await response.json();
-
-        if (data && data.data && Array.isArray(data.data)) {
-          setUniversities(data.data);
-        } else if (data && Array.isArray(data)) {
-          setUniversities(data);
-        } else {
-          console.warn("Unexpected response format:", data);
-          setUniversities([]);
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load universities";
-        setError(errorMessage);
-        console.error("Error fetching universities:", err);
-        setUniversities([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUniversities();
-  }, []);
+  }, [fetchUniversities]);
 
-  // Retry function for failed requests
   const retryFetch = () => {
-    setError(null);
-    setLoading(true);
-    const fetchUniversities = async () => {
-      try {
-        const requestBody = {
-          pageIndex: 0,
-          pageSize: 20,
-          filters: {},
-          sortBy: null,
-          sortOrder: "asc",
-        };
-
-        const response = await fetch(
-          "https://meta.oxyloans.com/api/user-service/student/universities",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch universities: ${response.status} ${response.statusText}`
-          );
-        }
-
-        const data: ApiResponse = await response.json();
-
-        if (data && data.data && Array.isArray(data.data)) {
-          setUniversities(data.data);
-        } else {
-          throw new Error("Invalid response format");
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load universities";
-        setError(errorMessage);
-        console.error("Error fetching universities:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUniversities();
   };
 
@@ -660,12 +636,22 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
               <div className="text-center py-8">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
                   <p className="text-red-600 mb-4">{error}</p>
-                  <button
-                    onClick={retryFetch}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Try Again
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button
+                      onClick={retryFetch}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Try Again
+                    </button>
+                    {error?.toLowerCase().includes("access token") && (
+                      <button
+                        onClick={redirectToLogin}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        Login Again
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (

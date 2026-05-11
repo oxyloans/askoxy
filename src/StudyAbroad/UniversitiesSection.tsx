@@ -418,36 +418,39 @@ const UniversitiesSection: React.FC = () => {
     };
   }, []);
 
-  // Get user ID from local storage
-  const getUserId = () => {
-    return localStorage.getItem("userId");
-  };
+  const getStoredValue = (key: string) =>
+    localStorage.getItem(key) || sessionStorage.getItem(key) || "";
 
-  // Get access token from local storage
-  const getAccessToken = () => {
-    return localStorage.getItem("accessToken");
-  };
+  const getUserId = () =>
+    getStoredValue("userId") ||
+    getStoredValue("studentUserId") ||
+    getStoredValue("lenderUserId");
 
-  // Check if user is logged in
-  const isLoggedIn = () => {
-    const userId = getUserId();
+  const getAccessToken = () =>
+    getStoredValue("accessToken") ||
+    getStoredValue("token") ||
+    getStoredValue("studentAccessToken");
+
+  const getAuthHeaders = () => {
     const accessToken = getAccessToken();
-    return userId && accessToken;
-  };
 
-  // Create auth config for axios
-  const createAuthConfig = () => {
     return {
-      headers: {
-        Authorization: `Bearer ${getAccessToken()}`,
-        "Content-Type": "application/json",
-      },
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     };
   };
 
-  // Handle auth error
+  const isLoggedIn = () => Boolean(getUserId() && getAccessToken());
+
+  const createAuthConfig = () => ({
+    headers: getAuthHeaders(),
+    validateStatus: (status: number) => status >= 200 && status < 300,
+  });
+
   const handleAuthError = (err: any, navigate: any) => {
-    if (err.response?.status === 401) {
+    const status = err?.response?.status;
+    if (status === 401 || status === 403) {
       sessionStorage.setItem("redirectPath", window.location.pathname);
       sessionStorage.setItem("fromStudyAbroad", "true");
       navigate("/whatsappregister?primaryType=STUDENT");
@@ -471,6 +474,11 @@ const UniversitiesSection: React.FC = () => {
     universityName: string,
     universityCountry: string = "United Kingdom"
   ) => {
+    if (!getAccessToken()) {
+      handleLoginRedirect();
+      return;
+    }
+
     try {
       setIsLoadingCourses(true);
       setCoursesError(null);
@@ -486,10 +494,7 @@ const UniversitiesSection: React.FC = () => {
         `${BASE_URL}/user-service/student/courses-mapped-to-university?${queryParams.toString()}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             countryName: universityCountry,
             university: universityName,
@@ -535,7 +540,8 @@ const UniversitiesSection: React.FC = () => {
 
       const response = await axios.post(
         "https://meta.oxyloans.com/api/user-service/student/getCountryBasedData",
-        { countryName: "United Kingdom" }
+        { countryName: "United Kingdom" },
+        { headers: getAuthHeaders() }
       );
 
       if (
@@ -597,7 +603,8 @@ const UniversitiesSection: React.FC = () => {
       return;
 
     const userId = getUserId();
-    if (!userId) {
+    const accessToken = getAccessToken();
+    if (!userId || !accessToken) {
       handleLoginRedirect();
       return;
     }

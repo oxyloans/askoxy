@@ -361,11 +361,11 @@ const CashbackUniversitiesPage: React.FC<CashbackUniversitiesPageProps> = ({ onN
 
   // Authentication functions
   const getUserId = () => {
-    return localStorage.getItem("userId");
+    return localStorage.getItem("userId") || sessionStorage.getItem("userId") || localStorage.getItem("customerId") || sessionStorage.getItem("customerId");
   };
 
   const getAccessToken = () => {
-    return localStorage.getItem("accessToken");
+    return localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") || localStorage.getItem("token") || sessionStorage.getItem("token");
   };
 
   const isLoggedIn = () => {
@@ -375,19 +375,20 @@ const CashbackUniversitiesPage: React.FC<CashbackUniversitiesPageProps> = ({ onN
   };
 
   const createAuthConfig = () => {
+    const token = getAccessToken();
     return {
       headers: {
-        Authorization: `Bearer ${getAccessToken()}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         "Content-Type": "application/json",
       },
     };
   };
 
   const handleAuthError = (err: any, navigate: any) => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 || err.response?.status === 403) {
       sessionStorage.setItem("redirectPath", window.location.pathname);
       sessionStorage.setItem("fromStudyAbroad", "true");
-      navigate("/whatsapplogin?primaryType=STUDENT");
+      navigate("/whatsappregister?primaryType=STUDENT");
       return true;
     }
     return false;
@@ -396,7 +397,7 @@ const CashbackUniversitiesPage: React.FC<CashbackUniversitiesPageProps> = ({ onN
   const handleLoginRedirect = (redirectPath?: string) => {
     sessionStorage.setItem("redirectPath", redirectPath || window.location.pathname);
     sessionStorage.setItem("fromStudyAbroad", "true");
-    navigate("/whatsapplogin?primaryType=STUDENT");
+    navigate("/whatsappregister?primaryType=STUDENT");
   };
 
   // Fetch courses for a specific university
@@ -419,6 +420,7 @@ const CashbackUniversitiesPage: React.FC<CashbackUniversitiesPageProps> = ({ onN
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
+            ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
           },
           body: JSON.stringify({
             countryName: universityCountry,
@@ -458,7 +460,8 @@ const CashbackUniversitiesPage: React.FC<CashbackUniversitiesPageProps> = ({ onN
     if (!selectedUniversityForApplication || !applicationData.selectedCourse) return;
 
     const userId = getUserId();
-    if (!userId) {
+    const token = getAccessToken();
+    if (!userId || !token) {
       handleLoginRedirect();
       return;
     }

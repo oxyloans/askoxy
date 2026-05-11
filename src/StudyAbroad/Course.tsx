@@ -191,9 +191,9 @@ const handleAuthError = (error: any, navigate: any) => {
   if (error.response?.status === 401 || error.response?.status === 403) {
     localStorage.removeItem("accessToken");
     sessionStorage.removeItem("accessToken");
-    navigate("/login", {
-      state: { message: "Session expired. Please log in again." },
-    });
+    sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+    sessionStorage.setItem("fromStudyAbroad", "true");
+    navigate("/whatsappregister?primaryType=STUDENT");
     return true;
   }
   return false;
@@ -961,7 +961,9 @@ setFilteredCountries(sortedCountries);
   const handleRetry = () => {
     const token = getAccessToken();
     if (!token) {
-      navigate("/login", { state: { message: "Please log in to continue." } });
+      sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+      sessionStorage.setItem("fromStudyAbroad", "true");
+      navigate("/whatsappregister?primaryType=STUDENT");
       return;
     }
     if (showCountrySelection) {
@@ -1025,7 +1027,7 @@ setFilteredCountries(sortedCountries);
               </button>
               {authRequired && (
                 <button
-                  onClick={() => navigate("/login")}
+                  onClick={() => navigate("/whatsappregister?primaryType=STUDENT")}
                   className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   Go to Login

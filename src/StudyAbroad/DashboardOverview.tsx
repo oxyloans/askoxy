@@ -137,11 +137,12 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
+    if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('accessToken');
       sessionStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+      sessionStorage.setItem('fromStudyAbroad', 'true');
+      window.location.href = '/whatsappregister?primaryType=STUDENT';
     }
     return Promise.reject(error);
   }

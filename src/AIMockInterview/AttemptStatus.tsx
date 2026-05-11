@@ -32,9 +32,9 @@ export const AttemptStatus: React.FC<AttemptStatusProps> = ({ userId, onStatusCh
 
   if (loading) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 animate-pulse">
-        <div className="h-4 bg-gray-700 rounded w-32 mb-2"></div>
-        <div className="h-3 bg-gray-700 rounded w-24"></div>
+      <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
+        <div className="h-4 w-36 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+        <div className="mt-3 h-3 w-28 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
       </div>
     );
   }
@@ -45,30 +45,33 @@ export const AttemptStatus: React.FC<AttemptStatusProps> = ({ userId, onStatusCh
   const color = percentage > 50 ? '#10b981' : percentage > 0 ? '#f59e0b' : '#ef4444';
 
   return (
-    <div 
-      className="bg-gray-800 border rounded-lg p-4"
-      style={{ borderColor: color + '40' }}
+    <div
+      className="rounded-2xl border bg-white/85 p-4 shadow-sm backdrop-blur dark:bg-slate-900/75"
+      style={{ borderColor: color + '45' }}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold text-white">📊 Interview Attempts</span>
-        <span 
-          className="text-xs font-medium px-2 py-1 rounded"
-          style={{ 
-            backgroundColor: color + '20',
-            color: color
-          }}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-extrabold text-slate-900 dark:text-white">📊 Interview Attempts</span>
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold"
+          style={{ backgroundColor: color + '18', color }}
         >
           {status.canAttempt ? 'Available' : 'Limit Reached'}
         </span>
       </div>
-      <div className="text-sm text-gray-300">
-        Used: <span className="font-semibold" style={{ color }}>{status.attemptsUsed}/{status.maxAttempts}</span>
-        {' • '}
-        Remaining: <span className="font-semibold" style={{ color }}>{status.attemptsRemaining}</span>
+
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: color }} />
       </div>
+
+      <div className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+        Used: <span className="font-extrabold" style={{ color }}>{status.attemptsUsed}/{status.maxAttempts}</span>
+        {' • '}
+        Remaining: <span className="font-extrabold" style={{ color }}>{status.attemptsRemaining}</span>
+      </div>
+
       {!status.canAttempt && (
-        <div className="mt-2 text-xs text-red-400 bg-red-900/20 border border-red-800 rounded p-2">
-          ⚠️ You have used all {status.maxAttempts} attempts
+        <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+          ⚠️ You have used all {status.maxAttempts} attempts.
         </div>
       )}
     </div>

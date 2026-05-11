@@ -26,7 +26,7 @@ export const PracticeMode: React.FC = () => {
     setStarted(true);
     setFeedback('');
     setAnswer('');
-    
+
     if (type === 'mcq') {
       const q = sampleQuestions.mcq[Math.floor(Math.random() * sampleQuestions.mcq.length)];
       setQuestion(`${q.q}\n${q.options.join('\n')}`);
@@ -47,51 +47,39 @@ export const PracticeMode: React.FC = () => {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-gray-900 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-8">
-            <h1 className="text-3xl font-bold text-white mb-4">Practice Mode</h1>
-            <p className="text-gray-400 mb-8">
-              Try sample questions without affecting your interview attempts. Perfect for preparation!
-            </p>
+      <div className="min-h-screen bg-slate-50 p-4 text-slate-900 dark:bg-slate-950 dark:text-white sm:p-6">
+        <div className="mx-auto max-w-5xl">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-indigo-50 p-6 dark:border-slate-800 dark:from-emerald-950/30 dark:to-indigo-950/30 sm:p-8">
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Unlimited Practice</span>
+              <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Practice Mode</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
+                Try sample questions without affecting your interview attempts. Perfect for preparation and interface familiarity.
+              </p>
+            </div>
 
-            <div className="grid md:grid-cols-3 gap-4">
-              <button
-                onClick={() => startPractice('mcq')}
-                className="bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-500/30 rounded-lg p-6 text-left transition-all"
-              >
-                <div className="text-emerald-400 text-2xl mb-2">📝</div>
-                <h3 className="text-white font-bold mb-2">MCQ Practice</h3>
-                <p className="text-gray-400 text-sm">Practice multiple choice questions</p>
+            <div className="grid gap-4 p-5 sm:p-6 md:grid-cols-3">
+              <button onClick={() => startPractice('mcq')} className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-left transition hover:-translate-y-1 hover:shadow-lg dark:border-emerald-900/60 dark:bg-emerald-950/30">
+                <div className="mb-3 text-3xl">📝</div>
+                <h3 className="font-black text-slate-900 dark:text-white">Skill Check Practice</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Practice multiple-choice technical questions.</p>
               </button>
 
-              <button
-                onClick={() => startPractice('scenario')}
-                className="bg-teal-900/30 hover:bg-teal-900/50 border border-teal-500/30 rounded-lg p-6 text-left transition-all"
-              >
-                <div className="text-teal-400 text-2xl mb-2">💼</div>
-                <h3 className="text-white font-bold mb-2">Scenario Practice</h3>
-                <p className="text-gray-400 text-sm">Practice scenario-based questions</p>
+              <button onClick={() => startPractice('scenario')} className="rounded-3xl border border-sky-200 bg-sky-50 p-5 text-left transition hover:-translate-y-1 hover:shadow-lg dark:border-sky-900/60 dark:bg-sky-950/30">
+                <div className="mb-3 text-3xl">💼</div>
+                <h3 className="font-black text-slate-900 dark:text-white">Scenario Practice</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Practice real-world thinking and decision-making.</p>
               </button>
 
-              <button
-                onClick={() => startPractice('coding')}
-                className="bg-purple-900/30 hover:bg-purple-900/50 border border-purple-500/30 rounded-lg p-6 text-left transition-all"
-              >
-                <div className="text-purple-400 text-2xl mb-2">💻</div>
-                <h3 className="text-white font-bold mb-2">Coding Practice</h3>
-                <p className="text-gray-400 text-sm">Practice coding challenges</p>
+              <button onClick={() => startPractice('coding')} className="rounded-3xl border border-purple-200 bg-purple-50 p-5 text-left transition hover:-translate-y-1 hover:shadow-lg dark:border-purple-900/60 dark:bg-purple-950/30">
+                <div className="mb-3 text-3xl">💻</div>
+                <h3 className="font-black text-slate-900 dark:text-white">Coding Practice</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Practice coding challenges before the assessment.</p>
               </button>
             </div>
 
-            <div className="mt-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="text-blue-400 text-xl">ℹ️</div>
-                <div className="text-sm text-gray-300">
-                  <strong className="text-white">Note:</strong> Practice mode doesn't count towards your interview attempts. 
-                  Use it to familiarize yourself with the question format and interface.
-                </div>
-              </div>
+            <div className="mx-5 mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-slate-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-slate-300 sm:mx-6">
+              <strong className="text-slate-900 dark:text-white">Note:</strong> Practice mode does not count towards your interview attempts.
             </div>
           </div>
         </div>
@@ -100,49 +88,36 @@ export const PracticeMode: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">Practice Question</h2>
-            <button
-              onClick={() => setStarted(false)}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm"
-            >
+    <div className="min-h-screen bg-slate-50 p-4 text-slate-900 dark:bg-slate-950 dark:text-white sm:p-6">
+      <div className="mx-auto max-w-4xl">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-black">Practice Question</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Answer freely and review feedback instantly.</p>
+            </div>
+            <button onClick={() => setStarted(false)} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto">
               Back to Menu
             </button>
           </div>
 
-          <div className="bg-gray-900 rounded-lg p-4 mb-4">
-            <p className="text-white whitespace-pre-line">{question}</p>
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
+            <p className="whitespace-pre-line break-words text-sm leading-7 text-slate-900 dark:text-white">{question}</p>
           </div>
 
-          <textarea
-            value={answer}
-            onChange={e => setAnswer(e.target.value)}
-            placeholder="Type your answer here..."
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white mb-4"
-            rows={8}
-          />
+          <textarea value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Type your answer here..." className="mb-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white" rows={8} />
 
           {feedback && (
-            <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 mb-4">
-              <p className="text-emerald-400">{feedback}</p>
+            <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium leading-6 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300">
+              {feedback}
             </div>
           )}
 
-          <div className="flex gap-3">
-            <button
-              onClick={submitPractice}
-              disabled={loading || !answer.trim()}
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg font-medium"
-            >
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button onClick={submitPractice} disabled={loading || !answer.trim()} className="rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 font-extrabold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none">
               {loading ? 'Checking...' : 'Submit Answer'}
             </button>
-            <button
-              onClick={() => { setAnswer(''); setFeedback(''); }}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium"
-            >
+            <button onClick={() => { setAnswer(''); setFeedback(''); }} className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-3 font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
               Clear
             </button>
           </div>

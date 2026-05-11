@@ -67,6 +67,20 @@ apiClient.interceptors.request.use(
   }
 );
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+      sessionStorage.setItem('fromStudyAbroad', 'true');
+      window.location.href = '/whatsappregister?primaryType=STUDENT';
+    }
+    return Promise.reject(error);
+  }
+);
+
 const UniversitySearch: React.FC<UniversitySearchProps> = ({ onNavigate }) => {
   // State management
   const [universities, setUniversities] = useState<University[]>([]);
@@ -87,7 +101,10 @@ const UniversitySearch: React.FC<UniversitySearchProps> = ({ onNavigate }) => {
   const fetchUniversities = async (pageIndex: number = 1, search: string = "") => {
     const token = getAccessToken();
     if (!token) {
-      setError('Authentication required. Please log in.');
+      setError('Session expired. Please login again.');
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+      sessionStorage.setItem('fromStudyAbroad', 'true');
+      window.location.href = '/whatsappregister?primaryType=STUDENT';
       return;
     }
 

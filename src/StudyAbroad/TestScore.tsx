@@ -206,7 +206,11 @@ const TestScores: React.FC<TestScoresProps> = ({ onNavigate }) => {
   const getUserId = (): string | null => {
     return (
       localStorage.getItem("userId") ||
+      sessionStorage.getItem("userId") ||
+      localStorage.getItem("customerId") ||
+      sessionStorage.getItem("customerId") ||
       localStorage.getItem("user_id") ||
+      sessionStorage.getItem("user_id") ||
       localStorage.getItem("USER_ID") ||
       localStorage.getItem("id")
     );
@@ -214,7 +218,12 @@ const TestScores: React.FC<TestScoresProps> = ({ onNavigate }) => {
 
   // Get token from localStorage
   const getToken = (): string | null => {
-    return localStorage.getItem("accessToken") || localStorage.getItem("token");
+    return (
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("accessToken") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token")
+    );
   };
 
   // Fetch existing scores

@@ -84,6 +84,22 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
     { value: 'TRANSCRIPTS', label: 'Academic Transcripts' }
   ];
 
+
+  const getAccessToken = () => {
+    return (
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('accessToken') ||
+      localStorage.getItem('token') ||
+      sessionStorage.getItem('token')
+    );
+  };
+
+  const redirectToLogin = () => {
+    sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+    sessionStorage.setItem('fromStudyAbroad', 'true');
+    window.location.href = '/whatsappregister?primaryType=STUDENT';
+  };
+
   const getUserId = () => {
     const customerId = localStorage.getItem('customerId') || localStorage.getItem('Customer_ID');
     if (customerId) {
@@ -139,10 +155,12 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
 
   const fetchDocuments = async () => {
     const userId = getUserId();
+    const token = getAccessToken();
     
-    if (!userId) {
-      setFetchError('Please login first to view documents.');
+    if (!userId || !token) {
+      setFetchError('Session expired. Please login again.');
       setLoading(false);
+      redirectToLogin();
       return;
     }
 
@@ -153,9 +171,15 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
       const response = await fetch(`https://meta.oxyloans.com/api/user-service/student/getStudentDocuments?userId=${userId}`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
         }
       });
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin();
+        throw new Error('Session expired. Please login again.');
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to fetch documents: ${response.status}`);
@@ -184,8 +208,10 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
     setUploadError('');
     
     const userId = getUserId();
-    if (!userId) {
-      setUploadError('Please login first to upload documents.');
+    const token = getAccessToken();
+    if (!userId || !token) {
+      setUploadError('Session expired. Please login again.');
+      redirectToLogin();
       return;
     }
 
@@ -225,6 +251,9 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
 
       const response = await fetch(`https://meta.oxyloans.com/api/user-service/student/uploadStudentDocuments`, {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -245,6 +274,11 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
             documentType: uploadData.documentType
           };
         }
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin();
+        throw new Error('Session expired. Please login again.');
       }
 
       if (!response.ok) {

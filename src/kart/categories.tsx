@@ -539,7 +539,7 @@ const Categories: React.FC<CategoriesProps> = ({
       }
     } catch (error) {
       console.error("Error fetching offers:", error);
-      message.error("Failed to load offers.");
+      // message.error("Failed to load offers.");
       setOffers([]);
       setIsFetchingOffers(false);
     }

@@ -3,15 +3,481 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { api } from "./lib/api";
 import { Modal } from "antd";
-import  logo from '../assets/img/ask oxy white.png';
+import logo from '../assets/img/askoxylogonew.png';
 import { AttemptStatus } from './AttemptStatus';
 import axiosInstance from "../utils/axiosInstance";
-import  BASE_URL  from "../Config";
+import BASE_URL from "../Config";
+
+/* ─── Inline CSS injected once ─── */
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  .theme-light {
+    --brand: #2563eb;
+    --brand-dark: #1d4ed8;
+    --brand-soft: #dbeafe;
+    --brand-tint: rgba(37,99,235,.08);
+    --accent: #7c3aed;
+    --accent-soft: #ede9fe;
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --surface: rgba(255,255,255,.92);
+    --surface-solid: #ffffff;
+    --surface-2: #f8fafc;
+    --surface-3: #eef2ff;
+    --border: rgba(148,163,184,.28);
+    --border-strong: rgba(100,116,139,.34);
+    --shadow-sm: 0 8px 24px rgba(15,23,42,.06);
+    --shadow-md: 0 16px 45px rgba(15,23,42,.10);
+    --shadow-lg: 0 26px 80px rgba(15,23,42,.14);
+    --grid: rgba(37,99,235,.08);
+    --glow-1: rgba(37,99,235,.16);
+    --glow-2: rgba(124,58,237,.13);
+    --brand-light: var(--brand-soft);
+    --brand-mid: color-mix(in srgb, var(--brand) 22%, transparent);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-xl: 28px;
+  }
+
+  .theme-dark {
+    --brand: #60a5fa;
+    --brand-dark: #93c5fd;
+    --brand-soft: rgba(96,165,250,.18);
+    --brand-tint: rgba(96,165,250,.13);
+    --accent: #a78bfa;
+    --accent-soft: rgba(167,139,250,.16);
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #fb7185;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --surface: rgba(15,23,42,.78);
+    --surface-solid: #111827;
+    --surface-2: #020617;
+    --surface-3: rgba(30,41,59,.78);
+    --border: rgba(148,163,184,.22);
+    --border-strong: rgba(148,163,184,.36);
+    --shadow-sm: 0 10px 30px rgba(0,0,0,.18);
+    --shadow-md: 0 18px 55px rgba(0,0,0,.28);
+    --shadow-lg: 0 30px 90px rgba(0,0,0,.42);
+    --grid: rgba(148,163,184,.10);
+    --glow-1: rgba(96,165,250,.20);
+    --glow-2: rgba(167,139,250,.18);
+    --brand-light: var(--brand-soft);
+    --brand-mid: color-mix(in srgb, var(--brand) 24%, transparent);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-xl: 28px;
+  }
+
+  .ai-bg {
+    min-height: 100vh;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-primary);
+    background-color: var(--surface-2);
+    background-image:
+      radial-gradient(circle at 12% 12%, var(--glow-1), transparent 34%),
+      radial-gradient(circle at 88% 4%, var(--glow-2), transparent 30%),
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 56px 56px, 56px 56px;
+    background-position: center, center, -1px -1px, -1px -1px;
+  }
+
+  .ai-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: color-mix(in srgb, var(--surface-solid) 86%, transparent);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+  .ai-header-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 18px;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .ai-logo-group { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ai-logo-divider { width: 1px; height: 30px; background: var(--border-strong); }
+  .ai-header-title { font-size: 14px; font-weight: 800; color: var(--text-primary); letter-spacing: .02em; }
+  .ai-header-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .ai-header-actions { display: flex; align-items: center; gap: 10px; }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-primary);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
+  }
+  .ai-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,var(--brand),var(--accent)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 800; }
+  .ai-user-chip { display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-sm); }
+  .ai-user-name { font-size: 13px; font-weight: 700; color: var(--text-primary); max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .ai-main { max-width: 1180px; margin: 0 auto; padding: 16px 18px 38px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow-md); overflow: hidden; }
+  .card-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, var(--surface), var(--brand-tint)); }
+  .card-body { padding: 20px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; font-size: 14px; font-weight: 800; border: none; cursor: pointer; transition: all .18s ease; outline: none; }
+  .btn:disabled { opacity: .48; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .btn-primary { position: relative; overflow: hidden; background: linear-gradient(135deg, #ffffff33 0%, transparent 28%), linear-gradient(135deg, var(--brand), var(--accent)); color: #fff; padding: 11px 22px; border-radius: 14px; border: 1px solid rgba(255,255,255,.32); box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -3px 0 rgba(0,0,0,.12), 0 14px 28px color-mix(in srgb, var(--brand) 26%, transparent); }
+  .btn-primary::after { content: ''; position: absolute; top: -40%; bottom: -40%; left: -45%; width: 34%; transform: rotate(18deg); background: linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent); transition: left .65s ease; pointer-events: none; }
+  .btn-primary:hover:not(:disabled)::after { left: 120%; }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -3px 0 rgba(0,0,0,.12), 0 20px 42px color-mix(in srgb, var(--brand) 34%, transparent); }
+  .btn-primary-lg { padding: 13px 30px; font-size: 15px; border-radius: 999px; }
+  .btn-outline { background: var(--surface); color: var(--text-secondary); padding: 9px 16px; border: 1px solid var(--border-strong); border-radius: 14px; }
+  .btn-outline:hover:not(:disabled) { background: var(--surface-3); color: var(--text-primary); }
+  .btn-danger { background: rgba(220,38,38,.10); color: var(--danger); padding: 9px 18px; border: 1px solid rgba(220,38,38,.22); border-radius: 14px; }
+  .btn-green { background: linear-gradient(135deg, #16a34a, #059669); color: #fff; padding: 9px 16px; border-radius: 13px; }
+
+  .welcome-hero { text-align: center; padding: 18px 18px 26px; max-width: 860px; margin: 0 auto; }
+  .welcome-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); color: var(--brand-dark); font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+  .welcome-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; animation: pulse-dot 1.8s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(.82)} }
+  .welcome-title { font-size: clamp(1.95rem, 5.2vw, 3.75rem); font-weight: 900; letter-spacing: -.055em; line-height: 1; color: var(--text-primary); margin: 0 0 12px; }
+  .welcome-title em { font-style: normal; background: linear-gradient(135deg, var(--brand), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .welcome-sub { font-size: 15px; color: var(--text-secondary); line-height: 1.62; max-width: 610px; margin: 0 auto 18px; }
+
+  .bot-bubble { display: inline-flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 9px 16px; box-shadow: var(--shadow-md); margin-bottom: 14px; }
+  .bot-icon { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,var(--brand),var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .bot-text { font-size: 14px; color: var(--text-primary); font-weight: 700; }
+  .bot-cursor { display: inline-block; width: 2px; height: 14px; background: var(--brand); margin-left: 2px; vertical-align: middle; animation: blink .7s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .round-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 22px 0 20px; }
+  .round-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 16px; text-align: left; transition: all .22s ease; position: relative; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .round-card::before { content:''; position:absolute; inset:0; background: radial-gradient(circle at 90% 0%, var(--brand-tint), transparent 45%); pointer-events:none; }
+  .round-card:hover { border-color: color-mix(in srgb, var(--brand) 44%, var(--border)); transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .round-num { width: 38px; height: 38px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: #fff; margin-bottom: 12px; box-shadow: 0 10px 25px rgba(15,23,42,.16); }
+  .round-name { font-size: 15px; font-weight: 900; color: var(--text-primary); margin-bottom: 5px; }
+  .round-meta { display: flex; gap: 8px; font-size: 11px; color: var(--text-muted); font-weight: 700; }
+  .round-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-top: 10px; }
+  .stats-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 16px 0 0; }
+  .stat-item { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); padding: 8px 12px; border-radius: 999px; }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+
+
+  .primary-cta-wrap { display: flex; justify-content: center; margin: 4px 0 0; }
+  .primary-cta-note { margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+  .how-works { margin-top: 22px; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 26px; padding: 18px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
+  .how-works::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 8% 0%, var(--brand-tint), transparent 36%), radial-gradient(circle at 96% 14%, var(--accent-soft), transparent 30%); pointer-events: none; }
+  .how-works-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .how-works-kicker { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: var(--brand-tint); color: var(--brand-dark); font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+  .how-works-title { margin: 8px 0 0; font-size: 20px; line-height: 1.2; font-weight: 900; color: var(--text-primary); letter-spacing: -.03em; }
+  .how-works-grid { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .how-step { min-height: 136px; background: color-mix(in srgb, var(--surface-solid) 72%, transparent); border: 1px solid var(--border); border-radius: 20px; padding: 14px; box-shadow: var(--shadow-sm); }
+  .how-step-icon { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 14px; margin-bottom: 10px; background: linear-gradient(135deg, var(--brand), var(--accent)); color: white; box-shadow: inset 0 1px 0 rgba(255,255,255,.36), 0 12px 24px color-mix(in srgb, var(--brand) 22%, transparent); }
+  .how-step-title { font-size: 13px; font-weight: 900; color: var(--text-primary); margin-bottom: 5px; }
+  .how-step-desc { font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
+  @media(max-width: 900px){ .how-works-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  .dropzone { border: 1.5px dashed var(--border-strong); border-radius: 22px; padding: 36px 24px; text-align: center; cursor: pointer; transition: all .2s; background: var(--surface-2); }
+  .dropzone:hover,.dropzone.active { border-color: var(--brand); background: var(--brand-tint); transform: translateY(-1px); }
+  .dropzone-title { font-size: 15px; font-weight: 900; color: var(--text-primary); margin-bottom: 4px; word-break: break-word; }
+  .dropzone-sub { font-size: 13px; color: var(--text-muted); }
+
+  .analyzing-wrap { display: flex; align-items: center; justify-content: center; min-height: 62vh; }
+  .analyzing-card { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 46px 34px; text-align: center; max-width: 380px; box-shadow: var(--shadow-lg); }
+  .spin-bot { width: 74px; height: 74px; border-radius: 24px; background: linear-gradient(135deg,var(--brand),var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; animation: spin3d 2s linear infinite; }
+  @keyframes spin3d { from{transform:rotateY(0)} to{transform:rotateY(360deg)} }
+  .progress-steps { text-align: left; margin-top: 20px; }
+  .progress-step { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--text-secondary); }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); flex-shrink: 0; animation: pulse-dot 1.8s infinite; }
+
+  .profile-header { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: linear-gradient(135deg,var(--brand-tint),var(--accent-soft)); border-bottom: 1px solid var(--border); }
+  .profile-avatar { width: 50px; height: 50px; border-radius: 18px; background: linear-gradient(135deg,var(--brand),var(--accent)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 900; flex-shrink: 0; }
+  .profile-name { font-size: 15px; font-weight: 900; color: var(--text-primary); }
+  .profile-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; color: var(--success); background: color-mix(in srgb, var(--success) 11%, transparent); padding: 3px 9px; border-radius: 999px; margin-top: 4px; }
+  .tag { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; margin: 3px; }
+  .tag-skill { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 24%, transparent); }
+  .tag-domain { background: var(--brand-soft); color: var(--brand-dark); border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent); }
+  .tag-exp { background: color-mix(in srgb, var(--warning) 14%, transparent); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent); }
+
+  .round-row { display: flex; align-items: flex-start; gap: 14px; padding: 15px 0; border-bottom: 1px solid var(--border); }
+  .round-row:last-child { border-bottom: none; }
+  .round-num-badge { width: 38px; height: 38px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #fff; flex-shrink: 0; }
+  .round-info-title { font-size: 14px; font-weight: 900; color: var(--text-primary); }
+  .round-info-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+  .round-chips { display: flex; gap: 7px; margin-top: 8px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--surface-3); }
+
+  .q-header { padding: 16px 20px; background: linear-gradient(135deg, var(--surface), var(--brand-tint)); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .q-round-badge { width: 42px; height: 42px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; color: #fff; }
+  .timer-chip { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 900; border: 1px solid; }
+  .timer-normal { background: color-mix(in srgb, var(--warning) 13%, transparent); color: var(--warning); border-color: color-mix(in srgb, var(--warning) 26%, transparent); }
+  .timer-urgent { background: color-mix(in srgb, var(--danger) 13%, transparent); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 28%, transparent); animation: timer-pulse .8s ease-in-out infinite; }
+  .timer-stopped { background: var(--surface-3); color: var(--text-muted); border-color: var(--border); }
+  @keyframes timer-pulse { 0%,100%{opacity:1} 50%{opacity:.66} }
+
+  .q-box { background: var(--surface-solid); border: 1px solid var(--border); border-radius: 18px; padding: 18px; box-shadow: var(--shadow-sm); }
+  .q-section { padding: 14px 15px; border-radius: 16px; border-left: 4px solid; margin-bottom: 11px; }
+  .q-section-problem { background: var(--brand-tint); border-color: var(--brand); }
+  .q-section-function { background: color-mix(in srgb, var(--success) 10%, transparent); border-color: var(--success); }
+  .q-section-example { background: var(--accent-soft); border-color: var(--accent); }
+  .q-section-constraint { background: color-mix(in srgb, var(--warning) 13%, transparent); border-color: var(--warning); }
+  .q-section-label { font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 7px; }
+
+  .mcq-option { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 16px; cursor: pointer; transition: all .16s; margin-bottom: 9px; background: var(--surface-solid); }
+  .mcq-option:hover:not(.disabled) { border-color: var(--brand); background: var(--brand-tint); }
+  .mcq-option.selected { border-color: var(--brand); background: var(--brand-tint); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent); }
+  .mcq-option.incorrect { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--surface-solid)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 12%, transparent); }
+  .mcq-option.correct { border-color: var(--success); background: color-mix(in srgb, var(--success) 12%, var(--surface-solid)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 12%, transparent); }
+  .mcq-option.disabled { cursor: not-allowed; opacity: .92; }
+  .mcq-radio { width: 19px; height: 19px; border-radius: 50%; border: 2px solid var(--border-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .mcq-option.selected .mcq-radio { border-color: var(--brand); background: var(--brand); }
+  .mcq-option.incorrect .mcq-radio { border-color: var(--danger); background: var(--danger); }
+  .mcq-option.correct .mcq-radio { border-color: var(--success); background: var(--success); }
+  .mcq-option.incorrect .mcq-letter, .mcq-option.incorrect .mcq-text { color: var(--danger); }
+  .mcq-option.correct .mcq-letter, .mcq-option.correct .mcq-text { color: var(--success); }
+  .clipboard-note { margin-top: 8px; font-size: 12px; line-height: 1.5; color: var(--warning); font-weight: 700; background: color-mix(in srgb, var(--warning) 10%, transparent); border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent); padding: 8px 10px; border-radius: 12px; }
+  .mcq-dot { width: 8px; height: 8px; border-radius: 50%; background: white; }
+  .mcq-letter { font-size: 12px; font-weight: 900; color: var(--brand-dark); min-width: 16px; }
+  .mcq-text { font-size: 13px; color: var(--text-primary); line-height: 1.55; }
+
+  .ai-textarea { width: 100%; padding: 15px 16px; font-family: inherit; font-size: 14px; background: var(--surface-solid); border: 1.5px solid var(--border); border-radius: 18px; color: var(--text-primary); resize: vertical; outline: none; transition: all .16s; line-height: 1.65; }
+  .ai-textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 13%, transparent); }
+  .ai-textarea:disabled { opacity: .55; cursor: not-allowed; }
+  .ai-textarea.mono { font-family: 'JetBrains Mono','Fira Code',Consolas,monospace; font-size: 13px; }
+  .code-output { background: #020617; color: #86efac; padding: 14px 16px; border-radius: 16px; font-family: monospace; font-size: 12px; white-space: pre-wrap; border: 1px solid rgba(148,163,184,.24); }
+  .code-error { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); padding: 14px 16px; border-radius: 16px; font-family: monospace; font-size: 12px; white-space: pre-wrap; border: 1px solid color-mix(in srgb, var(--danger) 24%, transparent); }
+  .feedback-box { background: linear-gradient(135deg, color-mix(in srgb, var(--success) 12%, transparent), var(--surface)); border: 1px solid color-mix(in srgb, var(--success) 26%, transparent); border-radius: 18px; padding: 16px; }
+  .feedback-label { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--success); margin-bottom: 8px; }
+  .feedback-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+  .ai-modal-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(2,6,23,.56); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .ai-modal { background: var(--surface-solid); border: 1px solid var(--border); border-radius: 28px; padding: 34px 30px; max-width: 460px; width: 100%; box-shadow: var(--shadow-lg); text-align: center; }
+  .ai-modal-icon { font-size: 46px; margin-bottom: 14px; }
+  .ai-modal-title { font-size: 22px; font-weight: 900; color: var(--text-primary); margin-bottom: 10px; }
+  .ai-modal-msg { font-size: 14px; color: var(--text-secondary); line-height: 1.7; white-space: pre-line; }
+  .char-counter { font-size: 12px; font-weight: 900; }
+  .char-ok { color: var(--success); }
+  .char-warn { color: var(--warning); }
+  .section-label { font-size: 12px; font-weight: 900; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .progress-bar-wrap { height: 5px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg,var(--brand),var(--accent)); border-radius: 999px; transition: width .3s ease; }
+  @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .spinner { animation: spin .8s linear infinite; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+
+  @media(max-width: 820px){
+    .two-col { grid-template-columns: 1fr; }
+    .round-grid { grid-template-columns: 1fr; }
+    .ai-main { padding: 12px 14px 30px; }
+    .welcome-hero { padding: 12px 0 18px; }
+    .q-header { align-items: flex-start; }
+    .q-header > div:nth-child(2) { order: 3; flex-basis: 100%; max-width: none !important; margin: 4px 0 0 !important; }
+  }
+
+  @media(max-width: 560px){
+    .ai-header-inner { padding: 8px 12px; min-height: 66px; }
+    .ai-header-sub, .ai-user-name { display: none; }
+    .ai-logo-divider { display: none; }
+    .theme-toggle span { display: none; }
+    .theme-toggle { width: 38px; padding: 0; justify-content: center; }
+    .card-header, .card-body, .q-header { padding-left: 15px; padding-right: 15px; }
+    .welcome-title { letter-spacing: -.045em; }
+    .bot-bubble { max-width: 100%; }
+    .how-works { padding: 14px; margin-top: 18px; }
+    .how-works-grid { grid-template-columns: 1fr; }
+    .how-step { min-height: auto; }
+  }
+
+  /* ─── Final polish: +15% visual scale and premium How It Works ─── */
+  .ai-header-inner { max-width: 1280px; min-height: 72px; padding: 0 22px; }
+  .ai-main { max-width: 1280px; padding: 18px 22px 48px; }
+  .ai-header-title { font-size: 16px; }
+  .ai-header-sub { font-size: 13px; }
+  .theme-toggle { min-height: 42px; padding: 8px 15px; font-size: 13px; }
+  .ai-avatar { width: 39px; height: 39px; font-size: 15px; }
+  .ai-user-chip { padding: 6px 14px 6px 6px; }
+  .ai-user-name { font-size: 14px; }
+
+  .welcome-hero { max-width: 980px; padding: 22px 18px 34px; }
+  .welcome-badge { font-size: 12.5px; padding: 8px 17px; margin-bottom: 14px; }
+  .bot-bubble { padding: 11px 20px; margin-bottom: 16px; }
+  .bot-icon { width: 39px; height: 39px; font-size: 19px; }
+  .bot-text { font-size: 16px; }
+  .welcome-title { font-size: clamp(2.35rem, 5.9vw, 4.35rem); line-height: .98; margin-bottom: 14px; }
+  .welcome-sub { font-size: 17px; max-width: 710px; margin-bottom: 20px; }
+  .btn { font-size: 16px; }
+  .btn-primary-lg { padding: 16px 36px; font-size: 17px; }
+  .primary-cta-note { font-size: 13.5px; margin-top: 10px; }
+  .stats-row { gap: 12px; margin: 18px 0 0; }
+  .stat-item { font-size: 14.5px; padding: 10px 15px; }
+
+  .round-grid { gap: 17px; margin: 24px 0 22px; }
+  .round-card { padding: 19px; border-radius: 25px; }
+  .round-num { width: 44px; height: 44px; font-size: 18px; border-radius: 15px; }
+  .round-name { font-size: 17px; }
+  .round-meta { font-size: 12.5px; }
+  .round-desc { font-size: 13.5px; }
+
+  .how-works { margin-top: 26px; padding: 0; border-radius: 30px; background: linear-gradient(135deg, color-mix(in srgb, var(--surface-solid) 88%, transparent), color-mix(in srgb, var(--surface) 96%, var(--brand-tint))); box-shadow: var(--shadow-lg); }
+  .how-works::before { background: radial-gradient(circle at 6% 0%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 32%), radial-gradient(circle at 96% 12%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 34%); }
+  .how-works-head { padding: 24px 26px 0; margin-bottom: 18px; align-items: flex-start; }
+  .how-works-kicker { padding: 8px 14px; font-size: 12px; background: color-mix(in srgb, var(--brand) 13%, transparent); border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent); }
+  .how-works-title { font-size: clamp(1.55rem, 3vw, 2.35rem); margin-top: 10px; max-width: 650px; }
+  .how-works-sub { margin: 10px 0 0; max-width: 700px; font-size: 15px; line-height: 1.7; color: var(--text-secondary); font-weight: 600; }
+  .how-works-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 0 18px 22px; }
+  .how-step { position: relative; min-height: 168px; padding: 21px 17px 18px; border-radius: 24px; border: 1px solid transparent; background: transparent; box-shadow: none; }
+  .how-step:not(:last-child)::after { content: ''; position: absolute; top: 38px; right: -8px; width: 18px; height: 18px; border-top: 2px solid color-mix(in srgb, var(--brand) 35%, transparent); border-right: 2px solid color-mix(in srgb, var(--brand) 35%, transparent); transform: rotate(45deg); opacity: .75; }
+  .how-step-inner { height: 100%; padding: 18px; border-radius: 24px; border: 1px solid var(--border); background: color-mix(in srgb, var(--surface-solid) 82%, transparent); box-shadow: var(--shadow-sm); transition: all .22s ease; }
+  .how-step-inner:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: color-mix(in srgb, var(--brand) 38%, var(--border)); }
+  .how-step-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .how-step-icon { width: 48px; height: 48px; margin: 0; border-radius: 18px; font-size: 22px; }
+  .how-step-number { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--brand-tint); color: var(--brand-dark); font-size: 12px; font-weight: 900; border: 1px solid color-mix(in srgb, var(--brand) 24%, transparent); }
+  .how-step-title { font-size: 16px; margin-bottom: 7px; }
+  .how-step-desc { font-size: 13.5px; line-height: 1.65; }
+
+  .card { border-radius: 28px; }
+  .card-header { padding: 21px 23px; }
+  .card-body { padding: 23px; }
+  .dropzone { padding: 42px 28px; }
+  .dropzone-title { font-size: 17px; }
+  .dropzone-sub { font-size: 15px; }
+  .q-header { padding: 19px 23px; }
+  .q-round-badge { width: 48px; height: 48px; font-size: 20px; }
+  .timer-chip { font-size: 16px; padding: 10px 18px; }
+  .q-box { padding: 21px; }
+  .mcq-text, .ai-textarea { font-size: 16px; }
+
+  @media(max-width: 900px){
+    .how-works-grid { grid-template-columns: 1fr; gap: 14px; padding: 0 18px 22px; }
+    .how-step { min-height: auto; padding: 0; }
+    .how-step:not(:last-child)::after { display: none; }
+    .how-step-inner { display: block; }
+  }
+
+  @media(max-width: 820px){
+    .ai-main { padding: 16px 14px 38px; }
+    .welcome-hero { padding: 18px 0 28px; }
+    .welcome-sub { font-size: 15.5px; }
+    .round-grid { gap: 14px; }
+    .how-works-head { padding: 20px 18px 0; }
+    .how-works-title { font-size: 1.55rem; }
+    .how-works-sub { font-size: 14px; }
+    .btn-primary-lg { width: 100%; max-width: 340px; }
+  }
+
+  @media(max-width: 560px){
+    .ai-header-inner { min-height: 68px; padding: 8px 12px; }
+    .welcome-title { font-size: clamp(2rem, 12vw, 3.05rem); }
+    .welcome-badge { font-size: 11px; }
+    .bot-text { font-size: 13.5px; }
+    .stat-item { font-size: 13px; padding: 9px 12px; }
+    .round-card { padding: 17px; }
+    .how-step-inner { padding: 16px; }
+    .how-step-icon { width: 44px; height: 44px; }
+  }
+
+
+  /* ─── Final responsive UI fixes: overlap + text clarity ─── */
+  .ai-bg, .ai-bg * { -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; }
+  .ai-bg h1, .ai-bg h2, .ai-bg h3, .ai-bg p, .ai-bg span, .ai-bg div, .ai-bg button { text-shadow: none; }
+  .welcome-title, .how-works-title, .round-name, .how-step-title { overflow-wrap: anywhere; }
+  .welcome-title em { filter: none; }
+  .bot-bubble { max-width: min(100%, 720px); white-space: normal; }
+  .bot-text { min-width: 0; overflow-wrap: anywhere; }
+  .round-card { isolation: isolate; min-width: 0; }
+  .round-card > * { position: relative; z-index: 1; }
+  .round-meta { flex-wrap: wrap; line-height: 1.4; }
+  .stat-item { min-width: 0; }
+  .stat-item span { overflow-wrap: anywhere; }
+
+  .how-works-grid { gap: 16px; }
+  .how-step { padding: 0; min-width: 0; }
+  .how-step:not(:last-child)::after { display: none; }
+  .how-step-inner { min-height: 188px; display: flex; flex-direction: column; justify-content: flex-start; }
+  .how-step-top { align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .how-step-icon { flex: 0 0 auto; }
+  .how-step-number { flex: 0 0 auto; white-space: nowrap; }
+  .how-step-desc { margin: 0; }
+
+  .card, .round-card, .how-step-inner, .q-box, .mcq-option, .dropzone, .ai-modal { min-width: 0; }
+  .profile-name, .round-info-title, .round-info-sub, .chip, .tag { overflow-wrap: anywhere; }
+  .q-header { row-gap: 14px; }
+  .q-header > div { min-width: 0; }
+  .q-section, .q-box, .feedback-text, .mcq-text { overflow-wrap: anywhere; }
+  .ai-textarea { min-width: 0; }
+  .btn { white-space: normal; text-align: center; line-height: 1.25; }
+  .btn-primary { color: #fff; text-shadow: none; }
+  .theme-dark .btn-primary { color: #fff; }
+
+  @media(max-width: 1024px){
+    .how-works-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .how-step-inner { min-height: 172px; }
+  }
+
+  @media(max-width: 820px){
+    .ai-header-inner { align-items: center; }
+    .ai-logo-group { gap: 9px; flex: 1 1 auto; }
+    .ai-header-actions { flex: 0 0 auto; }
+    .welcome-hero { max-width: 100%; }
+    .round-grid { grid-template-columns: 1fr; }
+    .how-works-grid { grid-template-columns: 1fr; gap: 12px; }
+    .how-step-inner { min-height: 0; }
+    .two-col { gap: 16px; }
+  }
+
+  @media(max-width: 560px){
+    .ai-header-inner { gap: 8px; }
+    .ai-logo-group img { height: 28px !important; max-width: 96px; }
+    .ai-header-title { font-size: 13px; letter-spacing: .01em; }
+    .ai-header-actions { gap: 6px; }
+    .ai-avatar { width: 34px; height: 34px; }
+    .ai-user-chip { padding: 4px; }
+    .welcome-hero { padding-top: 12px; }
+    .welcome-title { line-height: 1.04; margin-bottom: 12px; }
+    .welcome-sub { line-height: 1.55; }
+    .stats-row { justify-content: stretch; }
+    .stat-item { width: 100%; justify-content: center; }
+    .how-works-head { display: block; }
+    .how-works-title { line-height: 1.18; }
+    .how-step-top { align-items: center; }
+    .dropzone { padding: 30px 16px; }
+    .card-header { align-items: flex-start; }
+    .q-header { display: block; }
+    .q-header > div { margin-bottom: 12px; }
+    .q-header > div:last-child { margin-bottom: 0; }
+    .timer-chip { width: 100%; justify-content: center; }
+    .mcq-option { padding: 12px; }
+    .ai-modal { padding: 26px 18px; border-radius: 22px; }
+  }
+
+`;
+
 
 export default function InterviewPage() {
   function cryptoRandom() {
-    if (typeof crypto !== "undefined" && "randomUUID" in crypto)
-      return crypto.randomUUID();
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
     return `sess-${Math.random().toString(36).slice(2)}`;
   }
 
@@ -29,63 +495,50 @@ export default function InterviewPage() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [showAnalyzing, setShowAnalyzing] = useState(false);
-  const [showResumeDetails, setShowResumeDetails] = useState(false);
+  const [showAnalysisMessage, setShowAnalysisMessage] = useState(false);
 
-  // Get time limit based on round
-  const getTimeLimit = (roundNumber: number) => {
-    switch (roundNumber) {
-      case 1: return 30;   // Round 1: 30 seconds
-      case 2: return 120;  // Round 2: 120 seconds
-      case 3: return 300;  // Round 3: 300 seconds
-      default: return 30;
-    }
-  };
+  const getTimeLimit = (r: number) => ({ 1: 30, 2: 120, 3: 300 }[r] || 30);
+  const getQuestionCount = (r: number) => ({ 1: 12, 2: 5, 3: 3 }[r] || 5);
 
-  // Get correct question count per round
-  const getQuestionCount = (roundNumber: number) => {
-    switch (roundNumber) {
-      case 1: return 12;  // MCQ - 12 questions
-      case 2: return 5;   // Scenarios - 5 questions
-      case 3: return 3;   // Technical - 3 questions
-      default: return 5;
-    }
-  };
-
-  // Check if user is from non-technical background
   const isNonTechnical = (skills: string[], domains: string[]) => {
-    const nonTechKeywords = ['hr', 'human resource', 'marketing', 'sales', 'finance', 'accounting', 'business', 'management', 'admin', 'operations', 'customer service', 'support'];
-    const allText = [...(skills || []), ...(domains || [])].join(' ').toLowerCase();
-    return nonTechKeywords.some(keyword => allText.includes(keyword));
+    const kw = ['hr','human resource','marketing','sales','finance','accounting','business','management','admin','operations','customer service','support'];
+    return [...(skills||[]),...(domains||[])].join(' ').toLowerCase().split(' ').some(w => kw.includes(w));
   };
+
   const [roundType, setRoundType] = useState<string>("");
   const [roundDescription, setRoundDescription] = useState<string>("");
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
   const answerRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [timerStopped, setTimerStopped] = useState(false);
-  const [lastFeedback, setLastFeedback] = useState<{ score: number; feedback: string } | null>(null);
   const questionRef = useRef<HTMLDivElement>(null);
   const [askedQuestions, setAskedQuestions] = useState<string[]>([]);
   const [codeOutput, setCodeOutput] = useState<string>("");
   const [codeError, setCodeError] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("python");
-  const [isFrontendQuestion, setIsFrontendQuestion] = useState<boolean>(false);
+  const [isFrontendQuestion] = useState<boolean>(false);
   const [lineCount, setLineCount] = useState<number>(1);
-  const [modal, setModal] = useState<{show: boolean; type: 'success'|'error'; title: string; message: string; onClose?: () => void} | null>(null);
+  const [charCount, setCharCount] = useState<number>(0);
+  const [modal, setModal] = useState<{show:boolean;type:'success'|'error';title:string;message:string;onClose?:()=>void}|null>(null);
   const [typingText, setTypingText] = useState("");
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [analysisTypingText, setAnalysisTypingText] = useState("");
-  const [showAnalysisMessage, setShowAnalysisMessage] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [currentFeedback, setCurrentFeedback] = useState<{score: number; feedback: string; userAnswer: string} | null>(null);
-  const [feedbackTimer, setFeedbackTimer] = useState(10);
-  const [isWaitingForNext, setIsWaitingForNext] = useState(false);
+  const [currentFeedback, setCurrentFeedback] = useState<{score:number;feedback:string;userAnswer:string}|null>(null);
   const [nextQuestionData, setNextQuestionData] = useState<any>(null);
   const [canStartInterview, setCanStartInterview] = useState(true);
+  const [dragOver, setDragOver] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const savedTheme = localStorage.getItem("aiInterviewTheme");
+    return savedTheme === "dark" ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("aiInterviewTheme", theme);
+  }, [theme]);
 
   // Helper function to handle next question
   const handleNextQuestion = useCallback(async (feedbackData: any) => {
@@ -104,7 +557,7 @@ export default function InterviewPage() {
       
       if (data.advancedTo) {
         setQuestion("");
-        const roundNames: { [key: number]: string } = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Coding" };
+        const roundNames: { [key: number]: string } = { 1: "Skill Check", 2: "Scenario Round", 3: "Coding Challenge" };
         setModal({
           show: true, 
           type: 'success', 
@@ -117,8 +570,8 @@ export default function InterviewPage() {
               setTotalQ(data.total_questions || getQuestionCount(data.advancedTo));
               setQuestion(data.nextQuestion);
               setAskedQuestions([data.nextQuestion]);
-              const roundTypes = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Round" };
-              const roundDescriptions = { 1: "Multiple choice questions based on your technical skills (Need 70% to qualify)", 2: "Real-world scenarios related to your experience (Need 60% to qualify, min 300 chars)", 3: "Coding problems with input/output format and constraints (Need 70% to qualify)" };
+              const roundTypes = { 1: "Skill Check", 2: "Scenario Round", 3: "Coding Challenge" };
+              const roundDescriptions = { 1: "Technical MCQs to evaluate your fundamentals (Need 70% to qualify)", 2: "Real-world scenario questions based on your experience (Need 60% to qualify, min 300 chars)", 3: "Coding challenge with input/output format and constraints (Need 70% to qualify)" };
               setRoundType(roundTypes[data.advancedTo as keyof typeof roundTypes] || "");
               setRoundDescription(roundDescriptions[data.advancedTo as keyof typeof roundDescriptions] || "");
               setTimePerQuestion(getTimeLimit(data.advancedTo));
@@ -135,7 +588,7 @@ export default function InterviewPage() {
       
       if (data.doneRound && data.passed === false) {
         setQuestion("");
-        const roundNames: { [key: number]: string } = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Coding" };
+        const roundNames: { [key: number]: string } = { 1: "Skill Check", 2: "Scenario Round", 3: "Coding Challenge" };
         const requiredScores: { [key: number]: string } = { 1: "70%", 2: "60%", 3: "70%" };
         setModal({
           show: true, 
@@ -149,8 +602,8 @@ export default function InterviewPage() {
               setTotalQ(data.total_questions || getQuestionCount(data.advancedTo || data.doneRound + 1));
               setQuestion(data.nextQuestion);
               setAskedQuestions([data.nextQuestion]);
-              const roundTypes = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Round" };
-              const roundDescriptions = { 1: "Multiple choice questions based on your technical skills (Need 70% to qualify)", 2: "Real-world scenarios related to your experience (Need 60% to qualify, min 300 chars)", 3: "Coding problems with input/output format and constraints (Need 70% to qualify)" };
+              const roundTypes = { 1: "Skill Check", 2: "Scenario Round", 3: "Coding Challenge" };
+              const roundDescriptions = { 1: "Technical MCQs to evaluate your fundamentals (Need 70% to qualify)", 2: "Real-world scenario questions based on your experience (Need 60% to qualify, min 300 chars)", 3: "Coding challenge with input/output format and constraints (Need 70% to qualify)" };
               const nextRound = data.advancedTo || data.doneRound + 1;
               setRoundType(roundTypes[nextRound as keyof typeof roundTypes] || "");
               setRoundDescription(roundDescriptions[nextRound as keyof typeof roundDescriptions] || "");
@@ -181,55 +634,16 @@ export default function InterviewPage() {
     }
   }, [user, question, sessionId, parsed, currentFeedback, getQuestionCount]);
 
-  const languageOptions = [
-    { value: "python", label: "Python" },
-    { value: "javascript", label: "JavaScript" },
-    { value: "java", label: "Java" },
-    { value: "c", label: "C" },
-    { value: "cpp", label: "C++" },
-    // { value: "Automation", label: "C#" }, 
-  ];
+  const aiMessages = ["Welcome to AI Interview! 🤖","Analyzing your resume...","Generating personalized questions...","Evaluating your responses in real-time...","Ready to start your assessment?"];
 
-  const aiMessages = [
-    "Welcome to AI Interview! 🤖",
-    "I'll analyze your resume...",
-    "Generate personalized questions...",
-    "Evaluate your responses...",
-    "Ready to start your assessment?"
-  ];
+  useEffect(()=>{const stored=localStorage.getItem("user");if(!stored)handleLogin();else setUser(JSON.parse(stored));},[]);
 
-    useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (!stored) {
-     handleLogin()
-    } else {
-      setUser(JSON.parse(stored));
-    }
-  }, []);
-
-  // AI Bot typing animation effect
-  useEffect(() => {
-    if (!showWelcome) return;
-    
-    const message = aiMessages[currentMessageIndex];
-    let charIndex = 0;
-    setTypingText("");
-    
-    const typingInterval = setInterval(() => {
-      if (charIndex < message.length) {
-        setTypingText(message.slice(0, charIndex + 1));
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        // Wait 2 seconds then move to next message
-        setTimeout(() => {
-          setCurrentMessageIndex((prev) => (prev + 1) % aiMessages.length);
-        }, 2000);
-      }
-    }, 100);
-    
-    return () => clearInterval(typingInterval);
-  }, [currentMessageIndex, showWelcome]);
+  useEffect(()=>{
+    if(!showWelcome)return;
+    const msg=aiMessages[currentMessageIndex];let i=0;setTypingText("");
+    const t=setInterval(()=>{if(i<msg.length){setTypingText(msg.slice(0,i+1));i++;}else{clearInterval(t);setTimeout(()=>setCurrentMessageIndex(p=>(p+1)%aiMessages.length),2000);}},80);
+    return()=>clearInterval(t);
+  },[currentMessageIndex,showWelcome]);
 
    const handleLogin = async () => {
 
@@ -315,19 +729,10 @@ export default function InterviewPage() {
 
 
 
-  useEffect(() => {
-    if (question && timeLeft > 0 && !timerStopped) {
-      const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (question && timeLeft === 0 && !loading && !submitting && !showFeedback && !timerStopped) {
-      // When time expires, auto-submit regardless of character count
-      console.log('Timer expired - auto submitting answer');
-      setTimerStopped(true);
-      submitAnswer();
-    }
-  }, [timeLeft, question, loading, submitting, showFeedback, round, selectedOption, timerStopped]);
-
-
+  useEffect(()=>{
+    if(question&&timeLeft>0&&!timerStopped){const t=setTimeout(()=>setTimeLeft(x=>x-1),1000);return()=>clearTimeout(t);}
+    else if(question&&timeLeft===0&&!loading&&!submitting&&!showFeedback&&!timerStopped){setTimerStopped(true);submitAnswer();}
+  },[timeLeft,question,loading,submitting,showFeedback,round,selectedOption,timerStopped]);
 
   async function onUploadResume() {
     if (!user || !selectedFile) return;
@@ -508,11 +913,11 @@ export default function InterviewPage() {
           setAskedQuestions(prev => [...prev, contData.question]);
           
           // Set correct round info
-          const roundTypes = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Round" };
+          const roundTypes = { 1: "Skill Check", 2: "Scenario Round", 3: "Coding Challenge" };
           const roundDescriptions = {
-            1: "Multiple choice questions based on your technical skills",
-            2: "Real-world scenarios related to your experience (Need 60% to qualify)",
-            3: "Coding problems with input/output format and constraints"
+            1: "Technical MCQs to evaluate your fundamentals",
+            2: "Real-world scenario questions based on your experience (Need 60% to qualify)",
+            3: "Coding challenge with input/output format and constraints"
           };
           
           setRoundType(roundTypes[contData.round as keyof typeof roundTypes] || "");
@@ -537,14 +942,14 @@ export default function InterviewPage() {
       
       // Set correct round type and description
       const roundTypes = {
-        1: "MCQ Skills",
-        2: "Scenario Based", 
-        3: "Technical Round"
+        1: "Skill Check",
+        2: "Scenario Round", 
+        3: "Coding Challenge"
       };
       const roundDescriptions = {
-        1: "Multiple choice questions based on your technical skills (Need 70% to qualify)",
-        2: "Real-world scenarios related to your experience (Need 60% to qualify, min 300 chars)",
-        3: "Coding problems with input/output format and constraints (Need 70% to qualify)"
+        1: "Technical MCQs to evaluate your fundamentals (Need 70% to qualify)",
+        2: "Real-world scenario questions based on your experience (Need 60% to qualify, min 300 chars)",
+        3: "Coding challenge with input/output format and constraints (Need 70% to qualify)"
       };
       
       setRoundType(roundTypes[data.round as keyof typeof roundTypes] || "");
@@ -569,41 +974,21 @@ export default function InterviewPage() {
   }
 
   function getTestInput(lang: string) {
-    const functionMatch = question.match(/`([^`]+)\(/); 
-    const functionName = functionMatch ? functionMatch[1] : 'testFunction';
-    
+    // Keep this lightweight. The backend/code-runner should execute the user's code first;
+    // this test input is only a safe fallback and should not force a specific function name.
     switch (lang) {
-      case 'python': 
-        return `# Test with problem example data
-if '${functionName}' in globals():
-    func = globals()['${functionName}']
-    try:
-        if 'is_palindrome' in '${functionName}':
-            result1 = func("A man, a plan, a canal, Panama")
-            result2 = func("Hello, World!")
-            print(f"Test 1: {result1}, Test 2: {result2}")
-        elif 'two_sum' in '${functionName}':
-            result = func([2, 7, 11, 15], 9)
-        elif 'max_subarray' in '${functionName}':
-            result = func([-2, 1, -3, 4, -1, 2, 1, -5, 4])
-        else:
-            result = func([1, 2, 3, 4, 5])
-        print(f"OUTPUT: {result}")
-    except Exception as e:
-        print(f"ERROR: {str(e)}")
-else:
-    print(f"ERROR: Function '${functionName}' not found")`;
+      case 'python':
+        return '';
+      case 'javascript':
+        return '';
       case 'java':
-        return `public static void main(String[] args) {
-    try {
-        int[] testArray = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
-        int result = maxSubarraySum(testArray);
-        System.out.println("OUTPUT: " + result);
-    } catch (Exception e) {
-        System.out.println("ERROR: " + e.getMessage());
-    }
-}`;
-      default: return 'print("Testing function...")';
+        return '';
+      case 'c':
+        return '';
+      case 'cpp':
+        return '';
+      default:
+        return '';
     }
   }
 
@@ -615,45 +1000,69 @@ else:
     }
   }
 
+  const blockClipboardAction = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    setModal({
+      show: true,
+      type: 'error',
+      title: 'Copy/Paste Disabled',
+      message: 'Copy and paste are disabled for scenario and coding rounds. Please type your own answer.'
+    });
+  };
+
   async function runCode() {
-    if (!answerRef.current?.value.trim()) return;
-    
+    const code = answerRef.current?.value?.trim() || '';
+
+    if (!code) {
+      setCodeError('Please write your code before running.');
+      setCodeOutput('');
+      return;
+    }
+
     setLoading(true);
-    setCodeOutput("");
-    setCodeError("");
+    setCodeOutput('');
+    setCodeError('');
 
     const postdata = {
-        code: answerRef.current.value,
-        language: selectedLanguage,
-        testInput: getTestInput(selectedLanguage)
-    }
-    
+      code,
+      language: selectedLanguage,
+      testInput: getTestInput(selectedLanguage)
+    };
+
     try {
       const result = await api.codeRunner(postdata);
       console.log('Code Runner Response:', result);
-      
-      if (result.success) {
-        setCodeOutput(result.output || "Code executed successfully");
-        setCodeError("");
+
+      const output = result?.output || result?.stdout || result?.data?.output || '';
+      const errorText = result?.error || result?.stderr || result?.message || result?.data?.error || '';
+      const isSuccess = result?.success === true || (!errorText && Boolean(output));
+
+      if (isSuccess) {
+        setCodeOutput(output || 'Code executed successfully.');
+        setCodeError('');
       } else {
-        setCodeError(result.error || result.stderr || result.message || "Execution failed");
-        setCodeOutput("");
+        setCodeOutput('');
+        setCodeError(errorText || 'Code execution failed. Please check your syntax and selected language.');
       }
     } catch (error: any) {
       console.error('Code execution error:', error);
-      
-      let errorMessage = "Code execution failed. Please check your syntax and try again.";
-      
-      if (error.message?.includes("timeout")) {
-        errorMessage = "Code execution timed out. Your code may have an infinite loop or is taking too long to execute.";
-      } else if (error.message?.includes("Failed to fetch")) {
-        errorMessage = "Network error. Please check your connection and try running the code again.";
-      } else if (error.message) {
+
+      let errorMessage = 'Code runner is not responding. Please check the backend code-runner API and try again.';
+
+      if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message?.toLowerCase().includes('timeout')) {
+        errorMessage = 'Code execution timed out. Please check for infinite loops or heavy logic.';
+      } else if (error?.message?.includes('Failed to fetch') || error?.message?.includes('Network')) {
+        errorMessage = 'Network/API error. Please verify the code-runner endpoint is running.';
+      } else if (error?.message) {
         errorMessage = error.message;
       }
-      
+
       setCodeError(errorMessage);
-      setCodeOutput("");
+      setCodeOutput('');
     } finally {
       setLoading(false);
     }
@@ -756,7 +1165,7 @@ else:
         setStatus("success:Passed Round " + data.doneRound);
         setQuestion("");
         
-        const roundNames: { [key: number]: string } = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Coding" };
+        const roundNames: { [key: number]: string } = { 1: "Skill Check", 2: "Scenario Round", 3: "Coding Challenge" };
         
         setModal({
           show: true, 
@@ -772,14 +1181,14 @@ else:
               setAskedQuestions([data.nextQuestion]);
               
               const roundTypes = {
-                1: "MCQ Skills",
-                2: "Scenario Based", 
-                3: "Technical Round"
+                1: "Skill Check",
+                2: "Scenario Round", 
+                3: "Coding Challenge"
               };
               const roundDescriptions = {
-                1: "Multiple choice questions based on your technical skills (Need 70% to qualify)",
-                2: "Real-world scenarios related to your experience (Need 60% to qualify, min 300 chars)",
-                3: "Coding problems with input/output format and constraints (Need 70% to qualify)"
+                1: "Technical MCQs to evaluate your fundamentals (Need 70% to qualify)",
+                2: "Real-world scenario questions based on your experience (Need 60% to qualify, min 300 chars)",
+                3: "Coding challenge with input/output format and constraints (Need 70% to qualify)"
               };
               
               setRoundType(roundTypes[data.advancedTo as keyof typeof roundTypes] || "");
@@ -799,7 +1208,7 @@ else:
       }
 
       if (data.doneRound && data.passed === false) {
-        const roundNames: { [key: number]: string } = { 1: "MCQ Skills", 2: "Scenario Based", 3: "Technical Coding" };
+        const roundNames: { [key: number]: string } = { 1: "Skill Check", 2: "Scenario Round", 3: "Coding Challenge" };
         const requiredScores: { [key: number]: string } = { 1: "70%", 2: "60%", 3: "70%" };
         
         setModal({
@@ -816,14 +1225,14 @@ else:
               setAskedQuestions([data.nextQuestion]);
               
               const roundTypes = {
-                1: "MCQ Skills",
-                2: "Scenario Based", 
-                3: "Technical Round"
+                1: "Skill Check",
+                2: "Scenario Round", 
+                3: "Coding Challenge"
               };
               const roundDescriptions = {
-                1: "Multiple choice questions based on your technical skills (Need 70% to qualify)",
-                2: "Real-world scenarios related to your experience (Need 60% to qualify, min 300 chars)",
-                3: "Coding problems with input/output format and constraints (Need 70% to qualify)"
+                1: "Technical MCQs to evaluate your fundamentals (Need 70% to qualify)",
+                2: "Real-world scenario questions based on your experience (Need 60% to qualify, min 300 chars)",
+                3: "Coding challenge with input/output format and constraints (Need 70% to qualify)"
               };
               
               const nextRound = data.advancedTo || data.doneRound + 1;
@@ -930,1056 +1339,491 @@ else:
     }
   }
 
-  if (!user) return null;
+  if(!user) return null;
+
+  const roundColors = ["","#0ea576","#6366f1","#f59e0b"];
+  const languageOptions = [{value:"python",label:"Python"},{value:"javascript",label:"JavaScript"},{value:"java",label:"Java"},{value:"c",label:"C"},{value:"cpp",label:"C++"}];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-      {/* Modal */}
-      {modal?.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 max-w-md w-full mx-4">
-            <div className="text-center">
-              <div className={`text-5xl mb-4 ${modal.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                {modal.type === 'success' ? '✓' : '✗'}
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">{modal.title}</h3>
-              <p className="text-gray-300 text-sm whitespace-pre-line">{modal.message}</p>
-              <button
-                onClick={() => { setModal(null); modal.onClose?.(); }}
-                className="mt-6 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
-              >
-                OK
+    <>
+      <style>{GLOBAL_CSS}</style>
+      <div className={`ai-bg theme-${theme}`}>
+
+        {/* ─── Modal ─── */}
+        {modal?.show && (
+          <div className="ai-modal-overlay">
+            <div className="ai-modal">
+              <div className="ai-modal-icon">{modal.type==='success'?'🎉':'⚠️'}</div>
+              <h3 className="ai-modal-title">{modal.title}</h3>
+              <p className="ai-modal-msg">{modal.message}</p>
+              <button className="btn btn-primary btn-primary-lg" style={{marginTop:24,width:'100%'}} onClick={()=>{setModal(null);modal.onClose?.();}}>
+                {modal.type==='success'?'Continue →':'Got it'}
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <img src={logo} alt="AskOxy" className="w-20 sm:w-24 lg:w-36 h-auto object-contain" />
-              <div className="border-l border-slate-600 pl-2 sm:pl-4">
-                <h1 className="text-xs sm:text-sm lg:text-lg font-bold text-white">AI INTERVIEW</h1>
-                <p className="text-xs text-slate-400 hidden sm:block">Technical Assessment Platform</p>
+        {/* ─── Header ─── */}
+        <header className="ai-header">
+          <div className="ai-header-inner">
+            <div className="ai-logo-group">
+              <img src={logo} alt="AskOxy" style={{height:32,objectFit:'contain',width:'auto'}} />
+              <div className="ai-logo-divider" />
+              <div>
+                <div className="ai-header-title">AI INTERVIEW</div>
+                <div className="ai-header-sub">Technical Assessment Platform</div>
               </div>
             </div>
-            {user && (
-              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg bg-slate-800 border border-slate-700">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs sm:text-sm font-bold">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-xs sm:text-sm font-medium text-white hidden sm:inline">
-                  {user.name}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        {showWelcome ? (
-          <div className="min-h-[calc(100vh-140px)] flex items-center justify-center px-3 sm:px-4 py-4 sm:py-6">
-            <div className="max-w-4xl w-full">
-              <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 rounded-lg sm:rounded-xl border border-emerald-500/30 overflow-hidden shadow-xl">
-                {/* Header Section with AI Bot */}
-                <div className="relative bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 px-3 sm:px-6 py-4 sm:py-6">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
-                    {/* AI Bot and Typing */}
-                    <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-                      <div className="relative flex-shrink-0">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center animate-bounce shadow-lg border border-white/30">
-                          <div className="text-xl sm:text-3xl">🤖</div>
-                        </div>
-                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse border-2 border-white"></div>
-                      </div>
-                      
-                      <div className="bg-white/15 backdrop-blur-md text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl shadow-lg border border-white/30 flex-1 sm:flex-none">
-                        <div className="text-xs sm:text-sm font-medium">
-                          {typingText}
-                          <span className="animate-pulse">|</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Welcome Text */}
-                    <div className="text-center sm:text-right w-full sm:w-auto">
-                      <h1 className="text-lg sm:text-2xl font-bold text-white mb-1">Welcome, {user.name}!</h1>
-                      <p className="text-emerald-100 text-xs sm:text-sm">AI Technical Assessment</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Content Section */}
-                <div className="p-6">
-                  {/* AI Features Banner */}
-                  <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-lg p-3 sm:p-4">
-                    <h3 className="text-emerald-400 font-bold text-sm sm:text-base mb-3 text-center">How It Works</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                      <div className="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg">
-                        <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">
-                          1
-                        </div>
-                        <div className="text-gray-300 text-xs sm:text-sm leading-relaxed">Upload your resume to get started with your AI-powered mock interview.</div>
-                      </div>
-                      <div className="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg">
-                        <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">
-                          2
-                        </div>
-                        <div className="text-gray-300 text-xs sm:text-sm leading-relaxed">AI analyzes your profile and generates personalized questions.</div>
-                      </div>
-                      <div className="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg">
-                        <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">
-                          3
-                        </div>
-                        <div className="text-gray-300 text-sm">You’ll be asked to review and confirm your details to ensure accuracy.</div>
-                      </div>
-                      <div className="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg">
-                        <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">
-                          4
-                        </div>
-                        <div className="text-gray-300 text-sm">Once confirmed, you’ll be redirected to your personalized AI mock interview.</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Assessment Details */}
-                  <div className="mb-6">
-                    <h2 className="text-xl font-bold text-white mb-4 text-center">3-Round AI-Driven Assessment</h2>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      {[
-                        { 
-                          round: "1", 
-                          title: "MCQ Skills", 
-                          questions: "12 Questions",
-                          time: "30s each",
-                          desc: "Test your core technical knowledge with quick MCQ-based questions.",
-                          gradient: "from-purple-500 to-indigo-600"
-                        },
-                        { 
-                          round: "2", 
-                          title: "Scenarios", 
-                          questions: "5 Questions",
-                          time: "120s each",
-                          desc: "Answer scenario-based questions that assess your analytical thinking.",
-                          gradient: "from-purple-500 to-indigo-600"
-                        },
-                        { 
-                          round: "3", 
-                          title: "Coding", 
-                          questions: "3 Questions",
-                          time: "300s each",
-                          desc: "Demonstrate your coding ability through timed, hands-on challenges.",
-                          gradient: "from-purple-500 to-indigo-600"
-                        }
-                      ].map((round) => (
-                        <div key={round.round} className="bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-lg p-4 border border-gray-600 hover:border-emerald-500/50 transition-all">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${round.gradient} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
-                              {round.round}
-                            </div>
-                            <div>
-                              <div className="text-white font-bold text-sm">{round.title}</div>
-                              <div className="text-emerald-400 text-xs">{round.questions}</div>
-                            </div>
-                          </div>
-                          <div className="text-gray-400 text-xs mb-2">{round.time}</div>
-                          <p className="text-gray-300 text-xs">{round.desc}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Action Section */}
-                  <div className="text-center bg-gradient-to-br from-gray-700/30 to-gray-800/30 rounded-lg p-5 border border-emerald-500/30">
-                    <button
-                      onClick={() => { setShowWelcome(false); setShowUpload(true); }}
-                      className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 hover:from-emerald-700 hover:via-emerald-800 hover:to-teal-800 text-white font-bold py-3 px-8 rounded-lg text-base transition-all transform hover:scale-105 shadow-lg"
-                    >
-                     Begin Your AI Assessment
-                    </button>
-                    
-                    <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-400 flex-wrap">
-                      <div className="flex items-center gap-1 bg-gray-800/50 px-2 py-1 rounded">
-                        <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span>45-60 min</span>
-                      </div>
-                      <div className="flex items-center gap-1 bg-gray-800/50 px-2 py-1 rounded">
-                        <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        <span>20 Questions</span>
-                      </div>
-                      <div className="flex items-center gap-1 bg-gray-800/50 px-2 py-1 rounded">
-                        <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span>Instant Results</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : showUpload ? (
-          <div className="max-w-md mx-auto">
-            <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 rounded-xl border border-emerald-500/30 overflow-hidden shadow-xl">
-              <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 px-6 py-4 border-b border-emerald-500/30 flex items-center gap-3">
-                <button
-                  onClick={() => { setShowUpload(false); setShowWelcome(true); }}
-                  className="text-white hover:text-emerald-100 transition-colors"
-                >
-                  ← Back
-                </button>
-                <h2 className="text-lg font-semibold text-white">Upload Resume</h2>
-              </div>
-              
-              <div className="p-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-white font-semibold mb-2">Upload Your Resume</h3>
-                  <p className="text-gray-300 text-sm">AI will analyze your skills and experience</p>
-                </div>
-                
-                <div className="mb-6">
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 rounded-lg p-6 text-center transition-colors cursor-pointer bg-gray-800/50"
-                  >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,.doc,.docx,.txt"
-                      className="hidden"
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    />
-                    <svg className="w-12 h-12 text-gray-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    {selectedFile ? (
-                      <div>
-                        <p className="text-white font-medium mb-1">{selectedFile.name}</p>
-                        <p className="text-emerald-400 text-sm">✓ File selected - Click to change</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-white font-medium mb-1">Click to upload file</p>
-                        <p className="text-gray-400 text-sm">PDF, DOC, DOCX, TXT supported</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <button
-                  onClick={onUploadResume}
-                  disabled={!selectedFile}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-                >
-                  {selectedFile ? "Analyze Resume" : "Select file to continue"}
-                </button>
-                
-                <div className="mt-4 p-3 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-lg">
-                  <div className="text-white font-medium text-sm mb-1">What happens next:</div>
-                  <div className="text-gray-300 text-xs space-y-1">
-                    <div>• AI extracts your technical skills</div>
-                    <div>• Generates personalized questions</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : showAnalyzing || showAnalysisMessage ? (
-          <div className="max-w-sm mx-auto">
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-center">
-              {showAnalyzing ? (
-                <>
-                  <style>{`
-                    @keyframes rotate3d {
-                      0% { transform: rotateY(0deg); }
-                      100% { transform: rotateY(360deg); }
-                    }
-                    .rotate-3d {
-                      animation: rotate3d 2s linear infinite;
-                      transform-style: preserve-3d;
-                    }
-                  `}</style>
-                  <div className="mb-6">
-                    <div className="w-20 h-20 mx-auto mb-4 bg-emerald-600 rounded-full flex items-center justify-center rotate-3d shadow-lg">
-                      <div className="text-3xl">🤖</div>
-                    </div>
-                    <h2 className="text-lg font-semibold text-white mb-2">Analyzing Resume</h2>
-                    <p className="text-gray-400 text-sm">AI is processing your profile data</p>
-                  </div>
-                  
-                  <div className="space-y-2 text-xs text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                      <span>Parsing document structure</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                      <span>Extracting technical skills</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
-                      <span>Generating question matrix</span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="mb-6">
-                  <div className="w-20 h-20 mx-auto mb-4 bg-emerald-600 rounded-full flex items-center justify-center shadow-lg">
-                    <div className="text-3xl">🤖</div>
-                  </div>
-                  <div className="bg-emerald-900/30 p-4 rounded-lg border border-emerald-500/30">
-                    <p className="text-emerald-400 text-sm font-medium">
-                      {analysisTypingText}
-                      <span className="animate-pulse">|</span>
-                    </p>
-                  </div>
+            <div className="ai-header-actions">
+              <button
+                type="button"
+                className="theme-toggle"
+                onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}
+                aria-label="Toggle light and dark theme"
+              >
+                {theme === "light" ? "🌙" : "☀️"}
+                <span>{theme === "light" ? "Dark" : "Light"}</span>
+              </button>
+              {user && (
+                <div className="ai-user-chip">
+                  <div className="ai-avatar">{user.name.charAt(0).toUpperCase()}</div>
+                  <span className="ai-user-name">{user.name}</span>
                 </div>
               )}
             </div>
           </div>
-        ) : !question ? (
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 min-h-[calc(100vh-140px)]">
-            {/* Left: Resume Upload & Details */}
-            <div className="lg:w-1/2 min-h-[400px] lg:h-full">
-              <section className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden shadow-sm h-full flex flex-col">
-                <div className="px-4 sm:px-5 py-4 border-b border-gray-700 flex-shrink-0">
-                  <h2 className="text-base font-semibold text-white">
-                    {parsed ? "Resume Details" : "Upload Resume"}
-                  </h2>
-                  {parsed && (
-                    <p className="text-xs text-gray-400 mt-1">Your profile information</p>
-                  )}
+        </header>
+
+        <main className="ai-main">
+
+          {/* ══════════════ WELCOME SCREEN ══════════════ */}
+          {showWelcome && (
+            <div style={{paddingTop:0}}>
+              <div className="welcome-hero">
+                <div className="welcome-badge">AI-Powered Assessment</div>
+                <div className="bot-bubble">
+                  <div className="bot-icon">🤖</div>
+                  <span className="bot-text">{typingText}<span className="bot-cursor"/></span>
+                </div>
+                <h1 className="welcome-title">
+                  Ace Your Next<br/><em>Tech Interview</em>
+                </h1>
+                <p className="welcome-sub">
+                  Upload your resume and take a personalized AI interview designed around your skills, experience, and target role.
+                </p>
+
+                <div className="primary-cta-wrap">
+                  <button className="btn btn-primary btn-primary-lg" onClick={()=>{setShowWelcome(false);setShowUpload(true);}}>
+                    Start AI Interview →
+                  </button>
+                </div>
+                <div className="primary-cta-note">Upload resume → AI interview → Instant feedback</div>
+
+                <div className="stats-row">
+                  <div className="stat-item"><div className="stat-dot"/><span>45–60 min total</span></div>
+                  <div className="stat-item"><div className="stat-dot"/><span>20 questions</span></div>
+                  <div className="stat-item"><div className="stat-dot" style={{background:'#6366f1'}}/><span>Instant AI feedback</span></div>
                 </div>
 
-                <div className="p-4 sm:p-5 flex-1 overflow-y-auto min-h-0">
-                  {!parsed ? (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-300 mb-2">
-                          Resume File
-                        </label>
-                        <div
-                          onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-emerald-400 hover:bg-gray-700 transition-all cursor-pointer"
-                        >
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".pdf,.doc,.docx,.txt"
-                            className="hidden"
-                            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                          />
-                          <svg className="w-10 h-10 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                          </svg>
-                          {selectedFile ? (
-                            <div>
-                              <p className="text-sm font-medium text-white truncate">
-                                {selectedFile.name}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1">Click to change</p>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="text-sm font-medium text-white">Click to upload</p>
-                              <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX, TXT</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          onClick={onUploadResume}
-                          disabled={loading || !selectedFile}
-                          className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-                        >
-                          {loading ? (
-                            <>
-                              <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Parsing
-                            </>
-                          ) : (
-                            "analyze Resume"
-                          )}
-                        </button>
-                        {selectedFile && (
-                          <button
-                            onClick={() => {
-                              setSelectedFile(null);
-                              if (fileInputRef.current) fileInputRef.current.value = "";
-                            }}
-                            className="px-4 py-2.5 text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
-                          >
-                            Clear
-                          </button>
-                        )}
-                      </div>
-
-                      {status && !status.startsWith("success") && (
-                        <div
-                          className={`p-3 rounded-lg text-xs ${
-                            status.startsWith("error")
-                              ? "bg-red-900/20 text-red-400"
-                              : status.startsWith("warning")
-                              ? "bg-amber-900/20 text-amber-400"
-                              : "bg-emerald-900/20 text-emerald-400"
-                          }`}
-                        >
-                          {status.replace(/^(error|warning):/, "")}
-                        </div>
-                      )}
+                <div className="round-grid">
+                  {[
+                    {n:1,name:"Skill Check",qs:"12 questions",time:"30s each",desc:"Technical MCQs to evaluate your core fundamentals and role-based knowledge.",color:"#0ea576"},
+                    {n:2,name:"Scenario Round",qs:"5 questions",time:"120s each",desc:"Real-world problem solving to assess your thinking, judgement, and communication.",color:"#6366f1"},
+                    {n:3,name:"Coding Challenge",qs:"3 questions",time:"300s each",desc:"Hands-on coding problems with execution, constraints, and validation.",color:"#f59e0b"},
+                  ].map(r=>(
+                    <div key={r.n} className="round-card">
+                      <div className="round-num" style={{background:r.color}}>{r.n}</div>
+                      <div className="round-name">{r.name}</div>
+                      <div className="round-meta"><span>{r.qs}</span><span>·</span><span>{r.time}</span></div>
+                      <p className="round-desc">{r.desc}</p>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Profile Header */}
-                      <div className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg border border-gray-600">
-                        <div className="w-12 h-12 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-lg font-semibold">
-                          {parsed.name ? parsed.name.charAt(0).toUpperCase() : "C"}
-                        </div>
-                        <div>
-                          <h3 className="text-base font-semibold text-white">
-                            {parsed.name || "Candidate"}
-                          </h3>
-                          <p className="text-xs text-gray-400 mt-0.5">Profile Verified ✅</p>
-                        </div>
-                      </div>
-
-                      {/* Skills */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-300 mb-2">Technical Skills</p>
-                        <div className="flex flex-wrap gap-2">
-                          {Array.isArray(parsed.skills) && parsed.skills.length > 0 ? (
-                            parsed.skills.map((skill: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-700 text-emerald-400 border border-gray-600"
-                              >
-                                {skill}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-xs text-gray-400">No skills detected</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Experience */}
-                      {yearsOfExperience > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-gray-300 mb-2">Experience</p>
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-700 text-blue-400 border border-gray-600">
-                            {yearsOfExperience} {yearsOfExperience === 1 ? 'year' : 'years'}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Domains */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-300 mb-2">Domains</p>
-                        <div className="flex flex-wrap gap-2">
-                          {Array.isArray(parsed.domains) && parsed.domains.length > 0 ? (
-                            parsed.domains.map((domain: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-700 text-teal-400 border border-gray-600"
-                              >
-                                {domain}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-sm text-gray-400 italic">No domains detected</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Upload New Resume Button */}
-                      <div className="pt-3 border-t border-gray-700">
-                        <button
-                          onClick={() => {
-                            setParsed(null);
-                            setSelectedFile(null);
-                            setStatus("");
-                            if (fileInputRef.current) fileInputRef.current.value = "";
-                            setShowUpload(true);
-                          }}
-                          className="w-full px-4 py-2 text-gray-300 text-sm font-medium rounded-lg border border-gray-600 hover:bg-gray-700 transition-all"
-                        >
-                          Edit Resume
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </section>
-            </div>
-
-            {/* Right: Interview Rounds & Start Button */}
-            <div className="lg:w-1/2 min-h-[400px] lg:h-full">
-              <section className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden shadow-sm h-full flex flex-col">
-                <div className="px-4 sm:px-5 py-4 border-b border-gray-700 flex-shrink-0">
-                  <h2 className="text-base font-semibold text-white">Assessment Structure</h2>
-                  <p className="text-xs text-gray-400 mt-1">Three rounds of evaluation</p>
+                  ))}
                 </div>
 
-                <div className="p-4 sm:p-5 flex-1 flex flex-col min-h-0">
-                  <div className="space-y-3 flex-1 overflow-y-auto">
-                    {/* Round 1 */}
-                    <div className="p-4 border border-gray-700 rounded-lg hover:border-emerald-500 hover:bg-gray-700 transition-all">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                          1
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-white">MCQ Skills</h3>
-                          <p className="text-xs text-gray-400 mt-1">Multiple choice questions</p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                            <span>12 questions</span>
-                            <span>•</span>
-                            <span>30s each</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Round 2 */}
-                    <div className="p-4 border border-gray-700 rounded-lg hover:border-teal-500 hover:bg-gray-700 transition-all">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                          2
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-white">Scenario Based</h3>
-                          <p className="text-xs text-gray-400 mt-1">Real-world scenarios</p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                            <span>5 questions</span>
-                            <span>•</span>
-                            <span>120s each</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Round 3 */}
-                    <div className="p-4 border border-gray-700 rounded-lg hover:border-green-500 hover:bg-gray-700 transition-all">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                          3
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-white">
-                            {parsed && isNonTechnical(parsed.skills, parsed.domains) ? "Professional Assessment" : "Technical Coding"}
-                          </h3>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {parsed && isNonTechnical(parsed.skills, parsed.domains) ? "Domain-specific questions" : "Coding challenges"}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                            <span>3 questions</span>
-                            <span>•</span>
-                            <span>300s each</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Start Button - Fixed at bottom */}
-                  <div className="mt-4 pt-4 border-t border-gray-700 flex-shrink-0">
-                    {parsed && user && (
-                      <div className="mb-4">
-                        <AttemptStatus 
-                          userId={user.id} 
-                          onStatusChange={(canAttempt) => setCanStartInterview(canAttempt)}
-                        />
-                      </div>
-                    )}
-                    {parsed ? (
-                      <button
-                        onClick={startInterview}
-                        disabled={loading || round === 3 || !canStartInterview}
-                        className={`w-full px-5 py-3 rounded-lg font-semibold text-white text-sm transition-all ${
-                          round === 3 || !canStartInterview
-                            ? "bg-gray-600 cursor-not-allowed"
-                            : "bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow-md"
-                        }`}
-                      >
-                        {loading ? (
-                          <span className="inline-flex items-center gap-2">
-                            <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Starting...
-                          </span>
-                        ) : !canStartInterview ? (
-                          "Attempt Limit Reached"
-                        ) : round === 3 ? (
-                          "Assessment Completed"
-                        ) : (
-                          "Start Assessment"
-                        )}
-                      </button>
-                    ) : (
-                      <div className="p-3 bg-amber-900/20 border border-amber-700 rounded-lg">
-                        <p className="text-xs text-amber-400 text-center">
-                          Upload resume to begin
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-            </div>
-          </div>
-        ) : (
-          /* Question View */
-          <div className="min-h-[calc(100vh-140px)] flex justify-center px-2">
-            <div ref={questionRef} className="w-full max-w-4xl px-2 sm:px-8">
-              <section className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden shadow-sm">
-              {/* Header */}
-              <div className="px-3 sm:px-5 py-2 bg-gray-900 border-b border-gray-700">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold text-white ${
-                        round === 1
-                          ? "bg-emerald-600"
-                          : round === 2
-                          ? "bg-teal-600"
-                          : "bg-indigo-600"
-                      }`}
-                    >
-                      {round}
-                    </div>
+                <div className="how-works">
+                  <div className="how-works-head">
                     <div>
-                      <h2 className="text-sm sm:text-base font-semibold text-white">
-                        Round {round}: {roundType}
-                      </h2>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        Question {qNo} of {totalQ}
+                      <div className="how-works-kicker">✨ How It Works</div>
+                      <h2 className="how-works-title">How It Works</h2>
+                      <p className="how-works-sub">A simple guided flow that turns your resume into a personalized interview and gives clear performance feedback.</p>
+                    </div>
+                  </div>
+                  <div className="how-works-grid">
+                    {[
+                      { icon: "📄", step: "Step 01", title: "Upload Resume", desc: "Upload your resume and let AI analyze your technical profile, skills, and experience." },
+                      { icon: "🧠", step: "Step 02", title: "Personalized Questions", desc: "AI generates interview questions tailored to your profile, role, and selected skill areas." },
+                      { icon: "🎯", step: "Step 03", title: "Timed Interview Rounds", desc: "Complete skill checks, scenario questions, and coding rounds within real interview time limits." },
+                      { icon: "📊", step: "Step 04", title: "Instant Feedback", desc: "Get scores, skill insights, and improvement suggestions to improve your interview readiness." },
+                    ].map((item) => (
+                      <div className="how-step" key={item.title}>
+                        <div className="how-step-inner">
+                          <div className="how-step-top">
+                            <div className="how-step-icon">{item.icon}</div>
+                            <span className="how-step-number">{item.step}</span>
+                          </div>
+                          <div className="how-step-title">{item.title}</div>
+                          <p className="how-step-desc">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════ UPLOAD SCREEN ══════════════ */}
+          {showUpload && (
+            <div style={{maxWidth:480,margin:'20px auto'}}>
+              <div className="card">
+                <div className="card-header">
+                  <button className="btn btn-outline" style={{padding:'5px 12px',fontSize:13}} onClick={()=>{setShowUpload(false);setShowWelcome(true);}}>← Back</button>
+                  <div>
+                    <div style={{fontSize:15,fontWeight:600,color:'var(--text-primary)'}}>Upload Resume</div>
+                    <div style={{fontSize:12,color:'var(--text-muted)'}}>AI will analyse your skills and experience</div>
+                  </div>
+                </div>
+                <div className="card-body">
+                  <div
+                    className={`dropzone${dragOver?' active':''}`}
+                    onClick={()=>fileInputRef.current?.click()}
+                    onDragOver={e=>{e.preventDefault();setDragOver(true);}}
+                    onDragLeave={()=>setDragOver(false)}
+                    onDrop={e=>{e.preventDefault();setDragOver(false);const f=e.dataTransfer.files[0];if(f)setSelectedFile(f);}}
+                  >
+                    <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt" style={{display:'none'}} onChange={e=>setSelectedFile(e.target.files?.[0]||null)}/>
+                    {selectedFile ? (
+                      <>
+                        <div style={{fontSize:36,marginBottom:8}}>📄</div>
+                        <div className="dropzone-title">{selectedFile.name}</div>
+                        <div className="dropzone-sub" style={{color:'var(--brand)'}}>✓ Selected — click to change</div>
+                      </>
+                    ):(
+                      <>
+                        <div style={{fontSize:36,marginBottom:8}}>📁</div>
+                        <div className="dropzone-title">Drop your resume here</div>
+                        <div className="dropzone-sub">or click to browse — PDF, DOC, DOCX, TXT</div>
+                      </>
+                    )}
+                  </div>
+                  <button className="btn btn-primary" style={{width:'100%',marginTop:16}} disabled={!selectedFile} onClick={onUploadResume}>
+                    {selectedFile ? 'Analyse Resume →' : 'Select a file to continue'}
+                  </button>
+                  <div style={{marginTop:16,padding:'12px 14px',background:'var(--brand-light)',borderRadius:'var(--radius-md)',border:'1px solid var(--brand-mid)'}}>
+                    <div style={{fontSize:12,fontWeight:600,color:'var(--brand-dark)',marginBottom:6}}>What happens next</div>
+                    <div style={{fontSize:12,color:'var(--text-secondary)',lineHeight:1.6}}>
+                      • AI extracts your technical skills & experience<br/>
+                      • Personalised questions are generated for each round<br/>
+                      • You get instant scored feedback on every answer
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════ ANALYSING SCREEN ══════════════ */}
+          {(showAnalyzing||showAnalysisMessage) && (
+            <div className="analyzing-wrap">
+              <div className="analyzing-card">
+                <div className="spin-bot">🤖</div>
+                {showAnalyzing ? (
+                  <>
+                    <div style={{fontSize:17,fontWeight:600,marginBottom:6}}>Analysing your resume</div>
+                    <div style={{fontSize:13,color:'var(--text-muted)',marginBottom:20}}>AI is processing your profile data…</div>
+                    <div className="progress-steps">
+                      {['Parsing document structure','Extracting technical skills','Generating question matrix'].map((s,i)=>(
+                        <div key={i} className="progress-step">
+                          <div className="step-dot" style={{animationDelay:`${i*0.3}s`}}/>
+                          <span>{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ):(
+                  <>
+                    <div style={{fontSize:17,fontWeight:600,marginBottom:12}}>Analysis complete!</div>
+                    <div style={{background:'var(--brand-light)',border:'1px solid var(--brand-mid)',borderRadius:'var(--radius-md)',padding:'14px 16px'}}>
+                      <p style={{fontSize:13,color:'var(--brand-dark)',lineHeight:1.65}}>
+                        {analysisTypingText}<span className="bot-cursor"/>
                       </p>
                     </div>
-                  </div>
-                  <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm ${
-                      timerStopped
-                        ? "bg-gray-900/30 text-gray-400"
-                        : timeLeft <= 30
-                        ? "bg-red-900/30 text-red-400 animate-pulse"
-                        : "bg-amber-900/30 text-amber-400"
-                    }`}
-                  >
-                    <span className={`${timeLeft <= 30 && !timerStopped ? "animate-pulse" : ""}`}>⏱</span>
-                    <span>{timerStopped ? "Stopped" : `${timeLeft}s`}</span>
-                  </div>
-                </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
-                {roundDescription && (
-                  <div className="text-xs text-gray-400 italic mt-2 px-3 sm:px-0">
-                    {roundDescription}
-                  </div>
+          {/* ══════════════ PRE-INTERVIEW (Resume + Start) ══════════════ */}
+          {!showWelcome&&!showUpload&&!showAnalyzing&&!showAnalysisMessage&&!question && (
+            <div className="two-col" style={{alignItems:'start'}}>
+
+              {/* Left — Resume panel */}
+              <div className="card">
+                {!parsed ? (
+                  <>
+                    <div className="card-header">
+                      <div style={{width:32,height:32,borderRadius:8,background:'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📄</div>
+                      <div>
+                        <div style={{fontSize:14,fontWeight:600}}>Upload Resume</div>
+                        <div style={{fontSize:12,color:'var(--text-muted)'}}>Required to start</div>
+                      </div>
+                    </div>
+                    <div className="card-body">
+                      <div className="dropzone" onClick={()=>fileInputRef.current?.click()}>
+                        <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt" style={{display:'none'}} onChange={e=>setSelectedFile(e.target.files?.[0]||null)}/>
+                        <div style={{fontSize:32,marginBottom:8}}>📁</div>
+                        {selectedFile?(<><div className="dropzone-title">{selectedFile.name}</div><div className="dropzone-sub" style={{color:'var(--brand)'}}>✓ Click to change</div></>):(<><div className="dropzone-title">Click to upload</div><div className="dropzone-sub">PDF, DOC, DOCX, TXT</div></>)}
+                      </div>
+                      <div style={{display:'flex',gap:8,marginTop:14}}>
+                        <button className="btn btn-primary" style={{flex:1}} disabled={loading||!selectedFile} onClick={onUploadResume}>
+                          {loading?<><svg className="spinner" width={14} height={14} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity=".25"/><path fill="currentColor" opacity=".75" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg> Parsing…</>:'Analyse Resume'}
+                        </button>
+                        {selectedFile&&<button className="btn btn-outline" onClick={()=>{setSelectedFile(null);if(fileInputRef.current)fileInputRef.current.value="";}}>Clear</button>}
+                      </div>
+                    </div>
+                  </>
+                ):(
+                  <>
+                    <div className="profile-header">
+                      <div className="profile-avatar">{parsed.name?parsed.name.charAt(0).toUpperCase():'C'}</div>
+                      <div>
+                        <div className="profile-name">{parsed.name||'Candidate'}</div>
+                        <div className="profile-badge">✓ Profile Verified</div>
+                      </div>
+                    </div>
+                    <div className="card-body">
+                      {parsed.skills?.length>0&&(<><div className="section-label">Technical Skills</div><div style={{marginBottom:16}}>{parsed.skills.map((s:string,i:number)=><span key={i} className="tag tag-skill">{s}</span>)}</div></>)}
+                      {yearsOfExperience>0&&(<><div className="section-label">Experience</div><div style={{marginBottom:16}}><span className="tag tag-exp">⏱ {yearsOfExperience} {yearsOfExperience===1?'year':'years'}</span></div></>)}
+                      {parsed.domains?.length>0&&(<><div className="section-label">Domains</div><div style={{marginBottom:16}}>{parsed.domains.map((d:string,i:number)=><span key={i} className="tag tag-domain">{d}</span>)}</div></>)}
+                      <div style={{paddingTop:12,borderTop:'1px solid var(--border)'}}>
+                        <button className="btn btn-outline" style={{width:'100%'}} onClick={()=>{setParsed(null);setSelectedFile(null);setStatus("");if(fileInputRef.current)fileInputRef.current.value="";}}>
+                          ✏️ Edit Resume
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
-              <div className="p-3 sm:p-4 space-y-3">
-                {/* Question */}
-                <div>
-                  {round === 3 && parsed?.skills && parsed.skills.length > 0 && (
-                    <div className="mb-3 p-2 bg-blue-900/20 border border-blue-500/30 rounded text-xs text-blue-300">
-                      {isNonTechnical(parsed.skills, parsed.domains) ? (
-                        <span>💼 Professional assessment question based on: {parsed.skills.slice(0, 3).join(', ')}</span>
-                      ) : (
-                        <span>💡 Technical question based on: {parsed.skills.slice(0, 3).join(', ')}</span>
-                      )}
-                    </div>
-                  )}
-                  {round === 3 ? (
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 space-y-3">
-                      {(() => {
-                        const lines = question.split('\n');
-                        let currentSection = '';
-                        let sectionContent: string[] = [];
-                        const sections: {type: string, content: string[]}[] = [];
-                        
-                        lines.forEach(line => {
-                          const trimmed = line.trim().replace(/\*+/g, '').trim();
-                          if (!trimmed) return;
-                          
-                          if (trimmed.toLowerCase().startsWith('problem') || trimmed.toLowerCase().startsWith('given')) {
-                            if (currentSection) sections.push({type: currentSection, content: sectionContent});
-                            currentSection = 'problem';
-                            sectionContent = [trimmed.replace(/^(problem|given)[:\s]*/i, '')];
-                          } else if (trimmed.toLowerCase().startsWith('function')) {
-                            if (currentSection) sections.push({type: currentSection, content: sectionContent});
-                            currentSection = 'function';
-                            sectionContent = [trimmed];
-                          } else if (trimmed.toLowerCase().startsWith('example')) {
-                            if (currentSection) sections.push({type: currentSection, content: sectionContent});
-                            currentSection = 'example';
-                            sectionContent = [];
-                          } else if (trimmed.toLowerCase().startsWith('input format') || trimmed.toLowerCase().startsWith('input:')) {
-                            sectionContent.push(trimmed);
-                          } else if (trimmed.toLowerCase().startsWith('output format') || trimmed.toLowerCase().startsWith('output:')) {
-                            sectionContent.push(trimmed);
-                          } else if (trimmed.toLowerCase().startsWith('constraint')) {
-                            if (currentSection) sections.push({type: currentSection, content: sectionContent});
-                            currentSection = 'constraints';
-                            sectionContent = [trimmed.replace(/^constraints?[:\s]*/i, '')];
-                          } else if (trimmed.toLowerCase().startsWith('notes')) {
-                            if (currentSection) sections.push({type: currentSection, content: sectionContent});
-                            currentSection = 'notes';
-                            sectionContent = [trimmed.replace(/^notes?[:\s]*/i, '')];
-                          } else if (trimmed.startsWith('-') || trimmed.startsWith('###')) {
-                            sectionContent.push(trimmed.replace(/^[-#\s]+/, ''));
-                          } else {
-                            sectionContent.push(trimmed);
-                          }
-                        });
-                        if (currentSection) sections.push({type: currentSection, content: sectionContent});
-                        
-                        return (
-                          <>
-                            {sections.map((section, idx) => {
-                              if (section.type === 'problem') {
-                                return (
-                                  <div key={idx} className="bg-indigo-900/30 p-3 rounded border-l-4 border-indigo-400">
-                                    <span className="text-indigo-400 font-semibold text-xs uppercase tracking-wide">Problem</span>
-                                    <div className="text-white text-sm mt-2 space-y-1">
-                                      {section.content.map((line, i) => <p key={i}>{line}</p>)}
-                                    </div>
-                                  </div>
-                                );
-                              }
-                              if (section.type === 'function') {
-                                return (
-                                  <div key={idx} className="bg-emerald-900/30 p-3 rounded border-l-4 border-emerald-400">
-                                    <span className="text-emerald-400 font-semibold text-xs uppercase tracking-wide">Function Signature</span>
-                                    <code className="text-white text-sm mt-2 block font-mono">{section.content[0]}</code>
-                                  </div>
-                                );
-                              }
-                              if (section.type === 'example') {
-                                return (
-                                  <div key={idx} className="bg-purple-900/30 p-3 rounded border-l-4 border-purple-400">
-                                    <span className="text-purple-400 font-semibold text-xs uppercase tracking-wide">Examples</span>
-                                    <div className="text-white text-sm mt-2 space-y-2 font-mono">
-                                      {section.content.map((line, i) => {
-                                        if (line.toLowerCase().includes('input')) {
-                                          return <div key={i} className="text-green-300">→ {line}</div>;
-                                        }
-                                        if (line.toLowerCase().includes('output')) {
-                                          return <div key={i} className="text-blue-300">← {line}</div>;
-                                        }
-                                        return <div key={i}>{line}</div>;
-                                      })}
-                                    </div>
-                                  </div>
-                                );
-                              }
-                              if (section.type === 'constraints') {
-                                return (
-                                  <div key={idx} className="bg-amber-900/30 p-3 rounded border-l-4 border-amber-400">
-                                    <span className="text-amber-400 font-semibold text-xs uppercase tracking-wide">Constraints</span>
-                                    <div className="text-white text-sm mt-2 space-y-1">
-                                      {section.content.map((line, i) => <p key={i}>• {line}</p>)}
-                                    </div>
-                                  </div>
-                                );
-                              }
-                              if (section.type === 'notes') {
-                                return (
-                                  <div key={idx} className="bg-teal-900/30 p-3 rounded border-l-4 border-teal-400">
-                                    <span className="text-teal-400 font-semibold text-xs uppercase tracking-wide">Notes</span>
-                                    <div className="text-white text-sm mt-2 space-y-1">
-                                      {section.content.map((line, i) => <p key={i}>• {line}</p>)}
-                                    </div>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })}
-                          </>
-                        );
-                      })()}
-                    </div>
-                  ) : round === 2 ? (
-                    <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-                      <div className="text-sm text-white leading-relaxed space-y-3">
-                        {question.split('\n').map((line, idx) => {
-                          const trimmedLine = line.trim();
-                          if (!trimmedLine) return null;
-                          
-                          if (trimmedLine.startsWith('**Situation:**')) {
-                            return (
-                              <div key={idx} className="bg-emerald-900/30 p-3 rounded border-l-4 border-emerald-400">
-                                <span className="text-emerald-400 font-semibold text-xs uppercase tracking-wide">Situation</span>
-                                <p className="text-white text-base mt-1 font-medium">
-                                  {trimmedLine.replace('**Situation:**', '').trim()}
-                                </p>
-                              </div>
-                            );
-                          }
-                          
-                          if (trimmedLine.startsWith('**Question:**')) {
-                            return (
-                              <div key={idx} className="bg-teal-900/30 p-3 rounded border-l-4 border-teal-400">
-                                <span className="text-teal-400 font-semibold text-xs uppercase tracking-wide">Question</span>
-                                <p className="text-white text-base mt-1 font-medium">
-                                  {trimmedLine.replace('**Question:**', '').trim()}
-                                </p>
-                              </div>
-                            );
-                          }
-      
-                          return (
-                            <p key={idx} className="text-gray-200">
-                              {trimmedLine}
-                            </p>
-                          );
-                        }).filter(Boolean)}
-                      </div>
-                    </div>
-                  ) : (
-                    <h3 className="text-sm font-medium text-white leading-relaxed">
-                      {question.split(/[ABCD]\)/)[0].replace('Question:', '').trim()}
-                    </h3>
-                  )}
-                </div>
-
-                {/* MCQ Options */}
-                {round === 1 && question.includes("A)") && (
-                  <div className="space-y-1.5">
-                    {["A", "B", "C", "D"].map((option) => {
-                      const optionText = question
-                        .split(`${option})`)[1]
-                        ?.split(/[\n\r]|[BCD]\)/)[0]
-                        ?.trim();
-                      if (!optionText) return null;
-                      return (
-                        <label
-                          key={option}
-                          className={`flex items-start gap-2 p-2 rounded border transition-colors ${
-                            showFeedback ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-                          } ${
-                            selectedOption === option
-                              ? "border-emerald-500 bg-emerald-900/30"
-                              : "border-gray-700 hover:border-emerald-600 hover:bg-gray-700/50"
-                          }`}
-                        >
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                            selectedOption === option
-                              ? "border-emerald-500 bg-emerald-500"
-                              : "border-gray-600"
-                          }`}>
-                            {selectedOption === option && (
-                              <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                            )}
-                          </div>
-                          <input
-                            type="radio"
-                            name="mcq-option"
-                            value={option}
-                            checked={selectedOption === option}
-                            onChange={(e) => setSelectedOption(e.target.value)}
-                            disabled={showFeedback}
-                            className="sr-only"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-start gap-1">
-                              <span className="font-semibold text-emerald-400 text-xs">
-                                {option}.
-                              </span>
-                              <span className="text-xs text-gray-300 leading-relaxed">
-                                {optionText}
-                              </span>
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Text Answer */}
-                {round !== 1 && (
+              {/* Right — Assessment structure + start */}
+              <div className="card">
+                <div className="card-header">
+                  <div style={{width:32,height:32,borderRadius:8,background:'var(--accent-soft)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🎯</div>
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-semibold text-white">
-                        {round === 3 ? "Your Code Solution" : "Your Answer"}
-                      </label>
-                      {round === 3 ? (
-                        <span className="text-xs text-gray-400">
-                          Lines: {lineCount}
-                        </span>
-                      ) : round === 2 ? (
-                        <span className={`text-xs ${
-                          (answerRef.current?.value?.length || 0) >= 300 
-                            ? 'text-green-400' 
-                            : 'text-amber-400'
-                        }`}>
-                          Characters: {answerRef.current?.value?.length || 0}/300 minimum
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="relative">
-                      <textarea
-                        ref={answerRef}
-                        disabled={timeLeft <= 0 || showFeedback}
-                        className={`w-full px-4 py-3 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${round === 3 ? 'font-mono' : ''}`}
-                        placeholder={timeLeft <= 0 ? "Time expired - answer submitted automatically" : round === 3 ? getPlaceholder(selectedLanguage) : round === 2 ? "Your answer (be specific and concise):\n\n1. Immediate action:\n2. Next steps:\n3. Why this approach:" : "Enter your detailed answer here..."}
-                        style={{
-                          minHeight: round === 3 ? '300px' : round === 2 ? '250px' : '150px',
-                          resize: 'vertical',
-                          lineHeight: '1.5'
-                        }}
-                        onChange={(e) => {
-                          if (round === 3) {
-                            const lines = e.target.value.split('\n').length;
-                            setLineCount(lines);
-                          }
-                          // Force re-render for character count display in Round 2
-                          if (round === 2) {
-                            setLineCount(e.target.value.length);
-                          }
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Code Runner for Round 3 */}
-                    {round === 3 && (
-                      <div className="mt-3 space-y-3">
-                        <div className="flex gap-2 items-center flex-wrap">
-                          <select
-                            value={selectedLanguage}
-                            onChange={(e) => setSelectedLanguage(e.target.value)}
-                            disabled={showFeedback}
-                            className="px-2 py-1 text-xs border border-gray-600 rounded bg-gray-900 text-white min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {languageOptions.map(lang => (
-                              <option key={lang.value} value={lang.value}>{lang.label}</option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={runCode}
-                            disabled={loading || !answerRef.current?.value.trim() || showFeedback}
-                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {loading ? "Running..." : "▶ Run Code"}
-                          </button>
-                          <p className="text-xs text-gray-400 w-full sm:w-auto">
-                            Code will be compiled and executed with error checking
-                          </p>
+                    <div style={{fontSize:14,fontWeight:600}}>Assessment Structure</div>
+                    <div style={{fontSize:12,color:'var(--text-muted)'}}>3 rounds · 20 questions</div>
+                  </div>
+                </div>
+                <div className="card-body">
+                  <div>
+                    {[
+                      {n:1,name:"Skill Check",sub:"Multiple choice questions",qs:"12 questions",time:"30s each",color:"#0ea576"},
+                      {n:2,name:"Scenario Round",sub:"Real-world problem solving",qs:"5 questions",time:"120s each",color:"#6366f1"},
+                      {n:3,name:parsed&&isNonTechnical(parsed.skills,parsed.domains)?"Professional Assessment":"Coding Challenge",sub:parsed&&isNonTechnical(parsed.skills,parsed.domains)?"Domain-specific questions":"Live coding challenges",qs:"3 questions",time:"300s each",color:"#f59e0b"},
+                    ].map(r=>(
+                      <div key={r.n} className="round-row">
+                        <div className="round-num-badge" style={{background:r.color}}>{r.n}</div>
+                        <div style={{flex:1}}>
+                          <div className="round-info-title">{r.name}</div>
+                          <div className="round-info-sub">{r.sub}</div>
+                          <div className="round-chips">
+                            <div className="chip">{r.qs}</div>
+                            <div className="chip">⏱ {r.time}</div>
+                          </div>
                         </div>
-                        
-                        {/* Output Display */}
-                        {codeOutput && (
-                          <div className="bg-gray-950 text-green-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border border-gray-700">
-                            <div className="text-gray-400 mb-1">Output:</div>
-                            {typeof codeOutput === 'string' ? codeOutput : JSON.stringify(codeOutput, null, 2)}
-                          </div>
-                        )}
-                        
-                        {codeError && (
-                          <div className="bg-red-900/20 text-red-400 p-3 rounded text-xs font-mono whitespace-pre-wrap border border-red-800">
-                            <div className="font-semibold mb-1">Error:</div>
-                            {typeof codeError === 'string' ? codeError : JSON.stringify(codeError, null, 2)}
-                          </div>
-                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{paddingTop:16,borderTop:'1px solid var(--border)',marginTop:8}}>
+                    {parsed&&user&&<div style={{marginBottom:12}}><AttemptStatus userId={user.id} onStatusChange={c=>setCanStartInterview(c)}/></div>}
+                    {parsed ? (
+                      <button className="btn btn-primary btn-primary-lg" style={{width:'100%'}} disabled={loading||round===3||!canStartInterview} onClick={startInterview}>
+                        {loading?(<><svg className="spinner" width={16} height={16} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity=".25"/><path fill="currentColor" opacity=".75" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg>Starting…</>):!canStartInterview?'Attempt Limit Reached':round===3?'Assessment Complete ✓':'Start Assessment →'}
+                      </button>
+                    ):(
+                      <div style={{textAlign:'center',fontSize:13,color:'var(--text-muted)',padding:'12px',background:'var(--surface-3)',borderRadius:'var(--radius-md)'}}>
+                        Upload your resume to begin
                       </div>
                     )}
                   </div>
-                )}
-
-                {/* Feedback Display */}
-                {showFeedback && currentFeedback && (
-                  <div className="p-3 bg-emerald-900/20 rounded-lg border border-emerald-500/30 mb-4">
-                    <div className="mb-2">
-                      <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Feedback</span>
-                    </div>
-                    <p className="text-xs text-gray-300 mb-3">{currentFeedback.feedback}</p>
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => {
-                          if (nextQuestionData && nextQuestionData.question) {
-                            setRound(nextQuestionData.round);
-                            setQNo(nextQuestionData.question_no);
-                            setTotalQ(nextQuestionData.total_questions || getQuestionCount(nextQuestionData.round));
-                            setQuestion(nextQuestionData.question);
-                            setAskedQuestions(prev => [...prev, nextQuestionData.question]);
-                            setTimePerQuestion(getTimeLimit(nextQuestionData.round));
-                            setTimeLeft(getTimeLimit(nextQuestionData.round));
-                            setSelectedOption("");
-                            if (answerRef.current) answerRef.current.value = "";
-                            setCodeOutput("");
-                            setCodeError("");
-                            setNextQuestionData(null);
-                          }
-                          setShowFeedback(false);
-                          setCurrentFeedback(null);
-                          setTimerStopped(false);
-                        }}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded"
-                      >
-                        Next Question →
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                <div className="pt-2 border-t border-gray-700">
-                  {!showFeedback ? (
-                    <button
-                      onClick={submitAnswer}
-                      disabled={loading || submitting || (round === 1 && !selectedOption)}
-                      className={`w-full px-4 py-2 rounded-lg font-semibold text-white transition-all ${
-                        (round === 1 && !selectedOption) || submitting
-                          ? "bg-gray-600 cursor-not-allowed"
-                          : timeLeft <= 0
-                          ? "bg-orange-600 hover:bg-orange-700"
-                          : "bg-emerald-600 hover:bg-emerald-700"
-                      }`}
-                    >
-                      {loading || submitting ? (
-                        <span className="inline-flex items-center justify-center gap-2">
-                          <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          {submitting ? "Submitting..." : "Evaluating"}
-                        </span>
-                      ) : timeLeft <= 0 ? (
-                        "Submit (Time Expired)"
-                      ) : (
-                        "Submit Answer"
-                      )}
-                    </button>
-                  ) : (
-                    <div className="text-center text-gray-400 text-sm">
-                      Click Next Question above to continue
-                    </div>
-                  )}
                 </div>
               </div>
-            </section>
             </div>
-          </div>
-        )}
-      </main>
-    </div>
+          )}
+
+          {/* ══════════════ QUESTION VIEW ══════════════ */}
+          {question && (
+            <div style={{maxWidth:800,margin:'0 auto'}} ref={questionRef}>
+              <div className="card">
+
+                {/* Header */}
+                <div className="q-header">
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <div className="q-round-badge" style={{background:roundColors[round||1]}}>{round}</div>
+                    <div>
+                      <div style={{fontSize:15,fontWeight:600,color:'var(--text-primary)'}}>Round {round}: {roundType}</div>
+                      <div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>Question {qNo} of {totalQ}</div>
+                    </div>
+                  </div>
+
+                  {/* Progress */}
+                  <div style={{flex:1,maxWidth:160,display:'flex',flexDirection:'column',gap:4,margin:'0 16px'}}>
+                    <div className="progress-bar-wrap">
+                      <div className="progress-bar-fill" style={{width:`${(qNo/totalQ)*100}%`}}/>
+                    </div>
+                    <div style={{fontSize:11,color:'var(--text-muted)',textAlign:'center'}}>{qNo}/{totalQ}</div>
+                  </div>
+
+                  <div className={`timer-chip ${timerStopped?'timer-stopped':timeLeft<=10?'timer-urgent':'timer-normal'}`}>
+                    <span>⏱</span>
+                    <span>{timerStopped?'Done':timeLeft+'s'}</span>
+                  </div>
+                </div>
+
+                {roundDescription&&<div style={{padding:'8px 20px',fontSize:12,color:'var(--text-secondary)',background:'var(--surface-3)',borderBottom:'1px solid var(--border)'}}>{roundDescription}</div>}
+
+                <div style={{padding:'20px'}}>
+
+                  {/* Question content */}
+                  <div style={{marginBottom:16}}>
+                    {round===3 ? (
+                      <div className="q-box">
+                        {parsed?.skills?.length>0&&<div style={{marginBottom:12,fontSize:12,color:'var(--text-secondary)'}}>💡 Based on: {parsed.skills.slice(0,3).join(', ')}</div>}
+                        {(() => {
+                          const lines=question.split('\n');let cs='';let sc:string[]=[];const secs:{type:string;content:string[]}[]=[];
+                          lines.forEach(line=>{const t=line.trim().replace(/\*+/g,'').trim();if(!t)return;
+                            if(t.toLowerCase().startsWith('problem')||t.toLowerCase().startsWith('given')){if(cs)secs.push({type:cs,content:sc});cs='problem';sc=[t.replace(/^(problem|given)[:\s]*/i,'')];}
+                            else if(t.toLowerCase().startsWith('function')){if(cs)secs.push({type:cs,content:sc});cs='function';sc=[t];}
+                            else if(t.toLowerCase().startsWith('example')){if(cs)secs.push({type:cs,content:sc});cs='example';sc=[];}
+                            else if(t.toLowerCase().startsWith('constraint')){if(cs)secs.push({type:cs,content:sc});cs='constraints';sc=[t.replace(/^constraints?[:\s]*/i,'')];}
+                            else if(t.toLowerCase().startsWith('notes')){if(cs)secs.push({type:cs,content:sc});cs='notes';sc=[t.replace(/^notes?[:\s]*/i,'')];}
+                            else sc.push(t.replace(/^[-#\s]+/,''));
+                          });
+                          if(cs)secs.push({type:cs,content:sc});
+                          return secs.map((s,i)=>{
+                            if(s.type==='problem')return<div key={i} className="q-section q-section-problem"><div className="q-section-label" style={{color:'#1d4ed8'}}>Problem</div>{s.content.map((l,j)=><p key={j} style={{fontSize:14,color:'var(--text-primary)',lineHeight:1.65}}>{l}</p>)}</div>;
+                            if(s.type==='function')return<div key={i} className="q-section q-section-function"><div className="q-section-label" style={{color:'var(--brand-dark)'}}>Function Signature</div><code style={{fontSize:13,fontFamily:'monospace',color:'var(--text-primary)'}}>{s.content[0]}</code></div>;
+                            if(s.type==='example')return<div key={i} className="q-section q-section-example"><div className="q-section-label" style={{color:'#7c3aed'}}>Examples</div>{s.content.map((l,j)=><div key={j} style={{fontSize:13,fontFamily:'monospace',color:l.toLowerCase().includes('input')?'#16a34a':l.toLowerCase().includes('output')?'#1d4ed8':'var(--text-primary)'}}>{l}</div>)}</div>;
+                            if(s.type==='constraints')return<div key={i} className="q-section q-section-constraint"><div className="q-section-label" style={{color:'#b45309'}}>Constraints</div>{s.content.map((l,j)=><p key={j} style={{fontSize:13,color:'var(--text-primary)'}}>• {l}</p>)}</div>;
+                            return null;
+                          });
+                        })()}
+                      </div>
+                    ):round===2?(
+                      <div className="q-box">
+                        {question.split('\n').map((line,i)=>{const t=line.trim();if(!t)return null;
+                          if(t.startsWith('**Situation:**'))return<div key={i} className="q-section q-section-function"><div className="q-section-label" style={{color:'var(--brand-dark)'}}>Situation</div><p style={{fontSize:14,color:'var(--text-primary)',lineHeight:1.65}}>{t.replace('**Situation:**','').trim()}</p></div>;
+                          if(t.startsWith('**Question:**'))return<div key={i} className="q-section" style={{background:'#f5f3ff',borderLeft:'4px solid #8b5cf6'}}><div className="q-section-label" style={{color:'#7c3aed'}}>Question</div><p style={{fontSize:14,color:'var(--text-primary)',lineHeight:1.65,fontWeight:500}}>{t.replace('**Question:**','').trim()}</p></div>;
+                          return<p key={i} style={{fontSize:14,color:'var(--text-secondary)',marginBottom:6}}>{t}</p>;
+                        })}
+                      </div>
+                    ):(
+                      <h3 style={{fontSize:15,fontWeight:500,color:'var(--text-primary)',lineHeight:1.65}}>
+                        {question.split(/[ABCD]\)/)[0].replace('Question:','').trim()}
+                      </h3>
+                    )}
+                  </div>
+
+                  {/* MCQ Options */}
+                  {round===1&&question.includes("A)")&&(
+                    <div style={{marginBottom:16}}>
+                      {["A","B","C","D"].map(opt=>{
+                        const text=question.split(`${opt})`)[1]?.split(/[\n\r]|[BCD]\)/)[0]?.trim();
+                        if(!text)return null;
+                        return(
+                          <label
+                            key={opt}
+                            className={`mcq-option${selectedOption===opt?' selected':''}${showFeedback && selectedOption===opt && currentFeedback ? (currentFeedback.score >= 5 ? ' correct' : ' incorrect') : ''}${showFeedback?' disabled':''}`}
+                            onClick={()=>!showFeedback&&setSelectedOption(opt)}
+                          >
+                            <div className="mcq-radio">{selectedOption===opt&&<div className="mcq-dot"/>}</div>
+                            <span className="mcq-letter">{opt}.</span>
+                            <span className="mcq-text">{text}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Text / Code Answer */}
+                  {round!==1&&(
+                    <div style={{marginBottom:16}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                        <div style={{fontSize:13,fontWeight:600,color:'var(--text-primary)'}}>{round===3?'Your Code':'Your Answer'}</div>
+                        {round===3?<span style={{fontSize:12,color:'var(--text-muted)'}}>Lines: {lineCount}</span>:
+                         round===2?<span className={`char-counter ${charCount>=300?'char-ok':'char-warn'}`}>{charCount}/300 min chars</span>:null}
+                      </div>
+                      <textarea
+                        ref={answerRef}
+                        disabled={timeLeft<=0||showFeedback}
+                        className={`ai-textarea${round===3?' mono':''}`}
+                        placeholder={timeLeft<=0?"Time expired — submitted automatically":round===3?getPlaceholder(selectedLanguage):round===2?"Describe your approach:\n\n1. Immediate action:\n2. Reasoning:\n3. Expected outcome:":"Enter your answer…"}
+                        style={{minHeight:round===3?280:round===2?220:140}}
+                        onChange={e=>{
+                          if(round===3){setLineCount(e.target.value.split('\n').length);}
+                          if(round===2){setCharCount(e.target.value.length);}
+                        }}
+                        onPaste={blockClipboardAction}
+                        onCopy={blockClipboardAction}
+                        onCut={blockClipboardAction}
+                        onDrop={(e)=>e.preventDefault()}
+                        autoComplete="off"
+                        spellCheck={false}
+                      />
+                      <div className="clipboard-note">Copy, paste, cut and drag-drop are disabled for this round.</div>
+
+                      {/* Code runner */}
+                      {round===3&&(
+                        <div style={{marginTop:12}}>
+                          <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:10}}>
+                            <select value={selectedLanguage} onChange={e=>setSelectedLanguage(e.target.value)} disabled={showFeedback} style={{padding:'6px 10px',fontSize:12,borderRadius:'var(--radius-sm)',border:'1px solid var(--border)',background:'var(--surface)',color:'var(--text-primary)',cursor:'pointer'}}>
+                              {languageOptions.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}
+                            </select>
+                            <button className="btn btn-green" disabled={loading||!answerRef.current?.value.trim()||showFeedback} onClick={runCode}>
+                              {loading?'Running…':'▶ Run Code'}
+                            </button>
+                            <span style={{fontSize:12,color:'var(--text-muted)'}}>Compiled & executed with error checking</span>
+                          </div>
+                          {codeOutput&&<div className="code-output"><div style={{color:'#6b7280',marginBottom:6,fontSize:11}}>OUTPUT</div>{codeOutput}</div>}
+                          {codeError&&<div className="code-error" style={{marginTop:8}}><div style={{fontWeight:600,marginBottom:4}}>RUN ERROR</div>{codeError}</div>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Feedback */}
+                  {showFeedback&&currentFeedback&&(
+                    <div className="feedback-box" style={{marginBottom:16}}>
+                      <div className="feedback-label">AI Feedback</div>
+                      <p className="feedback-text">{currentFeedback.feedback}</p>
+                      <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
+                        <button className="btn btn-primary" onClick={()=>{
+                          if(nextQuestionData?.question){setRound(nextQuestionData.round);setQNo(nextQuestionData.question_no);setTotalQ(nextQuestionData.total_questions||getQuestionCount(nextQuestionData.round));setQuestion(nextQuestionData.question);setAskedQuestions(p=>[...p,nextQuestionData.question]);setTimePerQuestion(getTimeLimit(nextQuestionData.round));setTimeLeft(getTimeLimit(nextQuestionData.round));setSelectedOption("");if(answerRef.current)answerRef.current.value="";setCodeOutput("");setCodeError("");setNextQuestionData(null);}
+                          setShowFeedback(false);setCurrentFeedback(null);setTimerStopped(false);setCharCount(0);
+                        }}>Next Question →</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit */}
+                  <div style={{paddingTop:14,borderTop:'1px solid var(--border)'}}>
+                    {!showFeedback?(
+                      <button className="btn btn-primary btn-primary-lg" style={{width:'100%'}} disabled={loading||submitting||(round===1&&!selectedOption)} onClick={submitAnswer}>
+                        {(loading||submitting)?(<><svg className="spinner" width={16} height={16} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity=".25"/><path fill="currentColor" opacity=".75" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg>{submitting?'Submitting…':'Evaluating…'}</>):timeLeft<=0?'Submit Answer (Time Expired)':'Submit Answer →'}
+                      </button>
+                    ):(
+                      <div style={{textAlign:'center',fontSize:13,color:'var(--text-muted)'}}>Click "Next Question" above to continue</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
+    </>
   );
-
-
 }

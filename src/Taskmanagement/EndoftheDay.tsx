@@ -231,7 +231,7 @@ const canUpdateTask = (task: Task): boolean => {
 
       if (values.taskStatus === "COMPLETED") {
         payload = {
-          endOftheDay: values.endOftheDay,
+          endOftheDay: values.endOftheDay.trim(),
           id: values.id,
           taskStatus: values.taskStatus,
           userId: values.userId,
@@ -241,7 +241,7 @@ const canUpdateTask = (task: Task): boolean => {
         // PENDING status
         payload = {
           id: values.id,
-          pendingEod: values.endOftheDay, // Use endOftheDay field for pendingEod
+          pendingEod: values.endOftheDay.trim(), // Use endOftheDay field for pendingEod
           taskStatus: values.taskStatus,
           userId: values.userId,
         };
@@ -594,8 +594,6 @@ const canUpdateTask = (task: Task): boolean => {
                         <Paragraph className="text-gray-700 ml-4">
                           {task.planOftheDay}
                         </Paragraph>
-
-                     
                       </div>
                     </div>
                   </List.Item>
@@ -710,9 +708,25 @@ const canUpdateTask = (task: Task): boolean => {
                             message: "End of day note is required.",
                           },
                           {
-                            min: 50,
-                            message:
-                              "End of day note must be at least 50 characters long.",
+                            validator: (_, value) => {
+                              if (!value || !value.trim()) {
+                                return Promise.reject(
+                                  new Error(
+                                    "End of day note cannot contain only empty spaces.",
+                                  ),
+                                );
+                              }
+
+                              if (value.trim().length < 50) {
+                                return Promise.reject(
+                                  new Error(
+                                    "End of day note must be at least 50 characters long.",
+                                  ),
+                                );
+                              }
+
+                              return Promise.resolve();
+                            },
                           },
                         ]}
                       >
@@ -744,10 +758,12 @@ const canUpdateTask = (task: Task): boolean => {
                                   icon={<UploadOutlined />}
                                   className="bg-[#008CBA]"
                                   onClick={() => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.accept = 'image/*,.pdf,.doc,.docx';
-                                    input.onchange = (e: any) => handleFileChange(e);
+                                    const input =
+                                      document.createElement("input");
+                                    input.type = "file";
+                                    input.accept = "image/*,.pdf,.doc,.docx";
+                                    input.onchange = (e: any) =>
+                                      handleFileChange(e);
                                     input.click();
                                   }}
                                 >
@@ -762,7 +778,9 @@ const canUpdateTask = (task: Task): boolean => {
                             <div className="py-3">
                               <div className="flex items-center justify-center mb-2">
                                 <Spin />
-                                <Text className="ml-2 text-sm">Uploading {fileName}...</Text>
+                                <Text className="ml-2 text-sm">
+                                  Uploading {fileName}...
+                                </Text>
                               </div>
                               <Progress
                                 percent={uploadProgress}
@@ -780,7 +798,9 @@ const canUpdateTask = (task: Task): boolean => {
                                 <div className="flex items-center flex-1">
                                   <CheckCircleOutlined className="text-xl text-green-500 mr-2" />
                                   <div className="flex-1">
-                                    <Text strong className="block text-sm">{fileName}</Text>
+                                    <Text strong className="block text-sm">
+                                      {fileName}
+                                    </Text>
                                     <Tag color="success" className="mt-1">
                                       Upload Successful
                                     </Tag>
@@ -802,9 +822,14 @@ const canUpdateTask = (task: Task): boolean => {
                                 <div className="flex items-center flex-1">
                                   <InfoCircleOutlined className="text-xl text-red-500 mr-2" />
                                   <div className="flex-1">
-                                    <Text strong className="block text-sm text-red-600">{fileName}</Text>
+                                    <Text
+                                      strong
+                                      className="block text-sm text-red-600"
+                                    >
+                                      {fileName}
+                                    </Text>
                                     <Tag color="error" className="mt-1">
-                                    Upload Failed
+                                      Upload Failed
                                     </Tag>
                                   </div>
                                 </div>

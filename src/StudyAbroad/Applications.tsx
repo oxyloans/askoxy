@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Building2, 
   Search, 
@@ -49,6 +50,30 @@ interface ApplicationsProps {
   onNavigate?: (tab: string) => void;
 }
 
+const getStoredValue = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const getAccessToken = (): string | null =>
+  getStoredValue("accessToken") || getStoredValue("token");
+
+const getStoredUserId = (): string | null =>
+  getStoredValue("userId") ||
+  getStoredValue("customerId") ||
+  getStoredValue("Customer_ID") ||
+  getStoredValue("USER_ID") ||
+  getStoredValue("user_id");
+
+const redirectToLogin = () => {
+  sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+  sessionStorage.setItem("fromStudyAbroad", "true");
+  window.location.href = "/whatsappregister?primaryType=STUDENT";
+};
+
 const Applications: React.FC<ApplicationsProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -98,10 +123,13 @@ const Applications: React.FC<ApplicationsProps> = ({ onNavigate }) => {
       setError(null);
       
       // Get userId from localStorage (try both 'userId' and 'customerId')
-      const userId = localStorage.getItem('userId') || localStorage.getItem('customerId');
+      const userId = getStoredUserId();
+      const token = getAccessToken();
       
-      if (!userId) {
-        throw new Error('User ID not found in localStorage');
+      if (!userId || !token) {
+        setError('Session expired. Please login again.');
+        redirectToLogin();
+        return;
       }
 
       const baseUrl = 'https://meta.oxyloans.com/api';
@@ -111,8 +139,15 @@ const Applications: React.FC<ApplicationsProps> = ({ onNavigate }) => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin();
+        throw new Error('Session expired. Please login again.');
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

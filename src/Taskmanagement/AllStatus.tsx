@@ -107,17 +107,11 @@ interface PlanVideoData {
   date: string;
 }
 
-interface PlanVideoResponse {
-  name: string;
-  list: PlanVideoData[];
-}
-
 interface EditFormValues {
   planOftheDay?: string;
   endOftheDay?: string;
 }
 
-// Consistent styles for all buttons
 const buttonStyle = {
   width: "120px",
   height: "40px",
@@ -134,7 +128,7 @@ const editButtonStyle = {
 
 const AllStatusPage: React.FC = () => {
   const [editForm] = Form.useForm<EditFormValues>();
-  const [status, setStatus] = useState<string>("PENDING"); // Default status changed to PENDING
+  const [status, setStatus] = useState<string>("PENDING");
   const [tasks, setTasks] = useState<TaskData[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<TaskData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -147,24 +141,25 @@ const AllStatusPage: React.FC = () => {
   const [editingField, setEditingField] = useState<"plan" | "eod" | null>(null);
   const [planVideos, setPlanVideos] = useState<PlanVideoData[]>([]);
   const [loadingVideos, setLoadingVideos] = useState<boolean>(false);
-  const [videoPageNo, setVideoPageNo] = useState<number>(1);
+  const [videoPageNo] = useState<number>(1);
   const [videoPageSize] = useState<number>(100);
+
   const taskId = sessionStorage.getItem("taskId");
 
   useEffect(() => {
-    // Get userId from localStorage
     const storedUserId = sessionStorage.getItem("userId");
+
     if (storedUserId) {
       setUserId(storedUserId);
-      // Automatically call the employeUserIdSaving API when page opens
-      employeeApi.get(
-        `${BASE_URL}/ai-service/agent/employeUserIdSaving`
-      
-      ).catch(error => console.error("Error calling employeUserIdSaving:", error));
+
+      employeeApi
+        .get(`${BASE_URL}/ai-service/agent/employeUserIdSaving`)
+        .catch((error) =>
+          console.error("Error calling employeUserIdSaving:", error),
+        );
     }
   }, []);
 
-  // Auto-fetch tasks when userId, status, or activeTab changes
   useEffect(() => {
     if (userId) {
       if (activeTab === "general") {
@@ -176,25 +171,20 @@ const AllStatusPage: React.FC = () => {
     }
   }, [userId, status, activeTab]);
 
-  // Effect for filtering tasks based on search text
   useEffect(() => {
     if (tasks.length > 0) {
       const filtered = tasks.filter((task) => {
         const searchLower = searchText.toLowerCase();
+
         return (
-          (task.planOftheDay &&
-            task.planOftheDay.toLowerCase().includes(searchLower)) ||
-          (task.endOftheDay &&
-            task.endOftheDay.toLowerCase().includes(searchLower)) ||
-          (task.taskAssignedBy &&
-            task.taskAssignedBy.toLowerCase().includes(searchLower)) ||
-          (task.updatedBy && task.updatedBy.toLowerCase().includes(searchLower))
+          task.planOftheDay?.toLowerCase().includes(searchLower) ||
+          task.endOftheDay?.toLowerCase().includes(searchLower) ||
+          task.taskAssignedBy?.toLowerCase().includes(searchLower) ||
+          task.updatedBy?.toLowerCase().includes(searchLower)
         );
       });
 
-      // Apply sorting
-      const sorted = sortTasks(filtered, sortOrder);
-      setFilteredTasks(sorted);
+      setFilteredTasks(sortTasks(filtered, sortOrder));
     } else {
       setFilteredTasks([]);
     }
@@ -204,29 +194,39 @@ const AllStatusPage: React.FC = () => {
     return [...tasksToSort].sort((a, b) => {
       const dateA = new Date(a.planCreatedAt).getTime();
       const dateB = new Date(b.planCreatedAt).getTime();
+
       return order === "asc" ? dateA - dateB : dateB - dateA;
     });
-  };
-
-  const handleSortOrderChange = (order: "asc" | "desc") => {
-    setSortOrder(order);
   };
 
   const handleUpdate = async (values: EditFormValues) => {
     if (!editingTaskId || !editingField) return;
 
     const field = editingField === "plan" ? "planOftheDay" : "endOftheDay";
+    const value = values[field as keyof EditFormValues]?.trim();
+
+    if (!value) {
+      notification.warning({
+        message: "Validation Error",
+        description: "Empty spaces are not allowed. Please enter valid text.",
+        placement: "topRight",
+      });
+      return;
+    }
+
+    const currentTask = tasks.find((t) => t.id === editingTaskId);
+
     const payload = {
       id: editingTaskId,
-      [field]: values[field as keyof EditFormValues] || "",
-      taskStatus: "PENDING",
-      userId: userId,
+      [field]: value,
+      taskStatus: currentTask?.taskStatus || status,
+      userId,
     };
 
     try {
       const response = await employeeApi.patch(
         `${BASE_URL}/user-service/write/userTaskUpdate`,
-        payload
+        payload,
       );
 
       if (response.data.success) {
@@ -235,23 +235,25 @@ const AllStatusPage: React.FC = () => {
             task.id === editingTaskId
               ? {
                   ...task,
-                  [field]: values[field as keyof EditFormValues] || "",
-                  taskStatus: "PENDING",
+                  [field]: value,
+                  taskStatus: currentTask?.taskStatus || status,
                 }
-              : task
-          )
+              : task,
+          ),
         );
+
         setFilteredTasks((prev) =>
           prev.map((task) =>
             task.id === editingTaskId
               ? {
                   ...task,
-                  [field]: values[field as keyof EditFormValues] || "",
-                  taskStatus: "PENDING",
+                  [field]: value,
+                  taskStatus: currentTask?.taskStatus || status,
                 }
-              : task
-          )
+              : task,
+          ),
         );
+
         notification.success({
           message: "Success",
           description: `${
@@ -259,6 +261,7 @@ const AllStatusPage: React.FC = () => {
           } updated successfully.`,
           placement: "topRight",
         });
+
         setEditingTaskId(null);
         setEditingField(null);
         editForm.resetFields();
@@ -271,6 +274,7 @@ const AllStatusPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Error updating task:", error);
+
       notification.error({
         message: "Error",
         description: "An error occurred while updating the task.",
@@ -299,18 +303,21 @@ const AllStatusPage: React.FC = () => {
 
   const fetchPlanVideos = async () => {
     setLoadingVideos(true);
+
     try {
       const response = await employeeApi.post(
         `${BASE_URL}/ai-service/agent/planOfTheDayBasedOnUserId`,
         {
           pageNo: videoPageNo,
           pageSize: videoPageSize,
-          userId: userId,
-        }
+          userId,
+        },
       );
 
       if (response.data && response.data.length > 0) {
         setPlanVideos(response.data[0].list || []);
+      } else {
+        setPlanVideos([]);
       }
     } catch (error) {
       console.error("Error fetching plan videos:", error);
@@ -321,88 +328,98 @@ const AllStatusPage: React.FC = () => {
 
   const isEditingPlan = (taskId: string) =>
     editingTaskId === taskId && editingField === "plan";
+
   const isEditingEod = (taskId: string) =>
     editingTaskId === taskId && editingField === "eod";
 
   const getVideoForDate = (date: string, type: "plan" | "eod") => {
     const video = planVideos.find((v) => v.date === date);
+
     if (!video) return null;
+
     return type === "plan" ? video.planOfTheDay : video.endOfTheDay;
   };
 
   const isVideoUrl = (url: string | null) => {
     if (!url) return false;
-    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
-    return videoExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes('s3');
-  };
 
-  const renderMediaContent = (content: string | null, videoUrl: string | null, label: string) => {
-    const hasVideo = videoUrl && isVideoUrl(videoUrl);
-    
+    const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".avi"];
+
     return (
-      <>
-        <div className="bg-white p-3 rounded-md border border-gray-100 mb-3" style={{ minHeight: "150px", maxHeight: "200px", overflowY: "auto" }}>
-          <Text className="whitespace-pre-wrap text-gray-700 text-sm">
-            {content || `No ${label.toLowerCase()} recorded`}
-          </Text>
-        </div>
-        {hasVideo && (
-          <div className="bg-white p-2 rounded-md border border-gray-100">
-            <video
-              controls
-              className="w-full rounded-lg"
-              style={{ height: "220px", objectFit: "contain", backgroundColor: "#000" }}
-            >
-              <source src={videoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-        )}
-      </>
+      videoExtensions.some((ext) => url.toLowerCase().includes(ext)) ||
+      url.includes("s3")
     );
   };
 
-  const fetchAllTasks = async () => {
+const renderMediaContent = (
+  content: string | null,
+  videoUrl: string | null,
+  label: string
+) => {
+  const hasVideo = !!videoUrl && isVideoUrl(videoUrl);
+
+  return (
+    <div className="flex h-full flex-col gap-3">
+      <div
+        className={`overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 ${
+          hasVideo
+            ? "h-[170px] sm:h-[185px] md:h-[200px]"
+            : "min-h-[260px] flex-1"
+        }`}
+      >
+        <Text className="whitespace-pre-wrap break-words text-[13px] leading-6 text-gray-700 sm:text-sm">
+          {content?.trim() || `No ${label.toLowerCase()} recorded`}
+        </Text>
+      </div>
+
+      {hasVideo && (
+        <div className="rounded-lg border border-gray-200 bg-white p-2">
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            className="h-[180px] w-full rounded-md bg-black object-contain sm:h-[220px] md:h-[240px]"
+          >
+            <source src={videoUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
+    </div>
+  );
+};  const fetchAllTasks = async () => {
     setLoading(true);
+
     try {
       const response = await employeeApi.post(
         `${BASE_URL}/user-service/write/getAllTaskUpdates`,
         {
           taskStatus: status,
-          userId: userId,
+          userId,
           id: taskId,
-        }
+        },
       );
 
-      const sortedTasks = sortTasks(response.data, sortOrder);
+      const sortedTasks = sortTasks(response.data || [], sortOrder);
+
       setTasks(sortedTasks);
       setFilteredTasks(sortedTasks);
 
-      if (response.data.length === 0) {
+      if (!response.data || response.data.length === 0) {
         notification.info({
           message: "No Tasks Found",
           description: `No ${status.toLowerCase()} tasks found.`,
           placement: "topRight",
           icon: <FileSearchOutlined style={{ color: "#1890ff" }} />,
         });
-      } else {
-        notification.success({
-          message: "Tasks Loaded",
-          description: `Found ${
-            response.data.length
-          } ${status.toLowerCase()} tasks.`,
-          placement: "topRight",
-          duration: 3,
-          icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
-        });
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
+
       notification.error({
         message: "Error Fetching Tasks",
         description: "Failed to fetch tasks. Please try again later.",
         placement: "topRight",
-        duration: 4,
       });
     } finally {
       setLoading(false);
@@ -415,12 +432,12 @@ const AllStatusPage: React.FC = () => {
         message: "Missing Date",
         description: "Please select a date.",
         placement: "topRight",
-        duration: 3,
       });
       return;
     }
 
     setLoading(true);
+
     try {
       const formattedDate = selectedDate.format("YYYY-MM-DD");
 
@@ -429,38 +446,29 @@ const AllStatusPage: React.FC = () => {
         {
           taskStatus: status,
           specificDate: formattedDate,
-          userId: userId,
-        }
+          userId,
+        },
       );
 
-      const sortedTasks = sortTasks(response.data, sortOrder);
+      const sortedTasks = sortTasks(response.data || [], sortOrder);
+
       setTasks(sortedTasks);
       setFilteredTasks(sortedTasks);
 
-      if (response.data.length === 0) {
+      if (!response.data || response.data.length === 0) {
         notification.info({
           message: "No Tasks Found",
           description: `No ${status.toLowerCase()} tasks found for ${formattedDate}.`,
           placement: "topRight",
-          duration: 3,
-          icon: <FileSearchOutlined style={{ color: "#1890ff" }} />,
-        });
-      } else {
-        notification.success({
-          message: "Tasks Found",
-          description: `Found ${response.data.length} tasks for ${formattedDate}.`,
-          placement: "topRight",
-          duration: 3,
-          icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
         });
       }
     } catch (error) {
       console.error("Error fetching tasks by date:", error);
+
       notification.error({
         message: "Fetch Failed",
         description: "Failed to fetch tasks. Please try again later.",
         placement: "topRight",
-        duration: 4,
       });
     } finally {
       setLoading(false);
@@ -476,18 +484,15 @@ const AllStatusPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    // Trim whitespace and reject if empty
-    const trimmedValue = value.trim();
-    setSearchText(trimmedValue);
+    setSearchText(value.trim());
   };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
 
     try {
-      const date = new Date(dateString);
-      return date.toLocaleString();
-    } catch (e) {
+      return new Date(dateString).toLocaleString();
+    } catch {
       return dateString;
     }
   };
@@ -502,22 +507,21 @@ const AllStatusPage: React.FC = () => {
   const renderPendingResponses = (responses: PendingUserTaskResponse[]) => {
     if (!responses || responses.length === 0) return null;
 
-    // Sort responses by createdAt date in descending order (newest first)
     const sortedResponses = [...responses].sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+
       return dateB - dateA;
     });
 
     return (
-      <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:p-4">
         <Collapse
           bordered={false}
           expandIcon={({ isActive }) => (
             <DownOutlined rotate={isActive ? 180 : 0} />
           )}
           className="bg-transparent"
-          defaultActiveKey={["1"]}
         >
           <Panel
             header={
@@ -527,12 +531,12 @@ const AllStatusPage: React.FC = () => {
               </div>
             }
             key="1"
-            className="bg-white rounded-md mb-2 shadow-sm"
+            className="rounded-lg bg-white"
           >
-            {sortedResponses.map((response, index) => (
+            {sortedResponses.map((response) => (
               <div
                 key={response.id}
-                className="mb-3 border-b border-gray-100 pb-3 last:border-b-0 last:pb-0"
+                className="mb-3 border-b border-gray-100 pb-3 last:mb-0 last:border-b-0 last:pb-0"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag
@@ -542,13 +546,13 @@ const AllStatusPage: React.FC = () => {
                   </Tag>
 
                   {response.adminFilePath && (
-                    <div className="flex items-center ml-auto">
-                      <FileTextOutlined className="text-blue-500 mr-1" />
+                    <div className="ml-auto flex items-center">
+                      <FileTextOutlined className="mr-1 text-blue-500" />
                       <a
                         href={response.adminFilePath}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:text-blue-700 text-sm"
+                        className="text-sm text-blue-500 hover:text-blue-700"
                       >
                         {response.adminFileName || "View Attachment"}
                       </a>
@@ -556,26 +560,26 @@ const AllStatusPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                   {response.pendingEod && (
-                    <div className="bg-white p-2 rounded-md border border-gray-100">
-                      <Text className="text-gray-600 text-xs block mb-1">
+                    <div className="rounded-lg border border-gray-100 bg-white p-3">
+                      <Text className="mb-1 block text-xs text-gray-600">
                         Employee Description:
                       </Text>
-                      <Text className="text-gray-800 text-sm">
+                      <Text className="text-sm text-gray-800">
                         {response.pendingEod}
                       </Text>
                     </div>
                   )}
 
                   {response.adminDescription && (
-                    <div className="bg-white p-2 rounded-md border border-gray-100">
-                      <Text className="text-gray-600 text-xs block mb-1">
-                        <InfoCircleOutlined className="mr-1" /> Admin
-                        Description:
+                    <div className="rounded-lg border border-gray-100 bg-white p-3">
+                      <Text className="mb-1 block text-xs text-gray-600">
+                        <InfoCircleOutlined className="mr-1" />
+                        Admin Description:
                       </Text>
                       <Paragraph
-                        className="text-gray-800 text-sm"
+                        className="mb-0 text-sm text-gray-800"
                         ellipsis={{
                           rows: 2,
                           expandable: true,
@@ -598,37 +602,39 @@ const AllStatusPage: React.FC = () => {
   const renderTaskCard = (task: TaskData) => (
     <Card
       key={task.id}
-      className="mb-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
+      className="mb-4 overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-md"
       headStyle={{
         backgroundColor:
           task.taskStatus === "COMPLETED" ? "#f6ffed" : "#fff7e6",
         borderBottom: `1px solid ${
           task.taskStatus === "COMPLETED" ? "#b7eb8f" : "#ffe58f"
         }`,
-        borderRadius: "8px 8px 0 0",
-        padding: "12px 20px",
+        padding: "12px 16px",
       }}
-      bodyStyle={{ padding: "16px 20px" }}
+      bodyStyle={{ padding: "14px" }}
       title={
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="flex items-center gap-2 mb-2 sm:mb-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-2">
             <Avatar
               icon={<UserOutlined />}
               style={{
                 backgroundColor:
                   task.taskStatus === "COMPLETED" ? "#52c41a" : "#faad14",
                 color: "white",
+                flexShrink: 0,
               }}
             />
-            <div>
-              <Text strong className="text-gray-800 text-lg">
-                {task.taskAssignedBy}
+
+            <div className="min-w-0">
+              <Text strong className="block truncate text-base text-gray-800">
+                {task.taskAssignedBy || "Task"}
               </Text>
-              <Text className="text-gray-500 text-sm block sm:inline sm:ml-2">
-                Updated by: {task.updatedBy}
+              <Text className="block text-xs text-gray-500 sm:text-sm">
+                Updated by: {task.updatedBy || "N/A"}
               </Text>
             </div>
           </div>
+
           <Badge
             status={task.taskStatus === "COMPLETED" ? "success" : "warning"}
             text={
@@ -649,16 +655,18 @@ const AllStatusPage: React.FC = () => {
         </div>
       }
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-          <div className="flex justify-between items-center mb-2">
-            <Text className="text-gray-600 font-medium">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+        <div className="flex h-full min-h-[320px] flex-col rounded-xl border border-gray-200 bg-gray-50 p-3 sm:p-4">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Text className="font-medium text-gray-700">
               📋 Plan of the Day
             </Text>
-            <div className="flex items-center gap-2">
+
+            <div className="flex flex-wrap items-center gap-2">
               <Text className="text-xs text-gray-500">
                 📅 {dayjs(task.planCreatedAt).format("DD-MM-YYYY")}
               </Text>
+
               {!isEditingPlan(task.id) && (
                 <Button
                   onClick={() => handleEditPlan(task)}
@@ -666,25 +674,37 @@ const AllStatusPage: React.FC = () => {
                   size="small"
                   icon={<EditOutlined />}
                 >
-                  Edit Plan
+                  <span className="hidden sm:inline">Edit Plan</span>
                 </Button>
               )}
             </div>
           </div>
+
           {isEditingPlan(task.id) ? (
             <Form form={editForm} onFinish={handleUpdate} layout="vertical">
               <Form.Item
                 name="planOftheDay"
-                rules={[{ required: true, message: "Please enter your plan!" }]}
+                rules={[
+                  { required: true, message: "Please enter your plan!" },
+                  {
+                    validator: (_, value) => {
+                      if (!value || value.trim().length === 0) {
+                        return Promise.reject("Empty spaces are not allowed.");
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
               >
                 <Input.TextArea
-                  rows={5}
+                  rows={6}
                   placeholder="Enter plan of the day..."
                   maxLength={8000}
                   showCount
                 />
               </Form.Item>
-              <Space style={{ display: "flex", gap: 8 }}>
+
+              <Space wrap>
                 <Button
                   htmlType="submit"
                   type="primary"
@@ -693,32 +713,31 @@ const AllStatusPage: React.FC = () => {
                 >
                   Save Changes
                 </Button>
+
                 <Button onClick={handleCancelEdit}>Cancel</Button>
               </Space>
             </Form>
           ) : (
-            <>
-              {renderMediaContent(
-                task.planOftheDay,
-                getVideoForDate(
-                  dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
-                  "plan"
-                ),
-                "Plan of the Day"
-              )}
-            </>
+            renderMediaContent(
+              task.planOftheDay,
+              getVideoForDate(
+                dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
+                "plan",
+              ),
+              "Plan of the Day",
+            )
           )}
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-          <div className="flex justify-between items-center mb-2">
-            <Text className="text-gray-600 font-medium">
-              ✅ End of the Day
-            </Text>
-            <div className="flex items-center gap-2">
+        <div className="flex h-full min-h-[320px] flex-col rounded-xl border border-gray-200 bg-gray-50 p-3 sm:p-4">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Text className="font-medium text-gray-700">✅ End of the Day</Text>
+
+            <div className="flex flex-wrap items-center gap-2">
               <Text className="text-xs text-gray-500">
                 📅 {dayjs(task.planCreatedAt).format("DD-MM-YYYY")}
               </Text>
+
               {!isEditingEod(task.id) && (
                 <Button
                   onClick={() => handleEditEod(task)}
@@ -726,11 +745,12 @@ const AllStatusPage: React.FC = () => {
                   size="small"
                   icon={<EditOutlined />}
                 >
-                  Edit EOD
+                  <span className="hidden sm:inline">Edit EOD</span>
                 </Button>
               )}
             </div>
           </div>
+
           {isEditingEod(task.id) ? (
             <Form form={editForm} onFinish={handleUpdate} layout="vertical">
               <Form.Item
@@ -740,16 +760,25 @@ const AllStatusPage: React.FC = () => {
                     required: true,
                     message: "Please enter end of day report!",
                   },
+                  {
+                    validator: (_, value) => {
+                      if (!value || value.trim().length === 0) {
+                        return Promise.reject("Empty spaces are not allowed.");
+                      }
+                      return Promise.resolve();
+                    },
+                  },
                 ]}
               >
                 <Input.TextArea
-                  rows={8}
+                  rows={6}
                   placeholder="Enter end of the day report..."
                   maxLength={8000}
                   showCount
                 />
               </Form.Item>
-              <Space style={{ display: "flex", gap: 8 }}>
+
+              <Space wrap>
                 <Button
                   htmlType="submit"
                   type="primary"
@@ -758,38 +787,36 @@ const AllStatusPage: React.FC = () => {
                 >
                   Save Changes
                 </Button>
+
                 <Button onClick={handleCancelEdit}>Cancel</Button>
               </Space>
             </Form>
           ) : (
-            <>
-              {renderMediaContent(
-                task.endOftheDay,
-                getVideoForDate(
-                  dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
-                  "eod"
-                ),
-                "End of the Day"
-              )}
-            </>
+            renderMediaContent(
+              task.endOftheDay,
+              getVideoForDate(
+                dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
+                "eod",
+              ),
+              "End of the Day",
+            )
           )}
         </div>
       </div>
 
-      {task.pendingUserTaskResponse &&
-        task.pendingUserTaskResponse.length > 0 &&
+      {task.pendingUserTaskResponse?.length > 0 &&
         renderPendingResponses(task.pendingUserTaskResponse)}
 
-      <Divider className="my-3" />
+      <Divider className="my-4" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        <div className="flex items-center gap-2 text-gray-500">
-          <CalendarOutlined />
+      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+        <div className="flex items-start gap-2 text-gray-500">
+          <CalendarOutlined className="mt-1" />
           <Text>Created: {formatDate(task.planCreatedAt)}</Text>
         </div>
 
-        <div className="flex items-center gap-2 text-gray-500">
-          <CalendarOutlined />
+        <div className="flex items-start gap-2 text-gray-500">
+          <CalendarOutlined className="mt-1" />
           <Text>Updated: {formatDate(task.planUpdatedAt)}</Text>
         </div>
       </div>
@@ -798,19 +825,27 @@ const AllStatusPage: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="p-2 sm:p-4 md:p-6 bg-gray-50 min-h-screen">
+      <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
         <Card
-          className="shadow-md rounded-lg overflow-hidden border-0"
+          className="overflow-hidden rounded-xl border-0 shadow-md"
           bodyStyle={{ padding: 0 }}
         >
-          <div className="bg-gradient-to-r from-white-50 to-blue-50 p-4 text-black">
-            <Title level={4} className="text-black mb-1">
+          <div className="bg-gradient-to-r from-white to-blue-50 p-4 sm:p-5">
+            <Title level={4} className="mb-1 text-gray-900">
               Daily Activity Status
             </Title>
+            <Text className="text-sm text-gray-500">
+              View your Plan of the Day and End of the Day updates.
+            </Text>
           </div>
 
-          <div className="p-2 sm:p-4">
-            <Tabs activeKey={activeTab} onChange={handleTabChange} type="card">
+          <div className="p-3 sm:p-4">
+            <Tabs
+              activeKey={activeTab}
+              onChange={handleTabChange}
+              type="card"
+              className="responsive-tabs"
+            >
               <TabPane
                 tab={
                   <span>
@@ -820,6 +855,7 @@ const AllStatusPage: React.FC = () => {
                 }
                 key="general"
               />
+
               <TabPane
                 tab={
                   <span>
@@ -831,12 +867,14 @@ const AllStatusPage: React.FC = () => {
               />
             </Tabs>
 
-            <Card className="bg-gray-50 mb-4 border border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="mb-4 rounded-xl border border-gray-200 bg-gray-50">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <Text className="text-gray-600 block mb-1 font-medium">
-                    <FilterOutlined className="mr-1" /> Status Filter
+                  <Text className="mb-1 block font-medium text-gray-600">
+                    <FilterOutlined className="mr-1" />
+                    Status Filter
                   </Text>
+
                   <Select
                     value={status}
                     onChange={handleStatusChange}
@@ -846,13 +884,14 @@ const AllStatusPage: React.FC = () => {
                   >
                     <Option value="PENDING">
                       <div className="flex items-center">
-                        <ClockCircleOutlined className="text-orange-500 mr-2" />
+                        <ClockCircleOutlined className="mr-2 text-orange-500" />
                         <span>PENDING</span>
                       </div>
                     </Option>
+
                     <Option value="COMPLETED">
                       <div className="flex items-center">
-                        <CheckCircleOutlined className="text-green-500 mr-2" />
+                        <CheckCircleOutlined className="mr-2 text-green-500" />
                         <span>COMPLETED</span>
                       </div>
                     </Option>
@@ -861,9 +900,11 @@ const AllStatusPage: React.FC = () => {
 
                 {activeTab === "byDate" && (
                   <div>
-                    <Text className="text-gray-600 block mb-1 font-medium">
-                      <CalendarOutlined className="mr-1" /> Select Date
+                    <Text className="mb-1 block font-medium text-gray-600">
+                      <CalendarOutlined className="mr-1" />
+                      Select Date
                     </Text>
+
                     <DatePicker
                       value={selectedDate}
                       onChange={handleDateChange}
@@ -879,7 +920,7 @@ const AllStatusPage: React.FC = () => {
                     onClick={
                       activeTab === "general" ? fetchAllTasks : fetchTasksByDate
                     }
-                    className="bg-[#008CBA] shadow-sm mr-2"
+                    className="w-full bg-[#008CBA] shadow-sm sm:w-auto"
                     style={buttonStyle}
                     icon={<SearchOutlined />}
                   >
@@ -889,28 +930,23 @@ const AllStatusPage: React.FC = () => {
               </div>
             </Card>
 
-            {/* Search and Sort Bar */}
             {(tasks.length > 0 || searchText) && (
-              <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-                <div className="mb-3 md:mb-0 w-full md:w-auto">
-                  <Search
-                    placeholder="Search in tasks..."
-                    allowClear
-                    value={searchText}
-                    onChange={(e) => {
-                      const trimmedValue = e.target.value.trim();
-                      setSearchText(trimmedValue);
-                    }}
-                    onSearch={handleSearch}
-                    style={{ width: "100%", minWidth: "250px" }}
-                  />
-                </div>
+              <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <Search
+                  placeholder="Search in tasks..."
+                  allowClear
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value.trimStart())}
+                  onSearch={handleSearch}
+                  className="w-full md:max-w-sm"
+                />
 
-                <div className="flex items-center">
-                  <Text className="mr-2 text-gray-600">Sort by date:</Text>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Text className="text-gray-600">Sort by date:</Text>
+
                   <Radio.Group
                     value={sortOrder}
-                    onChange={(e) => handleSortOrderChange(e.target.value)}
+                    onChange={(e) => setSortOrder(e.target.value)}
                     buttonStyle="solid"
                   >
                     <Radio.Button value="desc">
@@ -919,6 +955,7 @@ const AllStatusPage: React.FC = () => {
                         Newest
                       </Space>
                     </Radio.Button>
+
                     <Radio.Button value="asc">
                       <Space>
                         <SortAscendingOutlined />
@@ -931,8 +968,8 @@ const AllStatusPage: React.FC = () => {
             )}
 
             {loading ? (
-              <div className="flex flex-col items-center justify-center p-8 sm:p-16">
-                <Spin size="small" />
+              <div className="flex flex-col items-center justify-center p-10 sm:p-16">
+                <Spin size="large" />
                 <Text className="mt-4 text-gray-500">Loading tasks...</Text>
               </div>
             ) : filteredTasks.length > 0 ? (
@@ -942,30 +979,30 @@ const AllStatusPage: React.FC = () => {
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={
                   <div className="text-center">
-                    <Text className="text-gray-500 block mb-2">
+                    <Text className="mb-2 block text-gray-500">
                       No matching tasks found
                     </Text>
-                    <Text className="text-gray-400 text-sm">
+                    <Text className="text-sm text-gray-400">
                       Try changing your search criteria
                     </Text>
                   </div>
                 }
-                className="py-8 sm:py-16"
+                className="py-10 sm:py-16"
               />
             ) : (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={
                   <div className="text-center">
-                    <Text className="text-gray-500 block mb-2">
+                    <Text className="mb-2 block text-gray-500">
                       No tasks found
                     </Text>
-                    <Text className="text-gray-400 text-sm">
+                    <Text className="text-sm text-gray-400">
                       Use the filters above to search for tasks
                     </Text>
                   </div>
                 }
-                className="py-8 sm:py-16"
+                className="py-10 sm:py-16"
               />
             )}
           </div>

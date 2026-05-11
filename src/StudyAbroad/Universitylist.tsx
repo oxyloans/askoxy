@@ -127,12 +127,9 @@ const handleAuthError = (error: any, navigate: any) => {
   if (error.response?.status === 401 || error.response?.status === 403) {
     localStorage.removeItem('accessToken');
     sessionStorage.removeItem('accessToken');
-    navigate('/login', { 
-      state: { 
-        message: 'Session expired. Please log in again.',
-        from: window.location.pathname 
-      } 
-    });
+    sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+    sessionStorage.setItem('fromStudyAbroad', 'true');
+    navigate('/whatsappregister?primaryType=STUDENT');
     return true;
   }
   return false;
@@ -223,7 +220,9 @@ const UniversityListPage: React.FC = () => {
       setError('Authentication required. Please log in.');
       setLoading(false);
       setInitialLoad(false);
-      navigate('/login', { state: { message: 'Please log in to access this page.' } });
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+      sessionStorage.setItem('fromStudyAbroad', 'true');
+      navigate('/whatsappregister?primaryType=STUDENT');
       return;
     }
 
@@ -271,7 +270,9 @@ const UniversityListPage: React.FC = () => {
     if (!token) {
       setError('Authentication required. Please log in.');
       setLoading(false);
-      navigate('/login', { state: { message: 'Please log in to continue.' } });
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+      sessionStorage.setItem('fromStudyAbroad', 'true');
+      navigate('/whatsappregister?primaryType=STUDENT');
       return;
     }
 
@@ -409,7 +410,9 @@ const UniversityListPage: React.FC = () => {
   const handleRetry = () => {
     const token = getAccessToken();
     if (!token) {
-      navigate('/login', { state: { message: 'Please log in to continue.' } });
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search);
+      sessionStorage.setItem('fromStudyAbroad', 'true');
+      navigate('/whatsappregister?primaryType=STUDENT');
       return;
     }
     fetchUniversities(currentPage);

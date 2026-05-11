@@ -78,6 +78,7 @@ import RecruitmentKnightRidersPage from "./components/JPL/RecruitmentKnightRider
 import RoyalJobSeekersPage from "./components/JPL/RoyalJobSeekersPage";
 import MarketplaceRaisersPage from "./components/JPL/MarketplaceRaisersPage";
 import TrainingInstituteGiantsPage from "./components/JPL/TalentSuperKingsPage";
+import LoginAdmin from "./AIMockInterview/admin/LoginAdmin";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -634,7 +635,10 @@ const App: React.FC = () => {
                 path="/insurvibe-code-builder"
                 element={<FinvibeLanding />}
               />
-
+            <Route
+                path="/login-admin"
+                element={<LoginAdmin />}
+              />
               <Route
                 path="/carnivals/edit/:id"
                 element={<CarnivalEditPage />}

@@ -59,6 +59,32 @@ interface ApiResponse {
   message?: string;
 }
 
+const getStoredValue = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const getAccessToken = (): string | null =>
+  getStoredValue("accessToken") || getStoredValue("token");
+
+const redirectToLogin = (navigate: ReturnType<typeof useNavigate>) => {
+  sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+  sessionStorage.setItem("fromStudyAbroad", "true");
+  navigate("/whatsappregister?primaryType=STUDENT");
+};
+
+const authHeaders = (): HeadersInit => {
+  const token = getAccessToken();
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
+
 const AllUniversities: React.FC = () => {
   // State management
   const [universities, setUniversities] = useState<University[]>([]);
@@ -106,7 +132,7 @@ const AllUniversities: React.FC = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCountry, debouncedSearchTerm, sortBy, pageSize]);
+  }, [selectedCountry, debouncedSearchTerm, sortBy, pageSize, navigate]);
 
   // Reset course page when modal opens
   useEffect(() => {
@@ -120,6 +146,14 @@ const AllUniversities: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+
+      if (!getAccessToken()) {
+        setError("Session expired. Please login again.");
+        setUniversities([]);
+        setTotalCount(0);
+        redirectToLogin(navigate);
+        return;
+      }
       
       const queryParams = new URLSearchParams({
         pageIndex: (page - 1).toString(),
@@ -134,12 +168,13 @@ const AllUniversities: React.FC = () => {
       
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
+        headers: authHeaders(),
       });
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin(navigate);
+        throw new Error("Session expired. Please login again.");
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -164,13 +199,19 @@ const AllUniversities: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCountry, debouncedSearchTerm, sortBy, pageSize]);
+  }, [selectedCountry, debouncedSearchTerm, sortBy, pageSize, navigate]);
 
   // Fetch courses function
   const fetchCourses = useCallback(async (university: University, page: number = 1) => {
     try {
       setCoursesLoading(true);
       setCoursesError(null);
+
+      if (!getAccessToken()) {
+        setCoursesError("Session expired. Please login again.");
+        redirectToLogin(navigate);
+        return;
+      }
       
       const queryParams = new URLSearchParams({
         pageIndex: page.toString(),
@@ -181,17 +222,18 @@ const AllUniversities: React.FC = () => {
         `${BASE_URL}/user-service/student/courses-mapped-to-university?${queryParams.toString()}`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+          headers: authHeaders(),
           body: JSON.stringify({
             countryName: university.country,
             university: university.universityName,
           }),
         }
       );
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin(navigate);
+        throw new Error("Session expired. Please login again.");
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -213,7 +255,7 @@ const AllUniversities: React.FC = () => {
     } finally {
       setCoursesLoading(false);
     }
-  }, [coursePageSize]);
+  }, [coursePageSize, navigate]);
 
   useEffect(() => {
     fetchUniversities(currentPage);
