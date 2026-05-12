@@ -7,6 +7,7 @@ import AIExamSection from "../JPL/ExamSection";
 import MentoringSection from "../JPL/MentoringSection";
 import AIInterviewLanding from "./AIInterviewLanding";
 import LeagueHighlightsSection from "./LeagueHighlightsSection";
+import ResumeAISection from "./ResumeAISection";
 
 const JPLLandingPage: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const JPLLandingPage: React.FC = () => {
        <AIInterviewLanding/>
       <JPLHeroSection />  
       <PersonalizedJobMatchSection/> 
+      <ResumeAISection/>
       <LeagueHighlightsSection />
       <JobSearchSection />
       <AIExamSection />

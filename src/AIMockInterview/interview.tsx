@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "./lib/api";
 import { Modal } from "antd";
 import logo from '../assets/img/askoxylogonew.png';
@@ -476,6 +477,7 @@ const GLOBAL_CSS = `
 
 
 export default function InterviewPage() {
+  const navigate = useNavigate();
   function cryptoRandom() {
     if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
     return `sess-${Math.random().toString(36).slice(2)}`;
@@ -1366,7 +1368,19 @@ export default function InterviewPage() {
         {/* ─── Header ─── */}
         <header className="ai-header">
           <div className="ai-header-inner">
-            <div className="ai-logo-group">
+            <div
+              className="ai-logo-group"
+              onClick={() => navigate("/jobspremierleague")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate("/jobspremierleague");
+                }
+              }}
+              style={{ cursor: "pointer" }}
+            >
               <img src={logo} alt="AskOxy" style={{height:32,objectFit:'contain',width:'auto'}} />
               <div className="ai-logo-divider" />
               <div>

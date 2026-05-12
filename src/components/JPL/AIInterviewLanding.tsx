@@ -119,7 +119,7 @@ const AIInterviewLanding: React.FC = () => {
             <motion.img
               src="https://i.ibb.co/hFfbhQSJ/2resume0.png"
               alt="Resume AI Interview and JobFit AI Interview"
-              onClick={goResume}
+              // onClick={goResume}
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="w-full max-w-[300px] cursor-pointer object-contain drop-shadow-[0_22px_45px_rgba(15,23,42,0.12)] sm:max-w-[430px] lg:max-w-[560px]"

@@ -9,7 +9,6 @@ import {
   Rocket,
   Search,
   Upload,
-  Sparkles,
   ClipboardCheck,
   UserCheck,
   Briefcase,
@@ -20,6 +19,9 @@ import {
   Lightbulb,
   ShieldCheck,
   ArrowRight,
+  Gift,
+  MessageSquare,
+  BarChart3,
 } from "lucide-react";
 
 const logoIcon = "https://i.ibb.co/bRNBRBp5/logo-ideas.png";
@@ -58,6 +60,12 @@ const mrPoints = [
   { icon: Rocket, text: "Freelancers upload resume" },
   { icon: Users, text: "Add job rate card openly" },
   { icon: Briefcase, text: "Employers recruit freelancers" },
+];
+
+const referBuddyPoints = [
+  { icon: Briefcase, text: "Post company job openings" },
+  { icon: BarChart3, text: "View scores and qualified resumes" },
+  { icon: Gift, text: "Earn referral bonus" },
 ];
 
 type PointItem = {
@@ -250,6 +258,62 @@ const LeagueCard: React.FC<LeagueCardProps> = ({
   );
 };
 
+const ReferBuddySpecialCard: React.FC = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="xl:col-span-3">
+      <div className="relative overflow-hidden rounded-[30px] border border-[#0b1f5e]/20 bg-gradient-to-br from-[#ffffff] via-[#f7faff] to-[#e7efff] p-6 shadow-[inset_0_2px_0_rgba(255,255,255,0.95),inset_0_-5px_0_rgba(11,31,94,0.16),0_14px_0_rgba(11,31,94,0.18),0_26px_55px_rgba(11,31,94,0.18)] transition-all duration-300 hover:-translate-y-1 sm:p-8">
+        <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#0b1f5e]/10 blur-2xl" />
+        <div className="absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-blue-200/30 blur-2xl" />
+
+        <div className="relative grid items-center gap-7 lg:grid-cols-[1fr_1.25fr_auto]">
+          <div>
+
+            <h3 className="mt-5 text-3xl font-black leading-tight text-[#0b1f5e] sm:text-4xl">
+              Refer Buddy
+            </h3>
+
+            <p className="mt-3 max-w-xl text-sm leading-7 text-[#475569] sm:text-base">
+              Post job openings, track qualified candidates, receive resumes,
+              update feedback, and earn referral rewards.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {referBuddyPoints.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.text}
+                  className="rounded-[22px] border border-white bg-gradient-to-b from-white to-[#eef4ff] p-5 text-center shadow-[inset_0_2px_0_rgba(255,255,255,0.95),inset_0_-3px_0_rgba(11,31,94,0.12),0_8px_0_rgba(11,31,94,0.12),0_18px_30px_rgba(11,31,94,0.10)]"
+                >
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#1d3fa3] to-[#0b1f5e] text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),0_8px_16px_rgba(11,31,94,0.24)]">
+                    <Icon className="h-5 w-5" />
+                  </div>
+
+                  <p className="mt-4 text-sm font-extrabold leading-6 text-[#0b1f5e]">
+                    {item.text}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => navigate("/refer-buddy")}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#1d3fa3] to-[#0b1f5e] px-6 py-3 text-sm font-extrabold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.3),inset_0_-3px_0_rgba(0,0,0,0.25),0_8px_0_rgba(11,31,94,0.35),0_18px_30px_rgba(11,31,94,0.20)] transition-all duration-300 hover:-translate-y-0.5"
+          >
+            Go to Page
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const LeagueHighlightsSection: React.FC = () => {
   return (
     <section className="relative overflow-hidden bg-[#f5f7f4] py-10 sm:py-12 lg:py-14">
@@ -309,7 +373,7 @@ const LeagueHighlightsSection: React.FC = () => {
             accent="purple"
             points={rjsPoints}
             navigateTo="/job-seekers"
-            flipText="Open the Royal Job Seekers page to explore Resume AI Score, JobFit AI Interview, skill-gap analysis, and AI-qualified opportunities."
+            flipText="Explore Resume AI Score, JobFit AI Interview, skill-gap analysis, and AI-qualified opportunities."
           />
 
           <LeagueCard
@@ -320,7 +384,7 @@ const LeagueHighlightsSection: React.FC = () => {
             accent="lightBlue"
             points={ccPoints}
             navigateTo="/employers"
-            flipText="Open the Corporate Capitals page to see how companies upload job positions and receive qualified AI-assessed profiles."
+            flipText="See how companies upload job positions and receive qualified AI-assessed profiles."
           />
 
           <LeagueCard
@@ -331,7 +395,7 @@ const LeagueHighlightsSection: React.FC = () => {
             accent="orange"
             points={mkPoints}
             navigateTo="/mentors"
-            flipText="Open the Job Mentor Kings page to see how AI mentors and human mentors guide job seekers."
+            flipText="See how AI mentors and human mentors guide job seekers."
           />
 
           <LeagueCard
@@ -342,7 +406,7 @@ const LeagueHighlightsSection: React.FC = () => {
             accent="teal"
             points={ckrPoints}
             navigateTo="/recruitment-knight-riders"
-            flipText="Open the Recruitment Knight Riders page to manage sourcing, qualified profiles, recruitment pipelines, and recruiter operations."
+            flipText="Manage sourcing, qualified profiles, and recruitment pipelines."
           />
 
           <LeagueCard
@@ -353,7 +417,7 @@ const LeagueHighlightsSection: React.FC = () => {
             accent="yellow"
             points={askPoints}
             navigateTo="/talent-super-kings"
-            flipText="Open the Training Institute Giants page to manage students, AI exams, certifications, training workflows, and placement readiness."
+            flipText="Manage students, AI exams, certifications, training workflows, and placement readiness."
           />
 
           <LeagueCard
@@ -364,8 +428,10 @@ const LeagueHighlightsSection: React.FC = () => {
             accent="pink"
             points={mrPoints}
             navigateTo="/marketplace-raisers"
-            flipText="Open the Marketplace Raisers page to explore freelancer profiles, rate cards, freelance jobs, and employer hiring opportunities."
+            flipText="Explore freelancer profiles, rate cards, freelance jobs, and employer hiring opportunities."
           />
+
+          <ReferBuddySpecialCard />
         </div>
       </div>
     </section>

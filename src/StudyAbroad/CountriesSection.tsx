@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
-  ChevronRight,
   BookOpen,
   Globe,
   Award,
@@ -20,7 +19,6 @@ import GermanyFlag from "../assets/img/germany.png";
 import FranceFlag from "../assets/img/france.png";
 import ItalyFlag from "../assets/img/italy.png";
 
-// Type definitions
 interface CountryDetails {
   visaInfo: string;
   langRequirements: string;
@@ -46,11 +44,6 @@ interface University {
   universityLogo: string;
 }
 
-interface ApiResponse {
-  data: University[];
-  count: number;
-}
-
 interface CountriesSectionProps {
   onViewAllClick?: () => void;
 }
@@ -60,14 +53,17 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [activeCountry, setActiveCountry] = useState<Country | null>(null);
   const [arrowPosition, setArrowPosition] = useState({ left: 0, top: 0 });
   const [isAnimating, setIsAnimating] = useState(false);
+
   const [universities, setUniversities] = useState<University[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const countryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const flagsRowRef = useRef<HTMLDivElement | null>(null);
@@ -84,7 +80,10 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     getStoredValue("studentAccessToken");
 
   const redirectToLogin = () => {
-    sessionStorage.setItem("redirectPath", window.location.pathname + window.location.search);
+    sessionStorage.setItem(
+      "redirectPath",
+      window.location.pathname + window.location.search
+    );
     sessionStorage.setItem("fromStudyAbroad", "true");
     navigate("/whatsappregister?primaryType=STUDENT");
   };
@@ -97,77 +96,6 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
       Accept: "application/json",
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     };
-  };
-
-  const fetchUniversities = useCallback(async () => {
-    const accessToken = getAccessToken();
-
-    if (!accessToken) {
-      setLoading(false);
-      setUniversities([]);
-      setError("Access token is missing. Please login again to view universities.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(`${BASE_URL}/user-service/student/universities`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          pageIndex: 0,
-          pageSize: 20,
-          filters: {},
-          sortBy: null,
-          sortOrder: "asc",
-        }),
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        redirectToLogin();
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to load universities. Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const universityList = Array.isArray(data) ? data : data?.data;
-
-      setUniversities(Array.isArray(universityList) ? universityList : []);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to load universities";
-      setError(errorMessage);
-      setUniversities([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  // Parse query parameter to auto-select country
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const countryFromQuery = params.get("selected");
-    if (countryFromQuery) {
-      const country = countries.find(
-        (c) => c.name.toLowerCase() === countryFromQuery.toLowerCase()
-      );
-      if (country) {
-        handleCountrySelect(country);
-      }
-    }
-  }, [location.search]);
-
-  useEffect(() => {
-    fetchUniversities();
-  }, [fetchUniversities]);
-
-  const retryFetch = () => {
-    fetchUniversities();
   };
 
   const countries: Country[] = [
@@ -219,8 +147,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     },
     {
       name: "Italy",
-      description:
-        "Rich cultural heritage and prestigious ancient universities",
+      description: "Rich cultural heritage and prestigious ancient universities",
       details: {
         visaInfo: "Student Visa type D required for non-EU students",
         langRequirements:
@@ -270,8 +197,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     },
     {
       name: "France",
-      description:
-        "World-class education in arts, sciences, and culinary studies",
+      description: "World-class education in arts, sciences, and culinary studies",
       details: {
         visaInfo: "VLS-TS Student Visa required",
         langRequirements: "French or English depending on program",
@@ -362,6 +288,89 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     ),
   };
 
+  const fetchUniversities = useCallback(async () => {
+    const accessToken = getAccessToken();
+
+    if (!accessToken) {
+      setIsLoggedIn(false);
+      setLoading(false);
+      setUniversities([]);
+      setError(null);
+      return;
+    }
+
+    setIsLoggedIn(true);
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `${BASE_URL}/user-service/student/universities`,
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            pageIndex: 0,
+            pageSize: 20,
+            filters: {},
+            sortBy: null,
+            sortOrder: "asc",
+          }),
+        }
+      );
+
+      if (response.status === 401 || response.status === 403) {
+        setIsLoggedIn(false);
+        setUniversities([]);
+        setError(null);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Unable to load universities. Please try again.");
+      }
+
+      const data = await response.json();
+      const universityList = Array.isArray(data) ? data : data?.data;
+
+      setUniversities(Array.isArray(universityList) ? universityList : []);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Unable to load universities. Please try again.";
+      setError(errorMessage);
+      setUniversities([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUniversities();
+  }, [fetchUniversities]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const countryFromQuery = params.get("selected");
+
+    if (countryFromQuery) {
+      const country = countries.find(
+        (c) => c.name.toLowerCase() === countryFromQuery.toLowerCase()
+      );
+
+      if (country) {
+        handleCountrySelect(country);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  const retryFetch = () => {
+    fetchUniversities();
+  };
+
   const getCountryFlag = (countryCode: string) => {
     const flagMap: Record<string, string> = {
       USA: "USA",
@@ -370,6 +379,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     };
 
     const countryName = flagMap[countryCode] || countryCode;
+
     return (
       countryFlags[countryName as keyof typeof countryFlags] ||
       countryFlags["USA"]
@@ -377,9 +387,15 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
   };
 
   const handleViewAllClick = () => {
+    if (!isLoggedIn) {
+      redirectToLogin();
+      return;
+    }
+
     if (onViewAllClick) {
       onViewAllClick();
     }
+
     navigate("/all-universities");
   };
 
@@ -393,31 +409,34 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     setSelectedCountry(country.name);
 
     const ref = countryRefs.current[country.name];
+
     if (ref) {
       const rect = ref.getBoundingClientRect();
       const container = flagsRowRef.current ?? ref.parentElement;
       const containerRect = container?.getBoundingClientRect();
 
       if (container && containerRect) {
-        // Position the arrow (unchanged logic)
         setArrowPosition({
           left: rect.left - containerRect.left + rect.width / 2,
           top: rect.bottom - containerRect.top + 10,
         });
 
-        // Smoothly center the selected flag in the horizontal row
         const offset =
           ref.offsetLeft - container.clientWidth / 2 + ref.clientWidth / 2;
-        container.scrollTo({ left: Math.max(0, offset), behavior: "smooth" });
+
+        container.scrollTo({
+          left: Math.max(0, offset),
+          behavior: "smooth",
+        });
       }
     }
 
     setIsAnimating(true);
+
     setTimeout(() => {
       setIsAnimating(false);
       setShowDetails(true);
 
-      // After details appear, smooth-scroll the page to the details card
       requestAnimationFrame(() => {
         detailsRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -427,18 +446,12 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
     }, 300);
   };
 
-  const handleExploreCountryUniversities = (countryName: string) => {
-    console.log(`Explore ${countryName} universities`);
-    handleViewAllClick();
-  };
-
   const displayUniversities = universities.slice(0, 3);
 
   return (
     <section className="py-4 mb-4">
       <div className="px-4 sm:px-6">
         <div className="border-2 border-yellow-500 rounded-lg p-6 relative bg-white shadow-lg">
-          {/* Top Countries Header */}
           <div className="absolute -top-6 left-0 right-0 flex justify-center">
             <div className="bg-white px-8 rounded-full border-2 border-yellow-500 shadow-md">
               <h2 className="text-2xl font-bold mb-1.5 mt-1 text-center text-purple-900">
@@ -447,15 +460,9 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
             </div>
           </div>
 
-          {/* Country flags row with dynamic arrow */}
           <div
             ref={flagsRowRef}
-            className="
-    relative mt-6 mb-16
-    flex gap-6 overflow-x-auto
-    snap-x snap-mandatory
-    sm:flex-wrap sm:justify-center sm:overflow-visible
-  "
+            className="relative mt-6 mb-16 flex gap-6 overflow-x-auto snap-x snap-mandatory sm:flex-wrap sm:justify-center sm:overflow-visible"
           >
             {selectedCountry && (
               <div
@@ -476,13 +483,13 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
               <div
                 key={country.name}
                 ref={(el) => (countryRefs.current[country.name] = el)}
-                className={`
-        snap-center flex-none
-        flex flex-col items-center cursor-pointer transition-all duration-300
-        ${selectedCountry === country.name ? "scale-110" : "hover:scale-105"}
-      `}
+                className={`snap-center flex-none flex flex-col items-center cursor-pointer transition-all duration-300 ${
+                  selectedCountry === country.name
+                    ? "scale-110"
+                    : "hover:scale-105"
+                }`}
                 onClick={() => handleCountrySelect(country)}
-                style={{ width: 112 /* ~w-28 for consistent centering */ }}
+                style={{ width: 112 }}
               >
                 <div
                   className={`relative w-24 h-24 ${
@@ -493,6 +500,7 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                 >
                   {countryFlags[country.name as keyof typeof countryFlags]}
                 </div>
+
                 <span
                   className={`mt-3 font-medium ${
                     selectedCountry === country.name
@@ -525,13 +533,16 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                         ]
                       }
                     </div>
+
                     <h3 className="text-xl sm:text-2xl font-bold text-purple-900">
                       {activeCountry.name} Study Information
                     </h3>
                   </div>
+
                   <button
                     onClick={() => setShowDetails(false)}
                     className="text-gray-600 hover:text-red-500 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition"
+                    aria-label="Close country details"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -572,8 +583,8 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                       Popular Programs
                     </h4>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
-                      {activeCountry.details.popularPrograms.map((p, i) => (
-                        <li key={i}>{p}</li>
+                      {activeCountry.details.popularPrograms.map((program, i) => (
+                        <li key={i}>{program}</li>
                       ))}
                     </ul>
 
@@ -582,115 +593,91 @@ const CountriesSection: React.FC<CountriesSectionProps> = ({
                       Scholarships
                     </h4>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
-                      {activeCountry.details.scholarships.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
+                      {activeCountry.details.scholarships.map(
+                        (scholarship, i) => (
+                          <li key={i}>{scholarship}</li>
+                        )
+                      )}
                     </ul>
                   </div>
                 </div>
-
-                {/* <div className="mt-6 text-center">
-                  <button
-                    onClick={() =>
-                      handleExploreCountryUniversities(activeCountry.name)
-                    }
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-full transition-all duration-300 shadow-md"
-                  >
-                    Explore {activeCountry.name} Universities
-                  </button>
-                </div> */}
               </div>
             </div>
           )}
 
-          {/* Universities Section */}
-          <div className="border-t-2 border-yellow-400 mt-12 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-              <div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-purple-900">
-                  1000+ Universities
-                </h3>
-                <p className="text-lg text-gray-600 mt-2">
-                  <span className="inline-block w-2 h-2 bg-purple-600 rounded-full mr-2 align-middle"></span>
-                  1500+ Courses Available
-                </p>
+          {isLoggedIn && (
+            <div className="border-t-2 border-yellow-400 mt-12 pt-8">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-purple-900">
+                    1000+ Universities
+                  </h3>
+                  <p className="text-lg text-gray-600 mt-2">
+                    <span className="inline-block w-2 h-2 bg-purple-600 rounded-full mr-2 align-middle"></span>
+                    1500+ Courses Available
+                  </p>
+                </div>
               </div>
 
-              {/* <button
-                onClick={handleViewAllClick}
-                className="border-2 border-yellow-400 bg-white hover:bg-yellow-50 text-purple-800 font-semibold px-6 py-2 rounded-full shadow-sm transition-all duration-300 flex items-center group"
-              >
-                View all universities
-                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </button> */}
-            </div>
-
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-                <span className="ml-2 text-gray-600">
-                  Loading universities...
-                </span>
-              </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-                  <p className="text-red-600 mb-4">{error}</p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                  <span className="ml-2 text-gray-600">
+                    Loading universities...
+                  </span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+                    <p className="text-red-600 mb-4">{error}</p>
                     <button
                       onClick={retryFetch}
                       className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
                     >
                       Try Again
                     </button>
-                    {error?.toLowerCase().includes("access token") && (
-                      <button
-                        onClick={redirectToLogin}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors"
-                      >
-                        Login Again
-                      </button>
-                    )}
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayUniversities.map((uni) => (
-                  <div
-                    key={uni.id}
-                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-                  >
-                    <div className="relative">
-                      <img
-                        src={uni.universityLogo}
-                        alt={uni.universityName}
-                        className="w-full h-48 object-contain bg-gray-50 transition-transform duration-500 group-hover:scale-105"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src =
-                            "https://via.placeholder.com/300x200?text=University+Logo";
-                        }}
-                      />
-                      <div className="absolute top-3 right-3">
-                        <div className="w-8 h-8 rounded-full ring-2 ring-white overflow-hidden">
-                          {getCountryFlag(uni.country)}
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {displayUniversities.map((uni) => (
+                    <div
+                      key={uni.id}
+                      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                    >
+                      <div className="relative">
+                        <img
+                          src={uni.universityLogo}
+                          alt={uni.universityName}
+                          className="w-full h-48 object-contain bg-gray-50 transition-transform duration-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src =
+                              "https://via.placeholder.com/300x200?text=University+Logo";
+                          }}
+                        />
+
+                        <div className="absolute top-3 right-3">
+                          <div className="w-8 h-8 rounded-full ring-2 ring-white overflow-hidden">
+                            {getCountryFlag(uni.country)}
+                          </div>
                         </div>
                       </div>
+
+                      <div className="p-4 text-center">
+                        <h4 className="text-lg font-semibold text-purple-900 mb-2">
+                          {uni.universityName}
+                        </h4>
+                        <p className="text-sm text-gray-500 mb-1">
+                          {uni.universityCampusCity}, {uni.address}
+                        </p>
+                      </div>
                     </div>
-                    <div className="p-4 text-center">
-                      <h4 className="text-lg font-semibold text-purple-900 mb-2">
-                        {uni.universityName}
-                      </h4>
-                      <p className="text-sm text-gray-500 mb-1">
-                        {uni.universityCampusCity}, {uni.address}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </section>
