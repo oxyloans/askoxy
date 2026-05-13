@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Mountain,
   Factory,
@@ -540,6 +540,14 @@ body {
 export default function GoldLandingPage() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
 
   const goToLoginFirst = () => {
     const currentPage = window.location.pathname + window.location.search;

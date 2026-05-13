@@ -81,6 +81,7 @@ import TrainingInstituteGiantsPage from "./components/JPL/TalentSuperKingsPage";
 import LoginAdmin from "./AIMockInterview/admin/LoginAdmin";
 import ResumeAIToolsPage from "./components/JPL/ResumeAIToolsPage";
 import ReferBuddyPage from "./components/JPL/ReferBuddyPage";
+import ProxyLendPage from "./components/Services/ProxyLend";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -679,6 +680,7 @@ const App: React.FC = () => {
               />
               <Route path ="/gccmate" element={<GCCMate />} />
             <Route path="/employers" element={<EmployerJobSeekerPage />} />
+                      <Route path="/proxylend" element={<ProxyLendPage />} />
             <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
 <Route path="/mentors" element={<EmployerMentorSection />} />
 <Route path="/refer-buddy" element={<ReferBuddyPage />} />

@@ -375,48 +375,80 @@ const Whiteboardtheme: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-10 md:hidden">
-            <div className="mb-8 flex justify-center">
+          <div className="mt-10 px-3 pb-4 md:hidden">
+            <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-x-6">
+              {sideCards
+                .filter((card) => card.key === "loans" || card.key === "jobs")
+                .map((card) => (
+                  <button
+                    key={card.key}
+                    onClick={card.onClick}
+                    className="group flex flex-col items-center justify-center"
+                    type="button"
+                  >
+                    <div className="flex h-[165px] items-end justify-center rounded-[22px] px-2">
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        className={`w-full max-w-[145px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:brightness-[1.02] ${card.hoverShadow}`}
+                      />
+                    </div>
+
+                    <div className="mt-4 flex min-h-[52px] items-start justify-center px-1">
+                      <h3
+                        className={`whitespace-pre-line text-center font-medium leading-[1.15] tracking-[-0.01em] ${card.titleClass}`}
+                        style={{ fontSize: "clamp(15px, 4vw, 20px)" }}
+                      >
+                        {card.key === "jobs" ? "JPL" : card.title}
+                      </h3>
+                    </div>
+                  </button>
+                ))}
+            </div>
+
+            <div className="my-12 flex justify-center px-2">
               <button
                 onClick={() => handleCardClick("studyabroad")}
-                className="group flex w-full max-w-[260px] cursor-pointer flex-col items-center justify-center border-0 bg-transparent p-0 active:scale-[0.98]"
+                className="group flex w-full max-w-[280px] cursor-pointer flex-col items-center justify-center border-0 bg-transparent p-0 active:scale-[0.98]"
                 type="button"
                 aria-label="Open Study Abroad"
               >
                 <img
                   src={web3}
                   alt="Study Abroad"
-                  className="w-full max-w-[230px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_24px_rgba(196,40,137,0.18)]"
+                  className="w-full max-w-[240px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_24px_rgba(196,40,137,0.18)]"
                 />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6">
-              {sideCards.map((card) => (
-                <button
-                  key={card.key}
-                  onClick={card.onClick}
-                  className="group flex flex-col items-center"
-                  type="button"
-                >
-                  <div className="flex h-[160px] items-end justify-center">
-                    <img
-                      src={card.image}
-                      alt={card.title}
-                      className={`w-full max-w-[145px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:brightness-[1.02] ${card.hoverShadow}`}
-                    />
-                  </div>
+            <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-x-6">
+              {sideCards
+                .filter((card) => card.key === "gold" || card.key === "bharat")
+                .map((card) => (
+                  <button
+                    key={card.key}
+                    onClick={card.onClick}
+                    className="group flex flex-col items-center justify-center"
+                    type="button"
+                  >
+                    <div className="flex h-[165px] items-end justify-center rounded-[22px] px-2">
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        className={`w-full max-w-[145px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:brightness-[1.02] ${card.hoverShadow}`}
+                      />
+                    </div>
 
-                  <div className="mt-3 flex h-[50px] items-start justify-center">
-                    <h3
-                      className={`whitespace-pre-line text-center font-medium leading-[1.12] tracking-[-0.01em] ${card.titleClass}`}
-                      style={{ fontSize: "clamp(15px, 4vw, 20px)" }}
-                    >
-                      {card.title}
-                    </h3>
-                  </div>
-                </button>
-              ))}
+                    <div className="mt-4 flex min-h-[52px] items-start justify-center px-1">
+                      <h3
+                        className={`whitespace-pre-line text-center font-medium leading-[1.15] tracking-[-0.01em] ${card.titleClass}`}
+                        style={{ fontSize: "clamp(15px, 4vw, 20px)" }}
+                      >
+                        {card.title}
+                      </h3>
+                    </div>
+                  </button>
+                ))}
             </div>
           </div>
 
@@ -513,7 +545,6 @@ const Whiteboardtheme: React.FC = () => {
         </div>
       </div>
 
-      
       {/* <div className="fixed right-16 top-[150px] z-[998] sm:right-8 md:right-20 md:top-[175px] lg:right-24 lg:top-[190px]">
         <button
           onClick={() => navigate("/may2Interview")}
