@@ -27,7 +27,7 @@ import encryptEas from "./encryptEas";
 import { motion, AnimatePresence } from "framer-motion";
 import BASE_URL from "../Config";
 import { log } from "node:console";
-
+import Swal from "sweetalert2";
 // Types
 type SubscriptionPlan = {
   amount: number;
@@ -794,24 +794,34 @@ const Subscription: React.FC = () => {
       localStorage.setItem("paymentId", parsedData.paymentId);
       localStorage.setItem("merchantTransactionId", mer);
       const paymentUrl = parsedData.paymentUrl;
+setIsLoading(false);
+      setIsLoading(false);
 
-      Modal.confirm({
-        title: "Proceed to Payment?",
-        content: "Click Yes to continue to the payment gateway.",
-        okText: "Yes",
-        cancelText: "No",
-        onOk() {
-          window.location.href = paymentUrl;
-        },
-        onCancel() {
-          setSelectedPlan(null);
-          setLoading((prev) => ({
-            ...prev,
-            [selectedPlan as string]: false,
-          }));
-          setIsLoading(false);
-        },
-      });
+Swal.fire({
+  title: "Proceed to Payment?",
+  text: "Click Yes to continue to the payment gateway.",
+  icon: "question",
+  showCancelButton: true,
+  confirmButtonText: "Yes",
+  cancelButtonText: "No",
+  confirmButtonColor: "#7c3aed",
+  cancelButtonColor: "#d33",
+}).then((result) => {
+  if (result.isConfirmed) {
+    window.location.href = paymentUrl;
+  } else {
+    setSelectedPlan(null);
+
+    setLoading((prev) => ({
+      ...prev,
+      ...(Object.fromEntries(
+        Object.keys(prev).map((key) => [key, false])
+      )),
+    }));
+
+    setIsLoading(false);
+  }
+});
     } catch (error) {
       console.log("getepayPortal error:", error);
       setLoading((prev) => ({

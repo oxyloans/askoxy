@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   Spin,
-  message,
   Card,
   Row,
   Col,
@@ -22,6 +21,7 @@ import {
   Space,
   Empty,
 } from "antd";
+import Swal from "sweetalert2";
 import { employeeApi } from "../utils/axiosInstances";
 import {
   ArrowLeftOutlined,
@@ -106,7 +106,7 @@ const RadhaInstructionView: React.FC = () => {
       );
       setInstructionData(res.data);
     } catch (err) {
-      message.error("❌ Failed to fetch instruction data");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch instruction data", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ const RadhaInstructionView: React.FC = () => {
       );
       setEmployees(res.data);
     } catch (err) {
-      message.error("❌ Failed to fetch employees");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch employees", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     }
   };
 
@@ -178,12 +178,12 @@ const RadhaInstructionView: React.FC = () => {
         `${BASE_URL}/user-service/write/radhaInteractions`,
         payload
       );
-      message.success("✅ Interaction saved successfully!");
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Interaction saved successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       setIsInteractionModalOpen(false);
       formInteraction.resetFields();
       fetchInstructionData();
     } catch (err) {
-      message.error("❌ Failed to save interaction");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to save interaction", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setSaving(false);
     }

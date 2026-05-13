@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import {
   Table,
   Spin,
-  message,
   
   Form,
   Input,
@@ -13,6 +12,7 @@ import {
   Typography,
   Tooltip,
 } from "antd";
+import Swal from "sweetalert2";
 import { MessageOutlined, SearchOutlined } from "@ant-design/icons";
 import { MdForum } from "react-icons/md";
 import { employeeApi } from "../utils/axiosInstances";
@@ -66,10 +66,10 @@ const EmployeeInteractions: React.FC = () => {
         setData(sortedData);
         setFilteredData(sortedData); // ✅ keep consistent with sorting
       } else {
-        message.warning("Unexpected response format");
+        Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Unexpected response format", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (err) {
-      message.error("Failed to fetch Employee Interactions");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch Employee Interactions", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }
@@ -108,12 +108,12 @@ const EmployeeInteractions: React.FC = () => {
       };
 
       await employeeApi.patch(INTERACTION_API, payload);
-      message.success("Interaction saved successfully!");
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Interaction saved successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       setIsInteractionModalOpen(false);
       setInteractionRecord(null);
       form.resetFields(); // ✅ clear modal form after save
     } catch (err) {
-      message.error("Failed to save interaction");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to save interaction", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setSaving(false);
     }

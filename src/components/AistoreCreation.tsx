@@ -140,7 +140,17 @@ const AgentStoreManager: React.FC = () => {
     const lowerName = file.name.toLowerCase();
     return lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls");
   };
+const [bulkFile, setBulkFile] = useState<File | null>(null);
+const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
+const clearBulkUploadForm = () => {
+  uploadForm.resetFields();
+  setBulkFile(null);
+
+  if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+  }
+};
   const validateExcelFormat = async (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -193,62 +203,78 @@ const AgentStoreManager: React.FC = () => {
     });
   };
 
-  const handleMultiAgentUpload = async (values: any) => {
-    try {
-      const storeId = values?.storeId;
-      const view = values?.view;
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      const file = fileInput?.files?.[0];
+ const handleMultiAgentUpload = async (values: any) => {
+  try {
+    const storeId = values?.storeId;
+    const view = values?.view;
+    const file = bulkFile;
 
-      if (!storeId) return message.error("Please select a store");
-      if (!view) return message.error("Please select view");
-      if (!file) return message.error("Please choose a file");
-      
-      if (!isXlsxFile(file)) {
-        return message.error("Only Excel files (.xlsx, .xls) are allowed");
-      }
-      
-      // Validate Excel format
-      const isValidFormat = await validateExcelFormat(file);
-      if (!isValidFormat) {
-        return;
-      }
-      
-      if (!userId)
-        return message.error("UserId not found. Please login again.");
+    if (!storeId) return message.error("Please select a store");
+    if (!view) return message.error("Please select view");
+    if (!file) return message.error("Please choose an Excel file");
 
-      setBulkUploading(true);
-
-      const formData = new FormData();
-      formData.append("storeId", storeId);
-      formData.append("userId", userId);
-      formData.append("view", view);
-      formData.append("file", file);
-
-      const res = await fetch(`${BASE_URL}/ai-service/agent/uploadMultiAgents1`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: formData
-      });
-
-      if (res.ok) {
-        message.success("Agents uploaded successfully");
-        setIsBulkUploadModal(false);
-        uploadForm.resetFields();
-        fetchStores();
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Upload failed");
-      }
-    } catch (err: any) {
-      console.error("Upload error:", err);
-      message.error(err?.message || "Failed to upload agents");
-    } finally {
-      setBulkUploading(false);
+    if (!isXlsxFile(file)) {
+      return message.error("Only Excel files (.xlsx, .xls) are allowed");
     }
-  };
+
+    const isValidFormat = await validateExcelFormat(file);
+    if (!isValidFormat) return;
+
+    if (!userId) {
+      return message.error("UserId not found. Please login again.");
+    }
+
+    setBulkUploading(true);
+    message.loading({
+      content: "Uploading agents, please wait...",
+      key: "bulkUpload",
+      duration: 0,
+    });
+
+    const formData = new FormData();
+    formData.append("storeId", storeId);
+    formData.append("userId", userId);
+    formData.append("view", view);
+    formData.append("file", file);
+
+    const res = await fetch(`${BASE_URL}/ai-service/agent/uploadMultiAgents1`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let errorMessage = "Upload failed. Please try again.";
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch {}
+
+      throw new Error(errorMessage);
+    }
+
+    message.success({
+      content: "Agents uploaded successfully!",
+      key: "bulkUpload",
+      duration: 3,
+    });
+
+    clearBulkUploadForm();
+    setIsBulkUploadModal(false);
+    await fetchStores();
+  } catch (err: any) {
+    console.error("Upload error:", err);
+    message.error({
+      content: err?.message || "Failed to upload agents",
+      key: "bulkUpload",
+      duration: 4,
+    });
+  } finally {
+    setBulkUploading(false);
+  }
+};
 
   const fallbackCopy = (text: string): void => {
     const textarea: HTMLTextAreaElement = document.createElement("textarea");
@@ -329,15 +355,25 @@ const AgentStoreManager: React.FC = () => {
     }
   };
 
-  // FIXED: Validation first → then confirmation
-  const handleSaveStoreClick = async (): Promise<void> => {
-    try {
-      await form.validateFields(); // This will trigger validation
-      setIsStoreConfirm(true); // Only open confirmation if valid
-    } catch (errorInfo) {
-      console.log("Validation Failed:", errorInfo);
+const handleSaveStoreClick = async (): Promise<void> => {
+  try {
+    const values = await form.validateFields();
+
+    const trimmedStoreName = values.storeName.trim().replace(/\s+/g, " ");
+    form.setFieldsValue({ storeName: trimmedStoreName });
+
+    if (isDuplicateStoreName(trimmedStoreName)) {
+      message.error(
+        `"${trimmedStoreName}" already exists. Store name must be unique.`
+      );
+      return;
     }
-  };
+
+    setIsStoreConfirm(true);
+  } catch (errorInfo) {
+    console.log("Validation Failed:", errorInfo);
+  }
+};
 
   /** Load Assistants (cursor based) */
   const fetchAssistants = async (
@@ -451,112 +487,152 @@ const AgentStoreManager: React.FC = () => {
     setCurrentPage(nextPage);
     fetchAssistants(nextPage, true);
   };
+const normalizeStoreName = (name?: string): string =>
+  (name || "").trim().replace(/\s+/g, " ").toLowerCase();
 
-  const saveStore = async (): Promise<void> => {
-    setSaving(true);
-    try {
-      const values = await form.validateFields();
+const isDuplicateStoreName = (storeName: string): boolean => {
+  const currentName = normalizeStoreName(storeName);
 
-      const payload: any = isEditMode
-        ? {
-            storeId: selectedStore!.storeId,
-            storeName: values.storeName,
-            description: values.description,
-            storeCreatedBy: "USER",
-            userId: userId,
-            storeImageUrl: values.storeImageUrl,
-            isCompanyStore: !!values.isCompanyStore,
+  return storeData.some((store) => {
+    const existingName = normalizeStoreName(store.storeName);
 
-            // ✅ ONLY send when Company Store
-            ...(values.isCompanyStore && {
-              companyName: values.companyName,
-            }),
-          }
-        : {
-            storeName: values.storeName,
-            description: values.description,
-            storeCreatedBy: "USER",
-            storeImageUrl: values.storeImageUrl,
-            isCompanyStore: !!values.isCompanyStore,
-            userId: userId,
+    // allow same name while editing same store
+    if (isEditMode && selectedStore?.storeId === store.storeId) {
+      return false;
+    }
 
-            // ✅ ONLY send when Company Store
-            ...(values.isCompanyStore && {
-              companyName: values.companyName,
-            }),
-          };
+    return existingName === currentName;
+  });
+};
+ const saveStore = async (): Promise<void> => {
+  setSaving(true);
+  try {
+    const values = await form.validateFields();
 
-      const res = await customerApi.patch(
-        `${BASE_URL}/ai-service/agent/agentStoreCreation`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+    const trimmedStoreName = values.storeName.trim().replace(/\s+/g, " ");
+
+    if (isDuplicateStoreName(trimmedStoreName)) {
+      message.error(
+        `"${trimmedStoreName}" already exists. Store name must be unique.`
       );
-
-      if (!res.data) throw new Error("Failed to save store");
-
-      message.success(
-        isEditMode ? "Store updated successfully" : "Store created successfully"
-      );
-
-      setIsStoreModal(false);
-      form.resetFields();
-      fetchStores();
-    } catch (err: any) {
-      if (err.errorFields) return;
-      message.error("Something went wrong");
-    } finally {
       setSaving(false);
-    }
-  };
-
-  /** Save Agents to Store */
-  const saveAgentsToStore = async (): Promise<void> => {
-    if (!selectedStore) {
-      message.error("Store not selected");
-      return;
-    }
-    if (selectedAgents.length === 0) {
-      message.error("Please select at least 1 agent");
       return;
     }
 
-    const payload: {
-      storeId: string;
-      storeName: string;
-      storeImageUrl: string;
-      agentDetailsOnAdUser: Agent[];
-    } = {
-      storeId: selectedStore.storeId,
-      storeName: selectedStore.storeName,
-      storeImageUrl: selectedStore.storeImageUrl,
-      agentDetailsOnAdUser: selectedAgents,
-    };
-
-    try {
-      const res = await customerApi.post(
-        `${BASE_URL}/ai-service/agent/saveAgentsInStore`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+    const payload: any = isEditMode
+      ? {
+          storeId: selectedStore!.storeId,
+          storeName: trimmedStoreName,
+          description: values.description.trim(),
+          storeCreatedBy: "USER",
+          userId: userId,
+          storeImageUrl: values.storeImageUrl,
+          isCompanyStore: !!values.isCompanyStore,
+          ...(values.isCompanyStore && {
+            companyName: values.companyName?.trim(),
+          }),
         }
-      );
+      : {
+          storeName: trimmedStoreName,
+          description: values.description.trim(),
+          storeCreatedBy: "USER",
+          storeImageUrl: values.storeImageUrl,
+          isCompanyStore: !!values.isCompanyStore,
+          userId: userId,
+          ...(values.isCompanyStore && {
+            companyName: values.companyName?.trim(),
+          }),
+        };
 
-      if (!res.data) throw new Error("Failed to save agents");
+    const res = await customerApi.patch(
+      `${BASE_URL}/ai-service/agent/agentStoreCreation`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
-      message.success("Agents added to store successfully");
-      setIsAgentsModal(false);
-      setSelectedAgents([]);
-      fetchStores();
-    } catch (err: any) {
-      message.error(err.message || "Failed to save agents");
-    }
+    if (!res.data) throw new Error("Failed to save store");
+
+    message.success(
+      isEditMode ? "Store updated successfully" : "Store created successfully"
+    );
+
+    setIsStoreModal(false);
+    form.resetFields();
+    fetchStores();
+  } catch (err: any) {
+    if (err.errorFields) return;
+    message.error("Something went wrong");
+  } finally {
+    setSaving(false);
+  }
+};
+
+const saveAgentsToStore = async (): Promise<void> => {
+  if (!selectedStore) {
+    message.error("Store not selected");
+    return;
+  }
+
+  if (selectedAgents.length === 0) {
+    message.error("Please select at least 1 agent");
+    return;
+  }
+
+  const existingAgents = selectedStore.agentDetailsOnAdUser || [];
+
+  const duplicateAgents = selectedAgents.filter((selected) =>
+    existingAgents.some(
+      (existing) =>
+        existing.agentId === selected.agentId ||
+        existing.assistantId === selected.assistantId ||
+        existing.agentName?.trim().toLowerCase() ===
+          selected.agentName?.trim().toLowerCase()
+    )
+  );
+
+  if (duplicateAgents.length > 0) {
+    message.warning(
+      `${duplicateAgents
+        .map((a) => a.agentName)
+        .join(", ")} already added in this AI Store. One agent can be added only once.`
+    );
+    return;
+  }
+
+  const payload = {
+    storeId: selectedStore.storeId,
+    storeName: selectedStore.storeName,
+    storeImageUrl: selectedStore.storeImageUrl,
+    agentDetailsOnAdUser: selectedAgents,
   };
+
+  try {
+    const res = await customerApi.post(
+      `${BASE_URL}/ai-service/agent/saveAgentsInStore`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!res.data) throw new Error("Failed to save agents");
+
+    message.success("Agents added to store successfully");
+    setIsAgentsModal(false);
+    setIsAgentsConfirm(false);
+    setSelectedAgents([]);
+    setAgentSearch("");
+    await fetchStores();
+  } catch (err: any) {
+    message.error(err.message || "Failed to save agents");
+  }
+};
 
   const toggleStoreStatus = (
     storeId: any,
@@ -777,6 +853,7 @@ const AgentStoreManager: React.FC = () => {
             onClick={() => {
               setSelectedStore(record);
               setSelectedAgents([]);
+                setAgentSearch("");
               setIsAgentsModal(true);
             }}
           >
@@ -884,7 +961,11 @@ const AgentStoreManager: React.FC = () => {
                 fontWeight: "500",
               }}
               type="default"
-              onClick={() => setIsBulkUploadModal(true)}
+             onClick={() => {
+  clearBulkUploadForm();
+  uploadForm.setFieldsValue({ view: "public" });
+  setIsBulkUploadModal(true);
+}}
             >
               Bulk Upload Agents
             </Button>
@@ -914,6 +995,7 @@ const AgentStoreManager: React.FC = () => {
         title="Bulk Upload Agents"
         onCancel={() => {
           setIsBulkUploadModal(false);
+            clearBulkUploadForm();
           uploadForm.resetFields();
         }}
         onOk={() => uploadForm.submit()}
@@ -925,17 +1007,13 @@ const AgentStoreManager: React.FC = () => {
           form={uploadForm}
           layout="vertical"
           onFinish={(values) => {
-            // Check if file is selected before submitting
-            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-            const file = fileInput?.files?.[0];
-            
-            if (!file) {
-              message.error("Please select a file");
-              return;
-            }
-            
-            handleMultiAgentUpload(values);
-          }}
+  if (!bulkFile) {
+    message.error("Please select an Excel file");
+    return;
+  }
+
+  handleMultiAgentUpload(values);
+}}
           initialValues={{ view: "public" }}
         >
           <Row gutter={[12, 12]}>
@@ -1083,35 +1161,43 @@ const AgentStoreManager: React.FC = () => {
               <Form.Item
                 label="Upload Excel File"
               >
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      if (!isXlsxFile(file)) {
-                        message.error("Only Excel files (.xlsx, .xls) are allowed");
-                        e.target.value = '';
-                        return;
-                      }
-                      
-                      const isValidFormat = await validateExcelFormat(file);
-                      if (!isValidFormat) {
-                        e.target.value = '';
-                        return;
-                      }
-                      
-                      message.success(`File "${file.name}" selected successfully`);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    border: '1px dashed #d9d9d9',
-                    borderRadius: '6px',
-                    background: '#fafafa'
-                  }}
-                />
+               <input
+  ref={fileInputRef}
+  type="file"
+  accept=".xlsx,.xls"
+  onChange={async (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      setBulkFile(null);
+      return;
+    }
+
+    if (!isXlsxFile(file)) {
+      message.error("Only Excel files (.xlsx, .xls) are allowed");
+      e.target.value = "";
+      setBulkFile(null);
+      return;
+    }
+
+    const isValidFormat = await validateExcelFormat(file);
+    if (!isValidFormat) {
+      e.target.value = "";
+      setBulkFile(null);
+      return;
+    }
+
+    setBulkFile(file);
+    message.success(`"${file.name}" selected successfully`);
+  }}
+  style={{
+    width: "100%",
+    padding: "8px",
+    border: "1px dashed #d9d9d9",
+    borderRadius: "6px",
+    background: "#fafafa",
+  }}
+/>
               </Form.Item>
             </Col>
           </Row>
@@ -1187,9 +1273,11 @@ const AgentStoreManager: React.FC = () => {
               { required: true, message: "Store name is required" },
               {
                 validator: (_, value) => {
-                  if (value && value.trim().length === 0) {
-                    return Promise.reject(new Error('Please enter a valid store name'));
-                  }
+                 if (value && isDuplicateStoreName(value)) {
+  return Promise.reject(
+    new Error("This store name already exists. Please use a unique name.")
+  );
+}
                   if (value && value.trim().length > 0 && value.trim().length < 3) {
                     return Promise.reject(new Error('Store name should be at least 3 characters'));
                   }
@@ -1328,45 +1416,64 @@ const AgentStoreManager: React.FC = () => {
                   />
                 </div>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
+             <input
+  type="file"
+  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-                  try {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    
-                    const response = await customerApi.post(
-                      `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
-                      formData,
-                      {
-                        headers: {
-                          'Content-Type': 'multipart/form-data',
-                          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
-                        }
-                      }
-                    );
-                    
-                    console.log('Upload response:', response.data);
-                    form.setFieldsValue({ storeImageUrl: response.data.documentPath });
-                    form.validateFields(["storeImageUrl"]);
-                    message.success("Image uploaded successfully!");
-                  } catch (error) {
-                    console.error('Upload error:', error);
-                    message.error("Failed to upload image. Please try again.");
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px dashed #d9d9d9',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              />
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+
+    const fileName = file.name.toLowerCase();
+    const isValidType = allowedTypes.includes(file.type);
+    const isValidExtension = allowedExtensions.some((ext) =>
+      fileName.endsWith(ext)
+    );
+
+    if (!isValidType || !isValidExtension) {
+      message.error("Only JPG, JPEG, PNG, or WEBP image files are allowed.");
+      e.target.value = "";
+      form.setFieldsValue({ storeImageUrl: undefined });
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await customerApi.post(
+        `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+
+      form.setFieldsValue({
+        storeImageUrl: response.data.documentPath,
+      });
+
+      form.validateFields(["storeImageUrl"]);
+      message.success("Image uploaded successfully!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      message.error("Failed to upload image. Please try again.");
+      e.target.value = "";
+    }
+  }}
+  style={{
+    width: "100%",
+    padding: "8px",
+    border: "1px dashed #d9d9d9",
+    borderRadius: "6px",
+    cursor: "pointer",
+  }}
+/>
             </div>
           </Form.Item>
         </Form>

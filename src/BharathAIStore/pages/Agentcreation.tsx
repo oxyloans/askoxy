@@ -29,7 +29,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import BASE_URL from "../../Config";
 import { customerApi as axios } from "../../utils/axiosInstances";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import VendorCreationModal from "../components/VendorCreationModal";
 import SRJImage from "../../assets/img/SRJ1.jpg";
 import CardBased from "../../assets/img/BS.jpg";
@@ -5314,8 +5314,24 @@ const Agentcreation: React.FC = () => {
         }}
         footer={null}
         title="Complete Your Profile"
-        // 🔒 fully locked modal
-        closable={false}
+       
+       closable={true}
+  closeIcon={
+    <div
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: "50%",
+        background: "#F3F4F6",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "0.2s",
+      }}
+    >
+      <X size={16} color="#6B7280" />
+    </div>
+  }
         maskClosable={false}
         keyboard={false}
         destroyOnClose={false}

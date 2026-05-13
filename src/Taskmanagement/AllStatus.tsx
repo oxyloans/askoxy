@@ -13,7 +13,6 @@ import {
   DatePicker,
   Tabs,
   Badge,
-  notification,
   Tag,
   Avatar,
   Collapse,
@@ -22,6 +21,7 @@ import {
   Radio,
   Form,
 } from "antd";
+import Swal from "sweetalert2";
 import {
   CalendarOutlined,
   FilterOutlined,
@@ -206,11 +206,7 @@ const AllStatusPage: React.FC = () => {
     const value = values[field as keyof EditFormValues]?.trim();
 
     if (!value) {
-      notification.warning({
-        message: "Validation Error",
-        description: "Empty spaces are not allowed. Please enter valid text.",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Empty spaces are not allowed. Please enter valid text.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
 
@@ -254,32 +250,18 @@ const AllStatusPage: React.FC = () => {
           ),
         );
 
-        notification.success({
-          message: "Success",
-          description: `${
-            editingField === "plan" ? "Plan of the Day" : "End of the Day"
-          } updated successfully.`,
-          placement: "topRight",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: `${editingField === "plan" ? "Plan of the Day" : "End of the Day"} updated successfully.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
         setEditingTaskId(null);
         setEditingField(null);
         editForm.resetFields();
       } else {
-        notification.error({
-          message: "Error",
-          description: "Failed to update task.",
-          placement: "topRight",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to update task.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error) {
       console.error("Error updating task:", error);
 
-      notification.error({
-        message: "Error",
-        description: "An error occurred while updating the task.",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "An error occurred while updating the task.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     }
   };
 
@@ -406,21 +388,12 @@ const renderMediaContent = (
       setFilteredTasks(sortedTasks);
 
       if (!response.data || response.data.length === 0) {
-        notification.info({
-          message: "No Tasks Found",
-          description: `No ${status.toLowerCase()} tasks found.`,
-          placement: "topRight",
-          icon: <FileSearchOutlined style={{ color: "#1890ff" }} />,
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
 
-      notification.error({
-        message: "Error Fetching Tasks",
-        description: "Failed to fetch tasks. Please try again later.",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks. Please try again later.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }
@@ -428,11 +401,7 @@ const renderMediaContent = (
 
   const fetchTasksByDate = async () => {
     if (!selectedDate) {
-      notification.warning({
-        message: "Missing Date",
-        description: "Please select a date.",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please select a date.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
 
@@ -456,20 +425,12 @@ const renderMediaContent = (
       setFilteredTasks(sortedTasks);
 
       if (!response.data || response.data.length === 0) {
-        notification.info({
-          message: "No Tasks Found",
-          description: `No ${status.toLowerCase()} tasks found for ${formattedDate}.`,
-          placement: "topRight",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found for ${formattedDate}.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error) {
       console.error("Error fetching tasks by date:", error);
 
-      notification.error({
-        message: "Fetch Failed",
-        description: "Failed to fetch tasks. Please try again later.",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks. Please try again later.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }

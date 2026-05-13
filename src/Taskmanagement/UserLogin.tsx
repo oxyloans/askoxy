@@ -4,12 +4,12 @@ import {
   Input,
   Button,
   Alert,
-  message,
   Card,
   Typography,
   Divider,
   Space,
 } from "antd";
+import Swal from "sweetalert2";
 import axios, { AxiosError } from "axios";
 import BASE_URL from "../Config";
 import { useNavigate, Link } from "react-router-dom";
@@ -106,12 +106,7 @@ const UserLogin: React.FC = () => {
 
         // Handle different user types
         if (primaryType === "EMPLOYEE") {
-          message.success({
-            content: "Login successful! Redirecting to dashboard...",
-            icon: <LoginOutlined />,
-            className: "custom-message-success",
-            duration: 2,
-          });
+          Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Login Successful! Redirecting...", showConfirmButton: false, timer: 1500, timerProgressBar: true });
 
           // Slight delay for user to see success message
           setTimeout(() => {

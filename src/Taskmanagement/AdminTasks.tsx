@@ -5,7 +5,6 @@ import {
   Image,
   Typography,
   Input,
-  message,
   Button,
   Popconfirm,
   Tag,
@@ -14,6 +13,7 @@ import {
   Empty,
   Select,
 } from "antd";
+import Swal from "sweetalert2";
 import { SearchOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { employeeApi } from "../utils/axiosInstances";
 import UserPanelLayout from "./UserPanelLayout";
@@ -167,7 +167,7 @@ const AdminTasks: React.FC = () => {
         setTasks(filteredContent);
         setTotalElements(data.totalElements || 0);
       } catch (error) {
-        message.error("Failed to fetch tasks");
+        Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       } finally {
         setLoading(false);
       }
@@ -194,16 +194,16 @@ const AdminTasks: React.FC = () => {
         `${BASE_URL}/ai-service/agent/taskUpdate?id=${id}&status=${newStatus}`,
         {},
       );
-      message.success(`Task marked as ${newStatus.toLowerCase()}`);
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: `Task marked as ${newStatus.toLowerCase()}`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
       await fetchTasks(currentPage, pageSize, statusFilter, searchText);
     } catch {
-      message.error("Failed to update task status");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to update task status", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     }
   };
 
   const handleCommentsUpdate = async () => {
     if (!comments.trim()) {
-      message.warning("Please enter a comment before submitting.");
+      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please enter a comment before submitting.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
     try {
@@ -215,13 +215,13 @@ const AdminTasks: React.FC = () => {
           commentsBy: "EMPLOYEE",
         },
       );
-      message.success("Comment added successfully!");
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Comment added successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       setCommentsModalVisible(false);
       setComments("");
       fetchTasks(currentPage, pageSize, statusFilter, searchText);
       if (selectedTask) handleViewComments(selectedTask);
     } catch {
-      message.error("Failed to add comment");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to add comment", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     }
   };
 
@@ -236,7 +236,7 @@ const AdminTasks: React.FC = () => {
       setCommentsData(response.data || []);
       setViewModalVisible(true);
     } catch {
-      message.error("Failed to fetch comments");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch comments", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }

@@ -1705,16 +1705,16 @@ const AllAgentsPage: React.FC = () => {
           </Button>
           <Button
             style={{
-              backgroundColor: "#1ab394",
+              backgroundColor: "#008cba",
               color: "white",
-              borderColor: "#1ab394",
+              borderColor: "#008cba",
             }}
             icon={<PlayCircleOutlined />}
             size={btnSize}
             block={btnBlock}
             onClick={gotoStore}
           >
-            Bharath AI Store
+            Create AI Agent
           </Button>
         </div>
       </div>

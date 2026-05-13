@@ -503,13 +503,12 @@ const LoadingSpinner = React.memo(() => {
 
 const App: React.FC = () => {
   const location = useLocation();
-  // Use the Google Analytics tracking hook
+
   useGtagPageView();
 
-  // ✅ Initialize automatic token refresh
+
   useTokenRefresh();
 
-  // ✅ Initialize task token expiry checking
   useTaskTokenExpiry();
 
   // useEffect(() => {
@@ -591,7 +590,7 @@ const App: React.FC = () => {
       currentPath.startsWith("/credera/jobs") ||
       currentPath.startsWith("/taskassigneduser") ||
       currentPath.startsWith("/broadridge/jobs") ||
-      currentPath.startsWith("/usermobilenumberupdate") ||
+      currentPath.startsWith("/employeeprofile") ||
       // Partner routes
       currentPath.startsWith("/home") ||
       // Admin routes
@@ -1025,7 +1024,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/usermobilenumberupdate"
+                path="/employeeprofile"
                 element={
                   <TaskProtectedRoute>
                     <MobileNumberUpdate />

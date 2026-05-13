@@ -11,8 +11,6 @@ import {
   Divider,
   Avatar,
   Tag,
-  notification,
-  message,
   Skeleton,
   Tooltip,
   Result,
@@ -20,6 +18,7 @@ import {
   Space,
   Alert,
 } from "antd";
+import Swal from "sweetalert2";
 import {
   WhatsAppOutlined,
   SendOutlined,
@@ -190,12 +189,7 @@ const PlanOfTheDay: React.FC = () => {
     } catch (error: any) {
       console.error("Error checking pending tasks:", error);
       setErrorState(true);
-      notification.error({
-        message: "Error",
-        description:
-          error.response?.data?.message || "Failed to check task status",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.message || "Failed to check task status", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setFetchingStatus(false);
     }
@@ -205,7 +199,7 @@ const PlanOfTheDay: React.FC = () => {
     setLoading(true);
     try {
       if (!userName) {
-        message.warning("User name not found. Please login again.");
+        Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "User name not found. Please login again.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
         setLoading(false);
         return;
       }
@@ -277,11 +271,7 @@ const PlanOfTheDay: React.FC = () => {
         setShowAiResponse(false); // Hide AI response after successful save
 
         const action = isEditMode ? "updated" : "submitted";
-        notification.success({
-          message: "Success",
-          description: `Your daily plan has been ${action} successfully.`,
-          placement: "topRight",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: `Your daily plan has been ${action} successfully.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
         setTimeout(async () => {
           checkPendingTasksForToday(userId);
@@ -296,15 +286,11 @@ const PlanOfTheDay: React.FC = () => {
 
         form.resetFields();
       } else {
-        message.error("Failed to update task.");
+        Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to update task.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error) {
       console.error("Error saving plan:", error);
-      notification.error({
-        message: "Error",
-        description: "An error occurred while saving the task.",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "An error occurred while saving the task.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       // ✅ MAIN FIX: stop "Updating..." after API completes
       setLoading(false);
@@ -359,12 +345,7 @@ const PlanOfTheDay: React.FC = () => {
         error.response?.data?.message ||
         error.message ||
         "Unknown error occurred";
-      notification.error({
-        message: "AI Service Unavailable",
-        description: `Unable to process your plan: ${errorMessage}. Your plan has been saved.`,
-        placement: "topRight",
-        duration: 5,
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: `AI Service Unavailable: ${errorMessage}`, showConfirmButton: false, timer: 4000, timerProgressBar: true });
     } finally {
       setAiLoading(false);
     }

@@ -5,270 +5,616 @@ import {
   Button,
   Card,
   Col,
+  Divider,
   Form,
   Grid,
   Input,
   Row,
-  Space,
+  Select,
   Spin,
   Typography,
-  message,
 } from "antd";
-import {
-  PhoneOutlined,
-  ReloadOutlined,
-  SaveOutlined,
- 
-} from "@ant-design/icons";
+import { EditOutlined, CloseOutlined } from "@ant-design/icons";
+import Swal from "sweetalert2";
 import BASE_URL from "../Config";
 import UserPanelLayout from "./UserPanelLayout";
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
-interface MobileNumberUpdateProps {
-  currentMobileNumber?: string;
-  onUpdateSuccess?: () => void;
-  onUpdateError?: (error: any) => void;
-}
+const PRIMARY = "#008cba";
+const SECONDARY = "#1ab394";
 
-const MobileNumberUpdate: React.FC<MobileNumberUpdateProps> = ({
-  currentMobileNumber = "",
-  onUpdateSuccess,
-  onUpdateError,
-}) => {
+const PLATFORMS = [
+  { value: "oxybricks", label: "Oxybricks" },
+  { value: "oxyloans", label: "OxyLoans" },
+  { value: "oxygold", label: "OxyGold" },
+  { value: "oxyglobal", label: "OxyGlobal" },
+  { value: "ai_agents", label: "AI Agents" },
+  { value: "askoxy_ai", label: "Askoxy.ai" },
+  { value: "study_abroad", label: "Study Abroad" },
+];
+
+const USAGE = [
+  { value: "high", label: "High" },
+  { value: "moderate", label: "Moderate" },
+  { value: "low", label: "Low" },
+];
+
+const ROLE_OPTIONS = [
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "Mobile App Developer",
+  "React Developer",
+  "QA Tester",
+  "Automation Tester",
+  "Business Analyst",
+  "HR Executive",
+  "Sales Executive",
+  "Telecalling Executive",
+  "Accountant",
+  "Operations Executive",
+  "Marketing Executive",
+  "UI/UX Designer",
+  "Project Manager",
+  "Team Lead",
+  "Manager",
+];
+
+const EmployeeProfilePage: React.FC = () => {
   const screens = useBreakpoint();
-  const [form] = Form.useForm();
-
-  const userId = sessionStorage.getItem("userId") || "";
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [inlineError, setInlineError] = useState<string>("");
   const isMobile = useMemo(() => !screens.md, [screens.md]);
 
-  useEffect(() => {
-    form.setFieldsValue({
-      mobileNumber: (currentMobileNumber || "").replace(/\D/g, "").slice(0, 10),
-    });
-  }, [currentMobileNumber, form]);
+  const [form] = Form.useForm();
+  const [saving, setSaving] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [hasProfileData, setHasProfileData] = useState(false);
+  const [mobErr, setMobErr] = useState("");
 
-  const onlyDigits10 = (value: string) =>
-    (value || "").replace(/\D/g, "").slice(0, 10);
+  const userId = sessionStorage.getItem("userId") || "";
+  const savedMobile = sessionStorage.getItem("mobileNumber") || "";
 
-  const handleReset = () => {
-    setInlineError("");
-    form.setFieldsValue({
-      mobileNumber: onlyDigits10(currentMobileNumber || ""),
-    });
-  };
+  const digits10 = (v: string) => (v || "").replace(/\D/g, "").slice(0, 10);
 
-  const updateMobileNumber = async () => {
-    setInlineError("");
+  const cleanText = (v: any) => String(v || "").trim();
+
+  const splitCommaValues = (value?: string) =>
+    value
+      ? value
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+  const getEmployeeSkills = async () => {
+    if (!userId) return;
+
+    setPageLoading(true);
 
     try {
-      const raw = form.getFieldValue("mobileNumber");
-      const mobileNumber = onlyDigits10(raw);
+      const response = await employeeApi.get(
+        `${BASE_URL}/user-service/write/getEmployeeSkills/${userId}`,
+      );
 
-      if (!mobileNumber || mobileNumber.length !== 10) {
-        setInlineError("Please enter a valid 10-digit mobile number.");
-        return;
-      }
+      const data = response.data || {};
 
-      // Check if all digits are the same
-      if (/^(\d)\1{9}$/.test(mobileNumber)) {
-        setInlineError("Please enter a valid mobile number. All digits cannot be the same.");
-        return;
-      }
+      const projectTypes = splitCommaValues(data.projectType);
 
-      // Check if number starts with valid Indian mobile prefix (6-9)
-      if (!/^[6-9]/.test(mobileNumber)) {
-        setInlineError("Mobile number must start with 6, 7, 8, or 9.");
-        return;
-      }
+      const hasData =
+        !!cleanText(data.skills) ||
+        !!cleanText(data.aiTools) ||
+        !!cleanText(data.designation) ||
+        !!cleanText(data.aiToolsUsage) ||
+        projectTypes.length > 0;
 
-      if (!userId) {
-        setInlineError("User ID not found. Please login again.");
-        return;
-      }
+      setHasProfileData(hasData);
 
-      setIsUpdating(true);
+      form.setFieldsValue({
+        mobileNumber: digits10(
+          sessionStorage.getItem("mobileNumber") || savedMobile,
+        ),
+        skills: cleanText(data.skills),
+        aiTools: cleanText(data.aiTools),
+        projectType: projectTypes,
+        aiUsageLevel: cleanText(data.aiToolsUsage) || undefined,
+        designation: cleanText(data.designation) || undefined,
+      });
 
+      setIsEditMode(!hasData);
+    } catch (err) {
+      setHasProfileData(false);
+
+      form.setFieldsValue({
+        mobileNumber: digits10(
+          sessionStorage.getItem("mobileNumber") || savedMobile,
+        ),
+      });
+
+      setIsEditMode(true);
+    } finally {
+      setPageLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getEmployeeSkills();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const handleSave = async () => {
+    setMobErr("");
+
+    try {
+      await form.validateFields();
+    } catch {
+      return;
+    }
+
+    const vals = form.getFieldsValue();
+
+    const mobile = digits10(vals.mobileNumber || "");
+    const aiTools = cleanText(vals.aiTools);
+    const skills = cleanText(vals.skills);
+    const designation = cleanText(vals.designation);
+    const aiUsageLevel = cleanText(vals.aiUsageLevel);
+    const projectType = vals.projectType || [];
+
+    if (!mobile || mobile.length !== 10) {
+      setMobErr("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (/^(\d)\1{9}$/.test(mobile)) {
+      setMobErr("Mobile number cannot contain the same digit repeatedly.");
+      return;
+    }
+
+    if (!/^[6-9]/.test(mobile)) {
+      setMobErr("Mobile number must start with 6, 7, 8, or 9.");
+      return;
+    }
+
+    if (!userId) {
+      setMobErr("User details not found. Please log in again.");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
       await employeeApi.patch(
         `${BASE_URL}/user-service/users/${userId}/empMobile`,
         null,
-        { params: { mobileNumber } }
+        { params: { mobileNumber: mobile } },
       );
 
-      message.success("Mobile number updated successfully");
-      onUpdateSuccess?.();
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message
-          ? err.response.data.message
-          : "Failed to update mobile number. Please try again.";
+      sessionStorage.setItem("mobileNumber", mobile);
 
-      setInlineError(errorMessage);
-      message.error(errorMessage);
-      onUpdateError?.(err);
+      const employeeSkillsPayload = {
+        employeeId: userId,
+        aiTools,
+        aiToolsUsage: aiUsageLevel,
+        projectType: projectType.join(", "),
+        designation,
+        skills,
+      };
+
+      await employeeApi.patch(
+        `${BASE_URL}/user-service/write/updateEmployeeSkills`,
+        employeeSkillsPayload,
+      );
+
+      setIsEditMode(false);
+      setHasProfileData(true);
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Employee profile updated successfully.",
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true,
+      });
+
+      getEmployeeSkills();
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.message ||
+        "Unable to update employee profile. Please try again.";
+
+      setMobErr(msg);
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: msg,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     } finally {
-      setIsUpdating(false);
+      setSaving(false);
     }
   };
+
+  const handleCancel = () => {
+    setMobErr("");
+    form.setFields([]);
+    getEmployeeSkills();
+
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "info",
+      title: "Edit cancelled.",
+      showConfirmButton: false,
+      timer: 1800,
+    });
+  };
+
+  const fieldDisabled =
+    saving || pageLoading || (hasProfileData && !isEditMode);
+
+  const pad = isMobile ? "16px 14px" : "36px 40px";
+  const colSpan = { xs: 24, sm: 12, md: 8 };
+
+  const dividerStyle = (color: string): React.CSSProperties => ({
+    borderColor: color,
+    marginBottom: 20,
+    marginTop: 8,
+  });
+
+  const sectionLabelStyle = (color: string): React.CSSProperties => ({
+    color,
+    fontWeight: 700,
+    fontSize: 13,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  });
 
   return (
     <UserPanelLayout>
       <div
         style={{
-          padding: isMobile ? 12 : 20,
-          maxWidth: 900,
+          maxWidth: 1280,
           margin: "0 auto",
+          padding: isMobile ? "16px 10px" : "32px 24px",
         }}
       >
-        <Row gutter={[16, 16]} justify="center">
-          <Col xs={24} md={18} lg={14}>
-            <Card
-              bordered
-              style={{
-                borderRadius: 14,
-                boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
+        <div
+          style={{
+            marginBottom: 12,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <Title
+            level={isMobile ? 4 : 3}
+            style={{ margin: 0, fontWeight: 700, color: "#1a1a2e" }}
+          >
+            Employee Profile Details
+          </Title>
+
+          {hasProfileData && !isEditMode ? (
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => {
+                setMobErr("");
+                setIsEditMode(true);
               }}
-              bodyStyle={{ padding: isMobile ? 16 : 22 }}
-              title={
-                <Space>
-                  <PhoneOutlined style={{ color: "#1677ff" }} />
-                  <span>Update Mobile Number</span>
-                </Space>
-              }
+              disabled={pageLoading || saving}
+              style={{
+                background: PRIMARY,
+                borderColor: PRIMARY,
+                borderRadius: 8,
+                fontWeight: 600,
+              }}
             >
-              <Space direction="vertical" size={14} style={{ width: "100%" }}>
-                <div>
-                  <Title level={5} style={{ margin: 0 }}>
-                    Enter your new number
-                  </Title>
-                  <Text type="secondary">
-                    Please provide a valid 10-digit Indian mobile number.
-                  </Text>
-                </div>
+              Edit Profile
+            </Button>
+          ) : isEditMode && hasProfileData ? (
+            <Button
+              icon={<CloseOutlined />}
+              onClick={handleCancel}
+              disabled={saving}
+              style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                borderColor: "#ff4d4f",
+                color: "#ff4d4f",
+              }}
+            >
+              Cancel Edit
+            </Button>
+          ) : null}
+        </div>
 
-                {/* <Alert
-                  type="info"
-                  showIcon
-                  icon={<InfoCircleOutlined />}
-                  message="Tip"
-                  description="Only digits are allowed. Country code is fixed as +91."
-                /> */}
+        <Card
+          bordered={false}
+          style={{
+            borderRadius: 10,
+            boxShadow: "0 2px 16px rgba(0,0,0,0.09)",
+            border: "1.5px solid #e8e8e8",
+          }}
+          bodyStyle={{ padding: pad }}
+        >
+          <Spin
+            spinning={saving || pageLoading}
+            tip={
+              pageLoading
+                ? "Loading employee profile..."
+                : "Updating employee profile..."
+            }
+            size="large"
+          >
+            <Form
+              form={form}
+              layout="vertical"
+              requiredMark={true}
+              validateTrigger={["onBlur", "onChange"]}
+              onValuesChange={() => {
+                if (mobErr) setMobErr("");
+              }}
+            >
+              <div style={sectionLabelStyle(PRIMARY)}>
+                Employee Contact & Work Information
+              </div>
 
-                {inlineError ? (
-                  <Alert type="error" showIcon message={inlineError} />
-                ) : null}
+              <Divider style={dividerStyle(PRIMARY)} />
 
-                <Spin spinning={isUpdating} tip="Updating..." size="large">
-                  <Form
-                    form={form}
-                    layout="vertical"
-                    onValuesChange={() => {
-                      if (inlineError) setInlineError("");
-                    }}
+              <Row gutter={[24, 0]}>
+                <Col {...colSpan}>
+                  {mobErr && (
+                    <Alert
+                      type="error"
+                      showIcon
+                      message={mobErr}
+                      style={{ borderRadius: 8, marginBottom: 12 }}
+                    />
+                  )}
+
+                  <Form.Item
+                    label={<Text strong>Employee Mobile Number</Text>}
+                    name="mobileNumber"
+                    required
                   >
-                    <Form.Item
-                      label="Mobile Number"
-                      name="mobileNumber"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Mobile number is required",
-                        },
-                        {
-                          validator: async (_, value) => {
-                            const v = onlyDigits10(value || "");
-                            if (!v || v.length !== 10) {
-                              return Promise.reject(
-                                new Error("Enter exactly 10 digits")
-                              );
-                            }
-                            // Check if all digits are the same
-                            if (/^(\d)\1{9}$/.test(v)) {
-                              return Promise.reject(
-                                new Error("All digits cannot be the same")
-                              );
-                            }
-                            // Check if number starts with valid Indian mobile prefix (6-9)
-                            if (!/^[6-9]/.test(v)) {
-                              return Promise.reject(
-                                new Error("Mobile number must start with 6, 7, 8, or 9")
-                              );
-                            }
-                            return Promise.resolve();
-                          },
-                        },
-                      ]}
+                    <Input
+                      size="large"
+                      addonBefore="+91"
+                      placeholder="Enter employee 10-digit mobile number"
+                      maxLength={10}
+                      inputMode="numeric"
+                      disabled={fieldDisabled}
+                      onChange={(e) =>
+                        form.setFieldsValue({
+                          mobileNumber: digits10(e.target.value),
+                        })
+                      }
+                      style={{ borderRadius: 8 }}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col {...colSpan}>
+                  <Form.Item
+                    label={<Text strong>Employee AI Usage Level</Text>}
+                    name="aiUsageLevel"
+                    required
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please select employee AI usage level.",
+                      },
+                    ]}
+                  >
+                    <Select
+                      size="large"
+                      placeholder="Select employee AI usage level"
+                      disabled={fieldDisabled}
+                      style={{ width: "100%" }}
                     >
-                      <Input
-                        prefix={<span style={{ color: "#6b7280" }}>+91</span>}
-                        placeholder="10-digit mobile number"
-                        maxLength={10}
-                        inputMode="numeric"
-                        autoComplete="tel-national"
-                        disabled={isUpdating}
-                        onChange={(e) => {
-                          const cleaned = onlyDigits10(e.target.value);
-                          form.setFieldsValue({ mobileNumber: cleaned });
-                        }}
+                      {USAGE.map((u) => (
+                        <Select.Option key={u.value} value={u.value}>
+                          {u.label}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col {...colSpan}>
+                  <Form.Item
+                    label={<Text strong>Employee Working Platforms</Text>}
+                    name="projectType"
+                    required
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please select at least one working platform.",
+                      },
+                    ]}
+                  >
+                    <Select
+                      mode="multiple"
+                      size="large"
+                      placeholder="Select employee working platforms"
+                      allowClear
+                      maxTagCount="responsive"
+                      disabled={fieldDisabled}
+                      style={{ width: "100%" }}
+                    >
+                      {PLATFORMS.map((p) => (
+                        <Select.Option key={p.value} value={p.value}>
+                          {p.label}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <div style={sectionLabelStyle(SECONDARY)}>
+                Employee Skills & AI Tool Details
+              </div>
+
+              <Divider style={dividerStyle(SECONDARY)} />
+
+              <Row gutter={[24, 0]}>
+                <Col {...colSpan}>
+                  <Form.Item
+                    label={<Text strong>AI Tools Used by Employee</Text>}
+                    name="aiTools"
+                    required
+                    rules={[
+                      {
+                        validator: (_, value) =>
+                          cleanText(value)
+                            ? Promise.resolve()
+                            : Promise.reject(
+                                new Error("Please enter the AI tools used."),
+                              ),
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      placeholder="Enter AI tools separated by commas"
+                      disabled={fieldDisabled}
+                      onBlur={(e) =>
+                        form.setFieldsValue({
+                          aiTools: cleanText(e.target.value),
+                        })
+                      }
+                      style={{ borderRadius: 8 }}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col {...colSpan}>
+                  <Form.Item
+                    label={<Text strong>Employee Technical Skills</Text>}
+                    name="skills"
+                    required
+                    rules={[
+                      {
+                        validator: (_, value) =>
+                          cleanText(value)
+                            ? Promise.resolve()
+                            : Promise.reject(
+                                new Error(
+                                  "Please enter employee technical skills.",
+                                ),
+                              ),
+                      },
+                    ]}
+                  >
+                    <Input
+                      size="large"
+                      placeholder="Example: React Js, Typescript"
+                      disabled={fieldDisabled}
+                      onBlur={(e) =>
+                        form.setFieldsValue({
+                          skills: cleanText(e.target.value),
+                        })
+                      }
+                      style={{ borderRadius: 8 }}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col {...colSpan}>
+                  <Form.Item
+                    label={<Text strong>Employee Role</Text>}
+                    name="designation"
+                    required
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please select employee role.",
+                      },
+                    ]}
+                  >
+                    <Select
+                      size="large"
+                      placeholder="Select employee role"
+                      disabled={fieldDisabled}
+                      style={{ width: "100%" }}
+                    >
+                      {ROLE_OPTIONS.map((role) => (
+                        <Select.Option key={role} value={role}>
+                          {role}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              {isEditMode && (
+                <>
+                  <Divider style={{ marginTop: 8, marginBottom: 24 }} />
+
+                  <Row
+                    gutter={[16, 12]}
+                    justify={isMobile ? "center" : "start"}
+                  >
+                    <Col xs={24} sm={10} md={6} lg={5}>
+                      <Button
+                        type="primary"
+                        size="large"
+                        block
+                        loading={saving}
+                        onClick={handleSave}
                         style={{
-                          height: isMobile ? 46 : 40,
-                          borderRadius: 10,
+                          borderRadius: 8,
+                          fontWeight: 600,
+                          height: 46,
+                          background: PRIMARY,
+                          borderColor: PRIMARY,
+                          fontSize: 15,
                         }}
-                      />
-                    </Form.Item>
+                      >
+                        {hasProfileData ? "Update Profile" : "Save Profile"}
+                      </Button>
+                    </Col>
 
-                    <Row gutter={[12, 12]}>
-                      <Col xs={24} sm={12}>
+                    {hasProfileData && (
+                      <Col xs={24} sm={10} md={5} lg={4}>
                         <Button
-                          icon={<SaveOutlined />}
+                          size="large"
                           block
-                          onClick={updateMobileNumber}
-                          disabled={isUpdating}
+                          disabled={saving}
+                          onClick={handleCancel}
                           style={{
-                            height: isMobile ? 46 : 40,
-                            borderRadius: 10,
-                            backgroundColor: "#008cba",
-                            color: "white",
+                            borderRadius: 8,
                             fontWeight: 600,
+                            height: 46,
+                            borderColor: SECONDARY,
+                            color: SECONDARY,
+                            fontSize: 15,
                           }}
                         >
-                          Update Mobile Number
+                          Cancel
                         </Button>
                       </Col>
-
-                      <Col xs={24} sm={12}>
-                        <Button
-                          icon={<ReloadOutlined />}
-                          block
-                          onClick={handleReset}
-                          disabled={isUpdating}
-                          style={{
-                            height: isMobile ? 46 : 40,
-                            borderRadius: 10,
-                            fontWeight: 600,
-                          }}
-                        >
-                          Reset
-                        </Button>
-                      </Col>
-                    </Row>
-                  </Form>
-                </Spin>
-
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Note: Your updated mobile number will be used for future
-                  communication and verification.
-                </Text>
-              </Space>
-            </Card>
-          </Col>
-        </Row>
+                    )}
+                  </Row>
+                </>
+              )}
+            </Form>
+          </Spin>
+        </Card>
       </div>
     </UserPanelLayout>
   );
 };
 
-export default MobileNumberUpdate;
+export default EmployeeProfilePage;

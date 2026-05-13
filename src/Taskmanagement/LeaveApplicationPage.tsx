@@ -4,7 +4,6 @@ import {
   DatePicker,
   Input,
   Button,
-  message,
   Card,
   Typography,
   Row,
@@ -15,6 +14,7 @@ import {
  
   Tag,
 } from "antd";
+import Swal from "sweetalert2";
 import {
   CalendarOutlined,
   UserOutlined,
@@ -140,7 +140,7 @@ const LeaveApplicationPage: React.FC = () => {
       const userId = sessionStorage.getItem("userId");
 
       if (!username || !userId) {
-        message.error("User information not found. Please login again.");
+        Swal.fire({ toast: true, position: "top-end", icon: "error", title: "User information not found. Please login again.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
         setLoading(false);
         return;
       }
@@ -166,13 +166,13 @@ const LeaveApplicationPage: React.FC = () => {
       );
 
       if (response.data) {
-        message.success("Leave application submitted successfully!");
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Leave application submitted successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
         form.resetFields();
         setLeaveDays(null);
       }
     } catch (error) {
       console.error("Error submitting leave application:", error);
-      message.error("Failed to submit leave application. Please try again.");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to submit leave application. Please try again.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }

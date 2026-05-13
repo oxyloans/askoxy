@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import BASE_URL from "../Config";
 import {
   Button,
-  notification,
   Spin,
   Typography,
   Select,
@@ -11,7 +10,6 @@ import {
   Card,
   List,
   Tag,
-  message,
   Progress,
   Timeline,
   Empty,
@@ -20,6 +18,7 @@ import {
   Divider,
   Tooltip,
 } from "antd";
+import Swal from "sweetalert2";
 
 import {
   UploadOutlined,
@@ -131,6 +130,8 @@ const TaskUpdate: React.FC = () => {
   const [fileInputKey, setFileInputKey] = useState<number>(Date.now()); // Key to reset file input
   // Add state to track if form fields should be visible
   const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
+  // Ref to scroll to the details section
+  const detailsSectionRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const storedUserId = sessionStorage.getItem("userId");
     if (storedUserId) {
@@ -179,11 +180,7 @@ const canUpdateTask = (task: Task): boolean => {
         setIsFormVisible(false);
       }
     } catch (error: any) {
-      notification.error({
-        message: "Error",
-        description: error.response?.data?.message || "Failed to fetch tasks",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.message || "Failed to fetch tasks", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       console.error("Error fetching tasks:", error);
     } finally {
       setFetchingTasks(false);
@@ -204,6 +201,13 @@ const canUpdateTask = (task: Task): boolean => {
       endOftheDay: task.endOftheDay || "",
       userDocumentId: task.userDocumentId,
     });
+    // Auto-scroll to the details section after state update
+    setTimeout(() => {
+      detailsSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
   };
 
   // Function to reset all upload state
@@ -217,12 +221,7 @@ const canUpdateTask = (task: Task): boolean => {
 
   const updateTask = async (values: TaskFormValues): Promise<void> => {
     if (!selectedTask || !canUpdateTask(selectedTask)) {
-      notification.error({
-        message: "Error",
-        description:
-          "Task updates are not allowed after 9:00 PM IST or for tasks from a different day.",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Task updates are not allowed after 9:00 PM IST or for tasks from a different day.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
     setLoading(true);
@@ -253,11 +252,7 @@ const canUpdateTask = (task: Task): boolean => {
       );
 
       if (response.data.success) {
-        notification.success({
-          message: "Success",
-          description: response.data.message || "Task updated successfully",
-          placement: "topRight",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: response.data.message || "Task updated successfully", showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
        
         resetUploadState();
@@ -265,19 +260,10 @@ const canUpdateTask = (task: Task): boolean => {
      
         fetchAllPendingTasks(userId);
       } else {
-        notification.warning({
-          message: "Warning",
-          description:
-            response.data.message || "Task update completed with warnings",
-          placement: "topRight",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "warning", title: response.data.message || "Task update completed with warnings", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error: any) {
-      notification.error({
-        message: "Error",
-        description: error.response?.data?.message || "Failed to update task",
-        placement: "topRight",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.message || "Failed to update task", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       console.error("Error updating task:", error);
     } finally {
       setLoading(false);
@@ -289,7 +275,7 @@ const canUpdateTask = (task: Task): boolean => {
     resetUploadState();
 
     if (!e.target.files || e.target.files.length === 0) {
-      message.warning("Please select a file to upload.");
+      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please select a file to upload.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
 
@@ -297,7 +283,7 @@ const canUpdateTask = (task: Task): boolean => {
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      message.error("File size should not exceed 10MB");
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "File size should not exceed 10MB", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
 
@@ -334,13 +320,11 @@ const canUpdateTask = (task: Task): boolean => {
       sessionStorage.setItem("taskDocumentTimestamp", new Date().toISOString());
       sessionStorage.setItem("taskDocumentName", file.name);
 
-      message.success("Document uploaded successfully!");
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Document uploaded successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       setUploadStatus("uploaded");
     } catch (error: any) {
       console.error("Upload Error:", error);
-      message.error(
-        error.response?.data?.error || "An error occurred during upload"
-      );
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.error || "An error occurred during upload", showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
       setUploadStatus("failed");
       // Reset file input on error
@@ -351,12 +335,12 @@ const canUpdateTask = (task: Task): boolean => {
   // Function to delete the current upload
   const handleDeleteUpload = () => {
     resetUploadState();
-    message.success("Upload cleared successfully");
+    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Upload cleared successfully", showConfirmButton: false, timer: 3000, timerProgressBar: true });
   };
 
   // Format date for display
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "";
     const date = dayjs(dateString);
     return {
       formatted: date.format("MMM DD, YYYY [at] HH:mm"),
@@ -523,7 +507,7 @@ const canUpdateTask = (task: Task): boolean => {
                 <CalendarOutlined className="mr-2 text-blue-500" />
                 <span className="font-semibold text-lg">All Pending Tasks</span>
               </div>
-              {fetchingTasks ? <Spin size="small" /> : null}
+             
             </div>
           }
           className="mb-4 sm:mb-6 shadow-md rounded-lg"
@@ -534,7 +518,7 @@ const canUpdateTask = (task: Task): boolean => {
         >
           {fetchingTasks ? (
             <div className="flex justify-center items-center py-8 sm:py-12">
-              <Spin size="small" tip="Loading your tasks..." />
+              <Spin size="large" tip="Loading your tasks..." />
             </div>
           ) : tasks.length > 0 ? (
             <List
@@ -556,45 +540,45 @@ const canUpdateTask = (task: Task): boolean => {
                       }`}
                     onClick={() => selectTask(task)}
                   >
-                    <div className="flex flex-col md:flex-row justify-between items-start mb-2">
-                      <div className="flex-1 w-full md:w-auto">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center  mb-2 sm:mb-0">
-                            <Title level={5} className="mb-0 font-bold ml-4">
-                              Plan of the day
-                            </Title>
-                            <Tag color="blue" className="mt-1 sm:mt-0 sm:ml-3">
-                              {taskDate}
-                            </Tag>
-                          </div>
-                          <div className="flex items-center mt-2 sm:mt-0">
-                            {task.taskAssignedBy && (
-                              <Tooltip title="Assigned by">
-                                <Tag color="cyan" className="mr-2">
-                                  <UserOutlined className="mr-1" />
-                                  {task.taskAssignedBy}
-                                </Tag>
-                              </Tooltip>
-                            )}
-                            <Tag
-                              icon={
-                                task.taskStatus === "COMPLETED" ? (
-                                  <CheckCircleOutlined />
-                                ) : (
-                                  <ClockCircleOutlined />
-                                )
-                              }
-                              color={getTaskStatusColor(task.taskStatus)}
-                              className="text-sm"
-                            >
-                              {task.taskStatus}
-                            </Tag>
-                          </div>
+                    <div className="w-full" style={{ padding: '4px 8px' }}>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        {/* Left side: Title + Date */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Title level={5} className="mb-0 font-bold" style={{ marginBottom: 0, paddingLeft: '6px'}}>
+                            Plan of the day
+                          </Title>
+                          <Tag color="blue">
+                            {taskDate}
+                          </Tag>
                         </div>
-                        <Paragraph className="text-gray-700 ml-4">
-                          {task.planOftheDay}
-                        </Paragraph>
+                        {/* Right side: Assigned by + Status */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {task.taskAssignedBy && (
+                            <Tooltip title="Assigned by">
+                              <Tag color="cyan">
+                                <UserOutlined className="mr-1" />
+                                {task.taskAssignedBy}
+                              </Tag>
+                            </Tooltip>
+                          )}
+                          <Tag
+                            icon={
+                              task.taskStatus === "COMPLETED" ? (
+                                <CheckCircleOutlined />
+                              ) : (
+                                <ClockCircleOutlined />
+                              )
+                            }
+                            color={getTaskStatusColor(task.taskStatus)}
+                            className="text-sm"
+                          >
+                            {task.taskStatus}
+                          </Tag>
+                        </div>
                       </div>
+                      <Paragraph className="text-gray-700 mb-0" style={{ wordBreak: 'break-word', paddingLeft: '6px' }}>
+                        {task.planOftheDay}
+                      </Paragraph>
                     </div>
                   </List.Item>
                 );
@@ -620,8 +604,8 @@ const canUpdateTask = (task: Task): boolean => {
 
         {selectedTask && (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch" ref={detailsSectionRef}>
+              <div className="lg:col-span-2 flex flex-col">
                 <Card
                   title={
                     <div className="flex items-center">
@@ -631,11 +615,13 @@ const canUpdateTask = (task: Task): boolean => {
                       </span>
                     </div>
                   }
-                  className="shadow-md rounded-lg"
+                  className="shadow-md rounded-lg flex-1"
                   headStyle={{
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
                   }}
+                  style={{ display: 'flex', flexDirection: 'column' }}
+                  bodyStyle={{ flex: 1 }}
                 >
                   {isFormVisible ? (
                     <Form<TaskFormValues>
@@ -880,7 +866,7 @@ const canUpdateTask = (task: Task): boolean => {
                 </Card>
               </div>
 
-              <div className="lg:col-span-1">
+              <div className="lg:col-span-1 flex flex-col">
                 {/* Previous Updates Section */}
                 <Card
                   title={
@@ -891,13 +877,14 @@ const canUpdateTask = (task: Task): boolean => {
                       </span>
                     </div>
                   }
-                  className="shadow-md rounded-lg"
+                  className="shadow-md rounded-lg flex-1"
                   headStyle={{
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
                   }}
+                  style={{ display: 'flex', flexDirection: 'column' }}
                   bodyStyle={{
-                    maxHeight: "600px",
+                    flex: 1,
                     overflowY: "auto",
                   }}
                 >

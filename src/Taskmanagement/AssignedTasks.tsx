@@ -9,7 +9,6 @@ import {
   Spin,
   Empty,
   Badge,
-  message,
   Tag,
   Avatar,
   Input,
@@ -22,6 +21,7 @@ import {
   Modal,
   Form,
 } from "antd";
+import Swal from "sweetalert2";
 import {
   ReloadOutlined,
   CheckCircleOutlined,
@@ -189,21 +189,10 @@ const AssignedTasksPage: React.FC = () => {
       setTasks(enhancedTasks);
       setFilteredTasks(enhancedTasks);
 
-      message.info({
-        content:
-          enhancedTasks.length === 0
-            ? "No assigned tasks at the moment."
-            : `${enhancedTasks.length} tasks retrieved.`,
-        key: "tasksLoaded",
-        duration: 3,
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "info", title: enhancedTasks.length === 0 ? "No assigned tasks at the moment." : `${enhancedTasks.length} tasks retrieved.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } catch (error) {
       console.error("Error fetching tasks:", error);
-      message.error({
-        content: "Failed to fetch tasks. Please try again.",
-        key: "fetchError",
-        duration: 4,
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks. Please try again.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }
@@ -222,11 +211,7 @@ const AssignedTasksPage: React.FC = () => {
       return;
     }
 
-    message.loading({
-      content: "Updating task status...",
-      key: taskId,
-      duration: 0,
-    });
+    Swal.fire({ toast: true, position: "top-end", icon: "info", title: "Updating task status...", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     setActionLoading((prev) => ({ ...prev, [taskId]: true }));
 
     const action =
@@ -246,17 +231,9 @@ const AssignedTasksPage: React.FC = () => {
           `${BASE_URL}/user-service/write/comments/${taskId}`,
           { comment: commentData.comment, link: commentData.link || "" }
         );
-        message.success({
-          content: "Task completed and comment submitted!",
-          key: taskId,
-          duration: 3,
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Task completed and comment submitted!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       } else {
-        message.success({
-          content: response.data.message || "Task status updated!",
-          key: taskId,
-          duration: 3,
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: response.data.message || "Task status updated!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
 
       setTasks((prev) =>
@@ -268,11 +245,7 @@ const AssignedTasksPage: React.FC = () => {
       setTimeout(fetchAssignedTasks, 300);
     } catch (error) {
       console.error("Error updating task status or submitting comment:", error);
-      message.error({
-        content: "Failed to update task status or submit comment.",
-        key: taskId,
-        duration: 4,
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to update task status or submit comment.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setActionLoading((prev) => ({ ...prev, [taskId]: false }));
       if (newStatus === 4) {
@@ -291,11 +264,7 @@ const AssignedTasksPage: React.FC = () => {
       const values = await commentForm.validateFields();
       await updateTaskStatus(selectedTaskId, 4, values);
     } catch (error) {
-      message.error({
-        content: "Please provide a valid comment.",
-        key: "commentError",
-        duration: 4,
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please provide a valid comment.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     }
   };
 

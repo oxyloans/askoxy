@@ -7,13 +7,13 @@ import {
   Button,
   Table,
   Spin,
-  notification,
   Typography,
   Tag,
   Tooltip,
   Row,
   Col,
 } from "antd";
+import Swal from "sweetalert2";
 import type { TableProps } from "antd";
 
 const { Option } = Select;
@@ -104,10 +104,7 @@ const TaskAssignedUser: React.FC = () => {
 
   const fetchUserTasks = async (userName: string) => {
     if (!userName) {
-      notification.warning({
-        message: "No User Selected",
-        description: "Please select a user to view their tasks.",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please select a user to view their tasks.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
 
@@ -120,27 +117,16 @@ const TaskAssignedUser: React.FC = () => {
       if (response.data && Array.isArray(response.data)) {
         setTasks(response.data);
         if (response.data.length === 0) {
-          notification.info({
-            message: "No Tasks Found",
-            description: `No tasks are assigned to ${userName}.`,
-          });
+          Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No tasks are assigned to ${userName}.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
         }
       } else {
         setTasks([]);
-        notification.warning({
-          message: "Unexpected Response Format",
-          description: "The API response was not in the expected format.",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "The API response was not in the expected format.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       setTasks([]);
-      notification.error({
-        message: "Error Fetching Tasks",
-        description:
-          error.response?.data?.message ||
-          "Failed to load tasks for this user.",
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.message || "Failed to load tasks for this user.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
     } finally {
       setLoading(false);
     }

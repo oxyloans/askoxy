@@ -1262,13 +1262,21 @@ const CheckoutPage: React.FC = () => {
         if (!response.data.paymentId && response.data.status) {
           setLoading(false);
           const Swal = require("sweetalert2");
-          Swal.fire({
-            icon: "error",
-            title: "Order Cannot Be Placed",
-            text: response.data.status,
-            confirmButtonText: "OK",
-            confirmButtonColor: "#d33",
-          }).then(() => {
+         Swal.fire({
+  icon: "warning",
+  title: "Minimum Order Required",
+  text: response.data.status,
+  confirmButtonText: "Continue Shopping",
+  confirmButtonColor: "#7C3AED",
+  background: "#ffffff",
+  color: "#333",
+  width: 400,
+  customClass: {
+    popup: "rounded-2xl shadow-xl",
+    title: "text-lg font-semibold",
+    confirmButton: "rounded-xl px-5 py-2",
+  },
+}).then(() => {
             navigate("/main/mycart");
           });
           return;

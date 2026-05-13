@@ -52,6 +52,7 @@ const Header: React.FC<HeaderProps> = ({
     "/bharath-aistore/ai-initiatives",
     "/bharath-aistore/RadhaAgents",
     "/awards-rewards",
+    "/all-ai-stores"
   ];
 
   const hideSearch = NAV_ROUTES.includes(location.pathname);

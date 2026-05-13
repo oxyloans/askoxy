@@ -9,7 +9,7 @@ import {
   message,
   Typography,
 } from "antd";
-import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
+import { MenuUnfoldOutlined, MenuFoldOutlined, UserOutlined } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
 
@@ -103,17 +103,31 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
 
   const toggleCollapse = (): void => setCollapsed((prev) => !prev);
 
-  const handleSignOut = (): void => {
-    // Store current route as intended route before logout
-    const currentPath = location.pathname;
-    if (currentPath !== '/userlogin' && currentPath !== '/userregister') {
-      localStorage.setItem('intendedRoute', currentPath);
-    }
-    sessionStorage.clear();
-    // Clear browser history to prevent back navigation
-    window.history.replaceState(null, '', '/userlogin');
-    window.location.replace('/userlogin');
-  };
+const handleSignOut = (): void => {
+  // Store current route before logout
+  const currentPath = location.pathname;
+
+  if (currentPath !== "/userlogin" && currentPath !== "/userregister") {
+    localStorage.setItem("intendedRoute", currentPath);
+  }
+
+  // Keep mobile number before clearing
+  const mobileNumber = sessionStorage.getItem("mobileNumber");
+
+  // Clear all session storage
+  sessionStorage.clear();
+
+  // Restore only mobile number
+  if (mobileNumber) {
+    sessionStorage.setItem("mobileNumber", mobileNumber);
+  }
+
+  // Clear browser history
+  window.history.replaceState(null, "", "/userlogin");
+
+  // Redirect
+  window.location.replace("/userlogin");
+};
 
   const getUserInitials = (): string => {
     if (!userName) return "U";
@@ -181,10 +195,10 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
         ),
       },
       {
-        key: "/usermobilenumberupdate",
-        label: <Link to="/usermobilenumberupdate">Update Mobile Number</Link>,
+        key: "/employeeprofile",
+        label: <Link to="/employeeprofile">Employee Profile Details</Link>,
         icon: (
-          <FaMobileAlt className="text-orange-600" style={{ fontSize: 16 }} />
+          <UserOutlined className="text-orange-600" style={{ fontSize: 16 }} />
         ),
       },
     ];

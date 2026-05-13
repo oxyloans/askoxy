@@ -5,10 +5,10 @@ import {
   Button,
   Alert,
   Card,
-  message,
   Typography,
   Divider,
 } from "antd";
+import Swal from "sweetalert2";
 import axios from "axios";
 import BASE_URL from "../Config";
 import { Link, useNavigate } from "react-router-dom";
@@ -47,12 +47,7 @@ const UserRegister: React.FC = () => {
   useEffect(() => {
     if (registrationSuccess) {
       // Show success message before redirecting
-      message.success({
-        content: "Registration successful! Redirecting to login...",
-        icon: <UserAddOutlined />,
-        className: "custom-message-success",
-        duration: 1.5,
-      });
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Registration successful! Redirecting to login...", showConfirmButton: false, timer: 1500, timerProgressBar: true });
 
       // Set immediate timeout for redirection
       const redirectTimer = setTimeout(() => {
@@ -87,11 +82,7 @@ const UserRegister: React.FC = () => {
         setIsEmailSubmitted(true);
         setEmailOtpSession(response.data.emailOtpSession);
         setSalt(response.data.salt);
-        message.success({
-          content: "OTP has been sent to your email",
-          icon: <MailOutlined />,
-          className: "custom-message-success",
-        });
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "OTP has been sent to your email", showConfirmButton: false, timer: 2000, timerProgressBar: true });
       } else {
         setError("Failed to generate OTP. Please try again.");
       }
