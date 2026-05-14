@@ -45,21 +45,74 @@ const ROLE_OPTIONS = [
   "Frontend Developer",
   "Backend Developer",
   "Full Stack Developer",
-  "Mobile App Developer",
   "React Developer",
+  "Angular Developer",
+  "Node.js Developer",
+  "Java Developer",
+  "Python Developer",
+  "Mobile App Developer",
+  "Software Engineer",
+  "Senior Software Engineer",
+  "Technical Lead",
+  "Team Lead",
+  "Project Manager",
+  "Product Manager",
+  "Engineering Manager",
+
+  "UI/UX Designer",
+  "Graphic Designer",
+  "Motion Graphic Designer",
+  "Video Editor",
+  "3D Designer",
+
+  "QA Engineer",
   "QA Tester",
   "Automation Tester",
+  "Manual Tester",
+  "Test Engineer",
+
   "Business Analyst",
+  "Senior Business Analyst",
+  "Data Analyst",
+  "AI Engineer",
+  "Machine Learning Engineer",
+  "Prompt Engineer",
+
   "HR Executive",
+  "HR Recruiter",
+  "Talent Acquisition Specialist",
+  "HR Manager",
+  "Human Resources Manager",
+
   "Sales Executive",
+  "Sales Manager",
+  "Business Development Executive",
+  "Business Development Manager",
+  "Marketing Executive",
+  "Digital Marketing Executive",
+  "Social Media Manager",
+  "Operations Executive",
+  "Operations Manager",
+
+  "Customer Support Executive",
   "Telecalling Executive",
   "Accountant",
-  "Operations Executive",
-  "Marketing Executive",
-  "UI/UX Designer",
-  "Project Manager",
-  "Team Lead",
-  "Manager",
+  "Finance Executive",
+
+  "Consultant",
+  "Trainer",
+  "Mentor",
+  "Freelancer",
+
+  "Director",
+  "Managing Director",
+  "Chief Executive Officer (CEO)",
+  "Chief Technology Officer (CTO)",
+  "Chief Operating Officer (COO)",
+  "Chief Marketing Officer (CMO)",
+  "Chief Financial Officer (CFO)",
+  "Founder",
+  "Co-Founder",
 ];
 
 const EmployeeProfilePage: React.FC = () => {
@@ -405,21 +458,17 @@ const EmployeeProfilePage: React.FC = () => {
 
                 <Col {...colSpan}>
                   <Form.Item
-                    label={<Text strong>Employee AI Usage Level</Text>}
+                    label={
+                      <Text strong>Employee AI Usage Level (Optional)</Text>
+                    }
                     name="aiUsageLevel"
-                    required
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please select employee AI usage level.",
-                      },
-                    ]}
                   >
                     <Select
                       size="large"
                       placeholder="Select employee AI usage level"
                       disabled={fieldDisabled}
                       style={{ width: "100%" }}
+                      allowClear
                     >
                       {USAGE.map((u) => (
                         <Select.Option key={u.value} value={u.value}>
@@ -470,19 +519,10 @@ const EmployeeProfilePage: React.FC = () => {
               <Row gutter={[24, 0]}>
                 <Col {...colSpan}>
                   <Form.Item
-                    label={<Text strong>AI Tools Used by Employee</Text>}
+                    label={
+                      <Text strong>AI Tools Used by Employee (Optional)</Text>
+                    }
                     name="aiTools"
-                    required
-                    rules={[
-                      {
-                        validator: (_, value) =>
-                          cleanText(value)
-                            ? Promise.resolve()
-                            : Promise.reject(
-                                new Error("Please enter the AI tools used."),
-                              ),
-                      },
-                    ]}
                   >
                     <Input
                       size="large"
@@ -500,25 +540,12 @@ const EmployeeProfilePage: React.FC = () => {
 
                 <Col {...colSpan}>
                   <Form.Item
-                    label={<Text strong>Employee Technical Skills</Text>}
+                    label={<Text strong>Employee Skills (Optional)</Text>}
                     name="skills"
-                    required
-                    rules={[
-                      {
-                        validator: (_, value) =>
-                          cleanText(value)
-                            ? Promise.resolve()
-                            : Promise.reject(
-                                new Error(
-                                  "Please enter employee technical skills.",
-                                ),
-                              ),
-                      },
-                    ]}
                   >
                     <Input
                       size="large"
-                      placeholder="Example: React Js, Typescript"
+                      placeholder="Enter employee skills"
                       disabled={fieldDisabled}
                       onBlur={(e) =>
                         form.setFieldsValue({

@@ -317,59 +317,62 @@ const ProfilePage = () => {
       setIsLoading(false);
     }
   };
+const getLast10Digits = (value: string | null | undefined) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  return digits.length > 10 ? digits.slice(-10) : digits;
+};
 
-  const validateProfileForm = () => {
-    const errors: Record<string, string> = {};
+const validateProfileForm = () => {
+  const errors: Record<string, string> = {};
 
-    if (!formData.userFirstName.trim()) {
-      errors.userFirstName = "First name is required";
-    } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
-      errors.userFirstName = "First name should only contain letters";
+  const primaryMobile = getLast10Digits(formData.mobileNumber);
+  const whatsappMobile = getLast10Digits(formData.whatsappNumber);
+  const alternateMobile = getLast10Digits(formData.alterMobileNumber);
+
+  const effectivePrimaryNumber = primaryMobile || whatsappMobile;
+
+  if (!formData.userFirstName.trim()) {
+    errors.userFirstName = "First name is required";
+  } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
+    errors.userFirstName = "First name should only contain letters";
+  }
+
+  const emailValue = formData.customerEmail.trim();
+
+  if (!emailValue) {
+    errors.customerEmail = "Email address is required";
+  } else {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailValue)) {
+      errors.customerEmail = "Please enter a valid email address";
     }
+  }
 
-    const emailValue = formData.customerEmail.trim();
+  if (!effectivePrimaryNumber) {
+    errors.mobileNumber = "Primary mobile number is required";
+  } else if (!/^\d{10}$/.test(effectivePrimaryNumber)) {
+    errors.mobileNumber = "Please enter a valid 10-digit mobile number";
+  } else if (/^0+$/.test(effectivePrimaryNumber)) {
+    errors.mobileNumber = "Mobile number cannot be all zeros";
+  }
 
-    if (!emailValue) {
-      errors.customerEmail = "Email address is required";
-    } else {
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      if (!emailRegex.test(emailValue)) {
-        errors.customerEmail = "Please enter a valid email address";
-      }
+  if (alternateMobile) {
+    if (!/^\d{10}$/.test(alternateMobile)) {
+      errors.alterMobileNumber = "Please enter a valid 10-digit mobile number";
+    } else if (/^0+$/.test(alternateMobile)) {
+      errors.alterMobileNumber = "Mobile number cannot be all zeros";
+    } else if (
+      alternateMobile === primaryMobile ||
+      alternateMobile === whatsappMobile
+    ) {
+      errors.alterMobileNumber =
+        "Alternate number must be different from primary and WhatsApp number.";
     }
+  }
 
-    if (formData.alterMobileNumber.trim() !== "") {
-      if (!/^\d{10}$/.test(formData.alterMobileNumber)) {
-        errors.alterMobileNumber =
-          "Please enter a valid 10-digit mobile number";
-      } else if (/^0+$/.test(formData.alterMobileNumber)) {
-        errors.alterMobileNumber = "Mobile number cannot be all zeros";
-      } else if (formData.alterMobileNumber === formData.mobileNumber) {
-        errors.alterMobileNumber =
-          "Alternate and Mobile number must be different.";
-        errors.mobileNumber = "Alternate and Mobile number must be different.";
-      } else if (
-        formData.alterMobileNumber === formData.whatsappNumber.replace(/\D/g, "")
-      ) {
-        errors.alterMobileNumber =
-          "Alternate and WhatsApp number must be different.";
-        errors.whatsappNumber =
-          "Alternate and WhatsApp number must be different.";
-      }
-    }
-
-    if (!formData.mobileNumber.trim()) {
-      errors.mobileNumber = "Mobile number is required";
-    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
-      errors.mobileNumber = "Please enter a valid 10-digit mobile number";
-    } else if (/^0+$/.test(formData.mobileNumber)) {
-      errors.mobileNumber = "Mobile number cannot be all zeros";
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
+  setValidationErrors(errors);
+  return Object.keys(errors).length === 0;
+};
   const validateField = (
     field: string,
     value: string,
@@ -457,51 +460,45 @@ const ProfilePage = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (!validateProfileForm()) {
-      setIsValidationPopupOpen(true);
-      return;
-    }
+  if (!validateProfileForm()) {
+    setIsValidationPopupOpen(true);
+    return;
+  }
 
-    try {
-      setIsLoading(true);
+  try {
+    setIsLoading(true);
 
-      const payload = {
-        ...formData,
-        whatsappNumber: formData.whatsappNumber || formData.mobileNumber,
-        mobileNumber: formData.mobileNumber.replace(countryCode, ""),
-      };
+    const primaryMobile = getLast10Digits(formData.mobileNumber);
+    const whatsappMobile = getLast10Digits(formData.whatsappNumber);
+    const finalPrimaryNumber = primaryMobile || whatsappMobile;
 
-      await customerApi.patch(`${BASE_URL}/user-service/profileUpdate`, payload);
+    const payload = {
+      ...formData,
+      mobileNumber: finalPrimaryNumber,
+      whatsappNumber: whatsappMobile || finalPrimaryNumber,
+      alterMobileNumber: getLast10Digits(formData.alterMobileNumber),
+    };
 
-      if (typeof window !== "undefined" && window.gtag) {
-        const updatedFields = Object.entries(payload)
-          .filter(([_, value]) => value !== "")
-          .map(([key, _]) => key);
+    await customerApi.patch(`${BASE_URL}/user-service/profileUpdate`, payload);
 
-        window.gtag("event", "profile_update", {
-          method: "form_submission",
-          fields_updated: updatedFields.join(","),
-        });
-      }
+    setSuccessMessage("Profile updated successfully!");
+    setEditStatus(true);
+    localStorage.setItem("profileData", JSON.stringify(payload));
+  } catch (error: any) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.response?.data ||
+      "Error updating profile. Please try again.";
 
-      setSuccessMessage("Profile updated successfully!");
-      setEditStatus(true);
-      localStorage.setItem("profileData", JSON.stringify(payload));
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data ||
-        "Error updating profile. Please try again.";
-
-      setError(
-        typeof errorMessage === "string"
-          ? errorMessage
-          : "Error updating profile. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setError(
+      typeof errorMessage === "string"
+        ? errorMessage
+        : "Error updating profile. Please try again."
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   React.useEffect(() => {
     if (successMessage || error) {

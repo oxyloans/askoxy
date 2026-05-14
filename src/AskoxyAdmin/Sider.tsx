@@ -191,6 +191,12 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKADMIN"],
         },
         {
+          title: "Ram Mohan Darisa",
+          icon: <FaRobot className="text-blue-400" />,
+          link: "/admin/rammohandarisa",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
+        {
           title: "All AskOxy Users",
           icon: <FaRegAddressCard className="text-green-400" />,
           link: "/admin/dataAssigned",

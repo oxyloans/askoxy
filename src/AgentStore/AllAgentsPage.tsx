@@ -39,7 +39,7 @@ function getAccessToken(): string | null {
 // Safely resolve a display name from historyData (fallback to userId)
 function resolveUserDisplayName(
   userId: string | number | null | undefined,
-  map?: Record<string, string | null>
+  map?: Record<string, string | null>,
 ) {
   if (userId == null) return "Unknown User";
   const key = String(userId);
@@ -75,7 +75,7 @@ function getBestAvatar(a: any): string | null {
 
 async function authFetch(
   input: RequestInfo | URL,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ): Promise<Response> {
   const base = authHeadersBase();
   const incoming =
@@ -83,8 +83,8 @@ async function authFetch(
       (init.headers instanceof Headers
         ? Object.fromEntries(init.headers.entries())
         : Array.isArray(init.headers)
-        ? Object.fromEntries(init.headers)
-        : (init.headers as Record<string, string>))) ||
+          ? Object.fromEntries(init.headers)
+          : (init.headers as Record<string, string>))) ||
     {};
   const isFormData = init.body instanceof FormData;
   const shouldSetJson =
@@ -95,7 +95,12 @@ async function authFetch(
   const headers: Record<string, string> = {
     ...base,
     ...incoming,
-    ...(shouldSetJson ? { "Content-Type": "application/json", Authorization: `Bearer ${getAccessToken()}` } : {}),
+    ...(shouldSetJson
+      ? {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getAccessToken()}`,
+        }
+      : {}),
   };
   return fetch(input, {
     mode: "cors",
@@ -253,12 +258,14 @@ const AllAgentsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AllAgentDataResponse | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [deleteType, setDeleteType] = useState<"soft" | "permanent" | null>(null);
+  const [deleteType, setDeleteType] = useState<"soft" | "permanent" | null>(
+    null,
+  );
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
   // ⬇️ place with the other React.useState hooks (top of component)
   const [avatarMenuFor, setAvatarMenuFor] = useState<string | null>(null);
-  
+
   // Close avatar menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -266,13 +273,13 @@ const AllAgentsPage: React.FC = () => {
         setAvatarMenuFor(null);
       }
     };
-    
+
     if (avatarMenuFor) {
-      document.addEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
     }
-    
+
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [avatarMenuFor]);
   const [genLoadingFor, setGenLoadingFor] = useState<string | null>(null);
@@ -313,7 +320,7 @@ const AllAgentsPage: React.FC = () => {
   const [tempRecipient, setTempRecipient] = useState("");
   // Edit only Instructions + ConStarters
   const [editScriptAgent, setEditScriptAgent] = useState<Assistant | null>(
-    null
+    null,
   );
   const [editInstr, setEditInstr] = useState("");
   const [editCS1, setEditCS1] = useState("");
@@ -340,7 +347,7 @@ const AllAgentsPage: React.FC = () => {
     return users.filter((u) => {
       const nm = resolveUserDisplayName(
         u.userId,
-        historyData?.userNameMap
+        historyData?.userNameMap,
       ).toLowerCase();
       const uid = String(u.userId || "").toLowerCase();
       return nm.includes(q) || uid.includes(q);
@@ -371,7 +378,7 @@ const AllAgentsPage: React.FC = () => {
       try {
         const url = new URL(
           "/api/user-service/customerProfileDetails",
-          BASE_URL
+          BASE_URL,
         );
         url.searchParams.set("customerId", candidate);
         const res = await authFetch(url.toString(), { method: "GET" });
@@ -429,7 +436,7 @@ const AllAgentsPage: React.FC = () => {
             headers: {
               Authorization: `Bearer ${getAccessToken()}`,
             },
-          }
+          },
         )
         .then((response) => {
           console.log(response.data);
@@ -477,7 +484,7 @@ const AllAgentsPage: React.FC = () => {
           headers: {
             Authorization: `Bearer ${getAccessToken()}`,
           },
-        }
+        },
       );
 
       setBusinessCardData(editBusinessCardData);
@@ -520,7 +527,7 @@ const AllAgentsPage: React.FC = () => {
       if (!nameToUse) {
         setCertLoadingFor(null);
         return message.warning(
-          "Please enter your first name to generate the certificate."
+          "Please enter your first name to generate the certificate.",
         );
       }
 
@@ -529,7 +536,7 @@ const AllAgentsPage: React.FC = () => {
       // ============================
       const profileUrl = new URL(
         "/api/user-service/customerProfileDetails",
-        BASE_URL
+        BASE_URL,
       );
       profileUrl.searchParams.set("customerId", resolvedUserId);
 
@@ -565,13 +572,13 @@ const AllAgentsPage: React.FC = () => {
       // ============================
       const url = new URL(
         "/api/ai-service/agent/downloadAiCertificate",
-        BASE_URL
+        BASE_URL,
       );
 
       url.searchParams.set("agentId", agent.id);
       url.searchParams.set(
         "agentName",
-        agent.agentName || agent.name || "AI Agent"
+        agent.agentName || agent.name || "AI Agent",
       );
       url.searchParams.set("recipientName", nameToUse);
 
@@ -589,7 +596,7 @@ const AllAgentsPage: React.FC = () => {
         throw new Error(
           `Certificate generation failed (${res.status})${
             txt ? `: ${txt}` : ""
-          }`
+          }`,
         );
       }
 
@@ -624,7 +631,7 @@ const AllAgentsPage: React.FC = () => {
 
   // Parse your prompt string into [{role, content}] safely (full text, no trimming)
   function parsePromptToMessages(
-    prompt?: string
+    prompt?: string,
   ): { role: string; content: string }[] {
     if (!prompt) return [];
     // Strip surrounding [ ... ] if present
@@ -653,9 +660,9 @@ const AllAgentsPage: React.FC = () => {
       if (!resolvedUserId) return;
       const ref = await authFetch(
         `${BASE_URL}/ai-service/agent/allAgentDataList?userId=${encodeURIComponent(
-          resolvedUserId
+          resolvedUserId,
         )}`,
-        { method: "GET" }
+        { method: "GET" },
       );
 
       const text = await ref.text().catch(() => "");
@@ -689,11 +696,11 @@ const AllAgentsPage: React.FC = () => {
 
           assistants: Array.isArray(raw?.assistants)
             ? sortByDate(raw.assistants)
-            : prev?.assistants ?? [],
+            : (prev?.assistants ?? []),
 
           conversations: Array.isArray(raw?.conversations)
             ? sortByDate(raw.conversations)
-            : prev?.conversations ?? [],
+            : (prev?.conversations ?? []),
         };
       });
     } catch {
@@ -749,10 +756,13 @@ const AllAgentsPage: React.FC = () => {
       // keep whole raw for detail view filtering
       rawList: list,
       // quick map for showing names in detail view
-      userNameMap: users.reduce((m, u) => {
-        m[u.userId] = u.name || null;
-        return m;
-      }, {} as Record<string, string | null>),
+      userNameMap: users.reduce(
+        (m, u) => {
+          m[u.userId] = u.name || null;
+          return m;
+        },
+        {} as Record<string, string | null>,
+      ),
     };
   }
   useEffect(() => {
@@ -776,7 +786,7 @@ const AllAgentsPage: React.FC = () => {
     try {
       const url = new URL(
         "/api/ai-service/agent/getCreatorAgentDeatils",
-        BASE_URL
+        BASE_URL,
       );
       url.searchParams.set("agentId", agentId);
       url.searchParams.set("userId", userId);
@@ -785,7 +795,7 @@ const AllAgentsPage: React.FC = () => {
       const text = await res.text().catch(() => "");
       if (!res.ok) {
         throw new Error(
-          `Request failed (${res.status})${text ? `: ${text}` : ""}`
+          `Request failed (${res.status})${text ? `: ${text}` : ""}`,
         );
       }
 
@@ -828,7 +838,7 @@ const AllAgentsPage: React.FC = () => {
     if (!res.ok) {
       // Surface backend error text if present
       throw new Error(
-        `Save image URL failed (${res.status})${text ? `: ${text}` : ""}`
+        `Save image URL failed (${res.status})${text ? `: ${text}` : ""}`,
       );
     }
 
@@ -869,7 +879,7 @@ const AllAgentsPage: React.FC = () => {
         {
           method: "PATCH",
           body: JSON.stringify(body),
-        }
+        },
       );
       const text = await res.text().catch(() => "");
       if (!res.ok) {
@@ -901,7 +911,7 @@ const AllAgentsPage: React.FC = () => {
       const txt = await res.text().catch(() => "");
       if (!res.ok)
         throw new Error(
-          `Fetch AI image failed: ${res.status}${txt ? ` ${txt}` : ""}`
+          `Fetch AI image failed: ${res.status}${txt ? ` ${txt}` : ""}`,
         );
       const json = txt ? JSON.parse(txt) : {};
       return json as {
@@ -962,48 +972,54 @@ const AllAgentsPage: React.FC = () => {
         });
       } catch (e: any) {
         console.error("Error loading agents:", e);
-        
+
         // Enhanced error handling with user-friendly messages
         let errorMessage = "Failed to load agents.";
-        
+
         if (e?.response) {
           const status = e.response.status;
           const data = e.response.data;
-          
+
           switch (status) {
             case 400:
-              errorMessage = "Invalid request. Please check your user credentials.";
+              errorMessage =
+                "Invalid request. Please check your user credentials.";
               break;
             case 401:
               errorMessage = "Authentication failed. Please login again.";
               break;
             case 403:
-              errorMessage = "Access denied. You don't have permission to view agents.";
+              errorMessage =
+                "Access denied. You don't have permission to view agents.";
               break;
             case 404:
               errorMessage = "Agent service not found. Please try again later.";
               break;
             case 500:
-              errorMessage = "Server error occurred. Our team has been notified. Please try again in a few minutes.";
+              errorMessage =
+                "Server error occurred. Our team has been notified. Please try again in a few minutes.";
               break;
             case 502:
-              errorMessage = "Service temporarily unavailable. Please try again later.";
+              errorMessage =
+                "Service temporarily unavailable. Please try again later.";
               break;
             case 503:
-              errorMessage = "Service is under maintenance. Please try again later.";
+              errorMessage =
+                "Service is under maintenance. Please try again later.";
               break;
             default:
               errorMessage = `Request failed (Error ${status}). Please try again.`;
           }
-          
+
           // Log detailed error for debugging but show user-friendly message
           console.error(`API Error ${status}:`, data);
         } else if (e?.request) {
-          errorMessage = "Network error. Please check your internet connection.";
+          errorMessage =
+            "Network error. Please check your internet connection.";
         } else {
           errorMessage = e?.message || "An unexpected error occurred.";
         }
-        
+
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -1029,7 +1045,7 @@ const AllAgentsPage: React.FC = () => {
         // 2) GET the saved profile image and show it
         const got = await getAiProfileImage(
           pendingSave.agentId,
-          pendingSave.userId
+          pendingSave.userId,
         );
         if (!cancelled && got?.imageUrl) {
           setPreviewSrc(got.imageUrl);
@@ -1083,7 +1099,7 @@ const AllAgentsPage: React.FC = () => {
         (a) =>
           a.assistantId &&
           !a.profileImagePath &&
-          !requestedProfileIdsRef.current.has(a.assistantId)
+          !requestedProfileIdsRef.current.has(a.assistantId),
       )
       .reduce<string[]>((acc, a) => {
         const id = a.assistantId as string;
@@ -1119,7 +1135,7 @@ const AllAgentsPage: React.FC = () => {
                     : a;
                 }),
               }
-            : prev
+            : prev,
         );
       } catch (err) {
         console.error("⚠️ Profile image skip error:", err);
@@ -1154,7 +1170,7 @@ const AllAgentsPage: React.FC = () => {
     const latest = [...convList].sort(
       (x, y) =>
         new Date(y.createdAt || "").getTime() -
-        new Date(x.createdAt || "").getTime()
+        new Date(x.createdAt || "").getTime(),
     )[0];
 
     setEditAgent({
@@ -1185,7 +1201,7 @@ const AllAgentsPage: React.FC = () => {
     setEditInstrLoading(true);
     try {
       const url = `${BASE_URL}/ai-service/agent/classifyInstruct?description=${encodeURIComponent(
-        cleanForTransport(desc)
+        cleanForTransport(desc),
       )}`;
 
       const res = await authFetch(url, { method: "POST" });
@@ -1195,7 +1211,7 @@ const AllAgentsPage: React.FC = () => {
         throw new Error(
           `Generate instructions failed (${res.status})${
             text ? `: ${text}` : ""
-          }`
+          }`,
         );
       }
 
@@ -1219,7 +1235,7 @@ const AllAgentsPage: React.FC = () => {
       if (cleaned.length > MAX_INSTRUCTIONS_CHARS) {
         cleaned = cleaned.slice(0, MAX_INSTRUCTIONS_CHARS);
         message.error(
-          `Instructions cannot exceed ${MAX_INSTRUCTIONS_CHARS} characters. Extra text was trimmed.`
+          `Instructions cannot exceed ${MAX_INSTRUCTIONS_CHARS} characters. Extra text was trimmed.`,
         );
       }
 
@@ -1229,7 +1245,7 @@ const AllAgentsPage: React.FC = () => {
       }
 
       setEditAgent((prev) =>
-        prev ? { ...prev, instructions: cleaned } : prev
+        prev ? { ...prev, instructions: cleaned } : prev,
       );
       message.success("Instructions generated.");
     } catch (e: any) {
@@ -1245,7 +1261,7 @@ const AllAgentsPage: React.FC = () => {
     const desc = (editAgent.description || "").trim();
     if (!desc) {
       message.error(
-        "Please enter Description before generating conversation starters."
+        "Please enter Description before generating conversation starters.",
       );
       return;
     }
@@ -1253,7 +1269,7 @@ const AllAgentsPage: React.FC = () => {
     setEditStarterLoading(true);
     try {
       const url = `${BASE_URL}/ai-service/agent/classifyStartConversation?description=${encodeURIComponent(
-        cleanForTransport(desc)
+        cleanForTransport(desc),
       )}`;
 
       const res = await authFetch(url, { method: "POST" });
@@ -1263,14 +1279,14 @@ const AllAgentsPage: React.FC = () => {
         throw new Error(
           `Generate conversation starters failed (${res.status})${
             text ? `: ${text}` : ""
-          }`
+          }`,
         );
       }
 
       const prompts = parseStartersFromText(text);
       if (!prompts.length) {
         message.warning(
-          "No conversation starters returned. Please tweak your Description and try again."
+          "No conversation starters returned. Please tweak your Description and try again.",
         );
         return;
       }
@@ -1281,36 +1297,47 @@ const AllAgentsPage: React.FC = () => {
               ...prev,
               conStarter1: (prompts[0] || prev.conStarter1 || "").slice(
                 0,
-                MAX_CONVERSATION_STARTER_CHARS
+                MAX_CONVERSATION_STARTER_CHARS,
               ),
               conStarter2: (prompts[1] || prev.conStarter2 || "").slice(
                 0,
-                MAX_CONVERSATION_STARTER_CHARS
+                MAX_CONVERSATION_STARTER_CHARS,
               ),
               conStarter3: null,
               conStarter4: null,
             }
-          : prev
+          : prev,
       );
 
       if (prompts[0] && prompts[0].length > MAX_CONVERSATION_STARTER_CHARS) {
         message.error(
-          `Conversation Starter 1 was trimmed to ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+          `Conversation Starter 1 was trimmed to ${MAX_CONVERSATION_STARTER_CHARS} characters.`,
         );
       }
       if (prompts[1] && prompts[1].length > MAX_CONVERSATION_STARTER_CHARS) {
         message.error(
-          `Conversation Starter 2 was trimmed to ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+          `Conversation Starter 2 was trimmed to ${MAX_CONVERSATION_STARTER_CHARS} characters.`,
         );
       }
       message.success(
-        `Updated ${Math.min(2, prompts.length)} conversation starters.`
+        `Updated ${Math.min(2, prompts.length)} conversation starters.`,
       );
     } catch (e: any) {
       message.error(e?.message || "Failed to generate conversation starters.");
     } finally {
       setEditStarterLoading(false);
     }
+  };
+
+  const cleanUpdateValue = (value: any, max = 7000) => {
+    if (value === null || value === undefined) return "";
+    return String(value)
+      .replace(/\u2014|\u2013/g, "-")
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, max);
   };
 
   const saveEditAgent = async () => {
@@ -1320,67 +1347,87 @@ const AllAgentsPage: React.FC = () => {
       setEditLoading(true);
 
       const payload = {
-        // 🔹 Identity
-        agentId: editAgent.id,
-        assistantId: editAgent.assistantId,
-        userId: resolvedUserId,
+        agentId: cleanUpdateValue(editAgent.id),
+        assistantId: cleanUpdateValue(editAgent.assistantId),
+        userId: cleanUpdateValue(resolvedUserId || editAgent.userId),
 
-        // 🔹 Core fields (same as create)
-        agentName: editAgent.agentName,
-        name: editAgent.agentName, // Also set name field for consistency
-        description: editAgent.description,
-        roleUser: editAgent.roleUser,
-        goals: editAgent.goals,
-        purpose: editAgent.purpose,
-        view: editAgent.view,
+        agentName: cleanUpdateValue(editAgent.agentName || editAgent.name, 200),
+        name: cleanUpdateValue(editAgent.agentName || editAgent.name, 200),
+        description: cleanUpdateValue(editAgent.description, 2000),
 
-        // 🔹 Extra profile/business fields – send as-is (even if unchanged)
-        status: editAgent.status,
-        agentStatus: editAgent.agentStatus,
-        userRole: editAgent.userRole,
-        userExperience: editAgent.userExperience,
-        userExperienceSummary: editAgent.userExperienceSummary,
-        domain: editAgent.domain,
-        subDomain: editAgent.subDomain,
-        targetUser: editAgent.targetUser,
-        mainProblemSolved: editAgent.mainProblemSolved,
-        acheivements: editAgent.acheivements,
-        uniqueSolution: editAgent.uniqueSolution,
-        usageModel: editAgent.usageModel,
-        language: editAgent.language,
-        business: editAgent.business,
-        responseFormat: editAgent.responseFormat,
-        freeTrial: editAgent.freeTrial,
-        tool: editAgent.tool,
-        ageLimit: editAgent.ageLimit,
-        gender: editAgent.gender,
-        converstionTone: editAgent.converstionTone,
-        contactDetails: editAgent.contactDetails,
+        roleUser: cleanUpdateValue(editAgent.roleUser, 1000),
+        goals: cleanUpdateValue(editAgent.goals, 1000),
+        purpose: cleanUpdateValue(editAgent.purpose, 1000),
+        view: cleanUpdateValue(editAgent.view, 1000),
 
-        // 🔹 Instructions + conversation starters (updated)
-        instructions: editAgent.instructions || "",
-        conStarter1: editAgent.conStarter1 || "",
-        conStarter2: editAgent.conStarter2 || "",
-        conStarter3: null,
-        conStarter4: null,
+        status: cleanUpdateValue(editAgent.status || "APPROVED"),
+        agentStatus: cleanUpdateValue(editAgent.agentStatus || "CREATED"),
+
+        userRole: cleanUpdateValue(editAgent.userRole, 500),
+        userExperience:
+          editAgent.userExperience === null ||
+          editAgent.userExperience === undefined
+            ? 0
+            : Number(editAgent.userExperience),
+
+        userExperienceSummary: cleanUpdateValue(
+          editAgent.userExperienceSummary,
+          1000,
+        ),
+        domain: cleanUpdateValue(editAgent.domain, 500),
+        subDomain: cleanUpdateValue(editAgent.subDomain, 500),
+        targetUser: cleanUpdateValue(editAgent.targetUser, 2000),
+        mainProblemSolved: cleanUpdateValue(editAgent.mainProblemSolved, 2000),
+        acheivements: cleanUpdateValue(editAgent.acheivements, 2000),
+        uniqueSolution: cleanUpdateValue(editAgent.uniqueSolution, 2000),
+
+        usageModel: cleanUpdateValue(editAgent.usageModel || "gpt-4o"),
+        language: cleanUpdateValue(editAgent.language || "English"),
+        business: cleanUpdateValue(editAgent.business, 2000),
+        responseFormat: cleanUpdateValue(editAgent.responseFormat || "auto"),
+        freeTrial: Number(editAgent.freeTrial || 0),
+
+        tool: cleanUpdateValue(editAgent.tool, 1000),
+        ageLimit: cleanUpdateValue(editAgent.ageLimit, 500),
+        gender: cleanUpdateValue(editAgent.gender, 500),
+        converstionTone: cleanUpdateValue(editAgent.converstionTone, 500),
+        contactDetails: cleanUpdateValue(editAgent.contactDetails, 1000),
+
+        instructions: cleanUpdateValue(editAgent.instructions, 7000),
+        conStarter1: cleanUpdateValue(editAgent.conStarter1, 300),
+        conStarter2: cleanUpdateValue(editAgent.conStarter2, 300),
+        conStarter3: "",
+        conStarter4: "",
       };
+
+      console.log("Final PATCH Payload:", payload);
 
       const res = await authFetch(
         `${BASE_URL}/ai-service/agent/newAgentPublish`,
         {
           method: "PATCH",
           body: JSON.stringify(payload),
-        }
+        },
       );
 
-      const txt = await res.text();
-      if (!res.ok) throw new Error(txt || "Update failed");
+      const txt = await res.text().catch(() => "");
+
+      if (!res.ok) {
+        console.error("Update Agent API Error:", {
+          status: res.status,
+          response: txt,
+          payload,
+        });
+
+        throw new Error(txt || `Agent update failed with status ${res.status}`);
+      }
 
       message.success("Agent updated successfully!");
       setEditAgent(null);
-      refreshData();
+      await refreshData();
     } catch (err: any) {
-      message.error(err.message || "Failed to update agent");
+      console.error("Agent update failed:", err);
+      message.error(err?.message || "Failed to update agent.");
     } finally {
       setEditLoading(false);
     }
@@ -1434,12 +1481,12 @@ const AllAgentsPage: React.FC = () => {
       const text = await res.text().catch(() => "");
       if (!res.ok)
         throw new Error(
-          `Remove failed: ${res.status}${text ? ` ${text}` : ""}`
+          `Remove failed: ${res.status}${text ? ` ${text}` : ""}`,
         );
       setFilesMap((m) => ({
         ...m,
         [assistantId]: (m[assistantId] || []).filter(
-          (f) => (f.fileId || f.id) !== fileId
+          (f) => (f.fileId || f.id) !== fileId,
         ),
       }));
       message.success("File removed.");
@@ -1459,7 +1506,7 @@ const AllAgentsPage: React.FC = () => {
 
   const softDeleteAssistant = async (
     assistantId: string | null,
-    agentId: string
+    agentId: string,
   ) => {
     if (!assistantId) {
       message.error("Missing assistantId. Cannot delete this assistant.");
@@ -1468,13 +1515,13 @@ const AllAgentsPage: React.FC = () => {
     setDeleting(agentId);
     try {
       const url = `${BASE_URL}/ai-service/agent/deleteId/${encodeURIComponent(
-        assistantId
+        assistantId,
       )}`;
       const res = await authFetch(url, { method: "DELETE" });
       const txt = await res.text().catch(() => "");
       if (!res.ok)
         throw new Error(
-          `Delete failed: ${res.status} ${res.statusText}. ${txt || ""}`
+          `Delete failed: ${res.status} ${res.statusText}. ${txt || ""}`,
         );
       setData((old) =>
         old
@@ -1482,10 +1529,10 @@ const AllAgentsPage: React.FC = () => {
               ...old,
               assistants: old.assistants.filter((a) => a.id !== agentId),
               conversations: old.conversations.filter(
-                (c) => c.agentId !== agentId
+                (c) => c.agentId !== agentId,
               ),
             }
-          : old
+          : old,
       );
       message.success("Agent deleted successfully.");
     } catch (e: any) {
@@ -1498,7 +1545,7 @@ const AllAgentsPage: React.FC = () => {
 
   const permanentDeleteAssistant = async (
     assistantId: string | null,
-    agentId: string
+    agentId: string,
   ) => {
     if (!assistantId) {
       message.error("Missing assistantId. Cannot delete this assistant.");
@@ -1508,13 +1555,13 @@ const AllAgentsPage: React.FC = () => {
     try {
       const url = new URL(
         "/api/ai-service/agent/delete/" + encodeURIComponent(assistantId),
-        BASE_URL
+        BASE_URL,
       );
       const res = await authFetch(url.toString(), { method: "DELETE" });
       const txt = await res.text().catch(() => "");
       if (!res.ok)
         throw new Error(
-          `Permanent delete failed: ${res.status} ${res.statusText}. ${txt || ""}`
+          `Permanent delete failed: ${res.status} ${res.statusText}. ${txt || ""}`,
         );
       setData((old) =>
         old
@@ -1522,10 +1569,10 @@ const AllAgentsPage: React.FC = () => {
               ...old,
               assistants: old.assistants.filter((a) => a.id !== agentId),
               conversations: old.conversations.filter(
-                (c) => c.agentId !== agentId
+                (c) => c.agentId !== agentId,
               ),
             }
-          : old
+          : old,
       );
       message.success("Agent permanently deleted from database.");
     } catch (e: any) {
@@ -1551,16 +1598,16 @@ const AllAgentsPage: React.FC = () => {
       }
       const res = await authFetch(
         `${BASE_URL}/ai-service/agent/${encodeURIComponent(
-          assistantId
+          assistantId,
         )}/addfiles`,
-        { method: "POST", body: fd }
+        { method: "POST", body: fd },
       );
       const text = await res.text().catch(() => "");
       if (!res.ok)
         throw new Error(
           `Upload failed: ${res.status} ${res.statusText}${
             text ? ` — ${text}` : ""
-          }`
+          }`,
         );
       message.success(`Files uploaded successfully`);
       // optional: refresh file list if modal is open for this assistant
@@ -1582,13 +1629,13 @@ const AllAgentsPage: React.FC = () => {
       fd.append("file", file);
       const res = await authFetch(
         `${BASE_URL}/ai-service/agent/${encodeURIComponent(
-          assistantId
+          assistantId,
         )}/uploadImage`,
-        { method: "POST", body: fd }
+        { method: "POST", body: fd },
       );
       if (!res.ok)
         throw new Error(
-          `Image upload failed: ${res.status} ${await res.text()}`
+          `Image upload failed: ${res.status} ${await res.text()}`,
         );
       // Don’t show filename: keep it clean like WhatsApp
       message.success("Profile image updated.");
@@ -1602,11 +1649,11 @@ const AllAgentsPage: React.FC = () => {
                 ? old.assistants.map((a) =>
                     a.assistantId === assistantId
                       ? { ...a, profileImagePath: preview }
-                      : a
+                      : a,
                   )
                 : [],
             }
-          : old
+          : old,
       );
 
       await refreshData();
@@ -1624,16 +1671,16 @@ const AllAgentsPage: React.FC = () => {
     try {
       const url = new URL(
         `/api/ai-service/agent/${encodeURIComponent(uid)}/${encodeURIComponent(
-          agentId
+          agentId,
         )}/hideStatus`,
-        BASE_URL
+        BASE_URL,
       );
       url.searchParams.set("activeStatus", String(nextActive));
       const res = await authFetch(url.toString(), { method: "PATCH" });
       const txt = await res.text().catch(() => "");
       if (!res.ok)
         throw new Error(
-          `Hide status failed: ${res.status} ${res.statusText}. ${txt || ""}`
+          `Hide status failed: ${res.status} ${res.statusText}. ${txt || ""}`,
         );
       // ✅ update in place instead of filtering the agent OUT
       setData((old) =>
@@ -1642,16 +1689,16 @@ const AllAgentsPage: React.FC = () => {
               ...old,
               assistants: Array.isArray(old.assistants)
                 ? old.assistants.map((a) =>
-                    a.id === agentId ? { ...a, activeStatus: nextActive } : a
+                    a.id === agentId ? { ...a, activeStatus: nextActive } : a,
                   )
                 : [],
             }
-          : old
+          : old,
       );
       message.success(
         nextActive
           ? "Agent Status Updated to Active."
-          : "Agent Status Updated to Inactive."
+          : "Agent Status Updated to Inactive.",
       );
     } catch (e: any) {
       message.error(e?.message || "Failed to update active status.");
@@ -1819,7 +1866,7 @@ const AllAgentsPage: React.FC = () => {
                                       uploadImage(a.assistantId, f);
                                     else if (!a.assistantId)
                                       message.error(
-                                        "Missing assistantId for image upload."
+                                        "Missing assistantId for image upload.",
                                       );
                                     e.currentTarget.value = "";
                                     setAvatarMenuFor(null);
@@ -1832,7 +1879,7 @@ const AllAgentsPage: React.FC = () => {
                                   onClick={(ev) => {
                                     ev.stopPropagation();
                                     setAvatarMenuFor((curr) =>
-                                      curr === a.id ? null : a.id
+                                      curr === a.id ? null : a.id,
                                     );
                                   }}
                                   className="
@@ -1886,7 +1933,7 @@ const AllAgentsPage: React.FC = () => {
 
                                 {/* tiny action sheet */}
                                 {avatarMenuFor === a.id && (
-                                  <div 
+                                  <div
                                     className="absolute z-20 left-1/2 -translate-x-1/2 bottom-8 w-[180px] rounded-xl bg-white border border-purple-200 shadow-lg p-2"
                                     onClick={(e) => e.stopPropagation()}
                                   >
@@ -1894,7 +1941,7 @@ const AllAgentsPage: React.FC = () => {
                                       onClick={() => {
                                         // OPEN native file picker (your upload image API)
                                         const el = document.getElementById(
-                                          `img_${a.id}`
+                                          `img_${a.id}`,
                                         ) as HTMLInputElement | null;
                                         if (el) el.click();
                                         setAvatarMenuFor(null);
@@ -1937,12 +1984,12 @@ const AllAgentsPage: React.FC = () => {
         a.status === "APPROVED"
           ? "bg-green-100 text-green-800 border-green-200"
           : a.status === "REQUESTED"
-          ? "bg-sky-100 text-sky-700 border-sky-200"
-          : a.status === "DELETED"
-          ? "bg-red-100 text-red-700 border-red-200"
-          : a.status === "REJECTED"
-          ? "bg-orange-100 text-orange-700 border-orange-200"
-          : "bg-purple-100 text-purple-700 border-purple-200"
+            ? "bg-sky-100 text-sky-700 border-sky-200"
+            : a.status === "DELETED"
+              ? "bg-red-100 text-red-700 border-red-200"
+              : a.status === "REJECTED"
+                ? "bg-orange-100 text-orange-700 border-orange-200"
+                : "bg-purple-100 text-purple-700 border-purple-200"
       }`}
                               >
                                 {a.status}
@@ -2014,11 +2061,11 @@ const AllAgentsPage: React.FC = () => {
                                   uploadFiles(a.assistantId, Array.from(list));
                                 else
                                   message.error(
-                                    "This agent has no assistantId yet. Open/Edit & save the agent, then upload."
+                                    "This agent has no assistantId yet. Open/Edit & save the agent, then upload.",
                                   );
                               } else {
                                 message.error(
-                                  "Please choose at least one file."
+                                  "Please choose at least one file.",
                                 );
                               }
                               e.currentTarget.value = "";
@@ -2071,7 +2118,7 @@ const AllAgentsPage: React.FC = () => {
                                       setHistoryOpenFor(a.id);
                                       fetchCreatorAgentDetails(
                                         a.id,
-                                        resolvedUserId
+                                        resolvedUserId,
                                       );
                                     }}
                                     title="View public chat history (creator view)"
@@ -2174,7 +2221,7 @@ const AllAgentsPage: React.FC = () => {
                             <button
                               onClick={() =>
                                 navigate(
-                                  `/${a.assistantId}/${a.id}/${a.agentName}`
+                                  `/${a.assistantId}/${a.id}/${a.agentName}`,
                                 )
                               }
                               title="View Agent in a new tab"
@@ -2462,7 +2509,7 @@ const AllAgentsPage: React.FC = () => {
                                             onClick={() =>
                                               removeUploadedFile(
                                                 fileModalOpen!,
-                                                idToRemove
+                                                idToRemove,
                                               )
                                             }
                                             loading={
@@ -2524,14 +2571,14 @@ const AllAgentsPage: React.FC = () => {
                             style={{ background: PURPLE, borderColor: PURPLE }}
                             onClick={() => {
                               const agent = (data?.assistants || []).find(
-                                (x) => x.assistantId === genPreviewAssistantId
+                                (x) => x.assistantId === genPreviewAssistantId,
                               );
                               const uid = resolvedUserId;
                               setGenPreviewUrl(null);
                               setGenPreviewAssistantId(null);
                               if (!agent?.id || !uid)
                                 return message.error(
-                                  "Missing agentId or userId."
+                                  "Missing agentId or userId.",
                                 );
                               setPendingSave({
                                 agentId: agent.id,
@@ -2546,7 +2593,7 @@ const AllAgentsPage: React.FC = () => {
                           <Button
                             onClick={() => {
                               const asst = (data?.assistants || []).find(
-                                (x) => x.assistantId === genPreviewAssistantId
+                                (x) => x.assistantId === genPreviewAssistantId,
                               );
                               setGenPreviewUrl(null);
                               setGenPreviewAssistantId(null);
@@ -2559,10 +2606,10 @@ const AllAgentsPage: React.FC = () => {
                           <Button
                             onClick={() => {
                               const agent = (data?.assistants || []).find(
-                                (x) => x.assistantId === genPreviewAssistantId
+                                (x) => x.assistantId === genPreviewAssistantId,
                               );
                               const picker = document.getElementById(
-                                `img_${agent?.id || ""}`
+                                `img_${agent?.id || ""}`,
                               ) as HTMLInputElement | null;
                               if (picker) picker.click();
                               setGenPreviewUrl(null);
@@ -2711,7 +2758,7 @@ const AllAgentsPage: React.FC = () => {
                                     onClick={() =>
                                       fetchCreatorAgentDetails(
                                         historyOpenFor!,
-                                        resolvedUserId
+                                        resolvedUserId,
                                       )
                                     }
                                   >
@@ -2729,7 +2776,7 @@ const AllAgentsPage: React.FC = () => {
                                         String(u.userId || "");
                                       const label = resolveUserDisplayName(
                                         u.userId,
-                                        historyData?.userNameMap
+                                        historyData?.userNameMap,
                                       );
 
                                       return (
@@ -2744,7 +2791,7 @@ const AllAgentsPage: React.FC = () => {
                                             // On phones, bring the chat pane into view right away
                                             if (
                                               window.matchMedia(
-                                                "(max-width: 767px)"
+                                                "(max-width: 767px)",
                                               ).matches
                                             ) {
                                               requestAnimationFrame(() => {
@@ -2763,7 +2810,7 @@ const AllAgentsPage: React.FC = () => {
                                               e.key === " "
                                             )
                                               setSelectedUserId(
-                                                normalizeId(u.userId)
+                                                normalizeId(u.userId),
                                               );
                                           }}
                                           className={`p-2.5 md:p-3 cursor-pointer transition ${
@@ -2798,7 +2845,7 @@ const AllAgentsPage: React.FC = () => {
                                           </div>
                                         </li>
                                       );
-                                    }
+                                    },
                                   )}
 
                                   {/* Empty users */}
@@ -2884,11 +2931,11 @@ const AllAgentsPage: React.FC = () => {
                                         <div className="space-y-2.5">
                                           {filterHistoryByUser(
                                             historyData.rawList,
-                                            selectedUserId
+                                            selectedUserId,
                                           ).map((row: any, idx: number) => {
                                             const messages =
                                               parsePromptToMessages(
-                                                row?.prompt || ""
+                                                row?.prompt || "",
                                               );
                                             const ts = row?.createdAt
                                               ? fmtDate(row.createdAt)
@@ -3375,7 +3422,7 @@ const AllAgentsPage: React.FC = () => {
                 }
                 const trimmed = v.slice(0, 100);
                 setEditAgent((prev) =>
-                  prev ? { ...prev, agentName: trimmed } : prev
+                  prev ? { ...prev, agentName: trimmed } : prev,
                 );
               }}
               placeholder="Enter agent name"
@@ -3393,12 +3440,12 @@ const AllAgentsPage: React.FC = () => {
                 const v = e.target.value || "";
                 if (v.length > MAX_INSTRUCTIONS_CHARS) {
                   message.error(
-                    `Instructions cannot exceed ${MAX_INSTRUCTIONS_CHARS} characters.`
+                    `Instructions cannot exceed ${MAX_INSTRUCTIONS_CHARS} characters.`,
                   );
                 }
                 const trimmed = v.slice(0, MAX_INSTRUCTIONS_CHARS);
                 setEditAgent((prev) =>
-                  prev ? { ...prev, instructions: trimmed } : prev
+                  prev ? { ...prev, instructions: trimmed } : prev,
                 );
               }}
             />
@@ -3414,7 +3461,7 @@ const AllAgentsPage: React.FC = () => {
                 const v = e.target.value || "";
                 if (v.length > MAX_CONVERSATION_STARTER_CHARS) {
                   message.error(
-                    `Conversation Starter 1 cannot exceed ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+                    `Conversation Starter 1 cannot exceed ${MAX_CONVERSATION_STARTER_CHARS} characters.`,
                   );
                 }
                 const trimmed = v.slice(0, MAX_CONVERSATION_STARTER_CHARS);
@@ -3426,7 +3473,7 @@ const AllAgentsPage: React.FC = () => {
                         conStarter3: null,
                         conStarter4: null,
                       }
-                    : prev
+                    : prev,
                 );
               }}
             />
@@ -3441,7 +3488,7 @@ const AllAgentsPage: React.FC = () => {
                 const v = e.target.value || "";
                 if (v.length > MAX_CONVERSATION_STARTER_CHARS) {
                   message.error(
-                    `Conversation Starter 2 cannot exceed ${MAX_CONVERSATION_STARTER_CHARS} characters.`
+                    `Conversation Starter 2 cannot exceed ${MAX_CONVERSATION_STARTER_CHARS} characters.`,
                   );
                 }
                 const trimmed = v.slice(0, MAX_CONVERSATION_STARTER_CHARS);
@@ -3453,7 +3500,7 @@ const AllAgentsPage: React.FC = () => {
                         conStarter3: null,
                         conStarter4: null,
                       }
-                    : prev
+                    : prev,
                 );
               }}
             />

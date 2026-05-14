@@ -10,6 +10,9 @@ import {
   FaComments,
   FaBan,
   FaPen,
+  FaDownload,
+  FaEye,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 import {
   Modal,
@@ -22,10 +25,9 @@ import {
   Row,
   Col,
   message,
+  Table,
 } from "antd";
 import BASE_URL from "../Config";
-import { Table } from "antd";
-
 
 const { Option } = Select;
 
@@ -62,6 +64,7 @@ interface ProfileData {
   email: string;
   whatsappNumber: string;
 }
+
 type TicketRow = {
   key: string;
   sno: number;
@@ -70,6 +73,11 @@ type TicketRow = {
   actions: Ticket;
   comments: string;
 };
+
+interface PreviewFile {
+  fileName: string;
+  filePath: string;
+}
 
 const TicketHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -84,25 +92,26 @@ const TicketHistoryPage: React.FC = () => {
     whatsappNumber: "",
   });
 
-  // Filters
   const [selectedStatus, setSelectedStatus] = useState<TicketStatus>("PENDING");
   const [askOxyOffersFilter, setAskOxyOffersFilter] =
     useState<string>("FREESAMPLE");
 
-  // Data
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
 
-  // UI
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [reasonModal, setReasonModal] = useState(false);
   const [reason, setReason] = useState("");
   const [cancelLoader, setCancelLoader] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
-  // Load initial profile
+  const [filePreviewModal, setFilePreviewModal] = useState(false);
+  const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+
   useEffect(() => {
     if (storedProfileData) {
       try {
@@ -113,7 +122,6 @@ const TicketHistoryPage: React.FC = () => {
     }
   }, [storedProfileData]);
 
-  // Load tickets on filter change
   useEffect(() => {
     fetchTickets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,6 +130,7 @@ const TicketHistoryPage: React.FC = () => {
   const fetchTickets = async () => {
     setLoading(true);
     setError(null);
+
     try {
       const response = await customerApi.post(
         BASE_URL + "/user-service/write/getAllQueries",
@@ -132,7 +141,7 @@ const TicketHistoryPage: React.FC = () => {
           userId: storedUserId,
           projectType: "ASKOXY",
           queryStatus: selectedStatus,
-        }
+        },
       );
 
       const fetchedTickets: Ticket[] = (response.data || []).map(
@@ -153,7 +162,7 @@ const TicketHistoryPage: React.FC = () => {
             filePath: item.userQueryDocumentStatus?.filePath || null,
           },
           userPendingQueries: item.userPendingQueries || [],
-        })
+        }),
       );
 
       setTickets(fetchedTickets);
@@ -183,6 +192,7 @@ const TicketHistoryPage: React.FC = () => {
     }
 
     setCancelLoader(true);
+
     try {
       await customerApi.post(BASE_URL + "/user-service/write/saveData", {
         adminDocumentId: "",
@@ -225,169 +235,275 @@ const TicketHistoryPage: React.FC = () => {
         return <Tag>Unknown</Tag>;
     }
   };
-const getHelpText = () => {
-  return selectedStatus === "PENDING"
-    ? "Need more help? Reply or add a comment."
-    : "View conversation history.";
-};
-  const openFile = (filePath: string | null) => {
-    if (filePath) window.open(filePath, "_blank");
+
+  const formatDate = (date: string | Date) => {
+    if (!date) return "-";
+
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
-const formatDate = (date: string | Date) => {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
-const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
-  key: ticket.id,
-  sno: index + 1,
-  ticketId: ticket,
-  query: ticket,
-  actions: ticket,
-  comments: ticket.comments,
-}));
 
+  const getFileExtension = (fileName?: string, filePath?: string) => {
+    const value = (fileName || filePath || "").split("?")[0];
+    return value.split(".").pop()?.toLowerCase() || "";
+  };
 
- const columns: ColumnsType<TicketRow> = [
-   {
-     title: "SNO",
-     dataIndex: "sno",
-     key: "sno",
-     width: 80,
-     align: "center" as const,
-   },
-   {
-     title: "Ticket Id",
-     dataIndex: "ticketId",
-     key: "ticketId",
-     width: 260,
-     render: (ticket: Ticket) => (
-       <div>
-         <div className="font-semibold text-gray-800">
-           {ticket.randomTicketId}
-         </div>
+  const isImageFile = (fileName?: string, filePath?: string) => {
+    const ext = getFileExtension(fileName, filePath);
+    return ["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg"].includes(ext);
+  };
 
-         <div className="text-xs text-gray-500">
-           Received On: {formatDate(ticket.createdAt)}
-         </div>
+  const isPdfFile = (fileName?: string, filePath?: string) => {
+    return getFileExtension(fileName, filePath) === "pdf";
+  };
 
-         <div className="mt-1">{getStatusTag(ticket.status)}</div>
+  const openFileOverview = (
+    fileName: string | null | undefined,
+    filePath: string | null | undefined,
+  ) => {
+    if (!filePath) {
+      message.warning("File path is not available.");
+      return;
+    }
 
-         {ticket.resolvedOn && (
-           <div className="text-xs text-gray-500 mt-1">
-             Resolved On: {formatDate(ticket.resolvedOn)}
-           </div>
-         )}
-       </div>
-     ),
-   },
-   {
-     title: "Query",
-     dataIndex: "query",
-     key: "query",
+    setPreviewFile({
+      fileName: fileName || "Attachment",
+      filePath,
+    });
+    setZoomLevel(1);
+    setFilePreviewModal(true);
+  };
 
-     render: (_: any, record: TicketRow) => {
-       const ticket = record.ticketId;
+  const openInNewTab = (filePath?: string) => {
+    if (!filePath) {
+      message.warning("File is not available.");
+      return;
+    }
 
-       return (
-         <div className="text-gray-800 text-sm font-medium">
-           {/* User Query */}
-           <p>{ticket.query}</p>
+    window.open(filePath, "_blank", "noopener,noreferrer");
+  };
 
-           {/* User Attachment */}
-           {ticket.userQueryDocumentStatus?.fileName && (
-             <Button
-               type="link"
-               onClick={() => openFile(ticket.userQueryDocumentStatus.filePath)}
-               className="flex items-center gap-1 text-xs p-0 mt-1"
-             >
-               <FaFile /> {ticket.userQueryDocumentStatus.fileName}
-             </Button>
-           )}
+  const downloadFile = async (filePath?: string, fileName?: string) => {
+    if (!filePath) {
+      message.warning("Download file is not available.");
+      return;
+    }
 
-           {/* Admin Comments (only comment text, no box) */}
-           {ticket.comments && selectedStatus !== "PENDING" && (
-             <p className="text-xs text-gray-700 mt-2">
-               Admin Comments: {ticket.comments}
-             </p>
-           )}
-         </div>
-       );
-     },
-   },
+    try {
+      const response = await fetch(filePath);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
 
-   {
-     title: "Actions",
-     dataIndex: "actions",
-     key: "actions",
-     align: "center" as const,
-     render: (ticket: Ticket) => (
-       <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
-         <Button
-          
-           icon={<FaComments />}
-           onClick={() => showComments(ticket.userPendingQueries)}
-           style={{
-             backgroundColor: "#008cba",
-             borderColor: "#a5b4fc",
-             color: "#ffffff",
-           }}
-         >
-           View Comments
-         </Button>
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName || "attachment";
+      document.body.appendChild(link);
+      link.click();
 
-         {selectedStatus === "PENDING" && (
-           <Button
-            
-             icon={<FaPen />}
-             className="border-green-500 text-green-600"
-             style={{
-               backgroundColor: "#1ab394",
-               borderColor: "#a5b4fc",
-               color: "#ffffff",
-             }}
-             onClick={() =>
-               navigate(
-                 `/main/writetous/${ticket.id}?userQuery=${encodeURIComponent(
-                   ticket.query
-                 )}`,
-                 {
-                   state: {
-                     fromTicketHistory: true,
-                     askOxyOffer: askOxyOffersFilter || "FREESAMPLE",
-                   },
-                 }
-               )
-             }
-           >
-             Reply
-           </Button>
-         )}
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      window.open(filePath, "_blank", "noopener,noreferrer");
+    }
+  };
 
-         {selectedStatus === "PENDING" && (
-           <Button
-            
-             danger
-             icon={<FaBan />}
-             onClick={() => {
-               setReasonModal(true);
-               setSelectedTicketId(ticket.id);
-             }}
-           >
-             Cancel
-           </Button>
-         )}
-       </div>
-     ),
-   },
- ];
+  const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
+    key: ticket.id,
+    sno: index + 1,
+    ticketId: ticket,
+    query: ticket,
+    actions: ticket,
+    comments: ticket.comments,
+  }));
+
+  const renderFilePreview = () => {
+    if (!previewFile?.filePath) {
+      return <Empty description="File preview is not available." />;
+    }
+
+    if (isImageFile(previewFile.fileName, previewFile.filePath)) {
+      return (
+        <div className="w-full h-[45vh] overflow-auto bg-slate-50 rounded-lg border border-slate-200 p-2 flex justify-center items-center">
+          <img
+            src={previewFile.filePath}
+            alt={previewFile.fileName}
+            style={{
+              transform: `scale(${zoomLevel})`,
+              transition: "transform 0.2s ease",
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+            }}
+            onError={() =>
+              message.warning(
+                "Image preview is not available. Please use Open or Download.",
+              )
+            }
+          />
+        </div>
+      );
+    }
+
+    if (isPdfFile(previewFile.fileName, previewFile.filePath)) {
+      return (
+        <iframe
+          src={previewFile.filePath}
+          title={previewFile.fileName}
+          className="w-full h-[45vh] rounded-lg border border-slate-200"
+        />
+      );
+    }
+
+    return (
+      <div className="text-center py-12 bg-slate-50 border border-slate-200 rounded-xl">
+        <FaFile className="mx-auto text-5xl text-purple-700 mb-4" />
+        <p className="text-sm font-semibold text-slate-700">
+          Preview not supported for this file type.
+        </p>
+        <p className="text-xs text-slate-500 mt-1">
+          Please use Open or Download option.
+        </p>
+      </div>
+    );
+  };
+
+  const columns: ColumnsType<TicketRow> = [
+    {
+      title: "SNO",
+      dataIndex: "sno",
+      key: "sno",
+      width: 80,
+      align: "center",
+    },
+    {
+      title: "Ticket Id",
+      dataIndex: "ticketId",
+      key: "ticketId",
+      width: 260,
+      render: (ticket: Ticket) => (
+        <div>
+          <div className="font-semibold text-gray-800">
+            {ticket.randomTicketId}
+          </div>
+
+          <div className="text-xs text-gray-500">
+            Received On: {formatDate(ticket.createdAt)}
+          </div>
+
+          <div className="mt-1">{getStatusTag(ticket.status)}</div>
+
+          {ticket.resolvedOn && (
+            <div className="text-xs text-gray-500 mt-1">
+              Resolved On: {formatDate(ticket.resolvedOn)}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Query",
+      dataIndex: "query",
+      key: "query",
+      render: (_: any, record: TicketRow) => {
+        const ticket = record.ticketId;
+
+        return (
+          <div className="text-gray-800 text-sm font-medium">
+            <p>{ticket.query}</p>
+
+            {ticket.userQueryDocumentStatus?.fileName && (
+              <Button
+                type="link"
+                onClick={() =>
+                  openFileOverview(
+                    ticket.userQueryDocumentStatus.fileName,
+                    ticket.userQueryDocumentStatus.filePath,
+                  )
+                }
+                className="flex items-center gap-1 text-xs p-0 mt-1"
+              >
+                <FaEye /> Overview: {ticket.userQueryDocumentStatus.fileName}
+              </Button>
+            )}
+
+            {ticket.comments && selectedStatus !== "PENDING" && (
+              <p className="text-xs text-gray-700 mt-2">
+                Admin Comments: {ticket.comments}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: "Actions",
+      dataIndex: "actions",
+      key: "actions",
+      align: "center",
+      render: (ticket: Ticket) => (
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
+          <Button
+            icon={<FaComments />}
+            onClick={() => showComments(ticket.userPendingQueries)}
+            style={{
+              backgroundColor: "#008cba",
+              borderColor: "#a5b4fc",
+              color: "#ffffff",
+            }}
+          >
+            View Comments
+          </Button>
+
+          {selectedStatus === "PENDING" && (
+            <Button
+              icon={<FaPen />}
+              style={{
+                backgroundColor: "#1ab394",
+                borderColor: "#a5b4fc",
+                color: "#ffffff",
+              }}
+              onClick={() =>
+                navigate(
+                  `/main/writetous/${ticket.id}?userQuery=${encodeURIComponent(
+                    ticket.query,
+                  )}`,
+                  {
+                    state: {
+                      fromTicketHistory: true,
+                      askOxyOffer: askOxyOffersFilter || "FREESAMPLE",
+                    },
+                  },
+                )
+              }
+            >
+              Reply
+            </Button>
+          )}
+
+          {selectedStatus === "PENDING" && (
+            <Button
+              danger
+              icon={<FaBan />}
+              onClick={() => {
+                setReasonModal(true);
+                setSelectedTicketId(ticket.id);
+              }}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <div className="flex-1 px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
         <div className="max-w-7xl mx-auto">
-          {/* ---------- PAGE HEADER ---------- */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-3">
@@ -397,6 +513,7 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
                   className="hidden sm:inline-flex"
                   onClick={() => navigate(-1)}
                 />
+
                 <div>
                   <div
                     role="heading"
@@ -438,7 +555,6 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
             className="shadow-sm border border-slate-100 rounded-2xl"
             bodyStyle={{ padding: 0 }}
           >
-            {/* ---------- FILTER SECTION ---------- */}
             <div className="px-4 py-4 sm:px-6 sm:py-4 border-b border-slate-100 bg-slate-50/60">
               <Row gutter={[16, 12]} align="middle">
                 <Col xs={24} md={8}>
@@ -448,6 +564,7 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
                       Filter by Status
                     </span>
                   </div>
+
                   <select
                     value={selectedStatus}
                     onChange={(e) =>
@@ -467,6 +584,7 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
                       Filter by Offer
                     </span>
                   </div>
+
                   <Select
                     placeholder="Filter by Offer"
                     value={askOxyOffersFilter}
@@ -491,7 +609,6 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
               </Row>
             </div>
 
-            {/* ---------- TICKETS SECTION ---------- */}
             <div className="px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
               {loading ? (
                 <div className="flex justify-center items-center py-16">
@@ -521,92 +638,155 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
                   bordered
                   pagination={false}
                   className="text-sm"
-                  scroll={{ x: "true" }}
+                  scroll={{ x: 900 }}
                 />
               )}
             </div>
           </Card>
         </div>
+
         <Footer />
-        {/* ---------- COMMENTS MODAL ---------- */}
+
         <Modal
-  title="Ticket Comments History"
-  open={isCommentsModalOpen}
-  onCancel={() => setIsCommentsModalOpen(false)}
-  footer={null}
-  width={800}
->
-  {comments.length > 0 ? (
-    <Table
-      dataSource={comments.map((c, i) => ({
-        key: i,
-        sno: i + 1,
-        resolvedBy: c.resolvedBy,
-        resolvedOn: c.resolvedOn,
-        pendingComments: c.pendingComments,
-        adminFileName: c.adminFileName,
-        adminFilePath: c.adminFilePath,
-      }))}
-      pagination={false}
-      bordered
-      size="small"
-      columns={[
-        {
-          title: "S.No",
-          dataIndex: "sno",
-          key: "sno",
-          width: 70,
-          align: "center",
-        },
-        {
-          title: "Resolved By",
-          dataIndex: "resolvedBy",
-          key: "resolvedBy",
-          align: "center",
-          render: (value) => value || "-",
-        },
-        {
-          title: "Date",
-          dataIndex: "resolvedOn",
-          key: "resolvedOn",
-          align: "center",
-          render: (value) =>
-            value
-              ? new Date(value).toLocaleDateString()
-              : "-",
-        },
-        {
-          title: "Comments / Attachments",
-          dataIndex: "pendingComments",
-          key: "pendingComments",
-          render: (_, record) => (
-            <div style={{ textAlign: "center" }}>
-              <div>{record.pendingComments || "-"}</div>
+          title="Ticket Comments History"
+          open={isCommentsModalOpen}
+          onCancel={() => setIsCommentsModalOpen(false)}
+          footer={null}
+          width={800}
+        >
+          {comments.length > 0 ? (
+            <Table
+              dataSource={comments.map((c, i) => ({
+                key: i,
+                sno: i + 1,
+                resolvedBy: c.resolvedBy,
+                resolvedOn: c.resolvedOn,
+                pendingComments: c.pendingComments,
+                adminFileName: c.adminFileName,
+                adminFilePath: c.adminFilePath,
+              }))}
+              pagination={false}
+              bordered
+              size="small"
+              scroll={{ x: 700 }}
+              columns={[
+                {
+                  title: "S.No",
+                  dataIndex: "sno",
+                  key: "sno",
+                  width: 70,
+                  align: "center",
+                },
+                {
+                  title: "Resolved By",
+                  dataIndex: "resolvedBy",
+                  key: "resolvedBy",
+                  align: "center",
+                  render: (value) => value || "-",
+                },
+                {
+                  title: "Date",
+                  dataIndex: "resolvedOn",
+                  key: "resolvedOn",
+                  align: "center",
+                  render: (value) =>
+                    value ? new Date(value).toLocaleDateString() : "-",
+                },
+                {
+                  title: "Comments / Attachments",
+                  dataIndex: "pendingComments",
+                  key: "pendingComments",
+                  render: (_, record) => (
+                    <div style={{ textAlign: "center" }}>
+                      <div>{record.pendingComments || "-"}</div>
 
-              {record.adminFileName && (
-                <Button
-                  type="link"
-                  size="small"
-                  onClick={() => openFile(record.adminFilePath)}
-                  icon={<FaFile />}
-                >
-                  {record.adminFileName}
-                </Button>
-              )}
+                      {record.adminFileName && (
+                        <Button
+                          type="link"
+                          size="small"
+                          onClick={() =>
+                            openFileOverview(
+                              record.adminFileName,
+                              record.adminFilePath,
+                            )
+                          }
+                          icon={<FaEye />}
+                        >
+                          Overview: {record.adminFileName}
+                        </Button>
+                      )}
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <p className="text-center py-4 text-slate-500 text-sm">
+              No comments found for this ticket.
+            </p>
+          )}
+        </Modal>
+
+        <Modal
+          title={
+            <span className="text-sm font-semibold">
+              {previewFile?.fileName || "File Overview"}
+            </span>
+          }
+          open={filePreviewModal}
+          onCancel={() => {
+            setFilePreviewModal(false);
+            setPreviewFile(null);
+            setZoomLevel(1);
+          }}
+          width="58%"
+          style={{ maxWidth: 720, top: 40 }}
+          centered
+          footer={[
+            <Button
+              key="zoomout"
+              onClick={() => setZoomLevel((prev) => Math.max(prev - 0.2, 0.5))}
+            >
+              Zoom -
+            </Button>,
+            <Button
+              key="zoomin"
+              onClick={() => setZoomLevel((prev) => Math.min(prev + 0.2, 3))}
+            >
+              Zoom +
+            </Button>,
+            <Button
+              key="download"
+              type="primary"
+              icon={<FaDownload />}
+              style={{
+                backgroundColor: "#6b21a8",
+                borderColor: "#6b21a8",
+              }}
+              onClick={() =>
+                downloadFile(previewFile?.filePath, previewFile?.fileName)
+              }
+            >
+              Download
+            </Button>,
+          ]}
+        >
+          {previewFile?.filePath ? (
+            <div>
+              <div className="mb-2 flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2 border border-slate-200">
+                <FaFile className="text-purple-700 shrink-0" />
+                <span className="text-xs font-medium text-slate-700 break-all">
+                  {previewFile.fileName}
+                </span>
+              </div>
+
+              {renderFilePreview()}
             </div>
-          ),
-        },
-      ]}
-    />
-  ) : (
-    <p className="text-center py-4 text-slate-500 text-sm">
-      No comments found for this ticket.
-    </p>
-  )}
-</Modal>
+          ) : (
+            <Empty description="File preview is not available." />
+          )}
+        </Modal>
 
-
-        {/* ---------- CANCEL MODAL ---------- */}
         <Modal
           title="Cancel Ticket"
           open={reasonModal}
@@ -622,6 +802,7 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
           <label className="block font-medium text-sm mt-2 mb-1 text-slate-700">
             Reason for cancellation
           </label>
+
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -633,7 +814,6 @@ const dataSource: TicketRow[] = tickets.map((ticket, index) => ({
       </div>
     </div>
   );
-
 };
 
 export default TicketHistoryPage;

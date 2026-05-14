@@ -145,14 +145,14 @@ const handleSignOut = (): void => {
     return [
       {
         key: "/planoftheday",
-        label: <Link to="/planoftheday">Plan of the Day</Link>,
+        label: <Link to="/planoftheday">Plan of the Day Report</Link>,
         icon: (
           <FaTachometerAlt className="text-blue-600" style={{ fontSize: 16 }} />
         ),
       },
       {
         key: "/taskupdated",
-        label: <Link to="/taskupdated">End-of-Day Report</Link>,
+        label: <Link to="/taskupdated">End of the Day Report</Link>,
         icon: (
           <FaClipboard className="text-green-600" style={{ fontSize: 16 }} />
         ),

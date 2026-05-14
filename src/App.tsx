@@ -1,6 +1,5 @@
 import React, { useEffect, Suspense, lazy } from "react";
 
-
 import { Route, useLocation, Routes, Navigate } from "react-router-dom";
 import CartProvider from "./until/CartProvider";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
@@ -43,8 +42,8 @@ import MinisterMeetingPage from "./components/MinisterPage";
 
 import TechmahindraJobsPage from "./components/TechmahindraJobsPage";
 import AllCompaniesJobsPage from "./components/AllCompaniesJobsPage";
-import LenderBorrowerPartnerLandingPage  from "./components/LenderPage";
-import GoldLandingPage  from "./components/GoldLandingPage";
+import LenderBorrowerPartnerLandingPage from "./components/LenderPage";
+import GoldLandingPage from "./components/GoldLandingPage";
 import JPLLandingPage from "./components/JPL/JPLLandingPage";
 import BroadRidgeJobsPage from "./components/BroadRidgepage";
 import JobViewPage from "./components/JobsViewPage";
@@ -121,7 +120,6 @@ const InsuranceLLmVoice = lazy(
   () => import("./GenOxy/components/InsuranceLLMVoice"),
 );
 
-
 const AccomidationGpt = lazy(() => import("./components/GPT's/Accomadation"));
 const ApplicationSupport = lazy(
   () => import("./components/GPT's/ApplicationSupport"),
@@ -191,6 +189,9 @@ const SuperAdminComments = lazy(
 const TestimonialsPage = lazy(() => import("./Dashboard/TestimoinalsOXY"));
 const RiceComparison = lazy(() => import("./components/SteanRiceVsRawRice"));
 const RegisteredUser = lazy(() => import("./AskoxyAdmin/RegisteredUser"));
+const RamMohanDarisaAgents = lazy(
+  () => import("./AskoxyAdmin/RamMohanDarisaAgents"),
+);
 const Login = lazy(() => import("./AskoxyAdmin/Login"));
 const RiceGpt = lazy(() => import("./components/RiceGpt"));
 const OxyGroup = lazy(() => import("./components/OxygroupPdf"));
@@ -203,7 +204,6 @@ const CurrentLandingPage = lazy(() => import("./components/CurrentLandinPage"));
 const PlanOfTheDay = lazy(() => import("./Taskmanagement/PlanOfTheDay"));
 
 const AllStatusPage = lazy(() => import("./Taskmanagement/AllStatus"));
-
 
 const TaskAssignedUser = lazy(
   () => import("./Taskmanagement/TaskAssignedUser"),
@@ -411,7 +411,6 @@ const AdvocatesDataPage = lazy(() => import("./AskoxyAdmin/Advoatedata"));
 const HiringPages = lazy(() => import("./Dashboard/hiringpages"));
 const KukatpallyAssignedDataPage = lazy(
   () => import("./AskoxyAdmin/KukatapallyAssignedData"),
-
 );
 const CelebShieldPage = lazy(() => import("./components/celebshieldpage"));
 const QuickAgentCreate = lazy(
@@ -505,7 +504,6 @@ const App: React.FC = () => {
   const location = useLocation();
 
   useGtagPageView();
-
 
   useTokenRefresh();
 
@@ -636,10 +634,7 @@ const App: React.FC = () => {
                 path="/insurvibe-code-builder"
                 element={<FinvibeLanding />}
               />
-            <Route
-                path="/login-admin"
-                element={<LoginAdmin />}
-              />
+              <Route path="/login-admin" element={<LoginAdmin />} />
               <Route
                 path="/carnivals/edit/:id"
                 element={<CarnivalEditPage />}
@@ -647,7 +642,7 @@ const App: React.FC = () => {
               {/* <Route path="/freelancers" element={<FreelancerList />} /> */}
 
               <Route path="/ThefanofOG" element={<BananaImageGenerate />} />
-              
+
               <Route path="/paymentcashfree" element={<PaymentCashfree />} />
               <Route path="/interview" element={<InterviewPage />} />
               <Route
@@ -677,15 +672,24 @@ const App: React.FC = () => {
                 path="/it-minister-vision"
                 element={<MinisterMeetingPage />}
               />
-              <Route path ="/gccmate" element={<GCCMate />} />
-            <Route path="/employers" element={<EmployerJobSeekerPage />} />
-            <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
-<Route path="/mentors" element={<EmployerMentorSection />} />
-<Route path="/refer-buddy" element={<ReferBuddyPage />} />
-<Route path="/job-seekers" element={<RoyalJobSeekersPage />} />
-<Route path="/recruitment-knight-riders" element={<RecruitmentKnightRidersPage />} />
-<Route path="/talent-super-kings" element={<TrainingInstituteGiantsPage />} />
-<Route path="/marketplace-raisers" element={<MarketplaceRaisersPage />} />
+              <Route path="/gccmate" element={<GCCMate />} />
+              <Route path="/employers" element={<EmployerJobSeekerPage />} />
+              <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
+              <Route path="/mentors" element={<EmployerMentorSection />} />
+              <Route path="/refer-buddy" element={<ReferBuddyPage />} />
+              <Route path="/job-seekers" element={<RoyalJobSeekersPage />} />
+              <Route
+                path="/recruitment-knight-riders"
+                element={<RecruitmentKnightRidersPage />}
+              />
+              <Route
+                path="/talent-super-kings"
+                element={<TrainingInstituteGiantsPage />}
+              />
+              <Route
+                path="/marketplace-raisers"
+                element={<MarketplaceRaisersPage />}
+              />
               <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
               {/* <Route path="/credera/jobs" element={<CrederaJobsPage />} /> */}
@@ -882,9 +886,12 @@ const App: React.FC = () => {
                 path="/termsandconditions"
                 element={<TermsAndConditions />}
               />
-              <Route path="/loansandinvest" element={<LenderBorrowerPartnerLandingPage  />} />
-              <Route path="/oxygold" element={<GoldLandingPage/>} />
-              <Route path ="/jobspremierleague" element={<JPLLandingPage />} />
+              <Route
+                path="/loansandinvest"
+                element={<LenderBorrowerPartnerLandingPage />}
+              />
+              <Route path="/oxygold" element={<GoldLandingPage />} />
+              <Route path="/jobspremierleague" element={<JPLLandingPage />} />
               <Route path="/rcsconsentform" element={<RCSConsentForm />} />
               <Route
                 path="/loanmanagement"
@@ -1143,11 +1150,9 @@ const App: React.FC = () => {
               <Route
                 path="/teststore/assistant/:id/:agentId"
                 element={<TestAgentDetails />}
-              /><Route
-                path="/may2Interview"
-                element={<HiringLandingPage />}
               />
-               <Route
+              <Route path="/may2Interview" element={<HiringLandingPage />} />
+              <Route
                 path="/DRAcertification"
                 element={<DRACertificationLanding />}
               />
@@ -1406,7 +1411,8 @@ const App: React.FC = () => {
                 <Route
                   path="assignedtalwarData"
                   element={<TalwarAssignedDataPage />}
-                /><Route
+                />
+                <Route
                   path="sendpollbasedrewards"
                   element={<SendPollBasedRewards />}
                 />
@@ -1418,6 +1424,10 @@ const App: React.FC = () => {
                 <Route
                   path="userOrdersIntegration"
                   element={<UserOrdersIntegration />}
+                />
+                <Route
+                  path="rammohandarisa"
+                  element={<RamMohanDarisaAgents />}
                 />
                 <Route
                   path="kukatpallyassignedData"
