@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowRight,
   HandCoins,
@@ -11,6 +11,10 @@ import {
   IndianRupee,
   TrendingUp,
   Wallet,
+  MapPin,
+  ShieldCheck,
+  UserCheck,
+  Scale,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/img/image1.png";
@@ -97,7 +101,7 @@ const content = {
     heroTitle1: "ఒకే ప్లాట్‌ఫామ్‌లో",
     heroTitle2: "రుణం, అప్పు & భాగస్వామ్యం",
     heroDesc:
-      "మీ అవసరానికి సరిపోయే మార్గాన్ని ఎంచుకోండి. మీరు డబ్బు ఇవ్వాలనుకుంటున్నా, అప్పు తీసుకోవాలనుకుంటున్నా, లేదా భాగస్వామిగా చేరాలనుకున్నా — OxyLoans మీకు స్పష్టమైన మార్గాన్ని అందిస్తుంది.",
+      "మీ అవసరానికి సరిపోయే మార్గాన్ని ఎంచుకోండి. మీరు డబ్బు ఇవ్వాలనుకుంటున్నా, అప్పు తీసుకోవాలనుకున్నా, లేదా భాగస్వామిగా చేరాలనుకున్నా — OxyLoans మీకు స్పష్టమైన మార్గాన్ని అందిస్తుంది.",
     continueText: "కొనసాగించండి",
     cards: [
       {
@@ -170,7 +174,7 @@ function LanguageToggle({
   setLang: React.Dispatch<React.SetStateAction<Lang>>;
 }) {
   return (
-    <div className="inline-flex rounded-2xl border border-sky-200/70 bg-white/80 p-1 backdrop-blur-md shadow-[0_10px_30px_rgba(59,130,246,0.10)]">
+    <div className="inline-flex rounded-2xl border border-sky-200/70 bg-white/80 p-1 shadow-[0_10px_30px_rgba(59,130,246,0.10)] backdrop-blur-md">
       <button
         type="button"
         onClick={() => setLang("en")}
@@ -204,51 +208,50 @@ export default function OxyLoansLandingPage() {
 
   const t = content[lang];
 
-const goToLoginFirst = () => {
-  const currentPage = window.location.pathname + window.location.search;
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+  }, []);
 
-  const accessToken =
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token");
+  const goToLoginFirst = () => {
+    const currentPage = window.location.pathname + window.location.search;
 
-  const cookieToken = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("accessToken="));
+    const accessToken =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("accessToken");
 
-  const isLoggedIn = Boolean(accessToken || cookieToken);
+    const cookieToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("accessToken="));
 
-  // ✅ If already logged in, go directly to platform
-  if (isLoggedIn) {
-    window.location.href = platformUrl;
-    return;
-  }
+    const isLoggedIn = Boolean(accessToken || cookieToken);
 
-  // ✅ After login success, go to platform redirect
-  sessionStorage.setItem("redirectPath", platformRedirectPath);
-  sessionStorage.setItem("platformRedirectUrl", platformUrl);
-  localStorage.setItem("platformRedirectUrl", platformUrl);
+    if (isLoggedIn) {
+      window.location.href = platformUrl;
+      return;
+    }
 
-  // ✅ If login closed, return to current page
-  sessionStorage.setItem("loginCloseReturnPath", currentPage);
+    sessionStorage.setItem("redirectPath", platformRedirectPath);
+    sessionStorage.setItem("platformRedirectUrl", platformUrl);
+    localStorage.setItem("platformRedirectUrl", platformUrl);
+    sessionStorage.setItem("loginCloseReturnPath", currentPage);
 
-  navigate("/whatsapplogin", {
-    state: {
-      from: platformRedirectPath,
-      closeReturnPath: currentPage,
-    },
-  });
-};
+    navigate("/whatsapplogin", {
+      state: {
+        from: platformRedirectPath,
+        closeReturnPath: currentPage,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#f0f7ff] text-slate-900">
-      {/* ─── Fixed ambient background ─── */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(125,211,252,0.35),transparent),linear-gradient(180deg,#eef8ff_0%,#f7fbff_60%,#eff6ff_100%)]" />
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(59,130,246,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.07)_1px,transparent_1px)] [background-size:48px_48px]" />
       </div>
 
-      {/* ─── Header ─── */}
-      <header className="fixed left-0 top-0 z-[999] w-full border-b border-sky-100/80 bg-white/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(14,165,233,0.08)]">
+      <header className="fixed left-0 top-0 z-[999] w-full border-b border-sky-100/80 bg-white/90 shadow-[0_4px_24px_rgba(14,165,233,0.08)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <img
@@ -257,21 +260,19 @@ const goToLoginFirst = () => {
               className="h-10 w-auto cursor-pointer object-contain sm:h-8 md:h-10"
               onClick={() => navigate("/")}
             />
-            <button
-              type="button"
-              onClick={goToLoginFirst}
-              className="flex items-center"
-            >
+            <button type="button" onClick={goToLoginFirst}>
               <img
                 src={logo}
                 alt="OxyLoans Logo"
-                className="h-20 w-auto object-contain sm:h-16"
+                className="h-24 w-auto object-contain sm:h-20"
               />
             </button>
           </div>
+
           <div className="hidden md:block">
             <LanguageToggle lang={lang} setLang={setLang} />
           </div>
+
           <button
             type="button"
             onClick={() => setOpen((p) => !p)}
@@ -281,6 +282,7 @@ const goToLoginFirst = () => {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
+
         {open && (
           <div className="border-t border-sky-100 bg-white/95 px-4 py-4 md:hidden">
             <LanguageToggle lang={lang} setLang={setLang} />
@@ -289,59 +291,44 @@ const goToLoginFirst = () => {
       </header>
 
       <main className="pt-[72px] sm:pt-[80px]">
-        {/* HERO SECTION — BIG RIGHT IMAGE */}
-        <section className="px-4 py-10 bg-gradient-to-br from-[#eaf7ff] via-white to-[#dff4ff] overflow-hidden">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 items-center">
-            {/* LEFT CONTENT */}
-            <div className="text-center lg:text-left z-10">
-              <div className="inline-flex items-center gap-2 text-sm font-semibold text-sky-700 bg-sky-100 px-4 py-2 rounded-full">
+        <section className="overflow-hidden bg-gradient-to-br from-[#eaf7ff] via-white to-[#dff4ff] px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-2">
+            <div className="z-10 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-semibold text-sky-700">
                 <BadgeCheck className="h-4 w-4 text-green-500" />
                 {t.badge}
               </div>
 
-              <h1 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
+              <h1 className="mt-6 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
                 <span>{t.heroTitle1}</span>
-                <span className="block mt-2 text-sky-600">{t.heroTitle2}</span>
+                <span className="mt-2 block text-sky-600">{t.heroTitle2}</span>
               </h1>
 
-              <p className="mt-4 text-lg text-slate-600 max-w-xl mx-auto lg:mx-0">
+              <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg lg:mx-0">
                 {t.heroDesc}
               </p>
 
               <button
                 onClick={goToLoginFirst}
-                className="mt-6 px-8 py-3 bg-sky-600 text-white rounded-full font-bold hover:bg-sky-700 transition"
+                className="mt-6 rounded-full bg-sky-600 px-8 py-3 font-bold text-white transition hover:bg-sky-700"
               >
                 Get Started →
               </button>
             </div>
 
-            {/* RIGHT BIG IMAGE */}
             <div className="relative flex justify-center lg:justify-end">
-              {/* background glow */}
-              <div className="absolute right-[-120px] top-[-60px] w-[500px] h-[500px] bg-cyan-300/30 blur-[120px] rounded-full"></div>
-              <div className="absolute left-[20%] bottom-[-80px] w-[400px] h-[400px] bg-sky-400/20 blur-[120px] rounded-full"></div>
+              <div className="absolute right-[-120px] top-[-60px] h-[500px] w-[500px] rounded-full bg-cyan-300/30 blur-[120px]" />
+              <div className="absolute bottom-[-80px] left-[20%] h-[400px] w-[400px] rounded-full bg-sky-400/20 blur-[120px]" />
 
-              {/* BIG IMAGE */}
               <img
                 src={headerImage}
                 alt="OxyLoans"
-                className="
-          relative z-10
-          w-[140%]              /* makes image bigger than container */
-          max-w-none            /* remove size restriction */
-          lg:w-[160%]           /* even bigger on desktop */
-          xl:w-[170%]
-          object-contain
-        "
+                className="relative z-10 w-full max-w-[520px] object-contain sm:max-w-[620px] lg:w-[125%] lg:max-w-none xl:w-[135%]"
               />
             </div>
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════════
-            CARDS SECTION
-        ══════════════════════════════════════════════ */}
         <section className="mx-auto max-w-7xl px-4 pb-14 pt-12 sm:px-6 md:pb-16 md:pt-14 lg:px-8">
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {t.cards.map((card, index) => {
@@ -385,7 +372,6 @@ const goToLoginFirst = () => {
                   key={card.title}
                   className={`group relative overflow-hidden rounded-3xl border ${borderColors[index]} bg-gradient-to-br ${gradients[index]} p-6 text-left shadow-[0_8px_32px_rgba(59,130,246,0.08)] backdrop-blur-xl transition duration-300 hover:-translate-y-1.5 ${glowColors[index]} sm:p-7`}
                 >
-                  {/* inner gloss */}
                   <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[linear-gradient(135deg,rgba(255,255,255,0.70)_0%,rgba(255,255,255,0.10)_100%)]" />
 
                   <div className="relative">
@@ -395,6 +381,7 @@ const goToLoginFirst = () => {
                       >
                         {card.label}
                       </span>
+
                       <div
                         className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${iconGradients[index]} text-white shadow-lg`}
                       >
@@ -405,6 +392,7 @@ const goToLoginFirst = () => {
                     <h3 className="mt-5 text-xl font-bold leading-[1.35] text-slate-900 sm:text-2xl">
                       {card.title}
                     </h3>
+
                     <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
                       {card.desc}
                     </p>
@@ -422,20 +410,60 @@ const goToLoginFirst = () => {
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════════
-            STATS + LEND & EARN SECTION
-        ══════════════════════════════════════════════ */}
+        <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-[28px] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-amber-50 p-6 shadow-[0_16px_45px_rgba(139,92,246,0.10)] sm:p-8">
+            <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
+            <div className="absolute -bottom-20 left-0 h-56 w-56 rounded-full bg-yellow-300/20 blur-3xl" />
+
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-4 py-2 text-sm font-bold text-violet-700">
+                  <MapPin className="h-4 w-4" />
+                  New Lending Model
+                </div>
+
+                <h2 className="mt-4 text-2xl font-extrabold leading-tight text-slate-900 sm:text-3xl lg:text-4xl">
+                  ProxyLend — nearby trust-based lending
+                </h2>
+
+                <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+                  Lenders can connect with nearby borrowers using location,
+                  references, repayment discipline, and recovery support.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-slate-700">
+                  <span className="rounded-full bg-white/80 px-4 py-2 shadow-sm">
+                    Nearby borrowers
+                  </span>
+                  <span className="rounded-full bg-white/80 px-4 py-2 shadow-sm">
+                    Reference trust
+                  </span>
+                  <span className="rounded-full bg-white/80 px-4 py-2 shadow-sm">
+                    Recovery support
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate("/proxylend")}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-500 px-7 py-3.5 text-sm font-bold text-white shadow-[0_10px_30px_rgba(139,92,246,0.28)] transition hover:scale-[1.03] sm:w-auto"
+              >
+                Explore ProxyLend
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:pb-24 lg:px-8">
           <div className="relative overflow-hidden rounded-[44px] border border-white/80 bg-gradient-to-br from-[#dff4ff] via-[#eefcff] to-[#fff8e1] shadow-[0_32px_90px_rgba(14,165,233,0.13)]">
-            {/* decorative blobs */}
             <div className="pointer-events-none absolute -top-24 left-0 h-72 w-72 rounded-full bg-sky-300/30 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 right-0 h-72 w-72 rounded-full bg-cyan-200/25 blur-3xl" />
             <div className="pointer-events-none absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-200/20 blur-3xl" />
-            {/* inner gloss */}
             <div className="pointer-events-none absolute inset-0 rounded-[44px] bg-[linear-gradient(135deg,rgba(255,255,255,0.60),rgba(255,255,255,0.15))]" />
 
             <div className="relative p-6 sm:p-8 md:p-12">
-              {/* ── Stats row ── */}
               <div className="grid gap-5 md:grid-cols-3">
                 {t.stats.map((item) => {
                   const Icon = item.icon;
@@ -449,19 +477,21 @@ const goToLoginFirst = () => {
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-400 text-white shadow-lg">
                         <Icon className="h-6 w-6" />
                       </div>
+
                       <h3 className="mt-4 text-2xl font-bold text-slate-900 sm:text-3xl">
                         {item.number}
                       </h3>
+
                       <p className="mt-1 text-base font-semibold text-slate-800">
                         {item.title}
                       </p>
+
                       <p className="text-sm text-slate-500">{item.desc}</p>
                     </button>
                   );
                 })}
               </div>
 
-              {/* ── Divider ── */}
               <div className="my-10 flex items-center gap-4">
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sky-300/50 to-transparent" />
                 <span className="rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 px-5 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-900 shadow">
@@ -470,26 +500,28 @@ const goToLoginFirst = () => {
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sky-300/50 to-transparent" />
               </div>
 
-              {/* ── Lend & Earn centre block ── */}
               <div className="text-center">
                 <h2 className="text-3xl font-bold leading-[1.2] text-slate-900 sm:text-4xl md:text-5xl">
                   {t.lendEarnTitle}
                 </h2>
+
                 <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">
                   {t.lendEarnDesc}
                 </p>
 
-                {/* ROI badge */}
                 <div className="mt-8 inline-block">
-                  <div className="relative overflow-hidden rounded-[28px] border border-orange-200/60 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 px-8 py-6 shadow-[0_16px_48px_rgba(245,158,11,0.14)]">
+                  <div className="relative overflow-hidden rounded-[28px] border border-orange-200/60 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 px-6 py-6 shadow-[0_16px_48px_rgba(245,158,11,0.14)] sm:px-8">
                     <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[linear-gradient(135deg,rgba(255,255,255,0.70),rgba(255,255,255,0.10))]" />
+
                     <div className="relative">
                       <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
                         {t.roiTop}
                       </p>
-                      <h3 className="mt-1 text-4xl font-extrabold text-orange-500 sm:text-5xl">
+
+                      <h3 className="mt-1 text-3xl font-extrabold text-orange-500 sm:text-5xl">
                         {t.roiMain}
                       </h3>
+
                       <p className="mt-1 text-sm font-medium text-slate-500">
                         {t.roiBottom}
                       </p>
@@ -509,7 +541,6 @@ const goToLoginFirst = () => {
                 </div>
               </div>
 
-              {/* ── Benefits cards ── */}
               <div className="mt-10 grid gap-6 md:grid-cols-2">
                 {t.benefits.map((item, index) => {
                   const Icon = item.icon;
@@ -535,9 +566,11 @@ const goToLoginFirst = () => {
                       >
                         <Icon className="h-6 w-6" />
                       </div>
+
                       <h3 className="mt-5 text-xl font-bold text-slate-900 sm:text-2xl">
                         {item.title}
                       </h3>
+
                       <p
                         className={`mt-3 text-base font-semibold ${textColors[index]}`}
                       >

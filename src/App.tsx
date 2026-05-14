@@ -80,6 +80,7 @@ import TrainingInstituteGiantsPage from "./components/JPL/TalentSuperKingsPage";
 import LoginAdmin from "./AIMockInterview/admin/LoginAdmin";
 import ResumeAIToolsPage from "./components/JPL/ResumeAIToolsPage";
 import ReferBuddyPage from "./components/JPL/ReferBuddyPage";
+import ProxyLendPage from "./components/Services/ProxyLend";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -672,6 +673,7 @@ const App: React.FC = () => {
                 path="/it-minister-vision"
                 element={<MinisterMeetingPage />}
               />
+<<<<<<< HEAD
               <Route path="/gccmate" element={<GCCMate />} />
               <Route path="/employers" element={<EmployerJobSeekerPage />} />
               <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
@@ -690,6 +692,18 @@ const App: React.FC = () => {
                 path="/marketplace-raisers"
                 element={<MarketplaceRaisersPage />}
               />
+=======
+              <Route path ="/gccmate" element={<GCCMate />} />
+            <Route path="/employers" element={<EmployerJobSeekerPage />} />
+                      <Route path="/proxylend" element={<ProxyLendPage />} />
+            <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
+<Route path="/mentors" element={<EmployerMentorSection />} />
+<Route path="/refer-buddy" element={<ReferBuddyPage />} />
+<Route path="/job-seekers" element={<RoyalJobSeekersPage />} />
+<Route path="/recruitment-knight-riders" element={<RecruitmentKnightRidersPage />} />
+<Route path="/talent-super-kings" element={<TrainingInstituteGiantsPage />} />
+<Route path="/marketplace-raisers" element={<MarketplaceRaisersPage />} />
+>>>>>>> e47908b8fce4df8548f43c2ab28711474c51d48d
               <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
               {/* <Route path="/credera/jobs" element={<CrederaJobsPage />} /> */}

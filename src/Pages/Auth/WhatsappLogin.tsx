@@ -111,6 +111,15 @@ const WhatsappLogin: React.FC = () => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const autoSubmitRef = useRef(false);
+  const loginAttemptRef = useRef(0);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearLoginRedirectTimer = () => {
+    if (redirectTimerRef.current) {
+      clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+  };
 
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
   const [otpMethod, setOtpMethod] = useState<"mobile" | "whatsapp">("whatsapp");
@@ -158,6 +167,12 @@ const WhatsappLogin: React.FC = () => {
       } as React.FormEvent<HTMLFormElement>);
     }, 300);
   }, [isOtpComplete, showOtp]);
+
+  useEffect(() => {
+    return () => {
+      clearLoginRedirectTimer();
+    };
+  }, []);
 
   const pendingGoogleAuth = sessionStorage.getItem("pendingGoogleAuth");
   const deviceId = useRef<string>(
@@ -349,25 +364,25 @@ const WhatsappLogin: React.FC = () => {
     }
   };
 
-const handleClose = () => {
-  setIsClosing(true);
+  const handleClose = () => {
+    setIsClosing(true);
 
-  const locationState = location.state as {
-    closeReturnPath?: string;
-    from?: string;
-  } | null;
+    const locationState = location.state as {
+      closeReturnPath?: string;
+      from?: string;
+    } | null;
 
-  const closeReturnPath =
-    locationState?.closeReturnPath ||
-    sessionStorage.getItem("loginCloseReturnPath") ||
-    "/";
+    const closeReturnPath =
+      locationState?.closeReturnPath ||
+      sessionStorage.getItem("loginCloseReturnPath") ||
+      "/";
 
-  sessionStorage.removeItem("loginCloseReturnPath");
+    sessionStorage.removeItem("loginCloseReturnPath");
 
-  setTimeout(() => {
-    navigate(closeReturnPath, { replace: true });
-  }, 300);
-};
+    setTimeout(() => {
+      navigate(closeReturnPath, { replace: true });
+    }, 300);
+  };
 
   const handleOtpChange = (value: string, index: number) => {
     autoSubmitRef.current = false;
@@ -542,31 +557,38 @@ const handleClose = () => {
 
   const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const currentAttempt = Date.now();
+    loginAttemptRef.current = currentAttempt;
+    clearLoginRedirectTimer();
+
     setOtpError("");
     setMessage("");
+    setShowSuccessPopup(false);
     setIsLoading(true);
 
-    if (!credentials) {
-      setOtpError("Please enter the complete OTP");
+    const enteredOtp =
+      otpMethod === "whatsapp"
+        ? credentials.otp.join("")
+        : credentials.mobileOTP.join("");
+
+    if (otpMethod === "whatsapp" && enteredOtp.length !== 4) {
+      setOtpError("Please enter the complete WhatsApp OTP");
       setIsLoading(false);
+      autoSubmitRef.current = false;
       return;
     }
 
-    if (otpMethod === "whatsapp" && credentials.otp.join("").length !== 4) {
-      setOtpError("Please enter the complete WhatsApp OTP");
-      setIsLoading(false);
-      return;
-    } else if (
-      otpMethod === "mobile" &&
-      credentials.mobileOTP.join("").length !== 6
-    ) {
+    if (otpMethod === "mobile" && enteredOtp.length !== 6) {
       setOtpError("Please enter the complete Mobile OTP");
       setIsLoading(false);
+      autoSubmitRef.current = false;
       return;
     }
 
     try {
       const phoneWithoutCode = extractPhoneWithoutCode(phoneNumber);
+
       const requestBody = {
         registrationType: otpMethod,
         userType: "Login",
@@ -577,14 +599,14 @@ const handleClose = () => {
           ? {
               whatsappNumber: phoneWithoutCode,
               whatsappOtpSession: localStorage.getItem("mobileOtpSession"),
-              whatsappOtpValue: credentials.otp.join(""),
+              whatsappOtpValue: enteredOtp,
               salt: localStorage.getItem("salt"),
               expiryTime: localStorage.getItem("expiryTime"),
             }
           : {
               mobileNumber: phoneWithoutCode,
               mobileOtpSession: localStorage.getItem("mobileOtpSession"),
-              mobileOtpValue: credentials.mobileOTP.join(""),
+              mobileOtpValue: enteredOtp,
               salt: localStorage.getItem("salt"),
               expiryTime: localStorage.getItem("expiryTime"),
             }),
@@ -594,10 +616,30 @@ const handleClose = () => {
         `${BASE_URL}/user-service/registerwithMobileAndWhatsappNumber`,
         requestBody,
       );
-      if (response.data && response.data.accessToken && response.data.userId) {
+
+      const apiMessage = (response.data?.message || "").toLowerCase();
+
+      if (
+        apiMessage.includes("invalid") ||
+        apiMessage.includes("incorrect") ||
+        apiMessage.includes("expired") ||
+        apiMessage.includes("wrong")
+      ) {
+        clearLoginRedirectTimer();
+        setOtpError(response.data?.message || "Invalid OTP. Please try again.");
+        setShowSuccessPopup(false);
+        setIsLoading(false);
+        autoSubmitRef.current = false;
+        return;
+      }
+
+      if (
+        response.data?.accessToken &&
+        response.data?.userId &&
+        loginAttemptRef.current === currentAttempt
+      ) {
         setCustomerAccessToken(response.data.accessToken);
 
-        // Store refresh token if available
         if (response.data.refreshToken) {
           setRefreshToken(response.data.refreshToken);
           store.dispatch(updateRefreshToken(response.data.refreshToken));
@@ -607,57 +649,59 @@ const handleClose = () => {
         localStorage.setItem("accessToken", response.data.accessToken);
         localStorage.setItem("token", response.data.accessToken);
 
-        // Fetch user details
         const userData = await fetchUserDetails(response.data.accessToken);
-        if (userData && userData.userId) {
+
+        if (userData?.userId && loginAttemptRef.current === currentAttempt) {
           if (otpMethod === "whatsapp") {
             localStorage.setItem("whatsappNumber", phoneWithoutCode);
           } else {
-            localStorage.setItem(
-              "mobileNumber",
-              phoneWithoutCode.replace(countryCode, ""),
-            );
+            localStorage.setItem("mobileNumber", phoneWithoutCode);
           }
+
           localStorage.removeItem("mobileOtpSession");
           localStorage.removeItem("salt");
           localStorage.removeItem("expiryTime");
+
           sessionStorage.removeItem("fromStudyAbroad");
           sessionStorage.removeItem("primaryType");
           sessionStorage.removeItem("pendingGoogleAuth");
 
+          setOtpError("");
           setShowSuccessPopup(true);
           setMessage("Login Successful");
 
-          setTimeout(() => {
+          redirectTimerRef.current = setTimeout(() => {
+            if (loginAttemptRef.current !== currentAttempt) return;
+
             const redirectPath =
               sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
 
-            // ✅ navigate first
             navigate(redirectPath, { replace: true });
 
-            // ✅ remove after a tiny delay (prevents losing it if login page rerenders)
             setTimeout(() => {
               sessionStorage.removeItem("redirectPath");
             }, 300);
           }, 1000);
         } else {
+          clearLoginRedirectTimer();
           setOtpError("Failed to fetch user details after login.");
-          // Stay on the same page
+          setShowSuccessPopup(false);
         }
       } else {
-        setOtpError("No access token or user ID received. Please try again.");
-        // Stay on the same page
+        clearLoginRedirectTimer();
+        setOtpError("Invalid OTP. Please try again.");
+        setShowSuccessPopup(false);
       }
     } catch (err) {
+      clearLoginRedirectTimer();
+
       const error = err as AxiosError<ErrorResponse>;
-      if (error.response?.status === 401) {
-        setOtpError(
-          "Unauthorized: Invalid or missing access token. Please try again.",
-        );
-        handleAuthError(error, navigate);
-      } else {
-        setOtpError(error.response?.data?.message || "Invalid OTP");
-      }
+
+      setOtpError(
+        error.response?.data?.message || "Invalid OTP. Please try again.",
+      );
+
+      setShowSuccessPopup(false);
     } finally {
       setIsLoading(false);
       autoSubmitRef.current = false;
