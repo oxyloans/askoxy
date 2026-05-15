@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import GCCMateHeader from "./GCCMateHeader";
 import {
   Building2,
@@ -15,6 +15,15 @@ import {
 } from "lucide-react";
 
 const GCCMate: React.FC = () => {
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  }, []);
   const ecosystem = [
     {
       icon: Globe2,

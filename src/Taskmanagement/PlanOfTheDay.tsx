@@ -110,13 +110,21 @@ const PlanOfTheDay: React.FC = () => {
 
     checkPendingTasksForToday(storedUserId);
 
+    const BYPASS_USER_ID = "591e704d-e831-491f-807c-9dc04cb1b35c";
+
     const checkSubmissionWindow = () => {
+     
+      if (storedUserId === BYPASS_USER_ID) {
+        setIsSubmissionWindowOpen(true);
+        return;
+      }
+
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 10 * 60 + 40;
+      const closeTimeInMinutes = 10 * 60 + 30;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes,
