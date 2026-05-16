@@ -166,13 +166,11 @@ const LeaveStatus: React.FC = () => {
 
   return (
     <UserPanelLayout>
-      <div className="min-h-screen bg-gray-100 py-6">
-        <Card
-          title={<h2 className="text-start text-xl font-semibold">My Leave Status</h2>}
-          bordered
-          style={{ margin: "20px auto", maxWidth: "1200px", borderRadius: 8 }}
-          className="shadow-sm"
+      <div className="min-h-screen  py-6">
+        <div
+          className="shadow-sm rounded-md p-4"
         >
+          <h2 className="text-start text-xl font-semibold">My Leave Status</h2>
           {loading ? (
             <div className="flex justify-center py-8">
               <Spin tip="Loading leave status..." />
@@ -182,7 +180,7 @@ const LeaveStatus: React.FC = () => {
           ) : leaveData.length === 0 ? (
             <Empty description="No leave records found." className="py-8" />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto pt-4">
               <Table
                 dataSource={leaveData}
                 columns={columns}
@@ -195,7 +193,7 @@ const LeaveStatus: React.FC = () => {
               />
             </div>
           )}
-        </Card>
+        </div>
       </div>
     </UserPanelLayout>
   );

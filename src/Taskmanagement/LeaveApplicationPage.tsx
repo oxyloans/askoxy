@@ -348,25 +348,16 @@ const LeaveApplicationPage: React.FC = () => {
                   Reason for Leave<Text type="danger">*</Text>
                 </Text>
               }
+              validateFirst
               rules={[
                 {
                   required: true,
-                  message: "Please provide a reason for your leave",
+                  whitespace: true,
+                  message: "Please provide a professional reason for your leave",
                 },
                 {
-                  validator: (_, value) => {
-                    if (!value || value.trim().length === 0) {
-                      return Promise.reject(
-                        new Error("Reason cannot be empty or contain only spaces")
-                      );
-                    }
-                    if (value.trim().length < 10) {
-                      return Promise.reject(
-                        new Error("Reason must be at least 10 characters")
-                      );
-                    }
-                    return Promise.resolve();
-                  },
+                  min: 10,
+                  message: "Reason must be at least 10 characters long",
                 },
               ]}
             >

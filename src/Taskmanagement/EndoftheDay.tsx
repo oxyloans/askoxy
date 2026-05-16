@@ -688,31 +688,16 @@ const canUpdateTask = (task: Task): boolean => {
                           <span className="font-medium">End of Day Note</span>
                         }
                         name="endOftheDay"
+                        validateFirst
                         rules={[
                           {
                             required: true,
+                            whitespace: true,
                             message: "End of day note is required.",
                           },
                           {
-                            validator: (_, value) => {
-                              if (!value || !value.trim()) {
-                                return Promise.reject(
-                                  new Error(
-                                    "End of day note cannot contain only empty spaces.",
-                                  ),
-                                );
-                              }
-
-                              if (value.trim().length < 50) {
-                                return Promise.reject(
-                                  new Error(
-                                    "End of day note must be at least 50 characters long.",
-                                  ),
-                                );
-                              }
-
-                              return Promise.resolve();
-                            },
+                            min: 50,
+                            message: "End of day note must be at least 50 characters long.",
                           },
                         ]}
                       >
@@ -723,7 +708,7 @@ const canUpdateTask = (task: Task): boolean => {
                         />
                       </Form.Item>
 
-                      <Form.Item
+                      {/* <Form.Item
                         label={
                           <span className="font-medium flex items-center">
                             <PaperClipOutlined className="mr-2" />
@@ -832,15 +817,22 @@ const canUpdateTask = (task: Task): boolean => {
                         </Card>
                       </Form.Item>
 
-                      <Divider />
+                      <Divider /> */}
 
                       <Form.Item>
                         <Button
-                          type="primary"
+                        
                           htmlType="submit"
                           loading={loading}
                           block
-                          className="h-10 sm:h-12 font-medium bg-[#008CBA]"
+
+                         style={{
+                  height:  "40px",
+                  borderRadius: "8px",
+                  background: "#008cba",
+                  color: "white",
+                  boxShadow: "0 2px 8px rgba(0, 140, 186, 0.2)",
+                }}
                           icon={<CloudUploadOutlined />}
                         >
                           {loading ? "Updating..." : "Update Task"}

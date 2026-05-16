@@ -466,22 +466,22 @@ const AdminTasks: React.FC = () => {
   return (
     <UserPanelLayout>
       <div style={{ padding: "20px 16px", minHeight: "100vh" }}>
-        {/* Header */}
+        {/* Header Row */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
-            gap: 12,
+            gap: 16,
             marginBottom: 20,
           }}
         >
           <div>
             <div
               style={{
-                color: "#351664",
-                fontSize: 20,
+                color: "black",
+                fontSize: 22,
                 fontWeight: 700,
                 letterSpacing: 0.3,
               }}
@@ -492,41 +492,64 @@ const AdminTasks: React.FC = () => {
               Manage and track all assigned tasks
             </div>
           </div>
-          {/* <Badge
-            count={totalElements}
-            overflowCount={9999}
-            style={{ backgroundColor: cfg.color, fontSize: 13, fontWeight: 700, padding: "0 10px", height: 26, lineHeight: "26px", borderRadius: 13 }}
+
+          <Select
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value as StatusFilter)}
+            style={{ width: 220, minWidth: 180, borderRadius: 20 }}
+            dropdownMatchSelectWidth={false}
           >
-            <div style={{ background: cfg.bg, borderRadius: 8, padding: "6px 14px", color: cfg.color, fontSize: 13, fontWeight: 600 }}>
-              {cfg.label} Tasks
-            </div>
-          </Badge> */}
+            <Option value="ALL">All Tasks</Option>
+            <Option value="ASSIGNED">Assigned</Option>
+            <Option value="COMPLETED">Completed</Option>
+          </Select>
         </div>
 
-        {/* Filters Row */}
+        {/* Filters & Search Row */}
         <div
           style={{
-            padding: "14px 0",
-            marginBottom: 16,
+            marginBottom: 20,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
-            gap: 12,
+            gap: 16,
           }}
         >
-          <Space align="center" size={12} wrap>
-            <Select
-              value={statusFilter}
-              onChange={(value) => setStatusFilter(value as StatusFilter)}
-              style={{ width: 220, minWidth: 180, borderRadius: 20 }}
-              dropdownMatchSelectWidth={false}
-            >
-              <Option value="ALL">All</Option>
-              <Option value="ASSIGNED">Assigned</Option>
-              <Option value="COMPLETED">Completed</Option>
-            </Select>
-            <div
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            {/* Search Input on the left */}
+            <Input
+              prefix={<SearchOutlined style={{ color: "#bbb" }} />}
+              suffix={
+                searchInput ? (
+                  <CloseCircleOutlined
+                    style={{ color: "#bbb", cursor: "pointer" }}
+                    onClick={() => {
+                      setSearchInput("");
+                    }}
+                  />
+                ) : null
+              }
+              placeholder="Search by name, task..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              style={{
+                width: 300,
+                borderRadius: 20,
+                border: "1.5px solid #e0e0e0",
+                height: 38,
+              }}
+              allowClear={false}
+            />
+
+            {/* <div
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -540,32 +563,8 @@ const AdminTasks: React.FC = () => {
               <span style={{ fontSize: 13, color: "#555" }}>
                 Completed: <strong>{completedCount}</strong>
               </span>
-            </div>
-          </Space>
-
-          {/* Search */}
-          <Input
-            prefix={<SearchOutlined style={{ color: "#bbb" }} />}
-            suffix={
-              searchInput ? (
-                <CloseCircleOutlined
-                  style={{ color: "#bbb", cursor: "pointer" }}
-                  onClick={() => {
-                    setSearchInput("");
-                  }}
-                />
-              ) : null
-            }
-            placeholder="Search by name, task..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            style={{
-              width: 260,
-              borderRadius: 20,
-              border: "1.5px solid #e0e0e0",
-            }}
-            allowClear={false}
-          />
+            </div> */}
+          </div>
         </div>
 
         {/* Table */}
@@ -574,6 +573,7 @@ const AdminTasks: React.FC = () => {
           dataSource={tasks}
           rowKey={(r) => r.id}
           loading={loading}
+          bordered
           locale={{
             emptyText: (
               <Empty
@@ -608,9 +608,9 @@ const AdminTasks: React.FC = () => {
             },
             style: { padding: "12px 16px" },
           }}
-          bordered={false}
+         
           showHeader
-          scroll={{ x: 900 }}
+          scroll={{ x: true }}
           style={{ fontSize: 13 }}
         />
       </div>

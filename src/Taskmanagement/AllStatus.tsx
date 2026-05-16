@@ -144,8 +144,6 @@ const AllStatusPage: React.FC = () => {
   const [videoPageNo] = useState<number>(1);
   const [videoPageSize] = useState<number>(100);
 
-  const taskId = sessionStorage.getItem("taskId");
-
   useEffect(() => {
     const storedUserId = sessionStorage.getItem("userId");
 
@@ -162,14 +160,19 @@ const AllStatusPage: React.FC = () => {
 
   useEffect(() => {
     if (userId) {
-      if (activeTab === "general") {
-        fetchAllTasks();
-        fetchPlanVideos();
-      } else if (activeTab === "byDate" && selectedDate) {
-        fetchTasksByDate();
-      }
+      fetchPlanVideos();
     }
-  }, [userId, status, activeTab]);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    if (activeTab === "general") {
+      fetchAllTasks();
+    } else if (activeTab === "byDate" && selectedDate) {
+      fetchTasksByDate();
+    }
+  }, [userId, status, activeTab, selectedDate]);
 
   useEffect(() => {
     if (tasks.length > 0) {
@@ -203,12 +206,18 @@ const AllStatusPage: React.FC = () => {
     if (!editingTaskId || !editingField) return;
 
     const field = editingField === "plan" ? "planOftheDay" : "endOftheDay";
-    const value = values[field as keyof EditFormValues]?.trim();
+    const rawValue = values[field as keyof EditFormValues]?.trim();
 
-    if (!value) {
+    if (!rawValue) {
       Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Empty spaces are not allowed. Please enter valid text.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       return;
     }
+
+    const userName = sessionStorage.getItem("Name") || "";
+    const value =
+      editingField === "plan" && userName
+        ? `${rawValue} - Plan by ${userName}`
+        : rawValue;
 
     const currentTask = tasks.find((t) => t.id === editingTaskId);
 
@@ -266,9 +275,14 @@ const AllStatusPage: React.FC = () => {
   };
 
   const handleEditPlan = (task: TaskData) => {
+    const originalPlan = (task.planOftheDay || "").replace(
+      /\s*-\s*Plan by\s+.*$/,
+      "",
+    );
+
     setEditingTaskId(task.id);
     setEditingField("plan");
-    editForm.setFieldsValue({ planOftheDay: task.planOftheDay });
+    editForm.setFieldsValue({ planOftheDay: originalPlan });
   };
 
   const handleEditEod = (task: TaskData) => {
@@ -322,54 +336,119 @@ const AllStatusPage: React.FC = () => {
     return type === "plan" ? video.planOfTheDay : video.endOfTheDay;
   };
 
-  const isVideoUrl = (url: string | null) => {
-    if (!url) return false;
+  const normalizeTaskList = (data: unknown): TaskData[] => {
+    if (Array.isArray(data)) return data;
 
+    if (data && typeof data === "object") {
+      const payload = data as Record<string, unknown>;
+
+      if (Array.isArray(payload.data)) return payload.data as TaskData[];
+      if (Array.isArray(payload.list)) return payload.list as TaskData[];
+      if (Array.isArray(payload.content)) return payload.content as TaskData[];
+    }
+
+    return [];
+  };
+
+  const getTaskDateKey = (planCreatedAt: string) =>
+    dayjs(planCreatedAt).format("YYYY-MM-DD");
+
+  const isMediaUrl = (value: string | null | undefined) => {
+    if (!value?.trim()) return false;
+
+    const trimmed = value.trim();
     const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".avi"];
 
     return (
-      videoExtensions.some((ext) => url.toLowerCase().includes(ext)) ||
-      url.includes("s3")
+      /^https?:\/\//i.test(trimmed) ||
+      trimmed.includes("s3.") ||
+      videoExtensions.some((ext) => trimmed.toLowerCase().includes(ext))
     );
   };
 
-const renderMediaContent = (
-  content: string | null,
-  videoUrl: string | null,
-  label: string
-) => {
-  const hasVideo = !!videoUrl && isVideoUrl(videoUrl);
+  const getPlanDisplay = (task: TaskData) => {
+    const dateKey = getTaskDateKey(task.planCreatedAt);
+    const videoFromApi = getVideoForDate(dateKey, "plan");
 
-  return (
-    <div className="flex h-full flex-col gap-3">
-      <div
-        className={`overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 ${
-          hasVideo
-            ? "h-[170px] sm:h-[185px] md:h-[200px]"
-            : "min-h-[260px] flex-1"
-        }`}
-      >
-        <Text className="whitespace-pre-wrap break-words text-[13px] leading-6 text-gray-700 sm:text-sm">
-          {content?.trim() || `No ${label.toLowerCase()} recorded`}
-        </Text>
-      </div>
+    if (isMediaUrl(task.planOftheDay)) {
+      return { text: null, video: task.planOftheDay };
+    }
 
-      {hasVideo && (
-        <div className="rounded-lg border border-gray-200 bg-white p-2">
-          <video
-            controls
-            playsInline
-            preload="metadata"
-            className="h-[180px] w-full rounded-md bg-black object-contain sm:h-[220px] md:h-[240px]"
+    return { text: task.planOftheDay, video: videoFromApi };
+  };
+
+  const getEodDisplay = (task: TaskData) => {
+    const dateKey = getTaskDateKey(task.planCreatedAt);
+    const videoFromApi = getVideoForDate(dateKey, "eod");
+
+    if (isMediaUrl(task.endOftheDay)) {
+      return { text: null, video: task.endOftheDay };
+    }
+
+    return { text: task.endOftheDay, video: videoFromApi };
+  };
+
+  const canEditPlan = (task: TaskData) => {
+    const { text } = getPlanDisplay(task);
+    return !!text?.trim();
+  };
+
+  const canEditEod = (task: TaskData) => {
+    const { text } = getEodDisplay(task);
+    return !!text?.trim();
+  };
+
+  const renderMediaContent = (
+    content: string | null,
+    videoUrl: string | null,
+    label: string,
+  ) => {
+    const hasVideo = isMediaUrl(videoUrl);
+    const displayText =
+      content?.trim() && !isMediaUrl(content) ? content.trim() : null;
+
+    return (
+      <div className="flex h-full flex-col gap-3">
+        {displayText && (
+          <div
+            className={`overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 ${
+              hasVideo
+                ? "h-[170px] sm:h-[185px] md:h-[200px]"
+                : "min-h-[260px] flex-1"
+            }`}
           >
-            <source src={videoUrl} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      )}
-    </div>
-  );
-};  const fetchAllTasks = async () => {
+            <Text className="whitespace-pre-wrap break-words text-[13px] leading-6 text-gray-700 sm:text-sm">
+              {displayText}
+            </Text>
+          </div>
+        )}
+
+        {hasVideo && videoUrl && (
+          <div className="rounded-lg border border-gray-200 bg-white p-2">
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              className="h-[180px] w-full rounded-md bg-black object-contain sm:h-[220px] md:h-[240px]"
+            >
+              <source src={videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        )}
+
+        {!displayText && !hasVideo && (
+          <div className="min-h-[260px] flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-3">
+            <Text className="whitespace-pre-wrap break-words text-[13px] leading-6 text-gray-700 sm:text-sm">
+              {`No ${label.toLowerCase()} recorded`}
+            </Text>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const fetchAllTasks = async () => {
     setLoading(true);
 
     try {
@@ -378,16 +457,16 @@ const renderMediaContent = (
         {
           taskStatus: status,
           userId,
-          id: taskId,
         },
       );
 
-      const sortedTasks = sortTasks(response.data || [], sortOrder);
+      const taskList = normalizeTaskList(response.data);
+      const sortedTasks = sortTasks(taskList, sortOrder);
 
       setTasks(sortedTasks);
       setFilteredTasks(sortedTasks);
 
-      if (!response.data || response.data.length === 0) {
+      if (taskList.length === 0) {
         Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error) {
@@ -419,12 +498,13 @@ const renderMediaContent = (
         },
       );
 
-      const sortedTasks = sortTasks(response.data || [], sortOrder);
+      const taskList = normalizeTaskList(response.data);
+      const sortedTasks = sortTasks(taskList, sortOrder);
 
       setTasks(sortedTasks);
       setFilteredTasks(sortedTasks);
 
-      if (!response.data || response.data.length === 0) {
+      if (taskList.length === 0) {
         Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found for ${formattedDate}.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
     } catch (error) {
@@ -560,7 +640,11 @@ const renderMediaContent = (
     );
   };
 
-  const renderTaskCard = (task: TaskData) => (
+  const renderTaskCard = (task: TaskData) => {
+    const planDisplay = getPlanDisplay(task);
+    const eodDisplay = getEodDisplay(task);
+
+    return (
     <Card
       key={task.id}
       className="mb-4 overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-md"
@@ -628,7 +712,7 @@ const renderMediaContent = (
                 📅 {dayjs(task.planCreatedAt).format("DD-MM-YYYY")}
               </Text>
 
-              {!isEditingPlan(task.id) && (
+              {!isEditingPlan(task.id) && canEditPlan(task) && (
                 <Button
                   onClick={() => handleEditPlan(task)}
                   style={editButtonStyle}
@@ -680,11 +764,8 @@ const renderMediaContent = (
             </Form>
           ) : (
             renderMediaContent(
-              task.planOftheDay,
-              getVideoForDate(
-                dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
-                "plan",
-              ),
+              planDisplay.text,
+              planDisplay.video,
               "Plan of the Day",
             )
           )}
@@ -699,7 +780,7 @@ const renderMediaContent = (
                 📅 {dayjs(task.planCreatedAt).format("DD-MM-YYYY")}
               </Text>
 
-              {!isEditingEod(task.id) && (
+              {!isEditingEod(task.id) && canEditEod(task) && (
                 <Button
                   onClick={() => handleEditEod(task)}
                   style={editButtonStyle}
@@ -754,11 +835,8 @@ const renderMediaContent = (
             </Form>
           ) : (
             renderMediaContent(
-              task.endOftheDay,
-              getVideoForDate(
-                dayjs(task.planCreatedAt).format("YYYY-MM-DD"),
-                "eod",
-              ),
+              eodDisplay.text,
+              eodDisplay.video,
               "End of the Day",
             )
           )}
@@ -782,7 +860,8 @@ const renderMediaContent = (
         </div>
       </div>
     </Card>
-  );
+    );
+  };
 
   return (
     <UserPanelLayout>

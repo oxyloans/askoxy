@@ -203,6 +203,16 @@ const RamMohanDarisaAgents: React.FC = () => {
     }
   };
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 576);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 576);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const filteredRecords = useMemo(() => {
     let data = [...records];
 
@@ -372,7 +382,7 @@ const RamMohanDarisaAgents: React.FC = () => {
   // Stat card data
   const statCards = [
     {
-      label: "Total Agents",
+      label: "Total Data",
       count: records.length,
       color: PRIMARY_COLOR,
       bgColor: "#e6f7ff",
@@ -422,10 +432,10 @@ const RamMohanDarisaAgents: React.FC = () => {
             level={4}
             style={{ margin: 0, color: "#1f2937", fontWeight: 700 }}
           >
-            Ram Mohan Darisa Agents
+            Ram Mohan Darisa Data
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            Manage agent records and comments
+            Manage data records and comments
           </Text>
         </div>
         <Button
@@ -499,14 +509,9 @@ const RamMohanDarisaAgents: React.FC = () => {
         ))}
       </div>
 
-      {/* Main Table Card */}
+     
       <div
-        style={{
-          background: "#ffffff",
-          borderRadius: 14,
-          padding: 16,
-          boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
-        }}
+       
       >
         {/* Tabs & Search */}
         <div
@@ -701,7 +706,7 @@ const RamMohanDarisaAgents: React.FC = () => {
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                paddingLeft: 40,
+                paddingLeft: isMobile ? 8 : 40,
               }}
             >
               <UserOutlined
@@ -727,7 +732,7 @@ const RamMohanDarisaAgents: React.FC = () => {
         open={modalOpen}
         onCancel={closeCommentModal}
         centered
-        width={520}
+        width={isMobile ? "95%" : 520}
         destroyOnClose
         footer={[
           <Button
@@ -778,8 +783,7 @@ const RamMohanDarisaAgents: React.FC = () => {
           }}
           placeholder="Enter comment, e.g. line busy, not reachable, interested..."
           autoSize={{ minRows: 4, maxRows: 6 }}
-          maxLength={MAX_COMMENT_LENGTH}
-          showCount
+         
           status={commentError ? "error" : ""}
           style={{ borderRadius: 8 }}
         />
