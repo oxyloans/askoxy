@@ -17,7 +17,7 @@ export const AdminAnalytics: React.FC = () => {
       alert('Limit must be at least 1');
       return;
     }
-    await fetch('/api/admin/attempts/limit', {
+    await fetch('${BASE_URL}/api/admin/attempts/limit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ maxAttempts })
