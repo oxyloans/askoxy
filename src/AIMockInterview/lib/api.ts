@@ -114,6 +114,13 @@ export const api = {
       credentials: 'include',
     });
     return response.json();
+  },
+
+  async getCandidate(userId: string) {
+    const response = await fetch(`${API_BASE_URL}/api/admin/candidate/${userId}`, {
+      credentials: 'include',
+    });
+    return response.json();
   }
 };
 
