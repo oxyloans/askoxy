@@ -12,9 +12,6 @@ import {
   TrendingUp,
   Wallet,
   MapPin,
-  ShieldCheck,
-  UserCheck,
-  Scale,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/img/image1.png";
@@ -24,7 +21,7 @@ type Lang = "en" | "te";
 
 const platformUrl = "https://oxyloans.com/";
 const platformRedirectPath = "/platform-redirect?target=oxyloans";
-const headerImage = "https://i.ibb.co/gFJpk82T/ipl-header.png";
+const headerImage = "https://i.ibb.co/jZHrNmRc/ipl-header.png";
 
 const content = {
   en: {
@@ -186,6 +183,7 @@ function LanguageToggle({
       >
         English
       </button>
+
       <button
         type="button"
         onClick={() => setLang("te")}
@@ -260,6 +258,7 @@ export default function OxyLoansLandingPage() {
               className="h-10 w-auto cursor-pointer object-contain sm:h-8 md:h-10"
               onClick={() => navigate("/")}
             />
+
             <button type="button" onClick={goToLoginFirst}>
               <img
                 src={logo}
@@ -301,7 +300,9 @@ export default function OxyLoansLandingPage() {
 
               <h1 className="mt-6 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
                 <span>{t.heroTitle1}</span>
-                <span className="mt-2 block text-sky-600">{t.heroTitle2}</span>
+                <span className="mt-2 block text-sky-600">
+                  {t.heroTitle2}
+                </span>
               </h1>
 
               <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg lg:mx-0">
@@ -339,26 +340,31 @@ export default function OxyLoansLandingPage() {
                 "from-emerald-50 via-white to-lime-50",
                 "from-violet-50 via-white to-fuchsia-50",
               ];
+
               const borderColors = [
                 "border-sky-200/60",
                 "border-emerald-200/60",
                 "border-violet-200/60",
               ];
+
               const iconGradients = [
                 "from-sky-500 to-cyan-400",
                 "from-emerald-500 to-green-400",
                 "from-violet-500 to-fuchsia-400",
               ];
+
               const labelStyles = [
                 "bg-sky-100 text-sky-700 border-sky-200",
                 "bg-emerald-100 text-emerald-700 border-emerald-200",
                 "bg-violet-100 text-violet-700 border-violet-200",
               ];
+
               const arrowColors = [
                 "text-sky-600",
                 "text-emerald-600",
                 "text-violet-600",
               ];
+
               const glowColors = [
                 "hover:shadow-[0_24px_60px_rgba(14,165,233,0.18)]",
                 "hover:shadow-[0_24px_60px_rgba(16,185,129,0.18)]",
@@ -423,12 +429,13 @@ export default function OxyLoansLandingPage() {
                 </div>
 
                 <h2 className="mt-4 text-2xl font-extrabold leading-tight text-slate-900 sm:text-3xl lg:text-4xl">
-                  ProxyLend — nearby trust-based lending
+                  CircleLend — nearby trust-based lending
                 </h2>
 
                 <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-                  Lenders can connect with nearby borrowers using location,
-                  references, repayment discipline, and recovery support.
+                  Lenders can connect with nearby borrowers using location
+                  intelligence, trusted references, repayment discipline, and
+                  recovery support.
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-slate-700">
@@ -436,7 +443,7 @@ export default function OxyLoansLandingPage() {
                     Nearby borrowers
                   </span>
                   <span className="rounded-full bg-white/80 px-4 py-2 shadow-sm">
-                    Reference trust
+                    Circle trust network
                   </span>
                   <span className="rounded-full bg-white/80 px-4 py-2 shadow-sm">
                     Recovery support
@@ -446,10 +453,10 @@ export default function OxyLoansLandingPage() {
 
               <button
                 type="button"
-                onClick={() => navigate("/proxylend")}
+                onClick={() => navigate("/circlelend")}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-500 px-7 py-3.5 text-sm font-bold text-white shadow-[0_10px_30px_rgba(139,92,246,0.28)] transition hover:scale-[1.03] sm:w-auto"
               >
-                Explore ProxyLend
+                Explore CircleLend
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -467,6 +474,7 @@ export default function OxyLoansLandingPage() {
               <div className="grid gap-5 md:grid-cols-3">
                 {t.stats.map((item) => {
                   const Icon = item.icon;
+
                   return (
                     <button
                       type="button"
@@ -544,11 +552,14 @@ export default function OxyLoansLandingPage() {
               <div className="mt-10 grid gap-6 md:grid-cols-2">
                 {t.benefits.map((item, index) => {
                   const Icon = item.icon;
+
                   const iconGrads = [
                     "from-emerald-400 to-green-500",
                     "from-fuchsia-500 to-violet-500",
                   ];
+
                   const textColors = ["text-orange-500", "text-sky-700"];
+
                   const glows = [
                     "hover:shadow-[0_18px_50px_rgba(16,185,129,0.18)]",
                     "hover:shadow-[0_18px_50px_rgba(139,92,246,0.18)]",

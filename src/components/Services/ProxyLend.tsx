@@ -21,7 +21,7 @@ const platformRedirectPath = "/platform-redirect?target=oxyloans";
 
 const ProxyLendPage: React.FC = () => {
   const navigate = useNavigate();
-  const heroImage = "https://i.ibb.co/whXKs1Jb/w3.png";
+  const heroImage ="https://i.ibb.co/kspZVDt1/w3.png";
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
@@ -62,14 +62,14 @@ const ProxyLendPage: React.FC = () => {
   const features = [
     {
       icon: MapPin,
-      title: "Radius Lending",
-      text: "Lend to borrowers located within your selected nearby radius.",
+      title: "Circle Radius Lending",
+      text: "Lend to borrowers located within your selected trusted nearby radius.",
       bg: "from-[#f0e7ff] to-white",
     },
     {
       icon: Users,
-      title: "Reference Trust",
-      text: "Borrower limits can grow through references and repayment discipline.",
+      title: "Trusted Circle References",
+      text: "Borrower limits can grow through references, repayment history, and trusted circle signals.",
       bg: "from-[#fff0bd] to-white",
     },
     {
@@ -86,16 +86,16 @@ const ProxyLendPage: React.FC = () => {
       text: "Borrower submits profile, location, repayment details, and references.",
     },
     {
-      title: "References Verified",
-      text: "ProxyLend checks borrower details and trust signals.",
+      title: "Circle Trust Verified",
+      text: "CircleLend checks borrower details, references, and trust signals.",
     },
     {
       title: "Lender Reviews",
-      text: "Nearby lenders review borrower profiles within selected radius.",
+      text: "Nearby lenders review borrower profiles within the selected lending circle.",
     },
     {
       title: "Lending Decision",
-      text: "Lender decides the amount and accepts the direct lending risk.",
+      text: "Lender decides the amount and accepts the direct lending responsibility.",
     },
     {
       title: "Repay or Recover",
@@ -111,6 +111,7 @@ const ProxyLendPage: React.FC = () => {
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -left-28 top-0 h-[360px] w-[360px] rounded-full bg-[#7b4dff]/14 blur-3xl"
         />
+
         <motion.div
           animate={{ scale: [1, 1.1, 1], y: [0, -18, 0] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
@@ -157,21 +158,22 @@ const ProxyLendPage: React.FC = () => {
             >
               <div className="inline-flex items-center gap-2 rounded-full bg-[#efe7ff] px-4 py-2 text-xs font-extrabold text-[#7b4dff] sm:text-sm">
                 <BadgeCheck size={16} />
-                Proximity-Based Lending
+                Circle-Based Lending
               </div>
 
               <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                Proxy<span className="text-[#7b4dff]">Lend</span>
+                Circle<span className="text-[#7b4dff]">Lend</span>
               </h1>
 
               <h2 className="mt-3 max-w-2xl text-2xl font-black leading-snug sm:text-3xl">
-                Lend to nearby borrowers with reference-based trust.
+                Lend to nearby borrowers through trusted circles.
               </h2>
 
               <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
-                ProxyLend helps lenders connect with borrowers inside their
-                selected radius. Borrowers can improve limits through trusted
-                references and repayment discipline.
+                CircleLend helps lenders connect with borrowers within their
+                trusted nearby circles. Borrowers can improve eligibility
+                through repayment discipline, references, and verified trust
+                signals.
               </p>
 
               <button
@@ -194,7 +196,7 @@ const ProxyLendPage: React.FC = () => {
             >
               <motion.img
                 src={heroImage}
-                alt="ProxyLend"
+                alt="CircleLend"
                 animate={{ y: [0, -10, 0] }}
                 transition={{
                   duration: 4,
@@ -213,6 +215,7 @@ const ProxyLendPage: React.FC = () => {
               <h2 className="text-4xl font-black sm:text-5xl">
                 Smart lending essentials
               </h2>
+
               <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-gray-600">
                 Simple features for nearby lending, borrower trust, and recovery
                 support.
@@ -222,6 +225,7 @@ const ProxyLendPage: React.FC = () => {
             <div className="grid gap-6 md:grid-cols-3">
               {features.map((item, index) => {
                 const Icon = item.icon;
+
                 return (
                   <motion.div
                     key={item.title}
@@ -233,13 +237,16 @@ const ProxyLendPage: React.FC = () => {
                     className={`relative overflow-hidden rounded-[34px] bg-gradient-to-br ${item.bg} p-8 shadow-[0_22px_60px_rgba(123,77,255,0.10)]`}
                   >
                     <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/50" />
+
                     <div className="relative z-10">
                       <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-[#7b4dff] shadow-lg">
                         <Icon size={28} />
                       </div>
+
                       <h3 className="mt-8 text-2xl font-black">
                         {item.title}
                       </h3>
+
                       <p className="mt-4 text-sm leading-7 text-gray-700">
                         {item.text}
                       </p>
@@ -255,11 +262,12 @@ const ProxyLendPage: React.FC = () => {
           <div className="mx-auto max-w-7xl">
             <div className="mb-8 text-center">
               <h2 className="text-3xl font-black sm:text-4xl">
-                How ProxyLend works
+                How CircleLend works
               </h2>
+
               <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
-                A simple roadmap from borrower application to repayment or
-                recovery.
+                A simple trusted-circle lending roadmap from borrower
+                application to repayment or recovery.
               </p>
             </div>
 
@@ -276,7 +284,9 @@ const ProxyLendPage: React.FC = () => {
                   <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[#7b4dff] text-sm font-black text-white">
                     {index + 1}
                   </div>
+
                   <h3 className="text-lg font-black">{item.title}</h3>
+
                   <p className="mt-2 text-sm leading-6 text-gray-600">
                     {item.text}
                   </p>
@@ -293,10 +303,12 @@ const ProxyLendPage: React.FC = () => {
                 <h2 className="text-3xl font-black sm:text-4xl">
                   Recovery support when repayment is delayed.
                 </h2>
+
                 <p className="mt-5 text-sm leading-8 text-gray-700 sm:text-base">
-                  If the borrower does not repay, recovery agents can be assigned
-                  based on lender request. Cheque bounce process, legal notices,
-                  and repayment enforcement support can also be initiated.
+                  If the borrower does not repay, recovery agents can be
+                  assigned based on lender request. Cheque bounce process, legal
+                  notices, and repayment enforcement support can also be
+                  initiated.
                 </p>
               </div>
 
@@ -316,12 +328,14 @@ const ProxyLendPage: React.FC = () => {
                   },
                 ].map((item) => {
                   const Icon = item.icon;
+
                   return (
                     <div
                       key={item.text}
                       className="flex items-center gap-4 rounded-2xl bg-white/80 p-4 shadow-sm backdrop-blur-xl"
                     >
                       <Icon className="text-[#7b4dff]" size={24} />
+
                       <p className="text-sm font-semibold text-gray-700">
                         {item.text}
                       </p>
@@ -346,7 +360,7 @@ const ProxyLendPage: React.FC = () => {
                 </h2>
 
                 <p className="mt-3 text-sm leading-7 text-gray-700 sm:text-base">
-                  ProxyLend is a support platform and does not guarantee
+                  CircleLend is a support platform and does not guarantee
                   repayment to lenders. The lending decision, amount, and risk
                   remain fully with the direct lender.
                 </p>

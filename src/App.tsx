@@ -81,6 +81,10 @@ import LoginAdmin from "./AIMockInterview/admin/LoginAdmin";
 import ResumeAIToolsPage from "./components/JPL/ResumeAIToolsPage";
 import ReferBuddyPage from "./components/JPL/ReferBuddyPage";
 import ProxyLendPage from "./components/Services/ProxyLend";
+import RadhAIPage from "./components/talktoceo/radhai";
+import TalkToCEO from "./components/talktoceo/TalkToCEO";
+import RadhAIVoicePage from "./components/talktoceo/RadhAIVoicePage";
+import RadhAICloneAdminPage from "./components/talktoceo/RadhAICloneAdminPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -673,16 +677,29 @@ const App: React.FC = () => {
                 path="/it-minister-vision"
                 element={<MinisterMeetingPage />}
               />
-              <Route path ="/gccmate" element={<GCCMate />} />
-            <Route path="/employers" element={<EmployerJobSeekerPage />} />
-                      <Route path="/proxylend" element={<ProxyLendPage />} />
-            <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
-<Route path="/mentors" element={<EmployerMentorSection />} />
-<Route path="/refer-buddy" element={<ReferBuddyPage />} />
-<Route path="/job-seekers" element={<RoyalJobSeekersPage />} />
-<Route path="/recruitment-knight-riders" element={<RecruitmentKnightRidersPage />} />
-<Route path="/talent-super-kings" element={<TrainingInstituteGiantsPage />} />
-<Route path="/marketplace-raisers" element={<MarketplaceRaisersPage />} />
+              <Route path="/gccmate" element={<GCCMate />} />
+              <Route path="/employers" element={<EmployerJobSeekerPage />} />
+              <Route path="/radhAI" element={<RadhAIPage />} />
+              <Route path="/radhAI-talk" element={<RadhAIVoicePage />} />
+              <Route path="/ceoclonevoice" element={<RadhAICloneAdminPage />} />
+              <Route path="/talktoceo" element={<TalkToCEO />} />
+              <Route path="/circleLend" element={<ProxyLendPage />} />
+              <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
+              <Route path="/mentors" element={<EmployerMentorSection />} />
+              <Route path="/refer-buddy" element={<ReferBuddyPage />} />
+              <Route path="/job-seekers" element={<RoyalJobSeekersPage />} />
+              <Route
+                path="/recruitment-knight-riders"
+                element={<RecruitmentKnightRidersPage />}
+              />
+              <Route
+                path="/talent-super-kings"
+                element={<TrainingInstituteGiantsPage />}
+              />
+              <Route
+                path="/marketplace-raisers"
+                element={<MarketplaceRaisersPage />}
+              />
               <Route path="/accenturestats" element={<CampaignStats />} />
               <Route path="/accenture/jobs" element={<AccentureJobsPage />} />
               {/* <Route path="/credera/jobs" element={<CrederaJobsPage />} /> */}
