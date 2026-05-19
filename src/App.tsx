@@ -86,6 +86,8 @@ import TalkToCEO from "./components/talktoceo/TalkToCEO";
 import RadhAIVoicePage from "./components/talktoceo/RadhAIVoicePage";
 import RadhAICloneAdminPage from "./components/talktoceo/RadhAICloneAdminPage";
 import SudheerVakkalagadda from "./AskoxyAdmin/SudheerVakkalagadda"; 
+import RadhAIRAndDPage from "./components/talktoceo/RadhAIRAndDPage";
+import RadhAIAdminDashboard from "./components/talktoceo/RadhAIAdminDashboard";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -683,6 +685,13 @@ const App: React.FC = () => {
               <Route path="/radhAI" element={<RadhAIPage />} />
               <Route path="/radhAI-talk" element={<RadhAIVoicePage />} />
               <Route path="/ceoclonevoice" element={<RadhAICloneAdminPage />} />
+
+              <Route
+                path="/radhai-admin/*"
+                element={<RadhAIAdminDashboard />}
+              />
+
+              <Route path="/radhai-RandD" element={<RadhAIRAndDPage />} />
               <Route path="/talktoceo" element={<TalkToCEO />} />
               <Route path="/circleLend" element={<ProxyLendPage />} />
               <Route path="/resume-ai" element={<ResumeAIToolsPage />} />

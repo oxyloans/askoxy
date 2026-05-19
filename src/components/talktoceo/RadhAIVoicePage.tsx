@@ -1,5 +1,3 @@
-// pages/RadhAIVoicePage.tsx
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -301,7 +299,7 @@ If exact company information is not available, say it politely instead of guessi
   };
 
   const getEphemeralToken = async (instructions: string): Promise<string> => {
-    const assistantId = "";
+    const assistantId = ASSISTANT_ID;
     const voicemode = VOICE_MODE.toLowerCase();
 
     const tokenUrl = `${BASE_URL}/student-service/user/voicetoken?assistantId=${encodeURIComponent(
@@ -558,48 +556,32 @@ If exact company information is not available, say it politely instead of guessi
   }, [chat]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#030712] text-white">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(0,245,255,0.22),transparent_30%),radial-gradient(circle_at_85%_18%,rgba(168,85,247,0.24),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(132,255,0,0.14),transparent_34%)]" />
+    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+      <div className="fixed inset-0 bg-[length:52px_52px,52px_52px,auto,auto,auto] bg-[linear-gradient(rgba(92,225,230,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(92,225,230,0.07)_1px,transparent_1px),radial-gradient(circle_at_18%_20%,rgba(44,224,231,0.22),transparent_30%),radial-gradient(circle_at_84%_14%,rgba(176,104,255,0.24),transparent_34%),radial-gradient(circle_at_52%_95%,rgba(174,255,91,0.12),transparent_35%)]" />
 
-      <div className="fixed inset-0 opacity-[0.08]">
-        <div
-          className="h-full w-full"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)",
-            backgroundSize: "54px 54px",
-          }}
-        />
-      </div>
-
-      <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-[#050816]/80 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
+      <header className="fixed left-0 top-0 z-50 w-full border-b border-[#5CE1E6]/15 bg-[#070B18]/92 backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:px-6 lg:px-10">
           <button
             onClick={handleBack}
-            className="group flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-bold text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_10px_28px_rgba(0,0,0,.35)] transition hover:-translate-y-0.5 hover:border-cyan-300/50 hover:text-white"
+            className="flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.06] px-3 py-2 text-xs font-bold text-white transition hover:border-[#5CE1E6]/45 hover:bg-[#5CE1E6]/10 sm:gap-2 sm:px-4 sm:text-sm"
           >
-            <ArrowLeft
-              size={16}
-              className="transition group-hover:-translate-x-1"
-            />
+            <ArrowLeft size={16} />
             Back
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-200 via-lime-200 to-cyan-400 text-black shadow-[0_0_28px_rgba(0,245,255,.45),inset_0_2px_0_rgba(255,255,255,.7)]">
-              <Bot size={24} />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#B8FF5E] via-[#78F0D8] to-[#5CE1E6] text-[#051018] shadow-[0_0_30px_rgba(212,175,55,.28)] sm:h-11 sm:w-11">
+              <Bot size={22} />
             </div>
             <div>
-              <h1 className="text-base font-black leading-none sm:text-lg">
-                radhAI
-              </h1>
-              <p className="text-[11px] text-slate-400 sm:text-xs">
-                {selectedLanguage.nativeName} Voice Session
+              <h1 className="text-sm font-black sm:text-lg">radhAI</h1>
+              <p className="text-[10px] text-[#B8C2D8] sm:text-xs">
+                {selectedLanguage.nativeName} Voice
               </p>
             </div>
           </div>
 
-          <div className="hidden rounded-full border border-lime-300/20 bg-lime-300/10 px-3 py-1.5 text-xs font-black text-lime-200 sm:block">
+          <div className="rounded-full bg-gradient-to-r from-[#B8FF5E] to-[#5CE1E6] px-3 py-2 text-[10px] font-black text-[#051018] shadow-[0_0_24px_rgba(92,225,230,.22)] sm:px-4 sm:text-xs">
             {isConnecting
               ? "Connecting"
               : isAssistantSpeaking
@@ -611,41 +593,33 @@ If exact company information is not available, say it politely instead of guessi
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto grid min-h-screen max-w-7xl gap-5 px-4 pb-6 pt-24 sm:px-6 lg:grid-cols-[42%_58%] lg:gap-6 lg:px-10">
+      <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-3 pb-4 pt-24 sm:px-6 sm:pt-24 lg:min-h-screen lg:grid-cols-[37%_63%] lg:px-10">
         <motion.section
-          initial={{ opacity: 0, y: 28, rotateX: 8 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-          className="relative flex flex-col justify-center overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-5 shadow-[0_30px_90px_rgba(0,0,0,.45),inset_0_1px_0_rgba(255,255,255,.18)] backdrop-blur-2xl"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="hidden rounded-[32px] border border-[#5CE1E6]/15 bg-white/[0.075] p-5 shadow-[0_30px_90px_rgba(0,0,0,.45)] backdrop-blur-2xl lg:block"
         >
-          <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-300/20 blur-3xl" />
-          <div className="absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-lime-300/10 blur-3xl" />
-
-          <div className="relative mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-200 shadow-[inset_0_1px_0_rgba(255,255,255,.25)]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#5CE1E6]/30 bg-[#5CE1E6]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#5CE1E6]">
             <Sparkles size={14} />
             CEO AI Clone
           </div>
 
-          <div className="relative flex items-center justify-center rounded-[28px] border border-white/10 bg-black/20 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.12)]">
+          <div className="relative overflow-hidden rounded-[28px] border border-[#5CE1E6]/15 bg-[#121827]/55 p-3">
             <motion.img
               src={RADHAI_IMAGE}
               alt="radhAI"
               animate={{
-                scale: isAssistantSpeaking ? 1.05 : 1,
-                y: isSessionActive ? [0, -6, 0] : 0,
+                scale: isAssistantSpeaking ? 1.04 : 1,
+                y: isSessionActive ? [0, -5, 0] : 0,
               }}
               transition={{
                 scale: { duration: 0.35 },
                 y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
               }}
-              className={`max-h-[460px] w-full object-contain transition duration-500 ${
-                isAssistantSpeaking
-                  ? "drop-shadow-[0_0_55px_rgba(132,255,0,0.48)]"
-                  : "drop-shadow-[0_0_40px_rgba(0,245,255,0.28)]"
-              }`}
+              className="mx-auto max-h-[500px] w-full object-contain"
             />
 
-            <div className="absolute left-4 top-4 rounded-full border border-lime-300/30 bg-black/60 px-4 py-2 text-xs font-black text-lime-200 shadow-[0_0_24px_rgba(132,255,0,.2)] backdrop-blur-xl">
+            <div className="absolute left-4 top-4 rounded-full border border-[#5CE1E6]/30 bg-[#050816]/80 px-4 py-2 text-xs font-black text-[#E9FBFF] backdrop-blur-xl">
               {isConnecting
                 ? "● Connecting"
                 : isAssistantSpeaking
@@ -656,92 +630,108 @@ If exact company information is not available, say it politely instead of guessi
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
             {services.map((item) => {
               const Icon = item.icon;
               return (
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.04 }}
+                <div
                   key={item.title}
-                  className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-bold text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,.18),0_12px_30px_rgba(0,0,0,.25)]"
+                  className="flex items-center justify-center gap-2 rounded-full border border-[#5CE1E6]/15 bg-white/[0.06] px-4 py-2 text-sm font-bold text-[#F7FAFF]"
                 >
-                  <Icon size={16} className="text-cyan-300" />
+                  <Icon size={15} className="text-[#5CE1E6]" />
                   {item.title}
-                </motion.div>
+                </div>
               );
             })}
           </div>
         </motion.section>
 
         <motion.section
-          initial={{ opacity: 0, y: 28, rotateX: 8 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          transition={{ duration: 0.7, delay: 0.12, ease: "easeOut" }}
-          className="flex min-h-[74vh] flex-col overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] shadow-[0_30px_90px_rgba(0,0,0,.45),inset_0_1px_0_rgba(255,255,255,.18)] backdrop-blur-2xl"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex min-h-[calc(100vh-104px)] flex-col overflow-hidden rounded-[22px] border border-[#5CE1E6]/15 bg-[#121827]/72 shadow-[0_24px_70px_rgba(0,0,0,.35)] backdrop-blur-2xl sm:rounded-[28px] lg:min-h-[78vh]"
         >
-          <div className="border-b border-white/10 px-4 py-4 sm:px-5">
+          <div className="border-b border-white/10 p-4 sm:p-5">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <h3 className="text-lg font-black">
-                  {selectedLanguage.code === "te" && "తెలుగు సంభాషణ"}
-                  {selectedLanguage.code === "en" && "English Conversation"}
-                  {selectedLanguage.code === "hi" && "हिन्दी बातचीत"}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#5CE1E6]/10 text-[#5CE1E6]">
+                    <Languages size={17} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black sm:text-lg">
+                      {selectedLanguage.code === "te" && "తెలుగు సంభాషణ"}
+                      {selectedLanguage.code === "en" && "English Voice"}
+                      {selectedLanguage.code === "hi" && "हिन्दी बातचीत"}
+                    </h3>
+                    <p className="mt-1 text-xs text-[#B8C2D8]">
+                      Choose your language and start speaking.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {(Object.keys(LANGUAGES_DATA) as LanguageCode[]).map((code) => {
-                  const lang = LANGUAGES_DATA[code];
-                  const active = code === languageCode;
-
-                  return (
-                    <button
-                      key={code}
-                      disabled={active || isConnecting}
-                      onClick={() => handleLanguageChange(code)}
-                      className={`rounded-full border px-3 py-2 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,.18)] transition hover:-translate-y-0.5 ${
-                        active
-                          ? "border-lime-300/70 bg-gradient-to-r from-lime-200 to-cyan-200 text-black shadow-[0_0_24px_rgba(132,255,0,.24)]"
-                          : "border-white/15 bg-white/[0.08] text-slate-200 hover:border-cyan-300/50"
-                      } disabled:cursor-not-allowed`}
-                    >
-                      {lang.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="border-b border-white/10 px-4 py-4 sm:px-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
               <motion.button
-                type="button"
-                whileTap={{ scale: 0.96 }}
-                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -2 }}
                 onClick={isSessionActive ? stopSession : handleStartSession}
                 disabled={isConnecting}
-                className={`group relative w-full overflow-hidden rounded-2xl px-6 py-4 text-sm font-black transition-all duration-300 disabled:opacity-50 sm:w-auto sm:min-w-[170px] ${
+                className={`w-full rounded-xl px-5 py-3 text-sm font-black shadow-lg transition disabled:opacity-50 sm:w-auto ${
                   isSessionActive
-                    ? "border border-red-300/40 bg-gradient-to-br from-red-500/25 via-red-500/15 to-orange-400/20 text-red-100 shadow-[0_18px_40px_rgba(239,68,68,.22),inset_0_2px_0_rgba(255,255,255,.18)]"
-                    : "border border-cyan-200/40 bg-gradient-to-br from-lime-200 via-cyan-200 to-cyan-400 text-black shadow-[0_18px_45px_rgba(0,245,255,.28),inset_0_2px_0_rgba(255,255,255,.75)]"
+                    ? "border border-red-300/40 bg-red-500/15 text-red-100"
+                    : "bg-gradient-to-r from-[#B8FF5E] via-[#78F0D8] to-[#5CE1E6] text-[#051018] hover:brightness-110"
                 }`}
               >
-                <span className="absolute inset-x-0 top-0 h-1/2 bg-white/25 opacity-60" />
-                <span className="relative flex items-center justify-center gap-2">
-                  {isSessionActive ? (
-                    <>
-                      <X size={18} />
-                      Stop Session
-                    </>
-                  ) : (
-                    <>
-                      <Play size={18} />
-                      {isConnecting ? "Connecting..." : "Start Session"}
-                    </>
-                  )}
+                <span className="flex items-center justify-center gap-2">
+                  {isSessionActive ? <X size={18} /> : <Play size={18} />}
+                  {isSessionActive
+                    ? "Stop Voice"
+                    : isConnecting
+                      ? "Connecting..."
+                      : "Start Voice"}
                 </span>
               </motion.button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {(Object.keys(LANGUAGES_DATA) as LanguageCode[]).map((code) => {
+                const lang = LANGUAGES_DATA[code];
+                const active = code === languageCode;
+
+                return (
+                  <button
+                    key={code}
+                    disabled={active || isConnecting}
+                    onClick={() => handleLanguageChange(code)}
+                    className={`rounded-xl border px-2 py-2.5 text-center text-[11px] font-black transition sm:px-3 sm:text-xs ${
+                      active
+                        ? "border-[#B8FF5E] bg-gradient-to-r from-[#FFF6D8] to-[#5CE1E6] text-[#051018]"
+                        : "border-[#5CE1E6]/15 bg-white/[0.07] text-[#F7FAFF] hover:border-[#B8FF5E]/50"
+                    }`}
+                  >
+                    <span className="block">{lang.nativeName}</span>
+                    <span className="mt-1 block text-[10px] opacity-75">
+                      {lang.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+              {services.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.title}
+                    className="flex shrink-0 items-center justify-center gap-1 rounded-full border border-[#5CE1E6]/15 bg-white/[0.07] px-3 py-2 text-[10px] font-bold text-[#F7FAFF]"
+                  >
+                    <Icon size={13} className="text-[#5CE1E6]" />
+                    {item.title}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -752,21 +742,19 @@ If exact company information is not available, say it politely instead of guessi
             {isConnecting ? (
               <div className="flex h-full items-center justify-center text-center">
                 <div>
-                  <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-cyan-300/20 border-t-cyan-300" />
-                  <p className="font-bold text-cyan-300">
+                  <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-white/12 border-t-[#5CE1E6]" />
+                  <p className="font-bold text-[#5CE1E6]">
                     Connecting radhAI...
                   </p>
                 </div>
               </div>
             ) : chat.length === 0 ? (
               <div className="flex h-full items-center justify-center text-center">
-                <div className="rounded-[28px] border border-white/10 bg-white/[0.06] px-6 py-8 shadow-[inset_0_1px_0_rgba(255,255,255,.16)]">
-                  <Bot className="mx-auto mb-3 text-cyan-300" size={34} />
-                  <p className="font-bold text-slate-200">
-                    Click Start Session
-                  </p>
-                  <p className="mt-1 text-sm text-slate-400">
-                    Activate radhAI voice conversation.
+                <div className="w-full max-w-sm rounded-[22px] border border-[#5CE1E6]/15 bg-white/[0.07] px-5 py-7">
+                  <Bot className="mx-auto mb-3 text-[#5CE1E6]" size={36} />
+                  <p className="font-bold text-[#F7FAFF]">Tap Start Voice</p>
+                  <p className="mt-1 text-sm text-[#B8C2D8]">
+                    Ask your question by voice or type below.
                   </p>
                 </div>
               </div>
@@ -774,15 +762,17 @@ If exact company information is not available, say it politely instead of guessi
               chat.map((msg, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
                   <div
-                    className={`max-w-[86%] rounded-3xl px-5 py-4 text-sm leading-7 shadow-xl backdrop-blur-xl sm:max-w-[78%] ${
+                    className={`max-w-[88%] rounded-3xl px-4 py-3 text-sm leading-7 shadow-xl sm:max-w-[78%] ${
                       msg.role === "user"
-                        ? "rounded-br-md border border-cyan-200/25 bg-gradient-to-br from-cyan-500 to-blue-700"
-                        : "rounded-bl-md border border-fuchsia-200/25 bg-gradient-to-br from-violet-600 to-fuchsia-700"
+                        ? "rounded-br-md bg-gradient-to-br from-[#B86BFF] via-[#5CE1E6] to-[#101A32] text-white"
+                        : "rounded-bl-md bg-gradient-to-br from-[#B8FF5E] via-[#78F0D8] to-[#5CE1E6] text-[#051018]"
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -795,8 +785,8 @@ If exact company information is not available, say it politely instead of guessi
             )}
           </div>
 
-          <div className="border-t border-white/10 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="border-t border-[#5CE1E6]/15 p-3 sm:p-4">
+            <div className="flex gap-2">
               <input
                 value={input}
                 disabled={isConnecting || !isSessionActive}
@@ -805,18 +795,18 @@ If exact company information is not available, say it politely instead of guessi
                 placeholder={
                   isSessionActive
                     ? "Type your message..."
-                    : "Start voice session first..."
+                    : "Tap Start Voice first..."
                 }
-                className="flex-1 rounded-2xl border border-white/15 bg-black/35 px-5 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,.12)] outline-none placeholder:text-slate-500 focus:border-cyan-300/60 disabled:opacity-50"
+                className="min-w-0 flex-1 rounded-xl border border-[#5CE1E6]/15 bg-[#050816]/60 px-4 py-3 text-sm text-white outline-none placeholder:text-[#8A94AA] focus:border-[#B8FF5E]/70 disabled:opacity-50"
               />
 
               <button
                 onClick={handleSend}
                 disabled={isConnecting || !isSessionActive}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-cyan-200/40 bg-gradient-to-br from-lime-200 via-cyan-200 to-cyan-400 px-5 py-3 font-black text-black shadow-[0_14px_34px_rgba(0,245,255,.22),inset_0_2px_0_rgba(255,255,255,.7)] transition hover:-translate-y-0.5 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#B8FF5E] via-[#78F0D8] to-[#5CE1E6] px-4 py-3 font-black text-[#051018] transition hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-50 sm:px-5"
               >
                 <Send size={16} />
-                Send
+                <span className="hidden sm:inline">Send</span>
               </button>
             </div>
           </div>

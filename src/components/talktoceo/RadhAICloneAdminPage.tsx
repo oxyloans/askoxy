@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
 import {
@@ -10,7 +10,6 @@ import {
   FileText,
   Save,
   X,
-  LogOut,
   Eye,
   EyeOff,
   CheckCircle,
@@ -19,7 +18,6 @@ import {
   Sparkles,
   RotateCcw,
   Edit3,
-  Bot,
   Hash,
   Megaphone,
   Layers,
@@ -89,7 +87,7 @@ const toast = (
     showConfirmButton: false,
     timer: 2600,
     timerProgressBar: true,
-    background: "#07111f",
+    background: "#070A16",
     color: "#ffffff",
   });
 };
@@ -117,6 +115,8 @@ export default function RadhAICloneAdminPage() {
   const recognitionRef = useRef<any>(null);
   const shouldRestartRef = useRef(false);
 
+  const generatedOutputRef = useRef<HTMLDivElement | null>(null);
+
   const [isCompanyUploading, setIsCompanyUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
@@ -138,6 +138,22 @@ export default function RadhAICloneAdminPage() {
     whileTap: { scale: 0.97 },
   };
 
+  useEffect(() => {
+    if (!isSubmitting && !generatedContent) return;
+
+    const isMobile = window.innerWidth < 1024;
+    if (!isMobile) return;
+
+    const timer = window.setTimeout(() => {
+      generatedOutputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [isSubmitting, generatedContent]);
+
   const displayText = interimVoiceText
     ? `${rawInstruction}${rawInstruction ? " " : ""}${interimVoiceText}`
     : rawInstruction;
@@ -155,9 +171,7 @@ export default function RadhAICloneAdminPage() {
 
     try {
       const parsed = JSON.parse(generatedContent);
-      if (parsed && typeof parsed === "object") {
-        return parsed;
-      }
+      if (parsed && typeof parsed === "object") return parsed;
       return null;
     } catch {
       return null;
@@ -177,6 +191,21 @@ export default function RadhAICloneAdminPage() {
       toast("error", "Please allow microphone permission");
       return false;
     }
+  };
+
+  const stopRecording = (showToast = true) => {
+    try {
+      shouldRestartRef.current = false;
+      recognitionRef.current?.stop();
+    } catch (error) {
+      console.error(error);
+    }
+
+    recognitionRef.current = null;
+    setIsRecording(false);
+    setInterimVoiceText("");
+
+    if (showToast) toast("success", "Voice stopped");
   };
 
   const startRecording = async () => {
@@ -263,21 +292,6 @@ export default function RadhAICloneAdminPage() {
     recognition.start();
   };
 
-  const stopRecording = (showToast = true) => {
-    try {
-      shouldRestartRef.current = false;
-      recognitionRef.current?.stop();
-    } catch (error) {
-      console.error(error);
-    }
-
-    recognitionRef.current = null;
-    setIsRecording(false);
-    setInterimVoiceText("");
-
-    if (showToast) toast("success", "Voice stopped");
-  };
-
   const handleLogin = () => {
     if (username === STATIC_USERNAME && password === STATIC_PASSWORD) {
       sessionStorage.setItem("radhAIAdminLogin", "true");
@@ -302,8 +316,8 @@ export default function RadhAICloneAdminPage() {
   const addCompanyFiles = (files: FileList | null) => {
     if (!files?.length) return;
     setCompanyFileAttempted(true);
-    const selected = Array.from(files);
 
+    const selected = Array.from(files);
     setCompanyFiles((prev) => {
       const existing = new Set(prev.map((f) => `${f.name}-${f.size}`));
       const unique = selected.filter(
@@ -316,8 +330,8 @@ export default function RadhAICloneAdminPage() {
   const addAttachments = (files: FileList | null) => {
     if (!files?.length) return;
     setSubmitContentAttempted(true);
-    const selected = Array.from(files);
 
+    const selected = Array.from(files);
     setAttachments((prev) => {
       const existing = new Set(prev.map((f) => `${f.name}-${f.size}`));
       const unique = selected.filter(
@@ -417,19 +431,12 @@ export default function RadhAICloneAdminPage() {
         formData.append("attachment", file);
       });
 
-      console.log("Submit API Payload:");
-      formData.forEach((value, key) => {
-        console.log(key, value);
-      });
-
       const res = await fetch(CONTENT_SUBMIT_API, {
         method: "POST",
         body: formData,
       });
 
       const data: SubmitResponse = await res.json();
-
-      console.log("Submit API Response:", data);
 
       if (!res.ok || data.success === false) {
         toast("error", data.message || "Something went wrong");
@@ -474,7 +481,7 @@ export default function RadhAICloneAdminPage() {
       showCancelButton: true,
       confirmButtonText: approved ? "Approve" : "Reject",
       cancelButtonText: "Cancel",
-      background: "#07111f",
+      background: "#070A16",
       color: "#ffffff",
       confirmButtonColor: approved ? "#22c55e" : "#ef4444",
       cancelButtonColor: "#64748b",
@@ -491,8 +498,6 @@ export default function RadhAICloneAdminPage() {
         feedback: approved ? "Approved" : "Rejected",
       };
 
-      console.log("Approve API Payload:", payload);
-
       const res = await fetch(CONTENT_APPROVE_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -505,8 +510,6 @@ export default function RadhAICloneAdminPage() {
       } catch {
         data = null;
       }
-
-      console.log("Approve API Response:", data);
 
       if (!res.ok || data?.success === false) {
         throw new Error(data?.message || "Action failed");
@@ -531,10 +534,14 @@ export default function RadhAICloneAdminPage() {
   };
 
   const handleSaveEdits = () => {
-    if (!parsedEdits) return;
-    const serialized = JSON.stringify(parsedEdits);
-    setGeneratedContent(serialized);
-    setEditedContent(serialized);
+    if (parsedEdits) {
+      const serialized = JSON.stringify(parsedEdits);
+      setGeneratedContent(serialized);
+      setEditedContent(serialized);
+    } else {
+      setGeneratedContent(editedContent);
+    }
+
     setIsEditing(false);
     toast("success", "Changes saved");
   };
@@ -562,49 +569,50 @@ export default function RadhAICloneAdminPage() {
 
   if (!isLoggedIn) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#030712] px-4 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,245,255,0.22),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(132,255,0,0.13),transparent_38%)]" />
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#070A16] px-4 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(46,229,255,0.14),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(143,116,255,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(174,244,91,0.10),transparent_38%)]" />
+        <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(to_right,#5EDDF2_1px,transparent_1px),linear-gradient(to_bottom,#5EDDF2_1px,transparent_1px)] bg-[size:44px_44px]" />
 
         <motion.div
           initial={{ opacity: 0, y: 24, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="relative w-full max-w-[410px] rounded-[30px] border border-white/15 bg-white/[0.07] p-5 shadow-[0_28px_80px_rgba(0,0,0,.55)] backdrop-blur-2xl"
+          className="relative w-full max-w-[410px] rounded-[30px] border border-[#3A465B]/70 bg-[#1C2433]/80 p-5 shadow-[0_30px_90px_rgba(0,0,0,.52)] backdrop-blur-2xl"
         >
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-200 via-lime-200 to-cyan-400 text-black">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] text-black">
               <Lock size={24} />
             </div>
             <h1 className="text-xl font-black">radhAI Admin</h1>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-[#9AA7BC]">
               Secure content training and approval panel
             </p>
           </div>
 
           <div className="space-y-3">
             <div className="relative">
-              <User className="absolute left-4 top-3 text-cyan-200" size={17} />
+              <User className="absolute left-4 top-3 text-[#7DEBFF]" size={17} />
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Username"
-                className="h-11 w-full rounded-xl border border-white/15 bg-white/[0.08] pl-11 pr-4 text-sm text-white outline-none placeholder:text-slate-500"
+                className="h-11 w-full rounded-xl border border-[#3A465B]/70 bg-[#212B3B]/80 pl-11 pr-4 text-sm text-white outline-none placeholder:text-[#78859A]"
               />
             </div>
 
             <div className="relative">
-              <Lock className="absolute left-4 top-3 text-cyan-200" size={17} />
+              <Lock className="absolute left-4 top-3 text-[#7DEBFF]" size={17} />
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                className="h-11 w-full rounded-xl border border-white/15 bg-white/[0.08] pl-11 pr-11 text-sm text-white outline-none placeholder:text-slate-500"
+                className="h-11 w-full rounded-xl border border-[#3A465B]/70 bg-[#212B3B]/80 pl-11 pr-11 text-sm text-white outline-none placeholder:text-[#78859A]"
               />
 
               <button
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-4 top-3 text-slate-300"
+                className="absolute right-4 top-3 text-[#C4CEDD]"
                 type="button"
               >
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -620,7 +628,7 @@ export default function RadhAICloneAdminPage() {
             <motion.button
               {...buttonMotion}
               onClick={handleLogin}
-              className="h-11 w-full rounded-xl bg-gradient-to-br from-lime-200 via-cyan-200 to-cyan-400 text-sm font-black text-black shadow-[0_12px_32px_rgba(34,211,238,0.22)]"
+              className="h-11 w-full rounded-xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] text-sm font-black text-black shadow-[0_16px_40px_rgba(94,221,242,0.22)]"
             >
               Login
             </motion.button>
@@ -631,46 +639,21 @@ export default function RadhAICloneAdminPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#030712] text-white">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(0,245,255,0.22),transparent_30%),radial-gradient(circle_at_85%_18%,rgba(168,85,247,0.24),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(132,255,0,0.14),transparent_34%)]" />
+    <div className="relative min-h-screen overflow-x-hidden bg-[#070A16] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(46,229,255,0.12),transparent_30%),radial-gradient(circle_at_85%_18%,rgba(143,116,255,0.13),transparent_32%),radial-gradient(circle_at_50%_95%,rgba(174,244,91,0.08),transparent_34%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.06] bg-[linear-gradient(to_right,#5EDDF2_1px,transparent_1px),linear-gradient(to_bottom,#5EDDF2_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-      <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-[#050816]/90 backdrop-blur-2xl">
-        <div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-200 via-lime-200 to-cyan-400 text-black shadow-[0_10px_30px_rgba(34,211,238,0.25)]">
-              <Bot size={21} />
-            </div>
-
-            <div className="min-w-0">
-              <h1 className="truncate text-sm font-black sm:text-lg">
-                radhAI Clone Admin
-              </h1>
-              <p className="hidden text-[11px] text-slate-400 sm:block">
-                Upload, generate, review and approve AI knowledge content
-              </p>
-            </div>
-          </div>
-
-          <motion.button
-            {...buttonMotion}
-            onClick={handleLogout}
-            className="flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3 py-2 text-xs font-bold"
-          >
-            <LogOut size={14} />
-            <span className="hidden sm:inline">Logout</span>
-          </motion.button>
-        </div>
-      </header>
-
-      <main className="relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-[88px] sm:px-6 lg:px-10">
+      <main className="relative z-10 mx-auto w-full max-w-[1500px] px-3 py-4 sm:px-5 lg:px-6">
         <motion.section
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 rounded-[26px] border border-white/15 bg-white/[0.07] p-4 shadow-[0_25px_70px_rgba(0,0,0,.36)] backdrop-blur-2xl"
+          className="mb-4 rounded-2xl border border-[#3A465B]/70 bg-[#1C2433]/82 p-3 shadow-[0_18px_60px_rgba(0,0,0,.32)] backdrop-blur-2xl sm:p-4"
         >
           <div className="mb-3 flex items-center gap-2">
-            <Upload size={18} className="text-cyan-200" />
-            <h2 className="text-sm font-black sm:text-base">Upload Company Knowledge File</h2>
+            <Upload size={18} className="text-[#7DEBFF]" />
+            <h2 className="text-sm font-black">
+              Upload Company Knowledge File
+            </h2>
           </div>
 
           <PlatformPicker
@@ -683,16 +666,21 @@ export default function RadhAICloneAdminPage() {
           />
 
           <AnimatePresence>
-            {companyFileAttempted && !companyPlatform && companyFiles.length > 0 && (
-              <div className="mb-3">
-                <InlineBanner variant="warning" message="Please select a Platform before uploading files." />
-              </div>
-            )}
+            {companyFileAttempted &&
+              !companyPlatform &&
+              companyFiles.length > 0 && (
+                <div className="mb-3">
+                  <InlineBanner
+                    variant="warning"
+                    message="Please select a Platform before uploading files."
+                  />
+                </div>
+              )}
           </AnimatePresence>
 
-          <div className="grid gap-3 md:grid-cols-[1fr_130px]">
-            <label className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-cyan-300/30 bg-white/[0.08] px-3 text-xs font-semibold">
-              <FileText size={15} className="text-cyan-200" />
+          <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
+            <label className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#5EDDF2]/30 bg-[#212B3B]/80 px-3 text-xs font-semibold">
+              <FileText size={15} className="text-[#7DEBFF]" />
               <span className="truncate">
                 {companyFiles.length
                   ? `${companyFiles.length} file(s) selected`
@@ -741,10 +729,8 @@ export default function RadhAICloneAdminPage() {
         <section className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
           <GlassCard>
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <Sparkles size={18} className="text-cyan-200" />
-              <h2 className="text-sm font-black sm:text-base">
-              Radha's Input
-              </h2>
+              <Sparkles size={18} className="text-[#7DEBFF]" />
+              <h2 className="text-sm font-black sm:text-base">Radha's Input</h2>
             </div>
 
             <PlatformPicker
@@ -760,12 +746,15 @@ export default function RadhAICloneAdminPage() {
             <AnimatePresence>
               {submitContentAttempted && !submitPlatform && hasInputContent && (
                 <div className="mb-3">
-                  <InlineBanner variant="warning" message="Please select a Platform before submitting content." />
+                  <InlineBanner
+                    variant="warning"
+                    message="Please select a Platform before submitting content."
+                  />
                 </div>
               )}
             </AnimatePresence>
 
-            <div className="rounded-[24px] border border-white/15 bg-black/25 p-3">
+            <div className="rounded-[24px] border border-[#3A465B]/70 bg-[#0B1020]/65 p-3">
               <textarea
                 value={displayText}
                 onChange={(e) => {
@@ -774,11 +763,11 @@ export default function RadhAICloneAdminPage() {
                   if (!submitPlatform) setSubmitContentAttempted(true);
                 }}
                 placeholder="Type content here or use the mic button. You can also attach files. Either text or file is mandatory."
-                className="min-h-[240px] w-full resize-none bg-transparent p-2 text-sm leading-7 text-white outline-none placeholder:text-slate-500 sm:min-h-[350px]"
+                className="min-h-[210px] w-full resize-none bg-transparent p-2 text-[13px] leading-6 text-white outline-none placeholder:text-[#78859A] sm:min-h-[300px] lg:min-h-[330px]"
               />
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
-                <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] px-3 text-xs font-bold">
+              <div className="flex flex-wrap items-center gap-2 border-t border-[#303A4E]/70 pt-3">
+                <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-[#3A465B]/70 bg-[#212B3B]/80 px-3 text-xs font-bold">
                   <Paperclip size={14} />
                   Attach Files
                   <input
@@ -801,7 +790,7 @@ export default function RadhAICloneAdminPage() {
                   className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-bold ${
                     isRecording
                       ? "bg-red-500 text-white"
-                      : "border border-cyan-300/30 bg-cyan-400/10 text-cyan-100"
+                      : "border border-[#5EDDF2]/30 bg-[#5EDDF2]/10 text-[#DDFBFF]"
                   }`}
                 >
                   {isRecording ? <Square size={14} /> : <Mic size={14} />}
@@ -812,7 +801,7 @@ export default function RadhAICloneAdminPage() {
                   {...buttonMotion}
                   type="button"
                   onClick={handleClear}
-                  className="flex h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] px-3 text-xs font-bold"
+                  className="flex h-9 items-center gap-1.5 rounded-full border border-[#3A465B]/70 bg-[#212B3B]/80 px-3 text-xs font-bold"
                 >
                   <RotateCcw size={14} />
                   Clear
@@ -823,7 +812,7 @@ export default function RadhAICloneAdminPage() {
                   type="button"
                   onClick={handleSubmitContent}
                   disabled={!canSubmit}
-                  className="ml-auto flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-br from-lime-200 via-cyan-200 to-cyan-400 px-4 text-xs font-black text-black shadow-[0_10px_28px_rgba(34,211,238,0.2)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="ml-auto flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-4 text-xs font-black text-black shadow-[0_14px_32px_rgba(94,221,242,0.20)] disabled:cursor-not-allowed disabled:opacity-40 max-sm:ml-0 max-sm:w-full max-sm:justify-center"
                 >
                   {isSubmitting ? "Generating" : "Submit"}
                   <Send size={14} />
@@ -880,143 +869,151 @@ export default function RadhAICloneAdminPage() {
           </GlassCard>
 
           <GlassCard>
-            <div className="mb-3 flex items-center gap-2">
-              <CheckCircle size={18} className="text-lime-200" />
-              <h2 className="text-sm font-black sm:text-base">
-                Generated Output
-              </h2>
-            </div>
+            <div ref={generatedOutputRef} className="scroll-mt-4">
+              <div className="mb-3 flex items-center gap-2">
+                <CheckCircle size={18} className="text-[#B6F269]" />
+                <h2 className="text-sm font-black sm:text-base">
+                  Generated Output
+                </h2>
+              </div>
 
-            <AnimatePresence mode="wait">
-              {isSubmitting ? (
-                <AIReasoningLoader />
-              ) : !generatedContent ? (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex min-h-[430px] items-center justify-center rounded-[24px] border border-dashed border-white/15 bg-black/20 p-4 text-center text-sm text-slate-400"
-                >
-                  <div>
-                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]">
-                      <Sparkles size={22} className="text-cyan-200" />
-                    </div>
-                    Generated content will appear here after submit.
-                    <p className="mt-1 text-xs text-slate-500">
-                      Approve button will be enabled only after content is
-                      generated.
-                    </p>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4"
-                >
-                  <div className="rounded-[24px] border border-white/15 bg-black/25 p-4">
-                    <div className="mb-3 flex flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="flex items-center gap-2 text-sm font-black text-cyan-200">
-                          <Layers size={15} />
-                          Polished Generated Content
-                        </p>
-                        {contentId && (
-                          <p className="mt-1 break-all text-[11px] text-slate-400">
-                            Content ID: {contentId}
-                          </p>
-                        )}
+              <AnimatePresence mode="wait">
+                {isSubmitting ? (
+                  <AIReasoningLoader />
+                ) : !generatedContent ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex min-h-[300px] items-center justify-center rounded-2xl border border-dashed border-[#3A465B]/70 bg-[#0B1020]/55 p-4 text-center text-[13px] text-[#9AA7BC] sm:min-h-[380px]"
+                  >
+                    <div>
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#303A4E]/70 bg-[#1B2432]/75">
+                        <Sparkles size={22} className="text-[#7DEBFF]" />
                       </div>
-
-                      <div className="flex gap-2">
-                        {!isEditing ? (
-                          <motion.button
-                            {...buttonMotion}
-                            type="button"
-                            onClick={handleStartEdit}
-                            className="flex h-8 w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] px-3 text-xs font-bold"
-                          >
-                            <Edit3 size={13} />
-                            Edit
-                          </motion.button>
-                        ) : (
-                          <>
-                            <motion.button
-                              {...buttonMotion}
-                              type="button"
-                              onClick={handleSaveEdits}
-                              className="flex h-8 w-fit items-center gap-1.5 rounded-full bg-gradient-to-br from-lime-200 via-cyan-200 to-cyan-400 px-3 text-xs font-black text-black"
-                            >
-                              <Save size={13} />
-                              Save
-                            </motion.button>
-                            <motion.button
-                              {...buttonMotion}
-                              type="button"
-                              onClick={handleCancelEdit}
-                              className="flex h-8 w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] px-3 text-xs font-bold"
-                            >
-                              <X size={13} />
-                              Cancel
-                            </motion.button>
-                          </>
-                        )}
-                      </div>
+                      Generated content will appear here after submit.
+                      <p className="mt-1 text-xs text-[#78859A]">
+                        Approve button will be enabled only after content is
+                        generated.
+                      </p>
                     </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="rounded-[24px] border border-[#3A465B]/70 bg-[#0B1020]/65 p-3 sm:p-4">
+                      <div className="mb-3 border-b border-[#303A4E]/70 pb-3">
+                        <div className="grid gap-3">
+                          <div className="min-w-0">
+                            <p className="flex items-center gap-2 text-sm font-black text-[#7DEBFF]">
+                              <Layers size={15} />
+                              <span className="truncate">
+                                Polished Generated Content
+                              </span>
+                            </p>
 
-                    {!isEditing ? (
-                      <div className="max-h-[560px] overflow-y-auto pr-1">
-                        {parsedGeneratedContent ? (
-                          <PolishedGeneratedView
-                            data={parsedGeneratedContent}
-                          />
-                        ) : (
-                          <div className="whitespace-pre-wrap text-sm leading-7 text-slate-200">
-                            {generatedContent}
+                            {contentId && (
+                              <p className="mt-1 break-all text-[11px] text-[#9AA7BC]">
+                                Content ID: {contentId}
+                              </p>
+                            )}
                           </div>
-                        )}
+
+                          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-nowrap">
+                            <motion.button
+                              {...buttonMotion}
+                              type="button"
+                              onClick={() => handleApproveContent(true)}
+                              disabled={!canApprove}
+                              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-2 text-[11px] font-black text-black shadow-[0_12px_30px_rgba(34,211,238,0.2)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-xs"
+                            >
+                              <CheckCircle size={14} />
+                              <span className="truncate">
+                                {isApproving ? "Approving..." : "Approve"}
+                              </span>
+                            </motion.button>
+
+                            <motion.button
+                              {...buttonMotion}
+                              type="button"
+                              onClick={() => handleApproveContent(false)}
+                              disabled={!canApprove}
+                              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-red-300/30 bg-red-500/10 px-2 text-[11px] font-bold text-red-200 disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-xs"
+                            >
+                              <X size={14} />
+                              <span className="truncate">Reject</span>
+                            </motion.button>
+
+                            {!isEditing ? (
+                              <motion.button
+                                {...buttonMotion}
+                                type="button"
+                                onClick={handleStartEdit}
+                                className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-[#3A465B]/70 bg-[#212B3B]/80 px-2 text-[11px] font-bold sm:px-4 sm:text-xs"
+                              >
+                                <Edit3 size={13} />
+                                <span className="truncate">Edit</span>
+                              </motion.button>
+                            ) : (
+                              <div className="col-span-3 grid grid-cols-2 gap-2 sm:col-span-1 sm:flex">
+                                <motion.button
+                                  {...buttonMotion}
+                                  type="button"
+                                  onClick={handleSaveEdits}
+                                  className="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-3 text-[11px] font-black text-black sm:text-xs"
+                                >
+                                  <Save size={13} />
+                                  Save
+                                </motion.button>
+
+                                <motion.button
+                                  {...buttonMotion}
+                                  type="button"
+                                  onClick={handleCancelEdit}
+                                  className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-[#3A465B]/70 bg-[#212B3B]/80 px-3 text-[11px] font-bold sm:text-xs"
+                                >
+                                  <X size={13} />
+                                  Cancel
+                                </motion.button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    ) : parsedEdits ? (
-                      <ParsedEditView
-                        data={parsedEdits}
-                        onChange={setParsedEdits}
-                      />
-                    ) : (
-                      <textarea
-                        value={editedContent}
-                        onChange={(e) => setEditedContent(e.target.value)}
-                        className="min-h-[430px] w-full resize-none bg-transparent text-sm leading-7 text-white outline-none"
-                      />
-                    )}
-                  </div>
 
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <motion.button
-                      {...buttonMotion}
-                      type="button"
-                      onClick={() => handleApproveContent(true)}
-                      disabled={!canApprove}
-                      className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-lime-200 via-cyan-200 to-cyan-400 text-xs font-black text-black shadow-[0_12px_30px_rgba(34,211,238,0.2)] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <Save size={15} />
-                      {isApproving ? "Approving" : "Approve"}
-                    </motion.button>
-
-                    <motion.button
-                      {...buttonMotion}
-                      type="button"
-                      onClick={() => handleApproveContent(false)}
-                      disabled={!canApprove}
-                      className="flex h-10 items-center justify-center gap-2 rounded-xl border border-red-300/30 bg-red-500/10 px-4 text-xs font-bold text-red-200 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <X size={15} />
-                      Reject
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      {!isEditing ? (
+                        <div className="max-h-[460px] overflow-y-auto pr-1">
+                          {parsedGeneratedContent ? (
+                            <PolishedGeneratedView
+                              data={parsedGeneratedContent}
+                            />
+                          ) : (
+                            <div className="whitespace-pre-wrap text-sm leading-7 text-[#E5EAF2]">
+                              {generatedContent}
+                            </div>
+                          )}
+                        </div>
+                      ) : parsedEdits ? (
+                        <ParsedEditView
+                          data={parsedEdits}
+                          onChange={setParsedEdits}
+                        />
+                      ) : (
+                        <textarea
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                          className="min-h-[320px] w-full resize-none bg-transparent text-[13px] leading-6 text-white outline-none"
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </GlassCard>
         </section>
       </main>
@@ -1036,13 +1033,15 @@ function PlatformPicker({
   return (
     <div className="mb-3">
       {label && (
-        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9AA7BC]">
           {label}
         </p>
       )}
+
       <div className="flex flex-wrap gap-2">
         {PLATFORMS.map((p) => {
           const active = value === p.key;
+
           return (
             <motion.button
               key={p.key}
@@ -1050,21 +1049,12 @@ function PlatformPicker({
               whileHover={{ y: -1, scale: 1.03 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => onChange(active ? "" : p.key)}
-              onDoubleClick={() => active && onChange("")}
-              className={`relative flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition-colors ${
+              className={`relative flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
                 active
-                  ? "bg-gradient-to-r from-cyan-400 to-lime-300 text-black shadow-[0_4px_14px_rgba(34,211,238,0.35)]"
-                  : "border border-white/15 bg-white/[0.06] text-slate-300 hover:border-cyan-300/40 hover:text-white"
+                  ? "bg-gradient-to-r from-[#5EDDF2] to-[#B6F269] text-black shadow-[0_8px_22px_rgba(94,221,242,0.26)]"
+                  : "border border-[#3A465B]/70 bg-[#1B2432]/75 text-[#C4CEDD] hover:border-[#5EDDF2]/40 hover:text-white"
               }`}
             >
-              {active && (
-                <motion.span
-                  layoutId={`platform-active-${label}`}
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400 to-lime-300"
-                  style={{ zIndex: -1 }}
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                />
-              )}
               {p.label}
               {active && <X size={12} className="relative shrink-0" />}
             </motion.button>
@@ -1096,11 +1086,11 @@ const BANNER_VARIANTS = {
   },
   info: {
     icon: Info,
-    bar: "bg-cyan-400",
-    border: "border-cyan-300/25",
-    bg: "bg-cyan-400/8",
-    icon_color: "text-cyan-300",
-    text: "text-cyan-100",
+    bar: "bg-[#5EDDF2]",
+    border: "border-[#5EDDF2]/25",
+    bg: "bg-[#5EDDF2]/8",
+    icon_color: "text-[#5EDDF2]",
+    text: "text-[#DDFBFF]",
     glow: "shadow-[0_0_18px_rgba(34,211,238,0.12)]",
   },
 } as const;
@@ -1121,11 +1111,8 @@ function InlineBanner({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -6, scale: 0.98 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
-      className={`relative flex items-start gap-3 overflow-hidden rounded-2xl border px-4 py-3 backdrop-blur-sm ${
-        v.border
-      } ${v.bg} ${v.glow}`}
+      className={`relative flex items-start gap-3 overflow-hidden rounded-2xl border px-4 py-3 backdrop-blur-sm ${v.border} ${v.bg} ${v.glow}`}
     >
-      {/* left accent bar */}
       <motion.span
         initial={{ scaleY: 0 }}
         animate={{ scaleY: 1 }}
@@ -1133,7 +1120,6 @@ function InlineBanner({
         className={`absolute left-0 top-0 h-full w-[3px] origin-top rounded-r-full ${v.bar}`}
       />
 
-      {/* icon with pulse ring */}
       <span className="relative mt-[1px] shrink-0">
         <motion.span
           animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
@@ -1149,16 +1135,16 @@ function InlineBanner({
 }
 
 const REASONING_STEPS = [
-  { icon: Brain, label: "Parsing your instruction", color: "text-cyan-300" },
+  { icon: Brain, label: "Parsing your instruction", color: "text-[#5EDDF2]" },
   {
     icon: Cpu,
     label: "Retrieving company knowledge",
-    color: "text-purple-300",
+    color: "text-[#B9A7FF]",
   },
   {
     icon: Sparkles,
     label: "Structuring content sections",
-    color: "text-lime-300",
+    color: "text-[#B6F269]",
   },
   { icon: Zap, label: "Polishing final output", color: "text-yellow-300" },
 ];
@@ -1171,14 +1157,13 @@ function AIReasoningLoader() {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.3 }}
-      className="flex min-h-[430px] flex-col items-center justify-center rounded-[24px] border border-cyan-300/20 bg-black/30 p-6 sm:p-10"
+      className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-[#5EDDF2]/20 bg-[#0B1020]/70 p-5 sm:min-h-[380px] sm:p-8"
     >
-      {/* Orbiting rings */}
       <div className="relative mb-8 flex h-24 w-24 items-center justify-center sm:h-28 sm:w-28">
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}
-            className="absolute inset-0 rounded-full border border-cyan-300/30"
+            className="absolute inset-0 rounded-full border border-[#5EDDF2]/30"
             animate={{
               scale: [1, 1.18 + i * 0.12, 1],
               opacity: [0.6, 0.15, 0.6],
@@ -1192,29 +1177,27 @@ function AIReasoningLoader() {
           />
         ))}
 
-        {/* Spinning arc */}
         <motion.span
           className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400"
           animate={{ rotate: 360 }}
           transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
         />
+
         <motion.span
-          className="absolute inset-2 rounded-full border-2 border-transparent border-b-lime-400"
+          className="absolute inset-2 rounded-full border-2 border-transparent border-b-[#B6F269]"
           animate={{ rotate: -360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         />
 
-        {/* Center icon */}
         <motion.div
           animate={{ scale: [1, 1.12, 1] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
           className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/20 to-lime-400/20"
         >
-          <Brain size={22} className="text-cyan-200" />
+          <Brain size={22} className="text-[#7DEBFF]" />
         </motion.div>
       </div>
 
-      {/* Title */}
       <motion.p
         animate={{ opacity: [0.7, 1, 0.7] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -1222,11 +1205,11 @@ function AIReasoningLoader() {
       >
         AI Reasoning
       </motion.p>
-      <p className="mb-8 text-xs text-slate-500">
+
+      <p className="mb-8 text-xs text-[#78859A]">
         Processing your content&hellip;
       </p>
 
-      {/* Step list */}
       <div className="w-full max-w-xs space-y-3 sm:max-w-sm">
         {REASONING_STEPS.map(({ icon: Icon, label, color }, i) => (
           <motion.div
@@ -1234,7 +1217,7 @@ function AIReasoningLoader() {
             initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.45, duration: 0.4 }}
-            className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3"
+            className="flex items-center gap-3 rounded-2xl border border-[#303A4E]/60 bg-[#1A2230]/70 px-4 py-3"
           >
             <motion.span
               animate={{ opacity: [0.5, 1, 0.5] }}
@@ -1249,16 +1232,15 @@ function AIReasoningLoader() {
               <Icon size={15} />
             </motion.span>
 
-            <span className="flex-1 text-xs font-semibold text-slate-300">
+            <span className="flex-1 text-xs font-semibold text-[#C4CEDD]">
               {label}
             </span>
 
-            {/* Animated dots */}
             <span className="flex gap-1">
               {[0, 1, 2].map((d) => (
                 <motion.span
                   key={d}
-                  className="h-1.5 w-1.5 rounded-full bg-cyan-400"
+                  className="h-1.5 w-1.5 rounded-full bg-[#5EDDF2]"
                   animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
                   transition={{
                     duration: 1.2,
@@ -1273,10 +1255,9 @@ function AIReasoningLoader() {
         ))}
       </div>
 
-      {/* Bottom scanning bar */}
-      <div className="mt-8 h-1 w-full max-w-xs overflow-hidden rounded-full bg-white/[0.06] sm:max-w-sm">
+      <div className="mt-8 h-1 w-full max-w-xs overflow-hidden rounded-full bg-[#1B2432]/75 sm:max-w-sm">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-lime-300 to-cyan-400"
+          className="h-full rounded-full bg-gradient-to-r from-[#5EDDF2] via-[#B6F269] to-[#5EDDF2]"
           animate={{ x: ["-100%", "100%"] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -1307,12 +1288,12 @@ function ParsedEditView({
   };
 
   const fieldClass =
-    "w-full resize-none rounded-xl border border-white/10 bg-black/25 p-3 text-sm leading-7 text-white outline-none focus:border-cyan-300/40 placeholder:text-slate-500";
+    "w-full resize-none rounded-xl border border-[#303A4E]/70 bg-[#0B1020]/65 p-3 text-[13px] leading-6 text-white outline-none focus:border-[#5EDDF2]/40 placeholder:text-[#78859A]";
   const labelClass =
-    "mb-1 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400";
+    "mb-1 block text-[11px] font-bold uppercase tracking-[0.18em] text-[#9AA7BC]";
 
   return (
-    <div className="max-h-[560px] space-y-4 overflow-y-auto pr-1">
+    <div className="max-h-[460px] space-y-3 overflow-y-auto pr-1">
       {data.title !== undefined && (
         <div>
           <label className={labelClass}>Title</label>
@@ -1340,22 +1321,25 @@ function ParsedEditView({
       {data.sections && data.sections.length > 0 && (
         <div className="space-y-3">
           <p className={labelClass}>Sections</p>
+
           {data.sections.map((section, index) => (
             <div
               key={index}
-              className="rounded-2xl border border-white/10 bg-black/20 p-3 space-y-2"
+              className="space-y-2 rounded-2xl border border-[#303A4E]/70 bg-[#0B1020]/55 p-3"
             >
               <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-300/15 text-[10px] font-black text-cyan-100">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5EDDF2]/15 text-[10px] font-black text-[#DDFBFF]">
                   {index + 1}
                 </span>
+
                 <input
                   value={section.heading || ""}
                   onChange={(e) => setSection(index, "heading", e.target.value)}
                   placeholder="Heading"
-                  className="flex-1 rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-sm font-bold text-cyan-100 outline-none focus:border-cyan-300/40 placeholder:text-slate-500"
+                  className="flex-1 rounded-lg border border-[#303A4E]/70 bg-[#0B1020]/65 px-3 py-1.5 text-sm font-bold text-[#DDFBFF] outline-none placeholder:text-[#78859A] focus:border-[#5EDDF2]/40"
                 />
               </div>
+
               <textarea
                 rows={3}
                 value={section.body || ""}
@@ -1418,8 +1402,8 @@ function PolishedGeneratedView({ data }: { data: ParsedGeneratedContent }) {
   return (
     <div className="space-y-5">
       {data.title && (
-        <div className="rounded-2xl border border-cyan-300/15 bg-gradient-to-br from-cyan-400/10 via-white/[0.04] to-lime-400/10 p-4">
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200/80">
+        <div className="rounded-2xl border border-[#5EDDF2]/15 bg-gradient-to-br from-cyan-400/10 via-white/[0.04] to-lime-400/10 p-4">
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7DEBFF]/80">
             Title
           </p>
           <h2 className="bg-gradient-to-r from-cyan-200 via-lime-200 to-cyan-300 bg-clip-text text-xl font-black leading-snug text-transparent sm:text-2xl">
@@ -1429,17 +1413,17 @@ function PolishedGeneratedView({ data }: { data: ParsedGeneratedContent }) {
       )}
 
       {data.intro && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+        <div className="rounded-2xl border border-[#303A4E]/70 bg-[#1A2230]/70 p-4">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9AA7BC]">
             Introduction
           </p>
-          <p className="text-sm leading-7 text-slate-200">{data.intro}</p>
+          <p className="text-[13px] leading-6 text-[#E5EAF2]">{data.intro}</p>
         </div>
       )}
 
       {data.sections && data.sections.length > 0 && (
         <div className="space-y-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9AA7BC]">
             Sections
           </p>
 
@@ -1449,22 +1433,22 @@ function PolishedGeneratedView({ data }: { data: ParsedGeneratedContent }) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.04 }}
-              className="rounded-2xl border border-white/10 bg-black/25 p-4 hover:border-cyan-300/30"
+              className="rounded-2xl border border-[#303A4E]/70 bg-[#0B1020]/65 p-4 hover:border-[#5EDDF2]/30"
             >
               <div className="mb-2 flex items-start gap-3">
-                <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-300/15 text-[11px] font-black text-cyan-100">
+                <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#5EDDF2]/15 text-[11px] font-black text-[#DDFBFF]">
                   {index + 1}
                 </div>
 
                 <div>
                   {section.heading && (
-                    <h3 className="text-sm font-black text-cyan-100">
+                    <h3 className="text-sm font-black text-[#DDFBFF]">
                       {section.heading}
                     </h3>
                   )}
 
                   {section.body && (
-                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                    <p className="mt-2 text-[13px] leading-6 text-[#C4CEDD]">
                       {section.body}
                     </p>
                   )}
@@ -1476,23 +1460,23 @@ function PolishedGeneratedView({ data }: { data: ParsedGeneratedContent }) {
       )}
 
       {data.closing && (
-        <div className="rounded-2xl border border-lime-300/15 bg-lime-400/5 p-4">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-lime-200/80">
+        <div className="rounded-2xl border border-[#B6F269]/15 bg-[#B6F269]/5 p-4">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#B6F269]/80">
             Closing
           </p>
-          <p className="text-sm leading-7 text-slate-200">{data.closing}</p>
+          <p className="text-[13px] leading-6 text-[#E5EAF2]">{data.closing}</p>
         </div>
       )}
 
       {data.callToAction && (
-        <div className="rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-cyan-400/10 to-lime-400/10 p-4">
-          <div className="mb-2 flex items-center gap-2 text-cyan-100">
+        <div className="rounded-2xl border border-[#5EDDF2]/20 bg-gradient-to-r from-cyan-400/10 to-lime-400/10 p-4">
+          <div className="mb-2 flex items-center gap-2 text-[#DDFBFF]">
             <Megaphone size={16} />
             <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
               Call To Action
             </p>
           </div>
-          <p className="text-sm font-semibold leading-7 text-cyan-50">
+          <p className="text-[13px] font-semibold leading-6 text-cyan-50">
             {data.callToAction}
           </p>
         </div>
@@ -1500,7 +1484,7 @@ function PolishedGeneratedView({ data }: { data: ParsedGeneratedContent }) {
 
       {hashtags.length > 0 && (
         <div>
-          <div className="mb-2 flex items-center gap-2 text-slate-400">
+          <div className="mb-2 flex items-center gap-2 text-[#9AA7BC]">
             <Hash size={14} />
             <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
               Hashtags
@@ -1511,7 +1495,7 @@ function PolishedGeneratedView({ data }: { data: ParsedGeneratedContent }) {
             {hashtags.map((tag, index) => (
               <span
                 key={`${tag}-${index}`}
-                className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1.5 text-[11px] font-bold text-cyan-100"
+                className="rounded-full border border-[#5EDDF2]/20 bg-[#5EDDF2]/10 px-3 py-1.5 text-[11px] font-bold text-[#DDFBFF]"
               >
                 {tag}
               </span>
@@ -1528,7 +1512,7 @@ function GlassCard({ children }: { children: React.ReactNode }) {
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[28px] border border-white/15 bg-white/[0.07] p-4 shadow-[0_25px_70px_rgba(0,0,0,.36)] backdrop-blur-2xl"
+      className="rounded-2xl border border-[#3A465B]/70 bg-[#1C2433]/82 p-3 shadow-[0_18px_60px_rgba(0,0,0,.32)] backdrop-blur-2xl sm:p-4"
     >
       {children}
     </motion.div>
@@ -1550,7 +1534,7 @@ function ActionButton({
       whileTap={!disabled ? { scale: 0.97 } : undefined}
       onClick={onClick}
       disabled={disabled}
-      className="h-11 rounded-xl bg-gradient-to-br from-cyan-200 via-lime-200 to-cyan-400 px-4 text-xs font-black text-black shadow-[0_10px_28px_rgba(34,211,238,0.2)] disabled:cursor-not-allowed disabled:opacity-40"
+      className="h-11 rounded-xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-4 text-xs font-black text-black shadow-[0_14px_32px_rgba(94,221,242,0.20)] disabled:cursor-not-allowed disabled:opacity-40"
     >
       {label}
     </motion.button>
@@ -1567,8 +1551,8 @@ function FileChip({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex max-w-full items-center gap-2 rounded-full border border-white/15 bg-black/25 px-3 py-2 text-[11px] text-slate-200">
-      <span className="shrink-0 text-cyan-200">{icon}</span>
+    <div className="flex max-w-full items-center gap-2 rounded-full border border-[#3A465B]/70 bg-[#0B1020]/65 px-3 py-2 text-[11px] text-[#E5EAF2]">
+      <span className="shrink-0 text-[#7DEBFF]">{icon}</span>
       <span className="max-w-[180px] truncate sm:max-w-[260px]">{name}</span>
       <button
         type="button"
