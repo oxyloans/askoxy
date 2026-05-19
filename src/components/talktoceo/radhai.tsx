@@ -13,8 +13,6 @@ import {
   TrendingUp,
   Coins,
   Sparkles,
-  ShieldCheck,
-  Zap,
   Linkedin,
   Youtube,
   Instagram,
@@ -131,12 +129,13 @@ const RadhAIPage: React.FC = () => {
 
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
           <motion.img
+            onClick={() => navigate("/radhAI")}
             initial={{ opacity: 0, x: -18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             src={TALKTOCEOLOGO}
             alt="Talk To CEO"
-            className="h-10 w-auto object-contain sm:h-12"
+            className="h-9 w-auto cursor-pointer object-contain sm:h-12"
           />
 
           <motion.button
@@ -145,11 +144,9 @@ const RadhAIPage: React.FC = () => {
             whileTap={{ scale: 0.97 }}
             className="group relative overflow-hidden rounded-full border border-cyan-300/20 bg-gradient-to-r from-cyan-300 via-violet-300 to-lime-300 p-[1px] shadow-[0_0_30px_rgba(0,245,255,0.25)]"
           >
-            <div className="flex items-center gap-2 rounded-full bg-[#050816] px-4 py-2 text-sm font-black text-white sm:px-6 sm:py-3">
+            <div className="flex items-center gap-2 rounded-full bg-[#050816] px-4 py-2 text-xs font-black text-white sm:px-6 sm:py-3 sm:text-sm">
               <Mic size={18} className="text-cyan-300 group-hover:text-lime-300" />
-              <span className="hidden sm:inline">Talk to CEO</span>
-              <span className="sm:hidden">Talk</span>
-              <ArrowRight size={16} className="transition group-hover:translate-x-1" />
+              Talk to CEO
             </div>
           </motion.button>
         </div>
@@ -158,23 +155,19 @@ const RadhAIPage: React.FC = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,245,255,0.22),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(132,255,0,0.13),transparent_38%)]" />
       <div className="absolute inset-0 opacity-[0.07] bg-[linear-gradient(to_right,#00f5ff_1px,transparent_1px),linear-gradient(to_bottom,#00f5ff_1px,transparent_1px)] bg-[size:44px_44px]" />
 
-      <div className="glow-pulse absolute left-6 top-24 h-32 w-32 rounded-full bg-cyan-400/30 blur-3xl" />
-      <div className="glow-pulse absolute bottom-20 right-8 h-44 w-44 rounded-full bg-lime-300/20 blur-3xl" />
-
-      <section className="relative z-10 mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 lg:grid-cols-2 lg:px-10 lg:pt-32">
+      <section className="relative z-10 mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-4 pb-14 pt-28 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-10 lg:pt-32">
         <motion.div
           initial={{ opacity: 0, x: -45 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative order-2 lg:order-1"
+          className="relative order-1"
         >
-          <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-r from-cyan-400/35 via-violet-500/35 to-lime-300/35 blur-2xl glow-pulse" />
+          <div className="absolute -inset-4 rounded-[36px] bg-gradient-to-r from-cyan-400/30 via-violet-500/30 to-lime-300/30 blur-2xl glow-pulse" />
 
-          <div className="relative flex min-h-[380px] items-center justify-center overflow-hidden rounded-[40px] border border-cyan-300/25 bg-white/[0.045] p-4 shadow-[0_0_90px_rgba(0,245,255,0.17)] backdrop-blur-xl sm:min-h-[500px] lg:min-h-[590px]">
+          <div className="relative flex min-h-[320px] items-center justify-center overflow-hidden rounded-[30px] border border-cyan-300/25 bg-white/[0.045] p-4 shadow-[0_0_80px_rgba(0,245,255,0.15)] backdrop-blur-xl sm:min-h-[470px] lg:min-h-[570px]">
             <div className="scan-line pointer-events-none absolute left-0 top-0 h-24 w-full bg-gradient-to-b from-transparent via-cyan-300/20 to-transparent" />
-
-            <div className="rotate-ring absolute h-[280px] w-[280px] rounded-full border border-dashed border-cyan-300/25 sm:h-[390px] sm:w-[390px]" />
-            <div className="absolute h-[210px] w-[210px] rounded-full bg-cyan-300/10 blur-3xl sm:h-[310px] sm:w-[310px]" />
+            <div className="rotate-ring absolute h-[230px] w-[230px] rounded-full border border-dashed border-cyan-300/25 sm:h-[380px] sm:w-[380px]" />
+            <div className="absolute h-[190px] w-[190px] rounded-full bg-cyan-300/10 blur-3xl sm:h-[310px] sm:w-[310px]" />
 
             <motion.img
               src={RADHAI}
@@ -182,12 +175,25 @@ const RadhAIPage: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.9 }}
-              className="float-slow relative z-10 max-h-[340px] w-full object-contain drop-shadow-[0_0_45px_rgba(0,245,255,0.35)] sm:max-h-[460px] lg:max-h-[545px]"
+              className="float-slow relative z-10 max-h-[305px] w-full object-contain drop-shadow-[0_0_45px_rgba(0,245,255,0.35)] sm:max-h-[450px] lg:max-h-[525px]"
             />
 
-            <div className="absolute left-5 top-5 z-20 rounded-full border border-lime-300/30 bg-black/50 px-4 py-2 text-xs font-bold text-lime-300 backdrop-blur-xl">
+            <div className="absolute left-4 top-4 z-20 rounded-full border border-lime-300/30 bg-black/50 px-3 py-2 text-[10px] font-bold text-lime-300 backdrop-blur-xl sm:px-4 sm:text-xs">
               ● Voice with CEO Clone
             </div>
+          </div>
+
+          <div className="mt-6 flex justify-center lg:hidden">
+            <motion.button
+              onClick={handleTalkToCEO}
+              whileHover={{ scale: 1.05, y: -4 }}
+              whileTap={{ scale: 0.97 }}
+              className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-7 py-4 text-sm font-black text-black shadow-[0_0_40px_rgba(132,255,0,0.35)]"
+            >
+              <Mic size={20} />
+              Talk to radhAI
+              <ArrowRight size={18} className="transition group-hover:translate-x-1" />
+            </motion.button>
           </div>
         </motion.div>
 
@@ -195,7 +201,7 @@ const RadhAIPage: React.FC = () => {
           initial={{ opacity: 0, x: 45 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="order-1 text-center lg:order-2 lg:text-left"
+          className="order-2 text-center lg:text-left"
         >
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
             <Sparkles size={16} />
@@ -263,10 +269,7 @@ const RadhAIPage: React.FC = () => {
                   className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br ${item.color} shadow-[inset_0_2px_10px_rgba(255,255,255,0.35),0_10px_25px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:h-12 sm:w-12`}
                 >
                   <span className="absolute inset-0 bg-white/20 opacity-0 transition duration-300 group-hover:opacity-100" />
-                  <Icon
-                    size={20}
-                    className="relative z-10 text-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.4)]"
-                  />
+                  <Icon size={20} className="relative z-10 text-white" />
                 </motion.a>
               );
             })}
@@ -276,7 +279,7 @@ const RadhAIPage: React.FC = () => {
             onClick={handleTalkToCEO}
             whileHover={{ scale: 1.05, y: -4 }}
             whileTap={{ scale: 0.97 }}
-            className="group mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-8 py-4 font-black text-black shadow-[0_0_40px_rgba(132,255,0,0.35)]"
+            className="group mt-8 hidden items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-8 py-4 font-black text-black shadow-[0_0_40px_rgba(132,255,0,0.35)] lg:inline-flex"
           >
             <Mic size={20} />
             Talk to radhAI
@@ -295,7 +298,9 @@ const RadhAIPage: React.FC = () => {
         >
           <h2 className="text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
             One AI Clone for Your{" "}
-            <span className="text-lime-300">Daily Decisions & Opportunities</span>
+            <span className="text-lime-300">
+              Daily Decisions & Opportunities
+            </span>
           </h2>
 
           <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-slate-300 sm:text-lg">
