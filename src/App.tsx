@@ -85,6 +85,7 @@ import RadhAIPage from "./components/talktoceo/radhai";
 import TalkToCEO from "./components/talktoceo/TalkToCEO";
 import RadhAIVoicePage from "./components/talktoceo/RadhAIVoicePage";
 import RadhAICloneAdminPage from "./components/talktoceo/RadhAICloneAdminPage";
+import SudheerVakkalagadda from "./AskoxyAdmin/SudheerVakkalagadda"; 
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -1438,6 +1439,10 @@ const App: React.FC = () => {
                 <Route
                   path="rammohandarisa"
                   element={<RamMohanDarisaAgents />}
+                />
+                 <Route
+                  path="sudheervakkalagadda"
+                  element={<SudheerVakkalagadda />}
                 />
                 <Route
                   path="kukatpallyassignedData"

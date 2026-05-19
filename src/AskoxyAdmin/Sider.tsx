@@ -29,6 +29,8 @@ import {
   FaHandshake,
   FaGift,
   FaTrophy,
+  FaUserTie,
+  FaLaptopCode,
 } from "react-icons/fa";
 import { RiFileUserLine } from "react-icons/ri";
 import {
@@ -190,12 +192,19 @@ const Sidebar: React.FC = () => {
           link: "/admin/userOrdersIntegration",
           roles: ["HELPDESKADMIN"],
         },
+
         {
           title: "Ram Mohan Darisa",
-          icon: <FaRobot className="text-blue-400" />,
+          icon: <FaUserTie className="text-green-500" />,
           link: "/admin/rammohandarisa",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
+        // {
+        //   title: "Sudheer Vakkalagadda",
+        //   icon: <FaLaptopCode className="text-purple-500" />,
+        //   link: "/admin/sudheervakkalagadda",
+        //   roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        // },
         {
           title: "All AskOxy Users",
           icon: <FaRegAddressCard className="text-green-400" />,
@@ -232,18 +241,18 @@ const Sidebar: React.FC = () => {
           link: "/admin/mumbaidata",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
-        {
-          title: "Freelancers Partners",
-          icon: <FaHandshake className="text-orange-400" />,
-          link: "/admin/partners-dashboard",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Freelance Requirements",
-          icon: <RiListUnordered className="text-blue-400" />,
-          link: "/admin/freelance-requirements",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
+        // {
+        //   title: "Freelancers Partners",
+        //   icon: <FaHandshake className="text-orange-400" />,
+        //   link: "/admin/partners-dashboard",
+        //   roles: ["HELPDESKSUPERADMIN"],
+        // },
+        // {
+        //   title: "Freelance Requirements",
+        //   icon: <RiListUnordered className="text-blue-400" />,
+        //   link: "/admin/freelance-requirements",
+        //   roles: ["HELPDESKSUPERADMIN"],
+        // },
         {
           title: "Assigned Talwar Data",
           icon: <RiFileCheckLine className="text-red-500" />,

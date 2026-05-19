@@ -2456,6 +2456,7 @@ const Agentcreation: React.FC = () => {
         "";
 
       message.success("Congratulations! Your agent is published successfully.");
+      setLoading(false);
       const publishedAgentType = (data?.agentType || "").toLowerCase();
       setPublishedAgentType(publishedAgentType);
       if (assistanceId) {
@@ -2477,6 +2478,15 @@ const Agentcreation: React.FC = () => {
 
       try {
         localStorage.setItem("hasAiAgent", "true");
+        // Track published agent names to prevent duplicates
+        const storageKey = `publishedAgents_${userId || "guest"}`;
+        let publishedNames: string[] = [];
+        try { publishedNames = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch {}
+        const normalizedName = (agentName || "").trim().toLowerCase();
+        if (normalizedName && !publishedNames.includes(normalizedName)) {
+          publishedNames.push(normalizedName);
+          localStorage.setItem(storageKey, JSON.stringify(publishedNames));
+        }
       } catch {
         // ignore
       }
@@ -2579,8 +2589,27 @@ const Agentcreation: React.FC = () => {
       return;
     }
 
+    // Duplicate agent name check per user
+    const normalizedName = agentName.trim().toLowerCase();
+    const storageKey = `publishedAgents_${customerId || "guest"}`;
+    let publishedNames: string[] = [];
+    try { publishedNames = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch {}
+    if (publishedNames.includes(normalizedName)) {
+      Modal.error({
+        title: "Duplicate Agent Name",
+        content: (
+          <div>
+            An agent named <b>&#34;{agentName.trim()}&#34;</b> already exists.
+            <br />Please use a different <b>Agent Name</b> to make it unique.
+          </div>
+        ),
+        okText: "Change Name",
+      });
+      return;
+    }
+
     setPublishModalOpen(true);
-  }, [description, instructions]);
+  }, [description, instructions, agentName, customerId]);
 
   const fetchProfilePdfAndUpload = useCallback(
     async (
@@ -2646,14 +2675,11 @@ const Agentcreation: React.FC = () => {
 
     try {
       await publishNow();
-      setLoading(false);
-      setSuccessModalOpen(true);
     } catch (error: any) {
       setErrorMessage(
         error?.message || "Failed to publish agent. Please try again.",
       );
       setErrorModalOpen(true);
-      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -5308,30 +5334,26 @@ const Agentcreation: React.FC = () => {
       {/* ===== Profile Edit (Mandatory Gate) ===== */}
       <Modal
         open={profileModalOpen}
-        onCancel={() => {
-          message.warning("Please complete your profile before continuing.");
-          setProfileModalOpen(true); // keep it open
-        }}
+        onCancel={() => setProfileModalOpen(false)}
         footer={null}
         title="Complete Your Profile"
-       
-       closable={true}
-  closeIcon={
-    <div
-      style={{
-        width: 28,
-        height: 28,
-        borderRadius: "50%",
-        background: "#F3F4F6",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        transition: "0.2s",
-      }}
-    >
-      <X size={16} color="#6B7280" />
-    </div>
-  }
+        closable={true}
+        closeIcon={
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "#F3F4F6",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "0.2s",
+            }}
+          >
+            <X size={16} color="#6B7280" />
+          </div>
+        }
         maskClosable={false}
         keyboard={false}
         destroyOnClose={false}

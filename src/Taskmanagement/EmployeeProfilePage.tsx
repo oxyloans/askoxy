@@ -12,6 +12,7 @@ import {
   Row,
   Select,
   Spin,
+  Tag,
   Typography,
 } from "antd";
 import { EditOutlined, CloseOutlined } from "@ant-design/icons";
@@ -36,10 +37,70 @@ const PLATFORMS = [
 ];
 
 const USAGE = [
-  { value: "high", label: "High" },
-  { value: "moderate", label: "Moderate" },
-  { value: "low", label: "Low" },
-];
+  { value: "high", label: "High", color: "green", field: "aiToolsHigh" },
+  { value: "moderate", label: "Medium", color: "gold", field: "aiToolsModerate" },
+  { value: "low", label: "Low", color: "blue", field: "aiToolsLow" },
+] as const;
+
+type UsageLevel = (typeof USAGE)[number]["value"];
+
+type AiToolsByLevel = Record<UsageLevel, string>;
+
+const buildToolUsageArray = (byLevel: Partial<AiToolsByLevel>) => {
+  const result: Array<{ usageLevel: string; tools: string[] }> = [];
+
+  if (byLevel.high?.trim()) {
+    result.push({
+      usageLevel: "HIGH",
+      tools: byLevel.high.split(",").map((t) => t.trim()).filter(Boolean),
+    });
+  }
+  if (byLevel.moderate?.trim()) {
+    result.push({
+      usageLevel: "MODERATE",
+      tools: byLevel.moderate.split(",").map((t) => t.trim()).filter(Boolean),
+    });
+  }
+  if (byLevel.low?.trim()) {
+    result.push({
+      usageLevel: "LOW",
+      tools: byLevel.low.split(",").map((t) => t.trim()).filter(Boolean),
+    });
+  }
+
+  return result;
+};
+
+const parseToolUsage = (
+  toolUsage?: Array<{ usageLevel: string; tools: string[] }>,
+): AiToolsByLevel => {
+  const empty: AiToolsByLevel = { high: "", moderate: "", low: "" };
+
+  if (!toolUsage || !Array.isArray(toolUsage)) return empty;
+
+  const result = { ...empty };
+
+  toolUsage.forEach((item) => {
+    const level = item.usageLevel?.toUpperCase();
+    const tools = item.tools?.join(", ") || "";
+
+    if (level === "HIGH") result.high = tools;
+    else if (level === "MODERATE") result.moderate = tools;
+    else if (level === "LOW") result.low = tools;
+  });
+
+  return result;
+};
+
+const parseDesignations = (designation?: string): string[] => {
+  const trimmed = (designation || "").trim();
+  if (!trimmed) return [];
+
+  return trimmed
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
 
 const ROLE_OPTIONS = [
   "Frontend Developer",
@@ -154,26 +215,41 @@ const EmployeeProfilePage: React.FC = () => {
       const data = response.data || {};
 
       const projectTypes = splitCommaValues(data.projectType);
+      const aiToolsByLevel = parseToolUsage(data.toolUsage);
+      const designations = parseDesignations(data.designation);
+
+      console.log("API Response toolUsage:", data.toolUsage);
+      console.log("Parsed aiToolsByLevel:", aiToolsByLevel);
+      console.log("Form values being set:", {
+        aiToolsHigh: aiToolsByLevel.high,
+        aiToolsModerate: aiToolsByLevel.moderate,
+        aiToolsLow: aiToolsByLevel.low,
+        designation: designations,
+      });
 
       const hasData =
         !!cleanText(data.skills) ||
-        !!cleanText(data.aiTools) ||
-        !!cleanText(data.designation) ||
-        !!cleanText(data.aiToolsUsage) ||
+        !!aiToolsByLevel.high ||
+        !!aiToolsByLevel.moderate ||
+        !!aiToolsByLevel.low ||
+        designations.length > 0 ||
         projectTypes.length > 0;
 
       setHasProfileData(hasData);
 
-      form.setFieldsValue({
+      const formValues = {
         mobileNumber: digits10(
           sessionStorage.getItem("mobileNumber") || savedMobile,
         ),
         skills: cleanText(data.skills),
-        aiTools: cleanText(data.aiTools),
+        aiToolsHigh: aiToolsByLevel.high,
+        aiToolsModerate: aiToolsByLevel.moderate,
+        aiToolsLow: aiToolsByLevel.low,
         projectType: projectTypes,
-        aiUsageLevel: cleanText(data.aiToolsUsage) || undefined,
-        designation: cleanText(data.designation) || undefined,
-      });
+        designation: designations,
+      };
+
+      form.setFieldsValue(formValues);
 
       setIsEditMode(!hasData);
     } catch (err) {
@@ -205,14 +281,21 @@ const EmployeeProfilePage: React.FC = () => {
       return;
     }
 
-    const vals = form.getFieldsValue();
+    const vals = form.getFieldsValue(true);
 
     const mobile = digits10(vals.mobileNumber || "");
-    const aiTools = cleanText(vals.aiTools);
     const skills = cleanText(vals.skills);
-    const designation = cleanText(vals.designation);
-    const aiUsageLevel = cleanText(vals.aiUsageLevel);
     const projectType = vals.projectType || [];
+    const designations: string[] = vals.designation || [];
+
+    const aiToolsByLevel = {
+      high: cleanText(vals.aiToolsHigh),
+      moderate: cleanText(vals.aiToolsModerate),
+      low: cleanText(vals.aiToolsLow),
+    };
+
+    const toolUsage = buildToolUsageArray(aiToolsByLevel);
+    const designation = designations.join(", ");
 
     if (!mobile || mobile.length !== 10) {
       setMobErr("Please enter a valid 10-digit mobile number.");
@@ -246,12 +329,11 @@ const EmployeeProfilePage: React.FC = () => {
       sessionStorage.setItem("mobileNumber", mobile);
 
       const employeeSkillsPayload = {
-        employeeId: userId,
-        aiTools,
-        aiToolsUsage: aiUsageLevel,
-        projectType: projectType.join(", "),
         designation,
+        employeeId: userId,
+        projectType: projectType.join(", "),
         skills,
+        toolUsage,
       };
 
       await employeeApi.patch(
@@ -296,7 +378,8 @@ const EmployeeProfilePage: React.FC = () => {
 
   const handleCancel = () => {
     setMobErr("");
-    form.setFields([]);
+    setIsEditMode(false);
+    form.resetFields();
     getEmployeeSkills();
 
     Swal.fire({
@@ -312,8 +395,34 @@ const EmployeeProfilePage: React.FC = () => {
   const fieldDisabled =
     saving || pageLoading || (hasProfileData && !isEditMode);
 
+  const aiToolsHigh = Form.useWatch("aiToolsHigh", form) as string | undefined;
+  const aiToolsModerate = Form.useWatch("aiToolsModerate", form) as
+    | string
+    | undefined;
+  const aiToolsLow = Form.useWatch("aiToolsLow", form) as string | undefined;
+  const selectedRoles = Form.useWatch("designation", form) as
+    | string[]
+    | undefined;
+
+  console.log("Current form watch values:", {
+    aiToolsHigh,
+    aiToolsModerate,
+    aiToolsLow,
+    selectedRoles,
+    isEditMode,
+    hasProfileData,
+  });
+
+  const getToolsForLevel = (level: UsageLevel) => {
+    if (level === "high") return aiToolsHigh;
+    if (level === "moderate") return aiToolsModerate;
+    return aiToolsLow;
+  };
+
   const pad = isMobile ? "16px 14px" : "36px 40px";
   const colSpan = { xs: 24, sm: 12, md: 8 };
+  const halfSpan = { xs: 24, sm: 12, md: 12 };
+  const toolsColSpan = { xs: 24, sm: 24, md: 8 };
 
   const dividerStyle = (color: string): React.CSSProperties => ({
     borderColor: color,
@@ -456,30 +565,7 @@ const EmployeeProfilePage: React.FC = () => {
                   </Form.Item>
                 </Col>
 
-                <Col {...colSpan}>
-                  <Form.Item
-                    label={
-                      <Text strong>Employee AI Usage Level (Optional)</Text>
-                    }
-                    name="aiUsageLevel"
-                  >
-                    <Select
-                      size="large"
-                      placeholder="Select employee AI usage level"
-                      disabled={fieldDisabled}
-                      style={{ width: "100%" }}
-                      allowClear
-                    >
-                      {USAGE.map((u) => (
-                        <Select.Option key={u.value} value={u.value}>
-                          {u.label}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-
-                <Col {...colSpan}>
+                <Col {...halfSpan}>
                   <Form.Item
                     label={<Text strong>Employee Working Platforms</Text>}
                     name="projectType"
@@ -516,26 +602,54 @@ const EmployeeProfilePage: React.FC = () => {
 
               <Divider style={dividerStyle(SECONDARY)} />
 
-              <Row gutter={[24, 0]}>
-                <Col {...colSpan}>
-                  <Form.Item
-                    label={
-                      <Text strong>AI Tools Used by Employee (Optional)</Text>
-                    }
-                    name="aiTools"
-                  >
-                    <Input
-                      size="large"
-                      placeholder="Enter AI tools separated by commas"
-                      disabled={fieldDisabled}
-                      onBlur={(e) =>
-                        form.setFieldsValue({
-                          aiTools: cleanText(e.target.value),
-                        })
-                      }
-                      style={{ borderRadius: 8 }}
-                    />
-                  </Form.Item>
+              <Row gutter={[24, 16]}>
+                <Col span={24}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4 }}>
+                      AI Tools Used by Employee (Optional)
+                    </Text>
+                    <Text
+                      type="secondary"
+                      style={{
+                        display: "block",
+                        marginBottom: 12,
+                        fontSize: 13,
+                      }}
+                    >
+                      Enter tools for High, Medium, and Low separately. All
+                      three fields are always shown — fill only what you use,
+                      then save.
+                    </Text>
+
+                    <Row gutter={[16, 16]}>
+                      {USAGE.map((level) => (
+                        <Col key={level.value} {...toolsColSpan}>
+                          <Form.Item
+                            label={
+                              <Tag color={level.color} style={{ margin: 0 }}>
+                                {level.label} usage tools
+                              </Tag>
+                            }
+                            name={level.field}
+                            style={{ marginBottom: 0 }}
+                          >
+                            <Input.TextArea
+                              rows={3}
+                              size="large"
+                              disabled={fieldDisabled}
+                              placeholder={`Tools for ${level.label} usage (comma separated)`}
+                              style={{ borderRadius: 8 }}
+                              onBlur={(e) =>
+                                form.setFieldsValue({
+                                  [level.field]: cleanText(e.target.value),
+                                })
+                              }
+                            />
+                          </Form.Item>
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
                 </Col>
 
                 <Col {...colSpan}>
@@ -557,22 +671,47 @@ const EmployeeProfilePage: React.FC = () => {
                   </Form.Item>
                 </Col>
 
-                <Col {...colSpan}>
+                <Col xs={24} sm={24} md={16}>
                   <Form.Item
-                    label={<Text strong>Employee Role</Text>}
+                    label={<Text strong>Employee Roles</Text>}
                     name="designation"
                     required
                     rules={[
                       {
                         required: true,
-                        message: "Please select employee role.",
+                        message: "Please select at least one employee role.",
                       },
                     ]}
+                    extra={
+                      !isEditMode && (selectedRoles?.length ?? 0) > 0 ? (
+                        <div style={{ marginTop: 8 }}>
+                          {selectedRoles!.map((role) => (
+                            <Tag key={role} color={PRIMARY} style={{ marginBottom: 4, marginRight: 4 }}>
+                              {role}
+                            </Tag>
+                          ))}
+                        </div>
+                      ) : (
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Select one or more roles that match your work.
+                        </Text>
+                      )
+                    }
                   >
                     <Select
+                      mode="multiple"
                       size="large"
-                      placeholder="Select employee role"
+                      placeholder="Search and select employee roles"
                       disabled={fieldDisabled}
+                      allowClear
+                      maxTagCount="responsive"
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        String(option?.children ?? "")
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
                       style={{ width: "100%" }}
                     >
                       {ROLE_OPTIONS.map((role) => (
@@ -584,6 +723,7 @@ const EmployeeProfilePage: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
+
 
               {isEditMode && (
                 <>
