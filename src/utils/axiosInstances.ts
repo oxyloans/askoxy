@@ -246,8 +246,12 @@ export const employeeApi = createInstance({
   on401: "redirect",
   loginRoute: LOGIN_ROUTES.employee,
   clearTokens: () => {
+    // Save any in-progress plan text before clearing tokens
+    const planDraft = sessionStorage.getItem("pod_draft");
     removeEmployeeAccessToken();
     removeEmployeeRefreshToken();
+    // Restore draft key after token removal so it survives to login page
+    if (planDraft) sessionStorage.setItem("pod_draft", planDraft);
   },
 });
 /** Freelance Marketplace portal — redirects to /employee-login on 401 */

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { adminApi as axios, customerApi } from "../utils/axiosInstances";
+import { uploadurlwithId } from "../Config";
 import { AxiosError } from "axios";
 import Sidebar from "./Sider";
 import {
@@ -12,6 +13,7 @@ import {
   Tag,
   Spin,
   Tabs,
+  Image,
 } from "antd";
 
 import BASE_URL from "../Config";
@@ -544,6 +546,12 @@ const AllCampaignsDetails: React.FC = () => {
     setFileList([]);
   };
 
+  const getImageSrc = (imageUrl: string): string => {
+    if (!imageUrl) return "";
+    if (imageUrl.startsWith("http")) return imageUrl;
+    return uploadurlwithId + imageUrl;
+  };
+
   // Helper function to check if URL is a video
   const isVideoUrl = (url: string): boolean => {
     const videoExtensions = [
@@ -566,17 +574,20 @@ const AllCampaignsDetails: React.FC = () => {
 
     if (imageUrls.length === 1) {
       const media = imageUrls[0];
-      return isVideoUrl(media.imageUrl) ? (
+      return isVideoUrl(getImageSrc(media.imageUrl)) ? (
         <video
-          src={media.imageUrl}
+          src={getImageSrc(media.imageUrl)}
           controls
-          className="w-20 h-20 object-cover rounded"
+          style={{ width: 80, height: 80, objectFit: "contain", background: "#f5f5f5", borderRadius: 6 }}
         />
       ) : (
-        <img
-          src={media.imageUrl}
+        <Image
+          src={getImageSrc(media.imageUrl)}
           alt="Media"
-          className="w-20 h-20 object-cover rounded"
+          width={80}
+          height={80}
+          style={{ objectFit: "contain", background: "#f5f5f5", borderRadius: 6 }}
+          preview={{ mask: "Preview" }}
         />
       );
     }
@@ -585,17 +596,20 @@ const AllCampaignsDetails: React.FC = () => {
       <div className="flex flex-wrap gap-1">
         {imageUrls.slice(0, 3).map((item, index) => (
           <div key={index} className="relative">
-            {isVideoUrl(item.imageUrl) ? (
+            {isVideoUrl(getImageSrc(item.imageUrl)) ? (
               <video
-                src={item.imageUrl}
-                className="w-16 h-16 object-cover rounded"
+                src={getImageSrc(item.imageUrl)}
+                style={{ width: 64, height: 64, objectFit: "contain", background: "#f5f5f5", borderRadius: 6 }}
                 muted
               />
             ) : (
-              <img
-                src={item.imageUrl}
+              <Image
+                src={getImageSrc(item.imageUrl)}
                 alt={`Media ${index + 1}`}
-                className="w-16 h-16 object-cover rounded"
+                width={64}
+                height={64}
+                style={{ objectFit: "contain", background: "#f5f5f5", borderRadius: 6 }}
+                preview={{ mask: "Preview" }}
               />
             )}
             {index === 2 && imageUrls.length > 3 && (
@@ -962,17 +976,18 @@ const AllCampaignsDetails: React.FC = () => {
                     <div key={index} className="relative group">
                       <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
                         <div className="aspect-[4/3]">
-                          {isVideoUrl(media.imageUrl) ? (
+                          {isVideoUrl(getImageSrc(media.imageUrl)) ? (
                             <video
-                              src={media.imageUrl}
+                              src={getImageSrc(media.imageUrl)}
                               controls
-                              className="w-full h-full object-cover"
+                              style={{ width: "100%", height: "100%", objectFit: "contain", background: "#f5f5f5" }}
                             />
                           ) : (
-                            <img
-                              src={media.imageUrl}
+                            <Image
+                              src={getImageSrc(media.imageUrl)}
                               alt={`Media ${index + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              style={{ width: "100%", height: "100%", objectFit: "contain", background: "#f5f5f5" }}
+                              preview={{ mask: "Preview" }}
                             />
                           )}
                         </div>
@@ -1012,13 +1027,14 @@ const AllCampaignsDetails: React.FC = () => {
                         <video
                           src={media.imageUrl}
                           controls
-                          className="w-full h-full object-cover"
+                          style={{ width: "100%", height: "100%", objectFit: "contain", background: "#f5f5f5" }}
                         />
                       ) : (
-                        <img
+                        <Image
                           src={media.imageUrl}
                           alt={`Uploaded Media ${index + 1}`}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          style={{ width: "100%", height: "100%", objectFit: "contain", background: "#f5f5f5" }}
+                          preview={{ mask: "Preview" }}
                         />
                       )}
                     </div>
@@ -1261,4 +1277,4 @@ const AllCampaignsDetails: React.FC = () => {
   );
 };
 
-export default AllCampaignsDetails;
+export default AllCampaignsDetails; 

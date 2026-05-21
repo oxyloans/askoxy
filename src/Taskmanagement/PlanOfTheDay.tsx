@@ -92,6 +92,14 @@ const PlanOfTheDay: React.FC = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiResponse, setShowAiResponse] = useState(false);
   const [hasSeenAiResponse, setHasSeenAiResponse] = useState(false);
+
+  // Restore draft on mount - do NOT remove it, keep it until successful submit
+  useEffect(() => {
+    const draft = sessionStorage.getItem("pod_draft");
+    if (draft) {
+      form.setFieldsValue({ planOftheDay: draft });
+    }
+  }, [form]);
   useEffect(() => {
     const today = new Date();
     const options: Intl.DateTimeFormatOptions = {
@@ -110,12 +118,16 @@ const PlanOfTheDay: React.FC = () => {
 
     checkPendingTasksForToday(storedUserId);
 
-    const BYPASS_USER_ID = "591e704d-e831-491f-807c-9dc04cb1b35c";
-
+    const BYRADHA_USER_ID = "591e704d-e831-491f-807c-9dc04cb1b35c";
+    const BYRAMA_USER_ID = "27223f9d-296b-465a-b845-1001ef0d0fc0";
     const checkSubmissionWindow = () => {
      
-      if (storedUserId === BYPASS_USER_ID) {
+      if (storedUserId === BYRADHA_USER_ID) {
         setIsSubmissionWindowOpen(true);
+        return;
+      }
+      if (storedUserId === BYRAMA_USER_ID) {
+         setIsSubmissionWindowOpen(true);
         return;
       }
 
@@ -124,7 +136,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 10 * 60 + 45;
+      const closeTimeInMinutes = 21 * 60 + 45;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes,
@@ -321,6 +333,7 @@ const PlanOfTheDay: React.FC = () => {
         }, 1000);
 
         form.resetFields();
+        sessionStorage.removeItem("pod_draft");
       } else {
         Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to update task.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
       }
@@ -406,7 +419,10 @@ const PlanOfTheDay: React.FC = () => {
       onFinish={onFinish}
       className="space-y-5"
       size="large"
-      onValuesChange={() => {
+      onValuesChange={(changedValues) => {
+        if (changedValues.planOftheDay !== undefined) {
+          sessionStorage.setItem("pod_draft", changedValues.planOftheDay || "");
+        }
         form.validateFields(["planOftheDay"]).catch(() => {});
       }}
     >
@@ -665,7 +681,7 @@ const PlanOfTheDay: React.FC = () => {
         <span>
           You can submit your <strong>Plan of the Day</strong> only between
           <br />
-          <strong>7:00 AM to 10:30 AM</strong> (daily).
+          <strong>7:00 AM to 10:45 AM</strong> (daily).
           <br />
           Please come back during this window tomorrow.
         </span>
@@ -716,8 +732,9 @@ const PlanOfTheDay: React.FC = () => {
             block
             onClick={() => {
               form.resetFields();
+              sessionStorage.removeItem("pod_draft");
               setIsEditing(false);
-              setLoading(false); // ✅ add this
+              setLoading(false); 
             }}
             className="flex-1 h-8 rounded-md"
           >
@@ -765,7 +782,10 @@ const PlanOfTheDay: React.FC = () => {
       onFinish={onFinish}
       className="space-y-5"
       size="large"
-      onValuesChange={() => {
+      onValuesChange={(changedValues) => {
+        if (changedValues.planOftheDay !== undefined) {
+          sessionStorage.setItem("pod_draft", changedValues.planOftheDay || "");
+        }
         form.validateFields(['planOftheDay']).catch(() => {});
       }}
     >

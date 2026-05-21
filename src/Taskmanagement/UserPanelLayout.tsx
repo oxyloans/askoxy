@@ -12,6 +12,7 @@ import {
 import { MenuUnfoldOutlined, MenuFoldOutlined, UserOutlined } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
+import Swal from "sweetalert2";
 
 import { FaUserCircle, FaWhatsapp } from "react-icons/fa";
 import {
@@ -104,29 +105,46 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   const toggleCollapse = (): void => setCollapsed((prev) => !prev);
 
 const handleSignOut = (): void => {
-  // Store current route before logout
-  const currentPath = location.pathname;
+  Swal.fire({
+    title: "Sign Out",
+    html: `
+      <div style="font-size:15px;color:#374151;line-height:1.6">
+        You are about to sign out of your account.<br/>
+        <span style="color:#6b7280;font-size:13px;">Any unsaved progress will be preserved.</span>
+      </div>
+    `,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#008cba",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Yes, Sign Out",
+    cancelButtonText: "Stay Logged In",
+    reverseButtons: true,
+    focusCancel: true,
+    customClass: {
+      title: "swal2-title",
+      confirmButton: "swal2-confirm",
+      cancelButton: "swal2-cancel",
+    },
+  }).then((result) => {
+    if (!result.isConfirmed) return;
 
-  if (currentPath !== "/userlogin" && currentPath !== "/userregister") {
-    localStorage.setItem("intendedRoute", currentPath);
-  }
+    const currentPath = location.pathname;
+    if (currentPath !== "/userlogin" && currentPath !== "/userregister") {
+      localStorage.setItem("intendedRoute", currentPath);
+    }
 
-  // Keep mobile number before clearing
-  const mobileNumber = sessionStorage.getItem("mobileNumber");
+    const mobileNumber = sessionStorage.getItem("mobileNumber");
+    const podDraft = sessionStorage.getItem("pod_draft");
 
-  // Clear all session storage
-  sessionStorage.clear();
+    sessionStorage.clear();
 
-  // Restore only mobile number
-  if (mobileNumber) {
-    sessionStorage.setItem("mobileNumber", mobileNumber);
-  }
+    if (mobileNumber) sessionStorage.setItem("mobileNumber", mobileNumber);
+    if (podDraft) sessionStorage.setItem("pod_draft", podDraft);
 
-  // Clear browser history
-  window.history.replaceState(null, "", "/userlogin");
-
-  // Redirect
-  window.location.replace("/userlogin");
+    window.history.replaceState(null, "", "/userlogin");
+    window.location.replace("/userlogin");
+  });
 };
 
   const getUserInitials = (): string => {
