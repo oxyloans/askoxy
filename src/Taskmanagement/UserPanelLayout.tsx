@@ -136,11 +136,13 @@ const handleSignOut = (): void => {
 
     const mobileNumber = sessionStorage.getItem("mobileNumber");
     const podDraft = sessionStorage.getItem("pod_draft");
+    const eodDraft = sessionStorage.getItem("eod_draft");
 
     sessionStorage.clear();
 
     if (mobileNumber) sessionStorage.setItem("mobileNumber", mobileNumber);
     if (podDraft) sessionStorage.setItem("pod_draft", podDraft);
+    if (eodDraft) sessionStorage.setItem("eod_draft", eodDraft);
 
     window.history.replaceState(null, "", "/userlogin");
     window.location.replace("/userlogin");

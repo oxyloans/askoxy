@@ -78,7 +78,7 @@ const SudheerVakkalagadda: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/ai-service/agent/getAllSudheerVakkalagadda`,
+        `${BASE_URL}/ai-service/agent/sudheerVakkalagadda`,
         {
           params: { page, size },
         },
@@ -162,7 +162,7 @@ const SudheerVakkalagadda: React.FC = () => {
     setSaving(true);
 
     try {
-      await axios.patch(`${BASE_URL}/ai-service/agent/commentsUpdation`, null, {
+      await axios.patch(`${BASE_URL}/ai-service/agent/commentsUpdationVakkalagadd`, null, {
         params: {
           id: selectedRecord.id,
           comments: cleanComment,

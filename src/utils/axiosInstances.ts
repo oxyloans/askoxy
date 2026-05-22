@@ -248,10 +248,12 @@ export const employeeApi = createInstance({
   clearTokens: () => {
     // Save any in-progress plan text before clearing tokens
     const planDraft = sessionStorage.getItem("pod_draft");
+    const eodDraft = sessionStorage.getItem("eod_draft");
     removeEmployeeAccessToken();
     removeEmployeeRefreshToken();
-    // Restore draft key after token removal so it survives to login page
+    // Restore drafts after token removal so they survive to login page
     if (planDraft) sessionStorage.setItem("pod_draft", planDraft);
+    if (eodDraft) sessionStorage.setItem("eod_draft", eodDraft);
   },
 });
 /** Freelance Marketplace portal — redirects to /employee-login on 401 */

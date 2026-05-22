@@ -199,12 +199,12 @@ const Sidebar: React.FC = () => {
           link: "/admin/rammohandarisa",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
-        // {
-        //   title: "Sudheer Vakkalagadda",
-        //   icon: <FaLaptopCode className="text-purple-500" />,
-        //   link: "/admin/sudheervakkalagadda",
-        //   roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        // },
+        {
+          title: "Sudheer Vakkalagadda",
+          icon: <FaLaptopCode className="text-purple-500" />,
+          link: "/admin/sudheervakkalagadda",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
         {
           title: "All AskOxy Users",
           icon: <FaRegAddressCard className="text-green-400" />,

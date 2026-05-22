@@ -34,9 +34,12 @@ import {
   PaperClipOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
+  AudioOutlined,
+  AudioMutedOutlined,
 } from "@ant-design/icons";
 import UserPanelLayout from "./UserPanelLayout";
 import { employeeApi } from "../utils/axiosInstances";
+import useSpeechToText from "../hooks/useSpeechToText";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -127,7 +130,16 @@ const TaskUpdate: React.FC = () => {
   >("idle");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [form] = Form.useForm<TaskFormValues>();
-  const [fileInputKey, setFileInputKey] = useState<number>(Date.now()); // Key to reset file input
+  const [fileInputKey, setFileInputKey] = useState<number>(Date.now());
+
+  const { isListening: isEodListening, toggle: toggleEodVoice } =
+    useSpeechToText((transcript) => {
+      const current = form.getFieldValue("endOftheDay") || "";
+      const updated = current ? `${current} ${transcript}` : transcript;
+      form.setFieldsValue({ endOftheDay: updated });
+      sessionStorage.setItem("eod_draft", updated);
+    });
+
   // Add state to track if form fields should be visible
   const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
   // Ref to scroll to the details section
@@ -137,6 +149,11 @@ const TaskUpdate: React.FC = () => {
     if (storedUserId) {
       setUserId(storedUserId);
       fetchAllPendingTasks(storedUserId);
+    }
+    // Restore EOD draft on mount
+    const eodDraft = sessionStorage.getItem("eod_draft");
+    if (eodDraft) {
+      form.setFieldsValue({ endOftheDay: eodDraft });
     }
   }, []);
   const accessToken = sessionStorage.getItem("taskAccessToken");
@@ -172,10 +189,10 @@ const canUpdateTask = (task: Task): boolean => {
         selectTask(response.data[0]);
       } else {
         setSelectedTask(null);
-        form.resetFields();
         form.setFieldsValue({
           userId: userIdValue,
-          taskStatus: "COMPLETED", // Default to COMPLETED when resetting form
+          taskStatus: "COMPLETED",
+          endOftheDay: sessionStorage.getItem("eod_draft") || "",
         });
         setIsFormVisible(false);
       }
@@ -190,18 +207,17 @@ const canUpdateTask = (task: Task): boolean => {
   const selectTask = (task: Task) => {
     setSelectedTask(task);
     resetUploadState();
-    // Check if the task can be updated
     const canUpdate = canUpdateTask(task);
     setIsFormVisible(canUpdate);
-    // Set form values with default taskStatus as COMPLETED regardless of task's current status
+    // Prefer saved draft over task's existing value
+    const savedDraft = sessionStorage.getItem("eod_draft");
     form.setFieldsValue({
       id: task.id,
       userId: task.userId,
-      taskStatus: "COMPLETED", // Always default to COMPLETED
-      endOftheDay: task.endOftheDay || "",
+      taskStatus: "COMPLETED",
+      endOftheDay: savedDraft || task.endOftheDay || "",
       userDocumentId: task.userDocumentId,
     });
-    // Auto-scroll to the details section after state update
     setTimeout(() => {
       detailsSectionRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -253,11 +269,8 @@ const canUpdateTask = (task: Task): boolean => {
 
       if (response.data.success) {
         Swal.fire({ toast: true, position: "top-end", icon: "success", title: response.data.message || "Task updated successfully", showConfirmButton: false, timer: 3000, timerProgressBar: true });
-
-       
+        sessionStorage.removeItem("eod_draft");
         resetUploadState();
-
-     
         fetchAllPendingTasks(userId);
       } else {
         Swal.fire({ toast: true, position: "top-end", icon: "warning", title: response.data.message || "Task update completed with warnings", showConfirmButton: false, timer: 3000, timerProgressBar: true });
@@ -631,10 +644,15 @@ const canUpdateTask = (task: Task): boolean => {
                       initialValues={{
                         id: selectedTask.id,
                         userId: selectedTask.userId,
-                        taskStatus: "COMPLETED", // Default to COMPLETED
+                        taskStatus: "COMPLETED",
                         endOftheDay: selectedTask.endOftheDay || "",
                       }}
                       className="px-1"
+                      onValuesChange={(changedValues) => {
+                        if (changedValues.endOftheDay !== undefined) {
+                          sessionStorage.setItem("eod_draft", changedValues.endOftheDay || "");
+                        }
+                      }}
                     >
                       <Form.Item name="id" hidden>
                         <Input />
@@ -707,6 +725,21 @@ const canUpdateTask = (task: Task): boolean => {
                           className="border-gray-300 hover:border-blue-400 focus:border-blue-500"
                         />
                       </Form.Item>
+                      {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && (
+                        <div className="-mt-4 mb-3 flex justify-end">
+                          <Button
+                            type={isEodListening ? "primary" : "default"}
+                            shape="round"
+                            size="small"
+                            icon={isEodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+                            onClick={toggleEodVoice}
+                            danger={isEodListening}
+                            style={isEodListening ? {} : { borderColor: "#008cba", color: "#008cba" }}
+                          >
+                            {isEodListening ? "Stop" : "Speak"}
+                          </Button>
+                        </div>
+                      )}
 
                       {/* <Form.Item
                         label={

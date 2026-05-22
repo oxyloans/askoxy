@@ -28,8 +28,11 @@ import {
   EditOutlined,
   CalendarOutlined,
   UserOutlined,
+  AudioOutlined,
+  AudioMutedOutlined,
 } from "@ant-design/icons";
 import { employeeApi } from "../utils/axiosInstances";
+import useSpeechToText from "../hooks/useSpeechToText";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -77,6 +80,15 @@ interface Task {
 
 const PlanOfTheDay: React.FC = () => {
   const [form] = Form.useForm<TaskFormValues>();
+
+  const { isListening: isPodListening, toggle: togglePodVoice } =
+    useSpeechToText((transcript) => {
+      const current = form.getFieldValue("planOftheDay") || "";
+      const updated = current ? `${current} ${transcript}` : transcript;
+      form.setFieldsValue({ planOftheDay: updated });
+      sessionStorage.setItem("pod_draft", updated);
+    });
+
   const [loading, setLoading] = useState(false);
   const [fetchingStatus, setFetchingStatus] = useState(true);
   const [userId, setUserId] = useState("");
@@ -136,7 +148,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 21 * 60 + 45;
+      const closeTimeInMinutes = 10  * 60 + 45;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes,
@@ -448,6 +460,21 @@ const PlanOfTheDay: React.FC = () => {
           className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400 transition-all"
         />
       </Form.Item>
+      {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && (
+        <div className="-mt-4 mb-3 flex justify-end">
+          <Button
+            type={isPodListening ? "primary" : "default"}
+            shape="round"
+            size="small"
+            icon={isPodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+            onClick={togglePodVoice}
+            danger={isPodListening}
+            style={isPodListening ? {} : { borderColor: "#008cba", color: "#008cba" }}
+          >
+            {isPodListening ? "Stop" : "Speak"}
+          </Button>
+        </div>
+      )}
 
       <Form.Item
         name="taskTeam"
@@ -823,6 +850,21 @@ const PlanOfTheDay: React.FC = () => {
           className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400 transition-all"
         />
       </Form.Item>
+      {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && (
+        <div className="-mt-4 mb-3 flex justify-end">
+          <Button
+            type={isPodListening ? "primary" : "default"}
+            shape="round"
+            size="small"
+            icon={isPodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+            onClick={togglePodVoice}
+            danger={isPodListening}
+            style={isPodListening ? {} : { borderColor: "#008cba", color: "#008cba" }}
+          >
+            {isPodListening ? "Stop" : "Speak"}
+          </Button>
+        </div>
+      )}
 
       <Form.Item
         name="taskTeam"
