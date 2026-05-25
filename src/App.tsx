@@ -88,6 +88,7 @@ import RadhAICloneAdminPage from "./components/talktoceo/RadhAICloneAdminPage";
 import SudheerVakkalagadda from "./AskoxyAdmin/SudheerVakkalagadda"; 
 import RadhAIRAndDPage from "./components/talktoceo/RadhAIRAndDPage";
 import RadhAIAdminDashboard from "./components/talktoceo/RadhAIAdminDashboard";
+import EmailCampaign from "./components/EmailCampaign";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -516,7 +517,40 @@ const App: React.FC = () => {
   useTokenRefresh();
 
   useTaskTokenExpiry();
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
 
+  if (
+    params.get("utm_source") ||
+    params.get("utm_medium") ||
+    params.get("utm_campaign")
+  ) {
+    const utmData = {
+      source: params.get("utm_source"),
+      medium: params.get("utm_medium"),
+      campaign: params.get("utm_campaign"),
+      content: params.get("utm_content"),
+      term: params.get("utm_term"),
+      fullUrl: window.location.href,
+      pagePath: window.location.pathname,
+    };
+
+    console.log("UTM DATA:", utmData);
+    localStorage.setItem("utmData", JSON.stringify(utmData));
+
+    if ((window as any).gtag) {
+      (window as any).gtag("event", "utm_landing", {
+        page_location: window.location.href,
+        page_path: window.location.pathname,
+        utm_source: utmData.source,
+        utm_medium: utmData.medium,
+        utm_campaign: utmData.campaign,
+        utm_content: utmData.content,
+        utm_term: utmData.term,
+      });
+    }
+  }
+}, []);
   // useEffect(() => {
   //     const rt = getRefreshToken();
   //     if (rt) {
@@ -587,6 +621,7 @@ const App: React.FC = () => {
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
       currentPath.startsWith("/taskupdated") ||
+      currentPath.startsWith("/email-campaign") ||
       currentPath.startsWith("/leaveapproval") ||
       currentPath.startsWith("/leavestatus") ||
       currentPath.startsWith("/all-statuses") ||
@@ -1171,6 +1206,7 @@ const App: React.FC = () => {
                 path="/teststore/assistant/:id/:agentId"
                 element={<TestAgentDetails />}
               />
+              <Route path="/email-campaign" element={<EmailCampaign />} />
               <Route path="/may2Interview" element={<HiringLandingPage />} />
               <Route
                 path="/DRAcertification"

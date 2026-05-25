@@ -103,7 +103,11 @@
         dataLayer.push(arguments);
       }
       gtag("js", new Date());
-      gtag("config", "G-7F5MXCYZ7W");
+     gtag("config", "G-7F5MXCYZ7W", {
+    send_page_view: true,
+    page_location: window.location.href,
+    page_path: window.location.pathname + window.location.search,
+  });
     </script>
 
     <!-- Affiliate Tracking Script -->

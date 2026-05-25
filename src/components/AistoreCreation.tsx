@@ -40,6 +40,7 @@ interface Agent {
   assistantId: string;
   agentName: string;
   imageUrl: string | null;
+
   agentStatus: "ACTIVE" | "INACTIVE";
   agentCreatorName: string | null;
 }
@@ -403,6 +404,7 @@ const handleSaveStoreClick = async (): Promise<void> => {
         assistantId: item.assistantId || item.agentId,
         agentName: item.name || "Untitled Agent",
         imageUrl: item.imageUrl || null,
+
         agentStatus: item.agentStatus || "INACTIVE",
         agentCreatorName: item.agentCreatorName || null,
       }));
@@ -961,11 +963,11 @@ const saveAgentsToStore = async (): Promise<void> => {
                 fontWeight: "500",
               }}
               type="default"
-             onClick={() => {
-  clearBulkUploadForm();
-  uploadForm.setFieldsValue({ view: "public" });
-  setIsBulkUploadModal(true);
-}}
+              onClick={() => {
+                clearBulkUploadForm();
+                uploadForm.setFieldsValue({ view: "public" });
+                setIsBulkUploadModal(true);
+              }}
             >
               Bulk Upload Agents
             </Button>
@@ -995,7 +997,7 @@ const saveAgentsToStore = async (): Promise<void> => {
         title="Bulk Upload Agents"
         onCancel={() => {
           setIsBulkUploadModal(false);
-            clearBulkUploadForm();
+          clearBulkUploadForm();
           uploadForm.resetFields();
         }}
         onOk={() => uploadForm.submit()}
@@ -1007,13 +1009,13 @@ const saveAgentsToStore = async (): Promise<void> => {
           form={uploadForm}
           layout="vertical"
           onFinish={(values) => {
-  if (!bulkFile) {
-    message.error("Please select an Excel file");
-    return;
-  }
+            if (!bulkFile) {
+              message.error("Please select an Excel file");
+              return;
+            }
 
-  handleMultiAgentUpload(values);
-}}
+            handleMultiAgentUpload(values);
+          }}
           initialValues={{ view: "public" }}
         >
           <Row gutter={[12, 12]}>
@@ -1021,10 +1023,8 @@ const saveAgentsToStore = async (): Promise<void> => {
               <Form.Item
                 name="storeId"
                 label="Store"
-                rules={[
-                  { required: true, message: "Please select a store" }
-                ]}
-                validateTrigger={['onChange', 'onSubmit']}
+                rules={[{ required: true, message: "Please select a store" }]}
+                validateTrigger={["onChange", "onSubmit"]}
               >
                 <Select
                   placeholder="Select Store"
@@ -1050,9 +1050,9 @@ const saveAgentsToStore = async (): Promise<void> => {
                 name="view"
                 label="View"
                 rules={[
-                  { required: true, message: "Please select a view option" }
+                  { required: true, message: "Please select a view option" },
                 ]}
-                validateTrigger={['onChange', 'onSubmit']}
+                validateTrigger={["onChange", "onSubmit"]}
               >
                 <Select>
                   <Select.Option value="public">public</Select.Option>
@@ -1152,52 +1152,53 @@ const saveAgentsToStore = async (): Promise<void> => {
                     <b> role, goal, purpose, agentName</b>
                     <br />
                     <span style={{ color: "#ff4d4f" }}>
-                      ⚠️ Only Excel files (.xlsx, .xls) with correct format are accepted
+                      ⚠️ Only Excel files (.xlsx, .xls) with correct format are
+                      accepted
                     </span>
                   </div>
                 </div>
               </Form.Item>
 
-              <Form.Item
-                label="Upload Excel File"
-              >
-               <input
-  ref={fileInputRef}
-  type="file"
-  accept=".xlsx,.xls"
-  onChange={async (e) => {
-    const file = e.target.files?.[0];
+              <Form.Item label="Upload Excel File">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
 
-    if (!file) {
-      setBulkFile(null);
-      return;
-    }
+                    if (!file) {
+                      setBulkFile(null);
+                      return;
+                    }
 
-    if (!isXlsxFile(file)) {
-      message.error("Only Excel files (.xlsx, .xls) are allowed");
-      e.target.value = "";
-      setBulkFile(null);
-      return;
-    }
+                    if (!isXlsxFile(file)) {
+                      message.error(
+                        "Only Excel files (.xlsx, .xls) are allowed",
+                      );
+                      e.target.value = "";
+                      setBulkFile(null);
+                      return;
+                    }
 
-    const isValidFormat = await validateExcelFormat(file);
-    if (!isValidFormat) {
-      e.target.value = "";
-      setBulkFile(null);
-      return;
-    }
+                    const isValidFormat = await validateExcelFormat(file);
+                    if (!isValidFormat) {
+                      e.target.value = "";
+                      setBulkFile(null);
+                      return;
+                    }
 
-    setBulkFile(file);
-    message.success(`"${file.name}" selected successfully`);
-  }}
-  style={{
-    width: "100%",
-    padding: "8px",
-    border: "1px dashed #d9d9d9",
-    borderRadius: "6px",
-    background: "#fafafa",
-  }}
-/>
+                    setBulkFile(file);
+                    message.success(`"${file.name}" selected successfully`);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    border: "1px dashed #d9d9d9",
+                    borderRadius: "6px",
+                    background: "#fafafa",
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -1273,22 +1274,30 @@ const saveAgentsToStore = async (): Promise<void> => {
               { required: true, message: "Store name is required" },
               {
                 validator: (_, value) => {
-                 if (value && isDuplicateStoreName(value)) {
-  return Promise.reject(
-    new Error("This store name already exists. Please use a unique name.")
-  );
-}
-                  if (value && value.trim().length > 0 && value.trim().length < 3) {
-                    return Promise.reject(new Error('Store name should be at least 3 characters'));
+                  if (value && isDuplicateStoreName(value)) {
+                    return Promise.reject(
+                      new Error(
+                        "This store name already exists. Please use a unique name.",
+                      ),
+                    );
+                  }
+                  if (
+                    value &&
+                    value.trim().length > 0 &&
+                    value.trim().length < 3
+                  ) {
+                    return Promise.reject(
+                      new Error("Store name should be at least 3 characters"),
+                    );
                   }
                   return Promise.resolve();
-                }
-              }
+                },
+              },
             ]}
-            validateTrigger={['onBlur', 'onSubmit']}
+            validateTrigger={["onBlur", "onSubmit"]}
           >
-            <Input 
-              placeholder="Enter store name" 
+            <Input
+              placeholder="Enter store name"
               size="large"
               onBlur={(e) => {
                 const trimmed = e.target.value.trim();
@@ -1308,20 +1317,28 @@ const saveAgentsToStore = async (): Promise<void> => {
               {
                 validator: (_, value) => {
                   if (value && value.trim().length === 0) {
-                    return Promise.reject(new Error('Please enter a valid description'));
+                    return Promise.reject(
+                      new Error("Please enter a valid description"),
+                    );
                   }
-                  if (value && value.trim().length > 0 && value.trim().length < 10) {
-                    return Promise.reject(new Error('Description should be at least 10 characters'));
+                  if (
+                    value &&
+                    value.trim().length > 0 &&
+                    value.trim().length < 10
+                  ) {
+                    return Promise.reject(
+                      new Error("Description should be at least 10 characters"),
+                    );
                   }
                   return Promise.resolve();
-                }
-              }
+                },
+              },
             ]}
-            validateTrigger={['onBlur', 'onSubmit']}
+            validateTrigger={["onBlur", "onSubmit"]}
           >
-            <Input.TextArea 
-              rows={4} 
-              showCount 
+            <Input.TextArea
+              rows={4}
+              showCount
               maxLength={500}
               placeholder="Describe your store..."
               onBlur={(e) => {
@@ -1367,19 +1384,29 @@ const saveAgentsToStore = async (): Promise<void> => {
                     {
                       validator: (_, value) => {
                         if (value && value.trim().length === 0) {
-                          return Promise.reject(new Error('Please enter a valid company name'));
+                          return Promise.reject(
+                            new Error("Please enter a valid company name"),
+                          );
                         }
-                        if (value && value.trim().length > 0 && value.trim().length < 2) {
-                          return Promise.reject(new Error('Company name should be at least 2 characters'));
+                        if (
+                          value &&
+                          value.trim().length > 0 &&
+                          value.trim().length < 2
+                        ) {
+                          return Promise.reject(
+                            new Error(
+                              "Company name should be at least 2 characters",
+                            ),
+                          );
                         }
                         return Promise.resolve();
-                      }
-                    }
+                      },
+                    },
                   ]}
-                  validateTrigger={['onBlur', 'onSubmit']}
+                  validateTrigger={["onBlur", "onSubmit"]}
                 >
-                  <Input 
-                    placeholder="Enter company name" 
+                  <Input
+                    placeholder="Enter company name"
                     size="large"
                     onBlur={(e) => {
                       const trimmed = e.target.value.trim();
@@ -1405,75 +1432,81 @@ const saveAgentsToStore = async (): Promise<void> => {
             ]}
           >
             <div>
-              {form.getFieldValue('storeImageUrl') && (
+              {form.getFieldValue("storeImageUrl") && (
                 <div style={{ marginBottom: 8 }}>
                   <Image
-                    src={form.getFieldValue('storeImageUrl')}
+                    src={form.getFieldValue("storeImageUrl")}
                     alt="Store"
                     width={100}
                     height={100}
-                    style={{ objectFit: 'cover', borderRadius: 8 }}
+                    style={{ objectFit: "cover", borderRadius: 8 }}
                   />
                 </div>
               )}
-             <input
-  type="file"
-  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+                  const allowedTypes = [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                  ];
+                  const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
 
-    const fileName = file.name.toLowerCase();
-    const isValidType = allowedTypes.includes(file.type);
-    const isValidExtension = allowedExtensions.some((ext) =>
-      fileName.endsWith(ext)
-    );
+                  const fileName = file.name.toLowerCase();
+                  const isValidType = allowedTypes.includes(file.type);
+                  const isValidExtension = allowedExtensions.some((ext) =>
+                    fileName.endsWith(ext),
+                  );
 
-    if (!isValidType || !isValidExtension) {
-      message.error("Only JPG, JPEG, PNG, or WEBP image files are allowed.");
-      e.target.value = "";
-      form.setFieldsValue({ storeImageUrl: undefined });
-      return;
-    }
+                  if (!isValidType || !isValidExtension) {
+                    message.error(
+                      "Only JPG, JPEG, PNG, or WEBP image files are allowed.",
+                    );
+                    e.target.value = "";
+                    form.setFieldsValue({ storeImageUrl: undefined });
+                    return;
+                  }
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+                  try {
+                    const formData = new FormData();
+                    formData.append("file", file);
 
-      const response = await customerApi.post(
-        `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
+                    const response = await customerApi.post(
+                      `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
+                      formData,
+                      {
+                        headers: {
+                          "Content-Type": "multipart/form-data",
+                          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                        },
+                      },
+                    );
 
-      form.setFieldsValue({
-        storeImageUrl: response.data.documentPath,
-      });
+                    form.setFieldsValue({
+                      storeImageUrl: response.data.documentPath,
+                    });
 
-      form.validateFields(["storeImageUrl"]);
-      message.success("Image uploaded successfully!");
-    } catch (error) {
-      console.error("Upload error:", error);
-      message.error("Failed to upload image. Please try again.");
-      e.target.value = "";
-    }
-  }}
-  style={{
-    width: "100%",
-    padding: "8px",
-    border: "1px dashed #d9d9d9",
-    borderRadius: "6px",
-    cursor: "pointer",
-  }}
-/>
+                    form.validateFields(["storeImageUrl"]);
+                    message.success("Image uploaded successfully!");
+                  } catch (error) {
+                    console.error("Upload error:", error);
+                    message.error("Failed to upload image. Please try again.");
+                    e.target.value = "";
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  border: "1px dashed #d9d9d9",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              />
             </div>
           </Form.Item>
         </Form>
@@ -1594,18 +1627,29 @@ const saveAgentsToStore = async (): Promise<void> => {
               },
               {
                 title: <strong>Agent Image</strong>,
-                dataIndex: "imageUrl",
-                key: "imageUrl",
+                dataIndex: "profileImageUrl",
+                key: "profileImageUrl",
                 align: "center",
-                render: (url: string | null) => (
-                  <div style={{ textAlign: "center" }}>
-                    <Image
-                      width={50}
-                      src={url || undefined}
-                      alt="company logo"
-                    />
-                  </div>
-                ),
+                render: (url: string | null) => {
+                  if (!url || url === "null" || url === "undefined") {
+                    return <div style={{ textAlign: "center", color: "#999", fontSize: 12 }}>No Image</div>;
+                  }
+                  const src = url.startsWith("http")
+                    ? url
+                    : `https://askoxy.s3.ap-south-1.amazonaws.com${url}`;
+                  return (
+                    <div style={{ textAlign: "center" }}>
+                      <Image
+                        width={50}
+                        height={50}
+                        src={src}
+                        alt="agent image"
+                        style={{ objectFit: "cover", borderRadius: 4 }}
+                        fallback="https://via.placeholder.com/50?text=N/A"
+                      />
+                    </div>
+                  );
+                },
               },
               {
                 title: <strong>Status</strong>,
@@ -1731,7 +1775,7 @@ const saveAgentsToStore = async (): Promise<void> => {
             ) : (
               filteredAssistants.map((agent: Agent) => {
                 const isSelected: boolean = selectedAgents.some(
-                  (x: Agent) => x.agentId === agent.agentId
+                  (x: Agent) => x.agentId === agent.agentId,
                 );
                 return (
                   <div
@@ -1765,9 +1809,9 @@ const saveAgentsToStore = async (): Promise<void> => {
                       setSelectedAgents((prev: Agent[]) =>
                         isSelected
                           ? prev.filter(
-                              (x: Agent) => x.agentId !== agent.agentId
+                              (x: Agent) => x.agentId !== agent.agentId,
                             )
-                          : [...prev, agent]
+                          : [...prev, agent],
                       );
                     }}
                     onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
@@ -1794,9 +1838,9 @@ const saveAgentsToStore = async (): Promise<void> => {
                         setSelectedAgents((prev: Agent[]) =>
                           isSelected
                             ? prev.filter(
-                                (x: Agent) => x.agentId !== agent.agentId
+                                (x: Agent) => x.agentId !== agent.agentId,
                               )
-                            : [...prev, agent]
+                            : [...prev, agent],
                         );
                       }}
                     />
