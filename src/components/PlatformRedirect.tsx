@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 const platformLinks: Record<string, string> = {
   oxyloans: "https://oxyloans.com/",
   oxygold: "https://www.oxygold.ai/",
+  oxybricks: "https://www.oxybricks.world/",
 };
 
 export default function PlatformRedirect() {
@@ -32,59 +33,22 @@ export default function PlatformRedirect() {
   }, []);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        background: "linear-gradient(135deg, #fff8e1, #ffffff)",
-        fontFamily: "Poppins, sans-serif",
-        textAlign: "center",
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          width: 60,
-          height: 60,
-          border: "5px solid #f3e7bd",
-          borderTop: "5px solid #d4af37",
-          borderRadius: "50%",
-          animation: "spin 1s linear infinite",
-        }}
-      />
+    <div className="flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#f4efff] via-white to-[#ece5ff] px-6">
+      <div className="relative text-center">
+        <div className="absolute left-1/2 top-1/2 h-[260px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6B35C7]/10 blur-3xl" />
 
-      <h2
-        style={{
-          marginTop: 24,
-          fontSize: 22,
-          fontWeight: 700,
-          color: "#2b1800",
-        }}
-      >
-        Redirecting to our Dedicated Platform...
-      </h2>
+        <div className="relative z-10">
+          <div className="mx-auto h-[90px] w-[90px] rounded-full border-[6px] border-[#e9dcff] border-t-[#6B35C7] shadow-[0_10px_35px_rgba(107,53,199,0.18)] animate-spin" />
 
-      <p
-        style={{
-          marginTop: 10,
-          color: "#7a6a45",
-          fontSize: 15,
-        }}
-      >
-        Please wait while we securely take you there.
-      </p>
+          <h1 className="mt-10 text-[28px] font-extrabold tracking-[-0.03em] text-[#2f1758] sm:text-[36px]">
+            Redirecting to Dedicated Platform
+          </h1>
 
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
+          <p className="mx-auto mt-4 max-w-[460px] text-[15px] leading-[1.7] text-[#6d5f8d] sm:text-[16px]">
+            Please wait while we securely connect you to the selected platform.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

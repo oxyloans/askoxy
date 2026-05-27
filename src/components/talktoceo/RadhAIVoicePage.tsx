@@ -15,7 +15,9 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import BASE_URL from "../../Config";
+
+const API_BASE_URL = "https://mailautomation-production.up.railway.app/api";
+const FILE_BASE_URL = "https://meta.oxyloans.com/radha-ai/files";
 
 type LanguageCode = "te" | "en" | "hi";
 
@@ -302,7 +304,7 @@ If exact company information is not available, say it politely instead of guessi
     const assistantId = ASSISTANT_ID;
     const voicemode = VOICE_MODE.toLowerCase();
 
-    const tokenUrl = `${BASE_URL}/student-service/user/voicetoken?assistantId=${encodeURIComponent(
+    const tokenUrl = `${API_BASE_URL}/student-service/user/voicetoken?assistantId=${encodeURIComponent(
       assistantId,
     )}&voicemode=${encodeURIComponent(voicemode)}`;
 

@@ -5,6 +5,7 @@ import CartProvider from "./until/CartProvider";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 import { SearchProvider } from "./until/SearchContext";
 import { useTokenRefresh } from "./utils/useTokenRefresh";
+import { initGA, trackPage } from "./utils/analytics";
 import { useTaskTokenExpiry } from "./utils/taskTokenManager";
 import AppliedJobs from "./Dashboard/AppliedJobs";
 import NinetyDayPlanPage from "./components/NinetyDayPlanPage";
@@ -86,10 +87,12 @@ import RadhAIPage from "./components/talktoceo/radhai";
 import TalkToCEO from "./components/talktoceo/TalkToCEO";
 import RadhAIVoicePage from "./components/talktoceo/RadhAIVoicePage";
 import RadhAICloneAdminPage from "./components/talktoceo/RadhAICloneAdminPage";
-import SudheerVakkalagadda from "./AskoxyAdmin/SudheerVakkalagadda"; 
+import SudheerVakkalagadda from "./AskoxyAdmin/SudheerVakkalagadda";
 import RadhAIRAndDPage from "./components/talktoceo/RadhAIRAndDPage";
 import RadhAIAdminDashboard from "./components/talktoceo/RadhAIAdminDashboard";
 import EmailCampaign from "./components/EmailCampaign";
+import GoogleAnalyticsDashboard from "./components/GoogleAnalyticsDashboard";
+import OxyBricksFractionalPage from "./components/FractionalPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -564,6 +567,14 @@ useEffect(() => {
   //   }, []);
 
   useEffect(() => {
+    initGA();
+  }, []);
+
+  useEffect(() => {
+    trackPage(location.pathname);
+  }, [location]);
+
+  useEffect(() => {
     const validEntryPoints = [
       "/",
       "/future",
@@ -954,6 +965,8 @@ useEffect(() => {
               />
               <Route path="/oxygold" element={<GoldLandingPage />} />
               <Route path="/jobspremierleague" element={<JPLLandingPage />} />
+                <Route path="/fpl" element={<OxyBricksFractionalPage  />} />
+
               <Route path="/rcsconsentform" element={<RCSConsentForm />} />
               <Route
                 path="/loanmanagement"
@@ -1171,6 +1184,10 @@ useEffect(() => {
                 element={<StudentMainDashboard />}
               />
               <Route path="/student-home" element={<UserSelectionPage />} />
+              <Route
+                path="/google-analytics-dashboard"
+                element={<GoogleAnalyticsDashboard />}
+              />
               <Route
                 path="/listofuniversities"
                 element={<UniversityListPage />}
@@ -1493,7 +1510,7 @@ useEffect(() => {
                   path="rammohandarisa"
                   element={<RamMohanDarisaAgents />}
                 />
-                 <Route
+                <Route
                   path="sudheervakkalagadda"
                   element={<SudheerVakkalagadda />}
                 />

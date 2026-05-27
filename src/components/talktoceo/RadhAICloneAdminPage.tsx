@@ -4,9 +4,9 @@ import Swal from "sweetalert2";
 import {
   Lock,
   User,
-  Upload,
+  Upload,Image,
   Mic,
-  Square,
+  Square,Newspaper,
   FileText,
   Save,
   X,
@@ -27,16 +27,21 @@ import {
   AlertTriangle,
   Info,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 const STATIC_USERNAME = "radhAI.clone";
 const STATIC_PASSWORD = "ceovoice";
 
-const API_BASE_URL = "https://radhaclone-production.up.railway.app/api";
+const API_BASE_URL = "https://mailautomation-production.up.railway.app/api";
 
 const COMPANY_UPLOAD_API = `${API_BASE_URL}/v1/upload/company`;
 const CONTENT_SUBMIT_API = `${API_BASE_URL}/v1/content/submit`;
-const CONTENT_APPROVE_API = `${API_BASE_URL}/v1/content/approve`;
+const ADD_TO_CLONE_API = `${API_BASE_URL}/v1/add-to-clone`;
+const IMAGE_API = `${API_BASE_URL}/v1/image`;
+const BLOG_FORMAT_API = `${API_BASE_URL}/v1/blog/format`;
+const BLOG_PUBLISH_API = `${API_BASE_URL}/v1/blog/publish`;
+const FILE_BASE_URL = "https://meta.oxyloans.com/radha-ai/files";
 
 const PLATFORMS = [
   { key: "OXY_LOANS", label: "OxyLoans" },
@@ -73,6 +78,33 @@ type SubmitResponse = {
     generatedContext?: string;
     rawContent?: string;
   };
+};
+
+type EntityType = "CONTENT" | "VIDEO";
+
+type BlogPayload = {
+  entityId?: string;
+  entityType?: EntityType;
+  title?: string;
+  description?: string;
+  socialMediaCaptions?: string;
+  addedBy?: string;
+  videoUrl?: string;
+  videoFileUrl?: string | null;
+  imageUrl?: string | null;
+  status?: string;
+  blogPostId?: string | null;
+};
+
+const getEntityId = (data: any) =>
+  String(data?.entityId || data?.contentId || data?.videoId || data?.id || "");
+
+const getImageUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/uploads/images/")) return `${FILE_BASE_URL}${url}`;
+  if (url.startsWith("uploads/images/")) return `${FILE_BASE_URL}/${url}`;
+  return url;
 };
 
 const toast = (
@@ -133,6 +165,15 @@ export default function RadhAICloneAdminPage() {
     null,
   );
 
+  const [addedToClone, setAddedToClone] = useState(false);
+  const [showBlogFlow, setShowBlogFlow] = useState(false);
+  const [blogPreview, setBlogPreview] = useState<BlogPayload | null>(null);
+  const [publishedBlog, setPublishedBlog] = useState<BlogPayload | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [formatLoading, setFormatLoading] = useState(false);
+  const [publishLoading, setPublishLoading] = useState(false);
+  const [isInputExpanded, setIsInputExpanded] = useState(false);
+
   const buttonMotion = {
     whileHover: { y: -2, scale: 1.015 },
     whileTap: { scale: 0.97 },
@@ -163,8 +204,14 @@ export default function RadhAICloneAdminPage() {
   const canSubmit = Boolean(submitPlatform) && hasInputContent && !isSubmitting;
   const canUploadCompanyFiles =
     Boolean(companyPlatform) && companyFiles.length > 0 && !isCompanyUploading;
-  const canApprove =
+  const canAddToClone =
     Boolean(contentId && generatedContent.trim()) && !isApproving;
+  const hasFormattedBlogPreview = Boolean(
+    blogPreview?.title?.trim() ||
+      blogPreview?.description?.trim() ||
+      blogPreview?.socialMediaCaptions?.trim(),
+  );
+  const canPublishBlog = Boolean(blogPreview && hasFormattedBlogPreview && !publishedBlog);
 
   const parsedGeneratedContent = useMemo<ParsedGeneratedContent | null>(() => {
     if (!generatedContent) return null;
@@ -177,6 +224,99 @@ export default function RadhAICloneAdminPage() {
       return null;
     }
   }, [generatedContent]);
+
+
+  const currentContentForClone = () => {
+    if (isEditing && parsedEdits) return JSON.stringify(parsedEdits);
+    return editedContent || generatedContent;
+  };
+
+  const buildBlogFallback = (existing?: BlogPayload | null): BlogPayload => {
+    const source: ParsedGeneratedContent | null =
+      parsedEdits || parsedGeneratedContent || null;
+
+    const fallbackTitle =
+      source?.title ||
+      (generatedContent && !parsedGeneratedContent ? generatedContent.slice(0, 90) : "") ||
+      "radhAI Generated Blog";
+
+    const sectionText = source?.sections
+      ?.map((section) =>
+        [section.heading, section.body].filter(Boolean).join("\n"),
+      )
+      .filter(Boolean)
+      .join("\n\n");
+
+    const fallbackDescription =
+      source?.intro ||
+      sectionText ||
+      source?.closing ||
+      editedContent ||
+      generatedContext ||
+      generatedContent ||
+      "Blog content generated from radhAI admin input.";
+
+    const fallbackCaptions =
+      [source?.callToAction, source?.hashtags].filter(Boolean).join("\n\n") ||
+      source?.hashtags ||
+      "";
+
+    return {
+      ...(existing || {}),
+      entityId: getEntityId(existing) || contentId,
+      entityType: "CONTENT",
+      title: existing?.title || fallbackTitle,
+      description: existing?.description || fallbackDescription,
+      socialMediaCaptions: existing?.socialMediaCaptions || fallbackCaptions,
+      addedBy: existing?.addedBy || "Radha",
+      imageUrl: existing?.imageUrl || "",
+      videoUrl: existing?.videoUrl || "",
+      videoFileUrl: existing?.videoFileUrl || null,
+      blogPostId: existing?.blogPostId || null,
+    };
+  };
+
+  const mergeBlogPreview = (
+    apiData: Partial<BlogPayload>,
+    existing?: BlogPayload | null,
+  ): BlogPayload => {
+    const merged = buildBlogFallback({
+      ...(existing || {}),
+      ...(apiData || {}),
+    });
+
+    return {
+      ...merged,
+      entityId: getEntityId(apiData) || getEntityId(existing) || contentId,
+      entityType: "CONTENT",
+      imageUrl: apiData.imageUrl || existing?.imageUrl || merged.imageUrl || "",
+      title: apiData.title || existing?.title || merged.title,
+      description: apiData.description || existing?.description || merged.description,
+      socialMediaCaptions:
+        apiData.socialMediaCaptions ||
+        existing?.socialMediaCaptions ||
+        merged.socialMediaCaptions,
+      addedBy: apiData.addedBy || existing?.addedBy || merged.addedBy || "Radha",
+    };
+  };
+
+  const fetchJson = async (url: string, options?: RequestInit) => {
+    const res = await fetch(url, options);
+    const text = await res.text();
+
+    let data: any = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error(text || "Invalid server response");
+    }
+
+    if (!res.ok || data?.success === false) {
+      throw new Error(data?.message || `API failed: ${res.status}`);
+    }
+
+    return data;
+  };
 
   const getSpeechRecognition = () =>
     (window as any).SpeechRecognition ||
@@ -418,6 +558,10 @@ export default function RadhAICloneAdminPage() {
       setGeneratedContext("");
       setGeneratedContent("");
       setEditedContent("");
+      setAddedToClone(false);
+      setShowBlogFlow(false);
+      setBlogPreview(null);
+      setPublishedBlog(null);
 
       const formData = new FormData();
 
@@ -466,24 +610,22 @@ export default function RadhAICloneAdminPage() {
     }
   };
 
-  const handleApproveContent = async (approved: boolean) => {
+  const handleAddToClone = async () => {
     if (!contentId || !generatedContent.trim()) {
       toast("warning", "Generate content first");
       return;
     }
 
     const result = await Swal.fire({
-      title: approved ? "Approve content?" : "Reject content?",
-      text: approved
-        ? "This generated content will be approved."
-        : "This generated content will be rejected.",
-      icon: approved ? "question" : "warning",
+      title: "Add this content to clone?",
+      text: "The edited content will be sent to the clone knowledge flow.",
+      icon: "question",
       showCancelButton: true,
-      confirmButtonText: approved ? "Approve" : "Reject",
+      confirmButtonText: "Add to Clone",
       cancelButtonText: "Cancel",
       background: "#070A16",
       color: "#ffffff",
-      confirmButtonColor: approved ? "#22c55e" : "#ef4444",
+      confirmButtonColor: "#22c55e",
       cancelButtonColor: "#64748b",
     });
 
@@ -493,34 +635,153 @@ export default function RadhAICloneAdminPage() {
       setIsApproving(true);
 
       const payload = {
-        contentId,
-        approved,
-        feedback: approved ? "Approved" : "Rejected",
+        entityId: contentId,
+        entityType: "CONTENT",
+        editedContent: currentContentForClone(),
+        confirmed: true,
       };
 
-      const res = await fetch(CONTENT_APPROVE_API, {
+      await fetchJson(ADD_TO_CLONE_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        data = null;
-      }
-
-      if (!res.ok || data?.success === false) {
-        throw new Error(data?.message || "Action failed");
-      }
-
-      toast("success", approved ? "Approved successfully" : "Rejected");
-      handleClear();
+      setAddedToClone(true);
+      setShowBlogFlow(true);
+      toast("success", "Added to clone successfully");
     } catch (error: any) {
-      toast("error", error?.message || "Action failed");
+      toast("error", error?.message || "Add to clone failed");
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  const handleRejectContent = async () => {
+    const result = await Swal.fire({
+      title: "Clear this generated content?",
+      text: "This will remove the current output from the screen.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Clear",
+      cancelButtonText: "Cancel",
+      background: "#070A16",
+      color: "#ffffff",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+    });
+
+    if (result.isConfirmed) handleClear();
+  };
+
+  const handleCreateImage = async () => {
+    if (!contentId) return toast("warning", "Content ID missing");
+
+    try {
+      setImageLoading(true);
+
+      const data = await fetchJson(
+        `${IMAGE_API}/${encodeURIComponent(contentId)}?entityType=CONTENT`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entityId: contentId,
+            entityType: "CONTENT",
+          }),
+        },
+      );
+
+      const imageData = data?.data || {};
+      const nextImageUrl =
+        imageData?.imageUrl || imageData?.url || imageData?.generatedImageUrl || "";
+
+      setBlogPreview((prev) =>
+        mergeBlogPreview(
+          {
+            ...(imageData || {}),
+            imageUrl: nextImageUrl || prev?.imageUrl || "",
+          },
+          prev,
+        ),
+      );
+
+      setPublishedBlog(null);
+      toast("success", "Image generated");
+    } catch (error: any) {
+      toast("error", error?.message || "Image generation failed");
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const handleFormatBlog = async (generateImage = false) => {
+    if (!contentId) return toast("warning", "Content ID missing");
+
+    try {
+      setFormatLoading(true);
+
+      const data = await fetchJson(BLOG_FORMAT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityId: contentId,
+          entityType: "CONTENT",
+          generateImage,
+        }),
+      });
+
+      const formattedData = data?.data || {};
+
+      setBlogPreview((prev) =>
+        mergeBlogPreview(
+          {
+            ...(formattedData || {}),
+            imageUrl: formattedData?.imageUrl || prev?.imageUrl || "",
+          },
+          prev,
+        ),
+      );
+
+      setPublishedBlog(null);
+      toast("success", "Blog preview ready");
+    } catch (error: any) {
+      toast("error", error?.message || "Blog preview failed");
+    } finally {
+      setFormatLoading(false);
+    }
+  };
+
+  const handlePublishBlog = async () => {
+    if (!blogPreview) return toast("warning", "Generate blog preview first");
+
+    try {
+      setPublishLoading(true);
+
+      const payload: BlogPayload = {
+        ...blogPreview,
+        entityId: getEntityId(blogPreview) || contentId,
+        entityType: "CONTENT",
+        imageUrl: blogPreview.imageUrl || "",
+        videoUrl: blogPreview.videoUrl || "",
+        videoFileUrl: blogPreview.videoFileUrl || null,
+        status: "PUBLISHED",
+      };
+
+      const data = await fetchJson(BLOG_PUBLISH_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const publishedData = data?.data || payload;
+      setPublishedBlog(publishedData);
+      setBlogPreview(null);
+      toast("success", "Blog published successfully");
+    } catch (error: any) {
+      toast("error", error?.message || "Blog publish failed");
+    } finally {
+      setPublishLoading(false);
     }
   };
 
@@ -562,6 +823,10 @@ export default function RadhAICloneAdminPage() {
     setContentId("");
     setIsEditing(false);
     setParsedEdits(null);
+    setAddedToClone(false);
+    setShowBlogFlow(false);
+    setBlogPreview(null);
+    setPublishedBlog(null);
     setSubmitAttempted(false);
     setCompanyFileAttempted(false);
     setSubmitContentAttempted(false);
@@ -726,12 +991,23 @@ export default function RadhAICloneAdminPage() {
           )}
         </motion.section>
 
-        <section className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
-          <GlassCard>
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <Sparkles size={18} className="text-[#7DEBFF]" />
-              <h2 className="text-sm font-black sm:text-base">Radha's Input</h2>
-            </div>
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+          <div className="space-y-4">
+            <GlassCard>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={18} className="text-[#7DEBFF]" />
+                  <h2 className="text-sm font-black sm:text-base">Radha's Input</h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsInputExpanded((prev) => !prev)}
+                  className="inline-flex h-9 items-center justify-center rounded-full border border-[#5EDDF2]/25 bg-[#5EDDF2]/10 px-3 text-[11px] font-black text-[#DDFBFF] hover:border-[#5EDDF2]/50"
+                >
+                  {isInputExpanded ? "Collapse Input" : "Expand Input"}
+                </button>
+              </div>
 
             <PlatformPicker
               label="Please Select Platform"
@@ -763,7 +1039,11 @@ export default function RadhAICloneAdminPage() {
                   if (!submitPlatform) setSubmitContentAttempted(true);
                 }}
                 placeholder="Type content here or use the mic button. You can also attach files. Either text or file is mandatory."
-                className="min-h-[210px] w-full resize-none bg-transparent p-2 text-[13px] leading-6 text-white outline-none placeholder:text-[#78859A] sm:min-h-[300px] lg:min-h-[330px]"
+                className={`w-full resize-none bg-transparent p-2 text-[13px] leading-6 text-white outline-none placeholder:text-[#78859A] ${
+                  isInputExpanded
+                    ? "min-h-[520px] sm:min-h-[620px] lg:min-h-[720px]"
+                    : "min-h-[210px] sm:min-h-[300px] lg:min-h-[330px]"
+                }`}
               />
 
               <div className="flex flex-wrap items-center gap-2 border-t border-[#303A4E]/70 pt-3">
@@ -866,7 +1146,28 @@ export default function RadhAICloneAdminPage() {
                 </button>
               </div>
             )}
-          </GlassCard>
+            </GlassCard>
+
+            {generatedContent && !isSubmitting && (
+              <ContentBlogWorkflow
+                showBlogFlow={showBlogFlow}
+                addedToClone={addedToClone}
+                blogPreview={blogPreview}
+                publishedBlog={publishedBlog}
+                imageLoading={imageLoading}
+                formatLoading={formatLoading}
+                publishLoading={publishLoading}
+                canPublishBlog={canPublishBlog}
+                hasFormattedBlogPreview={hasFormattedBlogPreview}
+                onShowBlogFlow={() => setShowBlogFlow(true)}
+                onCreateImage={handleCreateImage}
+                onFormatBlog={() => handleFormatBlog(false)}
+                onPublishBlog={handlePublishBlog}
+                onChangePreview={setBlogPreview}
+                onReset={handleClear}
+              />
+            )}
+          </div>
 
           <GlassCard>
             <div ref={generatedOutputRef} className="scroll-mt-4">
@@ -916,36 +1217,34 @@ export default function RadhAICloneAdminPage() {
                               </span>
                             </p>
 
-                            {contentId && (
-                              <p className="mt-1 break-all text-[11px] text-[#9AA7BC]">
-                                Content ID: {contentId}
-                              </p>
-                            )}
+                            <p className="mt-1 text-[11px] text-[#9AA7BC]">
+                              Review, edit and add this generated content to clone.
+                            </p>
                           </div>
 
                           <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-nowrap">
                             <motion.button
                               {...buttonMotion}
                               type="button"
-                              onClick={() => handleApproveContent(true)}
-                              disabled={!canApprove}
+                              onClick={handleAddToClone}
+                              disabled={!canAddToClone || addedToClone}
                               className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-2 text-[11px] font-black text-black shadow-[0_12px_30px_rgba(34,211,238,0.2)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-xs"
                             >
                               <CheckCircle size={14} />
                               <span className="truncate">
-                                {isApproving ? "Approving..." : "Approve"}
+                                {isApproving ? "Adding..." : addedToClone ? "Added" : "Add to Clone"}
                               </span>
                             </motion.button>
 
                             <motion.button
                               {...buttonMotion}
                               type="button"
-                              onClick={() => handleApproveContent(false)}
-                              disabled={!canApprove}
+                              onClick={handleRejectContent}
+                              disabled={!canAddToClone}
                               className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-red-300/30 bg-red-500/10 px-2 text-[11px] font-bold text-red-200 disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-xs"
                             >
                               <X size={14} />
-                              <span className="truncate">Reject</span>
+                              <span className="truncate">Clear</span>
                             </motion.button>
 
                             {!isEditing ? (
@@ -1010,6 +1309,7 @@ export default function RadhAICloneAdminPage() {
                         />
                       )}
                     </div>
+
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1506,6 +1806,427 @@ function PolishedGeneratedView({ data }: { data: ParsedGeneratedContent }) {
     </div>
   );
 }
+
+
+function ContentBlogWorkflow({
+  showBlogFlow,
+  addedToClone,
+  blogPreview,
+  publishedBlog,
+  imageLoading,
+  formatLoading,
+  publishLoading,
+  canPublishBlog,
+  hasFormattedBlogPreview,
+  onShowBlogFlow,
+  onCreateImage,
+  onFormatBlog,
+  onPublishBlog,
+  onChangePreview,
+  onReset,
+}: {
+  showBlogFlow: boolean;
+  addedToClone: boolean;
+  blogPreview: BlogPayload | null;
+  publishedBlog: BlogPayload | null;
+  imageLoading: boolean;
+  formatLoading: boolean;
+  publishLoading: boolean;
+  canPublishBlog: boolean;
+  hasFormattedBlogPreview: boolean;
+  onShowBlogFlow: () => void;
+  onCreateImage: () => void;
+  onFormatBlog: () => void;
+  onPublishBlog: () => void;
+  onChangePreview: (data: BlogPayload) => void;
+  onReset: () => void;
+}) {
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (blogPreview && hasFormattedBlogPreview && !publishedBlog) {
+      setIsPreviewModalOpen(true);
+    }
+  }, [blogPreview, hasFormattedBlogPreview, publishedBlog]);
+
+  if (publishedBlog) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[24px] border border-lime-300/20 bg-lime-300/8 p-4"
+      >
+        <div className="mb-3 flex items-center gap-2 text-lime-100">
+          <CheckCircle size={18} />
+          <h3 className="text-sm font-black">Blog Published Successfully</h3>
+        </div>
+        <p className="text-xs leading-5 text-lime-50/80">
+          Blog Post ID: {publishedBlog.blogPostId || "POSTED SUCCESSFULLY"}
+        </p>
+        <button
+          type="button"
+          onClick={onReset}
+          className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-4 text-xs font-black text-black"
+        >
+          <RotateCcw size={14} />
+          Refresh / New Content
+        </button>
+      </motion.div>
+    );
+  }
+
+  if (!showBlogFlow) {
+    return (
+      <ActionQuestion
+        text={
+          addedToClone
+            ? "Content is added to clone. Do you want to create a blog now?"
+            : "Do you want to create a blog for this generated content?"
+        }
+        button="Yes, Open Blog Workflow"
+        loading={false}
+        onClick={onShowBlogFlow}
+      />
+    );
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[24px] border border-[#3A465B]/70 bg-gradient-to-br from-[#0B1020]/85 via-[#111A2B]/80 to-[#0B1020]/85 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.28)] sm:p-4"
+      >
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-black text-[#DDFBFF]">
+              <Newspaper size={16} />
+              Blog Posting Workflow
+            </p>
+            <p className="mt-1 text-xs text-[#9AA7BC]">
+              Left-side blog actions for quick CEO review. Preview opens in a clean modal.
+            </p>
+          </div>
+
+          <span
+            className={`w-fit rounded-full border px-3 py-1.5 text-[11px] font-black ${
+              addedToClone
+                ? "border-lime-300/25 bg-lime-300/10 text-lime-100"
+                : "border-yellow-300/25 bg-yellow-300/10 text-yellow-100"
+            }`}
+          >
+            {addedToClone ? "Clone: Added" : "Clone: Not Added"}
+          </span>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <WorkflowButton
+            label={blogPreview?.imageUrl ? "Image Ready" : "Create Image"}
+            icon={<Image size={15} />}
+            loading={imageLoading}
+            disabled={Boolean(blogPreview?.imageUrl)}
+            onClick={onCreateImage}
+          />
+          <WorkflowButton
+            label={hasFormattedBlogPreview ? "Refresh Blog Preview" : "Format Blog Preview"}
+            icon={<FileText size={15} />}
+            loading={formatLoading}
+            disabled={false}
+            onClick={onFormatBlog}
+          />
+          <WorkflowButton
+            label="Open Preview Modal"
+            icon={<Eye size={15} />}
+            loading={false}
+            disabled={!blogPreview}
+            onClick={() => setIsPreviewModalOpen(true)}
+          />
+          <WorkflowButton
+            label="Publish Blog"
+            icon={<Send size={15} />}
+            loading={publishLoading}
+            disabled={!canPublishBlog}
+            onClick={onPublishBlog}
+          />
+        </div>
+
+        {!blogPreview ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-[#3A465B]/70 bg-[#07111f]/70 p-4 text-center text-xs leading-5 text-[#9AA7BC]">
+            Click <span className="font-black text-[#DDFBFF]">Format Blog Preview</span> to prepare the blog. Image creation is optional.
+          </div>
+        ) : (
+          <div className="mt-4 rounded-2xl border border-[#5EDDF2]/20 bg-[#07111f]/70 p-3 sm:p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-[#DDFBFF]">
+                  {blogPreview.title || "Blog preview is ready"}
+                </p>
+                <p className="mt-1 text-xs text-[#9AA7BC]">
+                  Review/edit the blog inside modal, then publish from the top button.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPreviewModalOpen(true)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-4 text-xs font-black text-black shadow-[0_14px_34px_rgba(94,221,242,0.20)]"
+              >
+                <Eye size={15} />
+                View Blog Preview
+              </button>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      <BlogPreviewModal
+        open={isPreviewModalOpen && Boolean(blogPreview)}
+        blogPreview={blogPreview}
+        canPublishBlog={canPublishBlog}
+        publishLoading={publishLoading}
+        onClose={() => setIsPreviewModalOpen(false)}
+        onPublish={onPublishBlog}
+        onChangePreview={onChangePreview}
+      />
+    </>
+  );
+}
+
+function BlogPreviewModal({
+  open,
+  blogPreview,
+  canPublishBlog,
+  publishLoading,
+  onClose,
+  onPublish,
+  onChangePreview,
+}: {
+  open: boolean;
+  blogPreview: BlogPayload | null;
+  canPublishBlog: boolean;
+  publishLoading: boolean;
+  onClose: () => void;
+  onPublish: () => void;
+  onChangePreview: (data: BlogPayload) => void;
+}) {
+  if (!open || !blogPreview) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-3 py-4 backdrop-blur-md"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 28, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 18, scale: 0.96 }}
+          transition={{ duration: 0.22 }}
+          className="flex max-h-[92vh] w-full max-w-[1120px] flex-col overflow-hidden rounded-[28px] border border-[#3A465B]/80 bg-[#0B1020] shadow-[0_30px_120px_rgba(0,0,0,0.65)]"
+        >
+          <div className="sticky top-0 z-10 border-b border-[#303A4E]/80 bg-[#111A2B]/95 p-3 backdrop-blur-xl sm:p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="flex items-center gap-2 text-sm font-black text-[#DDFBFF] sm:text-base">
+                  <Newspaper size={17} />
+                  Blog Preview
+                </p>
+                <p className="mt-1 text-xs text-[#9AA7BC]">
+                  Check all fields, edit if needed, then publish.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={onPublish}
+                  disabled={!canPublishBlog || publishLoading}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-4 text-xs font-black text-black shadow-[0_14px_34px_rgba(94,221,242,0.20)] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {publishLoading ? <Loader2 className="animate-spin" size={15} /> : <Send size={15} />}
+                  {publishLoading ? "Publishing..." : "Publish Blog"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-[#3A465B]/80 bg-[#1A2230] px-4 text-xs font-black text-white"
+                >
+                  <X size={15} />
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto p-3 sm:p-4">
+            <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="space-y-3">
+                {blogPreview.imageUrl ? (
+                  <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#07111f] shadow-[0_18px_45px_rgba(0,0,0,0.28)]">
+                    <img
+                      src={getImageUrl(blogPreview.imageUrl)}
+                      alt="Generated blog"
+                      className="max-h-[420px] w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-[#3A465B]/70 bg-[#07111f]/70 p-5 text-center text-xs text-[#9AA7BC]">
+                    Image not generated yet. You can still publish a text-only blog after preview fields are ready.
+                  </div>
+                )}
+
+                <div className="rounded-3xl border border-[#303A4E]/70 bg-[#111A2B]/80 p-4">
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#9AA7BC]">
+                    Preview Status
+                  </p>
+                  <div className="grid gap-2 text-xs text-[#C4CEDD]">
+                    <p>Title: <span className="font-bold text-white">{blogPreview.title ? "Ready" : "Missing"}</span></p>
+                    <p>Description: <span className="font-bold text-white">{blogPreview.description ? "Ready" : "Missing"}</span></p>
+                    <p>Captions: <span className="font-bold text-white">{blogPreview.socialMediaCaptions ? "Ready" : "Missing"}</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <EditableBlogPreview data={blogPreview} onChange={onChangePreview} />
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function WorkflowButton({
+  label,
+  icon,
+  loading,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  loading?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      whileHover={!disabled ? { y: -2, scale: 1.01 } : undefined}
+      whileTap={!disabled ? { scale: 0.97 } : undefined}
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-[#5EDDF2]/20 bg-[#5EDDF2]/10 px-3 text-xs font-black text-[#DDFBFF] disabled:cursor-not-allowed disabled:opacity-45"
+    >
+      {loading ? <Loader2 className="animate-spin" size={15} /> : icon}
+      {loading ? "Processing..." : label}
+    </motion.button>
+  );
+}
+
+function ActionQuestion({
+  text,
+  button,
+  loading,
+  onClick,
+}: {
+  text: string;
+  button: string;
+  loading?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div className="rounded-[24px] border border-[#5EDDF2]/25 bg-gradient-to-br from-[#5EDDF2]/12 via-[#101827]/80 to-[#B6F269]/10 p-4 shadow-[0_16px_40px_rgba(94,221,242,0.10)]">
+      <p className="mb-3 text-sm font-bold text-cyan-50">{text}</p>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={loading}
+        className="inline-flex h-10 items-center gap-2 rounded-2xl bg-gradient-to-br from-[#B6F269] via-[#75E6C9] to-[#5EDDF2] px-4 text-xs font-black text-black disabled:opacity-50"
+      >
+        {loading ? <Loader2 className="animate-spin" size={15} /> : <Newspaper size={15} />}
+        {button}
+      </button>
+    </div>
+  );
+}
+
+function EditableBlogPreview({
+  data,
+  onChange,
+}: {
+  data: BlogPayload;
+  onChange: (data: BlogPayload) => void;
+}) {
+  const update = (key: keyof BlogPayload, value: string) =>
+    onChange({ ...data, [key]: value });
+
+  const titleValue = data.title?.trim() || "radhAI Generated Blog";
+  const descriptionValue =
+    data.description?.trim() || "Blog content generated from radhAI admin input.";
+  const captionsValue =
+    data.socialMediaCaptions?.trim() || "Ready for social media publishing.";
+
+  return (
+    <div className="space-y-3">
+      <BlogInput label="Blog Title" value={titleValue} onChange={(v) => update("title", v)} />
+      <BlogTextarea label="Description" value={descriptionValue} onChange={(v) => update("description", v)} />
+      <BlogTextarea label="Social Media Captions" value={captionsValue} onChange={(v) => update("socialMediaCaptions", v)} />
+      <BlogInput label="Added By" value={data.addedBy || "Radha"} onChange={(v) => update("addedBy", v)} />
+      <BlogInput label="Image URL" value={getImageUrl(data.imageUrl)} onChange={(v) => update("imageUrl", v)} />
+    </div>
+  );
+}
+
+function BlogInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9AA7BC]">
+        {label}
+      </label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 w-full rounded-xl border border-[#303A4E]/70 bg-[#07111f] px-3 text-xs text-white outline-none focus:border-[#5EDDF2]/50"
+      />
+    </div>
+  );
+}
+
+function BlogTextarea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9AA7BC]">
+        {label}
+      </label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={4}
+        className="w-full resize-y rounded-xl border border-[#303A4E]/70 bg-[#07111f] p-3 text-xs leading-5 text-white outline-none focus:border-[#5EDDF2]/50"
+      />
+    </div>
+  );
+}
+
 
 function GlassCard({ children }: { children: React.ReactNode }) {
   return (

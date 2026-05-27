@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 
 import web1 from "../assets/img/web1.png";
 import web2 from "../assets/img/web2.png";
 import web3 from "../assets/img/web3.png";
+import web31 from "../assets/img/web3.11.png";
 import web4 from "../assets/img/web4.png";
 import web5 from "../assets/img/web5.png";
 
@@ -16,18 +15,6 @@ import line2 from "../assets/img/line2.png";
 import line3 from "../assets/img/line3.png";
 import line4 from "../assets/img/line4.png";
 
-import hiringImg from "../assets/img/wearehiring2.png";
-
-type PreviewCardData = {
-  title: string;
-  logo: string;
-  redirectUrl: string;
-  theme: "gold" | "loan";
-  bannerPrefix: string;
-  bannerHighlight: string;
-  features: string[];
-};
-
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   show: { opacity: 1, y: 0 },
@@ -35,219 +22,122 @@ const fadeUp = {
 
 const Whiteboardtheme: React.FC = () => {
   const navigate = useNavigate();
-  const [previewCard, setPreviewCard] = useState<PreviewCardData | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant" as ScrollBehavior,
-    });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, []);
 
-  const closePreview = () => setPreviewCard(null);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % 6);
+    }, 2800);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCardClick = (
-    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad",
+    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad" | "oxybricks"
   ) => {
     if (type === "studyabroad") return navigate("/studyabroad");
     if (type === "bharat") return navigate("/bharath-aistore");
     if (type === "jobs") return navigate("/jobspremierleague");
     if (type === "gold") return navigate("/oxygold");
     if (type === "loans") return navigate("/loansandinvest");
+    if (type === "oxybricks") return navigate("/fpl");
   };
 
-  const sideCards = [
+  const cards = [
     {
       key: "loans",
-      title: "Loans &\nInvestments",
+      league: "IP2PL",
       image: web1,
-      titleClass: "text-[#6B35C7]",
+      color: "#6B35C7",
+      shadow: "drop-shadow(0 10px 10px rgba(107,53,199,0.25))",
+      hoverShadow: "drop-shadow(0 14px 14px rgba(107,53,199,0.34))",
       onClick: () => handleCardClick("loans"),
-      hoverShadow: "drop-shadow-[0_10px_22px_rgba(107,53,199,0.22)]",
     },
     {
       key: "jobs",
-      title: "Our Jobs",
+      league: "JPL",
       image: web2,
-      titleClass: "text-[#0B4697]",
+      color: "#0B4697",
+      shadow: "drop-shadow(0 10px 10px rgba(11,70,151,0.25))",
+      hoverShadow: "drop-shadow(0 14px 14px rgba(11,70,151,0.34))",
       onClick: () => handleCardClick("jobs"),
-      hoverShadow: "drop-shadow-[0_10px_22px_rgba(11,70,151,0.22)]",
+    },
+    {
+      key: "studyabroad",
+      league: "SAPL",
+      image: web3,
+      color: "#D71D8E",
+      shadow: "drop-shadow(0 10px 10px rgba(215,29,142,0.25))",
+      hoverShadow: "drop-shadow(0 14px 14px rgba(215,29,142,0.34))",
+      onClick: () => handleCardClick("studyabroad"),
+      big: true,
+    },
+    {
+      key: "oxybricks",
+      league: "FPL",
+      image: web31,
+      color: "#6B35C7",
+      shadow: "drop-shadow(0 10px 10px rgba(107,53,199,0.25))",
+      hoverShadow: "drop-shadow(0 14px 14px rgba(107,53,199,0.34))",
+      onClick: () => handleCardClick("oxybricks"),
+      big: true,
     },
     {
       key: "gold",
-      title: "Gold",
+      league: "GPL",
       image: web4,
-      titleClass: "text-[#C48A00]",
+      color: "#C48A00",
+      shadow: "drop-shadow(0 10px 10px rgba(196,138,0,0.25))",
+      hoverShadow: "drop-shadow(0 14px 14px rgba(196,138,0,0.34))",
       onClick: () => handleCardClick("gold"),
-      hoverShadow: "drop-shadow-[0_10px_22px_rgba(196,138,0,0.24)]",
     },
     {
       key: "bharat",
-      title: "Bharat\nAI Store",
+      league: "AIPL",
       image: web5,
-      titleClass: "text-[#5A5A5A]",
+      color: "#5A5A5A",
+      shadow: "drop-shadow(0 10px 10px rgba(90,90,90,0.22))",
+      hoverShadow: "drop-shadow(0 14px 14px rgba(90,90,90,0.30))",
       onClick: () => handleCardClick("bharat"),
-      hoverShadow: "drop-shadow-[0_10px_22px_rgba(90,90,90,0.18)]",
     },
   ];
 
   return (
     <section className="relative w-full overflow-hidden bg-white text-[#1a1a1a]">
-      <div className="pointer-events-none absolute inset-0" />
-
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.22]"
+        className="pointer-events-none absolute inset-0 opacity-[0.18]"
         style={{
           backgroundImage: `
-            linear-gradient(30deg, rgba(170,170,170,0.22) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.18) 87.5%, rgba(170,170,170,0.18)),
-            linear-gradient(150deg, rgba(170,170,170,0.22) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.18) 87.5%, rgba(170,170,170,0.18)),
-            linear-gradient(90deg, rgba(170,170,170,0.08) 2%, transparent 2.5%, transparent 97%, rgba(170,170,170,0.08) 97.5%, rgba(170,170,170,0.08))
+            linear-gradient(30deg, rgba(170,170,170,0.22) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.18) 87.5%),
+            linear-gradient(150deg, rgba(170,170,170,0.22) 12%, transparent 12.5%, transparent 87%, rgba(170,170,170,0.18) 87.5%),
+            linear-gradient(90deg, rgba(170,170,170,0.08) 2%, transparent 2.5%, transparent 97%, rgba(170,170,170,0.08) 97.5%)
           `,
           backgroundSize: "42px 72px",
           backgroundPosition: "0 0, 0 0, 21px 36px",
         }}
       />
 
-      {/* <div className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:radial-gradient(circle,rgba(0,0,0,0.12)_1px,transparent_1px)] [background-size:24px_24px]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[180px] bg-gradient-to-b from-white via-white/80 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[110px] bg-gradient-to-t from-white via-white/80 to-transparent" />
+      <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-[#6B35C7]/16 blur-[90px]" />
+      <div className="pointer-events-none absolute right-0 top-20 h-80 w-80 rounded-full bg-[#D71D8E]/14 blur-[100px]" />
+      <div className="pointer-events-none absolute bottom-10 left-1/3 h-72 w-72 rounded-full bg-[#C48A00]/16 blur-[95px]" />
+      <div className="pointer-events-none absolute bottom-24 right-1/4 h-72 w-72 rounded-full bg-[#1F9D38]/12 blur-[100px]" />
 
-      <div className="pointer-events-none absolute -left-10 top-0 h-28 w-28 rounded-full bg-[#84B6FF]/40 blur-3xl md:h-36 md:w-36" />
-      <div className="pointer-events-none absolute right-4 top-[130px] h-36 w-36 rounded-full bg-[#FF67C0]/28 blur-3xl md:h-56 md:w-56" />
-      <div className="pointer-events-none absolute left-10 bottom-10 h-24 w-24 rounded-full bg-[#FFD963]/28 blur-3xl md:h-36 md:w-36" />
-      <div className="pointer-events-none absolute right-[33%] top-[34%] h-20 w-20 rounded-full bg-[#B86FFF]/18 blur-3xl md:h-28 md:w-28" /> */}
-
-      <AnimatePresence>
-        {previewCard && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/35 px-3 sm:px-4"
-          >
-            <motion.div
-              initial={{ scale: 0.96, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.98, opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              className={`relative w-full max-w-[720px] rounded-[24px] px-4 py-5 sm:px-7 sm:py-7 ${
-                previewCard.theme === "gold" ? "bg-[#f5eedf]" : "bg-[#e7eef6]"
-              }`}
-            >
-              <button
-                onClick={closePreview}
-                className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f5f5] text-[28px] font-bold text-[#111] shadow-sm sm:right-4 sm:top-4"
-                type="button"
-              >
-                ×
-              </button>
-
-              <div className="flex justify-center pt-3 sm:pt-1">
-                <img
-                  src={previewCard.logo}
-                  alt={previewCard.title}
-                  className="h-[56px] object-contain sm:h-[72px] md:h-[82px]"
-                />
-              </div>
-
-              <div
-                className={`mt-5 rounded-full px-4 py-3 text-center text-[14px] font-medium leading-tight sm:px-6 sm:text-[18px] md:text-[20px] ${
-                  previewCard.theme === "gold"
-                    ? "bg-[#b8860b] text-white"
-                    : "bg-[#2c63b5] text-[#ffd91f]"
-                }`}
-              >
-                <span className="mr-2 font-bold text-white">
-                  {previewCard.bannerPrefix}
-                </span>
-                <span>{previewCard.bannerHighlight}</span>
-              </div>
-
-              <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 text-[14px] text-[#4a4a4a] sm:mt-7 sm:grid-cols-2 sm:text-[16px] md:text-[18px]">
-                {previewCard.features.map((item, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <span className="mt-[1px] text-[18px] font-bold text-[#2ca24c] sm:text-[22px]">
-                      ✔
-                    </span>
-                    <span className="leading-snug">{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-7 flex justify-center">
-                <button
-                  onClick={() => {
-                    window.open(previewCard.redirectUrl, "_blank");
-                    closePreview();
-                  }}
-                  className={`rounded-full px-8 py-3 text-[16px] font-semibold text-white shadow-[0_8px_22px_rgba(0,0,0,0.15)] transition duration-200 hover:scale-[1.03] sm:px-10 sm:text-[18px] ${
-                    previewCard.theme === "gold"
-                      ? "bg-[#b8860b] hover:bg-[#a07609]"
-                      : "bg-[#2c63b5] hover:bg-[#1f4f9a]"
-                  }`}
-                  type="button"
-                >
-                  Open Now
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-6 pt-6 sm:px-6 sm:pb-8 sm:pt-8 md:px-8 lg:px-10 lg:pb-10 lg:pt-10 xl:px-12 xl:pb-12 xl:pt-10">
-        <div className="mx-auto w-full max-w-[1320px]">
+      <div className="relative z-10 mx-auto max-w-[1540px] px-3 pb-5 pt-6 sm:px-6 sm:pb-7 sm:pt-8 md:px-8 lg:px-10 lg:pb-8 lg:pt-10 xl:px-12">
+        <div className="mx-auto w-full max-w-[1440px]">
           <div className="relative mx-auto max-w-[1320px] text-center">
-            <motion.h5 className="mx-auto max-w-[1320px] text-center text-[26px] leading-[1.1] tracking-[-0.03em] sm:text-[34px] md:text-[44px] lg:text-[56px] xl:text-[62px]">
+            <motion.h5 className="mx-auto max-w-[1320px] text-center text-[28px] leading-[1.08] tracking-[-0.04em] sm:text-[38px] md:text-[48px] lg:text-[58px] xl:text-[64px]">
               <span className="block font-normal text-[#5E5E5E]">
                 One Responsible{" "}
-                <motion.span
-                  animate={{ scale: [1, 1.08, 1], y: [0, -2, 0] }}
-                  transition={{
-                    duration: 0.9,
-                    repeat: Infinity,
-                    repeatDelay: 10,
-                    ease: "easeInOut",
-                  }}
-                  className="inline-block font-bold text-[#5543C8] will-change-transform"
-                  style={{ transformOrigin: "center" }}
-                >
-                  AI
-                </motion.span>{" "}
-                Platform
+                <span className="font-bold text-[#5543C8]">AI</span> Platform
               </span>
 
               <span className="mt-2 block font-normal text-[#5E5E5E]">
-                <motion.span
-                  animate={{ scale: [1, 1.08, 1], y: [0, -2, 0] }}
-                  transition={{
-                    duration: 0.9,
-                    repeat: Infinity,
-                    repeatDelay: 10,
-                    delay: 1.8,
-                    ease: "easeInOut",
-                  }}
-                  className="inline-block font-bold text-[#D71D8E] will-change-transform"
-                  style={{ transformOrigin: "center" }}
-                >
-                  Multiple
-                </motion.span>{" "}
-                Premier{" "}
-                <motion.span
-                  animate={{ scale: [1, 1.08, 1], y: [0, -2, 0] }}
-                  transition={{
-                    duration: 0.9,
-                    repeat: Infinity,
-                    repeatDelay: 10,
-                    delay: 3.6,
-                    ease: "easeInOut",
-                  }}
-                  className="inline-block font-bold text-[#1F9D38] will-change-transform"
-                  style={{ transformOrigin: "center" }}
-                >
-                  Leagues
-                </motion.span>
+                <span className="font-bold text-[#D71D8E]">Multiple</span>{" "}
+                Premier <span className="font-bold text-[#1F9D38]">Leagues</span>
               </span>
             </motion.h5>
 
@@ -256,7 +146,7 @@ const Whiteboardtheme: React.FC = () => {
               alt="arrow"
               className="pointer-events-none absolute hidden object-contain lg:block"
               style={{
-                left: "17%",
+                left: "14%",
                 top: "120%",
                 width: "clamp(90px, 7.5vw, 140px)",
                 transform: "translateY(10px) rotate(-8deg)",
@@ -264,192 +154,77 @@ const Whiteboardtheme: React.FC = () => {
             />
           </div>
 
-          <div
-            className="mt-10 hidden md:grid lg:mt-12 xl:mt-16"
-            style={{
-              gridTemplateColumns: "1fr 1fr 1.55fr 1fr 1fr",
-              gap: "clamp(12px, 1.4vw, 22px)",
-              alignItems: "end",
-            }}
-          >
-            <div className="flex h-full items-end justify-center">
-              <button
-                onClick={() => handleCardClick("loans")}
-                className="group flex w-full flex-col items-center justify-end"
-                type="button"
-              >
-                <div className="flex h-[270px] items-end justify-center">
-                  <img
-                    src={web1}
-                    alt="Loans & Investments"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3 className="whitespace-pre-line text-center text-[22px] font-medium leading-[1.12] text-[#6B35C7]">
-                    {"Loans &\nInvestments"}
-                  </h3>
-                </div>
-              </button>
-            </div>
+          <div className="mt-8 grid grid-cols-3 items-end gap-x-1 gap-y-4 sm:mt-9 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:mt-12 md:grid-cols-6 md:gap-x-2 lg:gap-x-3 xl:gap-x-4">
+            {cards.map((card, index) => {
+              const isActive = activeIndex === index;
 
-            <div className="flex h-full items-end justify-center">
-              <button
-                onClick={() => handleCardClick("jobs")}
-                className="group flex w-full flex-col items-center justify-end"
-                type="button"
-              >
-                <div className="flex h-[270px] items-end justify-center">
-                  <img
-                    src={web2}
-                    alt="Our Jobs"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3 className="text-center text-[22px] font-medium leading-[1.12] text-[#0B4697]">
-                    Our Jobs
-                  </h3>
-                </div>
-              </button>
-            </div>
-
-            <div className="flex h-full items-end justify-center">
-              <button
-                onClick={() => handleCardClick("studyabroad")}
-                className="group flex w-full cursor-pointer flex-col items-center justify-end border-0 bg-transparent p-0"
-                type="button"
-                aria-label="Open Study Abroad"
-              >
-                <div className="flex h-[340px] items-end justify-center">
-                  <img
-                    src={web3}
-                    alt="STUDY ABROAD"
-                    className="w-full max-w-[400px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_24px_rgba(196,40,137,0.18)]"
-                  />
-                </div>
-                <div className="mt-4 h-[38px]" />
-              </button>
-            </div>
-
-            <div className="flex h-full items-end justify-center">
-              <button
-                onClick={() => handleCardClick("gold")}
-                className="group flex w-full flex-col items-center justify-end"
-                type="button"
-              >
-                <div className="flex h-[270px] items-end justify-center">
-                  <img
-                    src={web4}
-                    alt="Gold"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3 className="text-center text-[22px] font-medium leading-[1.12] text-[#C48A00]">
-                    Gold
-                  </h3>
-                </div>
-              </button>
-            </div>
-
-            <div className="flex h-full items-end justify-center">
-              <button
-                onClick={() => handleCardClick("bharat")}
-                className="group flex w-full flex-col items-center justify-end"
-                type="button"
-              >
-                <div className="flex h-[270px] items-end justify-center">
-                  <img
-                    src={web5}
-                    alt="Bharat AI Store"
-                    className="w-full max-w-[225px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="mt-4 flex h-[64px] items-start justify-center">
-                  <h3 className="whitespace-pre-line text-center text-[22px] font-medium leading-[1.12] text-[#5A5A5A]">
-                    {"Bharat\nAI Store"}
-                  </h3>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-10 px-3 pb-4 md:hidden">
-            <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-x-6">
-              {sideCards
-                .filter((card) => card.key === "loans" || card.key === "jobs")
-                .map((card) => (
-                  <button
-                    key={card.key}
-                    onClick={card.onClick}
-                    className="group flex flex-col items-center justify-center"
-                    type="button"
+              return (
+                <button
+                  key={card.key}
+                  onClick={card.onClick}
+                  className="group flex w-full cursor-pointer flex-col items-center justify-end border-0 bg-transparent p-0"
+                  type="button"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: 18, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{
+                      duration: 0.45,
+                      delay: index * 0.08,
+                      ease: "easeOut",
+                    }}
+                    className={`relative flex w-full items-end justify-center rounded-[24px] ${
+                      card.big
+                        ? "h-[142px] sm:h-[246px] md:h-[350px]"
+                        : "h-[128px] sm:h-[208px] md:h-[270px]"
+                    }`}
                   >
-                    <div className="flex h-[165px] items-end justify-center rounded-[22px] px-2">
-                      <img
-                        src={card.image}
-                        alt={card.title}
-                        className={`w-full max-w-[145px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:brightness-[1.02] ${card.hoverShadow}`}
-                      />
-                    </div>
+                    <motion.img
+                      src={card.image}
+                      alt={card.league}
+                      className={`relative z-10 w-full object-contain ${
+                        card.big
+                          ? "max-w-[118px] sm:max-w-[232px] md:max-w-[305px]"
+                          : "max-w-[106px] sm:max-w-[172px] md:max-w-[224px]"
+                      }`}
+                      style={{
+                        filter: isActive ? card.hoverShadow : card.shadow,
+                      }}
+                      animate={{
+                        scale: isActive ? 1.08 : 1,
+                        y: isActive ? -12 : 0,
+                      }}
+                      transition={{
+                        duration: 0.65,
+                        ease: "easeInOut",
+                      }}
+                      whileHover={{
+                        scale: 1.18,
+                        y: -12,
+                        filter: card.hoverShadow,
+                        transition: { duration: 0.25 },
+                      }}
+                    />
+                  </motion.div>
 
-                    <div className="mt-4 flex min-h-[52px] items-start justify-center px-1">
-                      <h3
-                        className={`whitespace-pre-line text-center font-medium leading-[1.15] tracking-[-0.01em] ${card.titleClass}`}
-                        style={{ fontSize: "clamp(15px, 4vw, 20px)" }}
-                      >
-                        {card.key === "jobs" ? "JPL" : card.title}
-                      </h3>
-                    </div>
-                  </button>
-                ))}
-            </div>
-
-            <div className="my-12 flex justify-center px-2">
-              <button
-                onClick={() => handleCardClick("studyabroad")}
-                className="group flex w-full max-w-[280px] cursor-pointer flex-col items-center justify-center border-0 bg-transparent p-0 active:scale-[0.98]"
-                type="button"
-                aria-label="Open Study Abroad"
-              >
-                <img
-                  src={web3}
-                  alt="Study Abroad"
-                  className="w-full max-w-[240px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:brightness-[1.02] group-hover:drop-shadow-[0_10px_24px_rgba(196,40,137,0.18)]"
-                />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-x-6">
-              {sideCards
-                .filter((card) => card.key === "gold" || card.key === "bharat")
-                .map((card) => (
-                  <button
-                    key={card.key}
-                    onClick={card.onClick}
-                    className="group flex flex-col items-center justify-center"
-                    type="button"
+                  <motion.div
+                    animate={{
+                      scale: isActive ? 1.08 : 1,
+                      opacity: isActive ? 1 : 0.9,
+                    }}
+                    transition={{ duration: 0.35 }}
+                    className="mt-1 flex h-[26px] items-start justify-center px-1 sm:mt-2 sm:h-[42px] md:h-[48px]"
                   >
-                    <div className="flex h-[165px] items-end justify-center rounded-[22px] px-2">
-                      <img
-                        src={card.image}
-                        alt={card.title}
-                        className={`w-full max-w-[145px] object-contain transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:brightness-[1.02] ${card.hoverShadow}`}
-                      />
-                    </div>
-
-                    <div className="mt-4 flex min-h-[52px] items-start justify-center px-1">
-                      <h3
-                        className={`whitespace-pre-line text-center font-medium leading-[1.15] tracking-[-0.01em] ${card.titleClass}`}
-                        style={{ fontSize: "clamp(15px, 4vw, 20px)" }}
-                      >
-                        {card.title}
-                      </h3>
-                    </div>
-                  </button>
-                ))}
-            </div>
+                    <h3
+                      className="text-center text-[14px] font-bold leading-[1.1] sm:text-[19px] md:text-[21px]"
+                      style={{ color: card.color }}
+                    >
+                      {card.league}
+                    </h3>
+                  </motion.div>
+                </button>
+              );
+            })}
           </div>
 
           <motion.div
@@ -457,7 +232,7 @@ const Whiteboardtheme: React.FC = () => {
             initial="hidden"
             animate="show"
             transition={{ delay: 0.45 }}
-            className="mt-16 w-full text-center sm:mt-10 lg:mt-16"
+            className="mt-7 w-full text-center sm:mt-8 lg:mt-12"
           >
             <div
               className="mx-auto flex max-w-[1500px] flex-wrap items-baseline justify-center text-[#4c4c4c]"
@@ -469,7 +244,6 @@ const Whiteboardtheme: React.FC = () => {
               }}
             >
               <span>The</span>
-
               <span
                 className="inline-flex items-center rounded-[6px] bg-[#5543C8] font-bold text-white"
                 style={{
@@ -480,85 +254,33 @@ const Whiteboardtheme: React.FC = () => {
               >
                 AI
               </span>
-
               <span>Digital Ecosystem for</span>
 
               <span className="inline-flex flex-col items-center leading-none text-[#1565C9]">
                 <span>Careers,</span>
-                <img
-                  src={line1}
-                  alt=""
-                  style={{
-                    marginTop: 2,
-                    height: "clamp(4px,0.45vw,6px)",
-                    width: "100%",
-                    objectFit: "fill",
-                  }}
-                />
+                <img src={line1} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
               </span>
 
               <span className="inline-flex flex-col items-center leading-none text-[#1F9D38]">
                 <span>Commerce,</span>
-                <img
-                  src={line2}
-                  alt=""
-                  style={{
-                    marginTop: 2,
-                    height: "clamp(4px,0.45vw,6px)",
-                    width: "100%",
-                    objectFit: "fill",
-                  }}
-                />
+                <img src={line2} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
               </span>
 
               <span className="inline-flex flex-col items-center leading-none text-[#E1A517]">
                 <span>Capital</span>
-                <img
-                  src={line3}
-                  alt=""
-                  style={{
-                    marginTop: 2,
-                    height: "clamp(4px,0.45vw,6px)",
-                    width: "100%",
-                    objectFit: "fill",
-                  }}
-                />
+                <img src={line3} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
               </span>
 
               <span>&amp;</span>
 
               <span className="inline-flex flex-col items-center leading-none text-[#D71D8E]">
                 <span>Global Capability Centers.</span>
-                <img
-                  src={line4}
-                  alt=""
-                  style={{
-                    marginTop: 2,
-                    height: "clamp(4px,0.45vw,6px)",
-                    width: "100%",
-                    objectFit: "fill",
-                  }}
-                />
+                <img src={line4} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
               </span>
             </div>
           </motion.div>
         </div>
       </div>
-
-      {/* <div className="fixed right-16 top-[150px] z-[998] sm:right-8 md:right-20 md:top-[175px] lg:right-24 lg:top-[190px]">
-        <button
-          onClick={() => navigate("/may2Interview")}
-          className="group flex flex-col items-center"
-          type="button"
-          aria-label="Open We Are Hiring"
-        >
-          <img
-            src={hiringImg}
-            alt="We Are Hiring"
-            className="w-[85px] object-contain drop-shadow-2xl transition duration-300 group-hover:-translate-y-1 group-hover:scale-110 sm:w-[100px] md:w-[115px] lg:w-[125px]"
-          />
-        </button>
-      </div> */}
     </section>
   );
 };

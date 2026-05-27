@@ -1,5 +1,5 @@
 // /src/AdminTasks.tsx
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Table,
   Image,
@@ -12,7 +12,9 @@ import {
   Space,
   Empty,
   Select,
+  
 } from "antd";
+import { Row, Col } from "antd";
 import Swal from "sweetalert2";
 import { SearchOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { employeeApi } from "../utils/axiosInstances";
@@ -36,7 +38,7 @@ interface Task {
   taskAssignTo: string[] | string;
   taskName: string;
   taskAssignedDate: string;
-  taskCompleteDate: string;
+  taskCompleteDate: string | null;
   tastCreatedDate?: string;
 }
 
@@ -75,6 +77,7 @@ const STATUS_CONFIG: Record<
 
 const AdminTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [allSearchTasks, setAllSearchTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -90,11 +93,43 @@ const AdminTasks: React.FC = () => {
   const [completedCount, setCompletedCount] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
-  const formatDate = (dateString: string) => {
+  const isSearchMode = searchText.trim().length > 0;
+
+  const normalizeTasks = (list: any[]): Task[] => {
+    return (Array.isArray(list) ? list : []).filter((task: any) => {
+      const assigned = task?.taskAssignTo;
+      const hasValidAssignee = Array.isArray(assigned)
+        ? assigned.some((a: string) => a && String(a).trim() !== "")
+        : typeof assigned === "string" && assigned.trim() !== "";
+
+      const hasValidTaskName =
+        typeof task?.taskName === "string" && task.taskName.trim() !== "";
+
+      return task?.id && hasValidAssignee && hasValidTaskName;
+    });
+  };
+
+  const filterByStatus = (list: Task[], status: string) => {
+    if (status.toUpperCase() === "ALL") return list;
+    return list.filter(
+      (task) => task.status?.toUpperCase() === status.toUpperCase(),
+    );
+  };
+
+  const updateStatusCounts = (list: Task[]) => {
+    setAssignedCount(
+      list.filter((task) => task.status?.toUpperCase() === "ASSIGNED").length,
+    );
+    setCompletedCount(
+      list.filter((task) => task.status?.toUpperCase() === "COMPLETED").length,
+    );
+  };
+
+  const formatDate = (dateString?: string | null) => {
     if (!dateString) return "";
     try {
       const date = new Date(dateString);
-      if (isNaN(date as any)) return dateString;
+      if (isNaN(date.getTime())) return dateString;
       return date.toLocaleDateString("en-IN", {
         year: "numeric",
         month: "short",
@@ -114,60 +149,66 @@ const AdminTasks: React.FC = () => {
       search: string = searchText,
     ) => {
       setLoading(true);
+
       try {
-        const params: any = { page: page - 1, size };
+        const cleanSearch = search.trim();
+
+        if (cleanSearch) {
+          /*
+            Search API:
+            GET /api/ai-service/agent/messages?search=may
+
+            This API returns a direct array, so pagination is handled on frontend
+            for a smooth user experience.
+          */
+          const response = await employeeApi.get(
+            `${BASE_URL}/ai-service/agent/messages`,
+            { params: { search: cleanSearch } },
+          );
+
+          const searchedTasks = normalizeTasks(response.data || []);
+          updateStatusCounts(searchedTasks);
+
+          const statusFilteredTasks = filterByStatus(searchedTasks, status);
+          const startIndex = (page - 1) * size;
+          const endIndex = startIndex + size;
+
+          setAllSearchTasks(statusFilteredTasks);
+          setTasks(statusFilteredTasks.slice(startIndex, endIndex));
+          setTotalElements(statusFilteredTasks.length);
+          return;
+        }
 
         const response = await employeeApi.get(
           `${BASE_URL}/ai-service/agent/getAllMessagesFromGroup`,
-          { params },
+          {
+            params: {
+              page: page - 1,
+              size,
+            },
+          },
         );
 
         const data = response.data;
-        const allContent: Task[] = (data.content || []).filter((task: any) => {
-          const assigned = task.taskAssignTo;
-          const hasValidAssignee = Array.isArray(assigned)
-            ? assigned.some((a: string) => a && a.trim() !== "")
-            : typeof assigned === "string" && assigned.trim() !== "";
-          const hasValidTaskName =
-            typeof task.taskName === "string" && task.taskName.trim() !== "";
+        const pageTasks = normalizeTasks(data?.content || []);
 
-          const matchesSearch =
-            !search.trim() ||
-            task.taskName?.toLowerCase().includes(search.toLowerCase()) ||
-            task.taskAssignBy?.toLowerCase().includes(search.toLowerCase()) ||
-            (Array.isArray(task.taskAssignTo)
-              ? task.taskAssignTo.some((name: string) =>
-                  name?.toLowerCase().includes(search.toLowerCase()),
-                )
-              : task.taskAssignTo
-                  ?.toLowerCase()
-                  .includes(search.toLowerCase()));
+        updateStatusCounts(pageTasks);
 
-          return hasValidAssignee && hasValidTaskName && matchesSearch;
-        });
+        const filteredContent = filterByStatus(pageTasks, status);
 
-        const assignedTasks = allContent.filter(
-          (task: any) => task.status?.toUpperCase() === "ASSIGNED",
-        );
-        const completedTasks = allContent.filter(
-          (task: any) => task.status?.toUpperCase() === "COMPLETED",
-        );
-
-        setAssignedCount(assignedTasks.length);
-        setCompletedCount(completedTasks.length);
-
-        const filteredContent =
-          status.toUpperCase() === "ALL"
-            ? allContent
-            : allContent.filter(
-                (task: any) =>
-                  task.status?.toUpperCase() === status.toUpperCase(),
-              );
-
+        setAllSearchTasks([]);
         setTasks(filteredContent);
-        setTotalElements(data.totalElements || 0);
+        setTotalElements(data?.totalElements || filteredContent.length || 0);
       } catch (error) {
-        Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "error",
+          title: "Failed to fetch tasks",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
       } finally {
         setLoading(false);
       }
@@ -176,7 +217,11 @@ const AdminTasks: React.FC = () => {
   );
 
   useEffect(() => {
-    const timer = setTimeout(() => setSearchText(searchInput), 400);
+    const timer = setTimeout(() => {
+      setSearchText(searchInput.trim());
+      setCurrentPage(1);
+    }, 450);
+
     return () => clearTimeout(timer);
   }, [searchInput]);
 
@@ -186,7 +231,14 @@ const AdminTasks: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, searchText]);
+  }, [statusFilter]);
+
+  const handleResetFilters = () => {
+    setSearchInput("");
+    setSearchText("");
+    setStatusFilter("ALL");
+    setCurrentPage(1);
+  };
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     try {
@@ -194,18 +246,43 @@ const AdminTasks: React.FC = () => {
         `${BASE_URL}/ai-service/agent/taskUpdate?id=${id}&status=${newStatus}`,
         {},
       );
-      Swal.fire({ toast: true, position: "top-end", icon: "success", title: `Task marked as ${newStatus.toLowerCase()}`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: `Task marked as ${newStatus.toLowerCase()}`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
       await fetchTasks(currentPage, pageSize, statusFilter, searchText);
     } catch {
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to update task status", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Failed to update task status",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
   };
 
   const handleCommentsUpdate = async () => {
     if (!comments.trim()) {
-      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please enter a comment before submitting.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "warning",
+        title: "Please enter a comment before submitting.",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
       return;
     }
+
     try {
       await employeeApi.post(
         `${BASE_URL}/ai-service/agent/userAndRadhaSirComments`,
@@ -215,13 +292,31 @@ const AdminTasks: React.FC = () => {
           commentsBy: "EMPLOYEE",
         },
       );
-      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Comment added successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Comment added successfully!",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+
       setCommentsModalVisible(false);
       setComments("");
-      fetchTasks(currentPage, pageSize, statusFilter, searchText);
+      await fetchTasks(currentPage, pageSize, statusFilter, searchText);
       if (selectedTask) handleViewComments(selectedTask);
     } catch {
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to add comment", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Failed to add comment",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
   };
 
@@ -236,26 +331,42 @@ const AdminTasks: React.FC = () => {
       setCommentsData(response.data || []);
       setViewModalVisible(true);
     } catch {
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch comments", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Failed to fetch comments",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const getAssignedToText = (taskAssignTo: string[] | string) => {
-    if (Array.isArray(taskAssignTo))
-      return taskAssignTo.filter(Boolean).join(", ");
-    return taskAssignTo || "";
+    if (Array.isArray(taskAssignTo)) {
+      return taskAssignTo
+        .map((item) => String(item).replace(/^\[|\]$/g, "").trim())
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    return String(taskAssignTo || "")
+      .replace(/^\[|\]$/g, "")
+      .trim();
   };
 
   const renderFileCell = (url?: string | null) => {
-    if (!url)
+    if (!url) {
       return <span style={{ color: "#bbb", fontSize: 12 }}>No File</span>;
+    }
 
     const lower = url.toLowerCase();
-    const isImage = /\.(jpg|jpeg|png|webp|gif)$/.test(lower);
-    const isPdf = lower.endsWith(".pdf");
-    const isExcel = /\.(xls|xlsx)$/.test(lower);
+    const isImage = /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/.test(lower);
+    const isPdf = lower.includes(".pdf");
+    const isExcel = /\.(xls|xlsx)(\?.*)?$/.test(lower);
 
     if (isImage) {
       return (
@@ -268,6 +379,7 @@ const AdminTasks: React.FC = () => {
         />
       );
     }
+
     return (
       <a
         href={url}
@@ -280,294 +392,288 @@ const AdminTasks: React.FC = () => {
     );
   };
 
-  const columns = [
-    {
-      title: "#",
-      key: "serial",
-      width: 55,
-      align: "center" as const,
-      render: (_: any, __: Task, index: number) => (
-        <span style={{ fontWeight: 600, color: "#888", fontSize: 13 }}>
-          {index + 1 + (currentPage - 1) * pageSize}
-        </span>
-      ),
-    },
-    {
-      title: "Task Details",
-      key: "task_info",
-      width: 200,
-      render: (_: any, record: Task) => {
-        const assignedTo = getAssignedToText(record.taskAssignTo);
-        return (
-          <div style={{ minWidth: 200, maxHeight: 150, overflowY: "auto" }}>
-            <div style={{ marginBottom: 4 }}>
-              <Tag
-                color="geekblue"
-                style={{ fontSize: 11, margin: 0, borderRadius: 4 }}
-              >
-                #{record.id.slice(-6).toUpperCase()}
-              </Tag>
-            </div>
-            <div style={{ marginBottom: 3 }}>
-              <span style={{ fontSize: 11, color: "#999" }}>By: </span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#351664" }}>
-                {record.taskAssignBy}
-              </span>
-            </div>
-            <div>
-              <span style={{ fontSize: 11, color: "#999" }}>To: </span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "#008cba" }}>
-                {assignedTo}
-              </span>
-            </div>
-          </div>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        title: "#",
+        key: "serial",
+        width: 55,
+        align: "center" as const,
+        render: (_: any, __: Task, index: number) => (
+          <span style={{ fontWeight: 600, color: "#888", fontSize: 13 }}>
+            {index + 1 + (currentPage - 1) * pageSize}
+          </span>
+        ),
       },
-    },
-    {
-      title: "Task Description",
-      dataIndex: "taskName",
-      key: "taskName",
-      width: 400,
-      render: (text: string) => (
-        <div style={{ maxHeight: 150, overflowY: "auto", paddingRight: 8 }}>
-          <Paragraph
-            style={{
-              margin: 0,
-              fontSize: 13,
-              color: "#333",
-              lineHeight: 1.6,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-            }}
-          >
-            {text}
-          </Paragraph>
-        </div>
-      ),
-    },
-    {
-      title: "Date & Status",
-      key: "timeline",
-      width: 170,
-      render: (_: any, record: Task) => (
-        <div>
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ fontSize: 12, color: "#555" }}>
-              {record.taskAssignedDate
-                ? formatDate(record.taskAssignedDate)
-                : "—"}
-            </span>
-          </div>
-          {record.tastCreatedDate && (
-            <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>
-              {record.tastCreatedDate}
+      {
+        title: "Task Details",
+        key: "task_info",
+        width: 230,
+        render: (_: any, record: Task) => {
+          const assignedTo = getAssignedToText(record.taskAssignTo);
+
+          return (
+            <div style={{ minWidth: 210 }}>
+              <div style={{ marginBottom: 6 }}>
+                <Tag
+                  color="geekblue"
+                  style={{ fontSize: 11, margin: 0, borderRadius: 4 }}
+                >
+                  #{record.id.slice(-6).toUpperCase()}
+                </Tag>
+              </div>
+
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ fontSize: 11, color: "#999" }}>By: </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#351664" }}>
+                  {record.taskAssignBy || "—"}
+                </span>
+              </div>
+
+              <div>
+                <span style={{ fontSize: 11, color: "#999" }}>To: </span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: "#008cba" }}>
+                  {assignedTo || "—"}
+                </span>
+              </div>
             </div>
-          )}
-          <Tag
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              borderRadius: 20,
-              padding: "2px 10px",
-              border: `1px solid ${STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]?.border || "#d9d9d9"}`,
-              background:
-                STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]
-                  ?.bg || "#f5f5f5",
-              color:
-                STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]
-                  ?.color || "#666",
-            }}
-          >
-            {STATUS_CONFIG[record.status?.toUpperCase() as StatusFilter]
-              ?.label || record.status}
-          </Tag>
-        </div>
-      ),
-    },
-    {
-      title: "Attachment",
-      dataIndex: "image",
-      key: "image",
-      width: 100,
-      align: "center" as const,
-      render: (url?: string | null) => renderFileCell(url),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 160,
-      align: "center" as const,
-      render: (_: any, record: Task) => (
-        <Space direction="vertical" size={6} style={{ width: "100%" }}>
-          {record.status?.toLowerCase() !== "completed" && (
-            <Popconfirm
-              title="Mark this task as completed?"
-              onConfirm={() => handleStatusUpdate(record.id, "COMPLETED")}
-              okText="Yes"
-              cancelText="No"
-              okButtonProps={{
-                style: { background: "#1ab394", borderColor: "#1ab394" },
+          );
+        },
+      },
+      {
+        title: "Task Description",
+        dataIndex: "taskName",
+        key: "taskName",
+        width: 430,
+        render: (text: string) => (
+          <div style={{ maxHeight: 150, overflowY: "auto", paddingRight: 8 }}>
+            <Paragraph
+              style={{
+                margin: 0,
+                fontSize: 13,
+                color: "#333",
+                lineHeight: 1.6,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
               }}
             >
-              <Button
-                size="small"
-                block
+              {text}
+            </Paragraph>
+          </div>
+        ),
+      },
+      {
+        title: "Date & Status",
+        key: "timeline",
+        width: 180,
+        render: (_: any, record: Task) => {
+          const statusKey = record.status?.toUpperCase() as StatusFilter;
+          const statusConfig = STATUS_CONFIG[statusKey] || STATUS_CONFIG.ALL;
+
+          return (
+            <div>
+              <div style={{ marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: "#555" }}>
+                  {record.taskAssignedDate
+                    ? formatDate(record.taskAssignedDate)
+                    : "—"}
+                </span>
+              </div>
+
+              {record.tastCreatedDate && (
+                <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>
+                  {record.tastCreatedDate}
+                </div>
+              )}
+
+              <Tag
                 style={{
-                  background: "#1ab394",
-                  borderColor: "#1ab394",
-                  color: "#fff",
-                  borderRadius: 6,
-                  fontWeight: 500,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 20,
+                  padding: "2px 10px",
+                  border: `1px solid ${statusConfig.border}`,
+                  background: statusConfig.bg,
+                  color: statusConfig.color,
                 }}
               >
-                Complete
-              </Button>
-            </Popconfirm>
-          )}
-          <Button
-            size="small"
-            block
-            style={{
-              background: "#008cba",
-              borderColor: "#008cba",
-              color: "#fff",
-              borderRadius: 6,
-              fontWeight: 500,
-            }}
-            onClick={() => {
-              setSelectedTask(record);
-              setCommentsModalVisible(true);
-            }}
-          >
-            Add Comment
-          </Button>
-          <Button
-            size="small"
-            block
-            style={{
-              background: "#351664",
-              borderColor: "#351664",
-              color: "#fff",
-              borderRadius: 6,
-              fontWeight: 500,
-            }}
-            onClick={() => handleViewComments(record)}
-          >
-            View Comments
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+                {statusConfig.label || record.status}
+              </Tag>
+            </div>
+          );
+        },
+      },
+      {
+        title: "Attachment",
+        dataIndex: "image",
+        key: "image",
+        width: 110,
+        align: "center" as const,
+        render: (url?: string | null) => renderFileCell(url),
+      },
+      {
+        title: "Actions",
+        key: "actions",
+        width: 165,
+        align: "center" as const,
+        render: (_: any, record: Task) => (
+          <Space direction="vertical" size={6} style={{ width: "100%" }}>
+            {record.status?.toLowerCase() !== "completed" && (
+              <Popconfirm
+                title="Mark this task as completed?"
+                onConfirm={() => handleStatusUpdate(record.id, "COMPLETED")}
+                okText="Yes"
+                cancelText="No"
+                okButtonProps={{
+                  style: { background: "#1ab394", borderColor: "#1ab394" },
+                }}
+              >
+                <Button
+                  size="small"
+                  block
+                  style={{
+                    background: "#1ab394",
+                    borderColor: "#1ab394",
+                    color: "#fff",
+                    borderRadius: 6,
+                    fontWeight: 500,
+                  }}
+                >
+                  Complete
+                </Button>
+              </Popconfirm>
+            )}
+
+            <Button
+              size="small"
+              block
+              style={{
+                background: "#008cba",
+                borderColor: "#008cba",
+                color: "#fff",
+                borderRadius: 6,
+                fontWeight: 500,
+              }}
+              onClick={() => {
+                setSelectedTask(record);
+                setCommentsModalVisible(true);
+              }}
+            >
+              Add Comment
+            </Button>
+
+            <Button
+              size="small"
+              block
+              style={{
+                background: "#351664",
+                borderColor: "#351664",
+                color: "#fff",
+                borderRadius: 6,
+                fontWeight: 500,
+              }}
+              onClick={() => handleViewComments(record)}
+            >
+              View Comments
+            </Button>
+          </Space>
+        ),
+      },
+    ],
+    [currentPage, pageSize],
+  );
 
   const cfg = STATUS_CONFIG[statusFilter];
 
   return (
     <UserPanelLayout>
       <div style={{ padding: "20px 16px", minHeight: "100vh" }}>
-        {/* Header Row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 16,
-            marginBottom: 20,
-          }}
+        <Row
+          gutter={[16, 16]}
+          align="middle"
+          justify="space-between"
+          style={{ marginBottom: 20 }}
         >
-          <div>
+          {/* Left Side */}
+          <Col xs={24} md={10} lg={12}>
+            <div>
+              <div
+                style={{
+                  color: "#111",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  lineHeight: 1.3,
+                }}
+              >
+                WhatsApp Assigned Tasks
+              </div>
+
+              <div
+                style={{
+                  color: "#888",
+                  fontSize: 13,
+                  marginTop: 4,
+                  lineHeight: 1.5,
+                }}
+              >
+                Manage, search, and track assigned tasks efficiently.
+              </div>
+            </div>
+          </Col>
+
+          {/* Right Side */}
+          <Col xs={24} md={14} lg={12}>
             <div
               style={{
-                color: "black",
-                fontSize: 22,
-                fontWeight: 700,
-                letterSpacing: 0.3,
-              }}
-            >
-              WhatsApp Task Manager
-            </div>
-            <div style={{ color: "#888", fontSize: 13, marginTop: 2 }}>
-              Manage and track all assigned tasks
-            </div>
-          </div>
-
-          <Select
-            value={statusFilter}
-            onChange={(value) => setStatusFilter(value as StatusFilter)}
-            style={{ width: 220, minWidth: 180, borderRadius: 20 }}
-            dropdownMatchSelectWidth={false}
-          >
-            <Option value="ALL">All Tasks</Option>
-            <Option value="ASSIGNED">Assigned</Option>
-            <Option value="COMPLETED">Completed</Option>
-          </Select>
-        </div>
-
-        {/* Filters & Search Row */}
-        <div
-          style={{
-            marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              flexWrap: "wrap",
-            }}
-          >
-            {/* Search Input on the left */}
-            <Input
-              prefix={<SearchOutlined style={{ color: "#bbb" }} />}
-              suffix={
-                searchInput ? (
-                  <CloseCircleOutlined
-                    style={{ color: "#bbb", cursor: "pointer" }}
-                    onClick={() => {
-                      setSearchInput("");
-                    }}
-                  />
-                ) : null
-              }
-              placeholder="Search by name, task..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              style={{
-                width: 300,
-                borderRadius: 20,
-                border: "1.5px solid #e0e0e0",
-                height: 38,
-              }}
-              allowClear={false}
-            />
-
-            {/* <div
-              style={{
                 display: "flex",
-                alignItems: "center",
-                gap: 14,
+                gap: 12,
+                justifyContent: "flex-end",
                 flexWrap: "wrap",
               }}
             >
-              <span style={{ fontSize: 13, color: "#555" }}>
-                Assigned: <strong>{assignedCount}</strong>
-              </span>
-              <span style={{ fontSize: 13, color: "#555" }}>
-                Completed: <strong>{completedCount}</strong>
-              </span>
-            </div> */}
-          </div>
-        </div>
+              <Input
+                prefix={<SearchOutlined style={{ color: "#bbb" }} />}
+                suffix={
+                  searchInput ? (
+                    <CloseCircleOutlined
+                      style={{ color: "#999", cursor: "pointer" }}
+                      onClick={() => {
+                        setSearchInput("");
+                        setSearchText("");
+                        setCurrentPage(1);
+                      }}
+                    />
+                  ) : null
+                }
+                placeholder="Search names, tasks, month, year..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                allowClear={false}
+                style={{
+                  width: 300,
+                  maxWidth: "100%",
+                  height: 40,
+                  borderRadius: 22,
+                }}
+              />
 
-        {/* Table */}
+              <Select
+                value={statusFilter}
+                onChange={(value) => setStatusFilter(value as StatusFilter)}
+                style={{
+                  width: 180,
+                }}
+                size="large"
+                dropdownMatchSelectWidth={false}
+              >
+                <Option value="ALL">All Tasks</Option>
+                <Option value="ASSIGNED">Assigned</Option>
+                <Option value="COMPLETED">Completed</Option>
+              </Select>
+            </div>
+          </Col>
+        </Row>
+
         <Table
           columns={columns}
           dataSource={tasks}
@@ -597,6 +703,7 @@ const AdminTasks: React.FC = () => {
             showTotal: (total, range) => (
               <span style={{ fontSize: 13, color: "#666" }}>
                 {range[0]}–{range[1]} of <strong>{total}</strong> tasks
+                {isSearchMode ? " found" : ""}
               </span>
             ),
             onChange: (page, size) => {
@@ -605,17 +712,22 @@ const AdminTasks: React.FC = () => {
                 setPageSize(size);
                 setCurrentPage(1);
               }
+
+              if (isSearchMode && allSearchTasks.length > 0) {
+                const nextSize = size || pageSize;
+                const startIndex = (page - 1) * nextSize;
+                const endIndex = startIndex + nextSize;
+                setTasks(allSearchTasks.slice(startIndex, endIndex));
+              }
             },
             style: { padding: "12px 16px" },
           }}
-         
           showHeader
           scroll={{ x: true }}
           style={{ fontSize: 13 }}
         />
       </div>
 
-      {/* View Comments Modal */}
       <Modal
         title="Comments"
         open={viewModalVisible}
@@ -661,6 +773,7 @@ const AdminTasks: React.FC = () => {
                     justifyContent: "space-between",
                     alignItems: "center",
                     marginBottom: 6,
+                    gap: 8,
                   }}
                 >
                   <div
@@ -682,6 +795,7 @@ const AdminTasks: React.FC = () => {
                     >
                       {(comment.commentsBy || "?")[0].toUpperCase()}
                     </div>
+
                     <span
                       style={{
                         fontWeight: 600,
@@ -692,6 +806,7 @@ const AdminTasks: React.FC = () => {
                       {comment.commentsBy}
                     </span>
                   </div>
+
                   {comment.status && (
                     <Tag
                       color={
@@ -707,6 +822,7 @@ const AdminTasks: React.FC = () => {
                     </Tag>
                   )}
                 </div>
+
                 <p
                   style={{
                     margin: 0,
@@ -728,7 +844,6 @@ const AdminTasks: React.FC = () => {
         )}
       </Modal>
 
-      {/* Add Comment Modal */}
       <Modal
         title="Add Comment"
         open={commentsModalVisible}
@@ -759,6 +874,7 @@ const AdminTasks: React.FC = () => {
             </strong>
           </Text>
         </div>
+
         <Input.TextArea
           rows={4}
           value={comments}

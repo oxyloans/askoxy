@@ -62,13 +62,13 @@ const TalkToCEO: React.FC = () => {
     <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-[#050816]/85 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-6 lg:px-10">
-         <button
-  onClick={() => navigate("/radhAI")}
-  className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/15 sm:text-sm"
->
-  <ArrowLeft size={16} />
-  Back
-</button>
+          <button
+            onClick={() => navigate("/radhAI")}
+            className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/15 sm:text-sm"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </button>
 
           <motion.img
             initial={{ opacity: 0, x: -18 }}
