@@ -1694,7 +1694,7 @@ const Home: React.FC = () => {
                 <div className="flex-1"></div>
                 <button
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all font-medium"
-                  onClick={() => navigate("/offer")}
+                  onClick={() => navigate("/main/agent-offers")}
                 >
                   See All Offers
                 </button>

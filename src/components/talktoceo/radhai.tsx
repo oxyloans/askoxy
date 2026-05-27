@@ -17,11 +17,17 @@ import {
   Youtube,
   Instagram,
   Facebook,
+  Mail,
+  ExternalLink,
+  MessageCircle,
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 
 import RADHAI from "../../assets/img/radhai.png";
 import TALKTOCEOLOGO from "../../assets/img/talktoceo.png";
+
+const GOOGLE_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSd7BMOmvNIfXgpnefXGoGeqJuLp1hege82srbNmQ9E3e-Lkjg/viewform";
 
 const RadhAIPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,6 +38,10 @@ const RadhAIPage: React.FC = () => {
 
   const handleTalkToCEO = () => {
     navigate("/talktoceo");
+  };
+
+  const handleWriteToUs = () => {
+    window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
   };
 
   const solutions = [
@@ -106,6 +116,11 @@ const RadhAIPage: React.FC = () => {
             to { transform: rotate(360deg); }
           }
 
+          @keyframes writePulse {
+            0%, 100% { box-shadow: 0 0 24px rgba(34, 211, 238, 0.25); }
+            50% { box-shadow: 0 0 44px rgba(132, 255, 0, 0.35); }
+          }
+
           .float-slow {
             animation: floatSlow 5s ease-in-out infinite;
           }
@@ -120,6 +135,10 @@ const RadhAIPage: React.FC = () => {
 
           .rotate-ring {
             animation: rotateRing 14s linear infinite;
+          }
+
+          .write-pulse {
+            animation: writePulse 2.4s ease-in-out infinite;
           }
         `}
       </style>
@@ -138,17 +157,30 @@ const RadhAIPage: React.FC = () => {
             className="h-9 w-auto cursor-pointer object-contain sm:h-12"
           />
 
-          <motion.button
-            onClick={handleTalkToCEO}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            className="group relative overflow-hidden rounded-full border border-cyan-300/20 bg-gradient-to-r from-cyan-300 via-violet-300 to-lime-300 p-[1px] shadow-[0_0_30px_rgba(0,245,255,0.25)]"
-          >
-            <div className="flex items-center gap-2 rounded-full bg-[#050816] px-4 py-2 text-xs font-black text-white sm:px-6 sm:py-3 sm:text-sm">
-              <Mic size={18} className="text-cyan-300 group-hover:text-lime-300" />
-              Talk to CEO
-            </div>
-          </motion.button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <motion.button
+              onClick={handleWriteToUs}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className="group hidden items-center gap-2 rounded-full border border-lime-300/30 bg-lime-300/10 px-4 py-2 text-xs font-black text-lime-300 transition hover:bg-lime-300 hover:text-black sm:inline-flex"
+            >
+              <Mail size={16} />
+              Write to CEO
+              <ExternalLink size={14} />
+            </motion.button>
+
+            <motion.button
+              onClick={handleTalkToCEO}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className="group relative overflow-hidden rounded-full border border-cyan-300/20 bg-gradient-to-r from-cyan-300 via-violet-300 to-lime-300 p-[1px] shadow-[0_0_30px_rgba(0,245,255,0.25)]"
+            >
+              <div className="flex items-center gap-2 rounded-full bg-[#050816] px-4 py-2 text-xs font-black text-white sm:px-6 sm:py-3 sm:text-sm">
+                <Mic size={18} className="text-cyan-300 group-hover:text-lime-300" />
+                Talk to CEO
+              </div>
+            </motion.button>
+          </div>
         </div>
       </header>
 
@@ -183,16 +215,26 @@ const RadhAIPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-center lg:hidden">
+          <div className="relative z-20 mt-5 flex flex-row items-center justify-center gap-3 lg:hidden">
             <motion.button
               onClick={handleTalkToCEO}
-              whileHover={{ scale: 1.05, y: -4 }}
+              whileHover={{ scale: 1.04, y: -3 }}
               whileTap={{ scale: 0.97 }}
-              className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-7 py-4 text-sm font-black text-black shadow-[0_0_40px_rgba(132,255,0,0.35)]"
+              className="group inline-flex min-h-[52px] flex-1 items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-3 py-3 text-[11px] font-black text-black shadow-[0_0_35px_rgba(132,255,0,0.3)] xs:text-xs sm:text-sm"
             >
-              <Mic size={20} />
+              <Mic size={17} />
               Talk to radhAI
-              <ArrowRight size={18} className="transition group-hover:translate-x-1" />
+            </motion.button>
+
+            <motion.button
+              onClick={handleWriteToUs}
+              whileHover={{ scale: 1.04, y: -3 }}
+              whileTap={{ scale: 0.97 }}
+              className="write-pulse group relative inline-flex min-h-[52px] flex-1 items-center justify-center gap-1.5 overflow-hidden rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 text-[11px] font-black text-cyan-200 backdrop-blur-xl transition hover:border-lime-300/70 hover:text-lime-300 xs:text-xs sm:text-sm"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition duration-700 group-hover:translate-x-full" />
+              <MessageCircle size={17} className="relative z-10" />
+              <span className="relative z-10">Write to CEO</span>
             </motion.button>
           </div>
         </motion.div>
@@ -227,8 +269,6 @@ const RadhAIPage: React.FC = () => {
             <span className="font-semibold text-violet-300">Loans</span>,{" "}
             <span className="font-semibold text-cyan-300">Investments</span>,
             and <span className="font-semibold text-yellow-300">Gold</span>.
-            It speaks in multiple languages and helps users take the right next
-            step faster.
           </p>
 
           <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
@@ -250,6 +290,36 @@ const RadhAIPage: React.FC = () => {
             })}
           </div>
 
+          <div className="mt-8 hidden flex-row gap-4 lg:flex">
+            <motion.button
+              onClick={handleTalkToCEO}
+              whileHover={{ scale: 1.05, y: -4 }}
+              whileTap={{ scale: 0.97 }}
+              className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-8 py-4 font-black text-black shadow-[0_0_40px_rgba(132,255,0,0.35)]"
+            >
+              <Mic size={20} />
+              Talk to radhAI
+              <ArrowRight size={18} className="transition group-hover:translate-x-1" />
+            </motion.button>
+
+            <motion.button
+              onClick={handleWriteToUs}
+              whileHover={{ scale: 1.05, y: -4 }}
+              whileTap={{ scale: 0.97 }}
+              className="write-pulse group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-8 py-4 font-black text-cyan-200 backdrop-blur-xl transition hover:border-lime-300/70 hover:text-lime-300"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition duration-700 group-hover:translate-x-full" />
+              <MessageCircle size={20} className="relative z-10" />
+              <span className="relative z-10">Write to CEO</span>
+              <ExternalLink size={18} className="relative z-10" />
+            </motion.button>
+          </div>
+
+          <p className="mt-4 text-sm text-slate-400">
+            Submit your query through Google Form. Your response will be saved
+            in Google Sheet for follow-up.
+          </p>
+
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
             {socialLinks.map((item, index) => {
               const Icon = item.icon;
@@ -264,7 +334,7 @@ const RadhAIPage: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45 + index * 0.08 }}
-                  whileHover={{ scale: 1.12, y: -4 }}
+                  whileHover={{ scale: 1.08, y: -4 }}
                   whileTap={{ scale: 0.94 }}
                   className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br ${item.color} shadow-[inset_0_2px_10px_rgba(255,255,255,0.35),0_10px_25px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:h-12 sm:w-12`}
                 >
@@ -274,17 +344,6 @@ const RadhAIPage: React.FC = () => {
               );
             })}
           </div>
-
-          <motion.button
-            onClick={handleTalkToCEO}
-            whileHover={{ scale: 1.05, y: -4 }}
-            whileTap={{ scale: 0.97 }}
-            className="group mt-8 hidden items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-8 py-4 font-black text-black shadow-[0_0_40px_rgba(132,255,0,0.35)] lg:inline-flex"
-          >
-            <Mic size={20} />
-            Talk to radhAI
-            <ArrowRight size={18} className="transition group-hover:translate-x-1" />
-          </motion.button>
         </motion.div>
       </section>
 
@@ -305,10 +364,7 @@ const RadhAIPage: React.FC = () => {
 
           <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-slate-300 sm:text-lg">
             radhAI connects users with the right guidance, opportunities, and
-            actions across jobs, AI, loans, investments, and gold — powered by{" "}
-            <b className="text-cyan-300">100+ Employees</b>,{" "}
-            <b className="text-violet-300">100+ LLMs</b>, and{" "}
-            <b className="text-lime-300">1000+ AI Agents</b>.
+            actions across jobs, AI, loans, investments, and gold.
           </p>
 
           <div className="mt-9 grid gap-5 sm:grid-cols-3">

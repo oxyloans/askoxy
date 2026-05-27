@@ -33,5 +33,16 @@ export const candidateApi = {
   getUserAttempts: async (userId: string) => {
     const { data } = await axios.get(`${API_BASE}/attempts/${userId}`);
     return data;
+  },
+
+  // Interview Config - Round Settings
+  getInterviewConfig: async () => {
+    const { data } = await axios.get(`${API_BASE}/interview-config`);
+    return data;
+  },
+
+  updateInterviewConfig: async (rounds: Array<{round: number, questions: number, time_limit: number, label: string}>) => {
+    const { data } = await axios.post(`${API_BASE}/interview-config`, { rounds });
+    return data;
   }
 };

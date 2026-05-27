@@ -1,0 +1,20 @@
+﻿.welcome-hero { text-align: center; padding: 18px 18px 26px; max-width: 860px; margin: 0 auto; }
+//   .welcome-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); color: var(--brand-dark); font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+//   .welcome-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; animation: pulse-dot 1.8s ease-in-out infinite; }
+//   @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(.82)} }
+//   .welcome-title { font-size: clamp(1.95rem, 5.2vw, 3.75rem); font-weight: 900; letter-spacing: -.055em; line-height: 1; color: var(--text-primary); margin: 0 0 12px; }
+//   .welcome-title em { font-style: normal; background: linear-gradient(135deg, var(--brand), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+//   .welcome-sub { font-size: 15px; color: var(--text-secondary); line-height: 1.62; max-width: 610px; margin: 0 auto 18px; }
+
+//   .bot-bubble { display: inline-flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 9px 16px; box-shadow: var(--shadow-md); margin-bottom: 14px; }
+//   .bot-icon { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,var(--brand),var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+//   .bot-text { font-size: 14px; color: var(--text-primary); font-weight: 700; }
+//   .bot-cursor { display: inline-block; width: 2px; height: 14px; background: var(--brand); margin-left: 2px; vertical-align: middle; animation: blink .7s step-end infinite; }
+//   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+//   .round-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 22px 0 20px; }
+//   .round-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 16px; text-align: left; transition: all .22s ease; position: relative; overflow: hidden; box-shadow: var(--shadow-sm); }
+//   .round-card::before { content:''; position:absolute; inset:0; background: radial-gradient(circle at 90% 0%, var(--brand-tint), transparent 45%); pointer-events:none; }
+//   .round-card:hover { border-color: color-mix(in srgb, var(--brand) 44%, var(--border)); transform: translateY(-4px); box-shadow: var(--shadow-md); }
+//   .round-num { width: 38px; height: 38px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: #fff; margin-bottom: 12px; box-shadow: 0 10px 25px rgba(15,23,42,.16); }
+//   .round-name { font-size: 15px; font-weight: 900; color: var(--text-primary); margin-bottom: 5p

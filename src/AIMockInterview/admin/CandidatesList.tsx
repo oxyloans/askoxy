@@ -2,285 +2,223 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { candidateApi } from './api';
 import { Candidate } from './types';
-import { SkillBadge, LoadingSpinner, EmptyState, ErrorState } from './components';
+import { LoadingSpinner, EmptyState, ErrorState } from './components';
 import { AdvancedFilter } from './AdvancedFilter';
 
-type SortField = 'name' | 'avgScore' | 'createdAt';
+type SortField = 'name' | 'bestScore' | 'createdAt';
 
 export const CandidatesList: React.FC = () => {
   const navigate = useNavigate();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // const fetchCandidates = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError('');
-  //     const data = await candidateApi.getCandidates();
-
-  //     setCandidates(data);
-  //   } catch (err) {
-  //     setError('Failed to load candidates');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  
   const fetchCandidates = async () => {
-  try {
-    setLoading(true);
-    setError('');
-
-    const data = await candidateApi.getCandidates();
-
-    // Remove candidates where name is "N/A"
-    const filteredData = data.filter(
-      (candidate) => candidate.name !== "N/A"
-    );
-
-    setCandidates(filteredData);
-  } catch (err) {
-    setError('Failed to load candidates');
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  useEffect(() => {
-    fetchCandidates();
-  }, []);
-
-  const filteredAndSorted = useMemo(() => {
-    let result = [...candidates];
-
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
-      result = result.filter(c => 
-        c.name?.toLowerCase().includes(term) ||
-        c.skills?.some(s => s.toLowerCase().includes(term))
-      );
-    }
-
-    result.sort((a, b) => {
-      let aVal, bVal;
-      if (sortField === 'avgScore') {
-        aVal = parseFloat(a.avgScore || '0');
-        bVal = parseFloat(b.avgScore || '0');
-      } else if (sortField === 'createdAt') {
-        aVal = new Date(a.createdAt || 0).getTime();
-        bVal = new Date(b.createdAt || 0).getTime();
-      } else {
-        aVal = a[sortField] || '';
-        bVal = b[sortField] || '';
-      }
-      return sortOrder === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
-    });
-
-    return result;
-  }, [candidates, searchTerm, sortField, sortOrder]);
-
-  const getRoundProgress = (candidate: Candidate) => {
-    const rounds = candidate.statistics?.roundScores?.length || 0;
-    return `${rounds}/3`;
+    try {
+      setLoading(true); setError('');
+      const data = await candidateApi.getCandidates();
+      setCandidates(data.filter(c => c.name !== 'N/A'));
+    } catch { setError('Failed to load candidates'); }
+    finally { setLoading(false); }
   };
 
-  const clearSearch = () => setSearchTerm('');
+  useEffect(() => { fetchCandidates(); }, []);
+
+  const list = useMemo(() => {
+    let r = [...candidates];
+    if (search.trim()) {
+      const t = search.toLowerCase();
+      r = r.filter(c => c.name?.toLowerCase().includes(t) || c.skills?.some(s => s.toLowerCase().includes(t)));
+    }
+    r.sort((a, b) => {
+      let av: any, bv: any;
+      if (sortField === 'bestScore') { av = parseFloat(a.summary?.bestScore || '0'); bv = parseFloat(b.summary?.bestScore || '0'); }
+      else if (sortField === 'createdAt') { av = new Date(a.createdAt || 0).getTime(); bv = new Date(b.createdAt || 0).getTime(); }
+      else { av = a.name || ''; bv = b.name || ''; }
+      return sortOrder === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+    });
+    return r;
+  }, [candidates, search, sortField, sortOrder]);
+
+  const scoreBg = (s: string) => {
+    const n = parseFloat(s || '0');
+    if (n >= 60) return 'bg-[#d4edda] text-[#155724]';
+    if (n >= 40) return 'bg-[#fff3cd] text-[#856404]';
+    return 'bg-[#f8d7da] text-[#721c24]';
+  };
+
+  const resultBg = (r: string) => {
+    if (r === 'Selected') return 'bg-[#d4edda] text-[#155724] border-[#c3e6cb]';
+    if (r === 'Not Selected') return 'bg-[#f8d7da] text-[#721c24] border-[#f5c6cb]';
+    return 'bg-[#e2e3e5] text-[#383d41] border-[#d6d8db]';
+  };
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={fetchCandidates} />;
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Interview Candidates</h1>
-            <p className="text-gray-400">Manage and review candidate performance</p>
-          </div>
-          <div className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-700">
-            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <div>
-              <div className="text-2xl font-bold text-white">{filteredAndSorted.length}</div>
-              <div className="text-xs text-gray-400">Total: {candidates.length}</div>
-            </div>
-          </div>
-        </div>
+    <div className="p-6">
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Candidates</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Manage and review all interview candidates
+        </p>
+      </div>
 
-        <div className="bg-gray-800 rounded-xl shadow-lg mb-6 p-6 border border-gray-700">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search by name or skills..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-gray-900 text-white placeholder-gray-500"
-              />
-              {searchTerm && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-                  aria-label="Clear search"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <AdvancedFilter onFilter={async (filters) => {
-                if (Object.keys(filters).length === 0) {
-                  fetchCandidates();
-                  return;
-                }
-                try {
-                  const res = await fetch('/api/admin/candidates/filter', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(filters)
-                  });
-                  const data = await res.json();
-                  setCandidates(data.map((c: any) => ({
-                    userId: c.user_id,
-                    name: c.name,
-                    skills: typeof c.skills === 'string' ? JSON.parse(c.skills) : c.skills,
-                    domains: typeof c.domains === 'string' ? JSON.parse(c.domains) : c.domains,
-                    experience: c.experience,
-                    avgScore: parseFloat(c.avg_score || 0).toFixed(2),
-                    statistics: { roundScores: [] },
-                    interviewResults: [],
-                    createdAt: c.created_at
-                  })));
-                } catch (err) {
-                  console.error('Filter error:', err);
-                }
-              }} />
-              <select
-                aria-label="Sort"
-                value={sortField}
-                onChange={(e) => setSortField(e.target.value as SortField)}
-                className="px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer bg-gray-900 text-white transition"
-              >
-                <option value="createdAt">Date</option>
-                <option value="avgScore">Score</option>
-                <option value="name">Name</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-4 py-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition text-white"
-                aria-label="Toggle sort order"
-              >
-                <svg className={`w-5 h-5 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: 'Total Candidates', value: candidates.length, color: 'text-gray-900' },
+          { label: 'Showing', value: list.length, color: 'text-[#0066c0]' },
+          { label: 'Selected', value: candidates.filter(c => c.summary?.bestResult === 'Selected').length, color: 'text-[#007600]' },
+          { label: 'Not Selected', value: candidates.filter(c => c.summary?.bestResult === 'Not Selected').length, color: 'text-[#c40000]' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-lg border border-gray-200 px-4 py-3 shadow-sm">
+            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Search & Filter */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search candidates by name or skill..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#ff9900] focus:ring-1 focus:ring-[#ff9900] bg-white text-gray-900 placeholder-gray-400"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>
+            )}
           </div>
-          {searchTerm && (
-            <div className="mt-3 text-sm text-gray-400">
-              Showing <span className="font-semibold text-emerald-400">{filteredAndSorted.length}</span> result{filteredAndSorted.length !== 1 ? 's' : ''} for &quot;{searchTerm}&quot;
-            </div>
-          )}
+          <div className="flex gap-2 flex-shrink-0">
+            <AdvancedFilter onFilter={async (filters) => {
+              if (!Object.keys(filters).length) { fetchCandidates(); return; }
+              try {
+                const res = await fetch('/api/admin/candidates/filter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(filters) });
+                const data = await res.json();
+                setCandidates(data.filter((c: any) => c.name !== 'N/A'));
+              } catch { /* ignore */ }
+            }} />
+            <select
+              value={sortField}
+              onChange={e => setSortField(e.target.value as SortField)}
+              className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#ff9900] bg-white text-gray-700"
+            >
+              <option value="createdAt">Sort: Date</option>
+              <option value="bestScore">Sort: Score</option>
+              <option value="name">Sort: Name</option>
+            </select>
+            <button
+              onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+              className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-600 transition"
+              title="Toggle order"
+            >
+              <svg className={`w-4 h-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+              </svg>
+            </button>
+          </div>
         </div>
-
-        {filteredAndSorted.length === 0 ? (
-          <EmptyState message={searchTerm ? "No candidates match your search" : "No candidates found"} />
-        ) : (
-          <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-900">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Candidate</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Skills</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Experience</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Score</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Progress</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-700">
-                  {filteredAndSorted.map((candidate) => (
-                    <tr
-                      key={candidate.userId}
-                      onClick={() => navigate(`/admin/candidate/${candidate.userId}`)}
-                      className="hover:bg-gray-700 cursor-pointer transition-colors group"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-semibold">
-                            {candidate.name?.charAt(0).toUpperCase() || '?'}
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold text-white group-hover:text-emerald-400 transition">{candidate.name || 'N/A'}</div>
-                            <div className="text-xs text-gray-400">{candidate.userId}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          {candidate.skills?.length ? (
-                            candidate.skills.slice(0, 3).map((skill, idx) => (
-                              <SkillBadge key={idx} skill={skill} />
-                            ))
-                          ) : (
-                            <span className="text-sm text-gray-500">No skills</span>
-                          )}
-                          {candidate.skills?.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded-full text-xs font-medium">
-                              +{candidate.skills.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-sm font-medium text-gray-300">{candidate.experience || 0} years</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-semibold text-sm ${
-                          parseFloat(candidate.avgScore || '0') >= 8 ? 'bg-green-100 text-green-700' :
-                          parseFloat(candidate.avgScore || '0') >= 5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          {candidate.avgScore || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-700 rounded-full h-2 max-w-[80px]">
-                            <div 
-                              className="bg-emerald-600 h-2 rounded-full transition-all"
-                              style={{ width: `${((candidate.statistics?.roundScores?.length || 0) / 3) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium text-gray-300">{getRoundProgress(candidate)}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {search && (
+          <p className="mt-2 text-xs text-gray-500">
+            {list.length} result{list.length !== 1 ? 's' : ''} for "<span className="font-medium text-gray-700">{search}</span>"
+          </p>
         )}
       </div>
+
+      {/* Table */}
+      {list.length === 0 ? (
+        <EmptyState message={search ? 'No candidates match your search' : 'No candidates found'} />
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-[#f7f8f8] border-b border-gray-200">
+                  {['Candidate', 'Skills', 'Experience', 'Result', ''].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((c, i) => (
+                  <tr
+                    key={c.userId}
+                    className={`border-b border-gray-100 hover:bg-[#fffbf2] cursor-pointer transition-colors group ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}
+                    onClick={() => navigate(`/admin/candidate/${c.userId}`)}
+                  >
+                    {/* Candidate */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[#232f3e] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                          {c.name?.charAt(0).toUpperCase() || '?'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-[#0066c0] group-hover:underline">{c.name || 'N/A'}</p>
+                          <p className="text-xs text-gray-400 font-mono">{c.userId?.slice(0, 8)}…</p>
+                        </div>
+                      </div>
+                    </td>
+                    {/* Skills */}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {c.skills?.slice(0, 3).map((s, idx) => (
+                          <span key={idx} className="px-2 py-0.5 bg-[#e8f4fd] text-[#0066c0] border border-[#c8e6f9] rounded text-xs font-medium">
+                            {s}
+                          </span>
+                        ))}
+                        {(c.skills?.length || 0) > 3 && (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{c.skills!.length - 3}</span>
+                        )}
+                        {!c.skills?.length && <span className="text-xs text-gray-400">—</span>}
+                      </div>
+                    </td>
+                    {/* Experience */}
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {c.experience > 0 ? `${c.experience} yr${c.experience !== 1 ? 's' : ''}` : 'Fresher'}
+                      </span>
+                    </td>
+                    {/* Result */}
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2.5 py-0.5 rounded border text-xs font-semibold ${resultBg(c.summary?.bestResult || '')}`}>
+                        {c.summary?.bestResult || 'Pending'}
+                      </span>
+                    </td>
+                    {/* Arrow */}
+                    <td className="px-4 py-3">
+                      <svg className="w-4 h-4 text-gray-400 group-hover:text-[#ff9900] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-3 bg-[#f7f8f8] border-t border-gray-200 text-xs text-gray-500">
+            Showing {list.length} of {candidates.length} candidates
+          </div>
+        </div>
+      )}
     </div>
   );
 };

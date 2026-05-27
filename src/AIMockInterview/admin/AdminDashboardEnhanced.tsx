@@ -4,14 +4,16 @@ import { CandidatesList } from './CandidatesList';
 import { AdminAnalyticsEnhanced } from './AdminAnalyticsEnhanced';
 import { AdminTemplates } from './AdminTemplates';
 import { AdminLiveMonitor } from './AdminLiveMonitor';
+import { InterviewConfig } from './InterviewConfig';
 
 export const AdminDashboardEnhanced: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'candidates' | 'attempts' | 'analytics' | 'templates' | 'live'>('candidates');
+  const [activeTab, setActiveTab] = useState<'candidates' | 'attempts' | 'analytics' | 'templates' | 'live' | 'config'>('candidates');
 
   const tabs = [
     { id: 'candidates', label: 'Candidates', icon: '👥' },
     { id: 'live', label: 'Live Monitor', icon: '📡' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'config', label: 'Interview Settings', icon: '⚙️' },
     { id: 'templates', label: 'Templates', icon: '📋' },
     { id: 'attempts', label: 'Attempts', icon: '🔢' }
   ];
@@ -42,6 +44,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
         {activeTab === 'candidates' && <CandidatesList />}
         {activeTab === 'live' && <AdminLiveMonitor />}
         {activeTab === 'analytics' && <AdminAnalyticsEnhanced />}
+        {activeTab === 'config' && <InterviewConfig />}
         {activeTab === 'templates' && <AdminTemplates />}
         {activeTab === 'attempts' && <AdminAttempts />}
       </main>

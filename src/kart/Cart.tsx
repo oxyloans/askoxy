@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { customerApi } from "../utils/axiosInstance";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Loader2,
@@ -22,6 +22,17 @@ import BASE_URL from "../Config";
 // import DeliveryFee from "./DeliveryFee";
 import { calculateDeliveryFee } from "./DeliveryFee";
 import { RiArrowDropDownLine } from "react-icons/ri";
+import {
+  clearAgentComboDisplay,
+  computeComboPricing,
+  isComboItemInCart,
+  loadAgentComboDisplay,
+  saveAgentComboDisplay,
+  type AgentComboDisplayPayload,
+  type ComboPricingResult,
+} from "./agentComboDisplay";
+import AgentComboPricingSummary from "./AgentComboPricingSummary";
+import { getActiveCombos } from "../ChatScreen/agentApi";
 
 interface Address {
   id?: string;
@@ -83,6 +94,18 @@ interface ContainerEligibility {
 }
 
 const CartPage: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [comboPricing, setComboPricing] = useState<ComboPricingResult>({
+    active: false,
+    display: null,
+    catalogComboSubtotal: 0,
+    bundlePrice: 0,
+    savings: 0,
+    nonComboSubtotal: 0,
+    adjustedItemSubtotal: 0,
+    incomplete: false,
+  });
   const [isItemTotalDropdownOpen, setIsItemTotalDropdownOpen] =
     useState<boolean>(false);
   const [cartData, setCartData] = useState<CartItem[]>([]);
@@ -159,7 +182,6 @@ const CartPage: React.FC = () => {
     pincode: "",
   });
 
-  const navigate = useNavigate();
   const customerId = localStorage.getItem("userId");
   const token = localStorage.getItem("accessToken");
 
@@ -170,6 +192,44 @@ const CartPage: React.FC = () => {
   }
 
   const { setCount } = context;
+
+  const refreshComboPricing = (
+    items: CartItem[],
+    quantityMap: Record<string, number>,
+  ) => {
+    const fromState = (
+      location.state as { agentComboDisplay?: AgentComboDisplayPayload } | null
+    )?.agentComboDisplay;
+    const display = fromState ?? loadAgentComboDisplay();
+    const pricing = computeComboPricing(display, items, quantityMap);
+    setComboPricing(pricing);
+    if (!pricing.active && !pricing.incomplete && !pricing.display) {
+      clearAgentComboDisplay();
+    }
+    return pricing;
+  };
+
+  const syncComboFromServer = async (
+    items: CartItem[],
+    quantityMap: Record<string, number>,
+  ) => {
+    if (!customerId) return;
+    const stored = loadAgentComboDisplay();
+    if (!stored) return;
+    try {
+      const offers = await getActiveCombos(customerId);
+      const match = offers.find((o) => o.comboOfferId === stored.comboOfferId);
+      if (!match) {
+        clearAgentComboDisplay();
+        refreshComboPricing(items, quantityMap);
+        return;
+      }
+      saveAgentComboDisplay(match);
+    } catch {
+      /* keep session payload */
+    }
+    refreshComboPricing(items, quantityMap);
+  };
 
   const fetchAddresses = async () => {
     try {
@@ -759,15 +819,21 @@ const CartPage: React.FC = () => {
         }
 
         setCartData(cartWithFreeItems);
+        const pricing = refreshComboPricing(cartWithFreeItems, regularItemsMap);
+        const catalogItemTotal = cartWithFreeItems
+          .filter((item: CartItem) => item.status !== "FREE")
+          .reduce(
+            (acc: number, item: CartItem) =>
+              acc +
+              parseFloat(item.itemPrice) * (regularItemsMap[item.itemId] || 0),
+            0,
+          );
         setCartTotal(
-          cartWithFreeItems.reduce(
-            (total: number, item: CartItem) =>
-              total + (item.itemPrice ? parseFloat(item.itemPrice) : 0),
-            0
-          )
+          pricing.active ? pricing.adjustedItemSubtotal : catalogItemTotal,
         );
         setTotalGstAmount(response.data.totalGstAmountToPay || 0); // Set the total GST amount
         setSaveAmount(response.data.saveAmount || 0);
+        void syncComboFromServer(cartWithFreeItems, regularItemsMap);
         return cartWithFreeItems;
       } else {
         console.warn(
@@ -1190,7 +1256,13 @@ const CartPage: React.FC = () => {
 
     const isAddressValid = await handleAddressChange(selectedAddress);
     if (isAddressValid?.isWithin) {
-      navigate("/main/checkout", { state: { selectedAddress, deliveryFee } });
+      navigate("/main/checkout", {
+        state: {
+          selectedAddress,
+          deliveryFee,
+          agentComboPricing: comboPricing.active ? comboPricing : null,
+        },
+      });
     }
   };
 
@@ -1411,6 +1483,23 @@ const CartPage: React.FC = () => {
 
     initializeCartPage();
   }, []);
+
+  useEffect(() => {
+    if (!cartData.length) {
+      setComboPricing({
+        active: false,
+        display: null,
+        catalogComboSubtotal: 0,
+        bundlePrice: 0,
+        savings: 0,
+        nonComboSubtotal: 0,
+        adjustedItemSubtotal: 0,
+        incomplete: false,
+      });
+      return;
+    }
+    refreshComboPricing(cartData, regularCartItems);
+  }, [cartData, regularCartItems, location.state]);
 
   useEffect(() => {
     const hasStockIssues = cartData.some(
@@ -1688,6 +1777,25 @@ const CartPage: React.FC = () => {
   );
   const chargesWithoutGoldGst = totalGstAmount - totalGoldGst;
 
+  const catalogItemCost =
+    cartData
+      ?.filter((item) => item.status !== "FREE")
+      .reduce(
+        (acc, item) =>
+          acc +
+          parseFloat(item.itemPrice) * (regularCartItems[item.itemId] || 0),
+        0,
+      ) || 0;
+
+  const itemCostSubtotal = comboPricing.active
+    ? comboPricing.adjustedItemSubtotal
+    : catalogItemCost;
+
+  const itemTotalWithGstAndHandling =
+    itemCostSubtotal +
+    totalGstAmount +
+    (cartData.length > 0 ? handlingFee || 0 : 0);
+
   return (
     <div className="flex flex-col min-h-screen">
       <style>
@@ -1785,6 +1893,15 @@ const CartPage: React.FC = () => {
                             <h3 className="text-sm sm:text-base font-semibold text-purple-700 leading-snug break-words line-clamp-3">
                               {item.itemName}
                             </h3>
+                            {comboPricing.active &&
+                              isComboItemInCart(
+                                item.itemId,
+                                comboPricing.display,
+                              ) && (
+                                <Tag color="purple" className="text-[10px] mt-1">
+                                  Combo offer item
+                                </Tag>
+                              )}
                             <p className="text-[11px] sm:text-xs text-gray-500 leading-tight">
                               {item.weight} {item.units}
                             </p>
@@ -2024,22 +2141,7 @@ const CartPage: React.FC = () => {
                           }`}
                         />
                       </div>
-                      <span>
-                        ₹
-                        {Number(
-                          (cartData
-                            ?.filter((item) => item.status !== "FREE")
-                            .reduce(
-                              (acc, item) =>
-                                acc +
-                                parseFloat(item.itemPrice) *
-                                  (regularCartItems[item.itemId] || 0),
-                              0
-                            ) || 0) +
-                          totalGstAmount +
-                          (cartData.length > 0 ? handlingFee || 0 : 0)
-                        ).toFixed(2)}
-                      </span>
+                      <span>₹{Number(itemTotalWithGstAndHandling).toFixed(2)}</span>
                     </button>
                     {isItemTotalDropdownOpen && (
                       <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
@@ -2049,20 +2151,14 @@ const CartPage: React.FC = () => {
                         </p>
                         <div className="flex justify-between text-gray-700 text-sm">
                           <span>Item Cost</span>
-                          <span>
-                            ₹
-                            {cartData
-                              ?.filter((item) => item.status !== "FREE")
-                              .reduce(
-                                (acc, item) =>
-                                  acc +
-                                  parseFloat(item.itemPrice) *
-                                    (regularCartItems[item.itemId] || 0),
-                                0
-                              )
-                              .toFixed(2)}
-                          </span>
+                          <span>₹{itemCostSubtotal.toFixed(2)}</span>
                         </div>
+                        {comboPricing.active && comboPricing.savings > 0 && (
+                          <div className="flex justify-between text-emerald-700 text-sm mt-1">
+                            <span>Combo offer savings</span>
+                            <span>-₹{comboPricing.savings.toFixed(2)}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-gray-700 text-sm mt-1">
                           <span>Charges</span>
                           <span>

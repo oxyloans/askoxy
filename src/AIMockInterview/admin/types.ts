@@ -1,16 +1,64 @@
+export interface QuestionResult {
+  question: string;
+  answer: string;
+  score: string;
+  feedback: string;
+}
+
+export interface RoundBreakdown {
+  round: number;
+  label: string;
+  questionsAnswered: number;
+  scored: number;
+  maxScore: number;
+  percentage: string;
+  questions: QuestionResult[];
+}
+
+export interface Attempt {
+  attemptNumber: number;
+  sessionId: string;
+  status: string;
+  isTechnical: boolean;
+  overallScore: string;
+  result: string;
+  totalQuestions: number;
+  roundBreakdown: RoundBreakdown[];
+  date: string;
+}
+
+export interface ProctoringSnapshot {
+  sessionId: string;
+  imageUrl: string;
+  violationType: string | null;
+  capturedAt: string;
+}
+
 export interface Candidate {
   userId: string;
   name: string;
   skills: string[];
+  domains: string[];
   experience: number;
-  avgScore?: string;
-  resumePath: string;
-  statistics: {
-    avgScore?: string;
-    roundScores: RoundScore[];
-  };
-  interviewResults: InterviewResult[];
+  isTechnical: boolean;
+  resumePath?: string;
   createdAt?: string;
+  proctoringSnapshots?: ProctoringSnapshot[];
+  scoringBreakdown: Record<string, { label: string; maxPerAttempt: number }>;
+  summary: {
+    totalAttempts: number;
+    completedAttempts: number;
+    bestScore: string;
+    bestResult: string;
+    latestScore: string;
+    latestResult: string;
+    passThreshold: string;
+  };
+  attempts: Attempt[];
+  // legacy fields kept for compatibility
+  avgScore?: string;
+  statistics?: { avgScore?: string; roundScores?: RoundScore[] };
+  interviewResults?: InterviewResult[];
 }
 
 export interface RoundScore {

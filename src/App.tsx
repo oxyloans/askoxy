@@ -13,6 +13,7 @@ import FMSRoutes1 from "./GLMS/FMS/Pages/FMSRoutes1";
 import CMSroutes1 from "./GLMS/CMS/Pages/CMSroutes1";
 import FreelancerForm from "./components/FreelancerForm";
 import FloatingCallButton from "./components/FloatingCallButton";
+import FloatingGiftOffersButton from "./components/FloatingGiftOffersButton";
 import UserOrdersIntegration from "./AskoxyAdmin/UserOrdersIntegration";
 import CampaignBlogPage from "./FREEAIBOOK/CampaignBlogPage";
 import InvoiceGenerator from "./components/InvoiceGenerator";
@@ -180,6 +181,7 @@ const WriteToUs = lazy(() => import("./kart/Writetous"));
 const TicketHistoryPage = lazy(() => import("./kart/Tickethistory"));
 const ManageAddressesPage = lazy(() => import("./kart/Address"));
 const CheckoutPage = lazy(() => import("./kart/Checkout"));
+const AgentComboOffersPage = lazy(() => import("./kart/AgentComboOffersPage"));
 const PrivacyPolicy = lazy(() => import("./kart/Privacypolicy"));
 const ReferralPage = lazy(() => import("./kart/Referral"));
 const DashboardMain = lazy(() => import("./Dashboard/Dashboardmain"));
@@ -654,6 +656,11 @@ useEffect(() => {
               localStorage.getItem("admin_acToken") ||
               localStorage.getItem("partner_Token")) &&
               !isRestrictedRoute() && <FloatingCallButton />}
+            {(
+              localStorage.getItem("userId") || 
+              localStorage.getItem("admin_acToken") ||
+              localStorage.getItem("partner_Token")) && 
+              !isRestrictedRoute() && <FloatingGiftOffersButton />}
             <Routes>
               {/* ===================================================== */}
               {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
@@ -1365,6 +1372,7 @@ useEffect(() => {
                 <Route path="bulkinvite" element={<BulkInvite />} />
                 <Route path="google" element={<GmailContactsScreen />} />
                 <Route path="mycart" element={<CartPage />} />
+                <Route path="agent-offers" element={<AgentComboOffersPage />} />
                 <Route path="freelanceform" element={<FreelancerForm />} />
                 <Route path="addblogs" element={<AddBlog />} />
                 <Route

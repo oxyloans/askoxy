@@ -1,148 +1,193 @@
 import React, { useState, useEffect } from 'react';
+import { candidateApi } from './api';
 
 export const AdminAnalytics: React.FC = () => {
   const [analytics, setAnalytics] = useState<any>(null);
   const [maxAttempts, setMaxAttempts] = useState(3);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
-    fetch('/api/admin/analytics')
-      .then(res => res.json())
-      .then(setAnalytics);
+    fetch('https://interviews-zadn.onrender.com/api/admin/analytics')
+      .then(r => r.json())
+      .then(setAnalytics)
+      .catch(() => {});
+    candidateApi.getAttemptLimit()
+      .then(d => setMaxAttempts(d.maxAttempts))
+      .catch(() => {});
   }, []);
 
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+
   const updateLimit = async () => {
-    if (maxAttempts < 1) {
-      alert('Limit must be at least 1');
-      return;
-    }
-    await fetch('${BASE_URL}/api/admin/attempts/limit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ maxAttempts })
-    });
-    alert('Limit updated successfully');
+    if (maxAttempts < 1) { showToast('Limit must be at least 1'); return; }
+    setSaving(true);
+    try {
+      await candidateApi.updateAttemptLimit(maxAttempts);
+      showToast('Limit updated successfully');
+    } catch { showToast('Failed to update limit'); }
+    finally { setSaving(false); }
   };
 
   const uploadCSV = async () => {
     if (!file) return;
     setUploading(true);
-    const formData = new FormData();
-    formData.append('csv', file);
-
+    const fd = new FormData();
+    fd.append('csv', file);
     try {
-      const res = await fetch('/api/bulk/import-candidates', {
-        method: 'POST',
-        body: formData
-      });
+      const res = await fetch('/api/bulk/import-candidates', { method: 'POST', body: fd });
       const data = await res.json();
-      alert(`Imported: ${data.imported}, Errors: ${data.errors}`);
+      showToast(`Imported: ${data.imported}, Errors: ${data.errors}`);
       setFile(null);
-    } catch (error) {
-      alert('Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    } catch { showToast('Upload failed'); }
+    finally { setUploading(false); }
   };
 
   const downloadTemplate = () => {
-    const csv = `userId,name,email,skills,domains\nuser1,John Doe,john@example.com,"javascript,react,node","web development,backend"\nuser2,Jane Smith,jane@example.com,"python,django","data science,ml"`;
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
+    const csv = `userId,name,email,skills,domains\nuser1,John Doe,john@example.com,"javascript,react,node","web development,backend"`;
     const a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = 'candidates_template.csv';
     a.click();
   };
 
-  return (
-    <div className="p-6 bg-gray-900 min-h-screen">
-      <h1 className="text-2xl font-bold text-white mb-6">System Analytics</h1>
+  const statCards = [
+    { label: 'Total Candidates', value: analytics?.multiLevel?.total_users ?? analytics?.basic?.total_candidates ?? '—', icon: '👥' },
+    { label: 'Completed Interviews', value: analytics?.multiLevel?.completed ?? analytics?.basic?.completed_interviews ?? '—', icon: '✅' },
+    { label: 'Avg Score', value: analytics?.multiLevel?.avg_score ? `${analytics.multiLevel.avg_score}%` : analytics?.basic?.avg_score ?? '—', icon: '📊' },
+    { label: 'Pass Rate', value: analytics?.multiLevel?.pass_rate ? `${analytics.multiLevel.pass_rate}%` : '—', icon: '🎯' },
+  ];
 
-      {/* Analytics Cards */}
-      <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">📊 Basic Interviews</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between text-gray-300">
-              <span>Total Candidates:</span>
-              <span className="font-semibold text-white">{analytics?.basic.total_candidates || 0}</span>
+  return (
+    <div className="p-6">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-[#232f3e] text-white text-sm px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <svg className="w-4 h-4 text-[#ff9900]" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          {toast}
+        </div>
+      )}
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <p className="text-sm text-gray-500 mt-1">System-wide interview performance overview</p>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {statCards.map(s => (
+          <div key={s.label} className="bg-white rounded-lg border border-gray-200 shadow-sm px-4 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+              <span className="text-lg">{s.icon}</span>
             </div>
-            <div className="flex justify-between text-gray-300">
-              <span>Avg Score:</span>
-              <span className="font-semibold text-white">{analytics?.basic.avg_score || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between text-gray-300">
-              <span>Completed:</span>
-              <span className="font-semibold text-white">{analytics?.basic.completed_interviews || 0}</span>
-            </div>
+            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-5 mb-5">
+        {/* Basic Interviews */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200 bg-[#f7f8f8]">
+            <h3 className="text-sm font-semibold text-gray-900">Basic Interviews</h3>
+          </div>
+          <div className="p-5 space-y-3">
+            {[
+              { label: 'Total Candidates', value: analytics?.basic?.total_candidates ?? '—' },
+              { label: 'Average Score', value: analytics?.basic?.avg_score ?? '—' },
+              { label: 'Completed', value: analytics?.basic?.completed_interviews ?? '—' },
+            ].map(row => (
+              <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                <span className="text-sm text-gray-600">{row.label}</span>
+                <span className="text-sm font-semibold text-gray-900">{row.value}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">📊 Multi-Level Interviews</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between text-gray-300">
-              <span>Total Users:</span>
-              <span className="font-semibold text-white">{analytics?.multiLevel.total_users || 0}</span>
-            </div>
-            <div className="flex justify-between text-gray-300">
-              <span>Completed:</span>
-              <span className="font-semibold text-white">{analytics?.multiLevel.completed || 0}</span>
-            </div>
-            <div className="flex justify-between text-gray-300">
-              <span>Avg Score:</span>
-              <span className="font-semibold text-white">{analytics?.multiLevel.avg_score || 'N/A'}%</span>
-            </div>
+        {/* Multi-Level Interviews */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200 bg-[#f7f8f8]">
+            <h3 className="text-sm font-semibold text-gray-900">Multi-Level Interviews</h3>
+          </div>
+          <div className="p-5 space-y-3">
+            {[
+              { label: 'Total Users', value: analytics?.multiLevel?.total_users ?? '—' },
+              { label: 'Completed', value: analytics?.multiLevel?.completed ?? '—' },
+              { label: 'Average Score', value: analytics?.multiLevel?.avg_score ? `${analytics.multiLevel.avg_score}%` : '—' },
+            ].map(row => (
+              <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                <span className="text-sm text-gray-600">{row.label}</span>
+                <span className="text-sm font-semibold text-gray-900">{row.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Settings */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold text-white mb-4">⚙️ Settings</h3>
-        <div className="flex gap-3 items-center">
-          <label className="text-gray-300 text-sm">Max Attempts:</label>
-          <input
-            type="number"
-            min="1"
-            value={maxAttempts}
-            onChange={(e) => setMaxAttempts(Number(e.target.value))}
-            className="px-4 py-2 bg-gray-900 border border-gray-700 rounded text-white w-24"
-          />
-          <button
-            onClick={updateLimit}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium"
-          >
-            Update
-          </button>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-5">
+        <div className="px-5 py-4 border-b border-gray-200 bg-[#f7f8f8]">
+          <h3 className="text-sm font-semibold text-gray-900">Settings</h3>
+        </div>
+        <div className="p-5">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Max Attempts Per Candidate</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min="1"
+              value={maxAttempts}
+              onChange={e => setMaxAttempts(Number(e.target.value))}
+              className="w-24 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#ff9900] focus:ring-1 focus:ring-[#ff9900] text-gray-900"
+            />
+            <button
+              onClick={updateLimit}
+              disabled={saving}
+              className="px-4 py-2 bg-[#ff9900] hover:bg-[#e88b00] disabled:bg-gray-300 text-white text-sm font-semibold rounded transition"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Bulk Import */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">📥 Bulk Import</h3>
-        <div className="space-y-3">
-          <button
-            onClick={downloadTemplate}
-            className="text-sm text-emerald-400 hover:text-emerald-300 font-medium"
-          >
-            Download CSV Template
-          </button>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200 bg-[#f7f8f8]">
+          <h3 className="text-sm font-semibold text-gray-900">Bulk Import Candidates</h3>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <p className="text-sm text-gray-600 mb-2">Download the CSV template, fill in candidate data, then upload.</p>
+            <button
+              onClick={downloadTemplate}
+              className="text-sm text-[#0066c0] hover:underline font-medium flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download CSV Template
+            </button>
+          </div>
           <div className="flex gap-3">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-            />
+            <label className="flex-1 flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded cursor-pointer hover:border-[#ff9900] transition bg-[#fafafa]">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+              <span className="text-sm text-gray-500">{file ? file.name : 'Choose CSV file…'}</span>
+              <input type="file" accept=".csv" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+            </label>
             <button
               onClick={uploadCSV}
               disabled={!file || uploading}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded font-medium"
+              className="px-4 py-2 bg-[#232f3e] hover:bg-[#374151] disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded transition"
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? 'Uploading…' : 'Upload'}
             </button>
           </div>
         </div>

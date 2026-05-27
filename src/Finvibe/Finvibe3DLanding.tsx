@@ -111,6 +111,16 @@ const ROADMAP_STEPS: RoadmapStep[] = [
   },
   {
     num: "05",
+    icon: "📊",
+    title: "Reports",
+    desc: "Submits regulatory reports to RBI and CIC automatically.",
+    color: "#0284C7",
+    bg: "#F0F9FF",
+    border: "#BAE6FD",
+    tag: "Reporting",
+  },
+  {
+    num: "06",
     icon: "🏗️",
     title: "System Design",
     desc: "Architects modules, APIs, and service boundaries at scale.",
@@ -120,7 +130,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     tag: "Design",
   },
   {
-    num: "06",
+    num: "07",
     icon: "📁",
     title: "Folder Structure",
     desc: "Generates a production-grade directory and file layout.",
@@ -130,7 +140,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     tag: "Scaffolding",
   },
   {
-    num: "07",
+    num: "08",
     icon: "✍️",
     title: "Prompt Builder",
     desc: "Compiles a precise generation prompt from all prior context.",
@@ -140,7 +150,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     tag: "Synthesis",
   },
   {
-    num: "08",
+    num: "09",
     icon: "⚙️",
     title: "Backend",
     desc: "Generates controllers, services, models, routes, middleware.",
@@ -150,7 +160,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     tag: "Code Gen",
   },
   {
-    num: "09",
+    num: "10",
     icon: "🎨",
     title: "Frontend",
     desc: "Builds UI components, pages, state, and API hooks.",
@@ -160,7 +170,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     tag: "Code Gen",
   },
   {
-    num: "10",
+    num: "11",
     icon: "🗄️",
     title: "Database",
     desc: "Writes schemas, migrations, seed data, and query optimisations.",
@@ -170,14 +180,14 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     tag: "Code Gen",
   },
   {
-    num: "11",
+    num: "12",
     icon: "🧪",
     title: "Test Cases & Data",
-    desc: "Generates test cases and data for validation.",
+    desc: "Generates unit, integration & edge-case tests with realistic seed data for full validation coverage.",
     color: "#475569",
     bg: "#F4F6FA",
     border: "#D1D9E8",
-    tag: "Testing",
+    tag: "QA & Testing",
   },
 ];
 
@@ -1156,7 +1166,7 @@ function RoadmapSection() {
               lineHeight: 1.7,
             }}
           >
-            11 sequential AI stages · Each feeds directly into the next · Done
+            12 sequential AI stages · Each feeds directly into the next · Done
             in under 60 seconds
           </p>
         </div>
@@ -1218,7 +1228,7 @@ function RoadmapSection() {
             marginBottom: 12,
           }}
         >
-          ◆ Track B — Generation &amp; Validation (Steps 07–11)
+          ◆ Track B — Generation &amp; Validation (Steps 07–12)
         </div>
         <div
           style={{
@@ -1244,46 +1254,6 @@ function RoadmapSection() {
               )}
             </div>
           ))}
-          <ChevronArrow color="#00f5ff" />
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-            <div
-              style={{
-                background:
-                  "linear-gradient(135deg,rgba(0,245,255,.1),rgba(124,58,237,.12))",
-                border: "1px solid rgba(0,245,255,.28)",
-                borderRadius: 14,
-                padding: "14px 16px",
-                textAlign: "center",
-                minWidth: 90,
-                boxShadow: "0 0 24px rgba(0,245,255,.1)",
-              }}
-            >
-              <div style={{ fontSize: "1.6rem", marginBottom: 6 }}>🚀</div>
-              <div
-                style={{
-                  fontFamily: "sans-serif",
-                  fontSize: "0.8rem",
-                  fontWeight: 700,
-                  color: "#00f5ff",
-                  marginBottom: 3,
-                }}
-              >
-                App Ready!
-              </div>
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  color: "rgba(255,255,255,.45)",
-                  lineHeight: 1.5,
-                  fontFamily: "sans-serif",
-                }}
-              >
-                Full stack
-                <br />
-                in &lt;60s
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Stats strip */}
@@ -1312,7 +1282,7 @@ function RoadmapSection() {
                   fontFamily: "sans-serif",
                 }}
               >
-                All 11 stages complete in under 60 seconds
+                All 12 stages complete in under 60 seconds
               </p>
               <p
                 style={{
@@ -1761,7 +1731,7 @@ export default function App() {
         style={{ position: "relative", zIndex: 2, padding: "80px 40px" }}
       >
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div style={{ textAlign: "center", marginBottom: 25 }}>
             <h2
               style={{
                 fontFamily: "'Orbitron',monospace",

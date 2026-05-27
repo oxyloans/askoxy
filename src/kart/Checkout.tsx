@@ -27,6 +27,12 @@ import {
 } from "./DeliveryFee";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { head } from "lodash";
+import {
+  computeComboPricing,
+  loadAgentComboDisplay,
+  type ComboPricingResult,
+} from "./agentComboDisplay";
+import AgentComboPricingSummary from "./AgentComboPricingSummary";
 
 interface CartItem {
   itemId: string;
@@ -90,9 +96,25 @@ interface ExtendedTimeSlot extends TimeSlot {
   formattedDay?: string;
 }
 
+const emptyComboPricing = (): ComboPricingResult => ({
+  active: false,
+  display: null,
+  catalogComboSubtotal: 0,
+  bundlePrice: 0,
+  savings: 0,
+  nonComboSubtotal: 0,
+  adjustedItemSubtotal: 0,
+  incomplete: false,
+});
+
 const CheckoutPage: React.FC = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const [comboPricing, setComboPricing] = useState<ComboPricingResult>(
+    () =>
+      (state as { agentComboPricing?: ComboPricingResult } | null)
+        ?.agentComboPricing ?? emptyComboPricing(),
+  );
   const [isEligibleToday, setIsEligibleToday] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [cartData, setCartData] = useState<CartItem[]>([]);
@@ -168,6 +190,33 @@ const CheckoutPage: React.FC = () => {
   const { count, setCount } = context;
 
   const isFreeItem = (item: CartItem) => item.status === "FREE";
+
+  const applyComboPricingToTotals = (
+    catalogSubtotal: number,
+    cartItems: CartItem[],
+  ) => {
+    const fromNav = (state as { agentComboPricing?: ComboPricingResult } | null)
+      ?.agentComboPricing;
+    const display = fromNav?.display ?? loadAgentComboDisplay();
+    const pricing = computeComboPricing(
+      display,
+      cartItems.map((item) => ({
+        itemId: item.itemId,
+        itemPrice: item.itemPrice,
+        cartQuantity: item.cartQuantity
+          ? parseInt(String(item.cartQuantity), 10)
+          : 1,
+        status: item.status,
+      })),
+    );
+    setComboPricing(pricing);
+    const subtotal = pricing.active
+      ? pricing.adjustedItemSubtotal
+      : catalogSubtotal;
+    setTotalAmount(subtotal);
+    setGrandTotal(subtotal);
+    return subtotal;
+  };
 
   const applyBmvCashBack = async () => {
     if (!customerId) {
@@ -740,12 +789,11 @@ const CheckoutPage: React.FC = () => {
 
         setSubGst(gstAmount);
         setGoldMakingCharges(goldMakingCharges);
-        setTotalAmount(amountToPay);
-        setGrandTotal(amountToPay);
+        const subtotalForFees = applyComboPricingToTotals(amountToPay, cartItems);
         setDeliveryFee(deliveryFee);
         setHandlingFee(handlingFee);
 
-        const totalWithGst = amountToPay + gstAmount;
+        const totalWithGst = subtotalForFees + gstAmount;
         const totalWithFees =
           totalWithGst +
           (cartItems.length > 0
@@ -761,6 +809,7 @@ const CheckoutPage: React.FC = () => {
         setTotalAmount(0);
         setGrandTotal(0);
         setGrandTotalAmount(0);
+        setComboPricing(emptyComboPricing());
       }
     } catch (error) {
       console.error("Error fetching cart items:", error);
@@ -824,13 +873,12 @@ const CheckoutPage: React.FC = () => {
           console.error("Latitude or Longitude is undefined");
         }
 
-        setGrandTotal(amountToPay);
         setSubGst(gstAmount);
-        setTotalAmount(amountToPay);
+        const subtotalForFees = applyComboPricingToTotals(amountToPay, cartItems);
         setDeliveryFee(deliveryFee);
         setHandlingFee(handlingFee);
 
-        const totalWithGst = amountToPay + gstAmount;
+        const totalWithGst = subtotalForFees + gstAmount;
         const totalWithFees =
           totalWithGst +
           (cartItems.length > 0
@@ -1843,12 +1891,26 @@ const CheckoutPage: React.FC = () => {
 
                 <div className="lg:col-span-5">
                   <div className="bg-white border rounded-lg p-4 sticky top-4">
+                    {(comboPricing.active || comboPricing.incomplete) && (
+                      <AgentComboPricingSummary
+                        pricing={comboPricing}
+                        compact
+                      />
+                    )}
                     <h3 className="font-medium mb-4">Order Summary</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between py-2">
                         <span className="text-gray-600">Subtotal</span>
                         <span>₹{Number(grandTotal || 0).toFixed(2)}</span>
                       </div>
+                      {comboPricing.active && comboPricing.savings > 0 && (
+                        <div className="flex justify-between py-2 text-emerald-700">
+                          <span>Combo offer savings</span>
+                          <span>
+                            -₹{Number(comboPricing.savings || 0).toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                       {goldMakingCharges > 0 && (
                         <div className="flex justify-between py-2">
                           <span className="text-gray-600">
