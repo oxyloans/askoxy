@@ -350,27 +350,34 @@ export default function Round4({ userId, sessionId, onComplete }: Round4Props) {
   const progPct = (questionNo / totalQ) * 100;
 
   /* ── Summary ── */
-  if (roundComplete) return (
-    <div style={{ maxWidth: 680, margin: "0 auto", animation: "r4fadeup .4s ease" }}>
-      <style>{STYLES}</style>
-      <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>
-        <div style={{ padding: "36px 28px", textAlign: "center" }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#7B4DFF14", border: `2px solid ${PURPLE}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 30 }}>🎉</div>
-          <div style={{ fontSize: 22, fontWeight: 500, color: "var(--color-text-primary)", marginBottom: 4 }}>Communication Round Complete!</div>
-          <div style={{ fontSize: 13, color: "var(--color-text-tertiary)", marginBottom: 8 }}>Round 4 of 5 · Voice MCQ</div>
-          <div style={{ fontSize: 14, color: "var(--color-text-secondary)", marginBottom: 28, lineHeight: 1.6 }}>
-            Great job completing the Communication Round!<br />You're one step closer to finishing the full assessment.
+  if (roundComplete) {
+    return (
+      <div style={{ maxWidth: 680, margin: "0 auto", animation: "r4fadeup .4s ease" }}>
+        <style>{STYLES}</style>
+        <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: "0.5px solid var(--color-border-tertiary)", background: "var(--color-background-secondary)" }}>
+            <div style={{ width: 30, height: 30, borderRadius: "50%", background: PURPLE, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 500 }}>4</div>
+            <div style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "var(--color-text-primary)" }}>Round 4 — Communication</div>
           </div>
-          <button
-            onClick={onComplete}
-            style={{ padding: "12px 32px", background: PURPLE, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
-          >
-            Continue to Round 5 →
-          </button>
+          {/* Body */}
+          <div style={{ padding: "32px 24px", textAlign: "center" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 6 }}>Round 4 Complete!</div>
+            <div style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>
+              Great job! Let's continue to the final round.
+            </div>
+            <button
+              onClick={onComplete}
+              style={{ width: "100%", padding: "13px", background: PURPLE, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", letterSpacing: ".01em" }}
+            >
+              Continue to Round 5 — HR Interview →
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   if (loading) return (
     <div style={{ maxWidth: 680, margin: "0 auto" }}>

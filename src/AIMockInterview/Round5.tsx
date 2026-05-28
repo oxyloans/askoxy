@@ -559,7 +559,6 @@ export default function Round5({ userId, sessionId, onComplete }: Round5Props) {
       if (data.completed && data.round_summary) { setSummary(data.round_summary); setRoundComplete(true); }
       else if (data.completed) setRoundComplete(true);
       setPhaseSync("done");
-      if (data.feedback) setTimeout(() => speak(data.feedback), 500);
     } catch {
       setFeedback("Could not evaluate answer. Please continue.");
       setPhaseSync("done");
@@ -584,25 +583,10 @@ export default function Round5({ userId, sessionId, onComplete }: Round5Props) {
   /* ════════════════════════════════════════════
      SUMMARY
   ════════════════════════════════════════════ */
-  if (roundComplete) return (
-    <div style={{ maxWidth: 680, margin: "0 auto", animation: "r5fade .4s ease" }}>
-      <style>{STYLES}</style>
-      <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>
-        <div style={{ padding: "36px 28px", textAlign: "center" }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: `${PINK}14`, border: `2px solid ${PINK}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 30 }}></div>
-          <div style={{ fontSize: 22, fontWeight: 500, color: "var(--color-text-primary)", marginBottom: 4 }}>HR Interview Complete!</div>
-          <div style={{ fontSize: 13, color: "var(--color-text-tertiary)", marginBottom: 8 }}>Round 5 of 5 · Voice HR Interview</div>
-          <div style={{ fontSize: 14, color: "var(--color-text-secondary)", marginBottom: 28, lineHeight: 1.6 }}>
-            Excellent work completing all 5 rounds!<br />Thank you for participating in the AI Mock Interview.
-          </div>
-          <button onClick={onComplete}
-            style={{ padding: "12px 32px", background: PINK, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
-            Finish Assessment →
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  if (roundComplete) {
+    setTimeout(() => onComplete(), 100);
+    return null;
+  }
 
   /* ════════════════════════════════════════════
      LOADING
@@ -938,14 +922,6 @@ export default function Round5({ userId, sessionId, onComplete }: Round5Props) {
               style={{ width: "100%", padding: 12, background: PINK, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               Done Speaking → Submit Answer
             </button>
-          )}
-          {phase === "done" && feedback && (
-            <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 12, background: (score ?? 0) >= 7 ? GREEN_BG : "#fef9c3", border: `0.5px solid ${(score ?? 0) >= 7 ? GREEN_BORDER : "#fde047"}`, animation: "r5fade .4s ease" }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: (score ?? 0) >= 7 ? GREEN : "#a16207", marginBottom: 6 }}>
-                {(score ?? 0) >= 7 ? "✅ Strong Answer" : "💡 Good Effort"} — {score}/10
-              </div>
-              <p style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.65, margin: 0 }}>{feedback}</p>
-            </div>
           )}
           {phase === "done" && !roundComplete && questionNo < totalQ && (
             <button onClick={loadQuestion}

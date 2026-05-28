@@ -193,6 +193,38 @@ export const api = {
     return response.json();
   },
 
+  async round3Execute(data: { code: string; language: string; userId: string; sessionId: string; questionId?: number }) {
+    const response = await fetch(`${API_BASE_URL}/api/code/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ code: data.code, language: data.language }),
+    });
+    return response.json();
+  },
+
+  async getCodingQuestion(userId: string, sessionId: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/interview/coding-question?userId=${userId}&sessionId=${sessionId}`,
+      { credentials: "include" }
+    );
+    return response.json();
+  },
+
+  async evaluateCode(data: { code: string; language: string; questionId: number; testCases?: any[] }) {
+    const response = await fetch(`${API_BASE_URL}/api/code/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ 
+        code: data.code, 
+        language: data.language,
+        testCases: data.testCases || []
+      }),
+    });
+    return response.json();
+  },
+
   async getAttemptStatus(userId: string) {
     const response = await fetch(
       `${API_BASE_URL}/api/interview/attempts/status?userId=${userId}`,
@@ -265,6 +297,13 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  async getInterviewConfig() {
+    const response = await fetch(`${API_BASE_URL}/api/admin/interview-config`, {
+      credentials: "include",
     });
     return response.json();
   },
