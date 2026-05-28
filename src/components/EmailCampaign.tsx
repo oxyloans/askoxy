@@ -13,6 +13,7 @@ import {
   Upload,
   Grid,
   Form,
+  Breadcrumb,
 } from "antd";
 import type { MenuProps } from "antd";
 import {
@@ -25,6 +26,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
+  HomeOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
 
@@ -36,7 +39,14 @@ const { useBreakpoint } = Grid;
 const BASE_URL = "https://mailautomation-production.up.railway.app/api/v1";
 
 const COLOR_PRIMARY = "#008cba";
+const COLOR_PRIMARY_DARK = "#0079a3";
 const COLOR_SUCCESS = "#1ab394";
+const COLOR_TEXT = "#111827";
+const COLOR_MUTED = "#6b7280";
+const COLOR_BORDER = "#e5e7eb";
+const COLOR_BG = "#ffffff";
+const COLOR_SIDEBAR = "#ffffff";
+const COLOR_MENU_SELECTED = "#f9fafb";
 
 interface UploadResponse {
   success: boolean;
@@ -63,57 +73,53 @@ const SECTION_META: Record<
     pageTitle: string;
     pageSubtitle: string;
     cardTitle: string;
+    breadcrumb: string;
   }
 > = {
   upload: {
-    sidebarLabel: "Upload PDF",
-    pageTitle: "Company PDF Upload",
-    pageSubtitle:
-      "Add your company brochure or profile PDF. Our AI will read and index it so future emails can mention your services accurately.",
-    cardTitle: "Select & Upload PDF File",
+    sidebarLabel: "Company Upload Files",
+    pageTitle: "Company Upload Files",
+    pageSubtitle: "Upload company files for AI email campaigns.",
+    cardTitle: "Upload Company Document",
+    breadcrumb: "PDF Upload",
   },
   campaign: {
     sidebarLabel: "Email Campaign",
-    pageTitle: "Send Email Campaign",
-    pageSubtitle:
-      "Enter your client’s name and email. AI will draft a personalized outreach message and send it for your approval.",
-    cardTitle: "Client Details for Campaign",
+    pageTitle: "Email Campaign",
+    pageSubtitle: "Create AI outreach emails for clients.",
+    cardTitle: "Client Campaign Details",
+    breadcrumb: "Campaign",
   },
 };
 
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-const btnPrimaryStyle: React.CSSProperties = {
+const primaryButtonStyle: React.CSSProperties = {
   background: COLOR_PRIMARY,
   borderColor: COLOR_PRIMARY,
   color: "#ffffff",
-  fontWeight: 600,
-  height: 48,
-  borderRadius: 8,
-  letterSpacing: "0.02em",
+  fontWeight: 700,
+  height: 46,
+  borderRadius: 10,
+  boxShadow: "0 10px 20px rgba(0, 140, 186, 0.18)",
 };
 
-const btnSuccessStyle: React.CSSProperties = {
+const successButtonStyle: React.CSSProperties = {
   background: COLOR_SUCCESS,
   borderColor: COLOR_SUCCESS,
   color: "#ffffff",
-  fontWeight: 600,
-  height: 48,
-  borderRadius: 8,
-  letterSpacing: "0.02em",
+  fontWeight: 700,
+  height: 46,
+  borderRadius: 10,
+  boxShadow: "0 10px 20px rgba(26, 179, 148, 0.18)",
 };
 
-const proCardStyles = {
-  borderRadius: 12,
-  boxShadow: "0 4px 20px rgba(15, 23, 42, 0.06)",
-  border: "1px solid #e8ecf1",
-};
-
-const proCardHeadStyles = {
-  borderBottom: "1px solid #eef2f6",
-  background: "#fafbfc",
-  minHeight: 52,
+const cardStyle: React.CSSProperties = {
+  borderRadius: 18,
+  border: `1px solid ${COLOR_BORDER}`,
+  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+  overflow: "hidden",
 };
 
 const EmailCampaign: React.FC = () => {
@@ -158,14 +164,30 @@ const EmailCampaign: React.FC = () => {
       ? collapsedWidth
       : expandedWidth;
 
+  const meta = SECTION_META[activeSection];
+
+  const isCampaignFormValid =
+    clientName.trim().length > 0 &&
+    clientEmail.trim().length > 0 &&
+    isValidEmail(clientEmail);
+
+  const menuItems: MenuProps["items"] = [
+    {
+      key: "upload",
+      icon: <UploadOutlined />,
+      label: SECTION_META.upload.sidebarLabel,
+    },
+    {
+      key: "campaign",
+      icon: <MailOutlined />,
+      label: SECTION_META.campaign.sidebarLabel,
+    },
+  ];
+
   const toggleCollapse = () => setCollapsed((prev) => !prev);
 
   const closeMobileSidebar = () => {
     if (isMobile && !collapsed) setCollapsed(true);
-  };
-
-  const onBreakpoint = (broken: boolean) => {
-    if (broken) setCollapsed(true);
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -174,6 +196,7 @@ const EmailCampaign: React.FC = () => {
       setUploadError("");
       return true;
     }
+
     setUploadError("Please choose a valid PDF file.");
     return false;
   };
@@ -212,19 +235,17 @@ const EmailCampaign: React.FC = () => {
 
   const handleSendCampaign = async () => {
     if (!clientName.trim()) {
-      setCampaignError("Please enter the client’s full name.");
+      setCampaignError("Please enter the client full name.");
       return;
     }
 
     if (!clientEmail.trim()) {
-      setCampaignError("Please enter the client’s email address.");
+      setCampaignError("Please enter the client email address.");
       return;
     }
 
     if (!isValidEmail(clientEmail)) {
-      setCampaignError(
-        "Please enter a valid email address (e.g. name@company.com).",
-      );
+      setCampaignError("Please enter a valid email address.");
       return;
     }
 
@@ -273,19 +294,6 @@ const EmailCampaign: React.FC = () => {
     setCampaignError("");
   };
 
-  const menuItems: MenuProps["items"] = [
-    {
-      key: "upload",
-      icon: <UploadOutlined />,
-      label: SECTION_META.upload.sidebarLabel,
-    },
-    {
-      key: "campaign",
-      icon: <MailOutlined />,
-      label: SECTION_META.campaign.sidebarLabel,
-    },
-  ];
-
   const onMenuClick: MenuProps["onClick"] = ({ key }) => {
     setActiveSection(key as SectionKey);
     if (isMobile) setCollapsed(true);
@@ -302,41 +310,43 @@ const EmailCampaign: React.FC = () => {
       ]
     : [];
 
-  const siderStyles: React.CSSProperties = {
+  const sidebarStyles: React.CSSProperties = {
     position: "fixed",
     height: "100vh",
     zIndex: 1000,
     top: 0,
     left: isMobile && collapsed ? -expandedWidth : 0,
-    transition: "left 0.25s ease-in-out",
     overflowY: "auto",
-    background: "#1A202C",
+    background: COLOR_SIDEBAR,
+    borderRight: `1px solid ${COLOR_BORDER}`,
+    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+    transition: "left 0.25s ease-in-out",
   };
 
   const headerStyles: React.CSSProperties = {
-    padding: screens.xs ? "0 12px" : "0 24px",
+    padding: screens.xs ? "0 14px" : "0 24px",
     width: screens.xs ? "100%" : `calc(100% - ${effectiveSidebarWidth}px)`,
     marginLeft: screens.xs ? 0 : effectiveSidebarWidth,
     position: "fixed",
     top: 0,
     zIndex: 900,
-    height: 64,
-    background: "#fff",
+    height: 72,
+    background: "#ffffff",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottom: "1px solid #f0f0f0",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+    borderBottom: `1px solid ${COLOR_BORDER}`,
+    boxShadow: "0 4px 18px rgba(15, 23, 42, 0.05)",
     transition: "margin-left 0.25s ease-in-out, width 0.25s ease-in-out",
   };
 
   const contentStyles: React.CSSProperties = {
-    padding: screens.xs ? 12 : screens.md ? 20 : 24,
+    padding: screens.xs ? "18px 14px" : screens.md ? "26px 24px" : "32px 28px",
     width: screens.xs ? "100%" : `calc(100% - ${effectiveSidebarWidth}px)`,
     marginLeft: screens.xs ? 0 : effectiveSidebarWidth,
-    marginTop: 64,
-    minHeight: "calc(100vh - 64px - 56px)",
-    background: "#f5f7fb",
+    marginTop: 72,
+    minHeight: "calc(100vh - 72px - 56px)",
+    background: COLOR_BG,
     transition: "margin-left 0.25s ease-in-out, width 0.25s ease-in-out",
   };
 
@@ -344,61 +354,98 @@ const EmailCampaign: React.FC = () => {
     width: screens.xs ? "100%" : `calc(100% - ${effectiveSidebarWidth}px)`,
     marginLeft: screens.xs ? 0 : effectiveSidebarWidth,
     height: 56,
-    transition: "margin-left 0.25s ease-in-out, width 0.25s ease-in-out",
-    background: "#f7f7f7",
-    borderTop: "1px solid #e5e7eb",
+    background: "#ffffff",
+    borderTop: `1px solid ${COLOR_BORDER}`,
     textAlign: "center",
     padding: "12px 16px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    transition: "margin-left 0.25s ease-in-out, width 0.25s ease-in-out",
   };
 
-  const meta = SECTION_META[activeSection];
-  const isCampaignFormValid =
-    clientName.trim().length > 0 &&
-    clientEmail.trim().length > 0 &&
-    isValidEmail(clientEmail);
-
-  const renderPageHeading = () => (
+  const renderPageHeader = () => (
     <div
-      className="ec-page-heading"
-      style={{ marginBottom: screens.xs ? 20 : 28 }}
+      className="ec-top-row"
+      style={{
+        display: "flex",
+        alignItems: screens.xs ? "flex-start" : "center",
+        justifyContent: "space-between",
+        gap: 16,
+        flexWrap: "wrap",
+        marginBottom: screens.xs ? 18 : 24,
+      }}
     >
-      <Title
-        level={screens.xs ? 4 : 3}
-        className="ec-page-title"
-        style={{ marginBottom: 8, color: "#0f172a", fontWeight: 700 }}
-      >
-        {meta.pageTitle}
-      </Title>
-      <Paragraph
-        className="ec-page-subtitle"
+      <div style={{ flex: 1, minWidth: 260 }}>
+        <Title
+          level={screens.xs ? 4 : 3}
+          style={{
+            margin: 0,
+            color: COLOR_TEXT,
+            fontWeight: 800,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {meta.pageTitle}
+        </Title>
+        <Paragraph
+          style={{
+            margin: "8px 0 0",
+            maxWidth: 720,
+            color: COLOR_MUTED,
+            fontSize: screens.xs ? 13 : 15,
+            lineHeight: 1.65,
+          }}
+        >
+          {meta.pageSubtitle}
+        </Paragraph>
+      </div>
+
+      <Breadcrumb
+        separator={<RightOutlined style={{ fontSize: 10 }} />}
+        items={[
+          {
+            title: (
+              <span>
+                <HomeOutlined /> OxyMail AI
+              </span>
+            ),
+          },
+        
+          { title: meta.breadcrumb },
+        ]}
         style={{
-          margin: 0,
-          fontSize: screens.xs ? 14 : 15,
-          color: "#64748b",
-          lineHeight: 1.65,
-          maxWidth: 640,
+          background: "transparent",
+          border: "none",
+          borderRadius: 0,
+          padding: 0,
+          boxShadow: "none",
+          whiteSpace: "nowrap",
+          color: COLOR_MUTED,
         }}
-      >
-        {meta.pageSubtitle}
-      </Paragraph>
+      />
     </div>
   );
 
   const renderUploadPanel = () => (
     <Card
-      className="ec-pro-form-card"
+      className="ec-pro-card"
       title={
-        <Text strong style={{ fontSize: 16, color: "#1a202c" }}>
-          {SECTION_META.upload.cardTitle}
-        </Text>
+        <Space>
+          <FilePdfOutlined style={{ color: COLOR_PRIMARY }} />
+          <Text strong style={{ fontSize: 16, color: COLOR_TEXT }}>
+            {SECTION_META.upload.cardTitle}
+          </Text>
+        </Space>
       }
-      style={proCardStyles}
+      style={cardStyle}
       styles={{
-        header: proCardHeadStyles,
-        body: { padding: "20px 24px 24px" },
+        header: {
+          background: "#ffffff",
+          borderBottom: `1px solid ${COLOR_BORDER}`,
+          minHeight: 58,
+        },
+        body: { padding: screens.xs ? 16 : 24 },
       }}
     >
       <input
@@ -406,15 +453,14 @@ const EmailCampaign: React.FC = () => {
         type="file"
         accept=".pdf"
         style={{ display: "none" }}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) handleFileSelect(f);
+        onChange={(event) => {
+          const selectedFile = event.target.files?.[0];
+          if (selectedFile) handleFileSelect(selectedFile);
         }}
       />
 
-      <Form layout="vertical" requiredMark={false} className="ec-pro-form">
+      <Form layout="vertical" requiredMark={false}>
         <Form.Item
-          className="ec-form-field"
           label={
             <span className="ec-form-label">
               PDF Document <span className="ec-required">*</span>
@@ -422,7 +468,7 @@ const EmailCampaign: React.FC = () => {
           }
           extra={
             <span className="ec-form-hint">
-              Drag and drop or browse — PDF format only, up to 10 MB
+              Upload only PDF files. Recommended file size: below 10 MB.
             </span>
           }
         >
@@ -431,8 +477,8 @@ const EmailCampaign: React.FC = () => {
             accept=".pdf"
             multiple={false}
             fileList={uploadFileList}
-            beforeUpload={(f) => {
-              handleFileSelect(f);
+            beforeUpload={(selectedFile) => {
+              handleFileSelect(selectedFile);
               return false;
             }}
             onRemove={() => {
@@ -442,12 +488,14 @@ const EmailCampaign: React.FC = () => {
             }}
           >
             <p className="ant-upload-drag-icon">
-              <FilePdfOutlined style={{ color: COLOR_PRIMARY, fontSize: 48 }} />
+              <FilePdfOutlined style={{ color: COLOR_PRIMARY, fontSize: 44 }} />
             </p>
-            <p className="ant-upload-text" style={{ fontWeight: 600 }}>
+            <p className="ant-upload-text" style={{ fontWeight: 700 }}>
               Drop your PDF here
             </p>
-            <p className="ant-upload-hint">or click to browse files</p>
+            <p className="ant-upload-hint">
+              or click to browse and select one file
+            </p>
           </Dragger>
         </Form.Item>
       </Form>
@@ -457,9 +505,11 @@ const EmailCampaign: React.FC = () => {
           type="success"
           showIcon
           icon={<CheckCircleOutlined />}
-          message="Upload complete"
-          description={`“${uploadResult.fileName}” is indexed (${uploadResult.chunksStored} chunk${uploadResult.chunksStored !== 1 ? "s" : ""}). You can upload another file anytime.`}
-          style={{ marginBottom: 16 }}
+          message="PDF uploaded successfully"
+          description={`"${uploadResult.fileName}" is indexed with ${uploadResult.chunksStored} chunk${
+            uploadResult.chunksStored !== 1 ? "s" : ""
+          }.`}
+          style={{ marginBottom: 16, borderRadius: 12 }}
         />
       )}
 
@@ -468,7 +518,7 @@ const EmailCampaign: React.FC = () => {
           type="error"
           message={uploadError}
           showIcon
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: 16, borderRadius: 12 }}
         />
       )}
 
@@ -476,21 +526,21 @@ const EmailCampaign: React.FC = () => {
         type="primary"
         size="large"
         block
-        className="ec-btn-primary"
+        className="ec-primary-btn"
         icon={<UploadOutlined />}
         loading={uploadLoading}
         disabled={!file}
         onClick={handleUpload}
-        style={btnPrimaryStyle}
+        style={primaryButtonStyle}
       >
-        Upload PDF to Server
+        Upload PDF
       </Button>
 
       {uploadResult && (
         <Button
           block
           size="large"
-          className="ec-btn-outline"
+          className="ec-outline-btn"
           onClick={resetUploadSection}
           style={{ marginTop: 12 }}
         >
@@ -498,44 +548,34 @@ const EmailCampaign: React.FC = () => {
         </Button>
       )}
 
-      <div style={{ marginTop: 20, textAlign: "center" }}>
-        <Space
-          split={<span style={{ color: "#d9d9d9" }}>·</span>}
-          size="middle"
-          wrap
-        >
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Encrypted transfer
-          </Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            AI-ready indexing
-          </Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            PDF only
-          </Text>
-        </Space>
-      </div>
+      
     </Card>
   );
 
   const renderCampaignPanel = () => (
     <Card
-      className="ec-pro-form-card"
+      className="ec-pro-card"
       title={
-        <Text strong style={{ fontSize: 16, color: "#1a202c" }}>
-          {SECTION_META.campaign.cardTitle}
-        </Text>
+        <Space>
+          <MailOutlined style={{ color: COLOR_PRIMARY }} />
+          <Text strong style={{ fontSize: 16, color: COLOR_TEXT }}>
+            {SECTION_META.campaign.cardTitle}
+          </Text>
+        </Space>
       }
-      style={proCardStyles}
+      style={cardStyle}
       styles={{
-        header: proCardHeadStyles,
-        body: { padding: "20px 24px 24px" },
+        header: {
+          background: "#ffffff",
+          borderBottom: `1px solid ${COLOR_BORDER}`,
+          minHeight: 58,
+        },
+        body: { padding: screens.xs ? 16 : 24 },
       }}
     >
       {!campaignResult ? (
-        <Form layout="vertical" requiredMark={false} className="ec-pro-form">
+        <Form layout="vertical" requiredMark={false}>
           <Form.Item
-            className="ec-form-field"
             label={
               <span className="ec-form-label">
                 Client Full Name <span className="ec-required">*</span>
@@ -543,25 +583,24 @@ const EmailCampaign: React.FC = () => {
             }
             extra={
               <span className="ec-form-hint">
-                The person you are reaching out to
+                Enter the recipient name for personalization.
               </span>
             }
           >
             <Input
               size="large"
               className="ec-form-input"
-              prefix={<UserOutlined style={{ color: "#94a3b8" }} />}
-              placeholder="e.g. John Smith"
+              prefix={<UserOutlined style={{ color: "#9ca3af" }} />}
+              placeholder="Example: John Smith"
               value={clientName}
-              onChange={(e) => {
-                setClientName(e.target.value);
+              onChange={(event) => {
+                setClientName(event.target.value);
                 setCampaignError("");
               }}
             />
           </Form.Item>
 
           <Form.Item
-            className="ec-form-field"
             label={
               <span className="ec-form-label">
                 Client Email Address <span className="ec-required">*</span>
@@ -569,7 +608,7 @@ const EmailCampaign: React.FC = () => {
             }
             extra={
               <span className="ec-form-hint">
-                Where the campaign email will be addressed
+                The campaign email will be sent to this address.
               </span>
             }
           >
@@ -577,11 +616,11 @@ const EmailCampaign: React.FC = () => {
               size="large"
               className="ec-form-input"
               type="email"
-              prefix={<MailOutlined style={{ color: "#94a3b8" }} />}
-              placeholder="e.g. john.smith@company.com"
+              prefix={<MailOutlined style={{ color: "#9ca3af" }} />}
+              placeholder="Example: john@company.com"
               value={clientEmail}
-              onChange={(e) => {
-                setClientEmail(e.target.value);
+              onChange={(event) => {
+                setClientEmail(event.target.value);
                 setCampaignError("");
               }}
             />
@@ -592,7 +631,7 @@ const EmailCampaign: React.FC = () => {
               type="error"
               message={campaignError}
               showIcon
-              style={{ marginBottom: 16 }}
+              style={{ marginBottom: 16, borderRadius: 12 }}
             />
           )}
 
@@ -600,33 +639,38 @@ const EmailCampaign: React.FC = () => {
             type="primary"
             size="large"
             block
-            className="ec-btn-success"
+            className="ec-success-btn"
             icon={<RocketOutlined />}
             loading={campaignLoading}
             disabled={!isCampaignFormValid}
             onClick={handleSendCampaign}
-            style={btnSuccessStyle}
+            style={successButtonStyle}
           >
-      Send Campaign
+            Send Campaign
           </Button>
         </Form>
       ) : (
         <>
           <Card
+            className="ec-success-card"
             style={{
-              background: `linear-gradient(135deg, ${COLOR_PRIMARY}, ${COLOR_SUCCESS})`,
-              border: "none",
+              border: "1px solid rgba(26, 179, 148, 0.24)",
+              background: "rgba(26, 179, 148, 0.08)",
               marginBottom: 16,
+              borderRadius: 14,
+              boxShadow: "0 8px 20px rgba(26, 179, 148, 0.10)",
             }}
-            styles={{ body: { padding: "16px 20px" } }}
+            styles={{ body: { padding: screens.xs ? 14 : 18 } }}
           >
-            <Space align="start" wrap>
-              <CheckCircleOutlined style={{ fontSize: 28, color: "#fff" }} />
+            <Space align="start">
+              <CheckCircleOutlined
+                style={{ fontSize: 26, color: COLOR_SUCCESS }}
+              />
               <div>
-                <Title level={5} style={{ color: "#fff", margin: 0 }}>
+                <Title level={5} style={{ margin: 0, color: "#0f766e" }}>
                   Campaign sent for approval
                 </Title>
-                <Text style={{ color: "rgba(255,255,255,0.9)" }}>
+                <Text style={{ color: "#0f766e" }}>
                   {campaignResult.message}
                 </Text>
               </div>
@@ -637,23 +681,29 @@ const EmailCampaign: React.FC = () => {
             size="small"
             title={
               <Text strong style={{ color: COLOR_PRIMARY }}>
-                Generated email preview
+                Generated Email Preview
               </Text>
             }
-            style={{ marginBottom: 16, background: "#f8fafc" }}
+            style={{
+              marginBottom: 16,
+              background: "#ffffff",
+              borderRadius: 14,
+              border: `1px solid ${COLOR_BORDER}`,
+              boxShadow: "0 8px 18px rgba(15, 23, 42, 0.05)",
+            }}
           >
             <Form.Item
               label={
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, fontWeight: 600 }}
+                  style={{ fontSize: 12, fontWeight: 700 }}
                 >
-                  SUBJECT LINE
+                  SUBJECT
                 </Text>
               }
               style={{ marginBottom: 16 }}
             >
-              <Paragraph strong style={{ margin: 0, color: "#1a202c" }}>
+              <Paragraph strong style={{ margin: 0, color: COLOR_TEXT }}>
                 {campaignResult.generatedEmail.subject}
               </Paragraph>
             </Form.Item>
@@ -662,7 +712,7 @@ const EmailCampaign: React.FC = () => {
               label={
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, fontWeight: 600 }}
+                  style={{ fontSize: 12, fontWeight: 700 }}
                 >
                   EMAIL BODY
                 </Text>
@@ -675,11 +725,11 @@ const EmailCampaign: React.FC = () => {
                   whiteSpace: "pre-wrap",
                   maxHeight: 340,
                   overflow: "auto",
-                  background: "#fff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 8,
+                  background: "#f9fafb",
+                  border: `1px solid ${COLOR_BORDER}`,
+                  borderRadius: 12,
                   padding: 14,
-                  color: "#475569",
+                  color: "#374151",
                   lineHeight: 1.7,
                 }}
               >
@@ -695,10 +745,11 @@ const EmailCampaign: React.FC = () => {
           block
           size="large"
           type="primary"
-          className="ec-btn-primary"
+          className="ec-primary-btn"
           onClick={resetCampaignSection}
-          style={{ ...btnPrimaryStyle, marginTop: 4 }}
-        > Submit Campaign
+          style={primaryButtonStyle}
+        >
+          Create New Campaign
         </Button>
       )}
     </Card>
@@ -713,7 +764,7 @@ const EmailCampaign: React.FC = () => {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.35)",
+            background: "rgba(17, 24, 39, 0.38)",
             zIndex: 950,
           }}
         />
@@ -723,12 +774,14 @@ const EmailCampaign: React.FC = () => {
         collapsed={collapsed}
         onCollapse={setCollapsed}
         breakpoint="md"
-        onBreakpoint={onBreakpoint}
+        onBreakpoint={(broken) => {
+          if (broken) setCollapsed(true);
+        }}
         width={expandedWidth}
         collapsedWidth={collapsedWidth}
-        theme="dark"
+        theme="light"
         trigger={null}
-        style={siderStyles}
+        style={sidebarStyles}
       >
         {isMobile && !collapsed && (
           <button
@@ -740,65 +793,65 @@ const EmailCampaign: React.FC = () => {
               top: 16,
               right: 16,
               zIndex: 20,
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              fontSize: 24,
+              background: "#f3f4f6",
+              border: `1px solid ${COLOR_BORDER}`,
+              color: COLOR_TEXT,
+              width: 32,
+              height: 32,
+              borderRadius: 10,
               cursor: "pointer",
               lineHeight: 1,
+              fontSize: 18,
             }}
           >
             ×
           </button>
         )}
 
-        <div
-          style={{
-            height: 64,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontWeight: 800,
-            fontSize: collapsed && !isMobile ? 14 : 16,
-            borderBottom: "1px solid rgba(255,255,255,0.1)",
-            padding: "0 16px",
-            gap: 8,
-          }}
-        >
-          <ThunderboltOutlined style={{ color: COLOR_PRIMARY }} />
-          {(!collapsed || isMobile) && <span>OxyMail AI</span>}
+        <div className="ec-sidebar-brand">
+          <div className="ec-brand-icon">
+            <ThunderboltOutlined />
+          </div>
+          {(!collapsed || isMobile) && (
+            <div>
+              <Text strong style={{ color: COLOR_TEXT, fontSize: 15 }}>
+                OxyMail AI
+              </Text>
+            </div>
+          )}
         </div>
 
         <Menu
-          theme="dark"
+          theme="light"
           mode="inline"
           selectedKeys={[activeSection]}
           items={menuItems}
           onClick={onMenuClick}
-          style={{ borderRight: 0, marginTop: 8, background: "transparent" }}
+          className="ec-side-menu"
+          style={{ borderRight: 0, background: "transparent", padding: "8px" }}
         />
       </Sider>
 
-      <Layout>
+      <Layout style={{ background: COLOR_BG }}>
         <Header style={headerStyles}>
-          <Space align="center" wrap>
+          <Space align="center">
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={toggleCollapse}
               aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-              style={{ fontSize: 18, color: COLOR_PRIMARY }}
+              className="ec-menu-toggle"
             />
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              OxyMail AI
-            </Text>
           </Space>
+
           <Tag
             style={{
-              color: COLOR_PRIMARY,
-              borderColor: COLOR_PRIMARY,
+              color: COLOR_PRIMARY_DARK,
+              borderColor: "rgba(0, 140, 186, 0.18)",
               background: "rgba(0, 140, 186, 0.08)",
+              borderRadius: 999,
+              padding: "4px 10px",
+              fontWeight: 700,
             }}
           >
             <ThunderboltOutlined /> {screens.xs ? "AI" : "AI Powered"}
@@ -806,8 +859,8 @@ const EmailCampaign: React.FC = () => {
         </Header>
 
         <Content style={contentStyles}>
-          <div style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
-            {renderPageHeading()}
+          <div className="ec-page-container">
+            {renderPageHeader()}
 
             <Spin
               spinning={
@@ -822,175 +875,253 @@ const EmailCampaign: React.FC = () => {
         </Content>
 
         <Footer style={footerStyles}>
-          <Text style={{ fontSize: 13, color: "#6b7280" }}>
-            <strong style={{ color: COLOR_PRIMARY }}>OxyMail AI</strong> ©
-            {new Date().getFullYear()} · Secure · Professional outreach
+          <Text style={{ fontSize: 13, color: COLOR_MUTED }}>
+            <strong style={{ color: COLOR_PRIMARY }}>OxyMail AI</strong> ©{" "}
+            {new Date().getFullYear()} · Secure professional outreach
           </Text>
         </Footer>
       </Layout>
 
       <style>{`
-        .ec-mail-layout .ant-layout-sider,
-        .ec-mail-layout .ant-menu-dark,
-        .ec-mail-layout .ant-menu-dark .ant-menu-sub {
-          background: #1a202c !important;
+        .ec-mail-layout,
+        .ec-mail-layout .ant-layout,
+        .ec-mail-layout .ant-layout-content {
+          background: #ffffff !important;
         }
 
-        .ec-mail-layout .ant-menu-dark .ant-menu-item,
-        .ec-mail-layout .ant-menu-dark .ant-menu-submenu-title {
-          color: #e2e8f0 !important;
+        .ec-page-container {
+          width: 100%;
+          max-width: 1152px;
+          margin: 0 auto;
         }
 
-        .ec-mail-layout .ant-menu-dark .ant-menu-item:hover,
-        .ec-mail-layout .ant-menu-dark .ant-menu-submenu-title:hover,
-        .ec-mail-layout .ant-menu-dark .ant-menu-item-selected {
-          background-color: #2d3748 !important;
-          color: #ffffff !important;
+        .ec-sidebar-brand {
+          height: 72px;
+          display: flex;
+          align-items: center;
+          justify-content: ${collapsed && !isMobile ? "center" : "flex-start"};
+          gap: 10px;
+          padding: ${collapsed && !isMobile ? "0" : "0 18px"};
+          border-bottom: 1px solid ${COLOR_BORDER};
+          background: #ffffff;
         }
 
-        .ec-mail-layout .ant-menu-dark .ant-menu-item-selected {
-          border-right: 3px solid ${COLOR_PRIMARY} !important;
+        .ec-brand-icon {
+          width: 38px;
+          height: 38px;
+      
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: ${COLOR_PRIMARY};
+         flex: 0 0 auto;
         }
 
-        .ec-mail-layout .ant-menu-dark .ant-menu-item:hover span,
-        .ec-mail-layout .ant-menu-dark .ant-menu-item-selected span,
-        .ec-mail-layout .ant-menu-dark .ant-menu-submenu-title:hover span {
-          color: #ffffff !important;
+        .ec-side-menu .ant-menu-item {
+          height: 44px !important;
+          line-height: 44px !important;
+          border-radius: 12px !important;
+          margin: 6px 0 !important;
+          color: #4b5563 !important;
+          font-weight: 600 !important;
         }
 
-        .ec-mail-layout .ec-form-label {
+        .ec-side-menu .ant-menu-item .anticon {
+          color: #6b7280 !important;
+        }
+
+        .ec-side-menu .ant-menu-item:hover {
+          background: #f3f4f6 !important;
+          color: #111827 !important;
+        }
+
+        .ec-side-menu .ant-menu-item:hover .anticon {
+          color: ${COLOR_PRIMARY} !important;
+        }
+
+        .ec-side-menu .ant-menu-item-selected {
+          background: ${COLOR_MENU_SELECTED} !important;
+          color: #111827 !important;
+         
+        }
+
+        .ec-side-menu .ant-menu-item-selected .anticon {
+          color: ${COLOR_PRIMARY} !important;
+        }
+
+        .ec-menu-toggle {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          color: ${COLOR_PRIMARY} !important;
+          background: rgba(0, 140, 186, 0.08) !important;
+          border: 1px solid rgba(0, 140, 186, 0.18) !important;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .ec-form-label {
           font-size: 14px;
-          font-weight: 600;
-          color: #1e293b;
-          display: block;
+          font-weight: 700;
+          color: ${COLOR_TEXT};
         }
 
-        .ec-mail-layout .ec-required {
+        .ec-required {
           color: #ef4444;
           margin-left: 2px;
         }
 
-        .ec-mail-layout .ec-form-hint {
+        .ec-form-hint {
           font-size: 12px;
-          color: #64748b;
+          color: ${COLOR_MUTED};
           line-height: 1.5;
         }
 
-        .ec-mail-layout .ec-pro-form .ec-form-field {
-          margin-bottom: 20px;
+        .ec-form-input,
+        .ec-form-input.ant-input-affix-wrapper {
+          border-radius: 12px !important;
+          border-color: #d1d5db !important;
+          min-height: 46px;
+          box-shadow: none !important;
         }
 
-        .ec-mail-layout .ec-pro-form .ec-form-field .ant-form-item-label {
-          padding-bottom: 6px;
+        .ec-form-input:hover,
+        .ec-form-input.ant-input-affix-wrapper:hover {
+          border-color: ${COLOR_PRIMARY} !important;
         }
 
-        .ec-mail-layout .ec-form-input,
-        .ec-mail-layout .ec-form-input.ant-input-affix-wrapper {
-          border-radius: 8px;
-          border-color: #d1d9e0;
-          min-height: 44px;
+        .ec-form-input:focus,
+        .ec-form-input.ant-input-affix-wrapper-focused {
+          border-color: ${COLOR_PRIMARY} !important;
+          box-shadow: 0 0 0 3px rgba(0, 140, 186, 0.14) !important;
         }
 
-        .ec-mail-layout .ec-form-input:hover,
-        .ec-mail-layout .ec-form-input.ant-input-affix-wrapper:hover {
-          border-color: ${COLOR_PRIMARY};
+        .ec-upload-dragger.ant-upload-drag {
+          border-radius: 16px !important;
+          border-color: #d1d5db !important;
+          background: #f9fafb !important;
+          padding: 22px 16px !important;
         }
 
-        .ec-mail-layout .ec-upload-dragger.ant-upload-drag {
-          border-radius: 10px;
-          border-color: #d1d9e0;
-          background: #f8fafc;
-          padding: 20px 16px;
+        .ec-upload-dragger.ant-upload-drag:hover {
+          border-color: ${COLOR_PRIMARY} !important;
+          background: rgba(0, 140, 186, 0.08) !important;
         }
 
-        .ec-mail-layout .ec-upload-dragger .ant-upload-text {
-          color: #334155;
+        .ec-upload-dragger .ant-upload-text {
+          color: ${COLOR_TEXT};
           font-size: 15px;
         }
 
-        .ec-mail-layout .ec-upload-dragger .ant-upload-hint {
-          color: #64748b;
+        .ec-upload-dragger .ant-upload-hint {
+          color: ${COLOR_MUTED};
         }
 
-        .ec-mail-layout .ec-btn-primary.ant-btn-primary,
-        .ec-mail-layout .ec-btn-success.ant-btn-primary {
-          color: #ffffff !important;
-          font-weight: 600;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        .ec-helper-row {
+          margin-top: 18px;
+          display: flex;
+          justify-content: center;
+          gap: 8px;
+          flex-wrap: wrap;
         }
 
-        .ec-mail-layout .ec-btn-primary.ant-btn-primary:not(:disabled) {
+        .ec-primary-btn.ant-btn-primary:not(:disabled) {
           background: ${COLOR_PRIMARY} !important;
           border-color: ${COLOR_PRIMARY} !important;
+          color: #ffffff !important;
         }
 
-        .ec-mail-layout .ec-btn-success.ant-btn-primary:not(:disabled) {
+        .ec-success-btn.ant-btn-primary:not(:disabled) {
           background: ${COLOR_SUCCESS} !important;
           border-color: ${COLOR_SUCCESS} !important;
-        }
-
-        .ec-mail-layout .ec-btn-primary.ant-btn-primary:not(:disabled):hover,
-        .ec-mail-layout .ec-btn-success.ant-btn-primary:not(:disabled):hover {
-          color: #ffffff !important;
-          opacity: 0.92;
-          filter: brightness(1.05);
-        }
-
-        .ec-mail-layout .ec-btn-primary.ant-btn-primary .anticon,
-        .ec-mail-layout .ec-btn-success.ant-btn-primary .anticon,
-        .ec-mail-layout .ec-btn-primary.ant-btn-primary span,
-        .ec-mail-layout .ec-btn-success.ant-btn-primary span {
           color: #ffffff !important;
         }
 
-        .ec-mail-layout .ec-btn-primary.ant-btn-primary:disabled,
-        .ec-mail-layout .ec-btn-success.ant-btn-primary:disabled {
-          color: rgba(255, 255, 255, 0.65) !important;
-          background: #94a3b8 !important;
-          border-color: #94a3b8 !important;
+        .ec-primary-btn.ant-btn-primary:not(:disabled):hover {
+          background: ${COLOR_PRIMARY_DARK} !important;
+          border-color: ${COLOR_PRIMARY_DARK} !important;
+          color: #ffffff !important;
         }
 
-        .ec-mail-layout .ec-btn-outline.ant-btn {
+        .ec-success-btn.ant-btn-primary:not(:disabled):hover {
+          background: #159b80 !important;
+          border-color: #159b80 !important;
+          color: #ffffff !important;
+        }
+
+        .ec-primary-btn.ant-btn-primary:disabled,
+        .ec-success-btn.ant-btn-primary:disabled {
+          color: rgba(255, 255, 255, 0.75) !important;
+          background: #9ca3af !important;
+          border-color: #9ca3af !important;
+          box-shadow: none !important;
+        }
+
+        .ec-outline-btn.ant-btn {
           height: 44px;
-          border-radius: 8px;
-          font-weight: 600;
+          border-radius: 10px;
+          font-weight: 700;
           color: ${COLOR_PRIMARY};
-          border-color: ${COLOR_PRIMARY};
-          background: #fff;
+          border-color: rgba(0, 140, 186, 0.28);
+          background: #ffffff;
         }
 
-        .ec-mail-layout .ec-btn-outline.ant-btn:hover {
+        .ec-outline-btn.ant-btn:hover {
           color: #ffffff !important;
           background: ${COLOR_PRIMARY} !important;
           border-color: ${COLOR_PRIMARY} !important;
         }
 
-        .ec-mail-layout .ant-upload-drag:hover,
-        .ec-mail-layout .ec-upload-dragger.ant-upload-drag:hover {
-          border-color: ${COLOR_PRIMARY} !important;
-          background: rgba(0, 140, 186, 0.04) !important;
-        }
-
-        .ec-mail-layout .ec-form-input:focus,
-        .ec-mail-layout .ec-form-input.ant-input-affix-wrapper-focused {
-          border-color: ${COLOR_PRIMARY} !important;
-          box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.15) !important;
+        .ec-pro-card .ant-card-head-title {
+          padding: 16px 0;
         }
 
         .ec-mail-layout .ant-layout-sider::-webkit-scrollbar {
           width: 6px;
         }
+
         .ec-mail-layout .ant-layout-sider::-webkit-scrollbar-track {
-          background: #1a202c;
+          background: #ffffff;
         }
+
         .ec-mail-layout .ant-layout-sider::-webkit-scrollbar-thumb {
-          background-color: #4a5568;
+          background-color: #d1d5db;
           border-radius: 10px;
         }
 
-        .ec-mail-layout .ant-layout-sider {
-          scrollbar-width: thin;
-          scrollbar-color: #4a5568 #1a202c;
+        @media (max-width: 768px) {
+          .ec-page-container {
+            max-width: 100%;
+          }
+
+          .ec-top-row .ant-breadcrumb {
+            width: 100%;
+            overflow-x: auto;
+          }
+
+          .ec-sidebar-brand {
+            justify-content: flex-start !important;
+            padding: 0 18px !important;
+          }
+
+          .ec-pro-card {
+            border-radius: 14px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .ec-mail-layout .ant-card-head {
+            padding: 0 14px !important;
+          }
+
+          .ec-mail-layout .ant-card-body {
+            padding: 14px !important;
+          }
+
+          .ec-upload-dragger.ant-upload-drag {
+            padding: 16px 10px !important;
+          }
         }
       `}</style>
     </Layout>

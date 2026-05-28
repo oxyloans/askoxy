@@ -14,7 +14,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
 import Swal from "sweetalert2";
 
-import { FaUserCircle, FaWhatsapp } from "react-icons/fa";
+import { FaTasks, FaUserCircle, FaWhatsapp } from "react-icons/fa";
 import {
   FaTachometerAlt,
   FaSlideshare,
@@ -182,6 +182,13 @@ const handleSignOut = (): void => {
         label: <Link to="/assigned-task">Assigned WhatsApp Tasks</Link>,
         icon: (
           <FaWhatsapp className="text-green-500" style={{ fontSize: 16 }} />
+        ),
+      },
+      {
+          key: "/assigned-task-status",
+        label: <Link to="/assigned-task-status">Assigned Task Status Based</Link>,
+        icon: (
+          <FaTasks className="text-blue-500" style={{ fontSize: 16 }} />
         ),
       },
       {

@@ -93,6 +93,7 @@ import RadhAIAdminDashboard from "./components/talktoceo/RadhAIAdminDashboard";
 import EmailCampaign from "./components/EmailCampaign";
 import GoogleAnalyticsDashboard from "./components/GoogleAnalyticsDashboard";
 import OxyBricksFractionalPage from "./components/FractionalPage";
+import Assignedtasksbasedstatus from "./Taskmanagement/Assignedtasksbasedstatus";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -667,10 +668,9 @@ useEffect(() => {
               localStorage.getItem("admin_acToken") ||
               localStorage.getItem("partner_Token")) &&
               !isRestrictedRoute() && <FloatingCallButton />}
-            {(
-              localStorage.getItem("userId") || 
+            {(localStorage.getItem("userId") ||
               localStorage.getItem("admin_acToken") ||
-              localStorage.getItem("partner_Token")) && 
+              localStorage.getItem("partner_Token")) &&
               !isRestrictedRoute() && <FloatingGiftOffersButton />}
             <Routes>
               {/* ===================================================== */}
@@ -965,7 +965,7 @@ useEffect(() => {
               />
               <Route path="/oxygold" element={<GoldLandingPage />} />
               <Route path="/jobspremierleague" element={<JPLLandingPage />} />
-                <Route path="/fpl" element={<OxyBricksFractionalPage  />} />
+              <Route path="/fpl" element={<OxyBricksFractionalPage />} />
 
               <Route path="/rcsconsentform" element={<RCSConsentForm />} />
               <Route
@@ -1158,6 +1158,14 @@ useEffect(() => {
                 element={
                   <TaskProtectedRoute>
                     <AdminTasks />
+                  </TaskProtectedRoute>
+                }
+              />
+              <Route
+                path="/assigned-task-status"
+                element={
+                  <TaskProtectedRoute>
+                    <Assignedtasksbasedstatus />
                   </TaskProtectedRoute>
                 }
               />

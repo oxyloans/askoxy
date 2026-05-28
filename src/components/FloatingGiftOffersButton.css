@@ -98,7 +98,36 @@
 }
 
 @media (max-width: 639px) {
+  .floating-gift-offers-btn {
+    top: auto;
+    right: 14px;
+    bottom: 90px;
+    transform: none;
+    padding: 0.72rem;
+    border-radius: 9999px;
+    gap: 0;
+  }
+
+  .floating-gift-offers-btn:hover,
+  .floating-gift-offers-btn:active {
+    transform: scale(1.04);
+  }
+
   .floating-gift-offers-btn__label {
     display: none;
+  }
+
+  .floating-gift-offers-btn__icon-wrap {
+    padding: 0.7rem;
+  }
+
+  .floating-gift-offers-btn__icon {
+    width: 1.45rem;
+    height: 1.45rem;
+  }
+
+  .floating-gift-offers-btn__badge {
+    top: -0.25rem;
+    right: -0.25rem;
   }
 }
