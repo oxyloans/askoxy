@@ -15,9 +15,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-
-const API_BASE_URL = "https://mailautomation-production.up.railway.app/api";
-const FILE_BASE_URL = "https://meta.oxyloans.com/radha-ai/files";
+import BASE_URL from "../../Config";
 
 type LanguageCode = "te" | "en" | "hi";
 
@@ -44,7 +42,7 @@ const AUTH_TOKEN =
 
 const ASSISTANT_ID = "radhAI";
 const VOICE_MODE = "ash";
-const REALTIME_MODEL = "gpt-4o-realtime-preview-2025-06-03";
+const REALTIME_MODEL = "gpt-realtime";
 
 const RADHAI_IMAGE = "https://i.ibb.co/RpvNHZCj/ceoai.png";
 
@@ -125,8 +123,7 @@ Always answer only in English.
 Speak naturally like a professional CEO AI assistant.`;
 };
 
-const RADHA_CHAT_API =
-  "https://radhaclone-production.up.railway.app/api/v1/radha/chat";
+const RADHA_CHAT_API = " ";
 
 const callRadhaChatApi = async (message: string): Promise<string> => {
   console.log("Radha Chat API URL:", RADHA_CHAT_API);
@@ -301,31 +298,30 @@ If exact company information is not available, say it politely instead of guessi
   };
 
   const getEphemeralToken = async (instructions: string): Promise<string> => {
-    const assistantId = ASSISTANT_ID;
-    const voicemode = VOICE_MODE.toLowerCase();
+    const tokenUrl =
+      "https://mailautomation-production.up.railway.app/api/realtime/token";
 
-    const tokenUrl = `${API_BASE_URL}/student-service/user/voicetoken?assistantId=${encodeURIComponent(
-      assistantId,
-    )}&voicemode=${encodeURIComponent(voicemode)}`;
+    const payload = {
+      instructions,
+      voice: VOICE_MODE,
+    };
 
     console.log("Voice Token API:", tokenUrl);
-    console.log("Voice Token Payload:", { instructions });
-    console.log("Assistant ID:", assistantId);
-    console.log("Voice Mode:", voicemode);
-    console.log("Has Auth Token:", Boolean(AUTH_TOKEN));
+    console.log("Voice Token Payload:", payload);
 
     const res = await fetch(tokenUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+        accept: "*/*",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        instructions: instructions,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const rawText = await res.text();
+
+    console.log("Voice Token API Status:", res.status);
+    console.log("Voice Token API Raw Response:", rawText);
 
     if (!res.ok) {
       throw new Error(`Voice token API failed: ${res.status} ${rawText}`);
@@ -333,11 +329,13 @@ If exact company information is not available, say it politely instead of guessi
 
     const data = JSON.parse(rawText);
 
-    if (!data?.client_secret?.value) {
-      throw new Error("client_secret.value missing in voice token response");
+    const token = data?.value || data?.client_secret?.value;
+
+    if (!token) {
+      throw new Error("Ephemeral token missing");
     }
 
-    return data.client_secret.value;
+    return token;
   };
 
   const setupSpeechRecognition = () => {
@@ -395,7 +393,21 @@ If exact company information is not available, say it politely instead of guessi
       try {
         const data = JSON.parse(event.data);
         console.log("Realtime event:", data.type, data);
+        if (data.type === "error") {
+          console.error("❌ Realtime API Error:", data.error);
+        }
 
+        if (data.type === "input_audio_buffer.speech_started") {
+          console.log("✅ Mic speech started");
+        }
+
+        if (data.type === "input_audio_buffer.speech_stopped") {
+          console.log("✅ Mic speech stopped");
+        }
+
+        if (data.type === "input_audio_buffer.committed") {
+          console.log("✅ Mic audio committed");
+        }
         if (
           (data.type === "response.output_text.delta" ||
             data.type === "response.audio_transcript.delta") &&
@@ -440,6 +452,26 @@ If exact company information is not available, say it politely instead of guessi
     };
   };
 
+  const waitForMicUnmuted = (track: MediaStreamTrack) => {
+    return new Promise<void>((resolve) => {
+      if (!track.muted) {
+        resolve();
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        console.warn("Mic still muted after wait, continuing...");
+        resolve();
+      }, 1500);
+
+      track.onunmute = () => {
+        console.log("🎤 Mic track unmuted");
+        clearTimeout(timeout);
+        resolve();
+      };
+    });
+  };
+
   const handleStartSession = async () => {
     try {
       setIsConnecting(true);
@@ -451,9 +483,22 @@ If exact company information is not available, say it politely instead of guessi
       stopSession();
 
       const instructions = getInstructionsByLanguage(languageCode);
+
       const ephemeralKey = await getEphemeralToken(instructions);
 
       const pc = new RTCPeerConnection();
+
+      pc.oniceconnectionstatechange = () => {
+        console.log("🧊 ICE state:", pc.iceConnectionState);
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log("🔗 PC state:", pc.connectionState);
+      };
+
+      pc.onicegatheringstatechange = () => {
+        console.log("🧊 ICE gathering:", pc.iceGatheringState);
+      };
       peerConnectionRef.current = pc;
 
       const audioEl = document.createElement("audio");
@@ -464,22 +509,57 @@ If exact company information is not available, say it politely instead of guessi
       };
 
       const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          deviceId: "default",
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
       });
 
       micStreamRef.current = micStream;
-      pc.addTrack(micStream.getTracks()[0]);
+
+      const audioTrack = micStream.getAudioTracks()[0];
+      audioTrack.onmute = () => {
+        console.warn("🎤 Mic track muted");
+      };
+
+      audioTrack.onunmute = () => {
+        console.log("🎤 Mic track unmuted");
+      };
+
+      audioTrack.onended = () => {
+        console.warn("🎤 Mic track ended");
+      };
+
+      if (!audioTrack) {
+        throw new Error("No microphone audio track found");
+      }
+
+      console.log("🎤 Mic tracks:", micStream.getAudioTracks());
+      console.log("🎤 Mic enabled:", audioTrack.enabled);
+      console.log("🎤 Mic readyState:", audioTrack.readyState);
+      console.log("🎤 Audio track settings:", audioTrack.getSettings());
+
+      await waitForMicUnmuted(audioTrack);
+
+      const sender = pc.addTrack(audioTrack, micStream);
+      console.log("🎤 Audio sender track:", sender.track);
 
       const dc = pc.createDataChannel("oai-events");
       dataChannelRef.current = dc;
       setupDataChannelHandlers(dc);
 
-      setupSpeechRecognition();
+      console.log("📡 Senders:", pc.getSenders());
+      console.log("📡 Transceivers:", pc.getTransceivers());
 
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+      });
+
       await pc.setLocalDescription(offer);
 
-      const realtimeUrl = `https://api.openai.com/v1/realtime?model=${REALTIME_MODEL}`;
+      const realtimeUrl = "https://api.openai.com/v1/realtime/calls";
 
       console.log("Voice WebRTC API:", realtimeUrl);
 
@@ -502,6 +582,10 @@ If exact company information is not available, say it politely instead of guessi
         type: "answer",
         sdp: answerText,
       });
+
+      console.log("✅ Remote description set");
+      console.log("🔗 Final PC state:", pc.connectionState);
+      console.log("🧊 Final ICE state:", pc.iceConnectionState);
 
       setIsSessionActive(true);
     } catch (error) {

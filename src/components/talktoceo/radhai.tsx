@@ -114,17 +114,17 @@ const RadhAIPage: React.FC = () => {
           <div className="hidden items-center gap-3 sm:flex">
             <button
               onClick={handleWriteToUs}
-              className="inline-flex items-center gap-2 rounded-full border border-lime-300/30 bg-lime-300/10 px-4 py-2 text-xs font-black text-lime-300 transition hover:bg-lime-300 hover:text-black"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-lime-300/30 bg-lime-300/10 px-4 text-xs font-black text-lime-300 transition hover:bg-lime-300 hover:text-black"
             >
-              <Mail size={16} />
+              <Mail size={15} />
               Write to CEO
             </button>
 
             <button
               onClick={handleTalkToCEO}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-lime-300 px-5 py-2.5 text-sm font-black text-black transition hover:scale-[1.03]"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-lime-300 px-5 text-xs font-black text-black shadow-[0_0_25px_rgba(0,245,255,0.25)] transition hover:scale-[1.04]"
             >
-              <Mic size={17} />
+              <Mic size={15} />
               Talk to CEO
             </button>
           </div>
@@ -175,17 +175,17 @@ const RadhAIPage: React.FC = () => {
           <div className="mt-5 grid grid-cols-2 gap-3 sm:hidden">
             <button
               onClick={handleTalkToCEO}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-3 py-3 text-xs font-black text-black"
+              className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-3 py-3 text-xs font-black text-black"
             >
-              <Mic size={17} />
+              <Mic size={16} />
               Talk to CEO
             </button>
 
             <button
               onClick={handleWriteToUs}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 text-xs font-black text-cyan-200"
+              className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 text-xs font-black text-cyan-200"
             >
-              <MessageCircle size={17} />
+              <MessageCircle size={16} />
               Write to CEO
             </button>
           </div>
@@ -226,7 +226,7 @@ const RadhAIPage: React.FC = () => {
               Radhakrishna Thatavarti is the CEO & Founder of
             </p>
 
-            <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {groupCompanies.map((item) => (
                 <a
                   key={item.name}
@@ -245,20 +245,20 @@ const RadhAIPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 hidden grid-cols-2 gap-3 sm:grid">
+          <div className="mt-6 hidden items-center gap-3 sm:flex lg:justify-start">
             <button
               onClick={handleTalkToCEO}
-              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-4 py-3 font-black text-black transition hover:scale-[1.02]"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-lime-300 to-cyan-300 px-5 text-sm font-black text-black shadow-[0_0_24px_rgba(132,255,0,0.28)] transition hover:scale-[1.04]"
             >
-              <Mic size={18} />
+              <Mic size={16} />
               Talk to CEO
             </button>
 
             <button
               onClick={handleWriteToUs}
-              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-4 py-3 font-black text-cyan-200 transition hover:bg-white/[0.12]"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-cyan-300/35 bg-white/[0.07] px-5 text-sm font-black text-cyan-200 transition hover:bg-white/[0.12]"
             >
-              <MessageCircle size={18} />
+              <MessageCircle size={16} />
               Write to CEO
             </button>
           </div>
