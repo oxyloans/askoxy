@@ -140,7 +140,7 @@ const LeaveApplicationPage: React.FC = () => {
       const userId = sessionStorage.getItem("userId");
 
       if (!username || !userId) {
-        Swal.fire({ toast: true, position: "top-end", icon: "error", title: "User information not found. Please login again.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ icon: "error", title: "Error", text: "User information not found. Please login again." });
         setLoading(false);
         return;
       }
@@ -166,13 +166,13 @@ const LeaveApplicationPage: React.FC = () => {
       );
 
       if (response.data) {
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Leave application submitted successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ icon: "success", title: "Success", text: "Leave application submitted successfully!" });
         form.resetFields();
         setLeaveDays(null);
       }
     } catch (error) {
       console.error("Error submitting leave application:", error);
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to submit leave application. Please try again.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Error", text: "Failed to submit leave application. Please try again." });
     } finally {
       setLoading(false);
     }

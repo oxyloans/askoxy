@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import type { Country } from "./components/Billing";
 
 // ── Utility
 const clamp = (v: number, min: number, max: number): number =>
@@ -103,7 +104,7 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     num: "04",
     icon: "📜",
     title: "Compliance",
-    desc: "Applies RBI, KYC/AML, GDPR, PCI-DSS rules automatically.",
+    desc: "Applies RBI/CBUAE/SAMA, KYC/AML, GDPR, PCI-DSS rules automatically.",
     color: "#D97706",
     bg: "#FFFBEB",
     border: "#FDE68A",
@@ -113,10 +114,10 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     num: "05",
     icon: "📊",
     title: "Reports",
-    desc: "Submits regulatory reports to RBI and CIC automatically.",
-    color: "#0284C7",
-    bg: "#F0F9FF",
-    border: "#BAE6FD",
+    desc: "Auto-generates regulatory, audit, and analytics reports for compliance and business intelligence.",
+    color: "#F59E0B",
+    bg: "#FFFBEB",
+    border: "#FDE68A",
     tag: "Reporting",
   },
   {
@@ -183,16 +184,13 @@ const ROADMAP_STEPS: RoadmapStep[] = [
     num: "12",
     icon: "🧪",
     title: "Test Cases & Data",
-    desc: "Generates unit, integration & edge-case tests with realistic seed data for full validation coverage.",
+    desc: "Generates test cases and data for validation.",
     color: "#475569",
     bg: "#F4F6FA",
     border: "#D1D9E8",
-    tag: "QA & Testing",
+    tag: "Testing",
   },
 ];
-
-const ROW1 = ROADMAP_STEPS.slice(0, 6);
-const ROW2 = ROADMAP_STEPS.slice(6);
 
 // ── Greeting Speech
 function useGreetingSpeech() {
@@ -249,6 +247,20 @@ function useGreetingSpeech() {
   return speaking;
 }
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 function useForceBodyDark() {
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -277,7 +289,7 @@ function ParticleCanvas() {
     let W = 0,
       H = 0,
       animId = 0;
-    const COLORS = ["#00f5ff", "#7c3aed", "#2563eb", "#06b6d4", "#a855f7"];
+    const COLORS = ["#00f5ff", "#7c3aed", "#2563eb", "#06b6d4", "#7C3AED"];
     const particles: Particle[] = Array.from({ length: 90 }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
@@ -422,8 +434,8 @@ function AnimCounter({
 // ── Brain Hero
 function BrainHero({ speaking = false }: { speaking?: boolean }) {
   const orbitColors = speaking
-    ? ["#ff6b6b", "#ffd700", "#00f5ff", "#a855f7"]
-    : ["#00f5ff", "#00f5ff", "#a855f7", "#a855f7"];
+    ? ["#ff6b6b", "#ffd700", "#00f5ff", "#7C3AED"]
+    : ["#00f5ff", "#00f5ff", "#7C3AED", "#7C3AED"];
   const nucleusGlow = speaking
     ? "0 0 50px rgba(255,107,107,.5),inset 0 0 35px rgba(255,215,0,.3)"
     : "0 0 50px rgba(0,245,255,.35),inset 0 0 35px rgba(124,58,237,.3)";
@@ -610,7 +622,7 @@ function SectionCard({
 }: SectionCardProps) {
   const isLeft = side === "left";
   return (
-    <TiltCard style={{ flex: 1, minWidth: 0 }}>
+    <TiltCard style={{ flex: "1 1 420px", minWidth: 0 }}>
       <div
         style={{
           background: "rgba(255,255,255,.04)",
@@ -801,8 +813,8 @@ function Navbar({ activeSection, setActiveSection }: NavbarProps) {
         left: 0,
         right: 0,
         zIndex: 1000,
-        padding: "0 40px",
-        height: 68,
+        padding: "0 clamp(1rem,5vw,2.5rem)",
+        height: "clamp(56px, 8vw, 68px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -812,17 +824,24 @@ function Navbar({ activeSection, setActiveSection }: NavbarProps) {
         transition: "all .3s",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "clamp(0.6rem, 2vw, 0.625rem)",
+        }}
+      >
         <div
           style={{
-            width: 34,
-            height: 34,
+            width: "clamp(28px, 4vw, 34px)",
+            height: "clamp(28px, 4vw, 34px)",
             borderRadius: 9,
             background: "linear-gradient(135deg,#00f5ff,#7c3aed)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: ".95rem",
+            fontSize: "clamp(0.75rem, 2vw, 0.95rem)",
+            flexShrink: 0,
           }}
         >
           ⬡
@@ -831,16 +850,22 @@ function Navbar({ activeSection, setActiveSection }: NavbarProps) {
           style={{
             fontFamily: "'Orbitron',monospace",
             fontWeight: 800,
-            fontSize: "1rem",
-            background: "linear-gradient(90deg,#00f5ff,#a855f7)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
+            fontSize: "clamp(0.8rem, 2vw, 1rem)",
+            whiteSpace: "nowrap",
           }}
         >
-          OXYBFS{`{AI}`}
+          <span style={{ color: "#FFFFFF" }}>OXY</span>
+          <span style={{ color: "#00D4FF" }}>BFS</span>
+          <span style={{ color: "#7C3AED" }}>AI</span>
         </span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "clamp(1.5rem, 3vw, 1.75rem)",
+        }}
+      >
         {["Home"].map((item) => (
           <a
             key={item}
@@ -848,11 +873,12 @@ function Navbar({ activeSection, setActiveSection }: NavbarProps) {
             style={{
               color: "rgba(255,255,255,.65)",
               textDecoration: "none",
-              fontSize: ".8rem",
+              fontSize: "clamp(0.65rem, 1.5vw, 0.8rem)",
               letterSpacing: ".08em",
               fontFamily: "'Orbitron',monospace",
               fontWeight: 500,
               transition: "color .2s",
+              whiteSpace: "nowrap",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#00f5ff")}
             onMouseLeave={(e) =>
@@ -863,11 +889,18 @@ function Navbar({ activeSection, setActiveSection }: NavbarProps) {
           </a>
         ))}
       </div>
-      <div style={{ display: "flex", gap: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "clamp(0.5rem, 1vw, 0.625rem)",
+          flexShrink: 0,
+          flexWrap: "nowrap",
+        }}
+      >
         {(
           [
             { label: "Banking", color: "#00f5ff" },
-            { label: "Insurance", color: "#a855f7" },
+            { label: "Insurance", color: "#7C3AED" },
           ] as { label: string; color: string }[]
         ).map((btn) => (
           <button
@@ -883,7 +916,7 @@ function Navbar({ activeSection, setActiveSection }: NavbarProps) {
               }
             }}
             style={{
-              padding: "7px 18px",
+              padding: "clamp(0.4rem, 1vw, 0.45rem) clamp(1rem, 2vw, 1.125rem)",
               borderRadius: 8,
               border: `1px solid ${btn.color}48`,
               cursor: "pointer",
@@ -894,8 +927,10 @@ function Navbar({ activeSection, setActiveSection }: NavbarProps) {
               color: btn.color,
               fontFamily: "'Orbitron',monospace",
               fontWeight: 700,
-              fontSize: ".72rem",
+              fontSize: "clamp(0.6rem, 1.2vw, 0.72rem)",
               transition: "all .3s",
+              whiteSpace: "nowrap",
+              minWidth: "auto",
             }}
           >
             {btn.label}
@@ -1092,10 +1127,49 @@ function SnakeBend({
 }
 
 // ── Roadmap Section (inline, no modal)
-function RoadmapSection() {
+function RoadmapSection({ country }: { country: Country }) {
+  const isMobile = useIsMobile(860);
+  const steps = ROADMAP_STEPS.map((s) =>
+    s.num === "04" ? { ...s, desc: COMPLIANCE_DESC[country] } : s,
+  );
+  const row1 = steps.slice(0, 6);
+  const row2 = steps.slice(6);
+  const renderTrack = (items: RoadmapStep[]) => (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(6, minmax(0, 1fr))",
+        gap: isMobile ? 12 : 0,
+        alignItems: "stretch",
+        marginBottom: isMobile ? 18 : 0,
+      }}
+    >
+      {items.map((s, i) => (
+        <div
+          key={s.num}
+          style={{
+            display: "flex",
+            alignItems: "stretch",
+            flexDirection: isMobile ? "column" : "row",
+            minWidth: 0,
+          }}
+        >
+          <StepCard s={s} delay={i * 0.05} />
+          {!isMobile && i < items.length - 1 && (
+            <ChevronArrow color={items[i + 1].color} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
   return (
     <section
-      style={{ position: "relative", zIndex: 2, padding: "80px 40px 60px" }}
+      style={{
+        position: "relative",
+        zIndex: 2,
+        padding:
+          "clamp(4rem, 10vw, 5rem) clamp(1rem, 5vw, 2.5rem) clamp(3rem, 8vw, 3.75rem)",
+      }}
     >
       <div
         style={{
@@ -1108,7 +1182,12 @@ function RoadmapSection() {
       />
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
         {/* Heading */}
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "clamp(2rem, 5vw, 2.5rem)",
+          }}
+        >
           <div
             style={{
               display: "inline-flex",
@@ -1118,7 +1197,7 @@ function RoadmapSection() {
               border: "1px solid rgba(0,245,255,.18)",
               borderRadius: 100,
               padding: "3px 14px",
-              marginBottom: 12,
+              marginBottom: "clamp(0.75rem, 2vw, 0.75rem)",
             }}
           >
             <span
@@ -1133,7 +1212,7 @@ function RoadmapSection() {
             />
             <span
               style={{
-                fontSize: "0.7rem",
+                fontSize: "clamp(0.55rem, 1vw, 0.7rem)",
                 fontWeight: 600,
                 letterSpacing: ".06em",
                 textTransform: "uppercase",
@@ -1149,18 +1228,17 @@ function RoadmapSection() {
               fontFamily: "'Orbitron',monospace",
               fontSize: "clamp(1.3rem,3vw,2rem)",
               fontWeight: 800,
-              background: "linear-gradient(90deg,#00f5ff,#a855f7)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              marginBottom: 10,
+              marginBottom: "clamp(0.5rem, 1.5vw, 0.625rem)",
             }}
           >
-            How OXYBFS{`{AI}`} Works
+            How <span style={{ color: "#FFFFFF" }}>OXY</span>
+            <span style={{ color: "#00D4FF" }}>BFS</span>
+            <span style={{ color: "#7C3AED" }}>AI</span> Works
           </h2>
           <p
             style={{
               color: "rgba(255,255,255,.38)",
-              fontSize: ".85rem",
+              fontSize: "clamp(0.75rem, 1.5vw, 0.85rem)",
               maxWidth: 460,
               margin: "0 auto",
               lineHeight: 1.7,
@@ -1185,36 +1263,14 @@ function RoadmapSection() {
         >
           ◆ Track A — Foundation &amp; Architecture (Steps 01–06)
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "stretch",
-            gap: 0,
-            marginBottom: 0,
-          }}
-        >
-          {ROW1.map((s, i) => (
-            <div
-              key={s.num}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              <StepCard s={s} delay={i * 0.05} />
-              {i < ROW1.length - 1 && (
-                <ChevronArrow color={ROW1[i + 1].color} />
-              )}
-            </div>
-          ))}
-        </div>
+        {renderTrack(row1)}
 
-        <SnakeBend
-          fromColor={ROW1[ROW1.length - 1].color}
-          toColor={ROW2[0].color}
-        />
+        {!isMobile && (
+          <SnakeBend
+            fromColor={row1[row1.length - 1].color}
+            toColor={row2[0].color}
+          />
+        )}
 
         {/* Track B */}
         <div
@@ -1230,31 +1286,7 @@ function RoadmapSection() {
         >
           ◆ Track B — Generation &amp; Validation (Steps 07–12)
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "stretch",
-            gap: 0,
-            marginBottom: 24,
-          }}
-        >
-          {ROW2.map((s, i) => (
-            <div
-              key={s.num}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              <StepCard s={s} delay={i * 0.05 + 0.3} />
-              {i < ROW2.length - 1 && (
-                <ChevronArrow color={ROW2[i + 1].color} />
-              )}
-            </div>
-          ))}
-        </div>
+        {renderTrack(row2)}
 
         {/* Stats strip */}
         <div
@@ -1331,11 +1363,324 @@ function RoadmapSection() {
   );
 }
 
-export default function App() {
+// ── Country selector data (same as Billing)
+const FLAG_COMPONENTS_LANDING: Record<Country, () => JSX.Element> = {
+  india: () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 900 600"
+      style={{ width: 40, height: 27, borderRadius: 4, display: "block" }}
+    >
+      <rect width="900" height="200" fill="#FF9933" />
+      <rect y="200" width="900" height="200" fill="#fff" />
+      <rect y="400" width="900" height="200" fill="#138808" />
+      <circle
+        cx="450"
+        cy="300"
+        r="70"
+        fill="none"
+        stroke="#000080"
+        strokeWidth="7"
+      />
+      {Array.from({ length: 24 }, (_, i) => {
+        const a = ((i * 15 - 90) * Math.PI) / 180;
+        return (
+          <line
+            key={i}
+            x1={450 + 55 * Math.cos(a)}
+            y1={300 + 55 * Math.sin(a)}
+            x2={450 + 70 * Math.cos(a)}
+            y2={300 + 70 * Math.sin(a)}
+            stroke="#000080"
+            strokeWidth="3"
+          />
+        );
+      })}
+      <circle cx="450" cy="300" r="10" fill="#000080" />
+    </svg>
+  ),
+  uae: () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 900 600"
+      style={{ width: 40, height: 27, borderRadius: 4, display: "block" }}
+    >
+      <rect width="900" height="600" fill="#fff" />
+      <rect width="900" height="200" fill="#00732F" />
+      <rect y="400" width="900" height="200" fill="#000" />
+      <rect width="225" height="600" fill="#FF0000" />
+    </svg>
+  ),
+  saudi: () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 900 600"
+      style={{ width: 40, height: 27, borderRadius: 4, display: "block" }}
+    >
+      <rect width="900" height="600" fill="#006C35" />
+      <text
+        x="450"
+        y="280"
+        textAnchor="middle"
+        fill="#fff"
+        fontSize="120"
+        fontFamily="serif"
+      >
+        &#x644;&#x627; &#x625;&#x644;&#x647; &#x625;&#x644;&#x627;
+        &#x627;&#x644;&#x644;&#x647;
+      </text>
+      <rect x="300" y="360" width="300" height="12" fill="#fff" />
+      <text
+        x="450"
+        y="440"
+        textAnchor="middle"
+        fill="#fff"
+        fontSize="80"
+        fontFamily="serif"
+      >
+        &#x2694;
+      </text>
+    </svg>
+  ),
+};
+
+const LANDING_COUNTRIES: { id: Country; label: string; sub: string }[] = [
+  { id: "india", label: "India", sub: "RBI · IRDAI" },
+  { id: "uae", label: "UAE", sub: "CBUAE · UAE IA" },
+  { id: "saudi", label: "Saudi Arabia", sub: "SAMA · Vision 2030" },
+];
+
+const FINVIBE_FEATURES: Record<Country, string[]> = {
+  india: [
+    "Covers 15,000+ RBI Regulated Entity Requirements",
+    "Follows RBI Master Directions & Guidelines — 1,00,000+ Master Circulars",
+    "Supports 11 Bank Types: Small Finance Banks, Urban Co-operative Banks, Payment Banks, Local Area Banks & more",
+    "Complete Banking Application from a Single Prompt",
+    "Frontend + Backend + Database Code — Ready to Deploy",
+    "One-click Download of the Full Application Codebase",
+  ],
+  uae: [
+    "Covers 10,000+ CBUAE Regulatory Requirements & Circulars",
+    "Supports 49+ Licensed Banks: 23 National + 26 Foreign Bank Branches",
+    "Covers 8 Bank Categories: Commercial, Islamic, Digital, Exchange Houses & more",
+    "Compliant with UAE AML/CFT, Open Banking & DFSA Frameworks",
+    "Frontend + Backend + Database Code — Ready to Deploy",
+    "One-click Download of the Full Application Codebase",
+  ],
+  saudi: [
+    "Covers 10,000+ SAMA Regulatory Requirements & Circulars",
+    "Supports 26+ Licensed Banks: 12 Local Banks + 14 Foreign Bank Branches",
+    "Covers 8 Bank Categories: Commercial, Islamic, Digital, Finance Companies & more",
+    "Compliant with SAMA Open Banking & Vision 2030 Fintech Frameworks",
+    "Frontend + Backend + Database Code — Ready to Deploy",
+    "One-click Download of the Full Application Codebase",
+  ],
+};
+
+const INSURVIBE_FEATURES: Record<Country, string[]> = {
+  india: [
+    "Addresses 2,800+ IRDAI Products & Policy Types",
+    "Supports 62 Insurance Companies",
+    "Covers 638 Brokerage Firms Nationwide",
+    "Full Compliance with IRDAI Regulatory Framework",
+    "Frontend + Backend + Database Code — Ready to Deploy",
+    "Complete Insurance Application from a Single Prompt",
+    "Covers Life, Health, Motor & General Insurance Domains",
+  ],
+  uae: [
+    "Covers UAE Insurance Authority (IA) Regulatory Requirements",
+    "Supports 60+ Licensed Insurance Companies in UAE",
+    "Covers 900+ Insurance Products across all Lines of Business",
+    "Compliant with UAE Takaful (Islamic Insurance) Frameworks",
+    "Covers Life & Takaful, Health, Motor & General Insurance",
+    "Frontend + Backend + Database Code — Ready to Deploy",
+    "Complete Insurance Application from a Single Prompt",
+  ],
+  saudi: [
+    "Covers SAMA Insurance Supervision Regulatory Requirements",
+    "Supports 30+ Licensed Cooperative Insurance Companies in KSA",
+    "Covers 900+ Insurance Products across all Lines of Business",
+    "Compliant with Saudi Vision 2030 Insurance Sector Reforms",
+    "Covers Cooperative Life, Health, Motor & General Takaful",
+    "Frontend + Backend + Database Code — Ready to Deploy",
+    "Complete Insurance Application from a Single Prompt",
+  ],
+};
+
+const FINVIBE_DESC: Record<Country, string> = {
+  india:
+    "Build a complete, RBI-compliant banking application with a single prompt.",
+  uae: "Build a complete, CBUAE-compliant banking application with a single prompt.",
+  saudi:
+    "Build a complete, SAMA-compliant banking application with a single prompt.",
+};
+
+const INSURVIBE_DESC: Record<Country, string> = {
+  india:
+    "Build complete IRDAI-compliant insurance platforms — life, health, motor & general — from one prompt.",
+  uae: "Build complete UAE Insurance Authority-compliant platforms — takaful, health, motor & general — from one prompt.",
+  saudi:
+    "Build complete SAMA-compliant cooperative insurance platforms — takaful, health, motor & general — from one prompt.",
+};
+
+const FINVIBE_TAGS: Record<Country, string[]> = {
+  india: [
+    "RBI Master Directions",
+    "15,000+ Requirements",
+    "11 Bank Types",
+    "1,00,000+ Circulars",
+  ],
+  uae: [
+    "CBUAE Compliant",
+    "10,000+ Requirements",
+    "49+ Banks",
+    "8 Bank Categories",
+  ],
+  saudi: [
+    "SAMA Compliant",
+    "10,000+ Requirements",
+    "26+ Banks",
+    "8 Bank Categories",
+  ],
+};
+
+const INSURVIBE_TAGS: Record<Country, string[]> = {
+  india: [
+    "IRDAI Compliant",
+    "2,800+ Products",
+    "62 Companies",
+    "638 Brokerages",
+  ],
+  uae: ["UAE IA Compliant", "60+ Companies", "900+ Products", "Takaful Ready"],
+  saudi: ["SAMA Compliant", "30+ Companies", "900+ Products", "Vision 2030"],
+};
+
+// ── Country-aware compliance desc for roadmap step 04
+const COMPLIANCE_DESC: Record<Country, string> = {
+  india:
+    "Applies RBI Master Directions, KYC/AML, IRDAI, GDPR, PCI-DSS rules automatically.",
+  uae: "Applies CBUAE, UAE IA, AML/CFT, DFSA, Open Banking & PCI-DSS rules automatically.",
+  saudi:
+    "Applies SAMA, Vision 2030, KYC/AML, Takaful & PCI-DSS compliance rules automatically.",
+};
+
+const COUNTRY_BANKING_STATS: Record<
+  Country,
+  { number: string; label: string }[]
+> = {
+  india: [
+    { number: "15000+", label: "RBI Regulated Entity" },
+    { number: "11+", label: "Regulated Banks" },
+  ],
+  uae: [
+    { number: "60+", label: "CBUAE Licensed Banks" },
+    { number: "8+", label: "Bank Categories" },
+  ],
+  saudi: [
+    { number: "30+", label: "SAMA Licensed Banks" },
+    { number: "10+", label: "Bank Categories" },
+  ],
+};
+
+const COUNTRY_INSURANCE_CATS: Record<
+  Country,
+  { name: string; stats: { number: string; label: string }[] }[]
+> = {
+  india: [
+    {
+      name: "🛡️ Life Insurance",
+      stats: [
+        { number: "28+", label: "Companies" },
+        { number: "2800+", label: "Products" },
+      ],
+    },
+    {
+      name: "🔒 General Insurance",
+      stats: [
+        { number: "30+", label: "Providers" },
+        { number: "1200+", label: "Products" },
+      ],
+    },
+  ],
+  uae: [
+    {
+      name: "🛡️ Life & Takaful",
+      stats: [
+        { number: "25+", label: "Companies" },
+        { number: "500+", label: "Products" },
+      ],
+    },
+    {
+      name: "🔒 General Insurance",
+      stats: [
+        { number: "35+", label: "Providers" },
+        { number: "400+", label: "Products" },
+      ],
+    },
+  ],
+  saudi: [
+    {
+      name: "🛡️ Cooperative Insurance",
+      stats: [
+        { number: "30+", label: "Companies" },
+        { number: "600+", label: "Products" },
+      ],
+    },
+    {
+      name: "🔒 General Takaful",
+      stats: [
+        { number: "20+", label: "Providers" },
+        { number: "300+", label: "Products" },
+      ],
+    },
+  ],
+};
+
+const COUNTRY_STATS: Record<
+  Country,
+  { num: number; suffix: string; label: string; color: string }[]
+> = {
+  india: [
+    { num: 253, suffix: "+", label: "Master Directions", color: "#00f5ff" },
+    { num: 51, suffix: "+", label: "Banking Use Cases", color: "#00f5ff" },
+    { num: 28, suffix: "+", label: "Insurance Companies", color: "#7C3AED" },
+    { num: 2800, suffix: "+", label: "Insurance Products", color: "#7C3AED" },
+    { num: 99, suffix: "%", label: "AI Accuracy", color: "#22d3ee" },
+  ],
+  uae: [
+    { num: 60, suffix: "+", label: "CBUAE Licensed Banks", color: "#00f5ff" },
+    { num: 40, suffix: "+", label: "Banking Use Cases", color: "#00f5ff" },
+    { num: 60, suffix: "+", label: "Insurance Companies", color: "#7C3AED" },
+    { num: 900, suffix: "+", label: "Insurance Products", color: "#7C3AED" },
+    { num: 99, suffix: "%", label: "AI Accuracy", color: "#22d3ee" },
+  ],
+  saudi: [
+    { num: 30, suffix: "+", label: "SAMA Licensed Banks", color: "#00f5ff" },
+    { num: 35, suffix: "+", label: "Banking Use Cases", color: "#00f5ff" },
+    { num: 30, suffix: "+", label: "Insurance Companies", color: "#7C3AED" },
+    { num: 900, suffix: "+", label: "Insurance Products", color: "#7C3AED" },
+    { num: 99, suffix: "%", label: "AI Accuracy", color: "#22d3ee" },
+  ],
+};
+
+export default function Finvibe3DLanding({ country }: { country?: Country }) {
+  const resolvedCountry: Country =
+    country ??
+    ((sessionStorage.getItem("finvibe_country") as Country) || "india");
+  const [selectedCountry, setSelectedCountry] =
+    useState<Country>(resolvedCountry);
   const [activeSection, setActiveSection] = useState("banking");
   useForceBodyDark();
   const speaking = useGreetingSpeech();
   const navigate = useNavigate();
+  const bankingStats = COUNTRY_BANKING_STATS[selectedCountry];
+  const insuranceCats = COUNTRY_INSURANCE_CATS[selectedCountry];
+  const pageStats = COUNTRY_STATS[selectedCountry];
+
+  const handleCountryChange = (c: Country) => {
+    setSelectedCountry(c);
+    sessionStorage.setItem("finvibe_country", c);
+  };
 
   return (
     <div
@@ -1370,6 +1715,11 @@ export default function App() {
           75%  { background-position: 50% center }
           100% { background-position: 0% center }
         }
+        button { -webkit-tap-highlight-color: transparent; }
+        @media (max-width: 768px) {
+          canvas { opacity: .55; }
+          nav { gap: 10px; }
+        }
       `}</style>
 
       <ParticleCanvas />
@@ -1399,7 +1749,8 @@ export default function App() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "80px 40px 40px",
+          padding:
+            "clamp(5rem, 12vw, 6rem) clamp(1rem, 5vw, 2.5rem) clamp(3rem, 8vw, 4rem)",
           textAlign: "center",
           overflow: "hidden",
         }}
@@ -1418,20 +1769,21 @@ export default function App() {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 8,
-            background: "rgba(0,245,255,.07)",
-            border: "1px solid rgba(0,245,255,.22)",
+            gap: 10,
+            background:
+              "linear-gradient(135deg,rgba(0,245,255,.1),rgba(124,58,237,.08))",
+            border: "1px solid rgba(0,245,255,.25)",
             borderRadius: 100,
-            padding: "4px 14px",
-            marginBottom: 16,
+            padding: "6px 18px",
+            marginBottom: 24,
             animation: "fadeInUp .8s ease forwards",
-            backdropFilter: "blur(10px)",
+            backdropFilter: "blur(12px)",
           }}
         >
           <span
             style={{
-              width: 5,
-              height: 5,
+              width: 6,
+              height: 6,
               borderRadius: "50%",
               background: "#00f5ff",
               animation: "pulseGlow 2s infinite",
@@ -1439,13 +1791,14 @@ export default function App() {
           />
           <span
             style={{
-              fontSize: ".62rem",
-              letterSpacing: ".12em",
+              fontSize: "clamp(0.65rem, 1.2vw, 0.73rem)",
+              letterSpacing: ".14em",
               color: "#00f5ff",
               fontFamily: "'Orbitron',monospace",
+              fontWeight: 600,
             }}
           >
-            AI-POWERED FINTECH PLATFORM
+            ⚡ AI-POWERED FINTECH PLATFORM
           </span>
         </div>
 
@@ -1462,17 +1815,30 @@ export default function App() {
         >
           <span
             style={{
-              backgroundImage:
-                "linear-gradient(135deg,#ffffff 0%,#00f5ff 40%,#a855f7 70%,#ffffff 100%)",
-              backgroundSize: "200% auto",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              display: "inline-block",
-              animation: "shimmer 4s linear 1s infinite",
+              color: "#FFFFFF",
+              fontFamily: "'Orbitron',monospace",
+              fontWeight: 900,
             }}
           >
-            OXYBFS&#123;AI&#125;
+            OXY
+          </span>
+          <span
+            style={{
+              color: "#00D4FF",
+              fontFamily: "'Orbitron',monospace",
+              fontWeight: 900,
+            }}
+          >
+            BFS
+          </span>
+          <span
+            style={{
+              color: "#7C3AED",
+              fontFamily: "'Orbitron',monospace",
+              fontWeight: 900,
+            }}
+          >
+            AI
           </span>
         </h1>
 
@@ -1481,7 +1847,7 @@ export default function App() {
             fontSize: "clamp(1rem,2vw,1.5rem)",
             fontFamily: "'Orbitron',monospace",
             fontWeight: 700,
-            background: "linear-gradient(90deg,#00f5ff,#a855f7)",
+            background: "linear-gradient(90deg,#00f5ff,#7C3AED)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             marginBottom: 14,
@@ -1506,7 +1872,7 @@ export default function App() {
           Transforming{" "}
           <span style={{ color: "#00f5ff", fontWeight: 600 }}>Banking</span>{" "}
           &amp;{" "}
-          <span style={{ color: "#a855f7", fontWeight: 600 }}>Insurance</span>{" "}
+          <span style={{ color: "#7C3AED", fontWeight: 600 }}>Insurance</span>{" "}
           with Intelligent AI Systems
         </p>
 
@@ -1567,17 +1933,111 @@ export default function App() {
 
       {/* ── SPLIT */}
       <section
-        style={{ position: "relative", zIndex: 2, padding: "70px 40px 90px" }}
+        style={{
+          position: "relative",
+          zIndex: 2,
+          padding:
+            "clamp(3rem, 8vw, 4.5rem) clamp(1rem, 5vw, 2.5rem) clamp(4rem, 10vw, 5.625rem)",
+        }}
       >
-        <div style={{ textAlign: "center", marginBottom: 50 }}>
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "clamp(2rem, 5vw, 3.125rem)",
+          }}
+        >
+          {/* Country flag selector */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "clamp(0.75rem, 2vw, 0.75rem)",
+              marginBottom: "clamp(1.5rem, 3vw, 1.75rem)",
+              flexWrap: "wrap",
+            }}
+          >
+            {LANDING_COUNTRIES.map((c) => {
+              const FlagComp = FLAG_COMPONENTS_LANDING[c.id];
+              const active = selectedCountry === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => handleCountryChange(c.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "clamp(0.5rem, 2vw, 0.625rem)",
+                    padding:
+                      "clamp(0.6rem, 1.5vw, 0.625rem) clamp(1rem, 2.5vw, 1.125rem)",
+                    borderRadius: 14,
+                    border: `2px solid ${active ? "rgba(0,245,255,.7)" : "rgba(255,255,255,.1)"}`,
+                    background: active
+                      ? "rgba(0,245,255,.1)"
+                      : "rgba(255,255,255,.03)",
+                    cursor: "pointer",
+                    transition: "all .2s",
+                    transform: active ? "scale(1.05)" : "scale(1)",
+                    boxShadow: active
+                      ? "0 4px 20px rgba(0,245,255,.2)"
+                      : "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      boxShadow: active
+                        ? "0 0 0 2px rgba(0,245,255,.5)"
+                        : "0 0 0 1px rgba(255,255,255,.15)",
+                      borderRadius: 4,
+                    }}
+                  >
+                    <FlagComp />
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: 2,
+                      minWidth: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "clamp(0.75rem, 2vw, 0.85rem)",
+                        fontWeight: 700,
+                        color: active ? "#67e8f9" : "#e2e8f0",
+                        fontFamily: "sans-serif",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {c.label}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "clamp(0.5rem, 1vw, 0.6rem)",
+                        fontWeight: 600,
+                        letterSpacing: ".08em",
+                        textTransform: "uppercase" as const,
+                        color: active ? "#22d3ee" : "#64748b",
+                        fontFamily: "sans-serif",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {c.sub}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
           <div
             style={{
               fontFamily: "'Orbitron',monospace",
-              fontSize: ".65rem",
+              fontSize: "clamp(0.5rem, 1.5vw, 0.65rem)",
               letterSpacing: ".25em",
               color: "rgba(255,255,255,.22)",
               textTransform: "uppercase",
-              marginBottom: 10,
+              marginBottom: "clamp(0.5rem, 1vw, 0.625rem)",
             }}
           >
             Core Intelligence Suite
@@ -1585,9 +2045,9 @@ export default function App() {
           <h2
             style={{
               fontFamily: "'Orbitron',monospace",
-              fontSize: "clamp(1.4rem,3vw,2.2rem)",
+              fontSize: "clamp(1.2rem, 4vw, 2.2rem)",
               fontWeight: 800,
-              background: "linear-gradient(90deg,#00f5ff,#a855f7)",
+              background: "linear-gradient(90deg,#00f5ff,#7C3AED)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}
@@ -1598,7 +2058,7 @@ export default function App() {
         <div
           style={{
             display: "flex",
-            gap: 22,
+            gap: "clamp(1rem, 3vw, 1.375rem)",
             alignItems: "stretch",
             maxWidth: 1080,
             margin: "0 auto",
@@ -1609,10 +2069,7 @@ export default function App() {
             side="left"
             title="Banking Intelligence"
             description="Empowering financial institutions with scalable AI-driven solutions, automation frameworks, and deep analytics — from compliance intelligence to real-time transaction monitoring."
-            stats={[
-              { number: "15000+", label: "RBI Regulated Entity" },
-              { number: "11+", label: "Regulated Banks" },
-            ]}
+            stats={bankingStats}
             ctaLabel="Explore Banking"
             ctaColor="#00f5ff"
             icon="🏦"
@@ -1622,24 +2079,9 @@ export default function App() {
             side="right"
             title="Insurance Intelligence"
             description="Revolutionizing insurance ecosystems with intelligent product mapping, automation, and real-time insights — from policy lifecycle to claims intelligence and risk scoring."
-            categories={[
-              {
-                name: "🛡️ Life Insurance",
-                stats: [
-                  { number: "28+", label: "Companies" },
-                  { number: "2800+", label: "Products" },
-                ],
-              },
-              {
-                name: "🔒 General Insurance",
-                stats: [
-                  { number: "30+", label: "Providers" },
-                  { number: "1200+", label: "Products" },
-                ],
-              },
-            ]}
+            categories={insuranceCats}
             ctaLabel="Explore Insurance"
-            ctaColor="#a855f7"
+            ctaColor="#7C3AED"
             icon="🛡️"
             onCta={() => handleNavigation(navigate, "/insurvibe-code-builder")}
           />
@@ -1651,10 +2093,12 @@ export default function App() {
         style={{
           position: "relative",
           zIndex: 2,
-          padding: "50px 40px",
-          background: "rgba(255,255,255,.018)",
-          borderTop: "1px solid rgba(255,255,255,.05)",
-          borderBottom: "1px solid rgba(255,255,255,.05)",
+          padding: "clamp(3rem, 7vw, 3.75rem) clamp(1rem, 5vw, 2.5rem)",
+          background:
+            "linear-gradient(135deg,rgba(0,245,255,.035) 0%,rgba(124,58,237,.05) 100%)",
+          borderTop: "1px solid rgba(0,245,255,.1)",
+          borderBottom: "1px solid rgba(124,58,237,.1)",
+          backdropFilter: "blur(8px)",
         }}
       >
         <div
@@ -1664,56 +2108,35 @@ export default function App() {
             display: "flex",
             justifyContent: "space-around",
             flexWrap: "wrap",
-            gap: 26,
+            gap: "clamp(1rem, 3vw, 1.625rem)",
           }}
         >
-          {(
-            [
-              {
-                num: 253,
-                suffix: "+",
-                label: "Master Directions",
-                color: "#00f5ff",
-              },
-              {
-                num: 51,
-                suffix: "+",
-                label: "Banking Use Cases",
-                color: "#00f5ff",
-              },
-              {
-                num: 28,
-                suffix: "+",
-                label: "Insurance Companies",
-                color: "#a855f7",
-              },
-              {
-                num: 2800,
-                suffix: "+",
-                label: "Insurance Products",
-                color: "#a855f7",
-              },
-              { num: 99, suffix: "%", label: "AI Accuracy", color: "#22d3ee" },
-            ] as { num: number; suffix: string; label: string; color: string }[]
-          ).map((s, i) => (
-            <div key={i} style={{ textAlign: "center" }}>
+          {pageStats.map((s, i) => (
+            <div
+              key={i}
+              style={{
+                textAlign: "center",
+                padding: "clamp(0.5rem, 2vw, 0.75rem)",
+              }}
+            >
               <div
                 style={{
-                  fontSize: "2.5rem",
+                  fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
                   fontWeight: 900,
                   fontFamily: "'Orbitron',monospace",
                   color: s.color,
-                  textShadow: `0 0 22px ${s.color}`,
+                  textShadow: `0 0 28px ${s.color}35`,
+                  marginBottom: 8,
                 }}
               >
                 <AnimCounter target={s.num} suffix={s.suffix} />
               </div>
               <div
                 style={{
-                  color: "rgba(255,255,255,.4)",
-                  fontSize: ".76rem",
-                  marginTop: 5,
-                  letterSpacing: ".08em",
+                  color: "rgba(255,255,255,.55)",
+                  fontSize: "clamp(0.7rem, 1.2vw, 0.82rem)",
+                  letterSpacing: ".06em",
+                  fontWeight: 500,
                 }}
               >
                 {s.label}
@@ -1723,22 +2146,348 @@ export default function App() {
         </div>
       </section>
 
+      {/* ── COUNTRY SELECTOR + PRODUCT CARDS */}
+      <section
+        style={{
+          position: "relative",
+          zIndex: 2,
+          padding:
+            "clamp(4rem, 10vw, 5rem) clamp(1rem, 5vw, 2.5rem) clamp(2rem, 5vw, 2.5rem)",
+        }}
+      >
+        <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+          {/* FinVibe + InsurVibe product cards */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
+              gap: "clamp(1rem, 3vw, 1.5rem)",
+              marginBottom: "clamp(3rem, 8vw, 3.75rem)",
+            }}
+          >
+            {/* FinVibe */}
+            <div
+              style={{
+                background:
+                  "linear-gradient(135deg,rgba(0,245,255,.09),rgba(37,99,235,.06))",
+                border: "1px solid rgba(0,245,255,.25)",
+                borderRadius: 20,
+                padding: "clamp(1.75rem, 5vw, 2.25rem)",
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+                overflow: "hidden",
+                transition: "all .35s ease",
+                boxShadow: "0 0 30px rgba(0,245,255,.08)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  "rgba(0,245,255,.4)";
+                (e.currentTarget as HTMLElement).style.boxShadow =
+                  "0 0 40px rgba(0,245,255,.16)";
+                (e.currentTarget as HTMLElement).style.transform =
+                  "translateY(-4px)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  "rgba(0,245,255,.25)";
+                (e.currentTarget as HTMLElement).style.boxShadow =
+                  "0 0 30px rgba(0,245,255,.08)";
+                (e.currentTarget as HTMLElement).style.transform =
+                  "translateY(0)";
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: -40,
+                  right: -40,
+                  width: 160,
+                  height: 160,
+                  borderRadius: "50%",
+                  background: "rgba(0,245,255,.04)",
+                  filter: "blur(30px)",
+                  pointerEvents: "none",
+                }}
+              />
+              <span
+                style={{
+                  display: "inline-block",
+                  background: "rgba(0,245,255,.15)",
+                  color: "#22d3ee",
+                  fontSize: "clamp(0.55rem, 1.2vw, 0.65rem)",
+                  fontWeight: 700,
+                  padding: "3px 10px",
+                  borderRadius: 100,
+                  marginBottom: "clamp(0.75rem, 2vw, 0.75rem)",
+                  letterSpacing: ".12em",
+                  textTransform: "uppercase",
+                  fontFamily: "sans-serif",
+                  width: "fit-content",
+                }}
+              >
+                Banking
+              </span>
+              <h3
+                style={{
+                  fontFamily: "'Orbitron',monospace",
+                  fontSize: "clamp(1.4rem, 3vw, 1.8rem)",
+                  fontWeight: 900,
+                  marginBottom: "clamp(0.5rem, 1vw, 0.5rem)",
+                }}
+              >
+                <span style={{ color: "#22d3ee" }}>Fin</span>
+                <span style={{ color: "#fff" }}>Vibe</span>
+              </h3>
+              <p
+                style={{
+                  color: "rgba(255,255,255,.65)",
+                  fontSize: "clamp(0.75rem, 1.5vw, 0.85rem)",
+                  lineHeight: 1.75,
+                  marginBottom: "clamp(1.25rem, 3vw, 1.5rem)",
+                  fontFamily: "sans-serif",
+                }}
+              >
+                {FINVIBE_DESC[selectedCountry]}
+              </p>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: "0 0 clamp(1rem, 2vw, 1.25rem)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "clamp(0.5rem, 1vw, 0.5rem)",
+                  flex: 1,
+                }}
+              >
+                {FINVIBE_FEATURES[selectedCountry].map((f, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "clamp(0.6rem, 1.5vw, 0.75rem)",
+                      fontSize: "clamp(0.72rem, 1.3vw, 0.83rem)",
+                      color: "rgba(255,255,255,.8)",
+                      fontFamily: "sans-serif",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <span
+                      style={{ color: "#22d3ee", flexShrink: 0, marginTop: 4 }}
+                    >
+                      ◆
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "clamp(0.4rem, 1vw, 0.375rem)",
+                  paddingTop: "clamp(1rem, 2vw, 1rem)",
+                  borderTop: "1px solid rgba(255,255,255,.06)",
+                }}
+              >
+                {FINVIBE_TAGS[selectedCountry].map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontSize: "clamp(0.6rem, 1vw, 0.68rem)",
+                      background: "rgba(0,245,255,.08)",
+                      border: "1px solid rgba(0,245,255,.2)",
+                      color: "#22d3ee",
+                      padding: "3px 10px",
+                      borderRadius: 8,
+                      fontFamily: "sans-serif",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* InsurVibe */}
+            <div
+              style={{
+                background:
+                  "linear-gradient(135deg,rgba(168,85,247,.09),rgba(99,102,241,.06))",
+                border: "1px solid rgba(168,85,247,.25)",
+                borderRadius: 20,
+                padding: "clamp(1.75rem, 5vw, 2.25rem)",
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+                overflow: "hidden",
+                transition: "all .35s ease",
+                boxShadow: "0 0 30px rgba(168,85,247,.08)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  "rgba(168,85,247,.4)";
+                (e.currentTarget as HTMLElement).style.boxShadow =
+                  "0 0 40px rgba(168,85,247,.16)";
+                (e.currentTarget as HTMLElement).style.transform =
+                  "translateY(-4px)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  "rgba(168,85,247,.25)";
+                (e.currentTarget as HTMLElement).style.boxShadow =
+                  "0 0 30px rgba(168,85,247,.08)";
+                (e.currentTarget as HTMLElement).style.transform =
+                  "translateY(0)";
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: -40,
+                  right: -40,
+                  width: 160,
+                  height: 160,
+                  borderRadius: "50%",
+                  background: "rgba(168,85,247,.04)",
+                  filter: "blur(30px)",
+                  pointerEvents: "none",
+                }}
+              />
+              <span
+                style={{
+                  display: "inline-block",
+                  background: "rgba(168,85,247,.15)",
+                  color: "#c084fc",
+                  fontSize: "clamp(0.55rem, 1.2vw, 0.65rem)",
+                  fontWeight: 700,
+                  padding: "3px 10px",
+                  borderRadius: 100,
+                  marginBottom: "clamp(0.75rem, 2vw, 0.75rem)",
+                  letterSpacing: ".12em",
+                  textTransform: "uppercase",
+                  fontFamily: "sans-serif",
+                  width: "fit-content",
+                }}
+              >
+                Insurance
+              </span>
+              <h3
+                style={{
+                  fontFamily: "'Orbitron',monospace",
+                  fontSize: "clamp(1.4rem, 3vw, 1.8rem)",
+                  fontWeight: 900,
+                  marginBottom: "clamp(0.5rem, 1vw, 0.5rem)",
+                }}
+              >
+                <span style={{ color: "#c084fc" }}>Insur</span>
+                <span style={{ color: "#fff" }}>Vibe</span>
+              </h3>
+              <p
+                style={{
+                  color: "rgba(255,255,255,.65)",
+                  fontSize: "clamp(0.75rem, 1.5vw, 0.85rem)",
+                  lineHeight: 1.75,
+                  marginBottom: "clamp(1.25rem, 3vw, 1.5rem)",
+                  fontFamily: "sans-serif",
+                }}
+              >
+                {INSURVIBE_DESC[selectedCountry]}
+              </p>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: "0 0 clamp(1rem, 2vw, 1.25rem)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "clamp(0.5rem, 1vw, 0.5rem)",
+                  flex: 1,
+                }}
+              >
+                {INSURVIBE_FEATURES[selectedCountry].map((f, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "clamp(0.6rem, 1.5vw, 0.75rem)",
+                      fontSize: "clamp(0.72rem, 1.3vw, 0.83rem)",
+                      color: "rgba(255,255,255,.8)",
+                      fontFamily: "sans-serif",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <span
+                      style={{ color: "#c084fc", flexShrink: 0, marginTop: 4 }}
+                    >
+                      ◆
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "clamp(0.4rem, 1vw, 0.375rem)",
+                  paddingTop: "clamp(1rem, 2vw, 1rem)",
+                  borderTop: "1px solid rgba(255,255,255,.06)",
+                }}
+              >
+                {INSURVIBE_TAGS[selectedCountry].map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontSize: "clamp(0.6rem, 1vw, 0.68rem)",
+                      background: "rgba(168,85,247,.08)",
+                      border: "1px solid rgba(168,85,247,.2)",
+                      color: "#c084fc",
+                      padding: "3px 10px",
+                      borderRadius: 8,
+                      fontFamily: "sans-serif",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── ROADMAP */}
-      <RoadmapSection />
+      <RoadmapSection country={selectedCountry} />
 
       {/* ── FEATURES */}
       <section
-        style={{ position: "relative", zIndex: 2, padding: "80px 40px" }}
+        style={{
+          position: "relative",
+          zIndex: 2,
+          padding: "clamp(5rem, 12vw, 6rem) clamp(1rem, 5vw, 2.5rem)",
+          borderTop: "1px solid rgba(0,245,255,.06)",
+        }}
       >
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 25 }}>
+          <div
+            style={{
+              textAlign: "center",
+              marginBottom: "clamp(2.5rem, 5vw, 3rem)",
+            }}
+          >
             <h2
               style={{
                 fontFamily: "'Orbitron',monospace",
-                fontSize: "clamp(1.2rem,3vw,1.9rem)",
+                fontSize: "clamp(1rem, 3vw, 1.9rem)",
                 fontWeight: 800,
                 color: "#fff",
-                marginBottom: 9,
+                marginBottom: "clamp(0.5rem, 1.5vw, 0.625rem)",
               }}
             >
               Platform Capabilities
@@ -1746,7 +2495,7 @@ export default function App() {
             <p
               style={{
                 color: "rgba(255,255,255,.38)",
-                fontSize: ".85rem",
+                fontSize: "clamp(0.75rem, 1.5vw, 0.85rem)",
                 maxWidth: 460,
                 margin: "0 auto",
               }}
@@ -1758,8 +2507,8 @@ export default function App() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(245px,1fr))",
-              gap: 16,
+              gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+              gap: "clamp(1rem, 2.5vw, 1.5rem)",
             }}
           >
             {(
@@ -1784,9 +2533,15 @@ export default function App() {
                 },
                 {
                   icon: "📊",
+                  title: "Report Generation",
+                  desc: "Generate regulatory, compliance, audit, and MIS reports with AI-powered automation.",
+                  color: "#00f5ff",
+                },
+                {
+                  icon: "📊",
                   title: "Smart Dashboard",
                   desc: "Holographic-grade UI with live KPIs, risk heat maps, and AI-generated insights.",
-                  color: "#a855f7",
+                  color: "#7C3AED",
                 },
                 {
                   icon: "🤖",
@@ -1822,46 +2577,60 @@ export default function App() {
               <TiltCard key={i}>
                 <div
                   style={{
-                    background: "rgba(255,255,255,.028)",
-                    border: "1px solid rgba(255,255,255,.06)",
-                    borderRadius: 15,
-                    padding: "22px 20px",
-                    transition: "border-color .28s,box-shadow .28s",
-                    cursor: "default",
+                    background:
+                      "linear-gradient(135deg,rgba(255,255,255,.032),rgba(124,58,237,.02))",
+                    border: "1px solid rgba(255,255,255,.08)",
+                    borderRadius: 16,
+                    padding: "clamp(1.25rem, 3vw, 1.75rem)",
+                    transition: "all .3s cubic-bezier(0.4,0,0.2,1)",
+                    cursor: "pointer",
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLDivElement).style.borderColor =
-                      `${feat.color}35`;
+                      `${feat.color}45`;
                     (e.currentTarget as HTMLDivElement).style.boxShadow =
-                      `0 0 22px ${feat.color}10`;
+                      `0 8px 32px ${feat.color}18`;
+                    (e.currentTarget as HTMLDivElement).style.transform =
+                      "translateY(-6px)";
+                    (e.currentTarget as HTMLDivElement).style.background =
+                      `linear-gradient(135deg,rgba(255,255,255,.06),${feat.color}08)`;
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLDivElement).style.borderColor =
-                      "rgba(255,255,255,.06)";
+                      "rgba(255,255,255,.08)";
                     (e.currentTarget as HTMLDivElement).style.boxShadow =
                       "none";
+                    (e.currentTarget as HTMLDivElement).style.transform =
+                      "translateY(0)";
+                    (e.currentTarget as HTMLDivElement).style.background =
+                      "linear-gradient(135deg,rgba(255,255,255,.032),rgba(124,58,237,.02))";
                   }}
                 >
-                  <div style={{ fontSize: "1.5rem", marginBottom: 11 }}>
+                  <div
+                    style={{
+                      fontSize: "clamp(1.2rem, 3vw, 1.75rem)",
+                      marginBottom: 14,
+                    }}
+                  >
                     {feat.icon}
                   </div>
                   <h3
                     style={{
                       fontFamily: "'Orbitron',monospace",
                       fontWeight: 700,
-                      fontSize: ".85rem",
+                      fontSize: "clamp(0.8rem, 1.5vw, 0.95rem)",
                       color: feat.color,
-                      marginBottom: 8,
-                      letterSpacing: ".03em",
+                      marginBottom: 10,
+                      letterSpacing: ".04em",
                     }}
                   >
                     {feat.title}
                   </h3>
                   <p
                     style={{
-                      color: "rgba(255,255,255,.42)",
-                      fontSize: ".78rem",
-                      lineHeight: 1.65,
+                      color: "rgba(255,255,255,.55)",
+                      fontSize: "clamp(0.75rem, 1.2vw, 0.82rem)",
+                      lineHeight: 1.7,
                     }}
                   >
                     {feat.desc}
@@ -1874,29 +2643,53 @@ export default function App() {
       </section>
 
       <section
-        style={{ position: "relative", zIndex: 2, padding: "0 40px 60px" }}
+        style={{
+          position: "relative",
+          zIndex: 2,
+          padding: "clamp(3rem, 8vw, 4rem) clamp(1rem, 5vw, 2.5rem)",
+        }}
       >
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
           <div
             style={{
               background:
-                "linear-gradient(135deg,rgba(0,245,255,.06) 0%,rgba(124,58,237,.08) 50%,rgba(168,85,247,.06) 100%)",
-              border: "1px solid rgba(0,245,255,.18)",
-              borderRadius: 20,
-              padding: "28px 36px",
+                "linear-gradient(135deg,rgba(0,245,255,.08) 0%,rgba(124,58,237,.09) 50%,rgba(168,85,247,.08) 100%)",
+              border: "1px solid rgba(0,245,255,.22)",
+              borderRadius: 18,
+              padding:
+                "clamp(1.75rem, 5vw, 2.5rem) clamp(1.75rem, 5vw, 2.5rem)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: 24,
+              gap: "clamp(1.25rem, 4vw, 2rem)",
               flexWrap: "wrap" as const,
-              boxShadow: "0 0 40px rgba(0,245,255,.06)",
+              boxShadow: "0 4px 40px rgba(0,245,255,.08)",
+              transition: "all .35s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor =
+                "rgba(0,245,255,.35)";
+              (e.currentTarget as HTMLElement).style.boxShadow =
+                "0 8px 50px rgba(0,245,255,.12)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor =
+                "rgba(0,245,255,.22)";
+              (e.currentTarget as HTMLElement).style.boxShadow =
+                "0 4px 40px rgba(0,245,255,.08)";
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "clamp(1rem, 3vw, 1rem)",
+              }}
+            >
               <div
                 style={{
-                  width: 48,
-                  height: 48,
+                  width: "clamp(40px, 8vw, 48px)",
+                  height: "clamp(40px, 8vw, 48px)",
                   borderRadius: 13,
                   flexShrink: 0,
                   background:
@@ -1905,15 +2698,15 @@ export default function App() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "1.5rem",
+                  fontSize: "clamp(1.2rem, 3vw, 1.5rem)",
                 }}
               >
                 📦
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <p
                   style={{
-                    fontSize: ".68rem",
+                    fontSize: "clamp(0.55rem, 1vw, 0.68rem)",
                     letterSpacing: ".16em",
                     textTransform: "uppercase" as const,
                     color: "rgba(0,245,255,.7)",
@@ -1928,24 +2721,27 @@ export default function App() {
                   style={{
                     fontFamily: "'Orbitron',monospace",
                     fontWeight: 800,
-                    fontSize: "clamp(.95rem,2vw,1.2rem)",
+                    fontSize: "clamp(0.8rem, 2vw, 1.2rem)",
                     color: "#fff",
                     margin: "0 0 5px",
                     letterSpacing: "-.01em",
                   }}
                 >
-                  Explore Already Generated Code
+                  Explore OXYBFSAI Use Cases
                 </h3>
                 <p
                   style={{
-                    fontSize: ".8rem",
+                    fontSize: "clamp(0.7rem, 1.2vw, 0.8rem)",
                     color: "rgba(255,255,255,.45)",
                     margin: 0,
                     lineHeight: 1.6,
                     fontFamily: "sans-serif",
                   }}
                 >
-                  Browse real BFSI apps built by OXYBFS{`{AI}`} — full backend,
+                  Browse real BFSI apps built by{" "}
+                  <span style={{ color: "#FFFFFF" }}>OXY</span>
+                  <span style={{ color: "#00D4FF" }}>BFS</span>
+                  <span style={{ color: "#7C3AED" }}>AI</span> — full backend,
                   frontend &amp; database code, ready to use.
                 </p>
               </div>
@@ -1955,21 +2751,22 @@ export default function App() {
                 window.open("https://vibecoding-finvibe.vercel.app/", "_blank")
               }
               style={{
-                padding: "12px 28px",
-                borderRadius: 11,
-                border: "1px solid rgba(0,245,255,.5)",
+                padding:
+                  "clamp(0.85rem, 2vw, 1rem) clamp(1.75rem, 3.5vw, 2rem)",
+                borderRadius: 12,
+                border: "1px solid rgba(0,245,255,.55)",
                 background:
-                  "linear-gradient(135deg,rgba(0,245,255,.14),rgba(124,58,237,.1))",
+                  "linear-gradient(135deg,rgba(0,245,255,.16),rgba(124,58,237,.12))",
                 color: "#00f5ff",
                 fontFamily: "'Orbitron',monospace",
                 fontWeight: 700,
-                fontSize: ".78rem",
-                letterSpacing: ".08em",
+                fontSize: "clamp(0.7rem, 1.2vw, 0.82rem)",
+                letterSpacing: ".1em",
                 cursor: "pointer",
-                transition: "all .25s",
+                transition: "all .3s cubic-bezier(0.4,0,0.2,1)",
                 whiteSpace: "nowrap" as const,
                 flexShrink: 0,
-                boxShadow: "0 0 20px rgba(0,245,255,.1)",
+                boxShadow: "0 2px 24px rgba(0,245,255,.15)",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background =
@@ -1999,21 +2796,22 @@ export default function App() {
         style={{
           position: "relative",
           zIndex: 2,
-          padding: "70px 40px",
+          padding: "clamp(5rem, 12vw, 6rem) clamp(1rem, 5vw, 2.5rem)",
           textAlign: "center",
           background:
-            "linear-gradient(135deg,rgba(0,245,255,.035) 0%,rgba(124,58,237,.06) 50%,rgba(168,85,247,.035) 100%)",
-          borderTop: "1px solid rgba(0,245,255,.08)",
-          borderBottom: "1px solid rgba(168,85,247,.08)",
+            "linear-gradient(135deg,rgba(0,245,255,.06) 0%,rgba(124,58,237,.08) 50%,rgba(168,85,247,.06) 100%)",
+          borderTop: "1px solid rgba(0,245,255,.12)",
+          borderBottom: "1px solid rgba(168,85,247,.12)",
+          backdropFilter: "blur(10px)",
         }}
       >
         <div
           style={{
             fontFamily: "'Orbitron',monospace",
-            fontSize: ".65rem",
+            fontSize: "clamp(0.5rem, 1.2vw, 0.65rem)",
             letterSpacing: ".2em",
             color: "rgba(255,255,255,.28)",
-            marginBottom: 12,
+            marginBottom: "clamp(0.75rem, 2vw, 0.75rem)",
           }}
         >
           BEGIN YOUR TRANSFORMATION
@@ -2021,33 +2819,36 @@ export default function App() {
         <h2
           style={{
             fontFamily: "'Orbitron',monospace",
-            fontSize: "clamp(1.4rem,4vw,2.7rem)",
+            fontSize: "clamp(1.2rem, 5vw, 2.7rem)",
             fontWeight: 900,
             background:
-              "linear-gradient(90deg,#00f5ff 0%,#fff 50%,#a855f7 100%)",
+              "linear-gradient(90deg,#00f5ff 0%,#fff 50%,#7C3AED 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            marginBottom: 16,
+            marginBottom: "clamp(1rem, 2vw, 1rem)",
           }}
         >
           Ready to Redefine FinTech?
         </h2>
         <p
           style={{
-            color: "rgba(255,255,255,.44)",
-            fontSize: ".92rem",
-            maxWidth: 460,
-            margin: "0 auto 30px",
-            lineHeight: 1.72,
+            color: "rgba(255,255,255,.55)",
+            fontSize: "clamp(0.8rem, 1.6vw, 0.95rem)",
+            maxWidth: 520,
+            margin: "0 auto clamp(2rem, 4vw, 2.5rem)",
+            lineHeight: 1.8,
           }}
         >
-          Join leading banks and insurers leveraging OXYBFS{`{AI}`} to build the
-          future of intelligent financial services.
+          Join leading banks and insurers leveraging{" "}
+          <span style={{ color: "#FFFFFF" }}>OXY</span>
+          <span style={{ color: "#00D4FF" }}>BFS</span>
+          <span style={{ color: "#7C3AED" }}>AI</span> to build the future of
+          intelligent financial services.
         </p>
         <div
           style={{
             display: "flex",
-            gap: 12,
+            gap: "clamp(1rem, 3vw, 1.25rem)",
             justifyContent: "center",
             flexWrap: "wrap",
           }}
@@ -2064,7 +2865,7 @@ export default function App() {
               {
                 label: "Get Started with Insurance",
                 bg: "transparent",
-                color: "#a855f7",
+                color: "#7C3AED",
                 border: "1px solid rgba(168,85,247,.5)",
                 shadow: "none",
               },
@@ -2079,18 +2880,19 @@ export default function App() {
             <button
               key={i}
               style={{
-                padding: "13px 30px",
-                borderRadius: 11,
+                padding:
+                  "clamp(0.85rem, 2vw, 1rem) clamp(1.75rem, 3.5vw, 2.25rem)",
+                borderRadius: 12,
                 background: btn.bg,
                 color: btn.color,
                 border: btn.border ?? "none",
                 fontFamily: "'Orbitron',monospace",
                 fontWeight: 700,
-                fontSize: ".8rem",
+                fontSize: "clamp(0.75rem, 1.3vw, 0.85rem)",
                 cursor: "pointer",
-                boxShadow: btn.shadow,
-                letterSpacing: ".08em",
-                transition: "all .28s",
+                boxShadow: `0 2px 20px ${btn.color}20`,
+                letterSpacing: ".1em",
+                transition: "all .3s cubic-bezier(0.4,0,0.2,1)",
               }}
               onClick={() => {
                 if (btn.label === "Get Started with Banking") {
@@ -2101,10 +2903,12 @@ export default function App() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform =
-                  "translateY(-3px) scale(1.02)";
+                  "translateY(-4px) scale(1.03)";
+                e.currentTarget.style.boxShadow = `0 8px 32px ${btn.color}35`;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0) scale(1)";
+                e.currentTarget.style.boxShadow = `0 2px 20px ${btn.color}20`;
               }}
             >
               {btn.label}
@@ -2118,8 +2922,10 @@ export default function App() {
         style={{
           position: "relative",
           zIndex: 2,
-          padding: "34px 40px 24px",
-          borderTop: "1px solid rgba(255,255,255,.04)",
+          padding: "clamp(2.5rem, 5vw, 3.5rem) clamp(1rem, 5vw, 2.5rem)",
+          borderTop: "1px solid rgba(0,245,255,.1)",
+          background:
+            "linear-gradient(135deg,rgba(0,245,255,.03) 0%,rgba(124,58,237,.05) 100%)",
         }}
       >
         <div
@@ -2153,19 +2959,19 @@ export default function App() {
                 fontFamily: "'Orbitron',monospace",
                 fontWeight: 700,
                 fontSize: ".85rem",
-                background: "linear-gradient(90deg,#00f5ff,#a855f7)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
               }}
             >
-              OXYBFS{`{AI}`}
+              <span style={{ color: "#FFFFFF" }}>OXY</span>
+              <span style={{ color: "#00D4FF" }}>BFS</span>
+              <span style={{ color: "#7C3AED" }}>AI</span>
             </span>
           </div>
           <div
             style={{
-              color: "#fff",
-              fontSize: ".74rem",
+              color: "rgba(255,255,255,.7)",
+              fontSize: "clamp(0.7rem, 1vw, 0.78rem)",
               letterSpacing: ".08em",
+              fontWeight: 500,
             }}
           >
             ⚡ Powered by ASKOXY.AI
@@ -2174,17 +2980,24 @@ export default function App() {
         <div
           style={{
             maxWidth: 1050,
-            margin: "16px auto 0",
-            borderTop: "1px solid rgba(255,255,255,.04)",
+            margin: "clamp(1.25rem, 3vw, 1.75rem) auto 0",
+            borderTop: "1px solid rgba(0,245,255,.08)",
             paddingTop: 14,
             display: "flex",
             justifyContent: "space-between",
             flexWrap: "wrap",
-            gap: 8,
+            gap: 12,
           }}
         >
-          <span style={{ fontSize: ".68rem", color: "#fff" }}>
-            © 2026 OXYBFS{`{AI}`} — All rights reserved
+          <span
+            style={{
+              fontSize: "clamp(0.65rem, 1vw, 0.75rem)",
+              color: "rgba(255,255,255,.65)",
+            }}
+          >
+            © 2026 <span style={{ color: "#FFFFFF" }}>OXY</span>
+            <span style={{ color: "#00D4FF" }}>BFS</span>
+            <span style={{ color: "#7C3AED" }}>AI</span> — All rights reserved
           </span>
           {/* <a href="#" style={{fontSize:".68rem",color:"rgba(255,255,255,.25)",textDecoration:"none"}}>contact@oxybfs.ai</a> */}
         </div>

@@ -6,6 +6,7 @@ import { LandingView } from "./components/LandingView";
 import { CodeView } from "./components/CodeView";
 import { PipelineView } from "./components/PipelineView";
 import { GenerationResult } from "./type/types";
+import type { Country } from "./components/Billing";
 
 export default function Landing() {
   const {
@@ -37,6 +38,11 @@ export default function Landing() {
       location.pathname === "/insurvibe-code-builder"
       ? "insurance"
       : "banking";
+
+  const country: Country = (sessionStorage.getItem("finvibe_country") as Country) || "india";
+
+  // Wrap run to always forward the selected country to the session/start API
+  const runWithCountry = (userPrompt: string) => run(userPrompt, country);
 
   const hasEverStartedRef = useRef(false);
   const hasResultRef = useRef(false);
@@ -102,6 +108,7 @@ export default function Landing() {
         selectedBank={selectedBank}
         onSelectBank={setSelectedBank}
         mode={mode}
+        country={country}
         onLoadHistory={(item) => {
           loadHistoryTurn(item);
           hasEverStartedRef.current = true;
@@ -126,9 +133,10 @@ export default function Landing() {
         ) : !hasStarted ? (
           <LandingView
             running={running}
-            onRun={run}
+            onRun={runWithCountry}
             selectedBank={selectedBank}
             mode={mode}
+            country={country}
           />
         ) : (
           <PipelineView
@@ -144,7 +152,7 @@ export default function Landing() {
             prompt={prompt}
             history={history}
             clarificationQuestion={clarificationQuestion}
-            onRun={run}
+            onRun={runWithCountry}
             onAnswer={answerQuestion}
             onViewCode={handleViewCode}
             onStop={stop}

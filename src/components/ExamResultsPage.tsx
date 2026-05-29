@@ -69,9 +69,9 @@ const percentage = result?.percentage ?? 0;
   const isPassed = percentage >= 80;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex flex-col items-center justify-start pt-8 sm:pt-16 p-4">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-start pt-8 sm:pt-16 p-4">
       {/* 🎉 HEADER */}
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-center mb-5 tracking-wide">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-center mb-5 tracking-wide text-slate-800">
         {result
           ? isPassed
             ? "🎉 Congratulations!"
@@ -81,15 +81,15 @@ const percentage = result?.percentage ?? 0;
 
       {/* 🎯 RESULT CARD */}
       {result && (
-        <div className="w-full max-w-sm bg-gray-900/90 rounded-2xl shadow-xl p-6 text-center border border-gray-700/60 backdrop-blur-sm">
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 text-center border border-slate-200">
 
           {/* SCORE CIRCLE */}
-          <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-5 shadow-lg rounded-full">
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-5 shadow-md rounded-full">
             <div
               className={`w-full h-full rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold border-4 shadow-inner ${
                 isPassed
-                  ? "bg-green-900/20 text-green-400 border-green-500/80"
-                  : "bg-red-900/20 text-red-500 border-red-500/80"
+                  ? "bg-green-50 text-green-600 border-green-500"
+                  : "bg-red-50 text-red-600 border-red-500"
               }`}
             >
               {Math.round(percentage)}%
@@ -97,13 +97,13 @@ const percentage = result?.percentage ?? 0;
           </div>
 
           {/* SCORE DETAILS */}
-          <h2 className="text-[13px] sm:text-sm text-gray-400 mb-1 font-semibold tracking-widest uppercase">
+          <h2 className="text-[13px] sm:text-sm text-slate-500 mb-1 font-semibold tracking-widest uppercase">
             Final Score
           </h2>
 
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-100 flex items-baseline justify-center gap-1">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-slate-800 flex items-baseline justify-center gap-1">
             {result.score}{" "}
-            <span className="text-lg sm:text-xl text-gray-500 font-medium">
+            <span className="text-lg sm:text-xl text-slate-400 font-medium">
               / {result.totalQuestions}
             </span>
           </h2>
@@ -111,15 +111,15 @@ const percentage = result?.percentage ?? 0;
           <div
             className={`inline-block px-4 py-1.5 rounded-lg border font-bold tracking-wider text-xs uppercase shadow-sm ${
               isPassed
-                ? "bg-green-500/10 border-green-500/40 text-green-400"
-                : "bg-red-500/10 border-red-500/40 text-red-400"
+                ? "bg-green-50 border-green-200 text-green-600"
+                : "bg-red-50 border-red-200 text-red-600"
             }`}
           >
             {isPassed ? "Status: Passed" : "Requirement Not Met"}
           </div>
 
           {/* MESSAGE */}
-          <p className="mt-5 text-gray-400 text-xs sm:text-sm leading-relaxed px-1">
+          <p className="mt-5 text-slate-600 text-xs sm:text-sm leading-relaxed px-1">
             {isPassed
               ? "Excellent performance. You have successfully met the assessment requirements for this position."
               : "A minimum score of 80% is required. Your current score does not meet the eligibility criteria for this application. We encourage you to keep practicing."}
@@ -144,14 +144,14 @@ const percentage = result?.percentage ?? 0;
                 },
               });
             }}
-            className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg"
+            className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg text-white"
           >
             ✅ Complete Final Step
           </button>
         ) : (
           <button
             onClick={() => navigate("/main/viewjobdetails/default/ALL")}
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg"
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg text-white"
           >
             🔍 Go to Job Details
           </button>

@@ -184,13 +184,9 @@ const Assignedtasksbasedstatus: React.FC = () => {
         );
       } catch (error) {
         Swal.fire({
-          toast: true,
-          position: "top-end",
           icon: "error",
-          title: "Failed to fetch tasks",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
+          title: "Error",
+          text: "Failed to fetch tasks",
         });
       } finally {
         setLoading(false);
@@ -228,24 +224,16 @@ const Assignedtasksbasedstatus: React.FC = () => {
         {},
       );
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "success",
-        title: `Task marked as ${newStatus.toLowerCase()}`,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
+        title: "Success",
+        text: `Task marked as ${newStatus.toLowerCase()}`,
       });
       await fetchTasks(currentPage, pageSize, statusFilter, searchText);
     } catch {
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "error",
-        title: "Failed to update task status",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
+        title: "Error",
+        text: "Failed to update task status",
       });
     }
   };
@@ -253,13 +241,9 @@ const Assignedtasksbasedstatus: React.FC = () => {
   const handleCommentsUpdate = async () => {
     if (!comments.trim()) {
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "warning",
-        title: "Please enter a comment before submitting.",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
+        title: "Warning",
+        text: "Please enter a comment before submitting.",
       });
       return;
     }
@@ -275,13 +259,9 @@ const Assignedtasksbasedstatus: React.FC = () => {
       );
 
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "success",
-        title: "Comment added successfully!",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
+        title: "Success",
+        text: "Comment added successfully!",
       });
 
       setCommentsModalVisible(false);
@@ -290,13 +270,9 @@ const Assignedtasksbasedstatus: React.FC = () => {
       if (selectedTask) handleViewComments(selectedTask);
     } catch {
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "error",
-        title: "Failed to add comment",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
+        title: "Error",
+        text: "Failed to add comment",
       });
     }
   };
@@ -313,13 +289,9 @@ const Assignedtasksbasedstatus: React.FC = () => {
       setViewModalVisible(true);
     } catch {
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "error",
-        title: "Failed to fetch comments",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
+        title: "Error",
+        text: "Failed to fetch comments",
       });
     } finally {
       setLoading(false);

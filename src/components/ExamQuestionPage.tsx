@@ -149,7 +149,7 @@ const ExamQuestionPage: React.FC = () => {
   // ❌ SAFETY
   if (!examData) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white bg-black">
+      <div className="min-h-screen flex items-center justify-center text-slate-800 bg-white">
         Loading exam...
       </div>
     );
@@ -157,31 +157,31 @@ const ExamQuestionPage: React.FC = () => {
 
   if (!question) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white bg-black">
+      <div className="min-h-screen flex items-center justify-center text-slate-800 bg-white">
         Invalid question
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-center p-4">
 
       {/* HEADER */}
-      <div className="mb-4 w-full max-w-xl bg-gray-900/80 border border-gray-700 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+      <div className="mb-4 w-full max-w-xl bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-lg relative overflow-hidden">
         {/* Top gradient highlight bar */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
         
         <div className="flex flex-wrap gap-2 justify-between items-center mb-3">
-          <span className="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+          <span className="bg-blue-50/80 border border-blue-200 text-blue-600 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
             Question {qIndex + 1} / {totalQ}
           </span>
           
-          <span className="bg-gray-800 border border-gray-600 text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-sm">
+          <span className="bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-sm">
             {question.type === "single" ? "Single Choice" : "Multiple Choice"}
           </span>
         </div>
 
-        <h2 className="text-lg font-semibold leading-snug text-gray-100 tracking-wide">
+        <h2 className="text-lg font-semibold leading-snug text-slate-800 tracking-wide">
           {question.question}
         </h2>
       </div>
@@ -196,13 +196,13 @@ const ExamQuestionPage: React.FC = () => {
               onClick={() => handleOptionClick(key)}
               className={`w-full p-3 rounded-xl border transition-all duration-300 cursor-pointer flex items-center gap-3 group ${
                 isSelected
-                  ? "border-blue-500 bg-blue-900/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]"
-                  : "border-gray-700 bg-gray-800/40 hover:border-gray-500 hover:bg-gray-800/80"
+                  ? "border-blue-500 bg-blue-50/50 shadow-sm"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
               }`}
             >
               <div 
                 className={`w-5 h-5 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-colors ${
-                  isSelected ? "border-blue-500" : "border-gray-500 group-hover:border-gray-400"
+                  isSelected ? "border-blue-500" : "border-slate-300 group-hover:border-slate-400"
                 }`}
               >
                 {isSelected && (
@@ -210,9 +210,9 @@ const ExamQuestionPage: React.FC = () => {
                 )}
               </div>
               <span className={`text-base transition-colors leading-snug ${
-                isSelected ? "text-blue-300 font-medium" : "text-gray-300 group-hover:text-white"
+                isSelected ? "text-blue-700 font-medium" : "text-slate-700 group-hover:text-slate-900"
               }`}>
-                <span className="font-bold mr-3 text-gray-500">{key.toUpperCase()}.</span>
+                <span className="font-bold mr-3 text-slate-400">{key.toUpperCase()}.</span>
                 {String(val)}
               </span>
             </div>
@@ -221,8 +221,8 @@ const ExamQuestionPage: React.FC = () => {
       </div>
 
       {/* TIMER */}
-      <div className="mt-5 text-lg">
-        Time Left: {timeLeft}s
+      <div className="mt-5 text-lg font-medium text-slate-700">
+        Time Left: <span className="font-bold text-slate-900">{timeLeft}s</span>
       </div>
 
       {/* ACTIONS */}
@@ -230,14 +230,14 @@ const ExamQuestionPage: React.FC = () => {
         <button
           onClick={handleSubmit}
           disabled={selected.length === 0}
-          className="px-6 py-2 bg-green-600 rounded disabled:opacity-50"
+          className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Next
         </button>
 
         <button
           onClick={() => advance([])}
-          className="px-6 py-2 bg-gray-600 rounded"
+          className="px-8 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition"
         >
           Skip
         </button>

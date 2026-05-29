@@ -337,6 +337,12 @@ const validateProfileForm = () => {
     errors.userFirstName = "First name should only contain letters";
   }
 
+  if (formData.userLastName.trim()) {
+    if (!/^[A-Za-z ]+$/.test(formData.userLastName.trim())) {
+      errors.userLastName = "Last name should only contain letters";
+    }
+  }
+
   const emailValue = formData.customerEmail.trim();
 
   if (!emailValue) {
@@ -387,6 +393,13 @@ const validateProfileForm = () => {
         if (!value.trim()) error = "First name is required";
         else if (!/^[A-Za-z ]+$/.test(value.trim()))
           error = "First name should only contain letters";
+        break;
+
+      case "userLastName":
+        if (value.trim()) {
+          if (!/^[A-Za-z ]+$/.test(value.trim()))
+            error = "Last name should only contain letters";
+        }
         break;
 
       case "customerEmail":
@@ -762,14 +775,17 @@ const validateProfileForm = () => {
 
                     <input
                       type="text"
-                      pattern="^[A-Za-z]+$"
+                      pattern="^[A-Za-z ]+$"
                       value={formData.userLastName}
-                      onChange={(e) =>
-                        setFormData({
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const updated = {
                           ...formData,
-                          userLastName: e.target.value,
-                        })
-                      }
+                          userLastName: val,
+                        };
+                        setFormData(updated);
+                        validateField("userLastName", val, updated);
+                      }}
                       className={`w-full px-4 py-3 rounded-lg border transition-all ${
                         validationErrors.userLastName
                           ? "border-red-500 ring-1 ring-red-500"

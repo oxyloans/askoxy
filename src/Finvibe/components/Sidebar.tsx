@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { GenerationResult } from "../type/types";
+import type { Country } from "./Billing";
 
 interface HistoryItem {
   id: number;
@@ -26,24 +27,60 @@ function formatDate(arr: number[]) {
   return `${d.toString().padStart(2, "0")}/${m.toString().padStart(2, "0")}/${y} ${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
 }
 
-const BANKING_CAPABILITIES = [
-  { icon: "🏦", label: "Local Area Banks", sub: "Regional banking services" },
-  { icon: "🏛️", label: "All India Financial Institutions", sub: "National financial institutions" },
-  { icon: "💳", label: "Payments Banks", sub: "Digital payments · Deposits" },
-  { icon: "🌾", label: "Regional Rural Banks", sub: "Rural banking services" },
-  { icon: "🏙️", label: "Urban Co-operative Banks", sub: "City-based cooperative banking" },
-  { icon: "🏠", label: "Non-Banking Financial Companies", sub: "Loans · Finance services" },
-  { icon: "🔄", label: "Asset Reconstruction Companies", sub: "Bad asset recovery · NPA management" },
-  { icon: "🏦", label: "Small Finance Banks", sub: "Financial inclusion · Micro loans" },
-  { icon: "📊", label: "Credit Information Companies", sub: "Credit scores · Reports" },
-  { icon: "🏛️", label: "Commercial Banks", sub: "Retail · Corporate banking" },
-  { icon: "🌱", label: "Rural Co-operative Banks", sub: "Agricultural finance · Rural credit" },
-];
+const BANKING_CAPABILITIES: Record<Country, { icon: string; label: string; sub: string }[]> = {
+  india: [
+    { icon: "🏦", label: "Local Area Banks", sub: "Regional banking services" },
+    { icon: "🏛️", label: "All India Financial Institutions", sub: "National financial institutions" },
+    { icon: "💳", label: "Payments Banks", sub: "Digital payments · Deposits" },
+    { icon: "🌾", label: "Regional Rural Banks", sub: "Rural banking services" },
+    { icon: "🏙️", label: "Urban Co-operative Banks", sub: "City-based cooperative banking" },
+    { icon: "🏠", label: "Non-Banking Financial Companies", sub: "Loans · Finance services" },
+    { icon: "🔄", label: "Asset Reconstruction Companies", sub: "Bad asset recovery · NPA management" },
+    { icon: "🏦", label: "Small Finance Banks", sub: "Financial inclusion · Micro loans" },
+    { icon: "📊", label: "Credit Information Companies", sub: "Credit scores · Reports" },
+    { icon: "🏛️", label: "Commercial Banks", sub: "Retail · Corporate banking" },
+    { icon: "🌱", label: "Rural Co-operative Banks", sub: "Agricultural finance · Rural credit" },
+  ],
+  uae: [
+    { icon: "🏦", label: "National Banks", sub: "CBUAE licensed · Retail & corporate" },
+    { icon: "🌍", label: "Foreign Bank Branches", sub: "International banks in UAE" },
+    { icon: "💳", label: "Digital Banks & Neobanks", sub: "CBUAE licensed digital-first banking" },
+    { icon: "☪️", label: "Islamic Banks", sub: "Sharia-compliant · CBUAE licensed" },
+    { icon: "🔄", label: "Finance Companies", sub: "CBUAE licensed finance firms" },
+    { icon: "💱", label: "Exchange Houses", sub: "Remittance · Forex · WPS services" },
+    { icon: "📊", label: "Investment Companies", sub: "SCA regulated · Capital markets" },
+    { icon: "🏢", label: "DIFC Financial Institutions", sub: "DFSA regulated entities" },
+  ],
+  saudi: [
+    { icon: "🏦", label: "Local Banks", sub: "SAMA licensed · Retail & corporate" },
+    { icon: "🌍", label: "Branches of Foreign Banks", sub: "International banks in KSA" },
+    { icon: "💳", label: "Digital Banks", sub: "SAMA licensed · Digital-only channels" },
+    { icon: "🔄", label: "Finance Companies", sub: "SAMA licensed finance firms" },
+    { icon: "💱", label: "Money Changers", sub: "Remittance · Forex services" },
+    { icon: "📱", label: "Payment Service Providers", sub: "SAMA licensed · Fintech · E-wallets" },
+    { icon: "📊", label: "Capital Market Institutions", sub: "CMA regulated · Securities & investment" },
+    { icon: "🏢", label: "Development Finance Institutions", sub: "Vision 2030 aligned" },
+  ],
+};
 
-const INSURANCE_CAPABILITIES = [
-  { icon: "🛡️", label: "Life Insurance", sub: "Term · ULIP · Endowment · Pension" },
-  { icon: "🔒", label: "General Insurance", sub: "Health · Motor · Property · Travel" },
-];
+const INSURANCE_CAPABILITIES: Record<Country, { icon: string; label: string; sub: string }[]> = {
+  india: [
+    { icon: "🛡️", label: "Life Insurance", sub: "Term · ULIP · Endowment · Pension" },
+    { icon: "🔒", label: "General Insurance", sub: "Health · Motor · Property · Travel" },
+  ],
+  uae: [
+    { icon: "🛡️", label: "Life & Fund Accumulation Insurance", sub: "Term · Savings · Pension · Investment" },
+    { icon: "🏥", label: "Health Insurance", sub: "Mandatory · DHA/HAAD/CBUAE compliant" },
+    { icon: "🚗", label: "Motor Insurance", sub: "Comprehensive · Third Party · RTA" },
+    { icon: "🔒", label: "General Insurance", sub: "Property · Marine · Engineering · Travel" },
+  ],
+  saudi: [
+    { icon: "🛡️", label: "Protection & Saving Insurance", sub: "Life · Savings · Pension · Takaful" },
+    { icon: "🏥", label: "Health Insurance", sub: "Mandatory · Insurance Authority (IA)" },
+    { icon: "🚗", label: "Motor Insurance", sub: "Compulsory TPL · Comprehensive" },
+    { icon: "🔒", label: "General Insurance", sub: "Property · Marine · Engineering · Energy" },
+  ],
+};
 
 interface SidebarProps {
   running: boolean;
@@ -52,6 +89,7 @@ interface SidebarProps {
   selectedBank: string | null;
   onSelectBank: (label: string) => void;
   mode: "banking" | "insurance";
+  country?: Country;
   onLoadHistory: (item: HistoryItem) => void;
   fetchHistory: () => Promise<any[]>;
   onNewChat: () => void;
@@ -59,7 +97,7 @@ interface SidebarProps {
 
 export type { HistoryItem };
 
-export function Sidebar({ running, result, codeViewResult, selectedBank, onSelectBank, mode, onLoadHistory, fetchHistory, onNewChat }: SidebarProps) {
+export function Sidebar({ running, result, codeViewResult, selectedBank, onSelectBank, mode, country = "india", onLoadHistory, fetchHistory, onNewChat }: SidebarProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -71,8 +109,9 @@ export function Sidebar({ running, result, codeViewResult, selectedBank, onSelec
       .then(setHistoryItems)
       .finally(() => setHistoryLoading(false));
   }, [historyOpen, fetchHistory]);
+
   const isInsurance = mode === "insurance";
-  const capabilities = isInsurance ? INSURANCE_CAPABILITIES : BANKING_CAPABILITIES;
+  const capabilities = isInsurance ? INSURANCE_CAPABILITIES[country] : BANKING_CAPABILITIES[country];
 
   const accentColor = isInsurance ? "#7C3AED" : "#3B6FFF";
   const accentBg = isInsurance ? "#F3EEFF" : "#EEF3FF";
@@ -84,6 +123,9 @@ export function Sidebar({ running, result, codeViewResult, selectedBank, onSelec
     : "linear-gradient(135deg, #3B6FFF 0%, #7C3AED 100%)";
   const logoLetter = isInsurance ? "I" : "F";
   const brandName = isInsurance ? "INSURVIBE" : "FINVIBE";
+
+  const countryFlag = country === "india" ? "🇮🇳" : country === "uae" ? "🇦🇪" : "🇸🇦";
+  const countryLabel = country === "india" ? "INDIA" : country === "uae" ? "UAE" : "SAUDI ARABIA";
 
   return (
     <aside
@@ -98,14 +140,21 @@ export function Sidebar({ running, result, codeViewResult, selectedBank, onSelec
         >
           {logoLetter}
         </div>
-        <div>
-          <p className="text-[14px] font-bold leading-none tracking-tight" style={{ color: "#0D1117" }}>
-            {brandName}
-          </p>
-          <p className="text-[9px] mt-0.5 uppercase tracking-[0.16em] font-semibold" style={{ color: "#A0AABF" }}>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 leading-none" style={{ flexWrap: "nowrap" }}>
+            <p className="text-[13px] font-black tracking-tight shrink-0" style={{ color: "#0D1117" }}>
+              {brandName}
+            </p>
+            <span style={{ color: "#C4CBDA", fontSize: "11px", fontWeight: 400, flexShrink: 0 }}>—</span>
+            <p className="text-[11px] font-bold tracking-wide truncate" style={{ color: accentColor }}>
+              {countryLabel}
+            </p>
+          </div>
+          <p className="text-[9px] mt-1 uppercase tracking-[0.16em] font-semibold" style={{ color: "#A0AABF" }}>
             App Builder
           </p>
         </div>
+        <span className="text-base shrink-0">{countryFlag}</span>
       </div>
 
       {/* History + New Chat — inline row */}
@@ -186,55 +235,55 @@ export function Sidebar({ running, result, codeViewResult, selectedBank, onSelec
           pointerEvents: historyOpen ? "auto" : "none",
         }}
       >
-          {/* Header */}
-          <div style={{ padding: "14px 16px 12px", borderBottom: `2px solid ${accentColor}22`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: `linear-gradient(135deg,${accentColor}10,${accentColor}04)` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: `linear-gradient(135deg,${accentColor},${accentColor}99)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🕐</div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 800, color: accentColor, margin: 0, letterSpacing: "-.01em" }}>History</p>
-                <p style={{ fontSize: 9.5, color: "#A0AABF", margin: 0 }}>Click to load a session</p>
-              </div>
+        {/* Header */}
+        <div style={{ padding: "14px 16px 12px", borderBottom: `2px solid ${accentColor}22`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: `linear-gradient(135deg,${accentColor}10,${accentColor}04)` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: `linear-gradient(135deg,${accentColor},${accentColor}99)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🕐</div>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 800, color: accentColor, margin: 0, letterSpacing: "-.01em" }}>History</p>
+              <p style={{ fontSize: 9.5, color: "#A0AABF", margin: 0 }}>Click to load a session</p>
             </div>
-            <button onClick={() => setHistoryOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#6B7A99", lineHeight: 1, padding: "2px 4px" }}>×</button>
           </div>
+          <button onClick={() => setHistoryOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#6B7A99", lineHeight: 1, padding: "2px 4px" }}>×</button>
+        </div>
 
-          {/* List */}
-          <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
-            {historyLoading ? (
-              <p style={{ fontSize: 11, color: "#A0AABF", textAlign: "center", padding: 20 }}>Loading…</p>
-            ) : historyItems.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 24 }}>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>📭</div>
-                <p style={{ fontSize: 11, color: "#A0AABF" }}>No history yet</p>
-              </div>
-            ) : historyItems.map((item) => {
-              const completedCount = ["planning","clarification","techstack","usecases","compliance","systemdesign","structure","prompt","backend","frontend","database","testcases"]
-                .filter((k) => (item as any)[k] !== null).length;
-              const pct = Math.round((completedCount / 12) * 100);
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => { onLoadHistory(item); setHistoryOpen(false); }}
-                  style={{ padding: "11px 12px", borderRadius: 12, cursor: "pointer", border: "1px solid #EAECF2", background: "#FAFBFD", transition: "all .15s" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${accentColor}40`; (e.currentTarget as HTMLElement).style.background = `${accentColor}06`; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "#EAECF2"; (e.currentTarget as HTMLElement).style.background = "#FAFBFD"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
-                >
-                  <p style={{ fontSize: 11.5, fontWeight: 600, color: "#0D1117", margin: "0 0 6px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden", lineHeight: 1.45 }}>
-                    {item.userPrompt}
-                  </p>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 9.5, color: "#A0AABF" }}>{formatDate(item.createdAt)}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: 48, height: 3, borderRadius: 2, background: "#EAECF2", overflow: "hidden" }}>
-                        <div style={{ width: `${pct}%`, height: "100%", background: pct === 100 ? "#10B981" : accentColor, borderRadius: 2 }} />
-                      </div>
-                      <span style={{ fontSize: 9.5, fontWeight: 600, color: pct === 100 ? "#10B981" : accentColor }}>{completedCount}/12</span>
+        {/* List */}
+        <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {historyLoading ? (
+            <p style={{ fontSize: 11, color: "#A0AABF", textAlign: "center", padding: 20 }}>Loading…</p>
+          ) : historyItems.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 24 }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>📭</div>
+              <p style={{ fontSize: 11, color: "#A0AABF" }}>No history yet</p>
+            </div>
+          ) : historyItems.map((item) => {
+            const completedCount = ["planning","clarification","techstack","usecases","compliance","systemdesign","structure","prompt","backend","frontend","database","testcases"]
+              .filter((k) => (item as any)[k] !== null).length;
+            const pct = Math.round((completedCount / 12) * 100);
+            return (
+              <div
+                key={item.id}
+                onClick={() => { onLoadHistory(item); setHistoryOpen(false); }}
+                style={{ padding: "11px 12px", borderRadius: 12, cursor: "pointer", border: "1px solid #EAECF2", background: "#FAFBFD", transition: "all .15s" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${accentColor}40`; (e.currentTarget as HTMLElement).style.background = `${accentColor}06`; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "#EAECF2"; (e.currentTarget as HTMLElement).style.background = "#FAFBFD"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              >
+                <p style={{ fontSize: 11.5, fontWeight: 600, color: "#0D1117", margin: "0 0 6px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden", lineHeight: 1.45 }}>
+                  {item.userPrompt}
+                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 9.5, color: "#A0AABF" }}>{formatDate(item.createdAt)}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <div style={{ width: 48, height: 3, borderRadius: 2, background: "#EAECF2", overflow: "hidden" }}>
+                      <div style={{ width: `${pct}%`, height: "100%", background: pct === 100 ? "#10B981" : accentColor, borderRadius: 2 }} />
                     </div>
+                    <span style={{ fontSize: 9.5, fontWeight: 600, color: pct === 100 ? "#10B981" : accentColor }}>{completedCount}/12</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Status pill */}

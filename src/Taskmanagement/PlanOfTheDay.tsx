@@ -214,7 +214,7 @@ const PlanOfTheDay: React.FC = () => {
     } catch (error: any) {
       console.error("Error checking pending tasks:", error);
       setErrorState(true);
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.message || "Failed to check task status", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to check task status" });
     } finally {
       setFetchingStatus(false);
     }
@@ -265,7 +265,7 @@ const PlanOfTheDay: React.FC = () => {
     setLoading(true);
     try {
       if (!userName) {
-        Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "User name not found. Please login again.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ icon: "warning", title: "Warning", text: "User name not found. Please login again." });
         setLoading(false);
         return;
       }
@@ -331,7 +331,7 @@ const PlanOfTheDay: React.FC = () => {
         setShowAiResponse(false); // Hide AI response after successful save
 
         const action = isEditMode ? "updated" : "submitted";
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: `Your daily plan has been ${action} successfully.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ icon: "success", title: "Success", text: `Your daily plan has been ${action} successfully.` });
 
         setTimeout(async () => {
           checkPendingTasksForToday(userId);
@@ -347,11 +347,11 @@ const PlanOfTheDay: React.FC = () => {
         form.resetFields();
         sessionStorage.removeItem("pod_draft");
       } else {
-        Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to update task.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ icon: "error", title: "Error", text: "Failed to update task." });
       }
     } catch (error) {
       console.error("Error saving plan:", error);
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "An error occurred while saving the task.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Error", text: "An error occurred while saving the task." });
     } finally {
       
       setLoading(false);
@@ -399,7 +399,7 @@ const PlanOfTheDay: React.FC = () => {
         error.response?.data?.message ||
         error.message ||
         "Unknown error occurred";
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: `AI Service Unavailable: ${errorMessage}`, showConfirmButton: false, timer: 4000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "AI Service Unavailable", text: errorMessage });
     } finally {
       setAiLoading(false);
     }

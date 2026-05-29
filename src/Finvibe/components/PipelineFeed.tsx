@@ -28,6 +28,7 @@ const STEP_META: Record<string, { icon: string; accent: string; summary: (data: 
   "Tech Stack": { icon: "🛠️", accent: "#8B5CF6", summary: d => d ? `${d.backend ?? ""}  ·  ${d.frontend ?? ""}  ·  ${d.database ?? ""}` : "Complete" },
   "Use Cases": { icon: "📋", accent: "#06B6D4", summary: d => d?.count ? `${d.count} use cases identified` : (Array.isArray(d) ? `${d.length} use cases identified` : "Complete") },
   "Compliance": { icon: "📜", accent: "#F59E0B", summary: d => d?.count ? `${d.count} compliance rules applied` : "Skipped (non-NBFC)" },
+  "Reporting": { icon: "📊", accent: "#6366F1", summary: d => d?.count ? `${d.count} reports defined` : (typeof d === "string" && d.length > 0 ? "Reports defined" : "Complete") },
   "System Design": { icon: "🏗️", accent: "#F97316", summary: d => {
     const mods = typeof d?.modules === "number" ? d.modules : (Array.isArray(d?.modules) ? d.modules.length : null);
     const apis = typeof d?.apis === "number" ? d.apis : (Array.isArray(d?.apis) ? d.apis.length : null);
@@ -460,7 +461,7 @@ function ConversationTurnView({ turn, onViewCode, onResume, running, stopped }: 
     completedLabels.has("Database Generation");
 
   const completedCount = turn.steps.filter((s: PipelineStep) => s.status === "completed").length;
-  const isIncompleteHistory = !!turn.sessionId && completedCount < 12 && completedCount > 0;
+  const isIncompleteHistory = !!turn.sessionId && completedCount < 13 && completedCount > 0;
 
   // If this turn only has a chat message and no visible steps, show only the chat
   const isChatOnly = turn.chatMessage && visibleSteps.length === 0;

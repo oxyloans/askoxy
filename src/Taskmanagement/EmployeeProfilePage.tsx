@@ -345,13 +345,9 @@ const EmployeeProfilePage: React.FC = () => {
       setHasProfileData(true);
 
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "success",
-        title: "Employee profile updated successfully.",
-        showConfirmButton: false,
-        timer: 2500,
-        timerProgressBar: true,
+        title: "Success",
+        text: "Employee profile updated successfully.",
       });
 
       getEmployeeSkills();
@@ -363,13 +359,9 @@ const EmployeeProfilePage: React.FC = () => {
       setMobErr(msg);
 
       Swal.fire({
-        toast: true,
-        position: "top-end",
         icon: "error",
-        title: msg,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
+        title: "Error",
+        text: msg,
       });
     } finally {
       setSaving(false);
@@ -383,12 +375,9 @@ const EmployeeProfilePage: React.FC = () => {
     getEmployeeSkills();
 
     Swal.fire({
-      toast: true,
-      position: "top-end",
       icon: "info",
-      title: "Edit cancelled.",
-      showConfirmButton: false,
-      timer: 1800,
+      title: "Info",
+      text: "Edit cancelled.",
     });
   };
 

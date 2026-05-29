@@ -197,7 +197,7 @@ const canUpdateTask = (task: Task): boolean => {
         setIsFormVisible(false);
       }
     } catch (error: any) {
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.message || "Failed to fetch tasks", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch tasks" });
       console.error("Error fetching tasks:", error);
     } finally {
       setFetchingTasks(false);
@@ -237,7 +237,7 @@ const canUpdateTask = (task: Task): boolean => {
 
   const updateTask = async (values: TaskFormValues): Promise<void> => {
     if (!selectedTask || !canUpdateTask(selectedTask)) {
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Task updates are not allowed after 9:00 PM IST or for tasks from a different day.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Update Not Allowed", text: "Task updates are not allowed after 9:00 PM IST or for tasks from a different day." });
       return;
     }
     setLoading(true);
@@ -268,15 +268,15 @@ const canUpdateTask = (task: Task): boolean => {
       );
 
       if (response.data.success) {
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: response.data.message || "Task updated successfully", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ icon: "success", title: "Success", text: response.data.message || "Task updated successfully" });
         sessionStorage.removeItem("eod_draft");
         resetUploadState();
         fetchAllPendingTasks(userId);
       } else {
-        Swal.fire({ toast: true, position: "top-end", icon: "warning", title: response.data.message || "Task update completed with warnings", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Swal.fire({ icon: "warning", title: "Warning", text: response.data.message || "Task update completed with warnings" });
       }
     } catch (error: any) {
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.message || "Failed to update task", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to update task" });
       console.error("Error updating task:", error);
     } finally {
       setLoading(false);
@@ -288,7 +288,7 @@ const canUpdateTask = (task: Task): boolean => {
     resetUploadState();
 
     if (!e.target.files || e.target.files.length === 0) {
-      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please select a file to upload.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "warning", title: "Warning", text: "Please select a file to upload." });
       return;
     }
 
@@ -296,7 +296,7 @@ const canUpdateTask = (task: Task): boolean => {
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "File size should not exceed 10MB", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Error", text: "File size should not exceed 10MB" });
       return;
     }
 
@@ -333,11 +333,11 @@ const canUpdateTask = (task: Task): boolean => {
       sessionStorage.setItem("taskDocumentTimestamp", new Date().toISOString());
       sessionStorage.setItem("taskDocumentName", file.name);
 
-      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Document uploaded successfully!", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "success", title: "Success", text: "Document uploaded successfully!" });
       setUploadStatus("uploaded");
     } catch (error: any) {
       console.error("Upload Error:", error);
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: error.response?.data?.error || "An error occurred during upload", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.error || "An error occurred during upload" });
 
       setUploadStatus("failed");
       // Reset file input on error
@@ -348,7 +348,7 @@ const canUpdateTask = (task: Task): boolean => {
   // Function to delete the current upload
   const handleDeleteUpload = () => {
     resetUploadState();
-    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Upload cleared successfully", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+    Swal.fire({ icon: "success", title: "Success", text: "Upload cleared successfully" });
   };
 
   // Format date for display

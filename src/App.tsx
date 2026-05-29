@@ -94,6 +94,13 @@ import EmailCampaign from "./components/EmailCampaign";
 import GoogleAnalyticsDashboard from "./components/GoogleAnalyticsDashboard";
 import OxyBricksFractionalPage from "./components/FractionalPage";
 import Assignedtasksbasedstatus from "./Taskmanagement/Assignedtasksbasedstatus";
+import BOSAIIntelligence from "./components/BosReportAi";
+import EmiratesNBDAIIntelligenceReport2026 from "./components/EmiratesNBDAIIntelligenceReport2026";
+import FABAIIntelligenceReport2026 from "./components/FABAIIntelligenceReport2026";
+import AjmanBankAIIntelligenceReport2026 from "./components/AjmanBankAIIntelligenceReport2026";
+import ADIBAIIntelligenceReport2026 from "./components/ADIBAIIntelligenceReport2026";
+import DIBAIIntelligenceReport2026 from "./components/DIBAIIntelligenceReport2026";
+import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -523,40 +530,40 @@ const App: React.FC = () => {
   useTokenRefresh();
 
   useTaskTokenExpiry();
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
 
-  if (
-    params.get("utm_source") ||
-    params.get("utm_medium") ||
-    params.get("utm_campaign")
-  ) {
-    const utmData = {
-      source: params.get("utm_source"),
-      medium: params.get("utm_medium"),
-      campaign: params.get("utm_campaign"),
-      content: params.get("utm_content"),
-      term: params.get("utm_term"),
-      fullUrl: window.location.href,
-      pagePath: window.location.pathname,
-    };
+    if (
+      params.get("utm_source") ||
+      params.get("utm_medium") ||
+      params.get("utm_campaign")
+    ) {
+      const utmData = {
+        source: params.get("utm_source"),
+        medium: params.get("utm_medium"),
+        campaign: params.get("utm_campaign"),
+        content: params.get("utm_content"),
+        term: params.get("utm_term"),
+        fullUrl: window.location.href,
+        pagePath: window.location.pathname,
+      };
 
-    console.log("UTM DATA:", utmData);
-    localStorage.setItem("utmData", JSON.stringify(utmData));
+      console.log("UTM DATA:", utmData);
+      localStorage.setItem("utmData", JSON.stringify(utmData));
 
-    if ((window as any).gtag) {
-      (window as any).gtag("event", "utm_landing", {
-        page_location: window.location.href,
-        page_path: window.location.pathname,
-        utm_source: utmData.source,
-        utm_medium: utmData.medium,
-        utm_campaign: utmData.campaign,
-        utm_content: utmData.content,
-        utm_term: utmData.term,
-      });
+      if ((window as any).gtag) {
+        (window as any).gtag("event", "utm_landing", {
+          page_location: window.location.href,
+          page_path: window.location.pathname,
+          utm_source: utmData.source,
+          utm_medium: utmData.medium,
+          utm_campaign: utmData.campaign,
+          utm_content: utmData.content,
+          utm_term: utmData.term,
+        });
+      }
     }
-  }
-}, []);
+  }, []);
   // useEffect(() => {
   //     const rt = getRefreshToken();
   //     if (rt) {
@@ -629,7 +636,23 @@ useEffect(() => {
       currentPath.startsWith("/userPanelLayout") ||
       currentPath.startsWith("/goldrates") ||
       currentPath.startsWith("/all-different-gold-rates") ||
+
       currentPath.startsWith("/allgoldrates") ||
+
+      currentPath.startsWith("/radha/bos-ai-intelligence") ||
+      currentPath.startsWith("/radha/emirates-nbd-ai-intelligence") ||
+      currentPath.startsWith("/radha/fab-ai-intelligence") ||
+      currentPath.startsWith("/radha/ajman-bank-ai-intelligence") ||
+      currentPath.startsWith("/radha/adib-ai-intelligence") ||
+      currentPath.startsWith("/radha/dib-ai-intelligence") ||
+
+
+
+
+
+
+
+
       currentPath.startsWith("/smartlock") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
@@ -653,7 +676,8 @@ useEffect(() => {
       currentPath.startsWith("/adminRegister") ||
       currentPath.startsWith("/accenture/jobs") ||
       currentPath.startsWith("/accenturestats") ||
-      currentPath.startsWith("/accenture-presentation")
+      currentPath.startsWith("/accenture-presentation") ||
+      currentPath.startsWith("/interview")
     );
   };
 
@@ -1231,8 +1255,15 @@ useEffect(() => {
               <Route path="/future" element={<Landingpage />} />
               <Route path="/apidocs" element={<ApiDocs />} />
               <Route path="/womensday" element={<WomensDay />} />
+              <Route path="/radha/bos-ai-intelligence" element={<BOSAIIntelligence />} />
+              <Route path="/radha/emirates-nbd-ai-intelligence" element={<EmiratesNBDAIIntelligenceReport2026 />} />
+              <Route path="/radha/fab-ai-intelligence" element={<FABAIIntelligenceReport2026 />} />
+              <Route path="/radha/ajman-bank-ai-intelligence" element={<AjmanBankAIIntelligenceReport2026 />} />
+              <Route path="/radha/adib-ai-intelligence" element={<ADIBAIIntelligenceReport2026 />} />
+              <Route path="/radha/dib-ai-intelligence" element={<DIBAIIntelligenceReport2026 />} />
               <Route path="/privacypolicy" element={<PrivacyPolicy />} />
               <Route path="/bmvpdf" element={<BMVPDF />} />
+              <Route path="/oxybfsai-landing" element={<Finvibe3DLanding />} />
               <Route path="/teststore" element={<TestStore />} />
               <Route
                 path="/teststore/assistant/:id/:agentId"

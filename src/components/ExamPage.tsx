@@ -103,29 +103,29 @@ const ExamPage: React.FC = () => {
 
   if (examStatus === "polling") {
     return (
-      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 relative overflow-hidden">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/8 rounded-full blur-[140px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-600/8 rounded-full blur-[120px]" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-100/50 rounded-full blur-[140px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-100/50 rounded-full blur-[120px]" />
         <div className="relative z-10 text-center max-w-lg w-full">
           <div className="relative w-44 h-44 mx-auto mb-10">
             <svg className="w-44 h-44 -rotate-90" viewBox="0 0 176 176">
-              <circle cx="88" cy="88" r="76" fill="none" stroke="rgba(99,102,241,0.12)" strokeWidth="6" />
+              <circle cx="88" cy="88" r="76" fill="none" stroke="rgba(99,102,241,0.08)" strokeWidth="6" />
               <circle cx="88" cy="88" r="76" fill="none" stroke="url(#pg)" strokeWidth="6"
                 strokeDasharray={`${2 * Math.PI * 76}`}
                 strokeDashoffset={`${2 * Math.PI * 76 * (1 - pollProgress / 100)}`}
                 strokeLinecap="round" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
               <defs>
                 <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#a78bfa" />
+                  <stop offset="0%" stopColor="#4f46e5" />
+                  <stop offset="100%" stopColor="#7c3aed" />
                 </linearGradient>
               </defs>
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-4xl font-black text-white" style={{ fontFamily: "Syne, sans-serif" }}>{Math.round(pollProgress)}%</div>
-                <div className="text-indigo-400 text-[10px] uppercase tracking-[3px] mt-1">Ready</div>
+                <div className="text-4xl font-black text-slate-800" style={{ fontFamily: "Syne, sans-serif" }}>{Math.round(pollProgress)}%</div>
+                <div className="text-indigo-600 text-[10px] uppercase tracking-[3px] mt-1 font-bold">Ready</div>
               </div>
             </div>
           </div>
@@ -134,15 +134,15 @@ const ExamPage: React.FC = () => {
               <div key={d} className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
             ))}
           </div>
-          <h1 className="text-3xl font-black text-white mb-3" style={{ fontFamily: "Syne, sans-serif" }}>Crafting Your Exam</h1>
-          <p className="text-slate-400 text-base mb-8">AI is generating your custom assessment. This takes 30–60 seconds.</p>
-          <div className="bg-white/4 border border-white/8 rounded-2xl p-5 text-left space-y-3">
+          <h1 className="text-3xl font-black text-slate-900 mb-3" style={{ fontFamily: "Syne, sans-serif" }}>Crafting Your Exam</h1>
+          <p className="text-slate-600 text-base mb-8">AI is generating your custom assessment. This takes 30–60 seconds.</p>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 text-left space-y-3 shadow-sm">
             {["Analyzing job requirements", "Matching your skill profile", "Generating custom questions", "Finalizing difficulty levels"].map((step, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${pollProgress > (i + 1) * 22 ? "bg-indigo-500" : "bg-white/8"}`}>
-                  {pollProgress > (i + 1) * 22 ? <CheckCircleOutlined className="text-white text-[10px]" /> : <div className="w-1.5 h-1.5 bg-white/20 rounded-full" />}
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${pollProgress > (i + 1) * 22 ? "bg-indigo-500" : "bg-slate-100"}`}>
+                  {pollProgress > (i + 1) * 22 ? <CheckCircleOutlined className="text-white text-[10px]" /> : <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />}
                 </div>
-                <span className={`text-sm font-medium transition-colors ${pollProgress > (i + 1) * 22 ? "text-white" : "text-slate-500"}`}>{step}</span>
+                <span className={`text-sm font-medium transition-colors ${pollProgress > (i + 1) * 22 ? "text-slate-900 font-bold" : "text-slate-400"}`}>{step}</span>
               </div>
             ))}
           </div>
@@ -153,11 +153,11 @@ const ExamPage: React.FC = () => {
 
   if (examStatus === "failed") {
     return (
-      <div className="min-h-screen bg-[#070b14] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-6">⚠️</div>
-          <h2 className="text-2xl font-black text-white mb-3">Exam Generation Failed</h2>
-          <p className="text-slate-400 mb-8">We couldn't generate your exam. Please try again.</p>
+          <h2 className="text-2xl font-black text-slate-900 mb-3">Exam Generation Failed</h2>
+          <p className="text-slate-600 mb-8">We couldn't generate your exam. Please try again.</p>
           <Button size="large" onClick={() => navigate(-1)} className="!bg-indigo-600 !border-0 !text-white !rounded-2xl !font-bold !h-12 !px-8">Go Back</Button>
         </div>
       </div>
@@ -165,46 +165,46 @@ const ExamPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#070b14] pb-20">
+    <div className="min-h-screen bg-white pb-20">
       {/* <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
         .s { font-family: 'Syne', sans-serif; }
         .d { font-family: 'DM Sans', sans-serif; }
       `}</style>
 
-      <div className="sticky top-0 z-50 bg-[#070b14]/95 backdrop-blur-xl border-b border-white/5">
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between d">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-medium">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors text-sm font-medium">
             <ArrowLeftOutlined /> Back
           </button>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Exam Ready</span>
+            <span className="text-emerald-700 text-xs font-bold uppercase tracking-wider">Exam Ready</span>
           </div>
         </div>
       </div> */}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 space-y-8 d">
         {/* Hero */}
-        <div className="relative rounded-[32px] overflow-hidden p-8 sm:p-12" style={{ background: "linear-gradient(135deg,#1e1b4b,#312e81 60%,#1e1b4b)" }}>
-          <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle,#fff 1px,transparent 1px)", backgroundSize: "28px 28px" }} />
-          <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-400/10 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3" />
+        <div className="relative rounded-[32px] overflow-hidden p-8 sm:p-12" style={{ background: "linear-gradient(135deg,#f0f4ff,#e0e7ff 60%,#f0f4ff)", border: "1px solid #c7d2fe" }}>
+          <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle,#000 1px,transparent 1px)", backgroundSize: "28px 28px" }} />
+          <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3" />
           <div className="relative z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
-              <div className="w-20 h-20 rounded-3xl flex-shrink-0 flex items-center justify-center shadow-[0_12px_40px_rgba(251,191,36,0.35)]"
+              <div className="w-20 h-20 rounded-3xl flex-shrink-0 flex items-center justify-center shadow-[0_12px_40px_rgba(251,191,36,0.25)]"
                 style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}>
                 <TrophyOutlined className="text-white text-4xl" />
               </div>
               <div>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="px-3 py-1 rounded-lg text-xs font-black" style={{ background: "rgba(251,191,36,0.2)", color: "#fbbf24" }}>🎉 CONGRATULATIONS</span>
-                  <span className="px-3 py-1 rounded-lg text-xs font-black" style={{ background: "rgba(16,185,129,0.2)", color: "#34d399" }}>ATS {matchScore}% MATCH</span>
+                  <span className="px-3 py-1 rounded-lg text-xs font-black bg-amber-100 text-amber-800">🎉 CONGRATULATIONS</span>
+                  <span className="px-3 py-1 rounded-lg text-xs font-black bg-emerald-100 text-emerald-800">ATS {matchScore}% MATCH</span>
                 </div>
-                <h1 className="s text-2xl sm:text-3xl font-black text-white mb-1">You're Selected for the Exam!</h1>
-                <p className="text-indigo-200 text-base">{jobDesignation} · {companyName}</p>
+                <h1 className="s text-2xl sm:text-3xl font-black text-slate-900 mb-1">You're Selected for the Exam!</h1>
+                <p className="text-indigo-900 font-semibold text-base">{jobDesignation} · {companyName}</p>
               </div>
             </div>
-            <p className="text-indigo-200 text-base leading-relaxed max-w-2xl mb-8">
+            <p className="text-indigo-950 text-base leading-relaxed max-w-2xl mb-8">
               Your profile cleared the 80% threshold. Complete this AI-generated skills assessment — one question at a time, 60 seconds each — to advance your application.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -214,10 +214,10 @@ const ExamPage: React.FC = () => {
                 { icon: <ThunderboltOutlined />, label: "Difficulty", value: examData?.difficultyLevel ?? "—" },
                 { icon: <BulbOutlined />, label: "Skills", value: examData?.summary?.skillsCovered?.length ?? "—" },
               ].map((s2) => (
-                <div key={s2.label} className="bg-white/10 border border-white/10 rounded-2xl p-4 text-center">
-                  <div className="text-indigo-300 text-lg mb-1">{s2.icon}</div>
-                  <div className="s text-white font-black text-xl">{s2.value}</div>
-                  <div className="text-indigo-300 text-xs uppercase tracking-wider mt-0.5">{s2.label}</div>
+                <div key={s2.label} className="bg-white/70 border border-indigo-200 rounded-2xl p-4 text-center shadow-sm">
+                  <div className="text-indigo-600 text-lg mb-1">{s2.icon}</div>
+                  <div className="s text-slate-900 font-black text-xl">{s2.value}</div>
+                  <div className="text-indigo-500 text-xs uppercase tracking-wider mt-0.5 font-bold">{s2.label}</div>
                 </div>
               ))}
             </div>
@@ -226,36 +226,36 @@ const ExamPage: React.FC = () => {
 
         {/* Instructions */}
         {examData && (
-          <div className="bg-white/4 border border-white/8 rounded-[24px] p-6 sm:p-8">
+          <div className="bg-slate-50 border border-slate-200 rounded-[24px] p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "rgba(245,158,11,0.15)" }}>
-                <BulbOutlined className="text-amber-400 text-lg" />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-amber-50">
+                <BulbOutlined className="text-amber-500 text-lg" />
               </div>
               <div>
-                <h3 className="s text-white font-black text-lg leading-none">Instructions</h3>
-                <p className="text-slate-400 text-sm mt-0.5">Read carefully before starting</p>
+                <h3 className="s text-slate-900 font-black text-lg leading-none">Instructions</h3>
+                <p className="text-slate-600 text-sm mt-0.5">Read carefully before starting</p>
               </div>
             </div>
-            <p className="text-slate-300 text-sm italic leading-relaxed mb-5 pl-4 border-l-2 border-indigo-500">
+            <p className="text-slate-700 text-sm italic leading-relaxed mb-5 pl-4 border-l-2 border-indigo-500">
               "{examData.instructions?.description}"
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
               {examData.instructions?.rules?.map((rule: string, i: number) => (
-                <div key={i} className="flex items-start gap-3 bg-white/4 border border-white/5 rounded-xl p-3">
-                  <CheckCircleOutlined className="text-indigo-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-slate-300 text-sm">{rule}</span>
+                <div key={i} className="flex items-start gap-3 bg-white border border-slate-100 rounded-xl p-3">
+                  <CheckCircleOutlined className="text-indigo-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-slate-700 text-sm">{rule}</span>
                 </div>
               ))}
-              <div className="flex items-start gap-3 rounded-xl p-3 border" style={{ background: "rgba(245,158,11,0.08)", borderColor: "rgba(245,158,11,0.2)" }}>
-                <ClockCircleOutlined className="text-amber-400 mt-0.5 flex-shrink-0" />
-                <span className="text-amber-300 text-sm font-medium">60 seconds per question — auto-advances when time runs out.</span>
+              <div className="flex items-start gap-3 rounded-xl p-3 border border-amber-200 bg-amber-50/50">
+                <ClockCircleOutlined className="text-amber-500 mt-0.5 flex-shrink-0" />
+                <span className="text-amber-800 text-sm font-medium">60 seconds per question — auto-advances when time runs out.</span>
               </div>
             </div>
-            <div className="pt-5 border-t border-white/5">
-              <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-3">Skills Assessed</p>
+            <div className="pt-5 border-t border-slate-200">
+              <p className="text-slate-600 text-xs uppercase tracking-widest font-bold mb-3">Skills Assessed</p>
               <div className="flex flex-wrap gap-2">
                 {examData.summary?.skillsCovered?.map((sk: string, i: number) => (
-                  <span key={i} className="px-3 py-1 rounded-lg text-xs font-bold" style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.25)" }}>{sk}</span>
+                  <span key={i} className="px-3 py-1 rounded-lg text-xs font-bold bg-[#f0f3ff] text-[#4f46e5] border border-[#c7d2fe]">{sk}</span>
                 ))}
               </div>
             </div>
@@ -271,9 +271,9 @@ const ExamPage: React.FC = () => {
               height: 64, padding: "0 72px", borderRadius: 20, border: "none",
               fontFamily: "Syne, sans-serif", fontWeight: 900, fontSize: 18,
               cursor: examStatus === "ready" ? "pointer" : "not-allowed",
-              background: examStatus === "ready" ? "linear-gradient(135deg,#4f46e5,#7c3aed)" : "rgba(255,255,255,0.06)",
-              color: examStatus === "ready" ? "#fff" : "#475569",
-              boxShadow: examStatus === "ready" ? "0 20px 60px rgba(99,102,241,0.35)" : "none",
+              background: examStatus === "ready" ? "linear-gradient(135deg,#4f46e5,#7c3aed)" : "#f1f5f9",
+              color: examStatus === "ready" ? "#fff" : "#94a3b8",
+              boxShadow: examStatus === "ready" ? "0 20px 60px rgba(99,102,241,0.25)" : "none",
               transition: "all 0.2s",
             }}
           >

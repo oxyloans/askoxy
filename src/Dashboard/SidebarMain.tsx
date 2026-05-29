@@ -320,7 +320,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-r border-gray-200">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 min-h-[60px] flex-shrink-0">
+      <div className="hidden md:flex items-center justify-between p-4 border-b border-gray-100 min-h-[60px] flex-shrink-0">
         <div
           className={`flex items-center transition-all duration-300 ${
             isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
@@ -490,41 +490,59 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           );
         })}
+        {isMobile && (
+          <button
+            onClick={() => {
+              onItemClick?.();
+              handleSignout();
+            }}
+            className="group w-full flex items-center rounded-lg transition-all duration-200 min-h-[44px] text-red-600 hover:bg-red-50 px-3 mt-4 border-t border-gray-100 pt-3"
+          >
+            <div className="flex items-center justify-center flex-shrink-0 transition-all duration-200 mr-3">
+              <IoLogOut size={18} />
+            </div>
+            <span className="font-medium text-sm transition-all duration-300 whitespace-nowrap">
+              Sign Out
+            </span>
+          </button>
+        )}
       </nav>
 
-      <div className="p-3 border-t border-gray-100 flex-shrink-0">
-        <button
-          onClick={handleSignout}
-          className={`group w-full flex items-center rounded-lg transition-all duration-200 min-h-[44px] text-red-600 hover:bg-red-50 ${
-            isExpanded || isMobile ? "px-3" : "px-0 justify-center"
-          }`}
-        >
-          <div
-            className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-              isExpanded || isMobile ? "mr-3" : "mx-auto"
+      {!isMobile && (
+        <div className="p-3 border-t border-gray-100 flex-shrink-0">
+          <button
+            onClick={handleSignout}
+            className={`group w-full flex items-center rounded-lg transition-all duration-200 min-h-[44px] text-red-600 hover:bg-red-50 ${
+              isExpanded ? "px-3" : "px-0 justify-center"
             }`}
           >
-            <IoLogOut size={18} />
-          </div>
-
-          <span
-            className={`font-medium text-sm transition-all duration-300 whitespace-nowrap ${
-              isExpanded || showLabels
-                ? "opacity-100"
-                : "opacity-0 -translate-x-2 absolute"
-            }`}
-          >
-            Sign Out
-          </span>
-
-          {!showLabels && isCollapsed && !isHovering && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none whitespace-nowrap">
-              Sign Out
-              <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+            <div
+              className={`flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                isExpanded ? "mr-3" : "mx-auto"
+              }`}
+            >
+              <IoLogOut size={18} />
             </div>
-          )}
-        </button>
-      </div>
+
+            <span
+              className={`font-medium text-sm transition-all duration-300 whitespace-nowrap ${
+                isExpanded || showLabels
+                  ? "opacity-100"
+                  : "opacity-0 -translate-x-2 absolute"
+              }`}
+            >
+              Sign Out
+            </span>
+
+            {!showLabels && isCollapsed && !isHovering && (
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none whitespace-nowrap">
+                Sign Out
+                <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+              </div>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
