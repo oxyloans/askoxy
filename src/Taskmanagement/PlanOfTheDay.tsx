@@ -214,7 +214,14 @@ const PlanOfTheDay: React.FC = () => {
     } catch (error: any) {
       console.error("Error checking pending tasks:", error);
       setErrorState(true);
-      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to check task status" });
+      Swal.fire({
+        icon: "error",
+        title: "Unable to Check Task Status",
+        text:
+          error.response?.data?.message ||
+          "We could not verify today’s plan status. Please refresh the page or try again after some time.",
+        confirmButtonText: "OK",
+      });
     } finally {
       setFetchingStatus(false);
     }
@@ -265,7 +272,12 @@ const PlanOfTheDay: React.FC = () => {
     setLoading(true);
     try {
       if (!userName) {
-        Swal.fire({ icon: "warning", title: "Warning", text: "User name not found. Please login again." });
+        Swal.fire({
+          icon: "warning",
+          title: "Login Session Required",
+          text: "Your user details could not be found. Please login again and submit your plan.",
+          confirmButtonText: "OK",
+        });
         setLoading(false);
         return;
       }
@@ -331,7 +343,16 @@ const PlanOfTheDay: React.FC = () => {
         setShowAiResponse(false); // Hide AI response after successful save
 
         const action = isEditMode ? "updated" : "submitted";
-        Swal.fire({ icon: "success", title: "Success", text: `Your daily plan has been ${action} successfully.` });
+        Swal.fire({
+          icon: "success",
+          title: isEditMode
+            ? "Daily Plan Updated Successfully"
+            : "Daily Plan Submitted Successfully",
+          text: isEditMode
+            ? "Your Plan of the Day has been updated successfully."
+            : "Your Plan of the Day has been submitted successfully.",
+          confirmButtonText: "OK",
+        });
 
         setTimeout(async () => {
           checkPendingTasksForToday(userId);
@@ -347,11 +368,21 @@ const PlanOfTheDay: React.FC = () => {
         form.resetFields();
         sessionStorage.removeItem("pod_draft");
       } else {
-        Swal.fire({ icon: "error", title: "Error", text: "Failed to update task." });
+        Swal.fire({
+          icon: "error",
+          title: "Plan Update Failed",
+          text: "We could not save your plan. Please review the details and try again.",
+          confirmButtonText: "OK",
+        });
       }
     } catch (error) {
       console.error("Error saving plan:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "An error occurred while saving the task." });
+      Swal.fire({
+        icon: "error",
+        title: "Unable to Save Plan",
+        text: "Something went wrong while saving your plan. Please try again after some time.",
+        confirmButtonText: "OK",
+      });
     } finally {
       
       setLoading(false);
@@ -399,7 +430,14 @@ const PlanOfTheDay: React.FC = () => {
         error.response?.data?.message ||
         error.message ||
         "Unknown error occurred";
-      Swal.fire({ icon: "error", title: "AI Service Unavailable", text: errorMessage });
+      Swal.fire({
+        icon: "error",
+        title: "AI Review Unavailable",
+        text:
+          errorMessage ||
+          "We could not process your plan with AI right now. Please try again after some time.",
+        confirmButtonText: "OK",
+      });
     } finally {
       setAiLoading(false);
     }

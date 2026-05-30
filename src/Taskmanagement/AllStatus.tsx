@@ -448,74 +448,196 @@ const AllStatusPage: React.FC = () => {
     );
   };
 
-  const fetchAllTasks = async () => {
-    setLoading(true);
+  // const fetchAllTasks = async () => {
+  //   setLoading(true);
 
-    try {
-      const response = await employeeApi.post(
-        `${BASE_URL}/user-service/write/getAllTaskUpdates`,
-        {
-          taskStatus: status,
-          userId,
-        },
-      );
+  //   try {
+  //     const response = await employeeApi.post(
+  //       `${BASE_URL}/user-service/write/getAllTaskUpdates`,
+  //       {
+  //         taskStatus: status,
+  //         userId,
+  //       },
+  //     );
 
-      const taskList = normalizeTaskList(response.data);
-      const sortedTasks = sortTasks(taskList, sortOrder);
+  //     const taskList = normalizeTaskList(response.data);
+  //     const sortedTasks = sortTasks(taskList, sortOrder);
 
-      setTasks(sortedTasks);
-      setFilteredTasks(sortedTasks);
+  //     setTasks(sortedTasks);
+  //     setFilteredTasks(sortedTasks);
 
-      if (taskList.length === 0) {
-        Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
-      }
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
+  //     if (taskList.length === 0) {
+  //       Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching tasks:", error);
 
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks. Please try again later.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
-    } finally {
-      setLoading(false);
+  //     Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks. Please try again later.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+const fetchAllTasks = async () => {
+  setLoading(true);
+
+  try {
+    const response = await employeeApi.post(
+      `${BASE_URL}/user-service/write/getAllTaskUpdates`,
+      {
+        taskStatus: status,
+        userId,
+      },
+    );
+
+    const taskList = normalizeTaskList(response.data);
+
+    // ✅ Frontend status safety filter
+    const statusMatchedTasks = taskList.filter(
+      (task) =>
+        String(task.taskStatus || "").toUpperCase() ===
+        String(status || "").toUpperCase(),
+    );
+
+    const sortedTasks = sortTasks(statusMatchedTasks, sortOrder);
+
+    setTasks(sortedTasks);
+    setFilteredTasks(sortedTasks);
+
+    if (statusMatchedTasks.length === 0) {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "info",
+        title: `No ${status.toLowerCase()} tasks found.`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
-  };
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
 
-  const fetchTasksByDate = async () => {
-    if (!selectedDate) {
-      Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please select a date.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
-      return;
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "error",
+      title: "Failed to fetch tasks. Please try again later.",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+  // const fetchTasksByDate = async () => {
+  //   if (!selectedDate) {
+  //     Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Please select a date.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+  //     return;
+  //   }
+
+  //   setLoading(true);
+
+  //   try {
+  //     const formattedDate = selectedDate.format("YYYY-MM-DD");
+
+  //     const response = await employeeApi.post(
+  //       `${BASE_URL}/user-service/write/get-task-by-date`,
+  //       {
+  //         taskStatus: status,
+  //         specificDate: formattedDate,
+  //         userId,
+  //       },
+  //     );
+
+  //     const taskList = normalizeTaskList(response.data);
+  //     const sortedTasks = sortTasks(taskList, sortOrder);
+
+  //     setTasks(sortedTasks);
+  //     setFilteredTasks(sortedTasks);
+
+  //     if (taskList.length === 0) {
+  //       Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found for ${formattedDate}.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching tasks by date:", error);
+
+  //     Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks. Please try again later.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+const fetchTasksByDate = async () => {
+  if (!selectedDate) {
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "warning",
+      title: "Please select a date.",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const formattedDate = selectedDate.format("YYYY-MM-DD");
+
+    const response = await employeeApi.post(
+      `${BASE_URL}/user-service/write/get-task-by-date`,
+      {
+        taskStatus: status,
+        specificDate: formattedDate,
+        userId,
+      },
+    );
+
+    const taskList = normalizeTaskList(response.data);
+
+    // ✅ Important fix:
+    // API may return COMPLETED even when PENDING is selected.
+    // So filter again in frontend.
+    const statusMatchedTasks = taskList.filter(
+      (task) =>
+        String(task.taskStatus || "").toUpperCase() ===
+        String(status || "").toUpperCase(),
+    );
+
+    const sortedTasks = sortTasks(statusMatchedTasks, sortOrder);
+
+    setTasks(sortedTasks);
+    setFilteredTasks(sortedTasks);
+
+    if (statusMatchedTasks.length === 0) {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "info",
+        title: `No ${status.toLowerCase()} tasks found for ${formattedDate}.`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
+  } catch (error) {
+    console.error("Error fetching tasks by date:", error);
 
-    setLoading(true);
-
-    try {
-      const formattedDate = selectedDate.format("YYYY-MM-DD");
-
-      const response = await employeeApi.post(
-        `${BASE_URL}/user-service/write/get-task-by-date`,
-        {
-          taskStatus: status,
-          specificDate: formattedDate,
-          userId,
-        },
-      );
-
-      const taskList = normalizeTaskList(response.data);
-      const sortedTasks = sortTasks(taskList, sortOrder);
-
-      setTasks(sortedTasks);
-      setFilteredTasks(sortedTasks);
-
-      if (taskList.length === 0) {
-        Swal.fire({ toast: true, position: "top-end", icon: "info", title: `No ${status.toLowerCase()} tasks found for ${formattedDate}.`, showConfirmButton: false, timer: 3000, timerProgressBar: true });
-      }
-    } catch (error) {
-      console.error("Error fetching tasks by date:", error);
-
-      Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Failed to fetch tasks. Please try again later.", showConfirmButton: false, timer: 3000, timerProgressBar: true });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "error",
+      title: "Failed to fetch tasks. Please try again later.",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
   const handleStatusChange = (value: string) => {
     setStatus(value);
   };

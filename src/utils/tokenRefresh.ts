@@ -1,11 +1,18 @@
 import BASE_URL from "../Config";
 import { store } from "../store";
 import { updateAccessToken, updateRefreshToken, logout } from "../store/authSlice";
-import { getRefreshToken } from "./cookieUtils";
+import {
+  getRefreshToken,
+  getEmployeeRefreshToken,
+  setEmployeeAccessToken,
+  setEmployeeRefreshToken,
+  removeEmployeeAccessToken,
+  removeEmployeeRefreshToken,
+} from "./cookieUtils";
 
 let refreshTokenInterval: NodeJS.Timeout | null = null;
 let pendingRefresh: Promise<boolean> | null = null;
-
+let pendingEmployeeRefresh: Promise<boolean> | null = null;
 export const refreshAccessToken = async (): Promise<boolean> => {
   // Return the in-flight promise to prevent concurrent refresh calls
   if (pendingRefresh) return pendingRefresh;
@@ -48,6 +55,51 @@ export const refreshAccessToken = async (): Promise<boolean> => {
   })();
 
   return pendingRefresh;
+};
+export const refreshEmployeeAccessToken = async (): Promise<boolean> => {
+  if (pendingEmployeeRefresh) return pendingEmployeeRefresh;
+
+  const refreshToken = getEmployeeRefreshToken();
+
+  if (!refreshToken) return false;
+
+  pendingEmployeeRefresh = (async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user-service/refresh-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok)
+        throw new Error(`Employee refresh failed: ${response.status}`);
+
+      const data = await response.json();
+
+      if (data.mobileNumber) {
+        setEmployeeAccessToken(data.mobileNumber);
+      }
+
+      if (data.mobileOtpSession) {
+        setEmployeeRefreshToken(data.mobileOtpSession);
+      }
+
+      return true;
+    } catch (error) {
+      removeEmployeeAccessToken();
+      removeEmployeeRefreshToken();
+
+      const currentPath = window.location.pathname + window.location.search;
+      sessionStorage.setItem("redirectPath", currentPath);
+      window.location.href = "/userlogin";
+
+      return false;
+    } finally {
+      pendingEmployeeRefresh = null;
+    }
+  })();
+
+  return pendingEmployeeRefresh;
 };
 
 export const startTokenRefresh = (): void => {

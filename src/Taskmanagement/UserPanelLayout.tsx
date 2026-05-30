@@ -177,21 +177,36 @@ const handleSignOut = (): void => {
           <FaClipboard className="text-green-600" style={{ fontSize: 16 }} />
         ),
       },
-      {
-        key: "/assigned-task",
-        label: <Link to="/assigned-task">Assigned WhatsApp Tasks</Link>,
-        icon: (
-          <FaWhatsapp className="text-green-500" style={{ fontSize: 16 }} />
-        ),
-      },
+      // {
+      //   key: "/assigned-task",
+      //   label: <Link to="/assigned-task">Assigned WhatsApp Tasks</Link>,
+      //   icon: (
+      //     <FaWhatsapp className="text-green-500" style={{ fontSize: 16 }} />
+      //   ),
+      // },
       {
           key: "/assigned-task-status",
-        label: <Link to="/assigned-task-status">Assigned Task Status Based</Link>,
+        label: <Link to="/assigned-task-status">Assigned WhatsApp Tasks</Link>,
         icon: (
-          <FaTasks className="text-blue-500" style={{ fontSize: 16 }} />
+          <FaWhatsapp className="text-blue-500" style={{ fontSize: 16 }} />
+        ),
+      },
+    
+      {
+        key: "/all-statuses",
+        label: <Link to="/all-statuses">Daily Work Activity</Link>,
+        icon: (
+          <FaSlideshare className="text-indigo-600" style={{ fontSize: 16 }} />
         ),
       },
       {
+        key: "/employeeprofile",
+        label: <Link to="/employeeprofile">Employee Profile Details</Link>,
+        icon: (
+          <UserOutlined className="text-orange-600" style={{ fontSize: 16 }} />
+        ),
+      },
+        {
         key: "leave-management",
         label: "Leave Management",
         icon: (
@@ -213,20 +228,6 @@ const handleSignOut = (): void => {
             ),
           },
         ],
-      },
-      {
-        key: "/all-statuses",
-        label: <Link to="/all-statuses">Daily Work Activity</Link>,
-        icon: (
-          <FaSlideshare className="text-indigo-600" style={{ fontSize: 16 }} />
-        ),
-      },
-      {
-        key: "/employeeprofile",
-        label: <Link to="/employeeprofile">Employee Profile Details</Link>,
-        icon: (
-          <UserOutlined className="text-orange-600" style={{ fontSize: 16 }} />
-        ),
       },
     ];
   };

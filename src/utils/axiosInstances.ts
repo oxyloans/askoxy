@@ -23,7 +23,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import { store } from "../store";
-import { refreshAccessToken } from "./tokenRefresh";
+import { refreshAccessToken, refreshEmployeeAccessToken } from "./tokenRefresh";
 import {
   getCustomerAccessToken,
   removeCustomerAccessToken,
@@ -80,7 +80,7 @@ interface InstanceOptions {
    * "refresh" → attempt token refresh then retry (customer flow).
    * "redirect" → clear storage and send user to login page.
    */
-  on401: "refresh" | "redirect";
+  on401: "refresh" | "employee-refresh" | "redirect";
   /** Login page path used when on401 === "redirect" */
   loginRoute?: string;
   /** Clears this module's tokens before redirecting on 401 */
@@ -132,6 +132,19 @@ function createInstance({
           if (newToken && original.headers) {
             original.headers.Authorization = `Bearer ${newToken}`;
           }
+          return instance(original);
+        }
+      }
+      if (on401 === "employee-refresh") {
+        const refreshed = await refreshEmployeeAccessToken();
+
+        if (refreshed) {
+          const newToken = getToken();
+
+          if (newToken && original.headers) {
+            original.headers.Authorization = `Bearer ${newToken}`;
+          }
+
           return instance(original);
         }
       }
@@ -243,15 +256,15 @@ export const partnerApi = createInstance({
 /** Employee / Task-management portal — redirects to /userlogin on 401 */
 export const employeeApi = createInstance({
   getToken: employeeToken,
-  on401: "redirect",
+  on401: "employee-refresh",
   loginRoute: LOGIN_ROUTES.employee,
   clearTokens: () => {
-    // Save any in-progress plan text before clearing tokens
     const planDraft = sessionStorage.getItem("pod_draft");
     const eodDraft = sessionStorage.getItem("eod_draft");
+
     removeEmployeeAccessToken();
     removeEmployeeRefreshToken();
-    // Restore drafts after token removal so they survive to login page
+
     if (planDraft) sessionStorage.setItem("pod_draft", planDraft);
     if (eodDraft) sessionStorage.setItem("eod_draft", eodDraft);
   },

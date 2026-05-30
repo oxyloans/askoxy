@@ -17,7 +17,7 @@ import {
 import { Row, Col } from "antd";
 import Swal from "sweetalert2";
 import { SearchOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import { employeeApi } from "../utils/axiosInstances";
+  import { employeeApi } from "../utils/axiosInstances";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 
@@ -41,27 +41,33 @@ interface Task {
   taskCompleteDate: string | null;
   tastCreatedDate?: string;
 }
-
-type StatusFilter = "assigned" | "COMPLETED";
+type StatusFilter = "all" | "assigned" | "COMPLETED";
 
 const STATUS_CONFIG: Record<
   StatusFilter,
   { color: string; bg: string; border: string; label: string }
 > = {
-    assigned: {
+  all: {
+    color: "#666",
+    bg: "#f5f5f5",
+    border: "#d9d9d9",
+    label: "All",
+  },
+
+  assigned: {
     color: "#008cba",
     bg: "#e8f6fb",
     border: "#008cba",
     label: "Assigned",
   },
-COMPLETED: {
+
+  COMPLETED: {
     color: "#1ab394",
     bg: "#e8f8f5",
     border: "#1ab394",
     label: "Completed",
   },
 };
-
 const Assignedtasksbasedstatus: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allSearchTasks, setAllSearchTasks] = useState<Task[]>([]);
@@ -76,7 +82,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(50);
   const [totalElements, setTotalElements] = useState<number>(0);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("assigned");
+const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const isSearchMode = searchText.trim().length > 0;
 
@@ -152,14 +158,22 @@ const Assignedtasksbasedstatus: React.FC = () => {
           return;
         }
 
-        const response = await employeeApi.get(
+      let response;
+
+      if (status === "all") {
+        response = await employeeApi.get(
+          `${BASE_URL}/ai-service/agent/messagesBasedOnStatus`,
+        );
+      } else {
+        response = await employeeApi.get(
           `${BASE_URL}/ai-service/agent/messagesBasedOnStatus`,
           {
             params: {
-              status: status,
+              status,
             },
           },
         );
+      }
 
         /*
           Status API:
@@ -171,7 +185,8 @@ const Assignedtasksbasedstatus: React.FC = () => {
         const data = response.data;
         const rawList = Array.isArray(data) ? data : data?.content || [];
         const pageTasks = normalizeTasks(rawList);
-        const filteredContent = filterByStatus(pageTasks, status);
+      const filteredContent =
+        status === "all" ? pageTasks : filterByStatus(pageTasks, status);
         const startIndex = (page - 1) * size;
         const endIndex = startIndex + size;
 
@@ -213,7 +228,7 @@ const Assignedtasksbasedstatus: React.FC = () => {
   const handleResetFilters = () => {
     setSearchInput("");
     setSearchText("");
-    setStatusFilter("assigned");
+  setStatusFilter("all");
     setCurrentPage(1);
   };
 
@@ -611,21 +626,18 @@ const Assignedtasksbasedstatus: React.FC = () => {
               />
 
               <Select
-                value={statusFilter}
-                onChange={(value) => {
-                  setCurrentPage(1);
-                  setStatusFilter(value as StatusFilter);
-                }}
-                style={{
-                  width: 180,
-                }}
-                size="large"
-                dropdownMatchSelectWidth={false}
-              >
-                <Option value="assigned">Assigned</Option>
-                <Option value="COMPLETED">Completed</Option>
-                <Option value="REJECTED">Rejected</Option>
-              </Select>
+  value={statusFilter}
+  onChange={(value) => {
+    setCurrentPage(1);
+    setStatusFilter(value as StatusFilter);
+  }}
+  style={{ width: 180 }}
+  size="large"
+>
+  <Option value="all">ALL</Option>
+  <Option value="assigned">ASSIGNED</Option>
+  <Option value="COMPLETED">COMPLETED</Option>
+</Select>
             </div>
           </Col>
         </Row>

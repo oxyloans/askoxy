@@ -158,17 +158,17 @@ const TaskUpdate: React.FC = () => {
   }, []);
   const accessToken = sessionStorage.getItem("taskAccessToken");
   // Check if task can be updated based on date and time
-const canUpdateTask = (task: Task): boolean => {
-  const currentTime = dayjs();
-  const taskDate = dayjs(task.planCreatedAt);
-  const isSameDay = currentTime.isSame(taskDate, "day");
+  const canUpdateTask = (task: Task): boolean => {
+    const currentTime = dayjs();
+    const taskDate = dayjs(task.planCreatedAt);
+    const isSameDay = currentTime.isSame(taskDate, "day");
 
-  const isBeforeNinePM =
-    currentTime.hour() < 21 ||
-    (currentTime.hour() === 21 && currentTime.minute() === 0);
+    const isBeforeNinePM =
+      currentTime.hour() < 21 ||
+      (currentTime.hour() === 21 && currentTime.minute() === 0);
 
-  return isSameDay && isBeforeNinePM;
-};
+    return isSameDay && isBeforeNinePM;
+  };
 
   // Modified to fetch all pending tasks without date filter
   const fetchAllPendingTasks = async (userIdValue: string) => {
@@ -179,7 +179,7 @@ const canUpdateTask = (task: Task): boolean => {
         {
           taskStatus: "PENDING",
           userId: userIdValue,
-        }
+        },
       );
 
       setTasks(response.data);
@@ -197,7 +197,14 @@ const canUpdateTask = (task: Task): boolean => {
         setIsFormVisible(false);
       }
     } catch (error: any) {
-      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch tasks" });
+      Swal.fire({
+        icon: "error",
+        title: "Unable to Load Tasks",
+        text:
+          error.response?.data?.message ||
+          "We could not fetch your pending tasks right now. Please refresh the page or try again after some time.",
+        confirmButtonText: "OK",
+      });
       console.error("Error fetching tasks:", error);
     } finally {
       setFetchingTasks(false);
@@ -237,7 +244,12 @@ const canUpdateTask = (task: Task): boolean => {
 
   const updateTask = async (values: TaskFormValues): Promise<void> => {
     if (!selectedTask || !canUpdateTask(selectedTask)) {
-      Swal.fire({ icon: "error", title: "Update Not Allowed", text: "Task updates are not allowed after 9:00 PM IST or for tasks from a different day." });
+      Swal.fire({
+        icon: "warning",
+        title: "Update Window Closed",
+        text: "This task can be updated only on the same day before 9:00 PM IST. Please contact your admin if you need any changes.",
+        confirmButtonText: "OK",
+      });
       return;
     }
     setLoading(true);
@@ -264,19 +276,40 @@ const canUpdateTask = (task: Task): boolean => {
 
       const response = await employeeApi.patch<ApiResponse>(
         `${BASE_URL}/user-service/write/userTaskUpdate`,
-        payload
+        payload,
       );
 
       if (response.data.success) {
-        Swal.fire({ icon: "success", title: "Success", text: response.data.message || "Task updated successfully" });
+        Swal.fire({
+          icon: "success",
+          title: "Task Updated Successfully",
+          text:
+            response.data.message ||
+            "Your End of Day update has been submitted successfully.",
+          confirmButtonText: "OK",
+        });
         sessionStorage.removeItem("eod_draft");
         resetUploadState();
         fetchAllPendingTasks(userId);
       } else {
-        Swal.fire({ icon: "warning", title: "Warning", text: response.data.message || "Task update completed with warnings" });
+        Swal.fire({
+          icon: "warning",
+          title: "Update Completed With Notice",
+          text:
+            response.data.message ||
+            "Your task update was processed, but there may be additional information to review.",
+          confirmButtonText: "OK",
+        });
       }
     } catch (error: any) {
-      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to update task" });
+      Swal.fire({
+        icon: "error",
+        title: "Task Update Failed",
+        text:
+          error.response?.data?.message ||
+          "We could not update your task at this time. Please check your details and try again.",
+        confirmButtonText: "OK",
+      });
       console.error("Error updating task:", error);
     } finally {
       setLoading(false);
@@ -288,7 +321,12 @@ const canUpdateTask = (task: Task): boolean => {
     resetUploadState();
 
     if (!e.target.files || e.target.files.length === 0) {
-      Swal.fire({ icon: "warning", title: "Warning", text: "Please select a file to upload." });
+      Swal.fire({
+        icon: "warning",
+        title: "No File Selected",
+        text: "Please choose a file before uploading.",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
@@ -296,7 +334,12 @@ const canUpdateTask = (task: Task): boolean => {
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      Swal.fire({ icon: "error", title: "Error", text: "File size should not exceed 10MB" });
+      Swal.fire({
+        icon: "error",
+        title: "File Size Too Large",
+        text: "The selected file is larger than 10 MB. Please upload a smaller file.",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
@@ -317,11 +360,11 @@ const canUpdateTask = (task: Task): boolean => {
           headers: { "Content-Type": undefined },
           onUploadProgress: (progressEvent: any) => {
             const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
+              (progressEvent.loaded * 100) / progressEvent.total,
             );
             setUploadProgress(percentCompleted);
           },
-        }
+        },
       );
 
       // Set document ID in state and save to local storage
@@ -333,11 +376,23 @@ const canUpdateTask = (task: Task): boolean => {
       sessionStorage.setItem("taskDocumentTimestamp", new Date().toISOString());
       sessionStorage.setItem("taskDocumentName", file.name);
 
-      Swal.fire({ icon: "success", title: "Success", text: "Document uploaded successfully!" });
+      Swal.fire({
+        icon: "success",
+        title: "Document Uploaded Successfully",
+        text: "Your supporting document has been uploaded and attached to this task.",
+        confirmButtonText: "OK",
+      });
       setUploadStatus("uploaded");
     } catch (error: any) {
       console.error("Upload Error:", error);
-      Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.error || "An error occurred during upload" });
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text:
+          error.response?.data?.error ||
+          "We could not upload your document. Please check the file and try again.",
+        confirmButtonText: "OK",
+      });
 
       setUploadStatus("failed");
       // Reset file input on error
@@ -348,7 +403,12 @@ const canUpdateTask = (task: Task): boolean => {
   // Function to delete the current upload
   const handleDeleteUpload = () => {
     resetUploadState();
-    Swal.fire({ icon: "success", title: "Success", text: "Upload cleared successfully" });
+    Swal.fire({
+      icon: "success",
+      title: "Upload Removed",
+      text: "The selected upload has been cleared successfully.",
+      confirmButtonText: "OK",
+    });
   };
 
   // Format date for display
@@ -450,13 +510,13 @@ const canUpdateTask = (task: Task): boolean => {
                     backgroundColor: isAdmin
                       ? "#f9f0ff"
                       : index === 0
-                      ? "#f6ffed"
-                      : "#f0f5ff",
+                        ? "#f6ffed"
+                        : "#f0f5ff",
                     borderColor: isAdmin
                       ? "#d3adf7"
                       : index === 0
-                      ? "#b7eb8f"
-                      : "#bae0ff",
+                        ? "#b7eb8f"
+                        : "#bae0ff",
                   }}
                 >
                   {/* Show either pendingEod or adminDescription based on what's available */}
@@ -520,7 +580,6 @@ const canUpdateTask = (task: Task): boolean => {
                 <CalendarOutlined className="mr-2 text-blue-500" />
                 <span className="font-semibold text-lg">All Pending Tasks</span>
               </div>
-             
             </div>
           }
           className="mb-4 sm:mb-6 shadow-md rounded-lg"
@@ -553,16 +612,18 @@ const canUpdateTask = (task: Task): boolean => {
                       }`}
                     onClick={() => selectTask(task)}
                   >
-                    <div className="w-full" style={{ padding: '4px 8px' }}>
+                    <div className="w-full" style={{ padding: "4px 8px" }}>
                       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                         {/* Left side: Title + Date */}
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Title level={5} className="mb-0 font-bold" style={{ marginBottom: 0, paddingLeft: '6px'}}>
+                          <Title
+                            level={5}
+                            className="mb-0 font-bold"
+                            style={{ marginBottom: 0, paddingLeft: "6px" }}
+                          >
                             Plan of the day
                           </Title>
-                          <Tag color="blue">
-                            {taskDate}
-                          </Tag>
+                          <Tag color="blue">{taskDate}</Tag>
                         </div>
                         {/* Right side: Assigned by + Status */}
                         <div className="flex items-center gap-2 flex-wrap">
@@ -589,7 +650,10 @@ const canUpdateTask = (task: Task): boolean => {
                           </Tag>
                         </div>
                       </div>
-                      <Paragraph className="text-gray-700 mb-0" style={{ wordBreak: 'break-word', paddingLeft: '6px' }}>
+                      <Paragraph
+                        className="text-gray-700 mb-0"
+                        style={{ wordBreak: "break-word", paddingLeft: "6px" }}
+                      >
                         {task.planOftheDay}
                       </Paragraph>
                     </div>
@@ -617,7 +681,10 @@ const canUpdateTask = (task: Task): boolean => {
 
         {selectedTask && (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch" ref={detailsSectionRef}>
+            <div
+              className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch"
+              ref={detailsSectionRef}
+            >
               <div className="lg:col-span-2 flex flex-col">
                 <Card
                   title={
@@ -633,7 +700,7 @@ const canUpdateTask = (task: Task): boolean => {
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
                   }}
-                  style={{ display: 'flex', flexDirection: 'column' }}
+                  style={{ display: "flex", flexDirection: "column" }}
                   bodyStyle={{ flex: 1 }}
                 >
                   {isFormVisible ? (
@@ -650,7 +717,10 @@ const canUpdateTask = (task: Task): boolean => {
                       className="px-1"
                       onValuesChange={(changedValues) => {
                         if (changedValues.endOftheDay !== undefined) {
-                          sessionStorage.setItem("eod_draft", changedValues.endOftheDay || "");
+                          sessionStorage.setItem(
+                            "eod_draft",
+                            changedValues.endOftheDay || "",
+                          );
                         }
                       }}
                     >
@@ -715,7 +785,8 @@ const canUpdateTask = (task: Task): boolean => {
                           },
                           {
                             min: 50,
-                            message: "End of day note must be at least 50 characters long.",
+                            message:
+                              "End of day note must be at least 50 characters long.",
                           },
                         ]}
                       >
@@ -731,17 +802,27 @@ const canUpdateTask = (task: Task): boolean => {
                             type={isEodListening ? "primary" : "default"}
                             shape="round"
                             size="small"
-                            icon={isEodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+                            icon={
+                              isEodListening ? (
+                                <AudioMutedOutlined />
+                              ) : (
+                                <AudioOutlined />
+                              )
+                            }
                             onClick={toggleEodVoice}
                             danger={isEodListening}
-                            style={isEodListening ? {} : { borderColor: "#008cba", color: "#008cba" }}
+                            style={
+                              isEodListening
+                                ? {}
+                                : { borderColor: "#008cba", color: "#008cba" }
+                            }
                           >
                             {isEodListening ? "Stop" : "Speak"}
                           </Button>
                         </div>
                       )}
 
-                      {/* <Form.Item
+                      <Form.Item
                         label={
                           <span className="font-medium flex items-center">
                             <PaperClipOutlined className="mr-2" />
@@ -850,22 +931,20 @@ const canUpdateTask = (task: Task): boolean => {
                         </Card>
                       </Form.Item>
 
-                      <Divider /> */}
+                      <Divider />
 
                       <Form.Item>
                         <Button
-                        
                           htmlType="submit"
                           loading={loading}
                           block
-
-                         style={{
-                  height:  "40px",
-                  borderRadius: "8px",
-                  background: "#008cba",
-                  color: "white",
-                  boxShadow: "0 2px 8px rgba(0, 140, 186, 0.2)",
-                }}
+                          style={{
+                            height: "40px",
+                            borderRadius: "8px",
+                            background: "#008cba",
+                            color: "white",
+                            boxShadow: "0 2px 8px rgba(0, 140, 186, 0.2)",
+                          }}
                           icon={<CloudUploadOutlined />}
                         >
                           {loading ? "Updating..." : "Update Task"}
@@ -907,7 +986,7 @@ const canUpdateTask = (task: Task): boolean => {
                     backgroundColor: "#f9f9f9",
                     borderBottom: "1px solid #f0f0f0",
                   }}
-                  style={{ display: 'flex', flexDirection: 'column' }}
+                  style={{ display: "flex", flexDirection: "column" }}
                   bodyStyle={{
                     flex: 1,
                     overflowY: "auto",
@@ -925,42 +1004,3 @@ const canUpdateTask = (task: Task): boolean => {
 };
 
 export default TaskUpdate;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

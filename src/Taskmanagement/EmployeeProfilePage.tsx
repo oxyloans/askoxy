@@ -38,7 +38,12 @@ const PLATFORMS = [
 
 const USAGE = [
   { value: "high", label: "High", color: "green", field: "aiToolsHigh" },
-  { value: "moderate", label: "Medium", color: "gold", field: "aiToolsModerate" },
+  {
+    value: "moderate",
+    label: "Medium",
+    color: "gold",
+    field: "aiToolsModerate",
+  },
   { value: "low", label: "Low", color: "blue", field: "aiToolsLow" },
 ] as const;
 
@@ -52,19 +57,28 @@ const buildToolUsageArray = (byLevel: Partial<AiToolsByLevel>) => {
   if (byLevel.high?.trim()) {
     result.push({
       usageLevel: "HIGH",
-      tools: byLevel.high.split(",").map((t) => t.trim()).filter(Boolean),
+      tools: byLevel.high
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
     });
   }
   if (byLevel.moderate?.trim()) {
     result.push({
       usageLevel: "MODERATE",
-      tools: byLevel.moderate.split(",").map((t) => t.trim()).filter(Boolean),
+      tools: byLevel.moderate
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
     });
   }
   if (byLevel.low?.trim()) {
     result.push({
       usageLevel: "LOW",
-      tools: byLevel.low.split(",").map((t) => t.trim()).filter(Boolean),
+      tools: byLevel.low
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
     });
   }
 
@@ -237,10 +251,12 @@ const EmployeeProfilePage: React.FC = () => {
 
       setHasProfileData(hasData);
 
+      const apiMobileNumber = digits10(data.empNumber || "");
+
       const formValues = {
-        mobileNumber: digits10(
-          sessionStorage.getItem("mobileNumber") || savedMobile,
-        ),
+        // ✅ Mobile number should come from getEmployeeSkills API response
+        // API field: empNumber
+        mobileNumber: apiMobileNumber,
         skills: cleanText(data.skills),
         aiToolsHigh: aiToolsByLevel.high,
         aiToolsModerate: aiToolsByLevel.moderate,
@@ -269,7 +285,6 @@ const EmployeeProfilePage: React.FC = () => {
 
   useEffect(() => {
     getEmployeeSkills();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const handleSave = async () => {
@@ -675,7 +690,11 @@ const EmployeeProfilePage: React.FC = () => {
                       !isEditMode && (selectedRoles?.length ?? 0) > 0 ? (
                         <div style={{ marginTop: 8 }}>
                           {selectedRoles!.map((role) => (
-                            <Tag key={role} color={PRIMARY} style={{ marginBottom: 4, marginRight: 4 }}>
+                            <Tag
+                              key={role}
+                              color={PRIMARY}
+                              style={{ marginBottom: 4, marginRight: 4 }}
+                            >
                               {role}
                             </Tag>
                           ))}
@@ -712,7 +731,6 @@ const EmployeeProfilePage: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
-
 
               {isEditMode && (
                 <>
