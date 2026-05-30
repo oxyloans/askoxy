@@ -18,6 +18,8 @@ import {
   Sparkles,
   Plus,
   Download,
+  ZoomIn,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
@@ -288,6 +290,137 @@ const detectIsImageUrl = (value: string): boolean => {
   }
 };
 
+// Helper: extract base64 image from JSON response and convert to data URL
+const extractBase64Image = (apiResponse: any): string | null => {
+  // Handle object with image field: { image: "iVBORw0KGgo..." }
+  const b64 = apiResponse?.image;
+  if (b64 && typeof b64 === "string" && b64.length > 100) {
+    let mimeType = "image/png";
+    if (b64.startsWith("/9j/")) mimeType = "image/jpeg";
+    else if (b64.startsWith("R0lGOD")) mimeType = "image/gif";
+    else if (b64.startsWith("UklGR")) mimeType = "image/webp";
+    return `data:${mimeType};base64,${b64}`;
+  }
+  return null;
+};
+
+// ─────────────────────────────────────────────
+// ImageCard – ChatGPT-style compact image display
+// ─────────────────────────────────────────────
+const ImageCard: React.FC<{ src: string }> = ({ src }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+
+  const handleDownload = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const link = document.createElement("a");
+    link.href = src;
+    link.download = `ai-image-${Date.now()}.png`;
+    link.click();
+  };
+
+  if (errored) {
+    return (
+      <div className="mt-3 rounded-xl border border-red-200 dark:border-red-700 bg-red-50/60 dark:bg-red-900/20 p-4 text-sm">
+        <div className="font-medium text-red-700 dark:text-red-300">
+          Failed to load image
+        </div>
+        <div className="mt-1 text-red-600/80 dark:text-red-300/70">
+          The image could not be displayed. It may be corrupted or too large.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="mt-3 inline-block relative group/img rounded-2xl overflow-hidden" style={{ maxWidth: 384 }}>
+        {/* Shimmer skeleton */}
+        {!loaded && (
+          <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br from-purple-100 via-gray-100 to-purple-100 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse flex items-center justify-center">
+            <Image className="w-10 h-10 text-purple-300 dark:text-gray-500" />
+          </div>
+        )}
+
+        <img
+          src={src}
+          alt="AI Generated"
+          className={`rounded-2xl max-h-[400px] object-contain cursor-pointer transition-all duration-500 border border-gray-200 dark:border-gray-700 shadow-lg ${
+            loaded
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-95 absolute top-0 left-0"
+          }`}
+          style={{ maxWidth: 384 }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+          onClick={() => setLightbox(true)}
+        />
+
+        {/* Hover overlay */}
+        {loaded && (
+          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/30 transition-all duration-300 rounded-2xl flex items-end justify-center opacity-0 group-hover/img:opacity-100">
+            <div className="flex gap-2 mb-3 transform translate-y-4 group-hover/img:translate-y-0 transition-transform duration-300">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-800 dark:text-gray-200 text-xs font-medium shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightbox(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-800 dark:text-gray-200 text-xs font-medium shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+                Fullscreen
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Caption */}
+      {loaded && (
+        <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 italic">
+          🎨 AI Generated Image · Click to enlarge
+        </p>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          style={{ animation: "fade-in 0.3s ease-out" }}
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            onClick={() => setLightbox(false)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={src}
+            alt="AI Generated - Full View"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="absolute bottom-6 flex gap-3">
+            <button
+              onClick={(e) => handleDownload(e)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white text-sm font-medium transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download Image
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 // ─────────────────────────────────────────────
 // Main Component
 // ─────────────────────────────────────────────
@@ -398,9 +531,21 @@ The user details are: ${age}, ${gender}, ${skinTone}, ${event}.
 
     const apiResponse = await createImage(enhancedPrompt, requestBody);
 
-    const assistantReply = apiResponse?.assistant_reply || apiResponse?.content || apiResponse || "";
-    const replyText = typeof assistantReply === "string" ? assistantReply : JSON.stringify(assistantReply);
-    const isImg = detectIsImageUrl(replyText);
+    // Check for base64 image in JSON response: { image: "iVBORw0KGgo..." }
+    const base64DataUrl = extractBase64Image(apiResponse);
+
+    let replyText: string;
+    let isImg: boolean;
+
+    if (base64DataUrl) {
+      // API returned a base64 image
+      replyText = base64DataUrl;
+      isImg = true;
+    } else {
+      const assistantReply = apiResponse?.assistant_reply || apiResponse?.content || apiResponse || "";
+      replyText = typeof assistantReply === "string" ? assistantReply : JSON.stringify(assistantReply);
+      isImg = detectIsImageUrl(replyText);
+    }
 
     setMessages((prev) =>
       prev.map((msg, index) =>
@@ -603,32 +748,7 @@ The user details are: ${age}, ${gender}, ${skinTone}, ${event}.
 
                     {/* Generated image */}
                     {msg.imageUrl && (
-                      <div className="mt-4 relative">
-                        <button
-                          onClick={() => downloadImage(msg.imageUrl!)}
-                          className="absolute top-2 right-2 z-10 p-2 bg-black/50 text-white hover:bg-black/70 rounded-lg transition-all"
-                          title="Download image"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <img
-                          src={msg.imageUrl}
-                          alt="Generated"
-                          className="w-full rounded-xl border-2 border-gray-300 dark:border-gray-600 shadow-2xl"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = "none";
-                            const errorDiv = document.createElement("div");
-                            errorDiv.className =
-                              "p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm";
-                            errorDiv.textContent = "Failed to load image.";
-                            target.parentNode?.insertBefore(
-                              errorDiv,
-                              target.nextSibling,
-                            );
-                          }}
-                        />
-                      </div>
+                      <ImageCard src={msg.imageUrl} />
                     )}
                   </div>
                 </div>

@@ -289,53 +289,56 @@ If exact company information is not available, say it politely instead of guessi
         item: {
           type: "message",
           role: "user",
-          content: [{ type: "input_text", text: finalText }],
+          content: [
+            {
+              type: "input_text",
+              text: finalText,
+            },
+          ],
         },
       }),
     );
 
-    dc.send(JSON.stringify({ type: "response.create" }));
+    dc.send(
+      JSON.stringify({
+        type: "response.create",
+      }),
+    );
   };
 
   const getEphemeralToken = async (instructions: string): Promise<string> => {
-    const tokenUrl =
-      "https://mailautomation-production.up.railway.app/api/realtime/token";
+    console.log("BASE_URL:", BASE_URL);
+    console.log("ASSISTANT_ID:", ASSISTANT_ID);
+    console.log("VOICE_MODE:", VOICE_MODE);
 
-    const payload = {
-      instructions,
-      voice: VOICE_MODE,
-    };
-
-    console.log("Voice Token API:", tokenUrl);
-    console.log("Voice Token Payload:", payload);
-
-    const res = await fetch(tokenUrl, {
-      method: "POST",
-      headers: {
-        accept: "*/*",
-        "Content-Type": "application/json",
+    const res = await fetch(
+      `${BASE_URL}/student-service/user/voicetoken?assistantId=${ASSISTANT_ID}&voicemode=${VOICE_MODE}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${AUTH_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ instructions }),
       },
-      body: JSON.stringify(payload),
-    });
+    );
 
-    const rawText = await res.text();
+    const responseText = await res.text();
 
-    console.log("Voice Token API Status:", res.status);
-    console.log("Voice Token API Raw Response:", rawText);
+    console.log("Voice Token Status:", res.status);
+    console.log("Voice Token Response:", responseText);
 
     if (!res.ok) {
-      throw new Error(`Voice token API failed: ${res.status} ${rawText}`);
+      throw new Error(`Voice token API failed: ${res.status} ${responseText}`);
     }
 
-    const data = JSON.parse(rawText);
+    const data = JSON.parse(responseText);
 
-    const token = data?.value || data?.client_secret?.value;
-
-    if (!token) {
-      throw new Error("Ephemeral token missing");
+    if (!data?.value) {
+      throw new Error(`No token received from backend: ${responseText}`);
     }
 
-    return token;
+    return data.value;
   };
 
   const setupSpeechRecognition = () => {
@@ -386,59 +389,57 @@ If exact company information is not available, say it politely instead of guessi
     let assistantBuffer = "";
 
     dc.onopen = () => {
-      console.log("Data channel opened");
+      console.log("🟢 Data channel opened");
+
+      dc.send(
+        JSON.stringify({
+          type: "session.update",
+          session: {
+            modalities: ["audio", "text"],
+            voice: "shimmer",
+          },
+        }),
+      );
     };
 
     dc.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+
         console.log("Realtime event:", data.type, data);
-        if (data.type === "error") {
-          console.error("❌ Realtime API Error:", data.error);
-        }
 
-        if (data.type === "input_audio_buffer.speech_started") {
-          console.log("✅ Mic speech started");
-        }
+        switch (data.type) {
+          case "response.output_text.delta":
+            assistantBuffer += data.delta || "";
 
-        if (data.type === "input_audio_buffer.speech_stopped") {
-          console.log("✅ Mic speech stopped");
-        }
+            addMessage({
+              role: "assistant",
+              text: assistantBuffer,
+              timestamp: new Date().toLocaleTimeString(),
+            });
+            break;
 
-        if (data.type === "input_audio_buffer.committed") {
-          console.log("✅ Mic audio committed");
-        }
-        if (
-          (data.type === "response.output_text.delta" ||
-            data.type === "response.audio_transcript.delta") &&
-          data.delta
-        ) {
-          assistantBuffer += data.delta;
-          setIsAssistantSpeaking(true);
+          case "response.output_text.done":
+            assistantBuffer = "";
+            break;
 
-          addMessage({
-            role: "assistant",
-            text: assistantBuffer,
-            timestamp: new Date().toLocaleTimeString(),
-          });
-        }
+          case "response.audio.delta":
+            setIsAssistantSpeaking(true);
+            break;
 
-        if (data.type === "response.audio.delta") {
-          setIsAssistantSpeaking(true);
-        }
+          case "response.audio.done":
+            setIsAssistantSpeaking(false);
+            break;
 
-        if (
-          data.type === "response.done" ||
-          data.type === "response.stop" ||
-          data.type === "output_audio_buffer.stopped" ||
-          data.type === "response.audio.done" ||
-          data.type === "response.audio_transcript.done"
-        ) {
-          setIsAssistantSpeaking(false);
-          assistantBuffer = "";
+          case "error":
+            console.error("Realtime Error:", data);
+            break;
+
+          default:
+            break;
         }
       } catch (error) {
-        console.error("Data channel event parse error:", error);
+        console.error("Data channel parse error:", error);
       }
     };
 
@@ -486,6 +487,12 @@ If exact company information is not available, say it politely instead of guessi
 
       const ephemeralKey = await getEphemeralToken(instructions);
 
+      console.log("Ephemeral Key:", ephemeralKey);
+
+      if (!ephemeralKey) {
+        throw new Error("Empty ephemeral token received");
+      }
+
       const pc = new RTCPeerConnection();
 
       pc.oniceconnectionstatechange = () => {
@@ -510,10 +517,9 @@ If exact company information is not available, say it politely instead of guessi
 
       const micStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          deviceId: "default",
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         },
       });
 
@@ -574,6 +580,9 @@ If exact company information is not available, say it politely instead of guessi
 
       const answerText = await sdpRes.text();
 
+      console.log("Realtime Status:", sdpRes.status);
+      console.log("Realtime Response:", answerText);
+
       if (!sdpRes.ok) {
         throw new Error(`Realtime API failed: ${sdpRes.status} ${answerText}`);
       }
@@ -583,11 +592,11 @@ If exact company information is not available, say it politely instead of guessi
         sdp: answerText,
       });
 
-      console.log("✅ Remote description set");
-      console.log("🔗 Final PC state:", pc.connectionState);
-      console.log("🧊 Final ICE state:", pc.iceConnectionState);
+      console.log("Realtime session connected");
 
       setIsSessionActive(true);
+
+      setupSpeechRecognition();
     } catch (error) {
       console.error("radhAI voice session failed:", error);
       alert(

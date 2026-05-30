@@ -53,7 +53,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "AI&GENAI", timeAgo: "1d" },
+    metadata: { category: "AI&GENAI" },
     response_format: "",
     image: "https://i.ibb.co/TDbh09NT/gt-faabf5888a4cb8cb7d81.png",
     link: "https://amzn.in/d/2Ie3hEg",
@@ -72,7 +72,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Marketplace", timeAgo: "1d" },
+    metadata: { category: "Marketplace"},
     response_format: "text",
     image: "https://i.ibb.co/SXsSVTXn/ask1.png",
     link: "/",
@@ -91,7 +91,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Chat", timeAgo: "18h" },
+    metadata: { category: "Chat"},
     response_format: "text",
     image: Logo2,
     link: "/genoxy",
@@ -110,7 +110,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Voice", timeAgo: "18h" },
+    metadata: { category: "Voice"},
     response_format: "audio",
     image: Logo1,
     link: "/voiceAssistant/welcome",
@@ -129,7 +129,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Research", timeAgo: "1d" },
+    metadata: { category: "Research"},
     response_format: "text",
     image: Logo4,
     link: "/genoxy/chat",
@@ -148,7 +148,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Media", timeAgo: "3w" },
+    metadata: { category: "Media" },
     response_format: "video",
     image: Logo3,
     link: "/ai-videos",
@@ -168,7 +168,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Voice", timeAgo: "20h" },
+    metadata: { category: "Voice" },
     response_format: "audio",
     image: Logo6,
     link: "/glms",
@@ -187,7 +187,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Research", timeAgo: "1d" },
+    metadata: { category: "Research" },
     response_format: "text",
     image: Logo7,
     link: "/jobstreet",
@@ -206,7 +206,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Media", timeAgo: "18h" },
+    metadata: { category: "Media" },
     response_format: "video",
     image: Logo8,
     link: "/freeaibook",
@@ -225,7 +225,7 @@ const STATIC_ASSISTANTS: Assistant[] = [
     temperature: 0.7,
     reasoning_effort: null,
     tool_resources: {},
-    metadata: { category: "Media", timeAgo: "18h" },
+    metadata: { category: "Media"},
     response_format: "video",
     image: Logo9,
     link: "/video-creator",
@@ -559,8 +559,7 @@ const AssistantCard: React.FC<{
           <span style={{ fontWeight: 600, color: "rgba(0,0,0,0.7)" }}>
             {source}
           </span>
-          <span style={{ opacity: 0.8 }}>•</span>
-          <span style={{ opacity: 0.9 }}>{timeAgo}</span>
+        
         </div>
 
         {/* Title */}
