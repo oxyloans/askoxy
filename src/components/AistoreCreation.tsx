@@ -40,6 +40,7 @@ interface Agent {
   assistantId: string;
   agentName: string;
   imageUrl: string | null;
+  profileImageUrl?: string | null;
 
   agentStatus: "ACTIVE" | "INACTIVE";
   agentCreatorName: string | null;
@@ -102,6 +103,32 @@ const AgentStoreManager: React.FC = () => {
   const filteredAssistants: Agent[] = assistants.filter((agent) =>
     agent.agentName?.toLowerCase().includes(agentSearch.toLowerCase())
   );
+
+  const isValidAgent = (agent: any): boolean =>
+    !!(
+      agent &&
+      agent.agentId &&
+      agent.assistantId &&
+      agent.agentName &&
+      String(agent.agentId).trim() &&
+      String(agent.assistantId).trim() &&
+      String(agent.agentName).trim()
+    );
+
+  const getValidAgents = (agents?: any[]): Agent[] =>
+    (Array.isArray(agents) ? agents : [])
+      .filter(isValidAgent)
+      .map((agent: any) => ({
+        ...agent,
+        agentId: String(agent.agentId),
+        assistantId: String(agent.assistantId),
+        agentName: String(agent.agentName).trim(),
+        imageUrl: agent.imageUrl || null,
+        profileImageUrl: agent.profileImageUrl || null,
+        agentCreatorName: agent.agentCreatorName || null,
+        agentStatus: agent.agentStatus === "ACTIVE" ? "ACTIVE" : "INACTIVE",
+      }));
+
 
   // Slugify store name for clean URL
   const slugify = (text: string | undefined): string =>
@@ -308,9 +335,12 @@ const clearBulkUploadForm = () => {
         ? [result.data]
         : [result];
 
-      const validStores: Store[] = data.filter(
-        (store: any) => store && store.storeId && store.userId === userId
-      );
+      const validStores: Store[] = data
+        .filter((store: any) => store && store.storeId && store.userId === userId)
+        .map((store: any) => ({
+          ...store,
+          agentDetailsOnAdUser: getValidAgents(store.agentDetailsOnAdUser),
+        }));
 
      
       const getSortTime = (s: any) => {
@@ -584,7 +614,7 @@ const saveAgentsToStore = async (): Promise<void> => {
     return;
   }
 
-  const existingAgents = selectedStore.agentDetailsOnAdUser || [];
+  const existingAgents = getValidAgents(selectedStore.agentDetailsOnAdUser);
 
   const duplicateAgents = selectedAgents.filter((selected) =>
     existingAgents.some(
@@ -786,7 +816,7 @@ const saveAgentsToStore = async (): Promise<void> => {
       align: "center",
 
       render: (_: any, record: Store) => {
-        const agents: Agent[] = record.agentDetailsOnAdUser || [];
+        const agents: Agent[] = getValidAgents(record.agentDetailsOnAdUser);
 
         if (agents.length === 0) {
           return (
@@ -804,7 +834,10 @@ const saveAgentsToStore = async (): Promise<void> => {
             size="small"
             style={{ color: "#008cba", fontWeight: 500 }}
             onClick={() => {
-              setSelectedStore(record);
+              setSelectedStore({
+                ...record,
+                agentDetailsOnAdUser: getValidAgents(record.agentDetailsOnAdUser),
+              });
               setIsAgentsShowModal(true);
             }}
           >
@@ -853,9 +886,12 @@ const saveAgentsToStore = async (): Promise<void> => {
               width: "100%",
             }}
             onClick={() => {
-              setSelectedStore(record);
+              setSelectedStore({
+                ...record,
+                agentDetailsOnAdUser: getValidAgents(record.agentDetailsOnAdUser),
+              });
               setSelectedAgents([]);
-                setAgentSearch("");
+              setAgentSearch("");
               setIsAgentsModal(true);
             }}
           >
@@ -1586,8 +1622,8 @@ const saveAgentsToStore = async (): Promise<void> => {
       >
         {selectedStore && (
           <Table<Agent>
-            dataSource={selectedStore.agentDetailsOnAdUser || []}
-            rowKey="agentId"
+            dataSource={getValidAgents(selectedStore.agentDetailsOnAdUser)}
+            rowKey={(agent) => agent.agentId || agent.assistantId || agent.agentName}
             pagination={false}
             bordered
             scroll={{ x: "true" }}
@@ -1611,7 +1647,7 @@ const saveAgentsToStore = async (): Promise<void> => {
                 key: "agentId",
                 align: "center",
                 render: (text: string) => (
-                  <span style={{ fontWeight: 500 }}>{text.slice(-4)}</span>
+                  <span style={{ fontWeight: 500 }}>{text ? text.slice(-4) : "—"}</span>
                 ),
               },
               {
@@ -1676,7 +1712,7 @@ const saveAgentsToStore = async (): Promise<void> => {
         )}
 
         {(!selectedStore?.agentDetailsOnAdUser ||
-          selectedStore.agentDetailsOnAdUser.length === 0) && (
+          getValidAgents(selectedStore.agentDetailsOnAdUser).length === 0) && (
           <Empty
             description="No agents added to this store yet"
             style={{ margin: "40px 0" }}
@@ -1932,7 +1968,7 @@ const saveAgentsToStore = async (): Promise<void> => {
 
         <Table<Agent>
           dataSource={selectedAgents}
-          rowKey="agentId"
+          rowKey={(agent) => agent.agentId || agent.assistantId || agent.agentName}
           pagination={false}
           bordered
           columns={[

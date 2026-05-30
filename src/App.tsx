@@ -101,6 +101,8 @@ import AjmanBankAIIntelligenceReport2026 from "./components/AjmanBankAIIntellige
 import ADIBAIIntelligenceReport2026 from "./components/ADIBAIIntelligenceReport2026";
 import DIBAIIntelligenceReport2026 from "./components/DIBAIIntelligenceReport2026";
 import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
+import ADCBAIIntelligenceReport2026 from "./components/ADCBAIIntelligenceReport2026";
+import CBDAIIntelligenceReport2026 from "./components/CBDAIIntelligenceReport2026";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -636,23 +638,15 @@ const App: React.FC = () => {
       currentPath.startsWith("/userPanelLayout") ||
       currentPath.startsWith("/goldrates") ||
       currentPath.startsWith("/all-different-gold-rates") ||
-
       currentPath.startsWith("/allgoldrates") ||
-
       currentPath.startsWith("/radha/bos-ai-intelligence") ||
+      currentPath.startsWith("/radha/adcb-ai-intelligence") ||
       currentPath.startsWith("/radha/emirates-nbd-ai-intelligence") ||
       currentPath.startsWith("/radha/fab-ai-intelligence") ||
       currentPath.startsWith("/radha/ajman-bank-ai-intelligence") ||
       currentPath.startsWith("/radha/adib-ai-intelligence") ||
       currentPath.startsWith("/radha/dib-ai-intelligence") ||
-
-
-
-
-
-
-
-
+      currentPath.startsWith("/radha/cbd-ai-intelligence") ||
       currentPath.startsWith("/smartlock") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
@@ -1255,12 +1249,39 @@ const App: React.FC = () => {
               <Route path="/future" element={<Landingpage />} />
               <Route path="/apidocs" element={<ApiDocs />} />
               <Route path="/womensday" element={<WomensDay />} />
-              <Route path="/radha/bos-ai-intelligence" element={<BOSAIIntelligence />} />
-              <Route path="/radha/emirates-nbd-ai-intelligence" element={<EmiratesNBDAIIntelligenceReport2026 />} />
-              <Route path="/radha/fab-ai-intelligence" element={<FABAIIntelligenceReport2026 />} />
-              <Route path="/radha/ajman-bank-ai-intelligence" element={<AjmanBankAIIntelligenceReport2026 />} />
-              <Route path="/radha/adib-ai-intelligence" element={<ADIBAIIntelligenceReport2026 />} />
-              <Route path="/radha/dib-ai-intelligence" element={<DIBAIIntelligenceReport2026 />} />
+              <Route
+                path="/radha/bos-ai-intelligence"
+                element={<BOSAIIntelligence />}
+              />
+              <Route
+                path="/radha/emirates-nbd-ai-intelligence"
+                element={<EmiratesNBDAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/fab-ai-intelligence"
+                element={<FABAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/ajman-bank-ai-intelligence"
+                element={<AjmanBankAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/adib-ai-intelligence"
+                element={<ADIBAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/dib-ai-intelligence"
+                element={<DIBAIIntelligenceReport2026 />}
+              />
+
+              <Route
+                path="/radha/adcb-ai-intelligence"
+                element={<ADCBAIIntelligenceReport2026 />}
+              />
+              <Route
+  path="/radha/cbd-ai-intelligence"
+  element={<CBDAIIntelligenceReport2026 />}
+/>
               <Route path="/privacypolicy" element={<PrivacyPolicy />} />
               <Route path="/bmvpdf" element={<BMVPDF />} />
               <Route path="/oxybfsai-landing" element={<Finvibe3DLanding />} />

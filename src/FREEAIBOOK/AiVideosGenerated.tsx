@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { motion } from "framer-motion";
 import { Loader2, Play } from "lucide-react";
 
@@ -141,18 +141,39 @@ const videos = [
 ].map((v) => ({
   ...v,
   thumbnail: `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`,
-  url: `https://www.youtube.com/embed/${v.id}`,
+  url: `https://www.youtube.com/watch?v=${v.id}`,
 }));
 
 export default function AiVideosGenerated() {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
+
+ const handlePlayVideo = (videoId: string) => {
+  window.open(
+    `https://www.youtube.com/watch?v=${videoId}`,
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
+
+  const handleKeyPlay = (
+    event: KeyboardEvent<HTMLDivElement>,
+    videoId: string,
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handlePlayVideo(videoId);
+    }
+  };
 
   return (
-    <section className="flex flex-col items-center max-w-7xl mx-auto bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-16 px-6 sm:px-8 md:px-12">
+    <section className="flex flex-col items-center max-w-7xl mx-auto bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-14 px-4 sm:px-6 md:px-10">
       {/* Heading */}
-      <div className="text-center mb-12 max-w-4xl">
-        <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-purple-900 leading-tight">
+      <div className="text-center mb-10 max-w-4xl">
+        <span className="inline-flex items-center rounded-full bg-purple-100 px-4 py-1 text-xs font-semibold text-purple-800 mb-3">
+          Video Library
+        </span>
+        <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-purple-950 leading-tight">
           Explore AI & Global Opportunities
         </h3>
         <div className="w-32 h-1.5 mt-3 mx-auto rounded-full bg-gradient-to-r from-purple-400 via-indigo-400 to-pink-400"></div>
@@ -163,67 +184,94 @@ export default function AiVideosGenerated() {
       </div>
 
       {/* Video Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
-        {videos.map((video, index) => (
-          <motion.div
-            key={video.id}
-            className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.03 }}
-          >
-            {/* Video / Thumbnail */}
-            <div className="relative aspect-video bg-black rounded-t-2xl overflow-hidden">
-              {activeVideo === video.id ? (
-                <>
-                  {loading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                      <Loader2 className="w-10 h-10 text-white animate-spin" />
-                    </div>
-                  )}
-                  <iframe
-                    src={video.url + "?autoplay=1"}
-                    title={video.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-full"
-                    onLoad={() => setLoading(false)}
-                  ></iframe>
-                </>
-              ) : (
-                <button
-                  className="w-full h-full relative group"
-                  onClick={() => {
-                    setActiveVideo(video.id);
-                    setLoading(true);
-                  }}
-                >
-                  <img
-                    src={video.thumbnail}
-                    alt={video.title}
-                    className="w-full h-full object-cover group-hover:brightness-90 transition"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/90 p-4 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-200">
-                      <Play className="w-8 h-8 text-purple-700" />
-                    </div>
-                  </div>
-                </button>
-              )}
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 w-full">
+        {videos.map((video, index) => {
+          const isActive = activeVideo === video.id;
+          const isLoading = loadingVideoId === video.id;
 
-            {/* Video Info */}
-            <div className="p-5 flex flex-col flex-grow">
-              <h4 className="text-lg sm:text-xl font-semibold text-purple-800 mb-2 line-clamp-2">
-                {video.title}
-              </h4>
-              <p className="text-gray-600 text-sm sm:text-base flex-grow line-clamp-3">
-                {video.description}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+          return (
+            <motion.div
+              key={video.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Play video: ${video.title}`}
+              onClick={() => handlePlayVideo(video.id)}
+              onKeyDown={(event) => handleKeyPlay(event, video.id)}
+              className="group bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer border border-gray-100 focus:outline-none focus:ring-4 focus:ring-purple-200"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.03 }}
+              whileHover={{ y: -4 }}
+            >
+              {/* Video / Thumbnail */}
+              <div className="relative aspect-video bg-black overflow-hidden">
+                {isActive ? (
+                  <>
+                    {isLoading && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10 text-white">
+                        <Loader2 className="w-10 h-10 animate-spin mb-3" />
+                        <span className="text-sm font-medium">
+                          Loading video...
+                        </span>
+                      </div>
+                    )}
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                      title={video.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="w-full h-full"
+                      onLoad={() => setLoadingVideoId(null)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <>
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-90"
+                      />
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-red-600 p-4 rounded-full shadow-xl group-hover:scale-110 transition-transform duration-200">
+                          <Play className="w-8 h-8 text-white fill-white" />
+                        </div>
+                      </div>
+
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
+                          Watch on YouTube
+                        </span>
+                      </div>
+                    </>
+                  </>
+                )}
+              </div>
+
+              {/* Video Info */}
+              <div className="p-5 flex flex-col flex-grow">
+                <h4 className="text-lg sm:text-xl font-semibold text-purple-900 mb-2 line-clamp-2 group-hover:text-purple-700 transition-colors">
+                  {video.title}
+                </h4>
+                <p className="text-gray-600 text-sm sm:text-base flex-grow line-clamp-3 leading-relaxed">
+                  {video.description}
+                </p>
+
+                {!isActive && (
+                  <div className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-800 group-hover:bg-purple-700 group-hover:text-white transition-colors">
+                    <Play className="w-4 h-4" />
+                    Watch Video
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </section>
   );
