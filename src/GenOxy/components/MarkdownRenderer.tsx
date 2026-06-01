@@ -37,7 +37,7 @@ const MarkdownRenderer: React.FC<Props> = memo(
           {children}
         </code>
       ) : (
-        <div className="relative group my-4">
+     <div className="relative group my-2">
           <pre
             ref={preRef}
             className="bg-[#f9f9f9] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 px-4 py-3 rounded-xl shadow-sm overflow-x-auto text-sm font-mono whitespace-pre-wrap"
@@ -142,10 +142,17 @@ const MarkdownRenderer: React.FC<Props> = memo(
         </button>
       </div>
     );
+const formatContent = (text: string) => {
+  return text
+    .replace(/^\s*\d+\.\s+\*\*(.*?)\*\*:?\s*$/gm, "\n### $1\n")
+    .replace(/^\s*\d+\.\s+(.*?):\s*$/gm, "\n### $1\n")
+    .replace(/^\s*•\s+/gm, "- ");
+};
 
+const finalContent = formatContent(content);
     return (
       <div
-        className={`prose prose-sm sm:prose-base lg:prose-lg max-w-full dark:prose-invert break-words text-gray-800 dark:text-gray-100 ${className}`}
+        className={`prose prose-sm sm:prose-base lg:prose-lg max-w-none dark:prose-invert break-words text-gray-800 dark:text-gray-100 ${className}`}
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
@@ -173,8 +180,13 @@ const MarkdownRenderer: React.FC<Props> = memo(
                 {children}
               </h6>
             ),
+            // p: ({ children }) => (
+            //   <p className="leading-relaxed text-[16px] text-gray-800 dark:text-gray-200 mb-4">
+            //     {children}
+            //   </p>
+            // ),
             p: ({ children }) => (
-              <p className="leading-relaxed text-[16px] text-gray-800 dark:text-gray-200 mb-4">
+              <p className="leading-relaxed text-[15px] text-gray-800 dark:text-gray-200 my-1">
                 {children}
               </p>
             ),
@@ -200,10 +212,13 @@ const MarkdownRenderer: React.FC<Props> = memo(
                 {children}
               </ol>
             ),
+            // li: ({ children }) => (
+            //   <li className="leading-relaxed text-gray-800 dark:text-gray-200 pl-2">
+            //     {children}
+            //   </li>
+            // ),
             li: ({ children }) => (
-              <li className="leading-relaxed text-gray-800 dark:text-gray-200 pl-2">
-                {children}
-              </li>
+              <li className="mb-3 leading-relaxed">{children}</li>
             ),
             code: CodeBlock,
             a: LinkRenderer,
@@ -270,7 +285,7 @@ const MarkdownRenderer: React.FC<Props> = memo(
               ),
           }}
         >
-          {content}
+          {finalContent}
         </ReactMarkdown>
       </div>
     );

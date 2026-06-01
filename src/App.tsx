@@ -103,6 +103,10 @@ import DIBAIIntelligenceReport2026 from "./components/DIBAIIntelligenceReport202
 import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
 import ADCBAIIntelligenceReport2026 from "./components/ADCBAIIntelligenceReport2026";
 import CBDAIIntelligenceReport2026 from "./components/CBDAIIntelligenceReport2026";
+import SIBAIIntelligenceReport2026 from "./components/SIBAIIntelligenceReport2026";
+import MashreqAIIntelligenceReport2026 from "./components/MashreqAIIntelligenceReport2026";
+import NBFAIIntelligenceReport2026 from "./components/NBFAIIntelligenceReport2026";
+import RAKBANKAIIntelligenceReport2026 from "./components/RAKBANKAIIntelligenceReport2026";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -647,6 +651,10 @@ const App: React.FC = () => {
       currentPath.startsWith("/radha/adib-ai-intelligence") ||
       currentPath.startsWith("/radha/dib-ai-intelligence") ||
       currentPath.startsWith("/radha/cbd-ai-intelligence") ||
+      currentPath.startsWith("/radha/sib-ai-intelligence") ||
+      currentPath.startsWith("/radha/mashreq-ai-intelligence") ||
+      currentPath.startsWith("/radha/nbf-ai-intelligence") ||
+      currentPath.startsWith("/radha/rakbank-ai-intelligence") ||
       currentPath.startsWith("/smartlock") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
@@ -1279,8 +1287,24 @@ const App: React.FC = () => {
                 element={<ADCBAIIntelligenceReport2026 />}
               />
               <Route
-  path="/radha/cbd-ai-intelligence"
-  element={<CBDAIIntelligenceReport2026 />}
+                path="/radha/cbd-ai-intelligence"
+                element={<CBDAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/rakbank-ai-intelligence"
+                element={<RAKBANKAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/nbf-ai-intelligence"
+                element={<NBFAIIntelligenceReport2026 />}
+              />
+              <Route
+  path="/radha/mashreq-ai-intelligence"
+  element={<MashreqAIIntelligenceReport2026 />}
+/>
+<Route
+  path="/radha/sib-ai-intelligence"
+  element={<SIBAIIntelligenceReport2026 />}
 />
               <Route path="/privacypolicy" element={<PrivacyPolicy />} />
               <Route path="/bmvpdf" element={<BMVPDF />} />

@@ -14,8 +14,8 @@ import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
 import { message } from "antd";
 
 interface StoreAgent {
-  agentId: string;
-  agentName: string;
+  agentId?: string | null;
+  agentName?: string | null;
   agentCreatorName?: string | null;
   agentStatus?: string | null;
   hideAgent?: boolean;
@@ -106,6 +106,22 @@ const slugify = (text?: string | null): string =>
         .slice(0, 60)
     : "store";
 
+const isValidStoreAgent = (
+  agent?: StoreAgent | null,
+): agent is StoreAgent & {
+  agentId: string;
+  assistantId: string;
+  agentName: string;
+} => {
+  const agentId = (agent?.agentId || "").trim();
+  const assistantId = (agent?.assistantId || "").trim();
+  const agentName = (agent?.agentName || "").trim();
+
+  return Boolean(
+    agent && !agent.hideAgent && agentId && assistantId && agentName,
+  );
+};
+
 const AllAIStore: React.FC = () => {
   const { storeSlug } = useParams<{ storeSlug: string }>();
   const location = useLocation();
@@ -165,7 +181,7 @@ const AllAIStore: React.FC = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const agentsSectionRef = useRef<HTMLDivElement | null>(null);
   const visibleAgents = useMemo(() => {
-    return (store?.agentDetailsOnAdUser || []).filter((a) => a && !a.hideAgent);
+    return (store?.agentDetailsOnAdUser || []).filter(isValidStoreAgent);
   }, [store]);
 
   // --- Search/filter effect ---
@@ -690,7 +706,12 @@ const AllAIStore: React.FC = () => {
 
       if (!found) throw new Error("Store not found");
 
-      setStore(found);
+      setStore({
+        ...found,
+        agentDetailsOnAdUser: (found?.agentDetailsOnAdUser || []).filter(
+          isValidStoreAgent,
+        ),
+      });
 
       // ✅ DO NOT inject storeId into URL (you wanted storeId removed)
 
@@ -1165,7 +1186,7 @@ const AllAIStore: React.FC = () => {
                           }
                           className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-slate-600 to-slate-700 px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-lg hover:from-slate-700 hover:to-slate-800 hover:shadow-xl transition-all"
                         >
-                         9000+ NBFCs
+                          9000+ NBFCs
                         </button>
                       </div>
                     </div>
@@ -1334,16 +1355,17 @@ const AllAIStore: React.FC = () => {
                                     {getInitials(agent.agentName)}
                                   </span>
                                 </div>
-                                
+
                                 {/* Image on top if valid */}
                                 {hasValidImage && (
                                   <img
                                     src={`https://askoxy.s3.ap-south-1.amazonaws.com${agent.profileImageUrl!}`}
-                                    alt={agent.agentName}
+                                    alt={agent.agentName ?? ''}
                                     className="absolute inset-0 h-full w-full object-cover bg-white"
                                     loading="lazy"
                                     onError={(e) => {
-                                      const img = e.currentTarget as HTMLImageElement;
+                                      const img =
+                                        e.currentTarget as HTMLImageElement;
                                       img.style.display = "none";
                                     }}
                                   />
@@ -1372,7 +1394,7 @@ const AllAIStore: React.FC = () => {
                                 {hasValidImage ? (
                                   <img
                                     src={agent.profileImageUrl!}
-                                    alt={agent.agentName}
+                                    alt={agent.agentName ?? "Agent"}
                                     className="h-10 w-10 rounded-full border border-slate-200 object-cover"
                                     loading="lazy"
                                     onError={(e) => {

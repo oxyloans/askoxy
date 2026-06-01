@@ -198,7 +198,7 @@ const ProfilePage = () => {
         `${BASE_URL}/user-service/customerProfileDetails`,
         {
           params: { customerId },
-        }
+        },
       );
 
       const data = response.data;
@@ -244,7 +244,7 @@ const ProfilePage = () => {
           chatId: formData.whatsappNumber.replace(countryCode, ""),
           countryCode: countryCode,
           id: customerId,
-        }
+        },
       );
 
       if (response.data) {
@@ -284,7 +284,7 @@ const ProfilePage = () => {
           whatsappOtp: whatsappVerificationCode,
           whatsappOtpSession: whatsappOtpSession,
           salt: salt,
-        }
+        },
       );
 
       if (response.data) {
@@ -307,7 +307,7 @@ const ProfilePage = () => {
       setIsLoading(true);
 
       const response = await customerApi.get(
-        `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`
+        `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`,
       );
 
       setAddresses(response.data);
@@ -317,72 +317,73 @@ const ProfilePage = () => {
       setIsLoading(false);
     }
   };
-const getLast10Digits = (value: string | null | undefined) => {
-  const digits = String(value || "").replace(/\D/g, "");
-  return digits.length > 10 ? digits.slice(-10) : digits;
-};
+  const getLast10Digits = (value: string | null | undefined) => {
+    const digits = String(value || "").replace(/\D/g, "");
+    return digits.length > 10 ? digits.slice(-10) : digits;
+  };
 
-const validateProfileForm = () => {
-  const errors: Record<string, string> = {};
+  const validateProfileForm = () => {
+    const errors: Record<string, string> = {};
 
-  const primaryMobile = getLast10Digits(formData.mobileNumber);
-  const whatsappMobile = getLast10Digits(formData.whatsappNumber);
-  const alternateMobile = getLast10Digits(formData.alterMobileNumber);
+    const primaryMobile = getLast10Digits(formData.mobileNumber);
+    const whatsappMobile = getLast10Digits(formData.whatsappNumber);
+    const alternateMobile = getLast10Digits(formData.alterMobileNumber);
 
-  const effectivePrimaryNumber = primaryMobile || whatsappMobile;
+    const effectivePrimaryNumber = primaryMobile || whatsappMobile;
 
-  if (!formData.userFirstName.trim()) {
-    errors.userFirstName = "First name is required";
-  } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
-    errors.userFirstName = "First name should only contain letters";
-  }
-
-  if (formData.userLastName.trim()) {
-    if (!/^[A-Za-z ]+$/.test(formData.userLastName.trim())) {
-      errors.userLastName = "Last name should only contain letters";
+    if (!formData.userFirstName.trim()) {
+      errors.userFirstName = "First name is required";
+    } else if (!/^[A-Za-z ]+$/.test(formData.userFirstName.trim())) {
+      errors.userFirstName = "First name should only contain letters";
     }
-  }
 
-  const emailValue = formData.customerEmail.trim();
-
-  if (!emailValue) {
-    errors.customerEmail = "Email address is required";
-  } else {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(emailValue)) {
-      errors.customerEmail = "Please enter a valid email address";
+    if (formData.userLastName.trim()) {
+      if (!/^[A-Za-z ]+$/.test(formData.userLastName.trim())) {
+        errors.userLastName = "Last name should only contain letters";
+      }
     }
-  }
 
-  if (!effectivePrimaryNumber) {
-    errors.mobileNumber = "Primary mobile number is required";
-  } else if (!/^\d{10}$/.test(effectivePrimaryNumber)) {
-    errors.mobileNumber = "Please enter a valid 10-digit mobile number";
-  } else if (/^0+$/.test(effectivePrimaryNumber)) {
-    errors.mobileNumber = "Mobile number cannot be all zeros";
-  }
+    const emailValue = formData.customerEmail.trim();
 
-  if (alternateMobile) {
-    if (!/^\d{10}$/.test(alternateMobile)) {
-      errors.alterMobileNumber = "Please enter a valid 10-digit mobile number";
-    } else if (/^0+$/.test(alternateMobile)) {
-      errors.alterMobileNumber = "Mobile number cannot be all zeros";
-    } else if (
-      alternateMobile === primaryMobile ||
-      alternateMobile === whatsappMobile
-    ) {
-      errors.alterMobileNumber =
-        "Alternate number must be different from primary and WhatsApp number.";
+    if (!emailValue) {
+      errors.customerEmail = "Email address is required";
+    } else {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(emailValue)) {
+        errors.customerEmail = "Please enter a valid email address";
+      }
     }
-  }
 
-  setValidationErrors(errors);
-  return Object.keys(errors).length === 0;
-};
+    if (!effectivePrimaryNumber) {
+      errors.mobileNumber = "Primary mobile number is required";
+    } else if (!/^\d{10}$/.test(effectivePrimaryNumber)) {
+      errors.mobileNumber = "Please enter a valid 10-digit mobile number";
+    } else if (/^0+$/.test(effectivePrimaryNumber)) {
+      errors.mobileNumber = "Mobile number cannot be all zeros";
+    }
+
+    if (alternateMobile) {
+      if (!/^\d{10}$/.test(alternateMobile)) {
+        errors.alterMobileNumber =
+          "Please enter a valid 10-digit mobile number";
+      } else if (/^0+$/.test(alternateMobile)) {
+        errors.alterMobileNumber = "Mobile number cannot be all zeros";
+      } else if (
+        alternateMobile === primaryMobile ||
+        alternateMobile === whatsappMobile
+      ) {
+        errors.alterMobileNumber =
+          "Alternate number must be different from primary and WhatsApp number.";
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
   const validateField = (
     field: string,
     value: string,
-    updatedFormData?: ProfileFormData
+    updatedFormData?: ProfileFormData,
   ) => {
     const data = updatedFormData || formData;
     let error = "";
@@ -396,9 +397,12 @@ const validateProfileForm = () => {
         break;
 
       case "userLastName":
-        if (value.trim()) {
-          if (!/^[A-Za-z ]+$/.test(value.trim()))
+        if (value.length > 0) {
+          if (!value.trim()) {
+            error = "Last name cannot contain only spaces";
+          } else if (!/^[A-Za-z ]+$/.test(value.trim())) {
             error = "Last name should only contain letters";
+          }
         }
         break;
 
@@ -473,45 +477,48 @@ const validateProfileForm = () => {
   };
 
   const handleSaveProfile = async () => {
-  if (!validateProfileForm()) {
-    setIsValidationPopupOpen(true);
-    return;
-  }
+    if (!validateProfileForm()) {
+      setIsValidationPopupOpen(true);
+      return;
+    }
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const primaryMobile = getLast10Digits(formData.mobileNumber);
-    const whatsappMobile = getLast10Digits(formData.whatsappNumber);
-    const finalPrimaryNumber = primaryMobile || whatsappMobile;
+      const primaryMobile = getLast10Digits(formData.mobileNumber);
+      const whatsappMobile = getLast10Digits(formData.whatsappNumber);
+      const finalPrimaryNumber = primaryMobile || whatsappMobile;
 
-    const payload = {
-      ...formData,
-      mobileNumber: finalPrimaryNumber,
-      whatsappNumber: whatsappMobile || finalPrimaryNumber,
-      alterMobileNumber: getLast10Digits(formData.alterMobileNumber),
-    };
+      const payload = {
+        ...formData,
+        mobileNumber: finalPrimaryNumber,
+        whatsappNumber: whatsappMobile || finalPrimaryNumber,
+        alterMobileNumber: getLast10Digits(formData.alterMobileNumber),
+      };
 
-    await customerApi.patch(`${BASE_URL}/user-service/profileUpdate`, payload);
+      await customerApi.patch(
+        `${BASE_URL}/user-service/profileUpdate`,
+        payload,
+      );
 
-    setSuccessMessage("Profile updated successfully!");
-    setEditStatus(true);
-    localStorage.setItem("profileData", JSON.stringify(payload));
-  } catch (error: any) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data ||
-      "Error updating profile. Please try again.";
+      setSuccessMessage("Profile updated successfully!");
+      setEditStatus(true);
+      localStorage.setItem("profileData", JSON.stringify(payload));
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data ||
+        "Error updating profile. Please try again.";
 
-    setError(
-      typeof errorMessage === "string"
-        ? errorMessage
-        : "Error updating profile. Please try again."
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setError(
+        typeof errorMessage === "string"
+          ? errorMessage
+          : "Error updating profile. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   React.useEffect(() => {
     if (successMessage || error) {
@@ -561,7 +568,7 @@ const validateProfileForm = () => {
       if (editingAddressId) {
         await customerApi.patch(
           `${BASE_URL}/user-service/updateAddress/${editingAddressId}`,
-          data
+          data,
         );
 
         if (typeof window !== "undefined" && window.gtag) {
@@ -600,7 +607,7 @@ const validateProfileForm = () => {
     try {
       const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        address
+        address,
       )}&key=${API_KEY}`;
 
       const response = await axios.get(url);
@@ -615,7 +622,7 @@ const validateProfileForm = () => {
       setIsLoading(true);
 
       await customerApi.delete(
-        `${BASE_URL}/user-service/deleteAddress/${addressId}`
+        `${BASE_URL}/user-service/deleteAddress/${addressId}`,
       );
 
       setSuccessMessage("Address deleted successfully!");
@@ -778,11 +785,13 @@ const validateProfileForm = () => {
                       pattern="^[A-Za-z ]+$"
                       value={formData.userLastName}
                       onChange={(e) => {
-                        const val = e.target.value;
+                        const val = e.target.value.replace(/\s{2,}/g, " ");
+
                         const updated = {
                           ...formData,
                           userLastName: val,
                         };
+
                         setFormData(updated);
                         validateField("userLastName", val, updated);
                       }}

@@ -15,6 +15,7 @@ import {
   Form,
   Breadcrumb,
 } from "antd";
+import customerApi from "../utils/axiosInstances";
 import type { MenuProps } from "antd";
 import {
   UploadOutlined,
@@ -30,13 +31,13 @@ import {
   RightOutlined,
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
-
+import BASE_URL from "../Config";
 const { Header, Sider, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { Dragger } = Upload;
 const { useBreakpoint } = Grid;
 
-const BASE_URL = "https://mailautomation-production.up.railway.app/api/v1";
+
 
 const COLOR_PRIMARY = "#008cba";
 const COLOR_PRIMARY_DARK = "#0079a3";
@@ -214,12 +215,15 @@ const EmailCampaign: React.FC = () => {
       const fd = new FormData();
       fd.append("file", file);
 
-      const res = await fetch(`${BASE_URL}/pdf/upload`, {
-        method: "POST",
-        body: fd,
-      });
-
-      const data: UploadResponse = await res.json();
+      const { data } = await customerApi.post<UploadResponse>(
+        `${BASE_URL}/ai-automation/pdf/upload`,
+        fd,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       if (data.success) {
         setUploadResult(data);
@@ -253,16 +257,18 @@ const EmailCampaign: React.FC = () => {
     setCampaignError("");
 
     try {
-      const res = await fetch(`${BASE_URL}/email/send-campaign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data } = await customerApi.post<CampaignResponse>(
+        `${BASE_URL}/ai-automation/email/send-campaign`,
+        {
           clientName: clientName.trim(),
           clientEmail: clientEmail.trim(),
-        }),
-      });
-
-      const data: CampaignResponse = await res.json();
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (data.success) {
         setCampaignResult(data);
