@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
 declare global {
   interface Window {
@@ -905,22 +905,36 @@ const htmlContent = `<div class="topbar">
 export default function NBFAIIntelligenceReport2026() {
   useEffect(() => {
     window.showPage = (id: string, btn: HTMLElement) => {
-      document.querySelectorAll('.page').forEach((page) => page.classList.remove('active'));
-      document.querySelectorAll('.nav button').forEach((button) => button.classList.remove('active'));
-      document.getElementById('page-' + id)?.classList.add('active');
-      btn.classList.add('active');
-      window.scrollTo(0, 0);
+      const root = btn.closest(".nbf-ai-intelligence-report-2026") || document;
+
+      root.querySelectorAll<HTMLElement>(".page").forEach((page) => {
+        page.classList.remove("active");
+      });
+
+      root.querySelectorAll<HTMLElement>(".nav button").forEach((button) => {
+        button.classList.remove("active");
+      });
+
+      root.querySelector<HTMLElement>(`#page-${id}`)?.classList.add("active");
+      btn.classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     window.filterUC = (maturity: string, btn: HTMLElement) => {
-      document.querySelectorAll('#uc-filters button').forEach((button) => button.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll<HTMLElement>('.uc-card').forEach((card) => {
-        if (maturity === 'all') {
-          card.style.display = '';
-        } else {
-          card.style.display = card.dataset.maturity?.includes(maturity) ? '' : 'none';
-        }
+      const root = btn.closest(".nbf-ai-intelligence-report-2026") || document;
+
+      root
+        .querySelectorAll<HTMLElement>("#uc-filters button, .filter-bar button")
+        .forEach((button) => {
+          button.classList.remove("active");
+        });
+
+      btn.classList.add("active");
+
+      root.querySelectorAll<HTMLElement>(".uc-card").forEach((card) => {
+        const cardMaturity = card.dataset.maturity || "";
+        card.style.display =
+          maturity === "all" || cardMaturity.includes(maturity) ? "" : "none";
       });
     };
 
@@ -931,9 +945,9 @@ export default function NBFAIIntelligenceReport2026() {
   }, []);
 
   return (
-    <>
+    <div className="nbf-ai-intelligence-report-2026">
       <style>{styles}</style>
       <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-    </>
+    </div>
   );
 }

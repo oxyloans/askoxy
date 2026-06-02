@@ -125,7 +125,26 @@ const reportHtml = `<div class="topbar">
       <h1>Abu Dhabi Commercial Bank (ADCB) — AI Intelligence Report 2026</h1>
       <p>Autonomous Banking AI Analysis · hayyak AI Platform · 30 Use Cases · 12 Agents · 8 Programs · Official Sources Only</p>
     </div>
-    <span class="badge-gold">&#9733; STRATEGIC INTELLIGENCE REPORT</span>
+  
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button
+        onclick="window.location.href='/radha/adib-ai-intelligence'"
+        style="
+          background:#5543C8;
+          color:white;
+          border:none;
+          padding:8px 18px;
+          border-radius:999px;
+          cursor:pointer;
+          font-size:13px;
+          font-weight:600;
+        "
+      >
+        View ADIB Report
+      </button>
+
+      <span class="badge-gold">&#9733; STRATEGIC INTELLIGENCE REPORT</span>
+    </div>
   </div>
 </div>
 

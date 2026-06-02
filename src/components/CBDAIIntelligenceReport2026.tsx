@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 
-const cbdReportHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CBD AI Intelligence Report 2026 — Commercial Bank of Dubai</title>
-<style>
+declare global {
+  interface Window {
+    showPage: (id: string, btn: HTMLElement) => void;
+    filterUC: (maturity: string, btn: HTMLElement) => void;
+  }
+}
+
+const styles = `
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f4f4f0;color:#1a1a1a;font-size:14px;line-height:1.6}
 .topbar{background:#003366;color:white;padding:0}
@@ -80,16 +81,33 @@ tr:hover td{background:#fafaf8}
 .chip{display:inline-flex;align-items:center;gap:6px;background:#f1f1e8;border:0.5px solid #d8d8c8;border-radius:20px;padding:4px 12px;font-size:11px;color:#444;margin:3px;text-decoration:none}
 .chip:hover{background:#e8e8d8}
 .page-footer{background:#002855;color:rgba(255,255,255,0.6);font-size:11px;text-align:center;padding:1rem;margin-top:2rem}
-</style>
-</head>
-<body>
-<div class="topbar">
+`;
+
+const pageHtml = `<div class="topbar">
   <div class="topbar-inner">
     <div>
       <h1>Commercial Bank of Dubai (CBD) — AI Intelligence Report 2026</h1>
       <p>Autonomous Banking AI Analysis | 25 Use Cases | 9 Agents | 7 Programs | Official Sources Only</p>
     </div>
-    <span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button
+        onclick="window.location.href='/radha/mashreq-ai-intelligence'"
+        style="
+          background:#5543C8;
+          color:white;
+          border:none;
+          padding:8px 18px;
+          border-radius:999px;
+          cursor:pointer;
+          font-size:13px;
+          font-weight:600;
+        "
+      >
+        View Mashreq Report
+      </button>
+
+      <span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+    </div>
   </div>
 </div>
 <nav class="nav">
@@ -1006,40 +1024,50 @@ tr:hover td{background:#fafaf8}
 
 <div class="page-footer">
   CBD AI Intelligence Report 2026 | Autonomous Banking AI Analysis | Sources: cbd.ae, Microsoft, Accenture, MIT Sloan ME, HPE, MEA Finance, DFM, CBUAE | May 2026
-</div>
-
-<script>
-function showPage(id, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  btn.classList.add('active');
-  window.scrollTo(0,0);
-}
-function filterUC(maturity, btn) {
-  document.querySelectorAll('#uc-filters button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.uc-card').forEach(card => {
-    if (maturity === 'all') {
-      card.style.display = '';
-    } else {
-      card.style.display = card.dataset.maturity.includes(maturity) ? '' : 'none';
-    }
-  });
-}
-</script>
-</body>
-</html>
-`;
+</div>`;
 
 const CBDAIIntelligenceReport2026: React.FC = () => {
+  useEffect(() => {
+    window.showPage = (id: string, btn: HTMLElement) => {
+      document
+        .querySelectorAll<HTMLElement>(".cbd-ai-intelligence-report-2026 .page")
+        .forEach((page) => page.classList.remove("active"));
+
+      document
+        .querySelectorAll<HTMLElement>(".cbd-ai-intelligence-report-2026 .nav button")
+        .forEach((button) => button.classList.remove("active"));
+
+      document.getElementById(`page-${id}`)?.classList.add("active");
+      btn.classList.add("active");
+      window.scrollTo(0, 0);
+    };
+
+    window.filterUC = (maturity: string, btn: HTMLElement) => {
+      document
+        .querySelectorAll<HTMLElement>(".cbd-ai-intelligence-report-2026 #uc-filters button")
+        .forEach((button) => button.classList.remove("active"));
+
+      btn.classList.add("active");
+
+      document
+        .querySelectorAll<HTMLElement>(".cbd-ai-intelligence-report-2026 .uc-card")
+        .forEach((card) => {
+          const cardMaturity = card.dataset.maturity || "";
+          card.style.display =
+            maturity === "all" || cardMaturity.includes(maturity) ? "" : "none";
+        });
+    };
+
+    return () => {
+      delete (window as any).showPage;
+      delete (window as any).filterUC;
+    };
+  }, []);
+
   return (
-    <div style={{ width: "100%", height: "100vh", margin: 0, padding: 0, overflow: "hidden" }}>
-      <iframe
-        title="CBD AI Intelligence Report 2026"
-        srcDoc={cbdReportHtml}
-        style={{ width: "100%", height: "100%", border: "none" }}
-      />
+    <div className="cbd-ai-intelligence-report-2026">
+      <style>{styles}</style>
+      <div dangerouslySetInnerHTML={{ __html: pageHtml }} />
     </div>
   );
 };

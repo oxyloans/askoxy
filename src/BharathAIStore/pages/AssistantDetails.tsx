@@ -28,13 +28,13 @@ import {
 } from "lucide-react";
 import MarkdownRenderer from "../../GenOxy/components/MarkdownRenderer";
 import { message, Modal } from "antd";
+import { CloseOutlined, WhatsAppOutlined } from "@ant-design/icons";
 import BASE_URL from "../../Config";
 import SubscriptionModal from "../components/SubscriptionModal";
 import { set } from "lodash";
 import { Button } from "antd";
 import { log } from "node:console";
 import { stopTokenRefresh } from "../../utils/tokenRefresh";
-import { WhatsAppOutlined } from "@ant-design/icons";
 /** ---------------- Types ---------------- */
 interface Assistant {
   id: string;
@@ -104,22 +104,30 @@ const AssistantDetails: React.FC = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const shareIdFromUrl = useMemo(
+    () => new URLSearchParams(location.search).get("shareId"),
+    [location.search],
+  );
+  const isSharedChatView = Boolean(shareIdFromUrl);
 
   // user id (from storage)
   const [userId] = useState<string | null>(() =>
-    localStorage.getItem("userId")
+    localStorage.getItem("userId"),
   );
   const currentPath = `${location.pathname}${location.search || ""}`;
 
-  useEffect(() => {
-    if (!userId) {
-      // Set the current full path as redirectPath for return after auth
-      sessionStorage.setItem("redirectPath", currentPath);
-      sessionStorage.setItem("fromAISTore", "true"); // Flag for primaryType detection
-      window.location.href = "/whatsappregister?primaryType=AGENT"; // Hard redirect to preserve session
-      return;
-    }
-  }, [userId, currentPath]);
+useEffect(() => {
+  if (!userId) {
+    const fullPath = `${location.pathname}${location.search || ""}`;
+
+    sessionStorage.setItem("redirectPath", fullPath);
+    sessionStorage.setItem("fromAISTore", "true");
+    sessionStorage.setItem("primaryType", "AGENT");
+
+    window.location.href = "/whatsappregister?primaryType=AGENT";
+    return;
+  }
+}, [userId, location.pathname, location.search]);
   // assistant + chat state
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -186,7 +194,7 @@ const AssistantDetails: React.FC = () => {
   }, []);
   const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
-    return saved ? JSON.parse(saved) : true;
+    return saved ? JSON.parse(saved) : false;
   });
   const loadingMessages: string[] = [
     "Thinking longer for a better answer",
@@ -252,14 +260,14 @@ const AssistantDetails: React.FC = () => {
   }, [loading]);
 
   const [threadSource, setThreadSource] = useState<"files" | "agent" | null>(
-    null
+    null,
   );
   // ⬇️ place with other useState hooks
   const [remainingPrompts, setRemainingPrompts] = useState<number | null>(null);
 
   // ⬇️ small helpers used by chat-with-file response parsing
   const extractImageUrl = (
-    raw: any
+    raw: any,
   ): { isImage: boolean; url: string | null } => {
     const s = String(raw ?? "");
     const md = s.match(/!\[[^\]]*]\((https?:\/\/[^\s)]+)\)/i);
@@ -303,7 +311,7 @@ const AssistantDetails: React.FC = () => {
   const RATING_LOCK_KEY = (u: string, a: string) => `agent_rating_${u}_${a}`;
 
   const [historyById, setHistoryById] = useState<Record<string, ChatMessage[]>>(
-    {}
+    {},
   );
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -318,7 +326,7 @@ const AssistantDetails: React.FC = () => {
   const [isXs, setIsXs] = useState<boolean>(() =>
     typeof window !== "undefined"
       ? window.matchMedia("(max-width: 640px)").matches
-      : false
+      : false,
   );
 
   const visiblePrompts = useMemo(
@@ -327,7 +335,7 @@ const AssistantDetails: React.FC = () => {
         .filter(Boolean)
         .map((s) => s.trim())
         .filter((s) => s.length > 0),
-    [prompts]
+    [prompts],
   );
 
   // sidebar + history
@@ -385,7 +393,7 @@ const AssistantDetails: React.FC = () => {
       try {
         const historyData = await fetchUserHistory(userId, agentId);
         const cleanedHistory = (historyData || []).filter(
-          (h: any) => h.threadId && h.threadId !== "null"
+          (h: any) => h.threadId && h.threadId !== "null",
         );
         if (!Array.isArray(cleanedHistory) || cleanedHistory.length === 0) {
           setHistoryById({});
@@ -437,13 +445,18 @@ const AssistantDetails: React.FC = () => {
         }
       } catch (err: any) {
         console.error("Failed to fetch history:", err);
-        
+
         if (err?.response?.status === 500) {
-          message.warning("Unable to load chat history. The service will retry automatically.");
-        } else if (err?.response?.status === 401 || err?.response?.status === 403) {
+          message.warning(
+            "Unable to load chat history. The service will retry automatically.",
+          );
+        } else if (
+          err?.response?.status === 401 ||
+          err?.response?.status === 403
+        ) {
           message.warning("Session expired. Please refresh the page.");
         }
-        
+
         setHistoryById({});
         setHistory([]);
       } finally {
@@ -514,7 +527,7 @@ const AssistantDetails: React.FC = () => {
       `${BASE_URL}/ai-service/agent/getConversation/${agentIdParam}`,
       {
         headers: { ...getAuthHeaders() },
-      }
+      },
     );
     return response.data;
   };
@@ -551,7 +564,7 @@ const AssistantDetails: React.FC = () => {
       return { avgUI: 0, count: 0 };
 
     const rawAvg = Number(
-      data.average ?? data.avg ?? data.feedbackRating ?? data.rating ?? NaN
+      data.average ?? data.avg ?? data.feedbackRating ?? data.rating ?? NaN,
     );
     if (!Number.isFinite(rawAvg)) return { avgUI: 0, count: rawCount };
 
@@ -575,7 +588,7 @@ const AssistantDetails: React.FC = () => {
   const normalizeMine = (
     data: any,
     currentAgentId: string,
-    currentAgentName: string
+    currentAgentName: string,
   ): { present: boolean; ui?: number; comment?: string } => {
     const matches = (rec: any) => {
       const recAgentId = (rec?.agentId ?? "").toString().trim();
@@ -634,7 +647,7 @@ const AssistantDetails: React.FC = () => {
   const fetchMyRating = async (
     userIdParam: string,
     agentIdParam: string,
-    agentNameParam: string
+    agentNameParam: string,
   ) => {
     const url = `${BASE_URL}/ai-service/agent/feedbackByUserId`;
     const { data } = await axios.get(url, {
@@ -767,8 +780,8 @@ const AssistantDetails: React.FC = () => {
         roleRaw === "assistant"
           ? "assistant"
           : roleRaw === "system"
-          ? "system"
-          : "user";
+            ? "system"
+            : "user";
 
       let content = (contentMatch?.[1] || "").trim();
 
@@ -785,13 +798,13 @@ const AssistantDetails: React.FC = () => {
 
   const fetchUserHistory = async (
     userIdParam: string,
-    agentIdParam: string
+    agentIdParam: string,
   ) => {
     console.log("into the fetch user history", { userIdParam, agentIdParam });
 
     const { data } = await axios.get(
       `${BASE_URL}/ai-service/agent/getUserHistory/${userIdParam}/${agentIdParam}`,
-      { headers: { ...getAuthHeaders() } }
+      { headers: { ...getAuthHeaders() } },
     );
     console.log("fetched user history", data);
 
@@ -803,7 +816,7 @@ const AssistantDetails: React.FC = () => {
       setLoadingPlans(true);
       const { data } = await axios.get(
         `${BASE_URL}/ai-service/agent/getAllPlans`,
-        { headers: { ...getAuthHeaders() } }
+        { headers: { ...getAuthHeaders() } },
       );
       const activePlans = data.filter((plan: any) => plan.status === true);
       setSubscriptionPlans(activePlans);
@@ -931,8 +944,8 @@ const AssistantDetails: React.FC = () => {
           m?.role === "assistant"
             ? "assistant"
             : m?.role === "system"
-            ? "system"
-            : "user";
+              ? "system"
+              : "user";
         const content = String(m?.content ?? m?.text ?? "").trim();
         return { role, content };
       })
@@ -986,7 +999,7 @@ const AssistantDetails: React.FC = () => {
       }
 
       const historyItem = historyData.find(
-        (h: any) => (h?.threadId || h?.id || h?.historyId) === hid
+        (h: any) => (h?.threadId || h?.id || h?.historyId) === hid,
       );
 
       if (!historyItem) {
@@ -998,20 +1011,20 @@ const AssistantDetails: React.FC = () => {
       // Extract threadId - prioritize cached, then various API fields
       console.log(
         "[openHistoryChat] DEBUG - historyItem keys:",
-        Object.keys(historyItem)
+        Object.keys(historyItem),
       );
       console.log("[openHistoryChat] DEBUG - cachedThreadId:", cachedThreadId);
       console.log(
         "[openHistoryChat] DEBUG - historyItem.threadId:",
-        historyItem?.threadId
+        historyItem?.threadId,
       );
       console.log(
         "[openHistoryChat] DEBUG - historyItem.thread_id:",
-        historyItem?.thread_id
+        historyItem?.thread_id,
       );
       console.log(
         "[openHistoryChat] DEBUG - historyItem.conversationId:",
-        historyItem?.conversationId
+        historyItem?.conversationId,
       );
 
       const extractedThreadId =
@@ -1029,7 +1042,7 @@ const AssistantDetails: React.FC = () => {
           extractedThreadId &&
           String(extractedThreadId).trim() &&
           String(extractedThreadId) !== "null"
-        )
+        ),
       );
 
       let messages: ChatMessage[] = [];
@@ -1042,7 +1055,7 @@ const AssistantDetails: React.FC = () => {
       ) {
         console.log(
           "[openHistoryChat] ✓ CALLING fetchThreadHistory with:",
-          extractedThreadId
+          extractedThreadId,
         );
         setThreadId(extractedThreadId);
 
@@ -1050,13 +1063,13 @@ const AssistantDetails: React.FC = () => {
           const threadMessages = await fetchThreadHistory(extractedThreadId);
           console.log(
             "[openHistoryChat] fetchThreadHistory returned:",
-            threadMessages
+            threadMessages,
           );
           if (Array.isArray(threadMessages) && threadMessages.length > 0) {
             messages = extractQAFromHistory(threadMessages);
             console.log(
               "[openHistoryChat] Loaded from thread:",
-              messages.length
+              messages.length,
             );
           }
         } catch (err) {
@@ -1064,7 +1077,7 @@ const AssistantDetails: React.FC = () => {
         }
       } else {
         console.log(
-          "[openHistoryChat] ✗ NOT calling fetchThreadHistory - no valid threadId"
+          "[openHistoryChat] ✗ NOT calling fetchThreadHistory - no valid threadId",
         );
         setThreadId(null);
       }
@@ -1074,7 +1087,7 @@ const AssistantDetails: React.FC = () => {
         messages = normalizeMessages(
           historyItem?.messages ??
             historyItem?.messageHistory ??
-            historyItem?.history
+            historyItem?.history,
         );
         console.log("[openHistoryChat] Using local messages:", messages.length);
       }
@@ -1084,13 +1097,15 @@ const AssistantDetails: React.FC = () => {
       setMessages(messages);
     } catch (err: any) {
       console.error("[openHistoryChat] Error:", err);
-      
+
       if (err?.response?.status === 500) {
-        message.warning("Unable to load this chat. Please try selecting it again.");
+        message.warning(
+          "Unable to load this chat. Please try selecting it again.",
+        );
       } else if (err?.response?.status === 404) {
         message.warning("This chat is no longer available.");
       }
-      
+
       setMessages([]);
       setThreadId(null);
     }
@@ -1132,7 +1147,7 @@ const AssistantDetails: React.FC = () => {
 
   const buildMessageHistory = (
     msgs: ChatMessage[],
-    overrideContent?: string
+    overrideContent?: string,
   ): APIMessage[] => {
     // We only want to send the LATEST user question to agentChat1.
     // Conversation context will be handled by `threadId` on the backend.
@@ -1165,7 +1180,7 @@ const AssistantDetails: React.FC = () => {
   const postAgentChat = async (
     agentIdParam: string,
     userIdParam: string | null,
-    messageHistory: any[]
+    messageHistory: any[],
   ) => {
     const headers = new AxiosHeaders();
     headers.set("Accept", "application/json");
@@ -1187,7 +1202,7 @@ const AssistantDetails: React.FC = () => {
     const { data } = await axios.post(
       `${BASE_URL}/ai-service/agent/agentChat1`,
       payload,
-      { headers }
+      { headers },
     );
     return data;
   };
@@ -1216,7 +1231,7 @@ const AssistantDetails: React.FC = () => {
         headers.set("Authorization", auth.Authorization);
       } else {
         console.warn(
-          "[fetchThreadHistory] ⚠ No authorization header available"
+          "[fetchThreadHistory] ⚠ No authorization header available",
         );
       }
 
@@ -1232,7 +1247,7 @@ const AssistantDetails: React.FC = () => {
       console.log("[fetchThreadHistory] ✓ Response status:", response.status);
       console.log(
         "[fetchThreadHistory] Response data type:",
-        typeof response.data
+        typeof response.data,
       );
       console.log("[fetchThreadHistory] Response data:", response.data);
 
@@ -1244,7 +1259,7 @@ const AssistantDetails: React.FC = () => {
           console.log(
             "[fetchThreadHistory] ✓ Found data.messages array:",
             data.messages.length,
-            "items"
+            "items",
           );
           return data.messages;
         }
@@ -1252,7 +1267,7 @@ const AssistantDetails: React.FC = () => {
           console.log(
             "[fetchThreadHistory] ✓ Found data.data array:",
             data.data.length,
-            "items"
+            "items",
           );
           return data.data;
         }
@@ -1260,7 +1275,7 @@ const AssistantDetails: React.FC = () => {
           console.log(
             "[fetchThreadHistory] ✓ Found data.history array:",
             data.history.length,
-            "items"
+            "items",
           );
           return data.history;
         }
@@ -1271,14 +1286,14 @@ const AssistantDetails: React.FC = () => {
         console.log(
           "[fetchThreadHistory] ✓ Response is array:",
           data.length,
-          "items"
+          "items",
         );
         return data;
       }
 
       console.warn(
         "[fetchThreadHistory] ⚠ Unexpected response shape. Object keys:",
-        Object.keys(data || {})
+        Object.keys(data || {}),
       );
       return null;
     } catch (error: any) {
@@ -1326,8 +1341,21 @@ const AssistantDetails: React.FC = () => {
     async (
       prompt?: string,
       skipAddUser = false,
-      baseMessages?: ChatMessage[]
+      baseMessages?: ChatMessage[],
     ) => {
+      // if (isSharedChatView && shareIdFromUrl) {
+      //   // ChatGPT-style behavior: the shared conversation stays visible,
+      //   // and the first follow-up becomes a new conversation for this user.
+      //   navigate(location.pathname, { replace: true });
+      // }
+
+      if (!userId) {
+        sessionStorage.setItem("redirectPath", currentPath);
+        sessionStorage.setItem("fromAISTore", "true");
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+        return;
+      }
+
       const messageContent = prompt || input;
       if (!messageContent.trim() && !skipAddUser) return;
       if (loading || !id) return;
@@ -1465,7 +1493,7 @@ const AssistantDetails: React.FC = () => {
           if (currentChatId) {
             console.log(
               "[sendMessage] Saving to historyById for chat:",
-              currentChatId
+              currentChatId,
             );
             setHistoryById((prev) => ({
               ...prev,
@@ -1477,19 +1505,24 @@ const AssistantDetails: React.FC = () => {
           setSidebarOpen(true);
         }
       } catch (e: any) {
-        console.error('Chat error:', e);
-        let errorMessage = "I'm having trouble responding right now. Please try again in a moment.";
-        
+        console.error("Chat error:", e);
+        let errorMessage =
+          "I'm having trouble responding right now. Please try again in a moment.";
+
         if (e?.response?.status === 500) {
-          errorMessage = "The AI service is temporarily unavailable. Please try again shortly.";
+          errorMessage =
+            "The AI service is temporarily unavailable. Please try again shortly.";
         } else if (e?.response?.status === 429) {
-          errorMessage = "Too many requests. Please wait a moment before trying again.";
+          errorMessage =
+            "Too many requests. Please wait a moment before trying again.";
         } else if (e?.response?.status === 401 || e?.response?.status === 403) {
-          errorMessage = "Authentication issue. Please refresh the page and try again.";
-        } else if (e?.message?.toLowerCase().includes('network')) {
-          errorMessage = "Network connection issue. Please check your internet and try again.";
+          errorMessage =
+            "Authentication issue. Please refresh the page and try again.";
+        } else if (e?.message?.toLowerCase().includes("network")) {
+          errorMessage =
+            "Network connection issue. Please check your internet and try again.";
         }
-        
+
         // Show error as assistant message in chat
         setMessages((prev) => [
           ...prev,
@@ -1499,13 +1532,26 @@ const AssistantDetails: React.FC = () => {
         setLoading(false);
       }
     },
-    [input, loading, messages, id, agentId, userId, threadId]
+    [
+      input,
+      loading,
+      messages,
+      id,
+      agentId,
+      userId,
+      threadId,
+      isSharedChatView,
+      shareIdFromUrl,
+      navigate,
+      location.pathname,
+      currentPath,
+    ],
   );
 
   const validateDate = async () => {
     try {
       const resp = await axios.get(
-        `${BASE_URL}/ai-service/agent/planValidateDate?agentId=${agentId}&userId=${userId}`
+        `${BASE_URL}/ai-service/agent/planValidateDate?agentId=${agentId}&userId=${userId}`,
       );
       if (
         resp?.data?.validateDate === 0 ||
@@ -1617,17 +1663,21 @@ const AssistantDetails: React.FC = () => {
         setSidebarOpen(true);
       }
     } catch (e: any) {
-      console.error('Edit save error:', e);
-      let errorMessage = "I'm having trouble processing your edit. Please try again.";
-      
+      console.error("Edit save error:", e);
+      let errorMessage =
+        "I'm having trouble processing your edit. Please try again.";
+
       if (e?.response?.status === 500) {
-        errorMessage = "The AI service is temporarily unavailable. Please try again shortly.";
+        errorMessage =
+          "The AI service is temporarily unavailable. Please try again shortly.";
       } else if (e?.response?.status === 429) {
-        errorMessage = "Too many requests. Please wait a moment before trying again.";
+        errorMessage =
+          "Too many requests. Please wait a moment before trying again.";
       } else if (e?.response?.status === 401 || e?.response?.status === 403) {
-        errorMessage = "Authentication issue. Please refresh the page and try again.";
+        errorMessage =
+          "Authentication issue. Please refresh the page and try again.";
       }
-      
+
       // Show error as assistant message in chat
       setMessages((prev) => [
         ...prev,
@@ -1784,7 +1834,7 @@ const AssistantDetails: React.FC = () => {
 
   const handleFileUpload = async (
     _file: File | null, // kept for signature compatibility; we now use `selectedFiles`
-    userPrompt: string
+    userPrompt: string,
   ): Promise<string | null> => {
     if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
       return await Promise.resolve(null);
@@ -1815,7 +1865,7 @@ const AssistantDetails: React.FC = () => {
         answerData = (
           await axios.post(
             `${BASE_URL}/student-service/user/chat-with-files`,
-            formData
+            formData,
           )
         ).data;
       } else {
@@ -1825,7 +1875,7 @@ const AssistantDetails: React.FC = () => {
         answerData = (
           await axios.post(
             `${BASE_URL}/student-service/user/chat-with-files`,
-            jsonPayload
+            jsonPayload,
           )
         ).data;
       }
@@ -1848,7 +1898,7 @@ const AssistantDetails: React.FC = () => {
         if (Number(updatedPrompts) === 0) {
           // ⛔ hard stop: show user error and do NOT render normal assistant content
           message.error(
-            "File search limit reached. Please try again tomorrow."
+            "File search limit reached. Please try again tomorrow.",
           );
           setMessages((prev) => [
             ...prev,
@@ -1881,23 +1931,29 @@ const AssistantDetails: React.FC = () => {
       return newThreadId || null;
     } catch (error: any) {
       console.error("File upload/search failed:", error);
-      
-      let userMessage = "I'm having trouble processing your file. Please try again.";
-      let assistantMessage = "⚠️ File processing failed. Please try again in a moment.";
-      
+
+      let userMessage =
+        "I'm having trouble processing your file. Please try again.";
+      let assistantMessage =
+        "⚠️ File processing failed. Please try again in a moment.";
+
       if (error?.response?.status === 500) {
-        userMessage = "The file processing service is temporarily unavailable. Please try again shortly.";
-        assistantMessage = "⚠️ File processing service is temporarily down. Please try again in a few minutes.";
+        userMessage =
+          "The file processing service is temporarily unavailable. Please try again shortly.";
+        assistantMessage =
+          "⚠️ File processing service is temporarily down. Please try again in a few minutes.";
       } else if (error?.response?.status === 413) {
         userMessage = "Your file is too large. Please try with a smaller file.";
         assistantMessage = "⚠️ File too large. Please upload a smaller file.";
       } else if (error?.response?.status === 429) {
-        userMessage = "Too many file uploads. Please wait a moment before trying again.";
-        assistantMessage = "⚠️ Upload limit reached. Please wait before uploading more files.";
+        userMessage =
+          "Too many file uploads. Please wait a moment before trying again.";
+        assistantMessage =
+          "⚠️ Upload limit reached. Please wait before uploading more files.";
       }
-      
+
       message.error(userMessage);
-      
+
       const errorMessage: ChatMessage = {
         role: "assistant",
         content: assistantMessage,
@@ -1919,6 +1975,10 @@ const AssistantDetails: React.FC = () => {
   }, []);
 
   const handleNewChat = () => {
+    if (shareIdFromUrl) {
+      navigate(location.pathname, { replace: true });
+    }
+
     // Clear current chat state
     setMessages([]);
     setInput("");
@@ -1962,10 +2022,14 @@ const AssistantDetails: React.FC = () => {
           { role: "assistant", content: cleanContent(answer) },
         ]);
       } catch {
-        console.error('File chat followup error');
+        console.error("File chat followup error");
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "⚠️ I'm having trouble processing your request. Please try again." },
+          {
+            role: "assistant",
+            content:
+              "⚠️ I'm having trouble processing your request. Please try again.",
+          },
         ]);
       } finally {
         setLoading(false);
@@ -1993,7 +2057,7 @@ const AssistantDetails: React.FC = () => {
       if (selectedFiles.length > 0) {
         await handleFileUpload(
           null,
-          input || "please describe the file content properly"
+          input || "please describe the file content properly",
         );
         setInput("");
         setShowMobileFiles(false);
@@ -2014,15 +2078,18 @@ const AssistantDetails: React.FC = () => {
               { role: "assistant", content: cleanContent(answer) },
             ]);
           } catch (err: any) {
-            console.error('File followup error:', err);
-            let errorMessage = "I'm having trouble processing your request. Please try again.";
-            
+            console.error("File followup error:", err);
+            let errorMessage =
+              "I'm having trouble processing your request. Please try again.";
+
             if (err?.response?.status === 500) {
-              errorMessage = "The service is temporarily unavailable. Please try again shortly.";
+              errorMessage =
+                "The service is temporarily unavailable. Please try again shortly.";
             } else if (err?.response?.status === 429) {
-              errorMessage = "Too many requests. Please wait a moment before trying again.";
+              errorMessage =
+                "Too many requests. Please wait a moment before trying again.";
             }
-            
+
             setMessages((prev) => [
               ...prev,
               { role: "assistant", content: `⚠️ ${errorMessage}` },
@@ -2071,31 +2138,140 @@ const AssistantDetails: React.FC = () => {
     }
   };
 
-  const handleChatShareClick = () => {
-    // 👉 If no messages, open modal instead of message.info
-    if (messages.length === 0) {
+  const loadSharedChatById = useCallback(
+    async (shareId: string) => {
+      if (!shareId) return;
+
+      setLoading(true);
+
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/ai-service/agent/share/${shareId}`,
+        );
+
+        const sharedMessages = normalizeMessages(res.data?.messages || []);
+
+       
+        const sharedTitle = generateChatTitle(
+          res.data?.agentName
+            ? `Shared chat - ${res.data.agentName}`
+            : "Shared chat",
+        );
+
+      setMessages(sharedMessages);
+
+      const sharedHistoryId = `shared-${shareId}`;
+      const sharedThreadId =
+        res.data?.threadId ||
+        res.data?.thread_id ||
+        res.data?.shareId ||
+        shareId;
+
+      setCurrentChatId(sharedHistoryId);
+      setThreadId(sharedThreadId);
+      setThreadSource("agent");
+
+      setThreadIdMap((prev) => ({
+        ...prev,
+        [sharedHistoryId]: sharedThreadId,
+      }));
+        setSelectedFiles([]);
+        setInput("");
+        setEditingIndex(null);
+        setHistory((prev) => {
+          const withoutExistingShared = prev.filter(
+            (item) => item.id !== sharedHistoryId,
+          );
+          return [
+            { id: sharedHistoryId, title: sharedTitle, createdAt: Date.now() },
+            ...withoutExistingShared,
+          ];
+        });
+        setHistoryById((prev) => ({
+          ...prev,
+          [sharedHistoryId]: sharedMessages,
+        }));
+
+        if (res.data?.agentName) {
+          setAssistant((prev) =>
+            prev
+              ? { ...prev, name: res.data.agentName }
+              : {
+                  id: res.data.agentId || agentId || "",
+                  name: res.data.agentName || "Shared AI Agent",
+                  description: "Shared chat conversation",
+                },
+          );
+        }
+      } catch (error) {
+        console.error("Shared chat load failed:", error);
+        message.error("Shared chat not found or no longer available.");
+        setMessages([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [agentId],
+  );
+
+  useEffect(() => {
+    if (!shareIdFromUrl) return;
+    loadSharedChatById(shareIdFromUrl);
+  }, [shareIdFromUrl, loadSharedChatById]);
+
+  const handleChatShareClick = async () => {
+    const shareableMessages = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role as APIRole,
+        content: cleanContent(m.content),
+      }))
+      .filter((m) => m.content.trim().length > 0);
+
+    if (shareableMessages.length === 0) {
       setShowNoChatModal(true);
       return;
     }
 
-    // Aggregate all Q&A
-    const chatContent = messages
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => {
-        const prefix = m.role === "user" ? "Q" : "A";
-        return `${prefix}: ${m.content}`;
-      })
-      .join("\n\n");
+    try {
+      const originalUrl = window.location.href.split("?")[0];
 
-    const text = `🤖 ${assistant?.name || "AI Agent"} — Chat History
+      const payload = {
+        agentId: agentId || assistant?.id || "",
+        agentName: assistant?.name || "AI Agent",
+        assistantId: id || "",
+        userId,
+        threadId,
+        originalUrl,
+        messages: shareableMessages,
+      };
 
-${chatContent}
+      const res = await axios.post(
+        `${BASE_URL}/ai-service/agent/share`,
+        payload,
+        { headers: { ...getAuthHeaders() } },
+      );
 
-🔗 Bharat AI Store`;
+      const shareUrl =
+        res.data?.shareUrl || `${originalUrl}?shareId=${res.data?.shareId}`;
 
-    setShareText(text);
-    setShareTitle("Share Chat History");
-    setShowShareQuestion(true); // open share modal
+      if (!shareUrl || shareUrl.includes("undefined")) {
+        throw new Error("Invalid share URL received from server.");
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      setShareText(shareUrl);
+      setShareTitle("Chat Share Link");
+      setShowShareQuestion(true);
+      message.success("Chat share link copied successfully.");
+    } catch (error: any) {
+      console.error("Chat share failed:", error);
+      message.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to create chat share link.",
+      );
+    }
   };
 
   // 🟡 Agent Share = Show modal -> Share on WhatsApp
@@ -2134,7 +2310,7 @@ ${url}`.trim();
   }, [history, historySearch]);
   const handleLogout = () => {
     try {
-       stopTokenRefresh();
+      stopTokenRefresh();
       localStorage.removeItem("userId");
       localStorage.removeItem("token");
       localStorage.clear();
@@ -2208,8 +2384,8 @@ ${url}`.trim();
       ? MOBILE_SIDEBAR_WIDTH_OPEN
       : 0
     : sidebarOpen
-    ? DESKTOP_SIDEBAR_WIDTH_OPEN
-    : SIDEBAR_WIDTH_COLLAPSED;
+      ? DESKTOP_SIDEBAR_WIDTH_OPEN
+      : SIDEBAR_WIDTH_COLLAPSED;
 
   // compute left offset only for desktop
   const leftOffset = !isXs ? (sidebarOpen ? 240 : 60) : 0;
@@ -2236,14 +2412,14 @@ ${url}`.trim();
 
   const effectiveContentWidth1 = useMemo(
     () => `calc(100vw - ${leftOffset}px - ${rightOffset}px)`,
-    [leftOffset, rightOffset]
+    [leftOffset, rightOffset],
   );
 
   // Add effect to persist right sidebar state (mirror left)
   useEffect(() => {
     localStorage.setItem(
       RIGHT_SIDEBAR_STATE_KEY,
-      JSON.stringify(rightSidebarOpen)
+      JSON.stringify(rightSidebarOpen),
     );
   }, [rightSidebarOpen]);
 
@@ -2255,7 +2431,7 @@ ${url}`.trim();
             try {
               sessionStorage.setItem(
                 "returnTo",
-                `${location.pathname}${location.search || ""}`
+                `${location.pathname}${location.search || ""}`,
               );
             } catch (e) {
               console.warn("Could not save returnTo:", e);
@@ -2263,7 +2439,7 @@ ${url}`.trim();
             return (
               <Navigate
                 to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
-                  currentPath
+                  currentPath,
                 )}`}
               />
             );
@@ -2345,7 +2521,7 @@ ${url}`.trim();
                 title="Share last Q&A"
               >
                 <Share className="w-5 h-5 text-purple-700 dark:text-white" />
-                <span className="hidden sm:inline">Chat Share</span>
+                <span className="hidden sm:inline">Share</span>
               </button>
               <Modal
                 open={showAgentShareModal}
@@ -2436,7 +2612,7 @@ ${url}`.trim();
                         window.open(
                           whatsappUrl,
                           "_blank",
-                          "noopener,noreferrer"
+                          "noopener,noreferrer",
                         );
 
                         setShowAgentShareModal(false);
@@ -2541,91 +2717,150 @@ ${url}`.trim();
             onCancel={() => setShowShareQuestion(false)}
             footer={null}
             centered
+            width={520}
+            className="share-chat-modal"
+            closeIcon={<CloseOutlined style={{ color: "#fff" }} />}
+            styles={{
+              content: {
+                background: "#1f2937", // gray-800
+                borderRadius: "20px",
+                padding: "24px",
+              },
+              header: {
+                background: "#1f2937",
+              },
+              body: {
+                background: "#1f2937",
+              },
+            }}
           >
-            <div className="text-center px-4 py-2">
-              <h3
-                style={{
-                  fontSize: "18px",
-                  fontWeight: 600,
-                  marginBottom: "12px",
-                }}
-              >
-                {shareTitle}
-              </h3>
+            <div>
+              <div className="text-center">
+                <h3
+                  style={{
+                    color: "#ffffff",
+                    fontSize: "20px",
+                    fontWeight: 600,
+                  }}
+                >
+                  {shareTitle || "Share Chat"}
+                </h3>
 
-              <p
-                style={{
-                  fontSize: "15px",
-                  lineHeight: "1.6",
-                  marginBottom: "20px",
-                  textAlign: "center",
-                }}
-              >
-                Share this {shareTitle.toLowerCase().includes("history") ? "full conversation" : "message"} with your friends via WhatsApp.
-              </p>
+                <p
+                  style={{
+                    color: "#d1d5db",
+                    marginTop: "12px",
+                    lineHeight: "24px",
+                    fontSize: "14px",
+                  }}
+                >
+                  Anyone with this link can view this shared chat and continue
+                  the conversation.
+                </p>
+              </div>
 
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexWrap: "wrap",
-                  gap: "12px",
-                  marginTop: "10px",
+                  marginTop: "24px",
+                  background: "#111827",
+                  border: "1px solid #374151",
+                  borderRadius: "14px",
+                  padding: "16px",
                 }}
               >
+                <label
+                  style={{
+                    color: "#9ca3af",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    display: "block",
+                    marginBottom: "10px",
+                  }}
+                >
+                  SHARE LINK
+                </label>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <input
+                    value={shareText}
+                    readOnly
+                    onFocus={(e) => e.currentTarget.select()}
+                    style={{
+                      flex: 1,
+                      background: "#1f2937",
+                      color: "#fff",
+                      border: "1px solid #374151",
+                      borderRadius: "10px",
+                      padding: "12px 14px",
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(shareText);
+                        message.success("Share link copied.");
+                      } catch {
+                        message.error("Unable to copy share link.");
+                      }
+                    }}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-500"
+                  >
+                    <Copy size={16} />
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Button
                   onClick={() => setShowShareQuestion(false)}
                   style={{
-                    background: "#e0e0e0",
+                    height: 48,
+                    borderRadius: 10,
+                    background: "#374151",
+                    color: "#fff",
                     border: "none",
-                    color: "#000",
-                    padding: "6px 20px",
-                    borderRadius: "6px",
-                    fontSize: "14px",
                   }}
                 >
                   Close
                 </Button>
 
-                {/* <Button
-                  onClick={() => {
-                    const subject = encodeURIComponent(`Chat History with ${assistant?.name || "AI Agent"}`);
-                    const body = encodeURIComponent(shareText);
-                    window.open(`mailto:?subject=${subject}&body=${body}`, "_self");
-                    setShowShareQuestion(false);
-                  }}
-                  icon={<Mail className="w-4 h-4 inline-block mr-1" />}
+                <Button
                   style={{
-                    background: "#EA4335",
-                    borderColor: "#EA4335",
-                    padding: "6px 20px",
-                    borderRadius: "6px",
-                    fontSize: "14px",
+                    height: 48,
+                    borderRadius: 10,
+                    background: "#4f46e5",
                     color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
+                    border: "none",
+                  }}
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(shareText);
+                      message.success("Share link copied.");
+                    } catch {
+                      message.error("Unable to copy share link.");
+                    }
                   }}
                 >
-                  Email
-                </Button> */}
+                  Copy Link
+                </Button>
 
                 <Button
-                  type="primary"
-                  icon={<WhatsAppOutlined className="w-4 h-4 inline-block mr-1" />} 
-               
+                  icon={<WhatsAppOutlined />}
                   onClick={() => {
                     const whatsappUrl =
                       "https://api.whatsapp.com/send?text=" +
                       encodeURIComponent(shareText);
+
                     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-                    setShowShareQuestion(false);
                   }}
                   style={{
+                    height: 48,
+                    borderRadius: 10,
                     background: "#25D366",
                     borderColor: "#25D366",
-                    padding: "6px 20px",
-                    borderRadius: "6px",
-                    fontSize: "14px",
                     color: "#fff",
                   }}
                 >
@@ -3128,7 +3363,7 @@ ${url}`.trim();
                       <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#999' font-family='Arial' font-size='16'>
                         Image unavailable
                       </text>
-                    </svg>`
+                    </svg>`,
                               );
                           }}
                         />
@@ -3251,16 +3486,16 @@ ${url}`.trim();
                           : Math.min(4, visiblePrompts.length);
                         const promptsToShow = visiblePrompts.slice(
                           0,
-                          countToShow
+                          countToShow,
                         );
                         const colClass =
                           countToShow === 1
                             ? "grid-cols-1 max-w-xs"
                             : countToShow === 2
-                            ? "grid-cols-2 max-w-lg"
-                            : countToShow === 3
-                            ? "grid-cols-3 max-w-3xl"
-                            : "grid-cols-4 max-w-5xl";
+                              ? "grid-cols-2 max-w-lg"
+                              : countToShow === 3
+                                ? "grid-cols-3 max-w-3xl"
+                                : "grid-cols-4 max-w-5xl";
                         return (
                           <div className={`grid gap-3 ${colClass} mx-auto`}>
                             {promptsToShow.map((prompt, idx) => (
@@ -3362,6 +3597,14 @@ ${url}`.trim();
             ) : (
               <>
                 {/* ======= Conversation ======= */}
+                {/* {isSharedChatView && (
+                  <div className="mx-auto w-full max-w-4xl px-3 sm:px-2 lg:px-2 pt-3">
+                    <div className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-900 shadow-sm">
+                      <strong>Shared Chat:</strong> You are viewing a shared conversation.
+                      You can continue below — your next message will start a new chat in your account.
+                    </div>
+                  </div>
+                )} */}
                 <div className="flex-1 w-full">
                   <div className="mx-auto w-full max-w-4xl px-3 sm:px-2 lg:px-2 pt-2 sm:pt-4 pb-[7.5rem]">
                     {messages.length === 0 ? (
@@ -3432,10 +3675,10 @@ ${url}`.trim();
                                       <button
                                         onClick={() => {
                                           navigator.clipboard.writeText(
-                                            msg.content
+                                            msg.content,
                                           );
                                           message.success(
-                                            "Copied to clipboard"
+                                            "Copied to clipboard",
                                           );
                                         }}
                                         className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
@@ -3471,36 +3714,38 @@ ${url}`.trim();
                                           />
                                         </svg>
                                       </button>
-                                      <button
-                                        onClick={() => handleEdit(idx)}
-                                        className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                        title="Edit"
-                                      >
-                                        <svg
-                                          width="16"
-                                          height="16"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          className="w-4 h-4"
-                                          aria-hidden="true"
+                                      {!isSharedChatView && (
+                                        <button
+                                          onClick={() => handleEdit(idx)}
+                                          className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                          title="Edit"
                                         >
-                                          <path
-                                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          />
-                                          <path
-                                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          />
-                                        </svg>
-                                      </button>
+                                          <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="w-4 h-4"
+                                            aria-hidden="true"
+                                          >
+                                            <path
+                                              d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                              stroke="currentColor"
+                                              strokeWidth="2"
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                            />
+                                            <path
+                                              d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                              stroke="currentColor"
+                                              strokeWidth="2"
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                            />
+                                          </svg>
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white mt-2">
@@ -3551,7 +3796,7 @@ ${url}`.trim();
                                   <button
                                     onClick={() => {
                                       navigator.clipboard.writeText(
-                                        cleanContent(msg.content)
+                                        cleanContent(msg.content),
                                       );
                                       message.success("Copied to clipboard");
                                     }}
@@ -3582,7 +3827,7 @@ ${msg.content}
                                     onClick={() =>
                                       handleReadAloud(
                                         cleanContent(msg.content),
-                                        idx
+                                        idx,
                                       )
                                     }
                                     className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
@@ -3599,19 +3844,20 @@ ${msg.content}
                                     )}
                                   </button>
 
-                                  {idx === messages.length - 1 && (
-                                    <button
-                                      onClick={() => handleRegenerate(idx)}
-                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                      title="Regenerate"
-                                    >
-                                      <RefreshCcw className="w-4 h-4" />
-                                    </button>
-                                  )}
+                                  {!isSharedChatView &&
+                                    idx === messages.length - 1 && (
+                                      <button
+                                        onClick={() => handleRegenerate(idx)}
+                                        className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                        title="Regenerate"
+                                      >
+                                        <RefreshCcw className="w-4 h-4" />
+                                      </button>
+                                    )}
                                 </div>
                               </div>
                             </div>
-                          )
+                          ),
                         )}
                         {loading && (
                           <div className="flex justify-start mb-3 sm:mb-4">
@@ -3742,7 +3988,6 @@ ${msg.content}
                       </div>
                     </div>
                   )}
-
                   {/* ===== DESKTOP: Chips row above bar ===== */}
                   {selectedFiles.length > 0 && (
                     <div className="hidden sm:block w-full max-w-4xl mx-auto mb-2">
@@ -3772,7 +4017,6 @@ ${msg.content}
                       </div>
                     </div>
                   )}
-
                   {/* ===== CHAT BAR (mobile-first, responsive grid) ===== */}
                   <div className="w-full max-w-4xl mx-auto rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500">
                     {/* Grid: [ + ] [ textarea ] [ mic/send ] on all sizes; spacing adapts */}
@@ -3804,7 +4048,7 @@ ${msg.content}
                             el.style.height = "auto";
                             el.style.height = `${Math.min(
                               el.scrollHeight,
-                              128
+                              128,
                             )}px`; // 128px = max-h-32
                           }}
                           onInput={(e) => {
@@ -3812,7 +4056,7 @@ ${msg.content}
                             el.style.height = "auto";
                             el.style.height = `${Math.min(
                               el.scrollHeight,
-                              128
+                              128,
                             )}px`;
                             if (!loading) setInput(el.value);
                           }}
@@ -3878,7 +4122,7 @@ ${msg.content}
                                 } catch (err) {
                                   console.warn(
                                     "Failed to stop voice recognition:",
-                                    err
+                                    err,
                                   );
                                 }
                                 setIsRecording(false);
@@ -3887,7 +4131,7 @@ ${msg.content}
                                 await handleFileUpload(
                                   null,
                                   input ||
-                                    "please describe the file content properly"
+                                    "please describe the file content properly",
                                 );
                                 setInput("");
                                 setShowMobileFiles(false);

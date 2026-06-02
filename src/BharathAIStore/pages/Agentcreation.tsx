@@ -1,5 +1,4 @@
-﻿// src/BharathAIStore/pages/Agentcreation.tsx
-import React, {
+﻿import React, {
   useCallback,
   useEffect,
   useMemo,
@@ -1086,6 +1085,12 @@ const Agentcreation: React.FC = () => {
             description: params.description || "",
             userId: params.userId,
           },
+          {
+            headers: {
+              ...((auth || {}) as Record<string, string>),
+              "Content-Type": "application/json",
+            },
+          },
         );
         const url: string | null = res.data?.imageUrl || null;
         if (!url) throw new Error("No imageUrl in response.");
@@ -1359,7 +1364,12 @@ const Agentcreation: React.FC = () => {
       const res = await axios.post(
         `${BASE_URL}/ai-service/agent/uploadBusinessCard?fileType=kyc&userId=${encodeURIComponent(userId)}`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } },
+        {
+          headers: {
+            ...((auth || {}) as Record<string, string>),
+            "Content-Type": "multipart/form-data",
+          },
+        },
       );
 
       const data = res.data;
@@ -1658,7 +1668,12 @@ const Agentcreation: React.FC = () => {
       const uploadUrl =
         "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar";
 
-      const uploadRes = await axios.post(uploadUrl, uploadForm);
+      const uploadRes = await axios.post(uploadUrl, uploadForm, {
+        headers: {
+          ...((auth || {}) as Record<string, string>),
+          "Content-Type": "multipart/form-data",
+        },
+      });
       const documentPath = uploadRes.data?.documentPath;
 
       if (!documentPath) {
@@ -1677,7 +1692,12 @@ const Agentcreation: React.FC = () => {
         documentPath,
       )}`;
 
-      await axios.post(finalUrl, agentForm);
+      await axios.post(finalUrl, agentForm, {
+        headers: {
+          ...((auth || {}) as Record<string, string>),
+          "Content-Type": "multipart/form-data",
+        },
+      });
     }
   }
 
@@ -1700,8 +1720,13 @@ const Agentcreation: React.FC = () => {
       uploadResolveRef.current = resolve;
       localStorage.setItem(
         "awaitingUpload",
-        JSON.stringify({ assistanceId, userId }),
+        JSON.stringify({
+          assistanceId,
+          userId,
+          roleForUpload: roleForUpload || "",
+        }),
       );
+      localStorage.removeItem("agentUploadClosed");
       setUploadFiles([]);
       setUploadRole(roleForUpload || ""); // ← seed UI with non-editable role
       pendingUploadRef.current = { assistanceId, userId, auth, roleForUpload };
@@ -1713,17 +1738,21 @@ const Agentcreation: React.FC = () => {
   // if not available, it will just show blank read-only (that’s okay).
   useEffect(() => {
     const raw = localStorage.getItem("awaitingUpload");
-    if (!raw) return;
+    if (!raw || localStorage.getItem("agentUploadClosed") === "true") return;
     try {
-      const { assistanceId, userId } = JSON.parse(raw || "{}");
+      const { assistanceId, userId, roleForUpload } = JSON.parse(raw || "{}");
       if (assistanceId && userId) {
         const auth = getAuthHeader();
         setUploadFiles([]);
-        // we may not have the role offline; still open the modal
         setUploadRole(
-          (pendingUploadRef.current?.roleForUpload as string) || "",
+          roleForUpload || pendingUploadRef.current?.roleForUpload || "",
         );
-        pendingUploadRef.current = { assistanceId, userId, auth };
+        pendingUploadRef.current = {
+          assistanceId,
+          userId,
+          auth,
+          roleForUpload,
+        };
         setUploadOpen(true);
       }
     } catch {}
@@ -1794,6 +1823,19 @@ const Agentcreation: React.FC = () => {
     }
   }
 
+  function handleUploadCancel() {
+    localStorage.setItem("agentUploadClosed", "true");
+    localStorage.removeItem("awaitingUpload");
+    setUploadOpen(false);
+    setUploadFiles([]);
+    setUploading(false);
+    uploadResolveRef.current?.(false);
+    uploadResolveRef.current = null;
+    message.info(
+      "Supporting file upload skipped. You can upload files later if required.",
+    );
+  }
+
   function handleUploadFilesPick() {
     const input = document.createElement("input");
     input.type = "file";
@@ -1809,15 +1851,19 @@ const Agentcreation: React.FC = () => {
   // Re-prompt on refresh using the controlled modal only (no confirm modal)
   useEffect(() => {
     const raw = localStorage.getItem("awaitingUpload");
-    if (!raw) return;
+    if (!raw || localStorage.getItem("agentUploadClosed") === "true") return;
     try {
-      const { assistanceId, userId } = JSON.parse(raw || "{}");
+      const { assistanceId, userId, roleForUpload } = JSON.parse(raw || "{}");
       if (assistanceId && userId) {
         const auth = getAuthHeader();
-        // seed context and open the controlled modal
-        setUploadRole("");
+        setUploadRole(roleForUpload || "");
         setUploadFiles([]);
-        pendingUploadRef.current = { assistanceId, userId, auth };
+        pendingUploadRef.current = {
+          assistanceId,
+          userId,
+          auth,
+          roleForUpload,
+        };
         setUploadOpen(true);
       }
     } catch {}
@@ -1847,7 +1893,7 @@ const Agentcreation: React.FC = () => {
           `${BASE_URL}/ai-service/agent/getUserModeDetails`,
           {},
           {
-            params: { role, goal, purpose }
+            params: { role, goal, purpose },
           },
         );
         const raw = res.data;
@@ -2010,19 +2056,33 @@ const Agentcreation: React.FC = () => {
 
       let axiosData: any;
       try {
-        const axiosRes = await axios.post(`${baseUrl}?${qs(queryParams)}`, {}, { signal: ctrl.signal });
+        const axiosRes = await axios.post(
+          `${baseUrl}?${qs(queryParams)}`,
+          {},
+          { signal: ctrl.signal },
+        );
         axiosData = axiosRes.data;
       } catch (err: any) {
-        if (err?.name === "AbortError" || err?.code === "ERR_CANCELED") throw err;
+        if (err?.name === "AbortError" || err?.code === "ERR_CANCELED")
+          throw err;
         // fallback: form-urlencoded
         try {
-          const axiosRes2 = await axios.post(baseUrl, new URLSearchParams(queryParams), {
-            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-            signal: ctrl.signal,
-          });
+          const axiosRes2 = await axios.post(
+            baseUrl,
+            new URLSearchParams(queryParams),
+            {
+              headers: {
+                "Content-Type":
+                  "application/x-www-form-urlencoded;charset=UTF-8",
+              },
+              signal: ctrl.signal,
+            },
+          );
           axiosData = axiosRes2.data;
         } catch {
-          message.warning("Name suggestion failed: Network/CORS. Ensure this route allows Authorization and required methods.");
+          message.warning(
+            "Name suggestion failed: Network/CORS. Ensure this route allows Authorization and required methods.",
+          );
           return;
         }
       }
@@ -2171,9 +2231,14 @@ const Agentcreation: React.FC = () => {
       try {
         const axiosRes = await axios.post(`${baseUrl}?${qs.toString()}`, {});
         const d = axiosRes.data;
-        raw = typeof d === "string" ? d : d?.name || d?.instructions || d?.message || JSON.stringify(d);
+        raw =
+          typeof d === "string"
+            ? d
+            : d?.name || d?.instructions || d?.message || JSON.stringify(d);
       } catch (e: any) {
-        message.warning(`Description suggestion failed: ${e?.response?.status ?? "network"} ${e?.message ?? ""}`);
+        message.warning(
+          `Description suggestion failed: ${e?.response?.status ?? "network"} ${e?.message ?? ""}`,
+        );
         return;
       }
       const proposed = cleanForTransport(raw).slice(0, MAX_DESC);
@@ -2251,9 +2316,16 @@ const Agentcreation: React.FC = () => {
       setGenLoading(true);
       let raw: string;
       try {
-        const axiosRes = await axios.post(`${baseUrl}?${qs.toString()}`, {}, { signal: ctrl.signal });
+        const axiosRes = await axios.post(
+          `${baseUrl}?${qs.toString()}`,
+          {},
+          { signal: ctrl.signal },
+        );
         const d = axiosRes.data;
-        raw = typeof d === "string" ? d : d?.name || d?.instructions || d?.message || JSON.stringify(d);
+        raw =
+          typeof d === "string"
+            ? d
+            : d?.name || d?.instructions || d?.message || JSON.stringify(d);
       } catch (e: any) {
         if (e?.name === "AbortError" || e?.code === "ERR_CANCELED") throw e;
         throw new Error();
@@ -2346,11 +2418,19 @@ const Agentcreation: React.FC = () => {
         const axiosRes = await axios.post(url, {}, { signal: ctrl.signal });
         const d = axiosRes.data;
         if (Array.isArray(d)) startersRaw = d.join("\n");
-        else if (d && typeof d === "object") startersRaw = (d as any).questions || (d as any).message || (d as any).result || (d as any).text || JSON.stringify(d);
+        else if (d && typeof d === "object")
+          startersRaw =
+            (d as any).questions ||
+            (d as any).message ||
+            (d as any).result ||
+            (d as any).text ||
+            JSON.stringify(d);
         else startersRaw = String(d ?? "");
       } catch (e: any) {
         if (e?.name === "AbortError" || e?.code === "ERR_CANCELED") throw e;
-        throw new Error("Network/CORS error calling starters API. Ensure POST is allowed and CORS is enabled.");
+        throw new Error(
+          "Network/CORS error calling starters API. Ensure POST is allowed and CORS is enabled.",
+        );
       }
 
       if (!applyPrompts(startersRaw)) return;
@@ -2441,7 +2521,13 @@ const Agentcreation: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = await axios.patch(`${BASE_URL}/ai-service/agent/newAgentPublish`, body);
+      const res = await axios.patch(
+        `${BASE_URL}/ai-service/agent/newAgentPublish`,
+        body,
+        {
+          headers: { ...((auth || {}) as Record<string, string>) },
+        },
+      );
       const data = res.data ?? {};
       const assistanceId =
         data.assistanceId || data.assistantId || data.id || "";
@@ -2459,21 +2545,26 @@ const Agentcreation: React.FC = () => {
       setLoading(false);
       const publishedAgentType = (data?.agentType || "").toLowerCase();
       setPublishedAgentType(publishedAgentType);
-      if (assistanceId) {
-        localStorage.setItem(
-          "awaitingUpload",
-          JSON.stringify({ assistanceId, userId }),
+      let uploadCompleted = false;
+
+      // ✅ If Business Card flow exists, first generate/upload the profile PDF silently.
+      if (assistanceId && isBusinessCardUsed && businessCardFile) {
+        uploadCompleted = await fetchProfilePdfAndUpload(
+          assistanceId,
+          userId,
+          auth || {},
+          roleForUpload,
         );
-        if (isBusinessCardUsed) {
-          await fetchProfilePdfAndUpload(
-            assistanceId,
-            userId,
-            auth || {},
-            roleForUpload,
-          );
-        } else {
-          await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
-        }
+      }
+
+      // ✅ After successful publish, ask for optional supporting files.
+      // Whether the user uploads files or closes/skips the modal, publishNow continues
+      // and navigates to /main/bharath-aistore/agents.
+      if (assistanceId) {
+        setPublishedAgentType(
+          (data?.agentType || roleForUpload || "supporting").toLowerCase(),
+        );
+        await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
       }
 
       try {
@@ -2481,7 +2572,9 @@ const Agentcreation: React.FC = () => {
         // Track published agent names to prevent duplicates
         const storageKey = `publishedAgents_${userId || "guest"}`;
         let publishedNames: string[] = [];
-        try { publishedNames = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch {}
+        try {
+          publishedNames = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        } catch {}
         const normalizedName = (agentName || "").trim().toLowerCase();
         if (normalizedName && !publishedNames.includes(normalizedName)) {
           publishedNames.push(normalizedName);
@@ -2492,7 +2585,11 @@ const Agentcreation: React.FC = () => {
       }
 
       setPreviewOpen(false);
-      message.success("All set! Files uploaded and agent queued for approval.");
+      message.success(
+        uploadCompleted
+          ? "Agent published successfully and profile document uploaded."
+          : "Agent published successfully.",
+      );
       setIsBusinessCardUsed(false);
       setBusinessCardFile(null);
       setBusinessCardPreview("");
@@ -2561,6 +2658,10 @@ const Agentcreation: React.FC = () => {
     view,
     conStarter1,
     conStarter2,
+    agentUserName,
+    userModeText,
+    isBusinessCardUsed,
+    businessCardFile,
     navigate,
   ]);
 
@@ -2593,14 +2694,17 @@ const Agentcreation: React.FC = () => {
     const normalizedName = agentName.trim().toLowerCase();
     const storageKey = `publishedAgents_${customerId || "guest"}`;
     let publishedNames: string[] = [];
-    try { publishedNames = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch {}
+    try {
+      publishedNames = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    } catch {}
     if (publishedNames.includes(normalizedName)) {
       Modal.error({
         title: "Duplicate Agent Name",
         content: (
           <div>
             An agent named <b>&#34;{agentName.trim()}&#34;</b> already exists.
-            <br />Please use a different <b>Agent Name</b> to make it unique.
+            <br />
+            Please use a different <b>Agent Name</b> to make it unique.
           </div>
         ),
         okText: "Change Name",
@@ -2617,15 +2721,23 @@ const Agentcreation: React.FC = () => {
       userId: string,
       auth: HeadersInit,
       roleForUpload: string,
-    ) => {
+    ): Promise<boolean> => {
       setAutoFetchingProfile(true);
       try {
         const formData = new FormData();
         formData.append("image", businessCardFile!); // businessCardFile is already in state
 
-        const res = await axios.post(`${BASE_URL}/ai-service/generate-profile`, formData, {
-          responseType: "blob",
-        });
+        const res = await axios.post(
+          `${BASE_URL}/ai-service/generate-profile`,
+          formData,
+          {
+            responseType: "blob",
+            headers: {
+              ...((auth || {}) as Record<string, string>),
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
 
         // Step 2: Response is direct PDF binary — read as blob
         const pdfBlob = res.data as Blob;
@@ -2642,28 +2754,23 @@ const Agentcreation: React.FC = () => {
         );
 
         message.success("Profile document uploaded successfully!");
-        setAutoFetchingProfile(false);
-        setUploadFiles([]);
-        setUploadRole(roleForUpload || "");
-        pendingUploadRef.current = {
-          assistanceId,
-          userId,
-          auth,
-          roleForUpload,
-        };
-        setUploadOpen(true);
+        return true;
       } catch (e: any) {
+        console.error("generate-profile/upload failed:", e);
+        message.warning(
+          e?.response?.data?.message ||
+            e?.message ||
+            "Agent published, but profile document upload failed.",
+        );
+        return false;
+      } finally {
         setAutoFetchingProfile(false);
-        message.error(e?.message || "Failed to fetch Company profile.");
         setUploadFiles([]);
-        setUploadRole(roleForUpload || "");
-        pendingUploadRef.current = {
-          assistanceId,
-          userId,
-          auth,
-          roleForUpload,
-        };
-        setUploadOpen(true);
+        setUploadRole("");
+        pendingUploadRef.current = null;
+        setUploadOpen(false);
+        localStorage.removeItem("awaitingUpload");
+        localStorage.setItem("agentUploadClosed", "true");
       }
     },
     [businessCardFile],
@@ -5059,7 +5166,7 @@ const Agentcreation: React.FC = () => {
                 cursor: "pointer",
               }}
             >
-              Close
+              Cancel
             </button>
 
             <button
@@ -5198,13 +5305,10 @@ const Agentcreation: React.FC = () => {
       <Modal
         open={uploadOpen}
         title={getUploadModalContent(publishedAgentType).title} // ← dynamic title
-        closable={false}
+        closable={true}
         maskClosable={false}
         keyboard={false}
-        onCancel={() => {
-          message.warning("Please complete the upload to continue.");
-          setUploadOpen(true);
-        }}
+        onCancel={handleUploadCancel}
         footer={null}
       >
         <div style={{ display: "grid", gap: 12 }}>
@@ -5287,7 +5391,7 @@ const Agentcreation: React.FC = () => {
           >
             <button
               type="button"
-              onClick={() => setUploadOpen(false)}
+              onClick={handleUploadCancel}
               style={{
                 padding: "10px 18px",
                 borderRadius: 999,
@@ -5298,7 +5402,7 @@ const Agentcreation: React.FC = () => {
                 cursor: "pointer",
               }}
             >
-              Close
+              Cancel
             </button>
             <button
               type="button"
@@ -5334,7 +5438,7 @@ const Agentcreation: React.FC = () => {
       {/* ===== Profile Edit (Mandatory Gate) ===== */}
       <Modal
         open={profileModalOpen}
-        onCancel={() => setProfileModalOpen(false)}
+        onCancel={handleCancelProfile}
         footer={null}
         title="Complete Your Profile"
         closable={true}
@@ -5441,6 +5545,23 @@ const Agentcreation: React.FC = () => {
 
           {/* Actions */}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <button
+              type="button"
+              onClick={handleCancelProfile}
+              disabled={profileLoading}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 999,
+                border: `1px solid ${BORDER}`,
+                fontWeight: 800,
+                color: "#475569",
+                background: "#FFFFFF",
+                cursor: profileLoading ? "not-allowed" : "pointer",
+                opacity: profileLoading ? 0.7 : 1,
+              }}
+            >
+              Cancel
+            </button>
             <button
               type="button"
               onClick={handleSaveOrUpdateProfile}

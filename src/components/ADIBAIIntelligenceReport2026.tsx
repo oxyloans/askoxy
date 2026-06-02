@@ -87,7 +87,25 @@ const htmlContent = `<div class="topbar">
       <h1>Abu Dhabi Islamic Bank (ADIB) — AI Intelligence Report 2026</h1>
       <p>Autonomous Banking AI Analysis | 20 Use Cases | 9 Agents | 7 Programs | Official Sources Only</p>
     </div>
-    <span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+   <div style="display:flex;align-items:center;gap:10px;">
+      <button
+        onclick="window.location.href='/radha/emirates-nbd-ai-intelligence'"
+        style="
+          background:#5543C8;
+          color:white;
+          border:none;
+          padding:8px 18px;
+          border-radius:999px;
+          cursor:pointer;
+          font-size:13px;
+          font-weight:600;
+        "
+      >
+        View Emirates NBD Report
+      </button>
+
+      <span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+    </div>
   </div>
 </div>
 <nav class="nav">

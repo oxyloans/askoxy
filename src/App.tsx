@@ -94,10 +94,10 @@ import EmailCampaign from "./components/EmailCampaign";
 import GoogleAnalyticsDashboard from "./components/GoogleAnalyticsDashboard";
 import OxyBricksFractionalPage from "./components/FractionalPage";
 import Assignedtasksbasedstatus from "./Taskmanagement/Assignedtasksbasedstatus";
-import BOSAIIntelligence from "./components/BosReportAi";
+
 import EmiratesNBDAIIntelligenceReport2026 from "./components/EmiratesNBDAIIntelligenceReport2026";
 import FABAIIntelligenceReport2026 from "./components/FABAIIntelligenceReport2026";
-import AjmanBankAIIntelligenceReport2026 from "./components/AjmanBankAIIntelligenceReport2026";
+
 import ADIBAIIntelligenceReport2026 from "./components/ADIBAIIntelligenceReport2026";
 import DIBAIIntelligenceReport2026 from "./components/DIBAIIntelligenceReport2026";
 import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
@@ -643,11 +643,11 @@ const App: React.FC = () => {
       currentPath.startsWith("/goldrates") ||
       currentPath.startsWith("/all-different-gold-rates") ||
       currentPath.startsWith("/allgoldrates") ||
-      currentPath.startsWith("/radha/bos-ai-intelligence") ||
+      // currentPath.startsWith("/radha/bos-ai-intelligence") ||
       currentPath.startsWith("/radha/adcb-ai-intelligence") ||
       currentPath.startsWith("/radha/emirates-nbd-ai-intelligence") ||
       currentPath.startsWith("/radha/fab-ai-intelligence") ||
-      currentPath.startsWith("/radha/ajman-bank-ai-intelligence") ||
+      // currentPath.startsWith("/radha/ajman-bank-ai-intelligence") ||
       currentPath.startsWith("/radha/adib-ai-intelligence") ||
       currentPath.startsWith("/radha/dib-ai-intelligence") ||
       currentPath.startsWith("/radha/cbd-ai-intelligence") ||
@@ -664,6 +664,7 @@ const App: React.FC = () => {
       currentPath.startsWith("/leaveapproval") ||
       currentPath.startsWith("/leavestatus") ||
       currentPath.startsWith("/all-statuses") ||
+      
       currentPath.startsWith("/assigned-task") ||
       currentPath.startsWith("/techmahindra/jobs") ||
       currentPath.startsWith("/allcompanies/jobs") ||
@@ -1257,10 +1258,7 @@ const App: React.FC = () => {
               <Route path="/future" element={<Landingpage />} />
               <Route path="/apidocs" element={<ApiDocs />} />
               <Route path="/womensday" element={<WomensDay />} />
-              <Route
-                path="/radha/bos-ai-intelligence"
-                element={<BOSAIIntelligence />}
-              />
+            
               <Route
                 path="/radha/emirates-nbd-ai-intelligence"
                 element={<EmiratesNBDAIIntelligenceReport2026 />}
@@ -1269,10 +1267,7 @@ const App: React.FC = () => {
                 path="/radha/fab-ai-intelligence"
                 element={<FABAIIntelligenceReport2026 />}
               />
-              <Route
-                path="/radha/ajman-bank-ai-intelligence"
-                element={<AjmanBankAIIntelligenceReport2026 />}
-              />
+             
               <Route
                 path="/radha/adib-ai-intelligence"
                 element={<ADIBAIIntelligenceReport2026 />}

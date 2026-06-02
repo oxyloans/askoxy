@@ -37,7 +37,7 @@ const Whiteboardtheme: React.FC = () => {
   }, []);
 
   const handleCardClick = (
-    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad" | "oxybricks"
+    type: "loans" | "jobs" | "gold" | "bharat" | "studyabroad" | "oxybricks",
   ) => {
     if (type === "studyabroad") return navigate("/studyabroad");
     if (type === "bharat") return navigate("/bharath-aistore");
@@ -47,6 +47,14 @@ const Whiteboardtheme: React.FC = () => {
     if (type === "oxybricks") return navigate("/fpl");
   };
 
+  const handleAdcbAiClick = () => {
+    window.open(
+      "https://www.askoxy.ai/radha/fab-ai-intelligence",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+  
   const cards = [
     {
       key: "loans",
@@ -137,9 +145,20 @@ const Whiteboardtheme: React.FC = () => {
 
               <span className="mt-2 block font-normal text-[#5E5E5E]">
                 <span className="font-bold text-[#D71D8E]">Multiple</span>{" "}
-                Premier <span className="font-bold text-[#1F9D38]">Leagues</span>
+                Premier{" "}
+                <span className="font-bold text-[#1F9D38]">Leagues</span>
               </span>
             </motion.h5>
+
+            <motion.div
+              onClick={() => {
+                window.location.href = "/radha/fab-ai-intelligence";
+              }}
+              whileHover={{ scale: 1.2 }}
+              whileTap={{ scale: 0.9 }}
+              className="h-4 w-4 cursor-pointer rounded-full border-2 border-dotted border-[#5543C8]"
+              
+            />
 
             <img
               src={arrow0}
@@ -258,24 +277,56 @@ const Whiteboardtheme: React.FC = () => {
 
               <span className="inline-flex flex-col items-center leading-none text-[#1565C9]">
                 <span>Careers,</span>
-                <img src={line1} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
+                <img
+                  src={line1}
+                  alt=""
+                  style={{
+                    marginTop: 2,
+                    height: "clamp(4px,0.45vw,6px)",
+                    width: "100%",
+                  }}
+                />
               </span>
 
               <span className="inline-flex flex-col items-center leading-none text-[#1F9D38]">
                 <span>Commerce,</span>
-                <img src={line2} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
+                <img
+                  src={line2}
+                  alt=""
+                  style={{
+                    marginTop: 2,
+                    height: "clamp(4px,0.45vw,6px)",
+                    width: "100%",
+                  }}
+                />
               </span>
 
               <span className="inline-flex flex-col items-center leading-none text-[#E1A517]">
                 <span>Capital</span>
-                <img src={line3} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
+                <img
+                  src={line3}
+                  alt=""
+                  style={{
+                    marginTop: 2,
+                    height: "clamp(4px,0.45vw,6px)",
+                    width: "100%",
+                  }}
+                />
               </span>
 
               <span>&amp;</span>
 
               <span className="inline-flex flex-col items-center leading-none text-[#D71D8E]">
                 <span>Global Capability Centers.</span>
-                <img src={line4} alt="" style={{ marginTop: 2, height: "clamp(4px,0.45vw,6px)", width: "100%" }} />
+                <img
+                  src={line4}
+                  alt=""
+                  style={{
+                    marginTop: 2,
+                    height: "clamp(4px,0.45vw,6px)",
+                    width: "100%",
+                  }}
+                />
               </span>
             </div>
           </motion.div>

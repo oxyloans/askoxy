@@ -87,7 +87,25 @@ const htmlContent = `<div class="topbar">
       <h1>Emirates NBD — AI Intelligence Report 2026</h1>
       <p>Autonomous Banking AI Analysis | 28 Use Cases | 10 Agents | 8 Programs | Official Sources Only</p>
     </div>
-    <span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button
+        onclick="window.location.href='/radha/dib-ai-intelligence'"
+        style="
+          background:#5543C8;
+          color:white;
+          border:none;
+          padding:8px 18px;
+          border-radius:999px;
+          cursor:pointer;
+          font-size:13px;
+          font-weight:600;
+        "
+      >
+        View DIB Report
+      </button>
+
+      <span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+    </div>
   </div>
 </div>
 <nav class="nav">

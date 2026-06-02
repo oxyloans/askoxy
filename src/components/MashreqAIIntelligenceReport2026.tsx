@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
 declare global {
   interface Window {
@@ -89,7 +89,25 @@ const htmlContent = `<div class="topbar">
 <h1>Mashreq Bank — AI Intelligence Report 2026</h1>
 <p>Autonomous Banking AI Analysis | 28 Use Cases | 12 Agents | 7 Programs | Official Sources Only | FY2025 + Q1 2026</p>
 </div>
-<span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+ <div style="display:flex;align-items:center;gap:10px;">
+      <button
+        onclick="window.location.href='/radha/sib-ai-intelligence'"
+        style="
+          background:#5543C8;
+          color:white;
+          border:none;
+          padding:8px 18px;
+          border-radius:999px;
+          cursor:pointer;
+          font-size:13px;
+          font-weight:600;
+        "
+      >
+        View SIB Report
+      </button>
+
+      <span class="badge-gold">CONFIDENTIAL STRATEGIC REPORT</span>
+    </div>
 </div>
 </div>
 <nav class="nav">
@@ -969,10 +987,10 @@ export default function MashreqAIIntelligenceReport2026() {
   useEffect(() => {
     window.showPage = (id: string, btn: HTMLElement) => {
       document
-        .querySelectorAll(".page")
+        .querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 .page")
         .forEach((page) => page.classList.remove("active"));
       document
-        .querySelectorAll(".nav button")
+        .querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 .nav button")
         .forEach((button) => button.classList.remove("active"));
       document.getElementById("page-" + id)?.classList.add("active");
       btn.classList.add("active");
@@ -981,10 +999,10 @@ export default function MashreqAIIntelligenceReport2026() {
 
     window.filterUC = (maturity: string, btn: HTMLElement) => {
       document
-        .querySelectorAll("#uc-filters button")
+        .querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 #uc-filters button")
         .forEach((button) => button.classList.remove("active"));
       btn.classList.add("active");
-      document.querySelectorAll<HTMLElement>(".uc-card").forEach((card) => {
+      document.querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 .uc-card").forEach((card) => {
         if (maturity === "all") {
           card.style.display = "";
         } else {
@@ -1002,9 +1020,9 @@ export default function MashreqAIIntelligenceReport2026() {
   }, []);
 
   return (
-    <>
+    <div className="mashreq-ai-intelligence-report-2026">
       <style>{styles}</style>
       <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-    </>
+    </div>
   );
 }
