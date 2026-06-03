@@ -105,28 +105,26 @@ const UserPanelLayout: React.FC<UserPanelLayoutProps> = ({ children }) => {
   const toggleCollapse = (): void => setCollapsed((prev) => !prev);
 
 const handleSignOut = (): void => {
-  Swal.fire({
-    title: "Sign Out",
-    html: `
-      <div style="font-size:15px;color:#374151;line-height:1.6">
-        You are about to sign out of your account.<br/>
-        <span style="color:#6b7280;font-size:13px;">Any unsaved progress will be preserved.</span>
-      </div>
-    `,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#008cba",
-    cancelButtonColor: "#6b7280",
-    confirmButtonText: "Yes, Sign Out",
-    cancelButtonText: "Stay Logged In",
-    reverseButtons: true,
-    focusCancel: true,
-    customClass: {
-      title: "swal2-title",
-      confirmButton: "swal2-confirm",
-      cancelButton: "swal2-cancel",
-    },
-  }).then((result) => {
+ Swal.fire({
+  title: "Sign Out",
+  html: `
+    <div style="font-size:15px;color:#374151;line-height:1.6">
+      Are you sure you want to sign out?
+      <br/>
+      <span style="color:#6b7280;font-size:13px;">
+        You will need to sign in again to access your account.
+      </span>
+    </div>
+  `,
+  icon: "warning",
+  showCancelButton: true,
+  confirmButtonColor: "#DC2626",
+  cancelButtonColor: "#6B7280",
+  confirmButtonText: "Yes, Sign Out",
+  cancelButtonText: "Cancel",
+  reverseButtons: true,
+  focusCancel: true,
+}).then((result) => {
     if (!result.isConfirmed) return;
 
     const currentPath = location.pathname;

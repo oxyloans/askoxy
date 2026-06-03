@@ -1009,7 +1009,9 @@ const Assignedtasksbasedstatus: React.FC = () => {
 
           const searchedTasks = normalizeTasks(response.data || []);
           const statusFilteredTasks =
-            status === "all" ? searchedTasks : filterByStatus(searchedTasks, status);
+            status === "all"
+              ? searchedTasks
+              : filterByStatus(searchedTasks, status);
           const startIndex = (page - 1) * size;
           const endIndex = startIndex + size;
 
@@ -1019,22 +1021,22 @@ const Assignedtasksbasedstatus: React.FC = () => {
           return;
         }
 
-      let response;
+        let response;
 
-      if (status === "all") {
-        response = await employeeApi.get(
-          `${BASE_URL}/ai-service/agent/messagesBasedOnStatus`,
-        );
-      } else {
-        response = await employeeApi.get(
-          `${BASE_URL}/ai-service/agent/messagesBasedOnStatus`,
-          {
-            params: {
-              status,
+        if (status === "all") {
+          response = await employeeApi.get(
+            `${BASE_URL}/ai-service/agent/messagesBasedOnStatus`,
+          );
+        } else {
+          response = await employeeApi.get(
+            `${BASE_URL}/ai-service/agent/messagesBasedOnStatus`,
+            {
+              params: {
+                status,
+              },
             },
-          },
-        );
-      }
+          );
+        }
 
         /*
           Status API:
@@ -1046,8 +1048,8 @@ const Assignedtasksbasedstatus: React.FC = () => {
         const data = response.data;
         const rawList = Array.isArray(data) ? data : data?.content || [];
         const pageTasks = normalizeTasks(rawList);
-      const filteredContent =
-        status === "all" ? pageTasks : filterByStatus(pageTasks, status);
+        const filteredContent =
+          status === "all" ? pageTasks : filterByStatus(pageTasks, status);
         const startIndex = (page - 1) * size;
         const endIndex = startIndex + size;
 
@@ -1058,11 +1060,14 @@ const Assignedtasksbasedstatus: React.FC = () => {
             ? filteredContent.length
             : data?.totalElements || filteredContent.length || 0,
         );
-      } catch (error) {
+      } catch (error: any) {
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Failed to fetch tasks",
+          title: "Unable to Load Tasks",
+          text:
+            error?.response?.data?.message ||
+            error?.response?.data ||
+            "Failed to fetch tasks.",
         });
       } finally {
         setLoading(false);
@@ -1131,8 +1136,8 @@ const Assignedtasksbasedstatus: React.FC = () => {
       title: "Access Restricted",
       text:
         action === "complete"
-          ? "This task is assigned to another employee. Only the assigned employee can mark this task as completed."
-          : "This task is assigned to another employee. Only the assigned employee can add comments or update task progress.",
+          ? "You do not have permission to complete this task. Only the employee assigned to this task can mark it as completed."
+          : "You do not have the necessary permissions to add comments or update this task. These actions can only be performed by the employee assigned to the task.",
       confirmButtonColor: "#008cba",
     });
   };
@@ -1145,15 +1150,18 @@ const Assignedtasksbasedstatus: React.FC = () => {
       );
       Swal.fire({
         icon: "success",
-        title: "Success",
-        text: `Task marked as ${newStatus.toLowerCase()} successfully.`,
+        title: "Task Updated",
+        text: `The task has been successfully marked as ${newStatus.toLowerCase()}.`,
       });
       await fetchTasks(currentPage, pageSize, statusFilter, searchText);
-    } catch {
+    } catch (error: any) {
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Failed to update task status",
+        title: "Access Restricted",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data ||
+          "Failed to update task status.",
       });
     }
   };
@@ -1180,21 +1188,25 @@ const Assignedtasksbasedstatus: React.FC = () => {
 
       Swal.fire({
         icon: "success",
-        title: "Success",
-        text: "Comment added successfully!",
+        title: "Comment Added",
+        text: "Your comment has been added successfully.",
       });
 
       setCommentsModalVisible(false);
       setComments("");
       await fetchTasks(currentPage, pageSize, statusFilter, searchText);
       if (selectedTask) handleViewComments(selectedTask);
-    } catch {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to add comment",
-      });
-    }
+    } catch (error: any) {
+    Swal.fire({
+      icon: "error",
+      title: "Access Restricted",
+      text:
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        "Failed to add comment.",
+    });
+  }
+    
   };
 
   const handleViewComments = async (task: Task) => {
@@ -1207,11 +1219,14 @@ const Assignedtasksbasedstatus: React.FC = () => {
       );
       setCommentsData(response.data || []);
       setViewModalVisible(true);
-    } catch {
+    } catch (error: any) {
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Failed to fetch comments",
+        title: "Unable to Load Comments",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data ||
+          "Failed to fetch comments.",
       });
     } finally {
       setLoading(false);

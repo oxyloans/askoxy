@@ -37,8 +37,6 @@ const { Title, Text, Paragraph } = Typography;
 const { Dragger } = Upload;
 const { useBreakpoint } = Grid;
 
-
-
 const COLOR_PRIMARY = "#008cba";
 const COLOR_PRIMARY_DARK = "#0079a3";
 const COLOR_SUCCESS = "#1ab394";
@@ -93,27 +91,24 @@ const SECTION_META: Record<
   },
 };
 
-const isValidEmail = (email: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-
 const primaryButtonStyle: React.CSSProperties = {
   background: COLOR_PRIMARY,
   borderColor: COLOR_PRIMARY,
   color: "#ffffff",
-  fontWeight: 700,
-  height: 46,
-  borderRadius: 10,
-  boxShadow: "0 10px 20px rgba(0, 140, 186, 0.18)",
+  fontWeight: 600,
+  height: 38,
+  borderRadius: 8,
+  fontSize: 14,
 };
 
 const successButtonStyle: React.CSSProperties = {
   background: COLOR_SUCCESS,
   borderColor: COLOR_SUCCESS,
   color: "#ffffff",
-  fontWeight: 700,
-  height: 46,
-  borderRadius: 10,
-  boxShadow: "0 10px 20px rgba(26, 179, 148, 0.18)",
+  fontWeight: 600,
+  height: 38,
+  borderRadius: 8,
+  fontSize: 14,
 };
 
 const cardStyle: React.CSSProperties = {
@@ -139,8 +134,8 @@ const EmailCampaign: React.FC = () => {
   const [activeSection, setActiveSection] = useState<SectionKey>("upload");
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [form] = Form.useForm();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
@@ -166,11 +161,6 @@ const EmailCampaign: React.FC = () => {
       : expandedWidth;
 
   const meta = SECTION_META[activeSection];
-
-  const isCampaignFormValid =
-    clientName.trim().length > 0 &&
-    clientEmail.trim().length > 0 &&
-    isValidEmail(clientEmail);
 
   const menuItems: MenuProps["items"] = [
     {
@@ -222,7 +212,7 @@ const EmailCampaign: React.FC = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (data.success) {
@@ -237,22 +227,10 @@ const EmailCampaign: React.FC = () => {
     }
   };
 
-  const handleSendCampaign = async () => {
-    if (!clientName.trim()) {
-      setCampaignError("Please enter the client full name.");
-      return;
-    }
-
-    if (!clientEmail.trim()) {
-      setCampaignError("Please enter the client email address.");
-      return;
-    }
-
-    if (!isValidEmail(clientEmail)) {
-      setCampaignError("Please enter a valid email address.");
-      return;
-    }
-
+  const handleSendCampaign = async (values: {
+    clientName: string;
+    clientEmail: string;
+  }) => {
     setCampaignLoading(true);
     setCampaignError("");
 
@@ -260,14 +238,14 @@ const EmailCampaign: React.FC = () => {
       const { data } = await customerApi.post<CampaignResponse>(
         `${BASE_URL}/ai-automation/email/send-campaign`,
         {
-          clientName: clientName.trim(),
-          clientEmail: clientEmail.trim(),
+          clientName: values.clientName.trim(),
+          clientEmail: values.clientEmail.trim(),
         },
         {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (data.success) {
@@ -296,6 +274,7 @@ const EmailCampaign: React.FC = () => {
   const resetCampaignSection = () => {
     setClientName("");
     setClientEmail("");
+    form.resetFields();
     setCampaignResult(null);
     setCampaignError("");
   };
@@ -417,7 +396,7 @@ const EmailCampaign: React.FC = () => {
               </span>
             ),
           },
-        
+
           { title: meta.breadcrumb },
         ]}
         style={{
@@ -553,8 +532,6 @@ const EmailCampaign: React.FC = () => {
           Upload Another PDF
         </Button>
       )}
-
-      
     </Card>
   );
 
@@ -580,18 +557,25 @@ const EmailCampaign: React.FC = () => {
       }}
     >
       {!campaignResult ? (
-        <Form layout="vertical" requiredMark={false}>
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          initialValues={{ clientName, clientEmail }}
+          onFinish={handleSendCampaign}
+         
+        >
           <Form.Item
+            name="clientName"
             label={
               <span className="ec-form-label">
                 Client Full Name <span className="ec-required">*</span>
               </span>
             }
-            extra={
-              <span className="ec-form-hint">
-                Enter the recipient name for personalization.
-              </span>
-            }
+            rules={[
+              { required: true, message: "Please enter the client full name." },
+              { min: 2, message: "Please enter at least 2 characters." },
+            ]}
           >
             <Input
               size="large"
@@ -607,16 +591,23 @@ const EmailCampaign: React.FC = () => {
           </Form.Item>
 
           <Form.Item
+            name="clientEmail"
             label={
               <span className="ec-form-label">
                 Client Email Address <span className="ec-required">*</span>
               </span>
             }
-            extra={
-              <span className="ec-form-hint">
-                The campaign email will be sent to this address.
-              </span>
-            }
+            rules={[
+              {
+                required: true,
+                message: "Please enter the client email address.",
+              },
+              {
+                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Please enter a valid email address.",
+              },
+            ]}
+            validateTrigger={["onBlur", "onChange"]}
           >
             <Input
               size="large"
@@ -640,20 +631,24 @@ const EmailCampaign: React.FC = () => {
               style={{ marginBottom: 16, borderRadius: 12 }}
             />
           )}
-
-          <Button
-            type="primary"
-            size="large"
-            block
-            className="ec-success-btn"
-            icon={<RocketOutlined />}
-            loading={campaignLoading}
-            disabled={!isCampaignFormValid}
-            onClick={handleSendCampaign}
-            style={successButtonStyle}
-          >
-            Send Campaign
-          </Button>
+          <Form.Item>
+            <Button
+              type="primary"
+              size="large"
+              block
+              className="ec-success-btn"
+              icon={<RocketOutlined />}
+              loading={campaignLoading}
+              htmlType="submit"
+              style={{
+                ...successButtonStyle,
+                minHeight: 46,
+                letterSpacing: 0.25,
+              }}
+            >
+              Send Campaign
+            </Button>
+          </Form.Item>
         </Form>
       ) : (
         <>

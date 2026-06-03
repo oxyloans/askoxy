@@ -116,18 +116,18 @@ const AssistantDetails: React.FC = () => {
   );
   const currentPath = `${location.pathname}${location.search || ""}`;
 
-useEffect(() => {
-  if (!userId) {
-    const fullPath = `${location.pathname}${location.search || ""}`;
+  useEffect(() => {
+    if (!userId) {
+      const fullPath = `${location.pathname}${location.search || ""}`;
 
-    sessionStorage.setItem("redirectPath", fullPath);
-    sessionStorage.setItem("fromAISTore", "true");
-    sessionStorage.setItem("primaryType", "AGENT");
+      sessionStorage.setItem("redirectPath", fullPath);
+      sessionStorage.setItem("fromAISTore", "true");
+      sessionStorage.setItem("primaryType", "AGENT");
 
-    window.location.href = "/whatsappregister?primaryType=AGENT";
-    return;
-  }
-}, [userId, location.pathname, location.search]);
+      window.location.href = "/whatsappregister?primaryType=AGENT";
+      return;
+    }
+  }, [userId, location.pathname, location.search]);
   // assistant + chat state
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -963,7 +963,9 @@ useEffect(() => {
 
   const openHistoryChat = async (hid: string) => {
     console.log("[openHistoryChat] Opening chat:", hid);
-
+  if (shareIdFromUrl) {
+    navigate(location.pathname, { replace: true });
+  }
     if (!id) return;
 
     setCurrentChatId(hid);
@@ -2151,30 +2153,29 @@ useEffect(() => {
 
         const sharedMessages = normalizeMessages(res.data?.messages || []);
 
-       
         const sharedTitle = generateChatTitle(
           res.data?.agentName
             ? `Shared chat - ${res.data.agentName}`
             : "Shared chat",
         );
 
-      setMessages(sharedMessages);
+        setMessages(sharedMessages);
 
-      const sharedHistoryId = `shared-${shareId}`;
-      const sharedThreadId =
-        res.data?.threadId ||
-        res.data?.thread_id ||
-        res.data?.shareId ||
-        shareId;
+        const sharedHistoryId = `shared-${shareId}`;
+        const sharedThreadId =
+          res.data?.threadId ||
+          res.data?.thread_id ||
+          res.data?.shareId ||
+          shareId;
 
-      setCurrentChatId(sharedHistoryId);
-      setThreadId(sharedThreadId);
-      setThreadSource("agent");
+        setCurrentChatId(sharedHistoryId);
+        setThreadId(sharedThreadId);
+        setThreadSource("agent");
 
-      setThreadIdMap((prev) => ({
-        ...prev,
-        [sharedHistoryId]: sharedThreadId,
-      }));
+        setThreadIdMap((prev) => ({
+          ...prev,
+          [sharedHistoryId]: sharedThreadId,
+        }));
         setSelectedFiles([]);
         setInput("");
         setEditingIndex(null);
@@ -2805,7 +2806,7 @@ ${url}`.trim();
                         message.error("Unable to copy share link.");
                       }
                     }}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-500"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 px-4 py-3 text-white "
                   >
                     <Copy size={16} />
                     Copy
@@ -2816,25 +2817,21 @@ ${url}`.trim();
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Button
                   onClick={() => setShowShareQuestion(false)}
-                  style={{
-                    height: 48,
-                    borderRadius: 10,
-                    background: "#374151",
-                    color: "#fff",
-                    border: "none",
-                  }}
+                  className="
+    h-12 rounded-lg
+    bg-gray-200 text-gray-800 border-gray-300
+    hover:!bg-gray-300
+
+    dark:bg-gray-800
+    dark:text-white
+    dark:border-gray-700
+    dark:hover:!bg-gray-700
+  "
                 >
                   Close
                 </Button>
 
                 <Button
-                  style={{
-                    height: 48,
-                    borderRadius: 10,
-                    background: "#4f46e5",
-                    color: "#fff",
-                    border: "none",
-                  }}
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(shareText);
@@ -2843,10 +2840,18 @@ ${url}`.trim();
                       message.error("Unable to copy share link.");
                     }
                   }}
+                  className="
+    h-12 rounded-lg
+    bg-gray-800 text-white border-none
+    hover:!bg-gray-700
+
+    dark:bg-gray-800
+    dark:text-white
+    dark:hover:!bg-gray-700
+  "
                 >
                   Copy Link
                 </Button>
-
                 <Button
                   icon={<WhatsAppOutlined />}
                   onClick={() => {
@@ -2856,13 +2861,15 @@ ${url}`.trim();
 
                     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
                   }}
-                  style={{
-                    height: 48,
-                    borderRadius: 10,
-                    background: "#25D366",
-                    borderColor: "#25D366",
-                    color: "#fff",
-                  }}
+                  className="
+    h-12 rounded-lg
+    bg-gray-800 text-white border-none
+    hover:!bg-gray-700
+
+    dark:bg-gray-800
+    dark:text-white
+    dark:hover:!bg-gray-700
+  "
                 >
                   WhatsApp
                 </Button>

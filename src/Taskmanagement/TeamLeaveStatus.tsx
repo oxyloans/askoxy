@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Card,
+  
   Table,
   Tag,
   Spin,
@@ -200,44 +200,44 @@ const LeaveStatus: React.FC = () => {
 };
 
 // Add custom styles
-const styles = `
-.ant-table-thead > tr > th {
-  background-color: #f9fafb;
-  font-weight: 600;
-}
+// const styles = `
+// .ant-table-thead > tr > th {
+//   background-color: #f9fafb;
+//   font-weight: 600;
+// }
 
-.ant-table-row:hover {
-  background-color: #f5f5f5;
-}
+// .ant-table-row:hover {
+//   background-color: #f5f5f5;
+// }
 
-.overflow-x-auto::-webkit-scrollbar {
-  height: 8px;
-}
+// .overflow-x-auto::-webkit-scrollbar {
+//   height: 8px;
+// }
 
-.overflow-x-auto::-webkit-scrollbar-thumb {
-  background-color: #d1d5db;
-  border-radius: 4px;
-}
+// .overflow-x-auto::-webkit-scrollbar-thumb {
+//   background-color: #d1d5db;
+//   border-radius: 4px;
+// }
 
-.overflow-x-auto::-webkit-scrollbar-track {
-  background-color: #f3f4f6;
-}
+// .overflow-x-auto::-webkit-scrollbar-track {
+//   background-color: #f3f4f6;
+// }
 
-@media (max-width: 640px) {
-  .ant-card {
-    margin: 10px;
-  }
+// @media (max-width: 640px) {
+//   .ant-card {
+//     margin: 10px;
+//   }
   
-  .ant-table-thead > tr > th,
-  .ant-table-tbody > tr > td {
-    padding: 8px;
-    font-size: 12px;
-  }
+//   .ant-table-thead > tr > th,
+//   .ant-table-tbody > tr > td {
+//     padding: 8px;
+//     font-size: 12px;
+//   }
   
-  .ant-card-title {
-    font-size: 16px;
-  }
-}
-`;
+//   .ant-card-title {
+//     font-size: 16px;
+//   }
+// }
+// `;
 
 export default LeaveStatus;

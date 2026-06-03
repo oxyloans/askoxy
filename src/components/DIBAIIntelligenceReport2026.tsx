@@ -84,25 +84,51 @@ const pageHtml = `<div class="topbar">
     
 
 
-     <div style="display:flex;align-items:center;gap:10px;">
-      <button
-        onclick="window.location.href='/radha/cbd-ai-intelligence'"
-        style="
-          background:#5543C8;
-          color:white;
-          border:none;
-          padding:8px 18px;
-          border-radius:999px;
-          cursor:pointer;
-          font-size:13px;
-          font-weight:600;
-        "
-      >
-        View CBD Report
-      </button>
+     <div
+  style="
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  "
+>
+  <button
+    onclick="window.location.href='/radha/cbd-ai-intelligence'"
+    style="
+      background:linear-gradient(135deg,#5543C8,#6D5BFF);
+      color:#fff;
+      border:none;
+      padding:10px 20px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:13px;
+      font-weight:600;
+      box-shadow:0 4px 12px rgba(85,67,200,0.25);
+      transition:all 0.3s ease;
+    "
+  >
+    View CBD
+  </button>
 
-     <span class="badge-gold">&#9733; STRATEGIC INTELLIGENCE REPORT</span>
-    </div>
+  <span
+    style="
+      display:inline-flex;
+      align-items:center;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(212,175,55,0.12);
+      color:#B8860B;
+      border:1px solid rgba(212,175,55,0.35);
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:0.5px;
+      text-transform:uppercase;
+    "
+  >
+    ★ Strategic Intelligence Report
+  </span>
+</div>
   </div>
 </div>
 <nav class="nav">
