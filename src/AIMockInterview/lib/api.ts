@@ -7,6 +7,7 @@ if (user === "production") {
   API_BASE_URL = "http://localhost:3001";
 }
 
+
 export const api = {
   async chat(message: string, userId?: string, sessionId?: string) {
     const response = await fetch(`${API_BASE_URL}/api/chat`, {

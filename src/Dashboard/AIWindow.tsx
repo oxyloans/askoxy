@@ -25,23 +25,23 @@ const parseMarkdown = (text: string) => {
     .replace(
       /```([\s\S]*?)```/g,
       (_, code) =>
-        `<pre class="p-3 bg-gray-100 rounded-md text-sm overflow-x-auto"><code>${code.trim()}</code></pre>`
+        `<pre class="p-3 bg-gray-100 rounded-md text-sm overflow-x-auto"><code>${code.trim()}</code></pre>`,
     )
     .replace(
       /`([^`]+)`/g,
-      '<code class="px-2 py-1 bg-gray-100 rounded text-sm">$1</code>'
+      '<code class="px-2 py-1 bg-gray-100 rounded text-sm">$1</code>',
     )
     .replace(
       /^#### (.*)$/gim,
-      '<h4 class="text-base font-semibold mt-3 mb-1">$1</h4>'
+      '<h4 class="text-base font-semibold mt-3 mb-1">$1</h4>',
     )
     .replace(
       /^### (.*)$/gim,
-      '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>'
+      '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>',
     )
     .replace(
       /^## (.*)$/gim,
-      '<h2 class="text-xl font-semibold mt-4 mb-2">$1</h2>'
+      '<h2 class="text-xl font-semibold mt-4 mb-2">$1</h2>',
     )
     .replace(/^# (.*)$/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>');
 
@@ -166,20 +166,27 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
     async (
       instructions: string,
       assistantId: string,
-      voicemode: string
+      voicemode: string,
     ): Promise<string> => {
       try {
         const { data } = await customerApi.post(
-          `${BASE_URL}/student-service/user/token?assistantId=${assistantId}&voicemode=${voicemode}`,
-          { instructions }
+          `${BASE_URL}/student-service/user/voicetoken?assistantId=${assistantId}&voicemode=${voicemode}`,
+          { instructions },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          },
         );
-        return data?.client_secret?.value;
+
+        return data?.value || "";
       } catch (error) {
         console.error("Failed to get ephemeral token:", error);
         throw error;
       }
     },
-    []
+    [],
   );
 
   const handleRaisequery = useCallback(
@@ -248,7 +255,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
 
         return response.data
@@ -266,7 +273,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         };
       }
     },
-    []
+    [],
   );
 
   const handleToolCall = useCallback(
@@ -279,7 +286,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       const { data } = await customerApi.post(
         `${BASE_URL}/ai-service/chat1?userId=${userId}`,
         { prompt: query },
-        { responseType: "text" }
+        { responseType: "text" },
       );
 
       // 🔥 IMPORTANT: return plain text or structured object
@@ -288,7 +295,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         data,
       };
     },
-    []
+    [],
   );
 
   const setupDataChannelHandlers = useCallback(
@@ -297,7 +304,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       onMessage: (message: ChatMessage) => void,
       onAssistantSpeaking: (speaking: boolean) => void,
       assistantId: string,
-      selectedInstructions: string
+      selectedInstructions: string,
     ) => {
       const pendingArgs: Record<string, string> = {};
 
@@ -325,6 +332,34 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
 
           if (event.type === "response.stop") {
             bufferRef.current = "";
+            onAssistantSpeaking(false);
+            return;
+          }
+          if (
+            event.type ===
+            "conversation.item.input_audio_transcription.completed"
+          ) {
+            if (event.transcript) {
+              onMessage({
+                role: "user",
+                text: event.transcript,
+                timestamp: new Date().toLocaleTimeString(),
+              });
+            }
+            return;
+          }
+
+          if (event.type === "input_audio_buffer.speech_started") {
+            onAssistantSpeaking(false);
+            return;
+          }
+
+          if (event.type === "response.audio.delta") {
+            onAssistantSpeaking(true);
+            return;
+          }
+
+          if (event.type === "response.audio.done") {
             onAssistantSpeaking(false);
             return;
           }
@@ -365,7 +400,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
                   call_id: callId,
                   output: JSON.stringify(result),
                 },
-              })
+              }),
             );
 
             // 🔁 Ask model to continue
@@ -380,18 +415,26 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       };
 
       dc.onopen = () => {
-        console.log("Voice channel opened ✅");
+        console.log("🟢 Data channel opened");
 
-        // Register tools FIRST
         injectRealtimeTools(selectedInstructions);
 
-        // Then allow model to respond
+        dc.send(
+          JSON.stringify({
+            type: "session.update",
+            session: {
+              modalities: ["audio", "text"],
+              voice: "alloy",
+            },
+          }),
+        );
+
         setTimeout(() => {
           dc.send(JSON.stringify({ type: "response.create" }));
         }, 300);
       };
     },
-    [handleToolCall]
+    [handleToolCall,handleRaisequery],
   );
 
   const startVoiceSession = useCallback(
@@ -400,13 +443,13 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
       selectedInstructions: string,
       onMessage: (message: ChatMessage) => void,
       onAssistantSpeaking: (speaking: boolean) => void,
-      voicemode: string
+      voicemode: string,
     ): Promise<void> => {
       try {
         const EPHEMERAL_KEY = await getEphemeralToken(
           selectedInstructions,
           assistantId,
-          voicemode
+          voicemode,
         );
 
         const pc = new RTCPeerConnection();
@@ -419,10 +462,16 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         };
 
         micStreamRef.current = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
         });
 
-        pc.addTrack(micStreamRef.current.getTracks()[0]);
+        micStreamRef.current.getTracks().forEach((track) => {
+          pc.addTrack(track, micStreamRef.current!);
+        });
 
         const dc = pc.createDataChannel("oai-events");
         dataChannelRef.current = dc;
@@ -430,22 +479,25 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
-        const model = "gpt-4o-realtime-preview-2025-06-03";
-        const sdpRes = await axios.post(
-          `https://api.openai.com/v1/realtime?model=${model}`,
-          offer.sdp,
-          {
-            headers: {
-              Authorization: `Bearer ${EPHEMERAL_KEY}`,
-              "Content-Type": "application/sdp",
-            },
-            responseType: "text",
-          }
-        );
+        const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${EPHEMERAL_KEY}`,
+            "Content-Type": "application/sdp",
+          },
+          body: offer.sdp,
+        });
+
+        if (!sdpRes.ok) {
+          const errorText = await sdpRes.text();
+          throw new Error(errorText);
+        }
+
+        const sdpText = await sdpRes.text();
 
         const answer: RTCSessionDescriptionInit = {
           type: "answer",
-          sdp: sdpRes.data,
+          sdp: sdpText,
         };
         await pc.setRemoteDescription(answer);
 
@@ -454,14 +506,14 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
           onMessage,
           onAssistantSpeaking,
           assistantId,
-          selectedInstructions
+          selectedInstructions,
         );
       } catch (error) {
         console.error("Failed to start voice session:", error);
         throw error;
       }
     },
-    [getEphemeralToken, setupDataChannelHandlers]
+    [getEphemeralToken, setupDataChannelHandlers],
   );
 
   const sendVoiceMessage = useCallback((text: string) => {
@@ -556,13 +608,13 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
 
     window.addEventListener(
       "aiChatExternalRequest",
-      handleExternalRequest as EventListener
+      handleExternalRequest as EventListener,
     );
 
     return () => {
       window.removeEventListener(
         "aiChatExternalRequest",
-        handleExternalRequest as EventListener
+        handleExternalRequest as EventListener,
       );
     };
   }, []);
@@ -640,7 +692,7 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
             Authorization: `Bearer ${token}`,
           },
           responseType: "text",
-        }
+        },
       );
 
       console.log("Response status:", response.status);
@@ -873,12 +925,12 @@ const AIChatWindow: React.FC<AIChatWindowProps> = ({
   `,
         onVoiceMessage,
         setIsAssistantSpeaking,
-        "alloy"
+        "alloy",
       );
     } catch (error) {
       console.error("Failed to start voice call:", error);
       message.error(
-        "Failed to start voice call. Please check your microphone permissions."
+        "Failed to start voice call. Please check your microphone permissions.",
       );
       setIsVoiceCallActive(false);
       setMode("text");

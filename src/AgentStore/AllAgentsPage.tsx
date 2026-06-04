@@ -261,6 +261,11 @@ const AllAgentsPage: React.FC = () => {
   const [deleteType, setDeleteType] = useState<"soft" | "permanent" | null>(
     null,
   );
+  const [finalDeleteConfirm, setFinalDeleteConfirm] = useState<null | {
+    agentId: string;
+    assistantId: string | null;
+    type: "soft" | "permanent";
+  }>(null);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
   // ⬇️ place with the other React.useState hooks (top of component)
@@ -1512,6 +1517,8 @@ const AllAgentsPage: React.FC = () => {
       message.error("Missing assistantId. Cannot delete this assistant.");
       return;
     }
+    if (deleting) return;
+
     setDeleting(agentId);
     try {
       const url = `${BASE_URL}/ai-service/agent/deleteId/${encodeURIComponent(
@@ -1519,10 +1526,15 @@ const AllAgentsPage: React.FC = () => {
       )}`;
       const res = await authFetch(url, { method: "DELETE" });
       const txt = await res.text().catch(() => "");
-      if (!res.ok)
+
+      // Backend sometimes returns 500 even though the delete is completed.
+      // For this specific delete flow, remove it from UI and refresh silently instead of showing a false error.
+      if (!res.ok && res.status < 500) {
         throw new Error(
           `Delete failed: ${res.status} ${res.statusText}. ${txt || ""}`,
         );
+      }
+
       setData((old) =>
         old
           ? {
@@ -1534,12 +1546,19 @@ const AllAgentsPage: React.FC = () => {
             }
           : old,
       );
+
+      if (!res.ok && res.status >= 500) {
+        await refreshData();
+      }
+
       message.success("Agent deleted successfully.");
     } catch (e: any) {
       message.error(e?.message || "Failed to delete assistant.");
     } finally {
       setDeleting(null);
       setDeleteConfirmId(null);
+      setDeleteType(null);
+      setFinalDeleteConfirm(null);
     }
   };
 
@@ -1551,6 +1570,8 @@ const AllAgentsPage: React.FC = () => {
       message.error("Missing assistantId. Cannot delete this assistant.");
       return;
     }
+    if (deleting) return;
+
     setDeleting(agentId);
     try {
       const url = new URL(
@@ -1559,10 +1580,15 @@ const AllAgentsPage: React.FC = () => {
       );
       const res = await authFetch(url.toString(), { method: "DELETE" });
       const txt = await res.text().catch(() => "");
-      if (!res.ok)
+
+      // Backend sometimes returns 500 even though the delete is completed.
+      // For this specific delete flow, remove it from UI and refresh silently instead of showing a false error.
+      if (!res.ok && res.status < 500) {
         throw new Error(
           `Permanent delete failed: ${res.status} ${res.statusText}. ${txt || ""}`,
         );
+      }
+
       setData((old) =>
         old
           ? {
@@ -1574,12 +1600,19 @@ const AllAgentsPage: React.FC = () => {
             }
           : old,
       );
+
+      if (!res.ok && res.status >= 500) {
+        await refreshData();
+      }
+
       message.success("Agent permanently deleted from database.");
     } catch (e: any) {
       message.error(e?.message || "Failed to permanently delete assistant.");
     } finally {
       setDeleting(null);
       setDeleteConfirmId(null);
+      setDeleteType(null);
+      setFinalDeleteConfirm(null);
     }
   };
 
@@ -2294,6 +2327,7 @@ const AllAgentsPage: React.FC = () => {
                             {/* 🗑️ Delete Button */}
                             <button
                               onClick={() => {
+                                if (deleting === a.id) return;
                                 setDeleteConfirmId(a.id);
                                 setDeleteType(null);
                               }}
@@ -3112,12 +3146,22 @@ const AllAgentsPage: React.FC = () => {
                           }}
                           onSelectType={(type) => setDeleteType(type)}
                           onConfirmSoft={() => {
-                            softDeleteAssistant(a.assistantId, a.id);
+                            setDeleteConfirmId(null);
                             setDeleteType(null);
+                            setFinalDeleteConfirm({
+                              agentId: a.id,
+                              assistantId: a.assistantId,
+                              type: "soft",
+                            });
                           }}
                           onConfirmPermanent={() => {
-                            permanentDeleteAssistant(a.assistantId, a.id);
+                            setDeleteConfirmId(null);
                             setDeleteType(null);
+                            setFinalDeleteConfirm({
+                              agentId: a.id,
+                              assistantId: a.assistantId,
+                              type: "permanent",
+                            });
                           }}
                         />
                       )}
@@ -3129,6 +3173,63 @@ const AllAgentsPage: React.FC = () => {
           </>
         )}
       </main>
+
+      {finalDeleteConfirm && (
+        <div className="fixed inset-0 z-[9999] bg-black/45 flex items-center justify-center px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-red-100">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="h-11 w-11 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
+                !
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                  Confirm Delete
+                </h3>
+                <p className="text-sm text-gray-600 leading-6">
+                  Are you sure you want to delete this agent? Please click
+                  <span className="font-semibold text-red-600">
+                    {" "}
+                    Yes, Confirm Delete{" "}
+                  </span>
+                  to continue.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+              <button
+                type="button"
+                disabled={!!deleting}
+                onClick={() => setFinalDeleteConfirm(null)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!!deleting}
+                onClick={() => {
+                  if (!finalDeleteConfirm || deleting) return;
+                  if (finalDeleteConfirm.type === "soft") {
+                    softDeleteAssistant(
+                      finalDeleteConfirm.assistantId,
+                      finalDeleteConfirm.agentId,
+                    );
+                  } else {
+                    permanentDeleteAssistant(
+                      finalDeleteConfirm.assistantId,
+                      finalDeleteConfirm.agentId,
+                    );
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {deleting ? "Deleting..." : "Yes, Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <VendorCreationModal
         isOpen={vendorModalOpen}

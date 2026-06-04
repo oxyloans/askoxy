@@ -11,7 +11,7 @@ export function InterviewHeader({ theme, user, onToggleTheme }: InterviewHeaderP
     <header className="ai-header">
       <div className="ai-header-inner">
         <div className="ai-logo-group">
-          <img src={logo} alt="AskOxy" style={{ height: 30, objectFit: "contain", width: "auto" }} />
+          <img src={logo} alt="AskOxy" className="ai-brand-logo" />
           <div className="ai-logo-divider" />
           <div className="ai-header-label">
             <div className="ai-header-title">AI Interview</div>

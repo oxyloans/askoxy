@@ -101,12 +101,15 @@ import FABAIIntelligenceReport2026 from "./components/FABAIIntelligenceReport202
 import ADIBAIIntelligenceReport2026 from "./components/ADIBAIIntelligenceReport2026";
 import DIBAIIntelligenceReport2026 from "./components/DIBAIIntelligenceReport2026";
 import Finvibe3DLanding from "./Finvibe/Finvibe3DLanding";
+import UseCaseEngineDemo from "./Finvibe/UseCaseEngineDemo";
+import LiveAIDemo from "./Finvibe/LiveAIDemo";
 import ADCBAIIntelligenceReport2026 from "./components/ADCBAIIntelligenceReport2026";
 import CBDAIIntelligenceReport2026 from "./components/CBDAIIntelligenceReport2026";
 import SIBAIIntelligenceReport2026 from "./components/SIBAIIntelligenceReport2026";
 import MashreqAIIntelligenceReport2026 from "./components/MashreqAIIntelligenceReport2026";
 import NBFAIIntelligenceReport2026 from "./components/NBFAIIntelligenceReport2026";
 import RAKBANKAIIntelligenceReport2026 from "./components/RAKBANKAIIntelligenceReport2026";
+import UAEBanksAIIntelligenceHub from "./components/UAEBanksAIIntelligenceHub";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -680,7 +683,14 @@ const App: React.FC = () => {
       currentPath.startsWith("/accenture/jobs") ||
       currentPath.startsWith("/accenturestats") ||
       currentPath.startsWith("/accenture-presentation") ||
-      currentPath.startsWith("/interview")
+      currentPath.startsWith("/interview") ||
+      currentPath.startsWith("/oxybfsai-landing") ||
+      currentPath.startsWith("/oxybfsai")  ||
+      currentPath.startsWith("/finvibe-code-builder") ||
+      currentPath.startsWith("/insurvibe-code-builder") ||
+      currentPath.startsWith("/radhai-admin/") || 
+      currentPath.startsWith("/radha/uae-banks-ai-intelligence") ||
+      currentPath.startsWith("/radhai-admin")
     );
   };
 
@@ -712,7 +722,11 @@ const App: React.FC = () => {
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
               <Route path="/Oxygpt" element={<OxyGPT />} />
-              <Route path="/oxybfsai" element={<Billing />} />
+
+              <Route path="/finvibe" element={<Finvibe3DLanding />} />
+            <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
+            <Route path="/live-ai-demo" element={<LiveAIDemo />} />
+            <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
 
               <Route
                 path="/finvibe-code-builder"
@@ -762,6 +776,10 @@ const App: React.FC = () => {
               />
               <Route path="/gccmate" element={<GCCMate />} />
               <Route path="/employers" element={<EmployerJobSeekerPage />} />
+              <Route
+                path="/radha/uae-banks-ai-intelligence"
+                element={<UAEBanksAIIntelligenceHub />}
+              />
               <Route path="/radhAI" element={<RadhAIPage />} />
               <Route path="/radhAI-talk" element={<RadhAIVoicePage />} />
               <Route path="/ceoclonevoice" element={<RadhAICloneAdminPage />} />
@@ -1303,7 +1321,7 @@ const App: React.FC = () => {
 />
               <Route path="/privacypolicy" element={<PrivacyPolicy />} />
               <Route path="/bmvpdf" element={<BMVPDF />} />
-              <Route path="/oxybfsai-landing" element={<Finvibe3DLanding />} />
+              
               <Route path="/teststore" element={<TestStore />} />
               <Route
                 path="/teststore/assistant/:id/:agentId"

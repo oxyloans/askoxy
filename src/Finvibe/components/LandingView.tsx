@@ -456,8 +456,8 @@ export function LandingView({ running, onRun, selectedBank, mode, country = "ind
         <div style={{ width: "100%", maxWidth: "660px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "14px" }}>
           {suggestions.map((s) => (
             <button
-              key={s.tag}
-              onClick={() => onRun(s.text)}
+              key={s.tag} 
+              onClick={() => {}}
               disabled={running}
               style={{
                 textAlign: "left", padding: "13px 14px", borderRadius: "14px", background: "#FFFFFF",

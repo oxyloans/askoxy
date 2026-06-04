@@ -9,71 +9,67 @@ interface Props {
 export function PromptInput({ onSubmit, disabled, compact = false }: Props) {
   const [value, setValue] = useState("");
 
-  const handleSubmit = () => {
-    const trimmed = value.trim();
-    if (!trimmed || disabled) return;
-    onSubmit(trimmed);
-    setValue("");
-  };
-
-  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
+  const handleSubmit = () => {};
+  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {};
 
   /* ─── COMPACT MODE ─── */
   if (compact) {
     return (
-      <div style={{
-        display: "flex", alignItems: "center", gap: "8px",
-        padding: "8px 12px", borderRadius: "12px",
-        background: "#FFFFFF", border: "1px solid #E4E8F4",
-        boxShadow: "0 1px 4px rgba(13,17,23,.06)", width: "100%",
-      }}>
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, opacity: .3 }}>
-          <circle cx="7" cy="7" r="5.5" stroke="#0D1117" strokeWidth="1.5"/>
-          <path d="M4.5 7h5M7 4.5v5" stroke="#0D1117" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "8px 12px",
+          borderRadius: "12px",
+          background: "#FFFFFF",
+          border: "1px solid #E4E8F4",
+          boxShadow: "0 1px 4px rgba(13,17,23,.06)",
+          width: "100%",
+        }}
+      >
+        <i
+          className="ti ti-lock"
+          style={{ fontSize: "13px", color: "#E2534A", flexShrink: 0 }}
+          aria-hidden="true"
+        />
         <input
           value={value}
-          onChange={e => setValue(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSubmit(); } }}
-          disabled={disabled}
-          placeholder={disabled ? "Generating your app…" : "Describe a new app…"}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+          }}
+          placeholder="This feature is disabled. Contact support@askoxy.ai to enable."
           style={{
-            flex: 1, background: "transparent", border: "none", outline: "none",
-            fontSize: "13px", color: disabled ? "#B0BACC" : "#0D1117", fontFamily: "inherit",
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            fontSize: "13px",
+            color: "#0D1117",
+            fontFamily: "inherit",
           }}
         />
-        {value.trim() && !disabled && (
-          <button onClick={handleSubmit} style={{
-            padding: "4px 12px", borderRadius: "7px", border: "none",
-            background: "linear-gradient(135deg,#3B6FFF,#7C3AED)",
-            color: "#fff", fontSize: "12px", fontWeight: 700, cursor: "pointer", flexShrink: 0,
-          }}>Build</button>
-        )}
-        {disabled && (
-          <span style={{
-            width: "13px", height: "13px", borderRadius: "50%",
-            border: "2px solid #3B6FFF", borderTopColor: "transparent",
-            display: "inline-block", animation: "fv-spin .7s linear infinite", flexShrink: 0,
-          }}/>
-        )}
-        <style>{`@keyframes fv-spin{to{transform:rotate(360deg)}}`}</style>
+        <span
+          style={{
+            fontSize: "12px",
+            color: "#E2534A",
+            flexShrink: 0,
+            fontWeight: 500,
+          }}
+        >
+          Disabled
+        </span>
       </div>
     );
   }
 
   /* ─── FULL MODE ─── */
-  const canSubmit = !disabled && !!value.trim();
-
   return (
     <>
       <style>{`
         @keyframes fv-spin { to { transform: rotate(360deg); } }
-        ::placeholder { color: #B0BACC; }
+        .pi-disabled-placeholder::placeholder { color: #E2534A; font-weight: 400; }
       `}</style>
 
       <div
@@ -88,33 +84,41 @@ export function PromptInput({ onSubmit, disabled, compact = false }: Props) {
           flexDirection: "column",
           gap: "8px",
         }}
-        onFocusCapture={e => {
+        onFocusCapture={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.borderColor = "#3B6FFF";
-          el.style.boxShadow = "0 0 0 4px rgba(59,111,255,.09), 0 2px 10px rgba(13,17,40,.07)";
+          el.style.boxShadow =
+            "0 0 0 4px rgba(59,111,255,.09), 0 2px 10px rgba(13,17,40,.07)";
         }}
-        onBlurCapture={e => {
+        onBlurCapture={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.borderColor = "#E4E8F4";
           el.style.boxShadow = "0 2px 10px rgba(13,17,40,.07)";
         }}
       >
-        {/* Textarea */}
         <textarea
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKey}
-          disabled={disabled}
-          placeholder="Describe the fintech app you want to build…"
+          placeholder="Prompt submission is disabled. Each prompt costs us $80–$100 USD."
           rows={1}
+          className="pi-disabled-placeholder"
           style={{
-            width: "100%", background: "transparent",
-            border: "none", outline: "none", resize: "none",
-            fontSize: "13.5px", lineHeight: "1.55",
-            color: "#0D1117", minHeight: "22px", maxHeight: "88px",
-            overflowY: "auto", fontFamily: "inherit",
+            width: "100%",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            resize: "none",
+            fontSize: "13.5px",
+            lineHeight: "1.55",
+            color: "#0D1117",
+            minHeight: "22px",
+            maxHeight: "88px",
+            overflowY: "auto",
+            fontFamily: "inherit",
+            boxSizing: "border-box",
           }}
-          onInput={e => {
+          onInput={(e) => {
             const el = e.currentTarget;
             el.style.height = "auto";
             el.style.height = Math.min(el.scrollHeight, 88) + "px";
@@ -122,35 +126,42 @@ export function PromptInput({ onSubmit, disabled, compact = false }: Props) {
         />
 
         {/* Toolbar row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
-          <span style={{ fontSize: "11px", color: "#D1D8E8", fontWeight: 500 }}>⏎ to build</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <span style={{ fontSize: "13px", color: "#E2534A" }}>🔒</span>
+            <span
+              style={{ fontSize: "11.5px", color: "#E2534A", fontWeight: 400 }}
+            >
+              Contact support@askoxy.ai to enable
+            </span>
+          </div>
           <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled
             style={{
-              display: "flex", alignItems: "center", gap: "5px",
-              padding: "7px 16px", borderRadius: "9px", border: "none",
-              background: canSubmit
-                ? "linear-gradient(135deg,#3B6FFF 0%,#7C3AED 100%)"
-                : "#F0F2F8",
-              color: canSubmit ? "#FFF" : "#C4CBDB",
-              fontSize: "12.5px", fontWeight: 700,
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              boxShadow: canSubmit ? "0 3px 12px rgba(59,111,255,.28)" : "none",
-              transition: "all .2s", letterSpacing: "-.01em", whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "7px 16px",
+              borderRadius: "9px",
+              border: "none",
+              background: "#F0F2F8",
+              color: "#4B5563",
+              fontWeight: 700,
+              fontSize: "12.5px",
+              cursor: "not-allowed",
+              transition: "all .2s",
+              letterSpacing: "-.01em",
+              whiteSpace: "nowrap",
             }}
           >
-            {disabled ? (
-              <>
-                <span style={{
-                  width: "11px", height: "11px", borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,.4)",
-                  borderTopColor: "transparent", display: "inline-block",
-                  animation: "fv-spin .7s linear infinite",
-                }}/>
-                Building…
-              </>
-            ) : <>⚡ Build</>}
+            🚫 Disabled
           </button>
         </div>
       </div>

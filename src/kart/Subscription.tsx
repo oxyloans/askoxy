@@ -1,33 +1,40 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { customerApi } from "../utils/axiosInstance";
 import Footer from "../components/Footer";
 import {
-  Menu,
   X,
-  Check,
   AlertCircle,
   Loader2,
   HelpCircle,
-  RefreshCw,
   ArrowDownCircle,
   ArrowDownUp,
   CheckCircle,
   Zap,
-  Calendar,
   Clock,
   Lock,
   CreditCard,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { FaBars, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import { message, Modal, Tabs, Empty } from "antd";
 import decryptEas from "./decryptEas";
 import encryptEas from "./encryptEas";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import BASE_URL from "../Config";
-import { log } from "node:console";
 import Swal from "sweetalert2";
+
+declare global {
+  interface Window {
+    gtag?: (
+      command: string,
+      action: string,
+      params?: {
+        [key: string]: any;
+      }
+    ) => void;
+  }
+}
+
 // Types
 type SubscriptionPlan = {
   amount: number;
@@ -54,6 +61,7 @@ interface SubscriptionHistoryItem {
   active: boolean;
   payAmount: number;
   createdAt: string;
+  transcationDate?: number | string;
   paymentStatus: string;
   planName?: string;
 }
@@ -74,11 +82,6 @@ interface ProfileData {
   customerEmail: string;
 }
 
-interface TabPaneProps {
-  tab: string;
-  key: string;
-  children: React.ReactNode;
-}
 
 // Components
 const Alert: React.FC<AlertProps> = ({
@@ -103,7 +106,6 @@ const AlertDescription: React.FC<AlertDescriptionProps> = ({ children }) => (
   <div className="text-sm font-medium">{children}</div>
 );
 
-const TabPane: React.FC<TabPaneProps> = ({ children }) => <>{children}</>;
 
 const SubscriptionCard: React.FC<{
   plan: SubscriptionPlan;
@@ -522,6 +524,24 @@ const SubscriptionCard: React.FC<{
   );
 };
 
+
+const formatSubscriptionDate = (transaction: SubscriptionHistoryItem) => {
+  const rawDate = transaction.createdAt || transaction.transcationDate;
+  if (!rawDate) return "-";
+
+  const date = typeof rawDate === "number" || /^\d+$/.test(String(rawDate))
+    ? new Date(Number(rawDate))
+    : new Date(rawDate);
+
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+};
+
 const TransactionHistoryCard: React.FC<{
   transaction: SubscriptionHistoryItem;
 }> = ({ transaction }) => {
@@ -532,32 +552,6 @@ const TransactionHistoryCard: React.FC<{
       PENDING: "bg-yellow-100 text-yellow-800",
     }[transaction.paymentStatus] || "bg-gray-100 text-gray-800";
 
-  // Check the full transaction and its createdAt field
-  console.log("Transaction createdAt:", transaction.createdAt);
-
-  const formatDate = (timestamp?: any) => {
-    if (!timestamp) {
-      console.error("Timestamp is undefined or null");
-      return "Invalid Date";
-    }
-
-    const parsedTimestamp = Number(timestamp);
-
-    if (isNaN(parsedTimestamp)) {
-      console.error("Invalid timestamp:", timestamp);
-      return "Invalid Date";
-    }
-
-    return new Date(parsedTimestamp).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true, // AM/PM format
-    });
-  };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 transition-all duration-300 hover:shadow-md">
@@ -578,7 +572,7 @@ const TransactionHistoryCard: React.FC<{
               <div className="flex items-center gap-2 mt-2">
                 <Clock className="h-4 w-4 text-gray-400" />
                 <span className="text-sm text-gray-600">
-                  {new Date(transaction.createdAt).toLocaleDateString()}
+                  {formatSubscriptionDate(transaction)}
                 </span>
               </div>
             </div>
@@ -626,7 +620,6 @@ const Subscription: React.FC = () => {
     SubscriptionPlan[]
   >([]);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [cartCount, setCartCount] = useState(0);
   const [plandetails, setPlanDetails] = useState<UserSubscriptionPlan>();
   const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -642,10 +635,21 @@ const Subscription: React.FC = () => {
   >([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("1");
+  const requeryStartedRef = useRef(false);
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("accessToken");
   const userId = localStorage.getItem("userId");
+
+  const resetPaymentLoading = (planId?: string | null) => {
+    setIsLoading(false);
+    setSelectedPlan(null);
+    setLoading((prev) => {
+      if (!planId) {
+        return Object.fromEntries(Object.keys(prev).map((key) => [key, false]));
+      }
+      return { ...prev, [planId]: false };
+    });
+  };
 
   useEffect(() => {
     getPlans();
@@ -657,19 +661,26 @@ const Subscription: React.FC = () => {
     const subscriptionID = params.trans;
     setSubscriptionId(subscriptionID);
 
-    setCartCount(parseInt(localStorage.getItem("cartCount") || "0"));
     const userData = localStorage.getItem("profileData");
     if (userData) {
-      setProfileData(JSON.parse(userData));
+      try {
+        setProfileData(JSON.parse(userData));
+      } catch {
+        localStorage.removeItem("profileData");
+      }
     }
   }, []);
 
   useEffect(() => {
     const trans = localStorage.getItem("merchantTransactionId");
     const paymentId = localStorage.getItem("paymentId");
-    if (trans === subscriptionId) {
-      Requery(paymentId);
-    }
+
+    if (!subscriptionId || !trans || !paymentId) return;
+    if (trans !== subscriptionId) return;
+    if (requeryStartedRef.current) return;
+
+    requeryStartedRef.current = true;
+    Requery(paymentId);
   }, [subscriptionId]);
 
   const getSubscriptionHistory = async () => {
@@ -683,12 +694,11 @@ const Subscription: React.FC = () => {
       );
 
       if (Array.isArray(response.data)) {
-        // Sort by transaction date (newest first)
-        const sortedHistory = response.data
-          .filter(
-            (item) => item.transcationDate && !isNaN(item.transcationDate)
-          ) // Filter invalid dates
-          .sort((a, b) => b.transcationDate - a.transcationDate);
+        const sortedHistory = response.data.sort((a, b) => {
+          const aDate = Number(a.transcationDate || new Date(a.createdAt || 0).getTime());
+          const bDate = Number(b.transcationDate || new Date(b.createdAt || 0).getTime());
+          return bDate - aDate;
+        });
         setSubscriptionHistory(sortedHistory);
       } else {
         setSubscriptionHistory([]);
@@ -702,13 +712,17 @@ const Subscription: React.FC = () => {
   };
 
   const handleSubscribe = async (planId: string, amount: number) => {
+    if (!userId) {
+      message.error("Please login before choosing a subscription plan.");
+      return;
+    }
+
+    if (loading[planId]) return;
+
     setSelectedPlan(planId);
-    setLoading((prev) => ({
-      ...prev,
-      [planId]: true,
-    }));
+    setLoading((prev) => ({ ...prev, [planId]: true }));
     setIsLoading(true);
-    // Track plan selection
+
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "select_subscription_plan", {
         plan_id: planId,
@@ -716,240 +730,227 @@ const Subscription: React.FC = () => {
         currency: "INR",
       });
     }
+
     try {
       const response = await customerApi.post(
         `${BASE_URL}/order-service/userSubscriptionAmount`,
         {
           planId,
-          customerId: localStorage.getItem("userId"),
+          customerId: userId,
           amount,
         }
       );
 
-      if (response.data.paymentId) {
-        const number = localStorage.getItem("whatsappNumber");
-        const withoutCountryCode = number?.replace("+91", "");
+      const merchantTransactionId = response.data?.paymentId;
 
-        const data = {
-          mid: "1152305",
-          amount: amount,
-          // amount: 1,
-          merchantTransactionId: response.data.paymentId,
-          transactionDate: new Date(),
-          terminalId: "getepay.merchant128638@icici",
-          udf1: withoutCountryCode,
-          udf2: `${profileData.userFirstName}  ${profileData.userLastName}`,
-          udf3: profileData.customerEmail,
-          udf4: "",
-          udf5: "",
-          udf6: "",
-          udf7: "",
-          udf8: "",
-          udf9: "",
-          udf10: "",
-          ru: `https://www.askoxy.ai/main/subscription?trans=${response.data.paymentId}`,
-          callbackUrl: `https://www.askoxy.ai/main/subscription?trans=${response.data.paymentId}`,
-          currency: "INR",
-          paymentMode: "ALL",
-          bankId: "",
-          txnType: "single",
-          productType: "IPG",
-          txnNote: "Subscription In Live",
-          vpa: "getepay.merchant128638@icici",
-        };
-
-        // Initiate payment
-        getepayPortal(data);
+      if (!merchantTransactionId) {
+        throw new Error("Payment ID was not received. Please try again.");
       }
-    } catch (error) {
-      console.log(error);
-      setLoading((prev) => ({
-        ...prev,
-        [planId]: false,
-      }));
-      setIsLoading(false);
-      setSelectedPlan(null);
-      message.error("Failed to initiate subscription");
+
+      const number = localStorage.getItem("whatsappNumber") || "";
+      const withoutCountryCode = number.replace("+91", "");
+
+      const data = {
+        mid: "1152305",
+        amount,
+        merchantTransactionId,
+        transactionDate: new Date(),
+        terminalId: "getepay.merchant128638@icici",
+        udf1: withoutCountryCode,
+        udf2: `${profileData.userFirstName || ""} ${profileData.userLastName || ""}`.trim(),
+        udf3: profileData.customerEmail || "",
+        udf4: "",
+        udf5: "",
+        udf6: "",
+        udf7: "",
+        udf8: "",
+        udf9: "",
+        udf10: "",
+        ru: `https://www.askoxy.ai/main/subscription?trans=${merchantTransactionId}`,
+        callbackUrl: `https://www.askoxy.ai/main/subscription?trans=${merchantTransactionId}`,
+        currency: "INR",
+        paymentMode: "ALL",
+        bankId: "",
+        txnType: "single",
+        productType: "IPG",
+        txnNote: "Subscription In Live",
+        vpa: "getepay.merchant128638@icici",
+      };
+
+      await getepayPortal(data, planId);
+    } catch (error: any) {
+      console.error("Subscription initiate error:", error);
+      resetPaymentLoading(planId);
+      message.error(error?.message || "Failed to initiate subscription");
     }
   };
 
-  const getepayPortal = async (data: any) => {
-    const JsonData = JSON.stringify(data);
-    const mer = data.merchantTransactionId;
-
-    var ciphertext = encryptEas(JsonData);
-    var newCipher = ciphertext.toUpperCase();
+  const getepayPortal = async (data: any, planId: string) => {
+    const jsonData = JSON.stringify(data);
+    const merchantTransactionId = data.merchantTransactionId;
 
     try {
+      const ciphertext = encryptEas(jsonData);
+      const newCipher = ciphertext.toUpperCase();
+
       const response = await axios.post(
         "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
         { mid: data.mid, terminalId: data.terminalId, req: newCipher },
         { headers: { "Content-Type": "application/json" } }
       );
-      const resultobj = response.data;
-      const responseurl = resultobj.response;
-      const parsed = decryptEas(responseurl);
+
+      const encryptedResponse = response.data?.response;
+      if (!encryptedResponse) {
+        throw new Error("Payment gateway did not return a valid response.");
+      }
+
+      const parsed = decryptEas(encryptedResponse);
       const parsedData = JSON.parse(parsed);
+      const paymentUrl = parsedData?.paymentUrl;
+      const paymentId = parsedData?.paymentId;
 
-      localStorage.setItem("paymentId", parsedData.paymentId);
-      localStorage.setItem("merchantTransactionId", mer);
-      const paymentUrl = parsedData.paymentUrl;
-setIsLoading(false);
+      if (!paymentUrl) {
+        throw new Error("Payment URL was not received from gateway.");
+      }
+
+      localStorage.setItem("paymentId", String(paymentId || ""));
+      localStorage.setItem("merchantTransactionId", String(merchantTransactionId));
+
+      // Stop page overlay before showing SweetAlert. This fixes the middle-drop/stuck loading issue.
       setIsLoading(false);
+      setLoading((prev) => ({ ...prev, [planId]: false }));
 
-Swal.fire({
-  title: "Proceed to Payment?",
-  text: "Click Yes to continue to the payment gateway.",
-  icon: "question",
-  showCancelButton: true,
-  confirmButtonText: "Yes",
-  cancelButtonText: "No",
-  confirmButtonColor: "#7c3aed",
-  cancelButtonColor: "#d33",
-}).then((result) => {
-  if (result.isConfirmed) {
-    window.location.href = paymentUrl;
-  } else {
-    setSelectedPlan(null);
+      const result = await Swal.fire({
+        title: "Proceed to Payment?",
+        text: "Click Yes to continue to the payment gateway.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        confirmButtonColor: "#7c3aed",
+        cancelButtonColor: "#d33",
+        allowOutsideClick: false,
+      });
 
-    setLoading((prev) => ({
-      ...prev,
-      ...(Object.fromEntries(
-        Object.keys(prev).map((key) => [key, false])
-      )),
-    }));
+      if (result.isConfirmed) {
+        window.location.assign(paymentUrl);
+        return;
+      }
 
-    setIsLoading(false);
-  }
-});
-    } catch (error) {
-      console.log("getepayPortal error:", error);
-      setLoading((prev) => ({
-        ...prev,
-        [selectedPlan as string]: false,
-      }));
-      setIsLoading(false);
-      message.error("Payment processing failed");
+      localStorage.removeItem("paymentId");
+      localStorage.removeItem("merchantTransactionId");
+      resetPaymentLoading(planId);
+    } catch (error: any) {
+      console.error("getepayPortal error:", error);
+      localStorage.removeItem("paymentId");
+      localStorage.removeItem("merchantTransactionId");
+      resetPaymentLoading(planId);
+      message.error(error?.message || "Payment processing failed");
     }
   };
 
-  function Requery(paymentId: any) {
-    setLoading((prev) => ({
-      ...prev,
-      [selectedPlan as string]: true,
-    }));
+  async function Requery(paymentId: any) {
+    if (!paymentId || Number.isNaN(Number(paymentId))) {
+      localStorage.removeItem("paymentId");
+      localStorage.removeItem("merchantTransactionId");
+      resetPaymentLoading();
+      return;
+    }
+
     setIsLoading(true);
 
-    if (
-      paymentStatus === "PENDING" ||
-      paymentStatus === "" ||
-      paymentStatus === null
-    ) {
-      const Config = {
-        "Getepay Mid": 1152305,
-        "Getepay Terminal Id": "getepay.merchant128638@icici",
-        "Getepay Key": "kNnyys8WnsuOXgBlB9/onBZQ0jiYNhh4Wmj2HsrV/wY=",
-        "Getepay IV": "L8Q+DeKb+IL65ghKXP1spg==",
+    try {
+      const config = {
+        mid: 1152305,
+        terminalId: "getepay.merchant128638@icici",
+        key: "kNnyys8WnsuOXgBlB9/onBZQ0jiYNhh4Wmj2HsrV/wY=",
+        iv: "L8Q+DeKb+IL65ghKXP1spg==",
       };
 
-      const JsonData = {
-        mid: Config["Getepay Mid"],
-        paymentId: parseInt(paymentId),
+      const jsonData = {
+        mid: config.mid,
+        paymentId: parseInt(paymentId, 10),
         referenceNo: "",
         status: "",
-        terminalId: Config["Getepay Terminal Id"],
+        terminalId: config.terminalId,
         vpa: "",
       };
 
-      var ciphertext = encryptEas(
-        JSON.stringify(JsonData),
-        Config["Getepay Key"],
-        Config["Getepay IV"]
+      const ciphertext = encryptEas(
+        JSON.stringify(jsonData),
+        config.key,
+        config.iv
       );
 
-      var newCipher = ciphertext.toUpperCase();
+      const response = await axios.post(
+        "https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus",
+        { mid: config.mid, terminalId: config.terminalId, req: ciphertext.toUpperCase() },
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-      axios
-        .post(
-          "https://portal.getepay.in:8443/getepayPortal/pg/invoiceStatus",
-          { mid: Config["Getepay Mid"], terminalId: Config["Getepay Terminal Id"], req: newCipher },
-          { headers: { "Content-Type": "application/json" } }
-        )
-        .then((response) => {
-          var resultobj = response.data;
-          if (resultobj.response != null) {
-            var responseurl = resultobj.response;
-            var data = decryptEas(responseurl);
-            data = JSON.parse(data);
+      const encryptedResponse = response.data?.response;
+      if (!encryptedResponse) {
+        throw new Error("Payment status response was empty.");
+      }
 
-            setPaymentStatus(data.paymentStatus);
+      const decryptedData = JSON.parse(decryptEas(encryptedResponse));
+      const finalStatus = decryptedData?.paymentStatus || "PENDING";
+      setPaymentStatus(finalStatus);
 
-            if (
-              data.paymentStatus == "SUCCESS" ||
-              data.paymentStatus == "FAILURE"
-            ) {
-              customerApi({
-                method: "POST",
-                url: `${BASE_URL}/order-service/userSubscriptionAmount`,
-                data: {
-                  paymentId: localStorage.getItem("merchantTransactionId"),
-                  paymentStatus: data.paymentStatus,
-                },
-              })
-                .then((secondResponse) => {
-                  // Inside the Requery function where payment is successful
-                  if (data.paymentStatus === "SUCCESS") {
-                    // Track successful subscription
-                    if (typeof window !== "undefined" && window.gtag) {
-                      // Find the selected plan to get its amount
-                      const selectedPlanData = subscriptionPlans.find(
-                        (plan) => plan.planId === selectedPlan
-                      );
-
-                      window.gtag("event", "subscription_complete", {
-                        transaction_id: localStorage.getItem(
-                          "merchantTransactionId"
-                        ),
-                        value: selectedPlanData ? selectedPlanData.amount : 0,
-                        currency: "INR",
-                        payment_type: "online",
-                      });
-                    }
-
-                    Modal.success({
-                      content: "Subscription Added Successfully",
-                      onOk: () => {
-                        navigate("/main/wallet");
-                      },
-                    });
-                  } else {
-                    Modal.error({
-                      content: "Payment was not successful. Please try again.",
-                      onOk: () => {
-                        // Refresh page or reset state
-                        window.location.reload();
-                      },
-                    });
-                  }
-
-                  // Refresh subscription history
-                  getSubscriptionHistory();
-                  setIsLoading(false);
-                  localStorage.removeItem("paymentId");
-                  localStorage.removeItem("merchantTransactionId");
-                })
-                .catch((error) => {
-                  console.error("Error in payment confirmation:", error);
-                  setIsLoading(false);
-                  message.error("Failed to confirm payment");
-                });
-            }
-          }
-        })
-        .catch((error) => {
-          console.log("Payment Status error:", error);
-          setIsLoading(false);
+      if (finalStatus !== "SUCCESS" && finalStatus !== "FAILURE") {
+        setIsLoading(false);
+        Modal.info({
+          content: "Your payment is still pending. Please check again after some time.",
+          onOk: () => {
+            localStorage.removeItem("paymentId");
+            localStorage.removeItem("merchantTransactionId");
+            navigate("/main/subscription", { replace: true });
+          },
         });
+        return;
+      }
+
+      await customerApi.post(`${BASE_URL}/order-service/userSubscriptionAmount`, {
+        paymentId: localStorage.getItem("merchantTransactionId"),
+        paymentStatus: finalStatus,
+      });
+
+      if (finalStatus === "SUCCESS") {
+        if (typeof window !== "undefined" && window.gtag) {
+          const selectedPlanData = subscriptionPlans.find(
+            (plan) => plan.planId === selectedPlan
+          );
+
+          window.gtag("event", "subscription_complete", {
+            transaction_id: localStorage.getItem("merchantTransactionId"),
+            value: selectedPlanData ? selectedPlanData.amount : 0,
+            currency: "INR",
+            payment_type: "online",
+          });
+        }
+
+        Modal.success({
+          content: "Subscription Added Successfully",
+          onOk: () => navigate("/main/wallet"),
+        });
+      } else {
+        Modal.error({
+          content: "Payment was not successful. Please try again.",
+          onOk: () => navigate("/main/subscription", { replace: true }),
+        });
+      }
+
+      await getSubscriptionHistory();
+      await userPlanDetails();
+      localStorage.removeItem("paymentId");
+      localStorage.removeItem("merchantTransactionId");
+    } catch (error: any) {
+      console.error("Payment Status error:", error);
+      message.error(error?.message || "Failed to verify payment status");
+    } finally {
+      setIsLoading(false);
+      setLoading({});
+      setSelectedPlan(null);
     }
   }
 
@@ -959,7 +960,7 @@ Swal.fire({
         `${BASE_URL}/order-service/getAllPlans`
       );
       // Sort with premium plan first, then by amount
-      const sortedData = response.data.sort((a, b) => {
+      const sortedData = [...(response.data || [])].sort((a, b) => {
         // Premium plan (99000) comes first
         if (a.amount === 99000) return -1;
         if (b.amount === 99000) return 1;

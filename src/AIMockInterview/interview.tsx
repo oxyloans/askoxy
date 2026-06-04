@@ -1,4 +1,5 @@
 ﻿import React, { useRef, useState, useEffect, useCallback } from "react";
+import MonacoEditor from "@monaco-editor/react";
 import { api } from "./lib/api";
 import { ExamImageType } from "./lib/examImageTypes";
 import { Modal } from "antd";
@@ -11,6 +12,7 @@ import { ExamProctorCamera } from "./components/ExamProctorCamera";
 import Round4 from "./Round4";
 import Round5 from "./Round5";
 import Round3CodingPage from "./Round3CodingPage";
+import interviewHeroImage from "../assets/img/interviewimg.png";
 
 const FLOW_STATE_KEY = "aiMockInterviewFlowState";
 
@@ -75,7 +77,7 @@ const GLOBAL_CSS = `
 .ai-bg{
   min-height:100vh;background:var(--bg);font-family:var(--font);
   color:var(--t1);line-height:1.55;-webkit-font-smoothing:antialiased;
-  font-size:14px;
+  font-size:15px;
 }
 
 /* ── Buttons ── */
@@ -106,16 +108,18 @@ const GLOBAL_CSS = `
 .btn-icon:hover{background:var(--s2);color:var(--t1);}
 
 /* ── Layout ── */
-.ai-main{max-width:1040px;margin:0 auto;padding:24px 20px 80px;}
+.ai-main{max-width:1380px;margin:0 auto;padding:36px 36px 88px;}
+@media(max-width:1200px){.ai-main{padding:30px 26px 80px;}}
+@media(max-width:720px){.ai-main{padding:20px 14px 64px;}}
 
 /* ── Cards ── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;}
-.card-header{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border-soft);background:var(--surface);}
-.card-body{padding:16px;}
+.card-header{display:flex;align-items:center;gap:11px;padding:18px 22px;border-bottom:1px solid var(--border-soft);background:var(--surface);}
+.card-body{padding:22px;}
 
 /* ── Two-col ── */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
-@media(max-width:720px){.two-col{grid-template-columns:1fr;}}
+.two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;}
+@media(max-width:960px){.two-col{grid-template-columns:1fr;gap:14px;}}
 
 /* ── Labels / Tags ── */
 .section-label{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--t4);margin-bottom:7px;}
@@ -145,7 +149,27 @@ const GLOBAL_CSS = `
 /* ─────────────────────────────────────────
    WELCOME SCREEN — Soft & Airy
 ──────────────────────────────────────── */
-.welcome-root{max-width:1020px;margin:0 auto;}
+.welcome-root{max-width:1360px;margin:0 auto;}
+.welcome-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,560px);gap:28px;align-items:center;margin-bottom:20px;}
+.welcome-hero-left{min-width:0;}
+.welcome-hero-right{
+  border:1px solid var(--border);
+  border-radius:var(--r-2xl);
+  background:var(--surface);
+  padding:16px;
+  box-shadow:var(--sh-sm);
+}
+.welcome-hero-image{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:var(--r-xl);
+  object-fit:cover;
+}
+@media(max-width:960px){
+  .welcome-hero{grid-template-columns:1fr;gap:14px;}
+  .welcome-hero-right{display:none;}
+}
 
 .welcome-eyebrow{
   display:inline-flex;align-items:center;gap:6px;
@@ -169,11 +193,11 @@ const GLOBAL_CSS = `
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
 .welcome-title{
-  font-family:var(--font);font-size:clamp(30px,4vw,46px);font-weight:300;
+  font-family:var(--font);font-size:clamp(32px,4.5vw,48px);font-weight:300;
   line-height:1.12;color:var(--t1);letter-spacing:-1px;margin-bottom:12px;
 }
 .welcome-title strong{font-weight:600;}
-.welcome-sub{font-size:15px;color:var(--t3);line-height:1.65;max-width:460px;margin-bottom:24px;font-weight:400;}
+.welcome-sub{font-size:15.5px;color:var(--t3);line-height:1.65;max-width:500px;margin-bottom:26px;font-weight:400;}
 
 .cta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
 .cta-hint{font-size:11.5px;color:var(--t4);margin-bottom:32px;}
@@ -247,7 +271,7 @@ const GLOBAL_CSS = `
 /* ─────────────────────────────────────────
    UPLOAD CARD
 ──────────────────────────────────────── */
-.upload-card{max-width:420px;margin:20px auto;}
+.upload-card{max-width:680px;margin:20px auto;}
 
 /* ─────────────────────────────────────────
    PROFILE / RESUME PARSED
@@ -267,8 +291,8 @@ const GLOBAL_CSS = `
 .analyzing-wrap{display:flex;justify-content:center;padding:48px 16px;}
 .analyzing-card{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-2xl);padding:36px 28px;text-align:center;
-  max-width:400px;width:100%;box-shadow:var(--sh-sm);
+  border-radius:var(--r-2xl);padding:38px 30px;text-align:center;
+  max-width:450px;width:100%;box-shadow:var(--sh-sm);
 }
 .spin-bot{font-size:32px;margin-bottom:14px;animation:float 2.2s ease-in-out infinite;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
@@ -289,7 +313,7 @@ const GLOBAL_CSS = `
 /* ─────────────────────────────────────────
    CAMERA
 ──────────────────────────────────────── */
-.camera-wrap{max-width:380px;margin:28px auto;}
+.camera-wrap{max-width:420px;margin:28px auto;}
 .camera-header{text-align:center;margin-bottom:16px;}
 .camera-preview{border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--border);margin-bottom:12px;}
 .camera-actions{display:flex;flex-direction:column;gap:8px;}
@@ -333,8 +357,8 @@ const GLOBAL_CSS = `
    QUESTION HEADER
 ──────────────────────────────────────── */
 .q-header{
-  display:flex;align-items:center;gap:10px;
-  padding:11px 16px;border-bottom:1px solid var(--border-soft);
+  display:flex;align-items:center;gap:11px;
+  padding:14px 18px;border-bottom:1px solid var(--border-soft);
   background:var(--surface);flex-wrap:wrap;
 }
 .q-round-badge{
@@ -361,7 +385,7 @@ const GLOBAL_CSS = `
 /* ── Question box ── */
 .q-box{
   background:var(--s1);border:1px solid var(--border-soft);
-  border-radius:var(--r-lg);padding:14px 16px;overflow:hidden;
+  border-radius:var(--r-lg);padding:16px 18px;overflow:hidden;
 }
 .q-section{padding:9px 0;border-bottom:1px solid var(--border-soft);}
 .q-section:last-child{border-bottom:none;padding-bottom:0;}
@@ -435,17 +459,28 @@ const GLOBAL_CSS = `
 
 /* ── Header (global nav) ── */
 .ai-header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);}
-.ai-header-inner{max-width:1040px;margin:0 auto;padding:0 20px;height:50px;display:flex;align-items:center;justify-content:space-between;gap:14px;}
-.ai-logo-group{display:flex;align-items:center;gap:9px;}
-.ai-logo-divider{width:1px;height:18px;background:var(--border);}
-.ai-header-title{font-size:13px;font-weight:600;color:var(--t1);line-height:1.2;}
-.ai-header-sub{font-size:11px;color:var(--t3);line-height:1.2;}
-.ai-header-actions{display:flex;align-items:center;gap:7px;}
-.theme-toggle{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r-md);font-size:11.5px;font-weight:500;color:var(--t2);cursor:pointer;transition:all var(--ease);}
+.ai-header-inner{max-width:1380px;margin:0 auto;padding:0 36px;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.ai-logo-group{display:flex;align-items:center;gap:12px;}
+.ai-logo-divider{width:1px;height:22px;background:var(--border);}
+.ai-brand-logo{height:36px;object-fit:contain;width:auto;}
+.ai-header-title{font-size:17px;font-weight:700;color:var(--t1);line-height:1.2;}
+.ai-header-sub{font-size:13px;color:var(--t3);line-height:1.25;}
+.ai-header-actions{display:flex;align-items:center;gap:10px;}
+.theme-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;transition:all var(--ease);}
 .theme-toggle:hover{background:var(--s2);color:var(--t1);}
-.ai-user-chip{display:flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r-full);}
-.ai-avatar{width:22px;height:22px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:10px;color:#fff;flex-shrink:0;}
-.ai-user-name{font-size:12px;font-weight:500;color:var(--t1);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ai-user-chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r-full);}
+.ai-avatar{width:28px;height:28px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:#fff;flex-shrink:0;}
+.ai-user-name{font-size:13px;font-weight:500;color:var(--t1);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media(max-width:1200px){.ai-header-inner{padding:0 26px;height:62px;}}
+@media(max-width:720px){
+  .ai-header-inner{padding:0 14px;height:58px;gap:8px;}
+  .ai-brand-logo{height:30px;}
+  .ai-logo-divider{height:18px;}
+  .ai-header-title{font-size:14px;}
+  .ai-header-sub{display:none;}
+  .theme-toggle{padding:7px 10px;font-size:12px;}
+  .ai-user-name{max-width:86px;}
+}
 
 /* ── Proctor cam ── */
 .exam-proctor-camera{position:fixed;bottom:12px;right:12px;z-index:200;width:118px;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-md);border:1px solid var(--border);background:#000;}
@@ -456,7 +491,7 @@ const GLOBAL_CSS = `
 .exam-proctor-status.warning .exam-proctor-dot{background:#fff;}
 
 /* ── Round 3 Done ── */
-.r3-done{max-width:420px;margin:60px auto;text-align:center;}
+.r3-done{max-width:480px;margin:60px auto;text-align:center;}
 
 /* ── Login loading ── */
 .login-loading{display:flex;justify-content:center;align-items:center;min-height:100vh;}
@@ -477,7 +512,8 @@ const GLOBAL_CSS = `
 .eval-step.done{color:var(--success);}
 
 /* ── Violation badge ── */
-.violation-bar{position:fixed;top:52px;left:0;right:0;z-index:300;background:var(--danger);color:#fff;font-size:12px;font-weight:500;padding:5px 16px;display:flex;align-items:center;gap:8px;}
+.violation-bar{position:fixed;top:66px;left:0;right:0;z-index:300;background:var(--danger);color:#fff;font-size:12px;font-weight:500;padding:5px 16px;display:flex;align-items:center;gap:8px;}
+@media(max-width:720px){.violation-bar{top:56px;}}
 `;
 
 export default function InterviewPage() {
@@ -485,6 +521,12 @@ export default function InterviewPage() {
     if (typeof crypto !== "undefined" && "randomUUID" in crypto)
       return crypto.randomUUID();
     return `sess-${Math.random().toString(36).slice(2)}`;
+  }
+
+  function decodeHtmlEntities(text: string): string {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
   }
 
   const [user, setUser] = useState<{ id: string; name: string } | null>(null);
@@ -1299,9 +1341,9 @@ export default function InterviewPage() {
         <div className={`ai-bg theme-${theme}`}>
           <ModalAlert />
           <InterviewHeader theme={theme} user={user} onToggleTheme={() => setTheme((p) => p === "light" ? "dark" : "light")} />
-          <main className="ai-main">
+          <div style={{ maxWidth: 840, margin: "0 auto", padding: "28px 20px 80px" }}>
             <Round4 userId={user.id} sessionId={sessionId} onComplete={() => { setShowRound4(false); setShowRound5(true); }} />
-          </main>
+          </div>
         </div>
       </>
     );
@@ -1315,7 +1357,7 @@ export default function InterviewPage() {
         <div className={`ai-bg theme-${theme}`}>
           <ModalAlert />
           <InterviewHeader theme={theme} user={user} onToggleTheme={() => setTheme((p) => p === "light" ? "dark" : "light")} />
-          <main className="ai-main">
+          <div style={{ maxWidth: 840, margin: "0 auto", padding: "28px 20px 80px" }}>
             <Round5 userId={user.id} sessionId={sessionId} onComplete={() => {
               setShowRound5(false);
               setModal({ 
@@ -1335,7 +1377,7 @@ export default function InterviewPage() {
                 }
               });
             }} />
-          </main>
+          </div>
         </div>
       </>
     );
@@ -1352,7 +1394,7 @@ export default function InterviewPage() {
         {/* ── Results Modal ── */}
         {showResultModal && candidateResult && (
           <div className="modal-overlay" onClick={() => { setShowResultModal(false); setSelectedAttempt(null); }}>
-            <div className="modal-box" style={{ maxWidth: 580, textAlign: "left", maxHeight: "88vh", overflowY: "auto", padding: "22px 24px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-box" style={{ maxWidth: 620, textAlign: "left", maxHeight: "88vh", overflowY: "auto", padding: "24px 28px" }} onClick={(e) => e.stopPropagation()}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
                 <div>
                   <div style={{ fontSize: 17, fontWeight: 600, color: "var(--t1)", letterSpacing: "-.3px" }}>{candidateResult.name}</div>
@@ -1504,41 +1546,49 @@ export default function InterviewPage() {
           {showWelcome && !round3Done && !showRound4 && !showRound5 && (
             <div className="welcome-root">
 
-              {/* Hero */}
-              <div className="welcome-eyebrow">
-                <span className="welcome-eyebrow-dot" />
-                AI-Powered Assessment
-              </div>
+              <div className="welcome-hero">
+                <div className="welcome-hero-left">
+                  {/* Hero */}
+                  <div className="welcome-eyebrow">
+                    <span className="welcome-eyebrow-dot" />
+                    AI-Powered Assessment
+                  </div>
 
-              <div className="ai-typing-row">
-                <span style={{ fontSize: 16 }}>🤖</span>
-                <span className="ai-typing-text">{typingText}<span className="cursor-blink" /></span>
-              </div>
+                  <div className="ai-typing-row">
+                    <span style={{ fontSize: 16 }}>🤖</span>
+                    <span className="ai-typing-text">{typingText}<span className="cursor-blink" /></span>
+                  </div>
 
-              <h1 className="welcome-title">
-                Ace your next<br /><strong>tech interview</strong>
-              </h1>
-              <p className="welcome-sub">Upload your resume and get a personalised AI interview tailored to your skills, experience, and target role.</p>
+                  <h1 className="welcome-title">
+                    Ace your next<br /><strong>tech interview</strong>
+                  </h1>
+                  <p className="welcome-sub">Upload your resume and get a personalised AI interview tailored to your skills, experience, and target role.</p>
 
-              <div className="cta-row">
-                <button className="btn btn-outline btn-primary-lg" onClick={openPreviousResults} disabled={resultLoading}>
-                  {resultLoading
-                    ? (<><svg className="spinner" width={13} height={13} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" opacity=".25" /><path fill="currentColor" opacity=".75" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" /></svg> Loading</>)
-                    : "Previous Results"}
-                </button>
-                <button className="btn btn-primary btn-primary-lg"
-                  onClick={() => { setShowWelcome(false); setShowUpload(true); }}>
-                  Start Interview →
-                </button>
-              </div>
-              <div className="cta-hint">Upload resume · AI questions · Instant scored feedback</div>
+                  <div className="cta-row">
+                    {/* <button className="btn btn-outline btn-primary-lg" onClick={openPreviousResults} disabled={resultLoading}>
+                      {resultLoading
+                        ? (<><svg className="spinner" width={13} height={13} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" opacity=".25" /><path fill="currentColor" opacity=".75" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" /></svg> Loading</>)
+                        : "Previous Results"}
+                    </button> */}
+                    <button className="btn btn-primary btn-primary-lg"
+                      onClick={() => { setShowWelcome(false); setShowUpload(true); }}>
+                      Start Interview →
+                    </button>
+                  </div>
+                  <div className="cta-hint">Upload resume · AI questions · Instant scored feedback</div>
 
-              {/* Stats */}
-              <div className="stats-row">
-                <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--brand)" }} /><span>45–60 min total</span></div>
-                <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--info)" }} /><span>34 questions</span></div>
-                <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--success)" }} /><span>Instant AI feedback</span></div>
-                <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--warning)" }} /><span>5 rounds</span></div>
+                  {/* Stats */}
+                  <div className="stats-row">
+                    <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--brand)" }} /><span>45–60 min total</span></div>
+                    <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--info)" }} /><span>34 questions</span></div>
+                    <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--success)" }} /><span>Instant AI feedback</span></div>
+                    <div className="stat-chip"><div className="stat-dot" style={{ background: "var(--warning)" }} /><span>5 rounds</span></div>
+                  </div>
+                </div>
+
+                <div className="welcome-hero-right" aria-hidden="true">
+                  <img src={interviewHeroImage} alt="Interview illustration" className="welcome-hero-image" />
+                </div>
               </div>
 
               {/* Rounds grid */}
@@ -1866,7 +1916,7 @@ export default function InterviewPage() {
               QUESTION VIEW
           ══════════════════════════════════════ */}
           {question && !showRound4 && !showRound5 && (
-            <div style={{ maxWidth: 760, margin: "0 auto" }} ref={questionRef}>
+            <div style={{ maxWidth: 840, margin: "0 auto" }} ref={questionRef}>
               <div className="card">
 
                 {/* Header */}
@@ -1892,7 +1942,7 @@ export default function InterviewPage() {
 
                 {roundDescription && <div className="round-desc-bar">{roundDescription}</div>}
 
-                <div style={{ padding: "16px 18px" }}>
+                <div style={{ padding: "20px 22px" }}>
 
                   {/* ── Question content ── */}
                   <div style={{ marginBottom: 16 }}>
@@ -1925,44 +1975,79 @@ export default function InterviewPage() {
                               )}
                             </>
                           );
-                          // Fallback: plain text question
-                          const lines = (typeof question === 'string' ? question : '').split("\n");
+                          // Fallback: plain text question - display full text with proper formatting
+                          const questionText = typeof question === 'string' ? question : JSON.stringify(question);
+                          const lines = questionText.split("\n");
                           let cs = "", sc: string[] = [];
                           const secs: { type: string; content: string[] }[] = [];
                           lines.forEach((line) => {
-                            const t = line.trim().replace(/\*+/g, "").trim();
+                            const t = line.trim().replace(/^\*+\s*/, "").replace(/\*+$/, "").trim();
                             if (!t) return;
-                            if (t.toLowerCase().startsWith("problem") || t.toLowerCase().startsWith("given")) { if (cs) secs.push({ type: cs, content: sc }); cs = "problem"; sc = [t.replace(/^(problem|given)[:\s]*/i, "")]; }
-                            else if (t.toLowerCase().startsWith("function")) { if (cs) secs.push({ type: cs, content: sc }); cs = "function"; sc = [t]; }
-                            else if (t.toLowerCase().startsWith("example")) { if (cs) secs.push({ type: cs, content: sc }); cs = "example"; sc = []; }
-                            else if (t.toLowerCase().startsWith("constraint")) { if (cs) secs.push({ type: cs, content: sc }); cs = "constraints"; sc = [t.replace(/^constraints?[:\s]*/i, "")]; }
-                            else sc.push(t.replace(/^[-#\s]+/, ""));
+                            const lower = t.toLowerCase();
+                            if (lower.startsWith("problem:") || lower.startsWith("problem") || lower.startsWith("given:") || lower.startsWith("given")) { 
+                              if (cs) secs.push({ type: cs, content: sc }); 
+                              cs = "problem"; 
+                              sc = [t.replace(/^(problem|given)[:\s]*/i, "")]; 
+                            }
+                            else if (lower.startsWith("function:") || lower.startsWith("function signature:")) { 
+                              if (cs) secs.push({ type: cs, content: sc }); 
+                              cs = "function"; 
+                              sc = [t.replace(/^function(\s+signature)?[:\s]*/i, "")]; 
+                            }
+                            else if (lower.startsWith("example:") || lower.startsWith("example")) { 
+                              if (cs) secs.push({ type: cs, content: sc }); 
+                              cs = "example"; 
+                              sc = []; 
+                            }
+                            else if (lower.startsWith("constraint:") || lower.startsWith("constraints:")) { 
+                              if (cs) secs.push({ type: cs, content: sc }); 
+                              cs = "constraints"; 
+                              sc = [t.replace(/^constraints?[:\s]*/i, "")]; 
+                            }
+                            else if (cs) {
+                              sc.push(t.replace(/^[-#•\s]+/, ""));
+                            } else {
+                              // If no section started yet, treat as problem
+                              cs = "problem";
+                              sc = [t];
+                            }
                           });
                           if (cs) secs.push({ type: cs, content: sc });
+                          
+                          // If no sections found, display raw question
+                          if (secs.length === 0) {
+                            return (
+                              <div className="q-section">
+                                <div className="q-section-label" style={{ color: "var(--brand)" }}>Problem</div>
+                                <pre style={{ fontSize: 13.5, color: "var(--t1)", lineHeight: 1.65, whiteSpace: "pre-wrap", fontFamily: "var(--font)" }}>{questionText}</pre>
+                              </div>
+                            );
+                          }
+                          
                           return secs.map((s, i) => {
-                            if (s.type === "problem") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--brand)" }}>Problem</div>{s.content.map((l, j) => <p key={j} style={{ fontSize: 13.5, color: "var(--t1)", lineHeight: 1.65 }}>{l}</p>)}</div>);
-                            if (s.type === "function") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--success)" }}>Function Signature</div><code style={{ fontSize: 12.5, fontFamily: "var(--mono)", color: "var(--t1)" }}>{s.content[0]}</code></div>);
-                            if (s.type === "example") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--info)" }}>Examples</div>{s.content.map((l, j) => (<div key={j} style={{ fontSize: 12.5, fontFamily: "var(--mono)", color: l.toLowerCase().includes("input") ? "var(--success)" : l.toLowerCase().includes("output") ? "var(--brand)" : "var(--t1)" }}>{l}</div>))}</div>);
-                            if (s.type === "constraints") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--warning)" }}>Constraints</div>{s.content.map((l, j) => <p key={j} style={{ fontSize: 12.5, color: "var(--t1)" }}>• {l}</p>)}</div>);
+                            if (s.type === "problem") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--brand)" }}>Problem</div>{s.content.map((l, j) => <p key={j} style={{ fontSize: 13.5, color: "var(--t1)", lineHeight: 1.65, marginBottom: 8 }}>{l}</p>)}</div>);
+                            if (s.type === "function") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--success)" }}>Function Signature</div><pre style={{ fontSize: 12.5, fontFamily: "var(--mono)", color: "var(--t1)", background: "var(--s1)", padding: "8px 12px", borderRadius: "var(--r-md)", overflowX: "auto" }}>{s.content.join("\n")}</pre></div>);
+                            if (s.type === "example") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--info)" }}>Examples</div>{s.content.map((l, j) => (<div key={j} style={{ fontSize: 12.5, fontFamily: "var(--mono)", color: l.toLowerCase().includes("input") ? "var(--success)" : l.toLowerCase().includes("output") ? "var(--brand)" : "var(--t1)", marginBottom: 4 }}>{l}</div>))}</div>);
+                            if (s.type === "constraints") return (<div key={i} className="q-section"><div className="q-section-label" style={{ color: "var(--warning)" }}>Constraints</div>{s.content.map((l, j) => <p key={j} style={{ fontSize: 12.5, color: "var(--t1)", marginBottom: 4 }}>• {l}</p>)}</div>);
                             return null;
                           });
                         })()}
                       </div>
                     ) : round === 2 || (round === 3 && nonTechnical) ? (
                       <div className="q-box">
-                        {question.split("\n").map((line, i) => {
+                        {decodeHtmlEntities(question).split("\n").map((line, i) => {
                           const t = line.trim();
                           if (!t) return null;
-                          if (t.startsWith("**Situation:**")) return (
+                          if (t.startsWith("**Situation:**") || t.startsWith("**Read the following passage:**")) return (
                             <div key={i} className="q-section">
-                              <div className="q-section-label" style={{ color: "var(--success)" }}>Situation</div>
-                              <p style={{ fontSize: 13.5, color: "var(--t1)", lineHeight: 1.65 }}>{t.replace("**Situation:**", "").trim()}</p>
+                              <div className="q-section-label" style={{ color: "var(--success)" }}>Passage</div>
+                              <p style={{ fontSize: 13.5, color: "var(--t1)", lineHeight: 1.65 }}>{t.replace(/\*\*(Situation|Read the following passage):\*\*/i, "").trim()}</p>
                             </div>
                           );
-                          if (t.startsWith("**Question:**")) return (
+                          if (t.startsWith("**Question:**") || t.startsWith("**Task:**")) return (
                             <div key={i} className="q-section">
-                              <div className="q-section-label" style={{ color: "var(--info)" }}>Question</div>
-                              <p style={{ fontSize: 13.5, color: "var(--t1)", lineHeight: 1.65, fontWeight: 500 }}>{t.replace("**Question:**", "").trim()}</p>
+                              <div className="q-section-label" style={{ color: "var(--info)" }}>Task</div>
+                              <p style={{ fontSize: 13.5, color: "var(--t1)", lineHeight: 1.65, fontWeight: 500 }}>{t.replace(/\*\*(Question|Task):\*\*/i, "").trim()}</p>
                             </div>
                           );
                           return <p key={i} style={{ fontSize: 13.5, color: "var(--t2)", marginBottom: 5 }}>{t}</p>;
@@ -1998,8 +2083,8 @@ export default function InterviewPage() {
                     </div>
                   )}
 
-                  {/* ── Text Answer (Round 2) ── */}
-                  {round === 2 && (
+                  {/* ── Text Answer (Round 2 & Round 3 Non-Technical) ── */}
+                  {(round === 2 || (round === 3 && nonTechnical)) && (
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--t1)" }}>Your Answer</div>
@@ -2009,7 +2094,7 @@ export default function InterviewPage() {
                         ref={answerRef}
                         disabled={timeLeft <= 0 || showFeedback}
                         className="ai-textarea"
-                        placeholder={timeLeft <= 0 ? "Time expired — submitted automatically" : "Describe your approach:\n\n1. Immediate action:\n2. Reasoning:\n3. Expected outcome:"}
+                        placeholder={timeLeft <= 0 ? "Time expired — submitted automatically" : "Write your detailed answer here (minimum 300 characters)..."}
                         style={{ minHeight: 210 }}
                         onChange={(e) => setCharCount(e.target.value.length)}
                         onPaste={blockClipboardAction}

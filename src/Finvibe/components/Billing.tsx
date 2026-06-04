@@ -185,11 +185,11 @@ const FINVIBE_FEATURES: Record<Country, string[]> = {
   ],
   saudi: [
     "Covers 10,000+ SAMA Regulatory Requirements & Circulars",
-    "Supports 26+ Licensed Banks: 12 Local Banks + 14 Foreign Bank Branches",
-    "Covers 8 Bank Categories: Commercial, Islamic, Digital, Finance Companies & more",
-    "Compliant with SAMA Open Banking & Vision 2030 Fintech Frameworks",
+    "Supports 38+ Licensed Banks: 11 Local + 4 Digital + 23 Foreign Bank Branches",
+    "Covers 88+ NBFCs: Finance Companies, BNPL, Microfinance, Crowdfunding & more",
+    "Covers 10 Institution Categories: Local, Digital, Foreign, Finance Support & more",
+    "Compliant with SAMA Open Banking, Vision 2030 & Fintech Frameworks",
     "Frontend + Backend + Database Code — Ready to Deploy",
-    "One-click Download of the Full Application Codebase",
   ],
 };
 
@@ -213,11 +213,11 @@ const INSURVIBE_FEATURES: Record<Country, string[]> = {
     "Complete Insurance Application from a Single Prompt",
   ],
   saudi: [
-    "Covers SAMA Insurance Supervision Regulatory Requirements",
-    "Supports 30+ Licensed Cooperative Insurance Companies in KSA",
-    "Covers 900+ Insurance Products across all Lines of Business",
-    "Compliant with Saudi Vision 2030 Insurance Sector Reforms",
-    "Covers Cooperative Life, Health, Motor & General Takaful",
+    "Covers Insurance Authority (IA) of Saudi Arabia Regulatory Requirements",
+    "Supports 30+ Licensed Cooperative Insurance (Takaful) Companies in KSA",
+    "Covers Reinsurance Companies, Brokers, Agents & Service Providers",
+    "Compliant with IA Cooperative Insurance Regulations & CCHI Health Rules",
+    "Covers Najm Motor Integration, Health TPA, Bancassurance & Loss Adjusters",
     "Frontend + Backend + Database Code — Ready to Deploy",
     "Complete Insurance Application from a Single Prompt",
   ],
@@ -261,8 +261,8 @@ const FINVIBE_TAGS: Record<Country, string[]> = {
   saudi: [
     "SAMA Compliant",
     "10,000+ Requirements",
-    "26+ Banks",
-    "8 Bank Categories",
+    "38+ Banks",
+    "88+ NBFCs",
   ],
 };
 
@@ -274,7 +274,7 @@ const INSURVIBE_TAGS: Record<Country, string[]> = {
     "638 Brokerages",
   ],
   uae: ["UAE IA Compliant", "60+ Companies", "900+ Products", "Takaful Ready"],
-  saudi: ["SAMA Compliant", "30+ Companies", "900+ Products", "Vision 2030"],
+  saudi: ["IA Compliant", "30+ Insurers", "5 Entity Types", "Vision 2030"],
 };
 
 const ANIM_STYLES = `
@@ -720,7 +720,7 @@ export default function OxybfsiPricing() {
               <div className="relative z-10 grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 items-center">
                 <div>
                   <span className="inline-block bg-emerald-500/20 text-emerald-300 text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full mb-3 sm:mb-4 tracking-widest uppercase">
-                    The OXYBFS{`{AI}`} Advantage
+                    The OXYBFSAI Advantage
                   </span>
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-3 sm:mb-4 leading-tight">
                     <span className="text-emerald-400">6 Engineers</span> build
@@ -737,7 +737,7 @@ export default function OxybfsiPricing() {
                   </h2>
                   <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mt-2 sm:mt-3">
                     Stop burning crores on large engineering teams and endless
-                    sprints. OXYBFS{`{AI}`} collapses months of regulated
+                    sprints. OXYBFSAI collapses months of regulated
                     financial software development into a single AI generation —
                     fully compliant, fully coded, ready to deploy.
                   </p>
@@ -756,7 +756,7 @@ export default function OxybfsiPricing() {
                       icon: "💸",
                     },
                     {
-                      label: "With OXYBFS{AI}",
+                      label: "With OXYBFSAI",
                       value: "1 Prompt · 6 Minutes",
                       icon: "⚡",
                     },
@@ -798,7 +798,7 @@ export default function OxybfsiPricing() {
                   environment,{" "}
                   <strong className="text-white">2 technical resources</strong>{" "}
                   are required on your side — one for backend infrastructure and
-                  one for frontend deployment. OXYBFS{`{AI}`} generates the
+                  one for frontend deployment. OXYBFSAI generates the
                   complete codebase; your team handles hosting and go-live.
                 </p>
               </div>
@@ -814,7 +814,7 @@ export default function OxybfsiPricing() {
                 ⚠
               </span>
               <p className="text-slate-300 text-[10px] sm:text-xs leading-relaxed">
-                <strong className="text-slate-200">Note:</strong> OXYBFS{`{AI}`}{" "}
+                <strong className="text-slate-200">Note:</strong> OXYBFSAI{" "}
                 Responsible AI may make mistakes. Generated code and compliance
                 mappings should be reviewed by qualified legal, technical, and
                 regulatory professionals before production deployment. This
@@ -823,7 +823,7 @@ export default function OxybfsiPricing() {
               </p>
             </div>
             <p className="text-slate-600 text-[9px] sm:text-xs mt-6 sm:mt-8 px-2">
-              © 2026 OXYBFS{`{AI}`} Responsible AI · All Rights Reserved
+              © 2026 OXYBFSAI Responsible AI · All Rights Reserved
             </p>
           </div>
         </div>

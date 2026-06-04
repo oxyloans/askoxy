@@ -592,7 +592,7 @@ export default function Round5({ userId, sessionId, onComplete }: Round5Props) {
      LOADING
   ════════════════════════════════════════════ */
   if (loading) return (
-    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto" }}>
       <style>{STYLES}</style>
       <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>
         {/* Header skeleton */}
@@ -634,7 +634,7 @@ export default function Round5({ userId, sessionId, onComplete }: Round5Props) {
 
   /* ── Error ── */
   if (error) return (
-    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto" }}>
       <style>{STYLES}</style>
       <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, padding: 32, textAlign: "center" }}>
         <div style={{ fontSize: 14, color: "#E24B4A", marginBottom: 16 }}>{error}</div>
@@ -647,7 +647,7 @@ export default function Round5({ userId, sessionId, onComplete }: Round5Props) {
      MAIN — same structure / maxWidth as Round 4
   ════════════════════════════════════════════ */
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", animation: "r5fade .4s ease" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto", animation: "r5fade .4s ease" }}>
       <style>{STYLES}</style>
 
       <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>

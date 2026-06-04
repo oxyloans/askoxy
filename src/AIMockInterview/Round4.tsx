@@ -352,7 +352,7 @@ export default function Round4({ userId, sessionId, onComplete }: Round4Props) {
   /* ── Summary ── */
   if (roundComplete) {
     return (
-      <div style={{ maxWidth: 680, margin: "0 auto", animation: "r4fadeup .4s ease" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", animation: "r4fadeup .4s ease" }}>
         <style>{STYLES}</style>
         <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>
           {/* Header */}
@@ -380,7 +380,7 @@ export default function Round4({ userId, sessionId, onComplete }: Round4Props) {
   }
 
   if (loading) return (
-    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto" }}>
       <style>{STYLES}</style>
       <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>
         {/* Header skeleton */}
@@ -418,7 +418,7 @@ export default function Round4({ userId, sessionId, onComplete }: Round4Props) {
   );
 
   if (error) return (
-    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto" }}>
       <style>{STYLES}</style>
       <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, padding: 32, textAlign: "center" }}>
         <div style={{ fontSize: 14, color: "var(--color-text-danger)", marginBottom: 16 }}>{error}</div>
@@ -430,7 +430,7 @@ export default function Round4({ userId, sessionId, onComplete }: Round4Props) {
   );
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", animation: "r4fadeup .4s ease" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto", animation: "r4fadeup .4s ease" }}>
       <style>{STYLES}</style>
 
       <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 16, overflow: "hidden" }}>

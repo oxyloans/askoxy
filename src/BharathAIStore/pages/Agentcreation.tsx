@@ -1652,6 +1652,14 @@ const Agentcreation: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // ✅ Supporting-file upload modal is disabled after publish.
+  // Clear any old pending upload state so users are not asked again after refresh.
+  useEffect(() => {
+    localStorage.removeItem("awaitingUpload");
+    localStorage.setItem("agentUploadClosed", "true");
+    setUploadOpen(false);
+  }, []);
+
   // was: addFileType: AddFileType,
   async function uploadMandatoryDocOnceMulti(
     assistanceId: string,
@@ -1720,11 +1728,7 @@ const Agentcreation: React.FC = () => {
       uploadResolveRef.current = resolve;
       localStorage.setItem(
         "awaitingUpload",
-        JSON.stringify({
-          assistanceId,
-          userId,
-          roleForUpload: roleForUpload || "",
-        }),
+        JSON.stringify({ assistanceId, userId, roleForUpload: roleForUpload || "" }),
       );
       localStorage.removeItem("agentUploadClosed");
       setUploadFiles([]);
@@ -1744,15 +1748,8 @@ const Agentcreation: React.FC = () => {
       if (assistanceId && userId) {
         const auth = getAuthHeader();
         setUploadFiles([]);
-        setUploadRole(
-          roleForUpload || pendingUploadRef.current?.roleForUpload || "",
-        );
-        pendingUploadRef.current = {
-          assistanceId,
-          userId,
-          auth,
-          roleForUpload,
-        };
+        setUploadRole(roleForUpload || pendingUploadRef.current?.roleForUpload || "");
+        pendingUploadRef.current = { assistanceId, userId, auth, roleForUpload };
         setUploadOpen(true);
       }
     } catch {}
@@ -2547,7 +2544,16 @@ const Agentcreation: React.FC = () => {
       setPublishedAgentType(publishedAgentType);
       let uploadCompleted = false;
 
-      // ✅ If Business Card flow exists, first generate/upload the profile PDF silently.
+      // ✅ IMPORTANT:
+      // Do not ask for "Upload Supporting Files" after publishing.
+      // Earlier this opened a modal and caused addAgentFiles 500 errors when the user skipped/changed files.
+      // Now:
+      // 1) Normal agent publish completes directly.
+      // 2) Business-card flow silently generates/uploads the profile PDF only when a card file exists.
+      localStorage.removeItem("awaitingUpload");
+      localStorage.setItem("agentUploadClosed", "true");
+      setUploadOpen(false);
+
       if (assistanceId && isBusinessCardUsed && businessCardFile) {
         uploadCompleted = await fetchProfilePdfAndUpload(
           assistanceId,
@@ -2555,16 +2561,6 @@ const Agentcreation: React.FC = () => {
           auth || {},
           roleForUpload,
         );
-      }
-
-      // ✅ After successful publish, ask for optional supporting files.
-      // Whether the user uploads files or closes/skips the modal, publishNow continues
-      // and navigates to /main/bharath-aistore/agents.
-      if (assistanceId) {
-        setPublishedAgentType(
-          (data?.agentType || roleForUpload || "supporting").toLowerCase(),
-        );
-        await promptUpload(assistanceId, userId, auth || {}, roleForUpload);
       }
 
       try {
@@ -2588,7 +2584,7 @@ const Agentcreation: React.FC = () => {
       message.success(
         uploadCompleted
           ? "Agent published successfully and profile document uploaded."
-          : "Agent published successfully.",
+          : "Agent published successfully."
       );
       setIsBusinessCardUsed(false);
       setBusinessCardFile(null);
@@ -2727,17 +2723,13 @@ const Agentcreation: React.FC = () => {
         const formData = new FormData();
         formData.append("image", businessCardFile!); // businessCardFile is already in state
 
-        const res = await axios.post(
-          `${BASE_URL}/ai-service/generate-profile`,
-          formData,
-          {
-            responseType: "blob",
-            headers: {
-              ...((auth || {}) as Record<string, string>),
-              "Content-Type": "multipart/form-data",
-            },
+        const res = await axios.post(`${BASE_URL}/ai-service/generate-profile`, formData, {
+          responseType: "blob",
+          headers: {
+            ...((auth || {}) as Record<string, string>),
+            "Content-Type": "multipart/form-data",
           },
-        );
+        });
 
         // Step 2: Response is direct PDF binary — read as blob
         const pdfBlob = res.data as Blob;
@@ -2760,7 +2752,7 @@ const Agentcreation: React.FC = () => {
         message.warning(
           e?.response?.data?.message ||
             e?.message ||
-            "Agent published, but profile document upload failed.",
+            "Agent published, but profile document upload failed."
         );
         return false;
       } finally {

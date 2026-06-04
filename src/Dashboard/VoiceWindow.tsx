@@ -220,8 +220,10 @@ interface VoiceWindowProps {
   onClose: () => void;
 }
 
-const VOICE_API_URL =
-  "http://65.0.147.157:9027/api/product-service/voice-assistance";
+const VOICE_API_URL = `${BASE_URL}/product-service/voice-assistance`;
+
+const SILENCE_LIMIT_MS = 4000;
+const MIN_RECORDING_MS = 1200;
 
 function safeArray<T>(value: T[] | undefined | null): T[] {
   return Array.isArray(value) ? value : [];
@@ -831,9 +833,60 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
   const lastUserSpokenTextRef = useRef<string>("");
   const latestUserTranscriptRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const silenceTimerRef = useRef<number | null>(null);
+  const recordingStartedAtRef = useRef<number>(0);
+  const isListeningRef = useRef(false);
+  const isVoiceLoadingRef = useRef(false);
 
   const assistantAudioRef = useRef<HTMLAudioElement | null>(null);
   const assistantAudioUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
+
+  useEffect(() => {
+    isVoiceLoadingRef.current = isVoiceLoading;
+  }, [isVoiceLoading]);
+
+  const clearVoiceSilenceTimer = () => {
+    if (silenceTimerRef.current) {
+      window.clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  };
+
+  const stopCurrentVoiceRecording = () => {
+    clearVoiceSilenceTimer();
+    setIsListening(false);
+    stopSpeechRecognition();
+
+    try {
+      if (mediaRecorderRef.current?.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+    } catch {
+      //
+    }
+  };
+
+  const startVoiceSilenceTimer = () => {
+    clearVoiceSilenceTimer();
+
+    silenceTimerRef.current = window.setTimeout(() => {
+      const recordedFor = Date.now() - recordingStartedAtRef.current;
+
+      if (
+        recordedFor >= MIN_RECORDING_MS &&
+        isListeningRef.current &&
+        !isVoiceLoadingRef.current
+      ) {
+        stopCurrentVoiceRecording();
+      } else if (isListeningRef.current) {
+        startVoiceSilenceTimer();
+      }
+    }, SILENCE_LIMIT_MS);
+  };
 
   const getCurrentUserId = () =>
     localStorage.getItem("userId") || sessionStorage.getItem("userId") || "";
@@ -887,6 +940,7 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
     fetchCartData();
 
     return () => {
+      clearVoiceSilenceTimer();
       stopSpeechRecognition();
       stopAllTracks();
       stopAssistantAudio();
@@ -1227,13 +1281,20 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
       if (displayText.trim()) {
         latestUserTranscriptRef.current = displayText.trim();
         lastUserSpokenTextRef.current = displayText.trim();
+        startVoiceSilenceTimer();
       }
       setLiveTranscript(displayText);
     };
 
-    recognition.onerror = () => {};
+    recognition.onerror = () => {
+      if (isListeningRef.current) startVoiceSilenceTimer();
+    };
     recognition.onend = () => {
       recognitionRef.current = null;
+
+      if (isListeningRef.current && !isVoiceLoadingRef.current) {
+        window.setTimeout(() => startLiveSpeechRecognition(), 150);
+      }
     };
 
     recognitionRef.current = recognition;
@@ -1541,6 +1602,7 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
 
   const handleStopVoiceAssistant = () => {
     stopAssistantAudio();
+    clearVoiceSilenceTimer();
 
     if (isListening) {
       setIsListening(false);
@@ -1589,6 +1651,7 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
 
         mediaRecorderRef.current = recorder;
         audioChunksRef.current = [];
+        recordingStartedAtRef.current = Date.now();
         transcriptRef.current = "";
         finalTranscriptRef.current = "";
         latestUserTranscriptRef.current = "";
@@ -1602,6 +1665,8 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
         };
 
         recorder.onstop = async () => {
+          clearVoiceSilenceTimer();
+
           const spokenText =
             finalTranscriptRef.current.trim() ||
             transcriptRef.current.trim() ||
@@ -1680,10 +1745,9 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
         recorder.start();
         startLiveSpeechRecognition();
         setIsListening(true);
+        startVoiceSilenceTimer();
       } else {
-        setIsListening(false);
-        stopSpeechRecognition();
-        mediaRecorderRef.current?.stop();
+        stopCurrentVoiceRecording();
       }
     } catch {
       setIsListening(false);
@@ -1710,6 +1774,7 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
       const formData = new FormData();
       formData.append("actionType", requestActionType);
       formData.append("file", audioBlob, "voice.webm");
+      formData.append("transcript", fallbackText || "");
       const currentUserId = getCurrentUserId();
       formData.append("userId", currentUserId);
       formData.append("products", JSON.stringify(payloadProducts || []));
