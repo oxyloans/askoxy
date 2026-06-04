@@ -140,7 +140,11 @@ const LeaveApplicationPage: React.FC = () => {
       const userId = sessionStorage.getItem("userId");
 
       if (!username || !userId) {
-        Swal.fire({ icon: "error", title: "Error", text: "User information not found. Please login again." });
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "User information not found. Please login again.",
+        });
         setLoading(false);
         return;
       }
@@ -162,17 +166,28 @@ const LeaveApplicationPage: React.FC = () => {
       // Make API call
       const response = await employeeApi.patch(
         `${BASE_URL}/user-service/write/requestLeaveApplication`,
-        payload
+        payload,
       );
-
       if (response.data) {
-        Swal.fire({ icon: "success", title: "Success", text: "Leave application submitted successfully!" });
+        Swal.fire({
+          icon: "success",
+          title: "Leave Request Submitted",
+          text: "Your leave request has been submitted successfully for review.",
+          confirmButtonText: "OK",
+        });
+
         form.resetFields();
         setLeaveDays(null);
       }
-    } catch (error) {
-      console.error("Error submitting leave application:", error);
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to submit leave application. Please try again." });
+    } catch (error: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Unable to Submit Leave Request",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data ||
+          "Unable to submit your leave request at this time. Please try again later.",
+      });
     } finally {
       setLoading(false);
     }

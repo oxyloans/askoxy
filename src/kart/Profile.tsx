@@ -310,7 +310,7 @@ const ProfilePage = () => {
         `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`,
       );
 
-      setAddresses(response.data);
+      setAddresses([...response.data].reverse());
     } catch (error) {
       setError("Error fetching addresses");
     } finally {
@@ -556,6 +556,7 @@ const ProfilePage = () => {
 
       const data = {
         userId: customerId,
+        id: editingAddressId,
         flatNo: addressFormData.flatNo,
         landMark: addressFormData.landmark,
         address: addressFormData.address,
@@ -567,7 +568,7 @@ const ProfilePage = () => {
 
       if (editingAddressId) {
         await customerApi.patch(
-          `${BASE_URL}/user-service/updateAddress/${editingAddressId}`,
+          `${BASE_URL}/user-service/updateAddress`,
           data,
         );
 
@@ -1020,9 +1021,9 @@ const ProfilePage = () => {
                       {addresses.map((address) => (
                         <div
                           key={address.id}
-                          className="bg-white border border-gray-200 rounded-xl p-4 lg:p-6 hover:shadow-lg transition-shadow relative group"
+                          className="bg-white border border-gray-200 rounded-xl p-4 lg:p-6 hover:shadow-lg transition-shadow relative group overflow-hidden"
                         >
-                          <div className="flex items-start gap-4">
+                          <div className="flex items-start gap-3">
                             <div className="p-2 bg-purple-50 rounded-lg shrink-0">
                               {address.addressType === "Home" ? (
                                 <FaHome className="text-purple-600" />
@@ -1034,19 +1035,37 @@ const ProfilePage = () => {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                {address.addressType}
-                              </span>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                  {address.addressType}
+                                </span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    onClick={() => handleEditAddress(address)}
+                                    className="text-gray-400 hover:text-purple-600 transition-colors"
+                                    title="Edit"
+                                  >
+                                    <FaPen size={13} />
+                                  </button>
+                                  {/* <button
+                                    onClick={() => handleDeleteAddress(address.id!)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <FaTrash size={13} />
+                                  </button> */}
+                                </div>
+                              </div>
 
-                              <h3 className="mt-2 font-medium text-gray-900 truncate">
+                              <h3 className="mt-2 font-medium text-gray-900 truncate" title={address.flatNo}>
                                 {address.flatNo}
                               </h3>
 
-                              <p className="mt-1 text-sm text-gray-500 truncate">
+                              <p className="mt-1 text-sm text-gray-500 truncate" title={address.landmark}>
                                 {address.landmark}
                               </p>
 
-                              <p className="mt-1 text-sm text-gray-500">
+                              <p className="mt-1 text-sm text-gray-500 line-clamp-2 break-words" title={address.address}>
                                 {address.address}
                               </p>
 

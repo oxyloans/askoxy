@@ -361,8 +361,8 @@ const EmployeeProfilePage: React.FC = () => {
 
       Swal.fire({
         icon: "success",
-        title: "Success",
-        text: "Employee profile updated successfully.",
+        title: "Update Successful",
+        text: "The employee profile information has been updated successfully.",
       });
 
       getEmployeeSkills();

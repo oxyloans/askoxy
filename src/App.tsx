@@ -659,6 +659,7 @@ const App: React.FC = () => {
       currentPath.startsWith("/radha/nbf-ai-intelligence") ||
       currentPath.startsWith("/radha/rakbank-ai-intelligence") ||
       currentPath.startsWith("/smartlock") ||
+      currentPath.startsWith("/radha/uae-banks-ai-intelligence") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
@@ -1284,6 +1285,10 @@ const App: React.FC = () => {
               <Route
                 path="/radha/fab-ai-intelligence"
                 element={<FABAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/uae-banks-ai-intelligence"
+                element={<UAEBanksAIIntelligenceHub />}
               />
              
               <Route

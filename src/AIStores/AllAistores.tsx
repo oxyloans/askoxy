@@ -6,13 +6,13 @@ import {
   IconSearch,
   IconFilter,
 } from "@tabler/icons-react";
-import BASE_URL ,{uploadurlwithId}from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 import axios from "axios";
-import { Modal, Radio, Input, Select, Spin, message } from "antd";
+import {  Spin, message } from "antd";
 
 interface StoreAgent {
-  agentId: string;
-  agentName: string;
+  agentId?: string | null;
+  agentName?: string | null;
   agentCreatorName?: string | null;
   agentStatus?: string | null;
 }
@@ -62,6 +62,17 @@ const getAuthHeaders = () => {
   return {
     Authorization: accessToken ? `Bearer ${accessToken}` : "",
   };
+};
+
+const getValidAgents = (agents?: StoreAgent[]) => {
+  return (agents || []).filter(
+    (agent) =>
+      agent &&
+      agent.agentId &&
+      agent.agentName &&
+      agent.agentStatus &&
+      agent.agentStatus.toString().toUpperCase() === "ACTIVE",
+  );
 };
 
 const safeFullName = (first?: string, last?: string) => {
@@ -138,7 +149,7 @@ const AllAIStores: React.FC = () => {
 
   const profileName = useMemo(
     () => safeFullName(firstName, lastName),
-    [firstName, lastName]
+    [firstName, lastName],
   );
 
   // company contact check
@@ -159,7 +170,7 @@ const AllAIStores: React.FC = () => {
 
   // if user clicks store before completing gate → hold navigation
   const [pendingStoreToOpen, setPendingStoreToOpen] = useState<AiStore | null>(
-    null
+    null,
   );
 
   /** ---------------------------------------------
@@ -176,7 +187,7 @@ const AllAIStores: React.FC = () => {
             .replace(/^-+|-+$/g, "")
             .slice(0, 40)
         : "store",
-    []
+    [],
   );
 
   const buildPublicStoreUrl = useCallback(
@@ -184,7 +195,7 @@ const AllAIStores: React.FC = () => {
       const slug = slugify(store.storeName);
       return `${aiStorePrefix}${slug}`;
     },
-    [slugify, aiStorePrefix]
+    [slugify, aiStorePrefix],
   );
 
   const accessToken = localStorage.getItem("accessToken");
@@ -205,7 +216,7 @@ const AllAIStores: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: accessToken ? `Bearer ${accessToken}` : "",
           },
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Failed to fetch AI Stores");
@@ -215,8 +226,8 @@ const AllAIStores: React.FC = () => {
       const active = Array.isArray(result)
         ? result.filter((x: any) => x?.aiStoreStatus === "ACTIVE")
         : Array.isArray(result?.data)
-        ? result.data.filter((x: any) => x?.aiStoreStatus === "ACTIVE")
-        : [];
+          ? result.data.filter((x: any) => x?.aiStoreStatus === "ACTIVE")
+          : [];
 
       const data = Array.isArray(active) ? active.reverse() : [];
       const validStores = data.filter((s: any) => s && s.storeId);
@@ -253,8 +264,8 @@ const AllAIStores: React.FC = () => {
         (store) =>
           store.storeName?.toLowerCase().includes(query) ||
           store.description?.toLowerCase().includes(query) ||
-          store.storeCreatedBy?.toLowerCase().includes(query)
-      )
+          store.storeCreatedBy?.toLowerCase().includes(query),
+      ),
     );
   }, [searchQuery, stores, activeStoreTab]);
 
@@ -285,7 +296,7 @@ const AllAIStores: React.FC = () => {
           {
             params: { customerId },
             headers: { ...getAuthHeaders() },
-          }
+          },
         );
 
         const data = response?.data || {};
@@ -342,7 +353,7 @@ const AllAIStores: React.FC = () => {
         {
           params: { userId: customerId },
           headers: { ...getAuthHeaders() },
-        }
+        },
       );
 
       const data: CompanyContactResponse = res?.data || {};
@@ -384,7 +395,7 @@ const AllAIStores: React.FC = () => {
             "Content-Type": "application/json",
             ...getAuthHeaders(),
           },
-        }
+        },
       );
 
       message.success(res?.data?.message || "Saved successfully");
@@ -400,7 +411,7 @@ const AllAIStores: React.FC = () => {
       }
     } catch (e: any) {
       message.error(
-        e?.response?.data?.message || "Failed to save. Please try again."
+        e?.response?.data?.message || "Failed to save. Please try again.",
       );
     } finally {
       setSendingOtp(false);
@@ -417,21 +428,21 @@ const AllAIStores: React.FC = () => {
         state: { storeId: store.storeId, companyName: store.companyName },
       });
     },
-    [navigate, slugify]
+    [navigate, slugify],
   );
 
   const openWhatsApp = useCallback((shareMessage: string, storeId: string) => {
     try {
       // Use wa.me for better compatibility (works on both mobile and desktop)
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
-        shareMessage
+        shareMessage,
       )}`;
 
       // Try to open in new window/tab
       const newWindow = window.open(
         whatsappUrl,
         "_blank",
-        "noopener,noreferrer,width=600,height=600"
+        "noopener,noreferrer,width=600,height=600",
       );
 
       // Check if popup was blocked (simple check)
@@ -443,17 +454,17 @@ const AllAIStores: React.FC = () => {
             .writeText(shareMessage)
             .then(() => {
               message.success(
-                "Link copied to clipboard! You can now share it manually."
+                "Link copied to clipboard! You can now share it manually.",
               );
             })
             .catch(() => {
               message.warning(
-                "Please allow popups for this site to share via WhatsApp."
+                "Please allow popups for this site to share via WhatsApp.",
               );
             });
         } else {
           message.warning(
-            "Please allow popups for this site to share via WhatsApp."
+            "Please allow popups for this site to share via WhatsApp.",
           );
         }
       } else {
@@ -505,7 +516,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
           .catch((error: any) => {
             console.log(
               "Native share failed with text only, trying with URL:",
-              error
+              error,
             );
             // If that fails, try with URL only (some browsers work better this way)
             (navigator as any)
@@ -522,7 +533,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
               .catch((error2: any) => {
                 console.log(
                   "All native share attempts failed, falling back to WhatsApp:",
-                  error2
+                  error2,
                 );
                 // Fallback to WhatsApp if all native share attempts fail
                 openWhatsApp(staticMessage, store.storeId);
@@ -534,7 +545,7 @@ Create your own AI Agent today on ASKOXY.AI! 🚀
       // Direct fallback to WhatsApp
       openWhatsApp(staticMessage, store.storeId);
     },
-    [buildPublicStoreUrl, openWhatsApp]
+    [buildPublicStoreUrl, openWhatsApp],
   );
 
   const tabClass = (active: boolean) =>
@@ -767,17 +778,20 @@ const StoreCard: React.FC<{
 
       <div className=" px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          {store.agentDetailsOnAdUser?.length ? (
-            <div className="inline-flex h-10 min-w-[96px] items-center justify-center gap-1 rounded-xl bg-violet-100 px-3 text-xs font-semibold text-violet-700">
-              <IconSparkles className="h-4 w-4" />
-              <span>
-                {store.agentDetailsOnAdUser.length}{" "}
-                {store.agentDetailsOnAdUser.length === 1 ? "Agent" : "Agents"}
-              </span>
-            </div>
-          ) : (
-            <div className="h-10 min-w-[96px]" />
-          )}
+          {(() => {
+            const validAgents = getValidAgents(store.agentDetailsOnAdUser);
+            return validAgents.length ? (
+              <div className="inline-flex h-10 min-w-[96px] items-center justify-center gap-1 rounded-xl bg-violet-100 px-3 text-xs font-semibold text-violet-700">
+                <IconSparkles className="h-4 w-4" />
+                <span>
+                  {validAgents.length}{" "}
+                  {validAgents.length === 1 ? "Agent" : "Agents"}
+                </span>
+              </div>
+            ) : (
+              <div className="h-10 min-w-[96px]" />
+            );
+          })()}
 
           <button
             type="button"
