@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -93,23 +94,7 @@ const pageHtml = `<div class="topbar">
     margin-top:12px;
   "
 >
-  <button
-    onclick="window.location.href='/radha/cbd-ai-intelligence'"
-    style="
-      background:linear-gradient(135deg,#5543C8,#6D5BFF);
-      color:#fff;
-      border:none;
-      padding:10px 20px;
-      border-radius:999px;
-      cursor:pointer;
-      font-size:13px;
-      font-weight:600;
-      box-shadow:0 4px 12px rgba(85,67,200,0.25);
-      transition:all 0.3s ease;
-    "
-  >
-    View CBD
-  </button>
+  
 
   <span
     style="
@@ -1321,6 +1306,7 @@ const pageHtml = `<div class="topbar">
 </div>`;
 
 const DIBAIIntelligenceReport2026: React.FC = () => {
+  const navigate = useNavigate();
   useEffect(() => {
     window.showPage = (id: string, btn: HTMLElement) => {
       document.querySelectorAll<HTMLElement>(".page").forEach((page) =>
@@ -1353,10 +1339,19 @@ const DIBAIIntelligenceReport2026: React.FC = () => {
   }, []);
 
   return (
-    <div className="dib-ai-intelligence-report-2026">
-      <style>{styles}</style>
-      <div dangerouslySetInnerHTML={{ __html: pageHtml }} />
-    </div>
+    <>
+      <div className="dib-ai-intelligence-report-2026">
+        <style>{styles}</style>
+        <div style={{ position: "sticky", top: 0, zIndex: 999, background: "linear-gradient(135deg,#004d00 0%,#003318 100%)", borderBottom: "2px solid #c8a84b", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px rgba(0,0,0,0.18)" }}>
+          <button onClick={() => navigate(-1)} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 10, color: "#fff", padding: "8px 18px", cursor: "pointer", fontSize: 14, fontWeight: 600, transition: "all 0.18s ease" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.22)"; (e.currentTarget as HTMLButtonElement).style.transform = "translateX(-2px)"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.1)"; (e.currentTarget as HTMLButtonElement).style.transform = "translateX(0)"; }} aria-label="Go back">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Back to Hub
+          </button>
+          <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, fontWeight: 500 }}>UAE Banks AI Intelligence Hub 2026</span>
+        </div>
+        <div dangerouslySetInnerHTML={{ __html: pageHtml }} />
+      </div>
+    </>
   );
 };
 

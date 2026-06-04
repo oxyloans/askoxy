@@ -236,7 +236,7 @@ const CartPage: React.FC = () => {
       const response = await customerApi.get(
         `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`
       );
-      const fetchedAddresses = response.data;
+      const fetchedAddresses = [...response.data].reverse();
       let defaultAddress = fetchedAddresses[0] || null;
 
       if (
@@ -2091,37 +2091,49 @@ const CartPage: React.FC = () => {
                   </button>
                 </div>
 
-                {selectedAddress === null ? (
-                  <p>No addresses found.</p>
+                {addresses.length === 0 ? (
+                  <p className="text-sm text-gray-500 mb-4">No addresses found. Add one to proceed.</p>
                 ) : (
-                  <p className="mb-2 text-gray-700 break-words">
-                    {selectedAddress?.flatNo}, {selectedAddress?.address},{" "}
-                    {selectedAddress?.landMark}, {selectedAddress?.pincode}
-                  </p>
-                )}
-                <div className="mb-4">
-                  <label className="block font-bold text-gray-700 mb-1">
-                    Select Address
-                  </label>
-                  <select
-                    value={selectedAddress?.address || ""}
-                    onChange={(e) => {
-                      const sel = addresses.find(
-                        (a) => a.address === e.target.value
+                  <div className="mb-4 space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {addresses.map((address) => {
+                      const isSelected = selectedAddress?.id === address.id;
+                      return (
+                        <button
+                          key={address.id}
+                          type="button"
+                          onClick={() => handleAddressChange(address)}
+                          className={`w-full text-left rounded-lg border p-3 transition-all ${
+                            isSelected
+                              ? "border-purple-500 bg-purple-50 ring-1 ring-purple-400"
+                              : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span
+                              className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 ${
+                                isSelected
+                                  ? "border-purple-600 bg-purple-600"
+                                  : "border-gray-400 bg-white"
+                              }`}
+                            />
+                            <div className="min-w-0">
+                              <span className="text-[10px] font-semibold uppercase tracking-wide text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">
+                                {address.addressType}
+                              </span>
+                              <p className="mt-1 text-sm font-medium text-gray-800 break-words">
+                                {address.flatNo}
+                              </p>
+                              <p className="text-xs text-gray-500 break-words line-clamp-2">
+                                {address.landMark}, {address.address}
+                              </p>
+                              <p className="text-xs text-gray-500">PIN: {address.pincode}</p>
+                            </div>
+                          </div>
+                        </button>
                       );
-                      if (sel) handleAddressChange(sel);
-                    }}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm break-words"
-                  >
-                    <option value="">Choose an Address</option>
-                    {addresses.map((address, index) => (
-                      <option key={index} value={address.address}>
-                        {address.flatNo}, {address.address}, {address.landMark},{" "}
-                        {address.pincode}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    })}
+                  </div>
+                )}
                 <div className="border-t border-gray-200 mt-4 pt-4">
                   <div className="mb-2">
                     <button

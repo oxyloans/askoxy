@@ -152,11 +152,11 @@ const Whiteboardtheme: React.FC = () => {
 
             <motion.div
               onClick={() => {
-                window.location.href = "/radha/fab-ai-intelligence";
+                window.location.href = "/radha/uae-banks-ai-intelligence";
               }}
               whileHover={{ scale: 1.2 }}
               whileTap={{ scale: 0.9 }}
-              className="h-4 w-4 cursor-pointer rounded-full border-2 border-dotted border-[#5543C8]"
+              className="h-3 w-3 cursor-pointer rounded-full border-2 border-dotted border-[#5543C8]"
               
             />
 

@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -98,23 +99,7 @@ const htmlContent = `<div class="topbar">
     margin-top:12px;
   "
 >
-  <button
-    onclick="window.location.href='/radha/sib-ai-intelligence'"
-    style="
-      background:linear-gradient(135deg,#5543C8,#6D5BFF);
-      color:#fff;
-      border:none;
-      padding:10px 20px;
-      border-radius:999px;
-      cursor:pointer;
-      font-size:13px;
-      font-weight:600;
-      box-shadow:0 4px 12px rgba(85,67,200,0.25);
-      transition:all 0.3s ease;
-    "
-  >
-    View SIB
-  </button>
+  // 
 
   <span
     style="
@@ -1010,13 +995,18 @@ const htmlContent = `<div class="topbar">
 </div>`;
 
 export default function MashreqAIIntelligenceReport2026() {
+  const navigate = useNavigate();
   useEffect(() => {
     window.showPage = (id: string, btn: HTMLElement) => {
       document
-        .querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 .page")
+        .querySelectorAll<HTMLElement>(
+          ".mashreq-ai-intelligence-report-2026 .page",
+        )
         .forEach((page) => page.classList.remove("active"));
       document
-        .querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 .nav button")
+        .querySelectorAll<HTMLElement>(
+          ".mashreq-ai-intelligence-report-2026 .nav button",
+        )
         .forEach((button) => button.classList.remove("active"));
       document.getElementById("page-" + id)?.classList.add("active");
       btn.classList.add("active");
@@ -1025,18 +1015,24 @@ export default function MashreqAIIntelligenceReport2026() {
 
     window.filterUC = (maturity: string, btn: HTMLElement) => {
       document
-        .querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 #uc-filters button")
+        .querySelectorAll<HTMLElement>(
+          ".mashreq-ai-intelligence-report-2026 #uc-filters button",
+        )
         .forEach((button) => button.classList.remove("active"));
       btn.classList.add("active");
-      document.querySelectorAll<HTMLElement>(".mashreq-ai-intelligence-report-2026 .uc-card").forEach((card) => {
-        if (maturity === "all") {
-          card.style.display = "";
-        } else {
-          card.style.display = card.dataset.maturity?.includes(maturity)
-            ? ""
-            : "none";
-        }
-      });
+      document
+        .querySelectorAll<HTMLElement>(
+          ".mashreq-ai-intelligence-report-2026 .uc-card",
+        )
+        .forEach((card) => {
+          if (maturity === "all") {
+            card.style.display = "";
+          } else {
+            card.style.display = card.dataset.maturity?.includes(maturity)
+              ? ""
+              : "none";
+          }
+        });
     };
 
     return () => {
@@ -1046,9 +1042,76 @@ export default function MashreqAIIntelligenceReport2026() {
   }, []);
 
   return (
-    <div className="mashreq-ai-intelligence-report-2026">
-      <style>{styles}</style>
-      <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-    </div>
+    <>
+      <div className="mashreq-ai-intelligence-report-2026">
+        <style>{styles}</style>
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 999,
+            background: "linear-gradient(135deg,#00533F 0%,#003328 100%)",
+            borderBottom: "2px solid #E8A020",
+            padding: "10px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+          }}
+        >
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: "rgba(255,255,255,0.1)",
+              border: "1.5px solid rgba(255,255,255,0.3)",
+              borderRadius: 10,
+              color: "#fff",
+              padding: "8px 18px",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 600,
+              transition: "all 0.18s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "rgba(255,255,255,0.22)";
+              (e.currentTarget as HTMLButtonElement).style.transform =
+                "translateX(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "rgba(255,255,255,0.1)";
+              (e.currentTarget as HTMLButtonElement).style.transform =
+                "translateX(0)";
+            }}
+            aria-label="Go back"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M11 4L6 9l5 5"
+                stroke="#fff"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back to Hub
+          </button>
+          <span
+            style={{
+              color: "rgba(255,255,255,0.65)",
+              fontSize: 12,
+              fontWeight: 500,
+            }}
+          >
+            UAE Banks AI Intelligence Hub 2026
+          </span>
+        </div>
+        <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+      </div>
+    </>
   );
 }

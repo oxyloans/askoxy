@@ -107,6 +107,7 @@ import SIBAIIntelligenceReport2026 from "./components/SIBAIIntelligenceReport202
 import MashreqAIIntelligenceReport2026 from "./components/MashreqAIIntelligenceReport2026";
 import NBFAIIntelligenceReport2026 from "./components/NBFAIIntelligenceReport2026";
 import RAKBANKAIIntelligenceReport2026 from "./components/RAKBANKAIIntelligenceReport2026";
+import UAEBanksAIIntelligenceHub from "./components/UAEBanksAIIntelligenceHub";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -656,6 +657,7 @@ const App: React.FC = () => {
       currentPath.startsWith("/radha/nbf-ai-intelligence") ||
       currentPath.startsWith("/radha/rakbank-ai-intelligence") ||
       currentPath.startsWith("/smartlock") ||
+      currentPath.startsWith("/radha/uae-banks-ai-intelligence") ||
       currentPath.startsWith("/planoftheday") ||
       currentPath.startsWith("/userinstructionsview") ||
       currentPath.startsWith("/taskmanagement") ||
@@ -1266,6 +1268,10 @@ const App: React.FC = () => {
               <Route
                 path="/radha/fab-ai-intelligence"
                 element={<FABAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/uae-banks-ai-intelligence"
+                element={<UAEBanksAIIntelligenceHub />}
               />
              
               <Route
