@@ -281,7 +281,7 @@ function useToast() {
   };
 
   const ToastContainer = () => (
-    <div className="fixed right-4 top-[60px] z-[999] space-y-2">
+    <div className="fixed right-4 top-4 z-[999] space-y-2">
       <AnimatePresence>
         {toasts.map((t) => {
           const colors =
@@ -1698,7 +1698,7 @@ ${
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
               ref={generatedOutputRef}
-              className="group scroll-mt-4 rounded-2xl border-2 border-slate-200 bg-white p-3 shadow-md transition-all duration-200 hover:shadow-xl hover:border-cyan-200 sm:p-4 lg:min-h-[calc(100vh-52px-4rem)]"
+              className="group scroll-mt-4 rounded-2xl border-2 border-slate-200 bg-white p-3 shadow-md transition-all duration-200 hover:shadow-xl hover:border-cyan-200 sm:p-4 lg:min-h-[calc(100vh-6rem)]"
             >
               {/* Card header */}
               <div className="mb-4 flex items-center gap-2">
@@ -2699,6 +2699,8 @@ function BlogPreviewModal({
       </AnimatePresence>
     );
   }
+
+  const preview = blogPreview ?? ({} as BlogPayload);
 
   return (
     <AnimatePresence>

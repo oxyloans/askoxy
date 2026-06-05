@@ -64,6 +64,7 @@ import EmployeeDashboard from "./FreelanceMarketplace/EmployeeDashboard";
 import EmployeeLogin from "./FreelanceMarketplace/EmployeeLogin";
 import EmployeeRegister from "./FreelanceMarketplace/EmployeeRegister";
 import FinvibeLanding from "./Finvibe/Landing";
+import Finvide3DLanding from "./Finvibe/Finvibe3DLanding";
 
 import OxyGPT from "./Finvibe/components/Oxyclaude";
 import Billing from "./Finvibe/components/Billing";
@@ -728,6 +729,9 @@ const App: React.FC = () => {
             <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
             <Route path="/live-ai-demo" element={<LiveAIDemo />} />
             <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
+            <Route path="/oxybfsai" element={<Billing />} />
+            <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
+            
 
               <Route
                 path="/finvibe-code-builder"

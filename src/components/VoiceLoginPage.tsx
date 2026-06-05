@@ -136,6 +136,16 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   const silenceTimerRef = useRef<number | null>(null);
   const recordingStartedAtRef = useRef<number>(0);
   const shouldSubmitAfterStopRef = useRef(false);
+  const isListeningRef = useRef(false);
+  const isAssistantSpeakingRef = useRef(false);
+
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
+
+  useEffect(() => {
+    isAssistantSpeakingRef.current = isAssistantSpeaking;
+  }, [isAssistantSpeaking]);
 
   const titleText = useMemo(
     () =>
@@ -217,7 +227,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
       shouldSubmitAfterStopRef.current = false;
 
-      if (isAssistantSpeaking || isSubmittingRef.current) return;
+      if (isAssistantSpeakingRef.current || isSubmittingRef.current) return;
 
       await submitVoice(blob, transcriptRef.current);
     },
@@ -231,11 +241,11 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
       if (
         recordedFor >= MIN_RECORDING_MS &&
-        isListening &&
+        isListeningRef.current &&
         !isSubmittingRef.current
       ) {
         handleStopListening();
-      } else if (isListening) {
+      } else if (isListeningRef.current) {
         startSilenceTimer();
       }
     }, SILENCE_LIMIT_MS);
@@ -270,11 +280,11 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     };
 
     recognition.onerror = () => {
-      if (isListening) startSilenceTimer();
+      if (isListeningRef.current) startSilenceTimer();
     };
 
     recognition.onend = () => {
-      if (isListening && !isSubmittingRef.current) {
+      if (isListeningRef.current && !isSubmittingRef.current) {
         try {
           recognition.start();
         } catch {}
@@ -501,7 +511,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   };
 
   const submitVoice = async (audioBlob?: Blob | null, transcript?: string) => {
-    if (isAssistantSpeaking || isSubmittingRef.current) return;
+    if (isAssistantSpeakingRef.current || isSubmittingRef.current) return;
 
     if (!hasMeaningfulVoiceInput(transcript, audioBlob || null)) {
       setLiveTranscript("");
@@ -514,19 +524,22 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
     const detectedMobileNumber = extractMobileNumber(transcript || "");
 
-    const userText =
-      detectedMobileNumber || (transcript || "").trim() || "Voice input recorded";
+    const userText = detectedMobileNumber || (transcript || "").trim();
 
     const loadingId = `${Date.now()}-loading`;
 
     setMessages((prev) => [
       ...prev,
-      {
-        id: `${Date.now()}-user`,
-        type: "user",
-        text: userText,
-        createdAt: new Date(),
-      },
+      ...(userText
+        ? ([
+            {
+              id: `${Date.now()}-user`,
+              type: "user",
+              text: userText,
+              createdAt: new Date(),
+            },
+          ] as VoiceAuthMessage[])
+        : []),
       {
         id: loadingId,
         type: "loading",

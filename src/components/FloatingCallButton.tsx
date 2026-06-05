@@ -59,11 +59,12 @@ const FloatingCallButton: React.FC = () => {
     try {
       const userId = localStorage.getItem("userId") || "default-user-id";
       const response = await customerApi.get(
-        `${BASE_URL}/user-service/callerNumberToUserMapping/${userId}`,{
+        `${BASE_URL}/user-service/callerNumberToUserMapping/${userId}`,
+        {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          }
-        }
+          },
+        },
       );
       const data = response.data;
       setCallerInfo(data);
@@ -92,26 +93,27 @@ const FloatingCallButton: React.FC = () => {
     async (
       instructions: string,
       assistantId: string,
-      voicemode: string
+      voicemode: string,
     ): Promise<string> => {
       try {
         const { data } = await customerApi.post(
-          `${BASE_URL}/student-service/user/token?assistantId=${""}&voicemode=${voicemode}`,
+          `${BASE_URL}/student-service/user/voicetoken?assistantId=${assistantId}&voicemode=${voicemode}`,
           { instructions },
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
-        return data.client_secret.value;
+
+        return data?.value || "";
       } catch (error) {
         console.error("Failed to get ephemeral token:", error);
         throw error;
       }
     },
-    []
+    [],
   );
 
   const handleRaisequery = useCallback(
@@ -177,7 +179,7 @@ const FloatingCallButton: React.FC = () => {
               Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         const data = response.data;
@@ -197,7 +199,7 @@ const FloatingCallButton: React.FC = () => {
         };
       }
     },
-    []
+    [],
   );
 
   const handleToolCall = useCallback(
@@ -218,7 +220,7 @@ const FloatingCallButton: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
           responseType: "text",
-        }
+        },
       );
 
       const text = res.data;
@@ -228,7 +230,7 @@ const FloatingCallButton: React.FC = () => {
         data: text,
       };
     },
-    []
+    [],
   );
 
   const injectRealtimeTools = (instructions: string) => {
@@ -280,7 +282,7 @@ const FloatingCallButton: React.FC = () => {
       onMessage: (message: ChatMessage) => void,
       onAssistantSpeaking: (speaking: boolean) => void,
       assistantId: string,
-      selectedInstructions: string
+      selectedInstructions: string,
     ) => {
       const pendingArgs: Record<string, string> = {};
 
@@ -342,7 +344,7 @@ const FloatingCallButton: React.FC = () => {
                   call_id: callId,
                   output: JSON.stringify(result),
                 },
-              })
+              }),
             );
 
             dc.send(JSON.stringify({ type: "response.create" }));
@@ -355,15 +357,27 @@ const FloatingCallButton: React.FC = () => {
         }
       };
 
-      dc.onopen = () => {
-        console.log("Voice channel opened ✅");
-        injectRealtimeTools(selectedInstructions);
-        setTimeout(() => {
-          dc.send(JSON.stringify({ type: "response.create" }));
-        }, 300);
-      };
+     dc.onopen = () => {
+  console.log("🟢 Data channel opened");
+
+  injectRealtimeTools(selectedInstructions);
+
+  dc.send(
+    JSON.stringify({
+      type: "session.update",
+      session: {
+        modalities: ["audio", "text"],
+        voice: "alloy",
+      },
+    })
+  );
+
+  setTimeout(() => {
+    dc.send(JSON.stringify({ type: "response.create" }));
+  }, 300);
+};
     },
-    [handleToolCall, handleRaisequery]
+    [handleToolCall, handleRaisequery],
   );
 
   const startVoiceSession = useCallback(
@@ -372,13 +386,13 @@ const FloatingCallButton: React.FC = () => {
       selectedInstructions: string,
       onMessage: (message: ChatMessage) => void,
       onAssistantSpeaking: (speaking: boolean) => void,
-      voicemode: string
+      voicemode: string,
     ): Promise<void> => {
       try {
         const EPHEMERAL_KEY = await getEphemeralToken(
           selectedInstructions,
           assistantId,
-          voicemode
+          voicemode,
         );
 
         const pc = new RTCPeerConnection();
@@ -391,10 +405,16 @@ const FloatingCallButton: React.FC = () => {
         };
 
         micStreamRef.current = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+  },
+});
 
-        pc.addTrack(micStreamRef.current.getTracks()[0]);
+        micStreamRef.current.getTracks().forEach((track) => {
+          pc.addTrack(track, micStreamRef.current!);
+        });
 
         const dc = pc.createDataChannel("oai-events");
         dataChannelRef.current = dc;
@@ -402,22 +422,25 @@ const FloatingCallButton: React.FC = () => {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
-        const model = "gpt-4o-realtime-preview-2025-06-03";
-        const sdpRes = await axios.post(
-          `https://api.openai.com/v1/realtime?model=${model}`,
-          offer.sdp,
-          {
-            headers: {
-              Authorization: `Bearer ${EPHEMERAL_KEY}`,
-              "Content-Type": "application/sdp",
-            },
-            responseType: "text",
-          }
-        );
+        const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${EPHEMERAL_KEY}`,
+            "Content-Type": "application/sdp",
+          },
+          body: offer.sdp,
+        });
+
+        if (!sdpRes.ok) {
+          const errorText = await sdpRes.text();
+          throw new Error(errorText);
+        }
+
+        const sdpText = await sdpRes.text();
 
         const answer: RTCSessionDescriptionInit = {
           type: "answer",
-          sdp: sdpRes.data,
+          sdp: sdpText,
         };
         await pc.setRemoteDescription(answer);
 
@@ -426,14 +449,14 @@ const FloatingCallButton: React.FC = () => {
           onMessage,
           onAssistantSpeaking,
           assistantId,
-          selectedInstructions
+          selectedInstructions,
         );
       } catch (error) {
         console.error("Failed to start voice session:", error);
         throw error;
       }
     },
-    [getEphemeralToken, setupDataChannelHandlers]
+    [getEphemeralToken, setupDataChannelHandlers],
   );
 
   const stopVoiceSession = useCallback(() => {
@@ -560,12 +583,12 @@ const FloatingCallButton: React.FC = () => {
   `,
         onVoiceMessage,
         setIsAssistantSpeaking,
-        "alloy"
+        "alloy",
       );
     } catch (error) {
       console.error("Failed to start voice call:", error);
       setErrorMessage(
-        "Failed to start voice call. Please check your microphone permissions."
+        "Failed to start voice call. Please Try after sometime.",
       );
       setIsVoiceCallActive(false);
     }

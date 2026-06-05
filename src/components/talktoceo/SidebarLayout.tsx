@@ -295,6 +295,7 @@ export default function SidebarLayout({ onLogout }: { onLogout: () => void }) {
             <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 shadow-sm" />
           </div>
 
+          {/* Logout button */}
           <button
             onClick={logout}
             className={`flex w-full items-center justify-center rounded-xl border border-red-900/40 bg-red-900/20 py-2 text-xs font-black text-red-400 transition hover:border-red-500/50 hover:bg-red-900/30 ${
@@ -346,6 +347,7 @@ export default function SidebarLayout({ onLogout }: { onLogout: () => void }) {
           >
             <LogOut size={18} />
           </button>
+        
         </div>
       </header>
 
