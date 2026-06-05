@@ -5,16 +5,17 @@ import {
   fetchAllGames,
   Campaign,
 } from "../components/servicesapi";
-import { message, Empty, Button, Tooltip, Pagination, Spin } from "antd";
+import { message, Empty, Button, Pagination, Spin, Modal, Input } from "antd";
 import {
   FileTextOutlined,
   UserOutlined,
   PlusOutlined,
-  ArrowRightOutlined,
-  ShareAltOutlined,
   TrophyOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import { uploadurlwithId } from "../Config";
+import axiosInstance from "../utils/axiosInstance";
+import BASE_URL from "../Config";
 
 const Header1 = React.lazy(() => import("../components/Header"));
 const Footer = React.lazy(() => import("../components/Footer"));
@@ -23,11 +24,19 @@ type TabKey = "ALL" | "MY" | "GAMES" | "ADD";
 
 const BlogsPage: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [myBlogs, setMyBlogs] = useState<Campaign[]>([]);
   const [games, setGames] = useState<Campaign[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10); // 6 blogs per page
+  const [pageSize] = useState(9);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Edit modal state
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editCampaign, setEditCampaign] = useState<Campaign | null>(null);
+  const [editDesc, setEditDesc] = useState("");
+  const [editCaption, setEditCaption] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   const navigate = useNavigate();
   const prevTabRef = useRef<TabKey>("ALL");
@@ -37,6 +46,36 @@ const BlogsPage: React.FC = () => {
     localStorage.getItem("customerId") ||
     localStorage.getItem("user_id") ||
     "";
+
+  const loadMyBlogs = async () => {
+    if (!userId) return;
+    try {
+      const { data } = await axiosInstance.get(
+        `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails?createdPersonId=${userId}`,
+      );
+      const list = Array.isArray(data) ? data : data?.data || [];
+      const normalized = list.map((c: any, index: number) => ({
+        ...c,
+        campaignId: c.campaignId || c.id || "",
+        id: c.id || c.campaignId || "",
+        imageUrls: Array.isArray(c.imageUrls)
+          ? c.imageUrls
+          : c.imageUrl
+            ? [{ imageUrl: c.imageUrl, status: true }]
+            : [],
+        __originalIndex: index,
+      }));
+      const sorted = normalized
+        .filter((c: any) => c.campainInputType === "BLOG")
+        .sort(
+          (a: any, b: any) =>
+            (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0),
+        );
+      setMyBlogs(sorted as Campaign[]);
+    } catch (err) {
+      console.error("Error loading my blogs:", err);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -52,7 +91,7 @@ const BlogsPage: React.FC = () => {
             ...c,
             id: c.id || c.campaignId,
             __originalIndex: index,
-          })
+          }),
         );
 
         const normalizedGames = (gameList as any[]).map(
@@ -60,7 +99,7 @@ const BlogsPage: React.FC = () => {
             ...c,
             id: c.id || c.campaignId,
             __originalIndex: index,
-          })
+          }),
         );
 
         setCampaigns(normalizedCampaigns as Campaign[]);
@@ -170,7 +209,7 @@ const BlogsPage: React.FC = () => {
       parseDateValue(item?.campaignCreatedAt),
       parseDateValue(item?.timestamp),
       parseDateValue(item?.date),
-      parseDateValue(item?.modifiedAt)
+      parseDateValue(item?.modifiedAt),
     );
   };
 
@@ -197,58 +236,160 @@ const BlogsPage: React.FC = () => {
   };
 
   const blogCampaigns = useMemo(() => {
-    const filteredCampaigns = (campaigns as any[])
-      .filter((c: any) => c.campaignStatus === true && c.campainInputType === "BLOG");
-    
+    const filteredCampaigns = (campaigns as any[]).filter(
+      (c: any) => c.campaignStatus === true && c.campainInputType === "BLOG",
+    );
+
     // Sort by most recent date first (same logic as AllCampaignDetail.tsx)
     const sortedCampaigns = filteredCampaigns.sort((a: any, b: any) => {
       const dateA = Number(a.createdAt) || 0;
       const dateB = Number(b.createdAt) || 0;
       return dateB - dateA; // Most recent first
     });
-    
+
     return sortedCampaigns;
   }, [campaigns]);
 
   const gamesCampaigns = useMemo(() => {
     const filtered = (games as any[]).filter(
-      (c: any) => c.campaignStatus === true
+      (c: any) => c.campaignStatus === true,
     );
     return sortNewestFirst(filtered);
   }, [games]);
- 
-  const myBlogs = useMemo(() => {
-    return blogCampaigns.filter(
-      (c: any) => (c.createdPersonId || "").toString() === (userId || "")
-    );
-  }, [blogCampaigns, userId]);
+
+  // myBlogs is now from its own API call (state), not filtered from all campaigns
 
   const visibleList = useMemo(() => {
     let list: Campaign[] = [];
-
     if (activeTab === "MY") list = myBlogs;
     else if (activeTab === "GAMES") list = gamesCampaigns;
     else list = blogCampaigns;
-
-    // Calculate pagination
     const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    
-    return list.slice(startIndex, endIndex);
-  }, [activeTab, myBlogs, gamesCampaigns, blogCampaigns, currentPage, pageSize]);
+    return list.slice(startIndex, startIndex + pageSize);
+  }, [
+    activeTab,
+    myBlogs,
+    gamesCampaigns,
+    blogCampaigns,
+    currentPage,
+    pageSize,
+  ]);
 
   const totalItems = useMemo(() => {
     if (activeTab === "MY") return myBlogs.length;
-    else if (activeTab === "GAMES") return gamesCampaigns.length;
-    else return blogCampaigns.length;
+    if (activeTab === "GAMES") return gamesCampaigns.length;
+    return blogCampaigns.length;
   }, [activeTab, myBlogs.length, gamesCampaigns.length, blogCampaigns.length]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
-const isLoggedInUser = Boolean(userId);
+  const isLoggedInUser = Boolean(userId);
+  const visibleTabs: TabKey[] = isLoggedInUser
+    ? ["MY", "ALL", "GAMES"]
+    : ["ALL", "GAMES"];
+
+  useEffect(() => {
+    if (!isLoggedInUser && activeTab === "MY") {
+      setActiveTab("ALL");
+      setCurrentPage(1);
+    }
+  }, [isLoggedInUser, activeTab]);
+
+  const handleStatusToggle = (campaign: Campaign) => {
+    Modal.confirm({
+      title: "Confirm",
+      content: `Are you sure you want to update to ${!campaign.campaignStatus ? "Active" : "Inactive"}?`,
+      okText: "Yes",
+      onOk: async () => {
+        try {
+          const response = await axiosInstance.patch(
+            `${BASE_URL}/marketing-service/campgin/activate-deactivate-campaign`,
+            {
+              askOxyCampaignDto: [
+                {
+                  addServiceType:
+                    (campaign as any).addServiceType === "WEAREHIRING"
+                      ? "WEAREHIRING"
+                      : null,
+                  campaignDescription: campaign.campaignDescription,
+                  campaignId: campaign.campaignId,
+                  campaignStatus: !campaign.campaignStatus,
+                  campaignType: campaign.campaignType,
+                  campaignTypeAddBy: campaign.campaignTypeAddBy,
+                  campainInputType: campaign.campainInputType,
+                  createdPersonId: userId,
+                  images: (campaign.imageUrls || []).map((img: any) => ({
+                    imageId: img.imageId,
+                    imageUrl: img.imageUrl,
+                    status: img.status,
+                  })),
+                  socialMediaCaption: campaign.socialMediaCaption,
+                },
+              ],
+            },
+          );
+          if (response.status === 200) {
+            message.success("Status updated successfully.");
+            loadMyBlogs();
+          } else {
+            message.error("Failed to update status.");
+          }
+        } catch {
+          message.error("Error while updating status.");
+        }
+      },
+    });
+  };
+
+  const handleEditOpen = (campaign: Campaign) => {
+    setEditCampaign(campaign);
+    setEditDesc(campaign.campaignDescription || "");
+    setEditCaption(campaign.socialMediaCaption || "");
+    setEditModalVisible(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editCampaign) return;
+    setEditSubmitting(true);
+    try {
+      const response = await axiosInstance.patch(
+        `${BASE_URL}/marketing-service/campgin/addCampaignTypes`,
+        {
+          askOxyCampaignDto: [
+            {
+              campaignDescription: editDesc,
+              campaignId: editCampaign.campaignId,
+              campaignType: editCampaign.campaignType,
+              campaignTypeAddBy: editCampaign.campaignTypeAddBy,
+              campainInputType: editCampaign.campainInputType,
+              socialMediaCaption: editCaption,
+              createdPersonId: userId,
+              images: (editCampaign.imageUrls || []).map((img: any) => ({
+                imageId: img.imageId,
+                imageUrl: img.imageUrl,
+                status: img.status,
+              })),
+            },
+          ],
+        },
+      );
+      if (response.data) {
+        message.success("Blog updated successfully.");
+        setEditModalVisible(false);
+        loadMyBlogs();
+      } else {
+        message.error("Failed to update blog.");
+      }
+    } catch {
+      message.error("Failed to update blog.");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   const onTabClick = (tab: TabKey) => {
     if (tab === "ADD") {
       const backTo = prevTabRef.current || "ALL";
@@ -257,10 +398,33 @@ const isLoggedInUser = Boolean(userId);
       setTimeout(() => setActiveTab(backTo), 150);
       return;
     }
-
+    if (tab === "MY" && userId) {
+      loadMyBlogs();
+    }
     prevTabRef.current = tab;
     setActiveTab(tab);
-    setCurrentPage(1); // Reset to first page when changing tabs
+    setCurrentPage(1);
+  };
+
+  const getInitials = (text: string) => {
+    const words = (text || "").trim().split(/\s+/);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return (text || "").substring(0, 2).toUpperCase();
+  };
+
+  const getAvatarColor = (text: string) => {
+    const colors = [
+      "#008cba",
+      "#1ab394",
+      "#f59e0b",
+      "#ef4444",
+      "#8b5cf6",
+      "#06b6d4",
+    ];
+    const index = (text || "").length % colors.length;
+    return colors[index];
   };
 
   const handleShare = (campaign: any) => {
@@ -283,14 +447,14 @@ const isLoggedInUser = Boolean(userId);
   const BlogsGrid = ({ list }: { list: any[] }) => {
     if (!list || list.length === 0) {
       return (
-        <div className="py-10">
+        <div style={{ padding: "60px 0", textAlign: "center" }}>
           <Empty
             description={
               activeTab === "MY"
-                ? "No blogs in My Blogs."
+                ? "No blogs found. Click 'Add Blog' to write your first blog!"
                 : activeTab === "GAMES"
-                ? "No IPL blogs found."
-                : "No blogs found."
+                  ? "No IPL blogs found."
+                  : "No blogs found."
             }
           />
         </div>
@@ -298,181 +462,222 @@ const isLoggedInUser = Boolean(userId);
     }
 
     return (
-      <div className="blogsGridWrap">
-        <div className="blogsGrid">
-          {list.map((campaign, index) => {
-            const mediaUrl = getMediaUrl(campaign);
-            const showImage = !!mediaUrl && isImage(mediaUrl);
-            const showVideo = !!mediaUrl && isVideo(mediaUrl);
-            const campaignId = getCampaignId(campaign);
-            const createdDate = (() => {
-              // Use createdAt timestamp (same logic as AllCampaignDetail.tsx)
-              const timestamp = Number(campaign.createdAt) || 0;
-              
-              if (timestamp === 0) return '';
-              
-              // Convert timestamp to date
-              const date = new Date(timestamp);
-              
-              // Check if date is valid
-              if (isNaN(date.getTime())) return '';
-              
-              return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              });
-            })();
+      <div className="bpCardsGrid">
+        {list.map((campaign) => {
+          const mediaUrl = getMediaUrl(campaign);
+          const showImage = !!mediaUrl && isImage(mediaUrl);
+          const showVideo = !!mediaUrl && isVideo(mediaUrl);
+          const cId = getCampaignId(campaign);
+          const title = formatTitle(getCampaignTitle(campaign));
+          const ts = Number(campaign.createdAt) || 0;
+          const cDate = ts
+            ? new Date(ts).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })
+            : "";
 
-            return (
-              <div key={campaignId} className="blogCard" onClick={() => handleCampaignClick(campaign)}>
-                <div className={`blogContent ${index % 2 === 0 ? 'normal' : 'reverse'}`}>
-                  <div className="blogBody">
-                    <h2 className="blogTitle">
-                      {formatTitle(getCampaignTitle(campaign)).toUpperCase()}
-                    </h2>
+          return (
+            <div
+              key={cId}
+              className="bpCard"
+              onClick={() => handleCampaignClick(campaign)}
+            >
+              {/* Image area */}
+              <div className="bpCardImg">
+                {showImage ? (
+                  <img src={mediaUrl} alt={title} loading="lazy" />
+                ) : showVideo ? (
+                  <video src={mediaUrl} autoPlay muted loop playsInline />
+                ) : (
+                  <div
+                    className="bpCardImgFallback"
+                    style={{
+                      background: getAvatarColor(title),
+                    }}
+                  >
+                    <span className="bpCardInitials">{getInitials(title)}</span>
+                  </div>
+                )}
+                <span className="bpBadge">
+                  {activeTab === "GAMES" ? "IPL" : "Blog"}
+                </span>
+              </div>
 
-                    {/* <div className="blogMeta">
-                      <span className="blogDate">
-                        {createdDate}
-                      </span>
-                      <span className="blogCategory">
-                        {activeTab === "GAMES" ? "Agentic AI, Artificial Intelligence" : "Agentic AI, Artificial Intelligence"}
-                      </span>
-                    </div> */}
+              {/* Content area */}
+              <div className="bpCardBody">
+                {cDate && <span className="bpDate">{cDate}</span>}
+                <h3 className="bpCardTitle">{title}</h3>
+                <p className="bpCardDesc">
+                  {(campaign?.campaignDescription || "").length > 240
+                    ? campaign.campaignDescription.substring(0, 240) + "..."
+                    : campaign?.campaignDescription || ""}
+                </p>
+                <div className="bpCardActions">
+                  <Button
+                    size="middle"
+                    type="primary"
+                    style={{
+                      background: "#2563EB",
+                      borderColor: "#2563EB",
+                      color: "#fff",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCampaignClick(campaign);
+                    }}
+                  >
+                    Read More
+                  </Button>
 
-                    <p className="blogDesc">
-                      {(campaign?.campaignDescription || "Click to read full details.").length > 450
-                        ? (campaign?.campaignDescription || "Click to read full details.").substring(0, 450) + "..."
-                        : (campaign?.campaignDescription || "Click to read full details.")}
-                    </p>
-
-                    <div className="blogActions">
+                  {activeTab === "MY" && (
+                    <>
                       <Button
-                        className="btnReadMore"
+                        size="middle"
+                        icon={<EditOutlined />}
+                        style={{
+                          background: "#10B981",
+                          borderColor: "#10B981",
+                          color: "#fff",
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleCampaignClick(campaign);
+                          handleEditOpen(campaign);
                         }}
                       >
-                        Read more
+                        Edit
                       </Button>
-                    </div>
-                  </div>
 
-                  <div className="blogMedia">
-                    {showImage ? (
-                      <img
-                        src={mediaUrl}
-                        alt={getCampaignTitle(campaign)}
-                        loading="lazy"
-                        className="blogMediaImg"
-                      />
-                    ) : showVideo ? (
-                      <video
-                        src={mediaUrl}
-                        className="blogMediaImg"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                      />
-                    ) : (
-                      <div className="blogMediaFallback">
-                        <FileTextOutlined style={{ fontSize: '48px', color: '#ccc' }} />
-                      </div>
-                    )}
-                  </div>
+                      <Button
+                        size="middle"
+                        style={{
+                          background: campaign.campaignStatus
+                            ? "#10B981"
+                            : "#EF4444",
+                          borderColor: campaign.campaignStatus
+                            ? "#10B981"
+                            : "#EF4444",
+                          color: "#fff",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusToggle(campaign);
+                        }}
+                      >
+                        {campaign.campaignStatus ? "Active" : "Inactive"}
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc]">
-     <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
+    <div className="min-h-screen" style={{ background: "#fff" }}>
+      {!userId && (
+        <Suspense fallback={null}>
+          <Header1 />
+        </Suspense>
+      )}
 
-      <div className="pageWrap"  style={{
-    padding: isLoggedInUser ? "16px" : "72px",
-  }}>
-        <div className="pageInner">
-          <div className="topSection">
-            <div className="topHeading">
-              <div className="h1">Explore Blogs & Share Your Ideas</div>
-              <div className="h2">
+      <div className="bpWrap" style={{ paddingTop: isLoggedInUser ? 16 : 80 }}>
+        <div className="bpInner">
+          {/* ── Row 1: Title left | Add Blog right ── */}
+          <div className="bpHeaderRow">
+            <div className="bpHeaderText">
+              <h1 className="bpTitle">Explore Blogs &amp; Share Your Ideas</h1>
+              <p className="bpSubtitle">
                 Read trending stories, discover IPL content, and publish your
                 own thoughts.
-              </div>
-              <div className="h3">
-                Newest blogs come first with aligned cards and fixed action buttons.
-              </div>
+              </p>
             </div>
-
-            <div className="tabsWrap">
-              <button
-                className={`tabItem ${activeTab === "ALL" ? "active" : ""}`}
-                onClick={() => onTabClick("ALL")}
-                type="button"
-              >
-                <FileTextOutlined />
-                <span>All Blogs</span>
-              </button>
-
-              <button
-                className={`tabItem ${activeTab === "MY" ? "active" : ""}`}
-                onClick={() => onTabClick("MY")}
-                type="button"
-              >
-                <UserOutlined />
-                <span>My Blogs</span>
-              </button>
-
-              <button
-                className={`tabItem ${activeTab === "GAMES" ? "active" : ""}`}
-                onClick={() => onTabClick("GAMES")}
-                type="button"
-              >
-                <TrophyOutlined />
-                <span>IPL Blogs</span>
-              </button>
-
-              <button
-                className={`tabItem ${activeTab === "ADD" ? "active" : ""}`}
-                onClick={() => onTabClick("ADD")}
-                type="button"
-              >
-                <PlusOutlined />
-                <span>Add Blog</span>
-              </button>
-            </div>
+            <Button
+              type="primary"
+              size="middle"
+              icon={<PlusOutlined />}
+              onClick={handleAddBlog}
+              style={{
+                background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
+                borderColor: "#2563EB",
+                color: "#fff",
+                fontWeight: 700,
+                borderRadius: "10px",
+                minHeight: "42px",
+                padding: "0 18px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                boxShadow: "0 4px 12px rgba(37,99,235,0.25)",
+              }}
+            >
+              Add Blog
+            </Button>
           </div>
 
-          <div className="mt-4">
+          {/* ── Row 2: Tabs ── */}
+          <div className="bpTabsRow">
+            {visibleTabs.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                className={`bpTab ${
+                  activeTab === tab
+                    ? tab === "MY"
+                      ? "bpTabMy"
+                      : tab === "ALL"
+                        ? "bpTabAll"
+                        : "bpTabGames"
+                    : ""
+                }`}
+                onClick={() => onTabClick(tab)}
+              >
+                {tab === "MY" && <UserOutlined />}
+                {tab === "ALL" && <FileTextOutlined />}
+                {tab === "GAMES" && <TrophyOutlined />}
+                <span>
+                  {tab === "MY"
+                    ? "My Blogs"
+                    : tab === "ALL"
+                      ? "All Blogs"
+                      : "IPL Blogs"}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* ── Content ── */}
+          <div style={{ marginTop: 20 }}>
             {isLoading ? (
-              <div className="flex items-center justify-center py-20">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  padding: "60px 0",
+                }}
+              >
                 <Spin size="large" />
               </div>
             ) : (
               <>
                 <BlogsGrid list={visibleList} />
-
                 {totalItems > pageSize && (
-                  <div className="paginationSection">
+                  <div className="bpPagination">
                     <Pagination
                       current={currentPage}
                       total={totalItems}
                       pageSize={pageSize}
                       onChange={handlePageChange}
                       showSizeChanger={false}
-                      showQuickJumper={false}
-                      showTotal={(total, range) => 
-                        window.innerWidth > 768 ? `${range[0]}-${range[1]} of ${total} blogs` : ''
+                      showTotal={(total, range) =>
+                        window.innerWidth > 768
+                          ? `${range[0]}-${range[1]} of ${total} blogs`
+                          : ""
                       }
-                      className="customPagination"
                       responsive
                     />
                   </div>
@@ -481,427 +686,352 @@ const isLoggedInUser = Boolean(userId);
             )}
           </div>
 
-          <div className="footerSection">
-            <Suspense fallback={<div className="py-8" />}>
+          <div style={{ marginTop: 24 }}>
+            <Suspense fallback={<div style={{ height: 32 }} />}>
               <Footer />
             </Suspense>
           </div>
         </div>
       </div>
 
+      {/* ── Edit Blog Modal ── */}
+      <Modal
+        title={
+          <div
+            style={{
+              background: "linear-gradient(135deg,#008cba,#1ab394)",
+              margin: "-20px -24px 0",
+              padding: "18px 24px",
+              borderRadius: "8px 8px 0 0",
+            }}
+          >
+            <span style={{ color: "#fff", fontWeight: 700, fontSize: 17 }}>
+              <EditOutlined style={{ marginRight: 8 }} />
+              Edit Blog
+            </span>
+          </div>
+        }
+        open={editModalVisible}
+        onCancel={() => setEditModalVisible(false)}
+        footer={[
+          <Button
+            key="cancel"
+            size="middle"
+            onClick={() => setEditModalVisible(false)}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="save"
+            size="middle"
+            loading={editSubmitting}
+            onClick={handleEditSubmit}
+            style={{
+              background: "#1ab394",
+              borderColor: "#1ab394",
+              color: "#fff",
+              fontWeight: 600,
+            }}
+          >
+            {editSubmitting ? "Saving..." : "Save Changes"}
+          </Button>,
+        ]}
+        width={620}
+        styles={{ body: { paddingTop: 24 } }}
+      >
+        {editCampaign && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label className="bpLabel">Blog Title</label>
+              <Input
+                value={editCampaign.campaignType}
+                onChange={() => {}}
+                style={{ borderColor: "#008cba" }}
+              />
+            </div>
+            <div>
+              <label className="bpLabel">Description</label>
+              <Input.TextArea
+                rows={6}
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                style={{ borderColor: "#008cba" }}
+                placeholder="Write your blog description..."
+              />
+            </div>
+            <div>
+              <label className="bpLabel">Social Media Caption</label>
+              <Input.TextArea
+                rows={3}
+                value={editCaption}
+                onChange={(e) => setEditCaption(e.target.value)}
+                maxLength={250}
+                // showCount
+                style={{ borderColor: "#1ab394" }}
+                placeholder="Caption for social media sharing..."
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
+
       <style>{`
-        .pageWrap {
-          width: 100%;
-      
-        }
+        .bpWrap { width: 100%; padding-bottom: 40px; }
+        .bpInner { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
-        .pageInner {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .topSection {
-          background:
-            radial-gradient(circle at top right, rgba(99, 102, 241, 0.12), transparent 28%),
-            radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.10), transparent 26%),
-            linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(245,248,255,0.98) 100%);
-          border: 1px solid rgba(226, 232, 240, 0.9);
-          border-radius: 26px;
-          padding: 24px;
-          margin-bottom: 24px;
-          box-shadow:
-            0 16px 40px rgba(15, 23, 42, 0.05),
-            inset 0 1px 0 rgba(255,255,255,0.8);
-          backdrop-filter: blur(12px);
-        }
-
-        .topHeading {
-          text-align: center;
-          margin-bottom: 22px;
-        }
-
-        .topHeading .h1 {
-          font-size: clamp(26px, 4vw, 38px);
-          font-weight: 800;
-          color: #0f172a;
-          line-height: 1.15;
+        /* Header row */
+        .bpHeaderRow {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 14px 0 12px;
           margin-bottom: 10px;
+          /* border-bottom: 1px solid #e5e7eb; */
         }
-
-        .topHeading .h2 {
-          font-size: clamp(15px, 2vw, 18px);
-          color: #475569;
-          font-weight: 600;
-          line-height: 1.65;
-          max-width: 860px;
-          margin: 0 auto 6px;
+        .bpHeaderText { flex: 1; min-width: 0; }
+        .bpTitle {
+          font-size: clamp(15px, 2.2vw, 20px);
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 2px;
+          line-height: 1.2;
         }
-
-        .topHeading .h3 {
-          font-size: 14px;
+        .bpSubtitle {
+          font-size: clamp(12px, 1.4vw, 13px);
           color: #64748b;
-          line-height: 1.7;
+          margin: 0;
+          line-height: 1.4;
         }
 
-        .tabsWrap {
+        /* Tabs row */
+        .bpTabsRow {
           display: flex;
           flex-wrap: wrap;
-          gap: 12px;
-          justify-content: center;
+          gap: 8px;
+          padding: 10px 0 12px;
+          margin-bottom: 20px;
+          border-bottom: 1px solid #e5e7eb;
         }
-
-        .tabItem {
-          border: 1px solid #dbe4f0;
-          background: rgba(255,255,255,0.88);
-          color: #334155;
-          border-radius: 16px;
-          padding: 12px 18px;
-          font-weight: 700;
+        .bpTab {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
+          padding: 7px 16px;
+          border-radius: 6px;
+          border: 1.5px solid #e2e8f0;
+          background: transparent;
+          color: #475569;
+          font-weight: 600;
+          font-size: 13px;
           cursor: pointer;
-          transition: all 0.25s ease;
-          box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+          transition: all 0.18s ease;
         }
+/* MY BLOGS */
+.bpTabMy:hover,
+.bpTabMy {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+}
 
-        .tabItem:hover {
-          transform: translateY(-1px);
-          border-color: #a5b4fc;
-          color: #4338ca;
-        }
+/* ALL BLOGS */
+.bpTabAll:hover,
+.bpTabAll {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
 
-        .tabItem.active {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
-          color: #fff;
-          border-color: transparent;
-          box-shadow: 0 12px 22px rgba(99, 102, 241, 0.28);
-        }
+/* IPL BLOGS */
+.bpTabGames:hover,
+.bpTabGames {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
 
-        .blogsGridWrap {
-          padding: 20px 0;
-        }
-
-        .blogsGrid {
-          display: flex;
-          flex-direction: column;
+        /* 3-col grid */
+        .bpCardsGrid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
           gap: 24px;
         }
+          .bpCardImgFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-        .blogCard {
+.bpCardInitials {
+  font-size: 64px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+        /* Card */
+        .bpCard {
           background: #fff;
+          border-radius: 12px;
           border: 1px solid #e5e7eb;
           overflow: hidden;
-          transition: all 0.3s ease;
-          margin-bottom: 24px;
           cursor: pointer;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .blogCard:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-          border-color: #d1d5db;
-        }
-
-        .blogContent {
-          display: flex;
-          align-items: stretch;
-          min-height: 350px;
-          gap: 20px;
-        }
-
-        .blogContent.reverse {
-          flex-direction: row-reverse;
-        }
-
-        .blogContent.normal {
-          flex-direction: row;
-        }
-
-        .blogBody {
-          flex: 1;
-          padding: 35px;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          transition: box-shadow 0.22s, transform 0.22s;
+        }
+        .bpCard:hover {
+          box-shadow: 0 10px 30px rgba(0,140,186,0.14);
+          transform: translateY(-4px);
         }
 
-        .blogTitle {
-          font-size: 22px;
-          font-weight: 700;
-          color: #1f2937;
-          line-height: 1.4;
-          margin: 0 0 18px 0;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          transition: color 0.3s ease;
-        }
-
-        .blogCard:hover .blogTitle {
-          color: #4f46e5;
-        }
-
-        .blogMeta {
-          margin-bottom: 20px;
-        }
-
-        .blogDate {
-          display: flex;
-          align-items: center;
-          font-size: 12px;
-          color: #06b6d4;
-          margin-bottom: 4px;
-        }
-
-        .blogDate::before {
-          content: '25cf';
-          margin-right: 8px;
-          color: #06b6d4;
-        }
-
-        .blogCategory {
-          font-size: 12px;
-          color: #06b6d4;
-          text-decoration: none;
-        }
-
-        .blogDesc {
-          color: #4b5563;
-          font-size: 16px;
-          line-height: 1.7;
-          margin: 0 0 30px 0;
-          flex: 1;
-          transition: color 0.3s ease;
-        }
-
-        .blogCard:hover .blogDesc {
-          color: #374151;
-        }
-
-        .blogActions {
-          margin-top: auto;
-        }
-
-        .btnReadMore {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
-          border: 1px solid transparent !important;
-          color: #fff !important;
-          font-size: 12px !important;
-          font-weight: 600 !important;
-          padding: 8px 20px !important;
-          height: auto !important;
-          border-radius: 8px !important;
-          transition: all 0.3s ease !important;
-          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
-        }
-
-        .btnReadMore:hover {
-          background: linear-gradient(135deg, #3730a3, #6b21a8) !important;
-          color: #fff !important;
-          transform: translateY(-2px) !important;
-          box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4) !important;
-        }
-
-        .blogMedia {
-          width: 400px;
-          height: 350px;
+        /* Image box — fixed height, object-contain, no crop */
+        .bpCardImg {
+          position: relative;
+          width: 100%;
+          height: 200px;
+          background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
           flex-shrink: 0;
-          cursor: pointer;
           overflow: hidden;
-          background: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 10px;
         }
-
-        .blogMediaImg {
+        .bpCardImg img,
+        .bpCardImg video {
           width: 100%;
           height: 100%;
           object-fit: contain;
-          transition: transform 0.3s ease;
+          display: block;
+          transition: transform 0.35s ease;
         }
+        .bpCard:hover .bpCardImg img,
+        .bpCard:hover .bpCardImg video { transform: scale(1.04); }
 
-        .blogMediaFallback {
+        /* Fallback: no image — show title text on gradient bg */
+        .bpCardImgFallback {
           width: 100%;
           height: 100%;
+          background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+          padding: 20px;
+        }
+        .bpCardImgTitle {
+          color: #fff;
+          font-size: 16px;
+          font-weight: 700;
+          text-align: center;
+          line-height: 1.4;
+          letter-spacing: 0.3px;
         }
 
-        .paginationSection {
+        /* Badge */
+        .bpBadge {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          background: linear-gradient(135deg, #008cba, #1ab394);
+          color: #fff;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 9px;
+          border-radius: 20px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          z-index: 1;
+        }
+
+        /* Card body */
+        .bpCardBody {
+          padding: 16px 18px 18px;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+        .bpDate {
+          font-size: 11px;
+          color: #94a3b8;
+          font-weight: 500;
+          margin-bottom: 6px;
+          display: block;
+        }
+        .bpCardTitle {
+          font-size: 14px;
+          font-weight: 700;
+          color: #0f172a;
+          line-height: 1.4;
+          margin: 0 0 8px;
+        }
+        .bpCard:hover .bpCardTitle { color: #008cba; }
+        .bpCardDesc {
+          font-size: 12px;
+          color: #6b7280;
+          line-height: 1.6;
+          flex: 1;
+          margin: 0 0 14px;
+        }
+      .bpCardActions {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.bpCardActions .ant-btn {
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+        /* Pagination */
+        .bpPagination {
           display: flex;
           justify-content: center;
-          padding: 40px 0 20px;
+          padding: 32px 0 16px;
         }
 
-        .customPagination {
-          text-align: center;
+        /* Modal label */
+        .bpLabel {
+          display: block;
+          font-size: 13px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 5px;
         }
 
-        .customPagination .ant-pagination-item {
-          border: 1px solid #000;
-          margin: 0 4px;
+        /* Tablet: 2 cols */
+        @media (max-width: 1024px) {
+          .bpCardsGrid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
         }
 
-        .customPagination .ant-pagination-item-active {
-          background: #000;
-          border-color: #000;
+        /* Mobile: 1 col */
+        @media (max-width: 640px) {
+          .bpHeaderRow { flex-direction: column; align-items: flex-start; padding: 10px 0 8px; }
+          .bpHeaderRow .ant-btn { width: 100%; justify-content: center; }
+          .bpTabsRow { gap: 6px; }
+          .bpTab { flex: 1; justify-content: center; padding: 7px 8px; font-size: 12px; }
+          .bpCardsGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .bpCardImg { height: 160px; }
+          .bpCardTitle { font-size: 13px; }
+          .bpCardDesc { font-size: 11px; }
+          .bpCardBody { padding: 12px 14px 14px; }
         }
-
-        .customPagination .ant-pagination-item-active a {
-          color: #fff;
-        }
-
-        .customPagination .ant-pagination-prev,
-        .customPagination .ant-pagination-next {
-          border: 1px solid #000;
-        }
-
-        .customPagination .ant-pagination-total-text {
-          display: inline-block;
-        }
-
-        @media (max-width: 768px) {
-          .customPagination .ant-pagination-total-text {
-            display: none !important;
-          }
-          
-          .customPagination .ant-pagination-item {
-            margin: 0 2px;
-            min-width: 32px;
-            height: 32px;
-            line-height: 30px;
-          }
-          
-          .customPagination .ant-pagination-prev,
-          .customPagination .ant-pagination-next {
-            min-width: 32px;
-            height: 32px;
-            line-height: 30px;
-          }
-        }
-
-        .footerSection {
-          margin-top: 20px;
-        }
-
-        @media (max-width: 768px) {
-          .pageWrap {
-            padding: 12px !important;
-          }
-
-          .topSection {
-            padding: 18px 14px;
-            border-radius: 20px;
-          }
-
-          .blogsGridWrap {
-            padding: 14px 0;
-          }
-
-          .blogContent {
-            flex-direction: column !important;
-            min-height: auto;
-          }
-
-          .blogContent.reverse {
-            flex-direction: column !important;
-          }
-
-          .blogMedia {
-            width: 100%;
-            height: 200px;
-            order: -1;
-          }
-
-          .blogBody {
-            padding: 20px;
-          }
-
-          .blogTitle {
-            font-size: 16px;
-            margin-bottom: 12px;
-          }
-
-          .blogDesc {
-            font-size: 13px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-          }
-
-          .tabItem {
-            width: calc(50% - 6px);
-            justify-content: center;
-            padding: 10px 14px;
-            font-size: 12px;
-          }
-
-          .tabItem:last-child {
-            width: 100%;
-          }
-
-          .tabsWrap {
-            gap: 8px;
-          }
-
-          .paginationSection {
-            padding: 30px 0 15px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .pageWrap {
-            padding: 8px;
-          }
-
-          .topSection {
-            padding: 16px 12px;
-          }
-
-          .blogBody {
-            padding: 16px;
-          }
-
-          .blogTitle {
-            font-size: 15px;
-            line-height: 1.3;
-          }
-
-          .blogDesc {
-            font-size: 12px;
-            line-height: 1.5;
-          }
-
-          .blogMedia {
-            height: 180px;
-          }
-
-          .btnReadMore {
-            font-size: 11px !important;
-            padding: 6px 16px !important;
-          }
-
-          .tabItem {
-            padding: 8px 12px;
-            font-size: 11px;
-          }
-
-          .topHeading .h1 {
-            font-size: 22px;
-          }
-
-          .topHeading .h2 {
-            font-size: 14px;
-          }
-
-          .topHeading .h3 {
-            font-size: 12px;
-          }
+        @media (max-width: 420px) {
+          .bpCardsGrid { grid-template-columns: 1fr; }
+          .bpCardImg { height: 180px; }
+          .bpTab { font-size: 11px; padding: 6px 6px; }
         }
       `}</style>
     </div>

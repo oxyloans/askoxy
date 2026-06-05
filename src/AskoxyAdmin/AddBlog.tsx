@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, {  useState } from "react";
 import { adminApi as axios } from "../utils/axiosInstances";
 import Sidebar from "./Sider";
-import { message, Upload, Button, Modal } from "antd";
+import { message, Button, Modal } from "antd";
 import {
-  UploadOutlined,
+ 
   CopyOutlined,
   FacebookOutlined,
   InstagramOutlined,
@@ -25,6 +25,7 @@ interface CampaignForm {
   mediaUrls: MediaItem[];
   campaignTypeAddBy: string;
   campainInputType: string;
+  createdPersonId: string;
 }
 
 interface CampaignResponse {
@@ -35,6 +36,7 @@ interface CampaignResponse {
   campaignDescription: string | null;
   campaignStatus: string | null;
   campaignId: string;
+  createdPersonId: string | null;
   campainInputType: string | null;
   facebookCampaignUrl: string;
   instagramCampaignUrl: string;
@@ -47,6 +49,7 @@ const AddBlog: React.FC = () => {
     socialMediaCaption: "",
     mediaUrls: [],
     campaignTypeAddBy: "",
+    createdPersonId: localStorage.getItem("userId") || "",
     campainInputType: "BLOG",
   });
 
@@ -261,6 +264,7 @@ const AddBlog: React.FC = () => {
           socialMediaCaption: formData.socialMediaCaption,
           campaignTypeAddBy: formData.campaignTypeAddBy,
           images: images,
+          createdPersonId: formData.createdPersonId,
           campainInputType: "BLOG",
         },
       ],
@@ -290,6 +294,7 @@ const AddBlog: React.FC = () => {
           mediaUrls: [],
           campaignTypeAddBy: "",
           campainInputType: "SERVICE",
+          createdPersonId: localStorage.getItem("userId") || "",
         });
         if (primaryType === "HELPDESKSUPERADMIN") {
           navigate("/admin/allcampaignsdetails");

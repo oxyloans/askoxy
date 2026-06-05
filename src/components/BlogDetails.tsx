@@ -1328,6 +1328,33 @@ const handleWriteToUsSubmitButton = async () => {
 
         <style>
           {`
+
+            .creatorRewardsBar {
+              border-radius: 0;
+              box-shadow: none;
+            }
+
+            .creatorRewardsButton {
+              min-width: 132px;
+              white-space: nowrap;
+            }
+
+            @media (max-width: 640px) {
+              .creatorRewardsBar {
+                padding: 14px 12px !important;
+              }
+
+              .creatorRewardsButton {
+                width: 100%;
+                min-width: 100%;
+              }
+            }
+
+            @media (min-width: 641px) and (max-width: 1024px) {
+              .creatorRewardsButton {
+                min-width: 140px;
+              }
+            }
             .custom-scrollbar::-webkit-scrollbar {
               width: 8px;
             }
@@ -1484,30 +1511,32 @@ const handleWriteToUsSubmitButton = async () => {
    
   }}>
           <div className="mx-auto max-w-[1550px] ">
-            <div className="mb-6 rounded-[28px] border border-[#eef1f7] bg-gradient-to-r from-white to-[#f8fafc] px-6 sm:px-10 py-6 shadow-[0_15px_40px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-              <div className="max-w-2xl">
-                <h2 className="text-[26px] sm:text-[34px] font-bold text-[#0f172a] leading-tight">
-                  Creator Rewards 🚀
-                </h2>
+            <div className="creatorRewardsBar mb-5 w-full  px-4 py-4 sm:px-6 sm:py-5">
+              <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1 text-left">
+                  <h2 className="m-0 text-[22px] font-bold leading-tight text-[#0f172a] sm:text-[28px] lg:text-[32px]">
+                    Creator Rewards 🚀
+                  </h2>
 
-                <p className="mt-2 text-[15px] sm:text-[16px] text-[#475569] leading-relaxed">
-                  Write your blog and earn exciting rewards. Share your ideas with
-                  the world and start earning{" "}
-                  <span className="font-semibold bg-gradient-to-r from-[#f59e0b] to-[#facc15] bg-clip-text text-transparent">
-                    BMV Coins 💰
-                  </span>
-                  .
-                </p>
+                  <p className="mt-2 max-w-3xl text-[14px] leading-relaxed text-[#475569] sm:text-[15px] lg:text-[16px]">
+                    Write your blog and earn exciting rewards. Share your ideas with
+                    the world and start earning{" "}
+                    <span className="font-semibold bg-gradient-to-r from-[#f59e0b] to-[#facc15] bg-clip-text text-transparent">
+                      BMV Coins 💰
+                    </span>
+                    .
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddblog}
+                  className="creatorRewardsButton inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] px-5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] sm:h-12 sm:px-6"
+                >
+                  <PlusOutlined />
+                  Add Blog
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={handleAddblog}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#9333ea] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:scale-105 transition-all duration-300"
-              >
-                <PlusOutlined />
-                Add Blog
-              </button>
             </div>
 
             {isLoading ? (
