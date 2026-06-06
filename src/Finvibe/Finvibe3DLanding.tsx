@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Country } from "./components/Billing";
 
@@ -2457,6 +2457,143 @@ export default function Finvibe3DLanding({ country }: { country?: Country }) {
                   </span>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI USE CASES ENGINE SECTION */}
+      <section
+        style={{
+          position: "relative",
+          zIndex: 2,
+          padding: "clamp(4rem, 10vw, 5rem) clamp(1rem, 5vw, 2.5rem)",
+          borderTop: "1px solid rgba(108,92,231,.15)",
+          background: "linear-gradient(135deg,rgba(108,92,231,.06) 0%,rgba(0,184,148,.04) 100%)",
+        }}
+      >
+        <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "clamp(2rem, 5vw, 3rem)" }}>
+
+            {/* Left: text */}
+            <div style={{ flex: "1 1 420px", minWidth: 0 }}>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: "rgba(0,184,148,.1)", border: "1px solid rgba(0,184,148,.3)",
+                borderRadius: 100, padding: "4px 16px", marginBottom: 20,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#00cec9", animation: "pulseGlow 2s infinite", display: "inline-block" }} />
+                <span style={{ fontSize: "clamp(0.58rem, 1vw, 0.68rem)", fontWeight: 700, letterSpacing: ".16em", color: "#00cec9", fontFamily: "'Orbitron',monospace", textTransform: "uppercase" as const }}>LIVE AI DEMO</span>
+              </div>
+              <h2 style={{
+                fontFamily: "'Orbitron',monospace",
+                fontSize: "clamp(1.4rem, 4vw, 2.4rem)",
+                fontWeight: 900, lineHeight: 1.1,
+                marginBottom: 16, letterSpacing: "-.02em",
+              }}>
+                <span style={{ color: "#fff" }}>30+ Real AI</span><br />
+                <span style={{
+                  background: "linear-gradient(90deg,#6C5CE7,#00B894)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                }}>Use Cases in Action</span>
+              </h2>
+              <p style={{
+                color: "rgba(255,255,255,.6)", fontSize: "clamp(0.82rem, 1.5vw, 0.95rem)",
+                lineHeight: 1.75, marginBottom: 28, fontFamily: "sans-serif", maxWidth: 460,
+              }}>
+                Watch AI transform real banking operations — Customer Onboarding, Loan Eligibility, Underwriting — from manual input to live executable code in under 2 seconds.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 32 }}>
+                {[
+                  { icon: "⚙️", label: "15-Step Engine" },
+                  { icon: "🤖", label: "50 AI Agents" },
+                  { icon: "</>", label: "Code Generation" },
+                  { icon: "▶",  label: "Live Execution" },
+                ].map(b => (
+                  <div key={b.label} style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "7px 14px", borderRadius: 9,
+                    background: "rgba(108,92,231,.12)", border: "1px solid rgba(108,92,231,.28)",
+                  }}>
+                    <span style={{ fontSize: 14 }}>{b.icon}</span>
+                    <span style={{ color: "#c4b5fd", fontSize: "clamp(0.7rem, 1.2vw, 0.78rem)", fontWeight: 600, fontFamily: "sans-serif" }}>{b.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => navigate("/use-case-engine")}
+                  style={{
+                    padding: "clamp(0.85rem, 2vw, 1rem) clamp(1.75rem, 3.5vw, 2rem)",
+                    borderRadius: 12, border: "1px solid rgba(0,184,148,.55)",
+                    background: "linear-gradient(135deg,rgba(0,184,148,.18),rgba(108,92,231,.12))",
+                    color: "#00cec9", fontFamily: "'Orbitron',monospace",
+                    fontWeight: 700, fontSize: "clamp(0.7rem, 1.2vw, 0.8rem)",
+                    letterSpacing: ".1em", cursor: "pointer",
+                    boxShadow: "0 2px 24px rgba(0,184,148,.2)", transition: "all .3s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,184,148,.3)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 24px rgba(0,184,148,.2)"; }}
+                >
+                  Explore Use Cases →
+                </button>
+                {/* <button
+                  onClick={() => navigate("/live-ai-demo")}
+                  style={{
+                    padding: "clamp(0.85rem, 2vw, 1rem) clamp(1.75rem, 3.5vw, 2rem)",
+                    borderRadius: 12, border: "1px solid rgba(108,92,231,.45)",
+                    background: "transparent",
+                    color: "#c4b5fd", fontFamily: "'Orbitron',monospace",
+                    fontWeight: 700, fontSize: "clamp(0.7rem, 1.2vw, 0.8rem)",
+                    letterSpacing: ".1em", cursor: "pointer", transition: "all .3s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(108,92,231,.12)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.transform = "translateY(0)"; }}
+                >
+                  ▶ Live AI Demo
+                </button> */}
+              </div>
+            </div>
+
+            {/* Right: use case flow cards */}
+            <div style={{ flex: "1 1 340px", minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { icon: "👤", title: "Customer Onboarding", sub: "KYC · AML · Identity Verification",      color: "#6C5CE7", steps: ["Run Engine", "4 Agents", "Decision", "Code", "✅ Customer Created"] },
+                { icon: "🏦", title: "Loan Eligibility",     sub: "Credit Score · DTI · Risk Analysis",      color: "#00B894", steps: ["Credit Analysis", "Decision", "Code", "✅ AED 250,000 Approved"] },
+                { icon: "📋", title: "Underwriting",         sub: "Policy Assessment · Risk Rating",          color: "#E17055", steps: ["Risk Analysis", "Actuarial", "Code", "✅ Policy Approved"] },
+              ].map((uc, i) => (
+                <div key={i} style={{
+                  padding: "16px 20px", borderRadius: 14,
+                  background: `linear-gradient(135deg,${uc.color}12,${uc.color}06)`,
+                  border: `1px solid ${uc.color}35`,
+                  transition: "all .25s",
+                }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${uc.color}70`; (e.currentTarget as HTMLElement).style.transform = "translateX(6px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = `${uc.color}35`; (e.currentTarget as HTMLElement).style.transform = "translateX(0)"; }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <span style={{ fontSize: 20 }}>{uc.icon}</span>
+                    <div>
+                      <div style={{ color: "#fff", fontWeight: 700, fontSize: "clamp(0.82rem, 1.4vw, 0.9rem)", fontFamily: "sans-serif" }}>{uc.title}</div>
+                      <div style={{ color: "rgba(255,255,255,.5)", fontSize: "clamp(0.65rem, 1vw, 0.72rem)", fontFamily: "sans-serif" }}>{uc.sub}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                    {uc.steps.map((s, j) => (
+                      <React.Fragment key={j}>
+                        <span style={{
+                          padding: "3px 9px", borderRadius: 6, fontSize: "clamp(0.6rem, 1vw, 0.68rem)", fontWeight: 600,
+                          background: s.startsWith("✅") ? `${uc.color}25` : "rgba(255,255,255,.06)",
+                          color: s.startsWith("✅") ? uc.color : "rgba(255,255,255,.65)",
+                          border: `1px solid ${s.startsWith("✅") ? uc.color + "50" : "rgba(255,255,255,.1)"}`,
+                          fontFamily: "sans-serif",
+                        }}>{s}</span>
+                        {j < uc.steps.length - 1 && <span style={{ color: "rgba(255,255,255,.25)", fontSize: 11 }}>→</span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
