@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import BASE_URL from "../Config";
 import {
   Button,
@@ -14,7 +14,6 @@ import {
   Timeline,
   Empty,
   Avatar,
-  Badge,
   Divider,
   Tooltip,
 } from "antd";
@@ -24,11 +23,8 @@ import {
   UploadOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  FileOutlined,
-  ArrowDownOutlined,
   CalendarOutlined,
   UserOutlined,
-  FireOutlined,
   HistoryOutlined,
   CloudUploadOutlined,
   PaperClipOutlined,
@@ -36,6 +32,8 @@ import {
   InfoCircleOutlined,
   AudioOutlined,
   AudioMutedOutlined,
+  UpOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import UserPanelLayout from "./UserPanelLayout";
 import { employeeApi } from "../utils/axiosInstances";
@@ -120,7 +118,6 @@ const TaskUpdate: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [fetchingTasks, setFetchingTasks] = useState<boolean>(true);
   const [userId, setUserId] = useState<string>("");
-  const [currentDate] = useState<dayjs.Dayjs>(dayjs());
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
@@ -130,7 +127,55 @@ const TaskUpdate: React.FC = () => {
   >("idle");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [form] = Form.useForm<TaskFormValues>();
-  const [fileInputKey, setFileInputKey] = useState<number>(Date.now());
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [tasksCollapsed, setTasksCollapsed] = useState<boolean>(false);
+
+  const handleTaskItemClick = (task: Task) => {
+    selectTask(task);
+    setExpandedTaskId((prev) => (prev === task.id ? null : task.id));
+  };
+
+  const fetchAllPendingTasks = useCallback(
+    async (userIdValue: string) => {
+      setFetchingTasks(true);
+      try {
+        const response = await employeeApi.post(
+          `${BASE_URL}/user-service/write/getAllTaskUpdates`,
+          {
+            taskStatus: "PENDING",
+            userId: userIdValue,
+          },
+        );
+
+        setTasks(response.data);
+
+        if (response.data && response.data.length > 0) {
+          selectTask(response.data[0]);
+        } else {
+          setSelectedTask(null);
+          form.setFieldsValue({
+            userId: userIdValue,
+            taskStatus: "COMPLETED",
+            endOftheDay: sessionStorage.getItem("eod_draft") || "",
+          });
+          setIsFormVisible(false);
+        }
+      } catch (error: any) {
+        Swal.fire({
+          icon: "error",
+          title: "Unable to Load Tasks",
+          text:
+            error.response?.data?.message ||
+            "We could not fetch your pending tasks right now. Please refresh the page or try again after some time.",
+          confirmButtonText: "OK",
+        });
+        console.error("Error fetching tasks:", error);
+      } finally {
+        setFetchingTasks(false);
+      }
+    },
+    [form],
+  );
 
   const { isListening: isEodListening, toggle: toggleEodVoice } =
     useSpeechToText((transcript) => {
@@ -155,8 +200,7 @@ const TaskUpdate: React.FC = () => {
     if (eodDraft) {
       form.setFieldsValue({ endOftheDay: eodDraft });
     }
-  }, []);
-  const accessToken = sessionStorage.getItem("taskAccessToken");
+  }, [fetchAllPendingTasks, form]);
   // Check if task can be updated based on date and time
   const canUpdateTask = (task: Task): boolean => {
     const currentTime = dayjs();
@@ -168,47 +212,6 @@ const TaskUpdate: React.FC = () => {
       (currentTime.hour() === 21 && currentTime.minute() === 0);
 
     return isSameDay && isBeforeNinePM;
-  };
-
-  // Modified to fetch all pending tasks without date filter
-  const fetchAllPendingTasks = async (userIdValue: string) => {
-    setFetchingTasks(true);
-    try {
-      const response = await employeeApi.post(
-        `${BASE_URL}/user-service/write/getAllTaskUpdates`,
-        {
-          taskStatus: "PENDING",
-          userId: userIdValue,
-        },
-      );
-
-      setTasks(response.data);
-
-      // If tasks are available, select the first one by default
-      if (response.data && response.data.length > 0) {
-        selectTask(response.data[0]);
-      } else {
-        setSelectedTask(null);
-        form.setFieldsValue({
-          userId: userIdValue,
-          taskStatus: "COMPLETED",
-          endOftheDay: sessionStorage.getItem("eod_draft") || "",
-        });
-        setIsFormVisible(false);
-      }
-    } catch (error: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Unable to Load Tasks",
-        text:
-          error.response?.data?.message ||
-          "We could not fetch your pending tasks right now. Please refresh the page or try again after some time.",
-        confirmButtonText: "OK",
-      });
-      console.error("Error fetching tasks:", error);
-    } finally {
-      setFetchingTasks(false);
-    }
   };
 
   const selectTask = (task: Task) => {
@@ -239,7 +242,6 @@ const TaskUpdate: React.FC = () => {
     setFileName("");
     setDocumentId(null);
     setUploadProgress(0);
-    setFileInputKey(Date.now()); // Change key to force input reset
   };
 
   const updateTask = async (values: TaskFormValues): Promise<void> => {
@@ -396,7 +398,6 @@ const TaskUpdate: React.FC = () => {
 
       setUploadStatus("failed");
       // Reset file input on error
-      setFileInputKey(Date.now());
     }
   };
 
@@ -575,10 +576,29 @@ const TaskUpdate: React.FC = () => {
       <div className="max-w-6xl mx-auto px-2 sm:px-4 lg:px-6">
         <Card
           title={
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <CalendarOutlined className="mr-2 text-blue-500" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CalendarOutlined className="text-blue-500" />
                 <span className="font-semibold text-lg">All Pending Tasks</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">
+                  {tasks.length} pending task{tasks.length === 1 ? "" : "s"}
+                </span>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={
+                    tasksCollapsed ? (
+                      <UpOutlined className="text-blue-500" />
+                    ) : (
+                      <DownOutlined className="text-blue-500" />
+                    )
+                  }
+                  onClick={() => setTasksCollapsed((prev) => !prev)}
+                >
+                  {tasksCollapsed ? "Show" : "Hide"}
+                </Button>
               </div>
             </div>
           }
@@ -593,74 +613,98 @@ const TaskUpdate: React.FC = () => {
               <Spin size="large" tip="Loading your tasks..." />
             </div>
           ) : tasks.length > 0 ? (
-            <List
-              itemLayout="vertical"
-              dataSource={tasks}
-              renderItem={(task) => {
-                const pendingUpdatesCount =
-                  task.pendingUserTaskResponse?.length || 0;
+            !tasksCollapsed ? (
+              <List
+                itemLayout="vertical"
+                dataSource={tasks}
+                renderItem={(task) => {
+                  const taskDate = getTaskDate(task);
 
-                const taskDate = getTaskDate(task);
-
-                return (
-                  <List.Item
-                    className={`border rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 cursor-pointer transition-all duration-300 hover:shadow-md
-                      ${
+                  return (
+                    <List.Item
+                      className={`border rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 cursor-pointer transition-all duration-300 hover:shadow-md ${
                         task.id === selectedTask?.id
                           ? "bg-blue-50 border-blue-300 shadow-md"
                           : "hover:bg-gray-50"
                       }`}
-                    onClick={() => selectTask(task)}
-                  >
-                    <div className="w-full" style={{ padding: "4px 8px" }}>
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                        {/* Left side: Title + Date */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Title
-                            level={5}
-                            className="mb-0 font-bold"
-                            style={{ marginBottom: 0, paddingLeft: "6px" }}
-                          >
-                            Plan of the day
-                          </Title>
-                          <Tag color="blue">{taskDate}</Tag>
+                      onClick={() => handleTaskItemClick(task)}
+                    >
+                      <div className="w-full" style={{ padding: "4px 8px" }}>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Title
+                              level={5}
+                              className="mb-0 font-bold"
+                              style={{ marginBottom: 0, paddingLeft: "6px" }}
+                            >
+                              Plan of the day
+                            </Title>
+                            <Tag color="blue">{taskDate}</Tag>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {task.taskAssignedBy && (
+                              <Tooltip title="Assigned by">
+                                <Tag color="cyan">
+                                  <UserOutlined className="mr-1" />
+                                  {task.taskAssignedBy}
+                                </Tag>
+                              </Tooltip>
+                            )}
+                            <Tag
+                              icon={
+                                task.taskStatus === "COMPLETED" ? (
+                                  <CheckCircleOutlined />
+                                ) : (
+                                  <ClockCircleOutlined />
+                                )
+                              }
+                              color={getTaskStatusColor(task.taskStatus)}
+                              className="text-sm"
+                            >
+                              {task.taskStatus}
+                            </Tag>
+                            <Button
+                              type="text"
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTaskItemClick(task);
+                              }}
+                              icon={
+                                expandedTaskId === task.id ? (
+                                  <UpOutlined style={{ color: "#008CBA" }} />
+                                ) : (
+                                  <DownOutlined style={{ color: "#008CBA" }} />
+                                )
+                              }
+                            />
+                          </div>
                         </div>
-                        {/* Right side: Assigned by + Status */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {task.taskAssignedBy && (
-                            <Tooltip title="Assigned by">
-                              <Tag color="cyan">
-                                <UserOutlined className="mr-1" />
-                                {task.taskAssignedBy}
-                              </Tag>
-                            </Tooltip>
-                          )}
-                          <Tag
-                            icon={
-                              task.taskStatus === "COMPLETED" ? (
-                                <CheckCircleOutlined />
-                              ) : (
-                                <ClockCircleOutlined />
-                              )
-                            }
-                            color={getTaskStatusColor(task.taskStatus)}
-                            className="text-sm"
-                          >
-                            {task.taskStatus}
-                          </Tag>
-                        </div>
+                        {expandedTaskId === task.id && (
+                          <div className="px-2 py-3 border-t border-gray-200 mt-1">
+                            <Paragraph
+                              className="text-gray-700 mb-0"
+                              style={{
+                                wordBreak: "break-word",
+                                paddingLeft: "6px",
+                              }}
+                            >
+                              {task.planOftheDay}
+                            </Paragraph>
+                          </div>
+                        )}
                       </div>
-                      <Paragraph
-                        className="text-gray-700 mb-0"
-                        style={{ wordBreak: "break-word", paddingLeft: "6px" }}
-                      >
-                        {task.planOftheDay}
-                      </Paragraph>
-                    </div>
-                  </List.Item>
-                );
-              }}
-            />
+                    </List.Item>
+                  );
+                }}
+              />
+            ) : (
+              <div className="text-center py-8 sm:py-12">
+                <Text type="secondary">
+                  Task list is collapsed. Expand to view pending tasks.
+                </Text>
+              </div>
+            )
           ) : (
             <div className="text-center py-8 sm:py-12">
               <Empty
@@ -796,31 +840,31 @@ const TaskUpdate: React.FC = () => {
                           className="border-gray-300 hover:border-blue-400 focus:border-blue-500"
                         />
                       </Form.Item>
-                      {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && (
-                        <div className="-mt-4 mb-3 flex justify-end">
-                          <Button
-                            type={isEodListening ? "primary" : "default"}
-                            shape="round"
-                            size="small"
-                            icon={
-                              isEodListening ? (
-                                <AudioMutedOutlined />
-                              ) : (
-                                <AudioOutlined />
-                              )
-                            }
-                            onClick={toggleEodVoice}
-                            danger={isEodListening}
-                            style={
-                              isEodListening
-                                ? {}
-                                : { borderColor: "#008cba", color: "#008cba" }
-                            }
-                          >
-                            {isEodListening ? "Stop" : "Speak"}
-                          </Button>
-                        </div>
-                      )}
+                      {/* {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && ( */}
+                      <div className="-mt-4 mb-3 flex justify-end">
+                        <Button
+                          type={isEodListening ? "primary" : "default"}
+                          shape="round"
+                          size="small"
+                          icon={
+                            isEodListening ? (
+                              <AudioMutedOutlined />
+                            ) : (
+                              <AudioOutlined />
+                            )
+                          }
+                          onClick={toggleEodVoice}
+                          danger={isEodListening}
+                          style={
+                            isEodListening
+                              ? {}
+                              : { borderColor: "#008cba", color: "#008cba" }
+                          }
+                        >
+                          {isEodListening ? "Stop" : "Speak"}
+                        </Button>
+                      </div>
+                      {/* )} */}
 
                       <Form.Item
                         label={

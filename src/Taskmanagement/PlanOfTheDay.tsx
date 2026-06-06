@@ -498,7 +498,7 @@ const PlanOfTheDay: React.FC = () => {
           className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400 transition-all"
         />
       </Form.Item>
-      {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && (
+      {/* {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && ( */}
         <div className="-mt-4 mb-3 flex justify-end">
           <Button
             type={isPodListening ? "primary" : "default"}
@@ -512,7 +512,7 @@ const PlanOfTheDay: React.FC = () => {
             {isPodListening ? "Stop" : "Speak"}
           </Button>
         </div>
-      )}
+      {/* )} */}
 
       <Form.Item
         name="taskTeam"
@@ -888,7 +888,7 @@ const PlanOfTheDay: React.FC = () => {
           className="border-gray-300 rounded-lg text-sm focus:border-blue-500 hover:border-blue-400 transition-all"
         />
       </Form.Item>
-      {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && (
+      {/* {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && ( */}
         <div className="-mt-4 mb-3 flex justify-end">
           <Button
             type={isPodListening ? "primary" : "default"}
@@ -902,7 +902,7 @@ const PlanOfTheDay: React.FC = () => {
             {isPodListening ? "Stop" : "Speak"}
           </Button>
         </div>
-      )}
+      {/* )} */}
 
       <Form.Item
         name="taskTeam"

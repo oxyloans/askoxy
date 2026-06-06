@@ -6,6 +6,7 @@ import {
   Campaign,
 } from "../components/servicesapi";
 import { message, Empty, Button, Pagination, Spin, Modal, Input } from "antd";
+import axios from "axios";
 import {
   FileTextOutlined,
   UserOutlined,
@@ -36,6 +37,9 @@ const BlogsPage: React.FC = () => {
   const [editCampaign, setEditCampaign] = useState<Campaign | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editCaption, setEditCaption] = useState("");
+  const [editFileList, setEditFileList] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageErrorMessage, setImageErrorMessage] = useState("");
   const [editSubmitting, setEditSubmitting] = useState(false);
 
   const navigate = useNavigate();
@@ -77,41 +81,51 @@ const BlogsPage: React.FC = () => {
     }
   };
 
+  const loadAllBlogsAndGames = async () => {
+    setIsLoading(true);
+    try {
+      const [campaignList, gameList] = await Promise.all([
+        fetchCampaigns(),
+        fetchAllGames(),
+      ]);
+
+      const normalizedCampaigns = (campaignList as any[]).map(
+        (c: any, index: number) => ({
+          ...c,
+          id: c.id || c.campaignId,
+          imageUrls: Array.isArray(c.imageUrls)
+            ? c.imageUrls
+            : c.imageUrl
+              ? [{ imageUrl: c.imageUrl, status: true }]
+              : [],
+          __originalIndex: index,
+        }),
+      );
+
+      const normalizedGames = (gameList as any[]).map(
+        (c: any, index: number) => ({
+          ...c,
+          id: c.id || c.campaignId,
+          imageUrls: Array.isArray(c.imageUrls)
+            ? c.imageUrls
+            : c.imageUrl
+              ? [{ imageUrl: c.imageUrl, status: true }]
+              : [],
+          __originalIndex: index,
+        }),
+      );
+
+      setCampaigns(normalizedCampaigns as Campaign[]);
+      setGames(normalizedGames as Campaign[]);
+    } catch (err) {
+      console.error("Error loading data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [campaignList, gameList] = await Promise.all([
-          fetchCampaigns(),
-          fetchAllGames(),
-        ]);
-
-        const normalizedCampaigns = (campaignList as any[]).map(
-          (c: any, index: number) => ({
-            ...c,
-            id: c.id || c.campaignId,
-            __originalIndex: index,
-          }),
-        );
-
-        const normalizedGames = (gameList as any[]).map(
-          (c: any, index: number) => ({
-            ...c,
-            id: c.id || c.campaignId,
-            __originalIndex: index,
-          }),
-        );
-
-        setCampaigns(normalizedCampaigns as Campaign[]);
-        setGames(normalizedGames as Campaign[]);
-      } catch (err) {
-        console.error("Error loading data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
+    loadAllBlogsAndGames();
   }, []);
 
   const slugify = (text: string) =>
@@ -161,7 +175,14 @@ const BlogsPage: React.FC = () => {
   };
 
   const isImage = (url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-  const isVideo = (url: string) => /\.(mp4|webm|ogg|mov|m4v)$/i.test(url);
+  const isVideo = (url: string) =>
+    /\.(mp4|webm|ogg|mov|m4v|avi|wmv|flv|mkv)$/i.test(url);
+
+  const buildMediaUrl = (url: string) => {
+    if (!url) return "";
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${uploadurlwithId}${url}`;
+  };
 
   const getMediaUrl = (campaign: any) => {
     const firstMedia =
@@ -172,8 +193,7 @@ const BlogsPage: React.FC = () => {
       "";
 
     if (!firstMedia) return "";
-    if (/^https?:\/\//i.test(firstMedia)) return firstMedia;
-    return `${uploadurlwithId}${firstMedia}`;
+    return buildMediaUrl(firstMedia);
   };
 
   const parseDateValue = (value: any): number => {
@@ -345,10 +365,73 @@ const BlogsPage: React.FC = () => {
   };
 
   const handleEditOpen = (campaign: Campaign) => {
+    const existingImages = Array.isArray((campaign as any).imageUrls)
+      ? (campaign as any).imageUrls
+      : (campaign as any).imageUrl
+        ? [{ imageUrl: (campaign as any).imageUrl, status: true }]
+        : [];
+
     setEditCampaign(campaign);
     setEditDesc(campaign.campaignDescription || "");
     setEditCaption(campaign.socialMediaCaption || "");
+    setEditFileList(
+      existingImages.map((img: any) => ({
+        imageId: img.imageId || img.id || "",
+        imageUrl: img.imageUrl || img.documentPath || img.url || img,
+        status: img.status !== undefined ? img.status : true,
+        isNew: false,
+      })),
+    );
+    setImageErrorMessage("");
     setEditModalVisible(true);
+  };
+
+  const handleRemoveEditFile = (index: number) => {
+    setEditFileList((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setImageErrorMessage("");
+    setIsUploading(true);
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+
+        const response = await axios.post(
+          "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
+          uploadFormData,
+          { headers: { "Content-Type": "multipart/form-data" } },
+        );
+
+        if (response.data?.uploadStatus === "UPLOADED") {
+          setEditFileList((prev) => [
+            ...prev,
+            {
+              imageUrl: response.data.documentPath,
+              status: true,
+              uploadId: response.data.id,
+              isNew: true,
+            },
+          ]);
+        } else {
+          setImageErrorMessage("Failed to upload the file. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      setImageErrorMessage("Failed to upload the file. Please try again.");
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
   };
 
   const handleEditSubmit = async () => {
@@ -367,11 +450,21 @@ const BlogsPage: React.FC = () => {
               campainInputType: editCampaign.campainInputType,
               socialMediaCaption: editCaption,
               createdPersonId: userId,
-              images: (editCampaign.imageUrls || []).map((img: any) => ({
-                imageId: img.imageId,
-                imageUrl: img.imageUrl,
-                status: img.status,
-              })),
+              images: editFileList.map((img: any) => {
+                const imagePayload: any = {
+                  imageUrl: img.imageUrl,
+                  status: img.status !== undefined ? img.status : true,
+                };
+
+                // Existing campaign images need imageId. Newly uploaded files should be sent
+                // like AllCampaignDetail.tsx: imageUrl + status only. Sending upload id as
+                // imageId can stop the backend from attaching the new image to the campaign.
+                if (!img.isNew && img.imageId) {
+                  imagePayload.imageId = img.imageId;
+                }
+
+                return imagePayload;
+              }),
             },
           ],
         },
@@ -379,7 +472,8 @@ const BlogsPage: React.FC = () => {
       if (response.data) {
         message.success("Blog updated successfully.");
         setEditModalVisible(false);
-        loadMyBlogs();
+        setEditFileList([]);
+        await Promise.all([loadMyBlogs(), loadAllBlogsAndGames()]);
       } else {
         message.error("Failed to update blog.");
       }
@@ -537,8 +631,8 @@ const BlogsPage: React.FC = () => {
                         size="middle"
                         icon={<EditOutlined />}
                         style={{
-                          background: "#10B981",
-                          borderColor: "#10B981",
+                          background: "#008cba",
+                          borderColor: "#008cba",
                           color: "#fff",
                         }}
                         onClick={(e) => {
@@ -556,7 +650,7 @@ const BlogsPage: React.FC = () => {
                             ? "#10B981"
                             : "#EF4444",
                           borderColor: campaign.campaignStatus
-                            ? "#10B981"
+                            ? "#008cba"
                             : "#EF4444",
                           color: "#fff",
                         }}
@@ -712,12 +806,20 @@ const BlogsPage: React.FC = () => {
           </div>
         }
         open={editModalVisible}
-        onCancel={() => setEditModalVisible(false)}
+        onCancel={() => {
+          setEditModalVisible(false);
+          setEditFileList([]);
+          setImageErrorMessage("");
+        }}
         footer={[
           <Button
             key="cancel"
             size="middle"
-            onClick={() => setEditModalVisible(false)}
+            onClick={() => {
+              setEditModalVisible(false);
+              setEditFileList([]);
+              setImageErrorMessage("");
+            }}
           >
             Cancel
           </Button>,
@@ -770,6 +872,83 @@ const BlogsPage: React.FC = () => {
                 style={{ borderColor: "#1ab394" }}
                 placeholder="Caption for social media sharing..."
               />
+            </div>
+            <div>
+              <label className="bpLabel">Images / Videos</label>
+
+              {editFileList.length > 0 && (
+                <div className="bpEditMediaGrid">
+                  {editFileList
+                    .filter((file: any) => file.status !== false)
+                    .map((file: any, index: number) => {
+                      const mediaUrl = buildMediaUrl(file.imageUrl || "");
+                      const showImage = isImage(mediaUrl);
+                      const showVideo = isVideo(mediaUrl);
+
+                      return (
+                        <div
+                          className="bpEditMediaItem"
+                          key={`${file.imageId || file.imageUrl}-${index}`}
+                        >
+                          {showImage ? (
+                            <img
+                              src={mediaUrl}
+                              alt={`Blog media ${index + 1}`}
+                            />
+                          ) : showVideo ? (
+                            <video src={mediaUrl} controls />
+                          ) : (
+                            <div className="bpEditMediaFallback">File</div>
+                          )}
+                          <button
+                            type="button"
+                            className="bpEditMediaRemove"
+                            onClick={() => handleRemoveEditFile(index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+
+              <label className="bpUploadLabel">
+                <div className="bpUploadButton">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                    />
+                  </svg>
+                  <span>Choose Images/Videos</span>
+                </div>
+                <input
+                  type="file"
+                  onChange={handleUploadChange}
+                  multiple
+                  accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv"
+                  className="hidden"
+                />
+              </label>
+
+              {isUploading && (
+                <div className="bpUploadingText">
+                  <div className="bpUploadingSpinner"></div>
+                  Uploading...
+                </div>
+              )}
+
+              {imageErrorMessage && (
+                <div className="bpImageError">{imageErrorMessage}</div>
+              )}
             </div>
           </div>
         )}
@@ -1011,6 +1190,92 @@ const BlogsPage: React.FC = () => {
           margin-bottom: 5px;
         }
 
+        .bpEditMediaGrid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+        .bpEditMediaItem {
+          position: relative;
+          height: 105px;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          overflow: hidden;
+          background: #f8fafc;
+        }
+        .bpEditMediaItem img,
+        .bpEditMediaItem video {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          display: block;
+        }
+        .bpEditMediaFallback {
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .bpEditMediaRemove {
+          position: absolute;
+          top: 6px;
+          right: 6px;
+          width: 24px;
+          height: 24px;
+          border: none;
+          border-radius: 999px;
+          background: #ef4444;
+          color: #fff;
+          font-size: 18px;
+          line-height: 20px;
+          cursor: pointer;
+        }
+        .bpUploadLabel { display: inline-block; }
+        .bpUploadButton {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 9px 14px;
+          background: #2563eb;
+          color: #fff;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: background 0.2s ease;
+          font-size: 13px;
+          font-weight: 700;
+        }
+        .bpUploadButton:hover { background: #1d4ed8; }
+        .bpUploadButton svg { width: 18px; height: 18px; }
+        .hidden { display: none; }
+        .bpUploadingText {
+          display: flex;
+          align-items: center;
+          margin-top: 8px;
+          font-size: 13px;
+          color: #4b5563;
+        }
+        .bpUploadingSpinner {
+          width: 16px;
+          height: 16px;
+          margin-right: 8px;
+          border: 2px solid #e5e7eb;
+          border-top-color: #2563eb;
+          border-radius: 999px;
+          animation: bpSpin 0.8s linear infinite;
+        }
+        .bpImageError {
+          margin-top: 8px;
+          color: #dc2626;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        @keyframes bpSpin { to { transform: rotate(360deg); } }
+
+
         /* Tablet: 2 cols */
         @media (max-width: 1024px) {
           .bpCardsGrid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -1018,6 +1283,7 @@ const BlogsPage: React.FC = () => {
 
         /* Mobile: 1 col */
         @media (max-width: 640px) {
+          .bpEditMediaGrid { grid-template-columns: repeat(2, 1fr); }
           .bpHeaderRow { flex-direction: column; align-items: flex-start; padding: 10px 0 8px; }
           .bpHeaderRow .ant-btn { width: 100%; justify-content: center; }
           .bpTabsRow { gap: 6px; }

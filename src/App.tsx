@@ -602,6 +602,7 @@ const App: React.FC = () => {
       "/los",
       "/fms",
       "/cms",
+      "/radhai",
       "/aiblockchainanditservices",
       "/caandcaservices",
       "/goldandsilveranddiamonds",
