@@ -2311,7 +2311,7 @@ const MyOrders: React.FC = () => {
                   <div className="flex justify-between items-start mb-3 sm:mb-4">
                     <div>
                       <h3 className="text-base sm:text-lg font-semibold text-purple-900">
-                        #{order.newOrderId || order.orderId.slice(-4)}
+                        {order.newOrderId || order.orderId.slice(-4)}
                       </h3>
                       <p className="text-xs sm:text-sm text-gray-600">
                         {formatDate(order.orderDate)}

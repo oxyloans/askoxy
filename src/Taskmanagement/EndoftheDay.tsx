@@ -127,12 +127,10 @@ const TaskUpdate: React.FC = () => {
   >("idle");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [form] = Form.useForm<TaskFormValues>();
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [tasksCollapsed, setTasksCollapsed] = useState<boolean>(false);
 
   const handleTaskItemClick = (task: Task) => {
     selectTask(task);
-    setExpandedTaskId((prev) => (prev === task.id ? null : task.id));
   };
 
   const fetchAllPendingTasks = useCallback(
@@ -146,10 +144,21 @@ const TaskUpdate: React.FC = () => {
             userId: userIdValue,
           },
         );
-
         setTasks(response.data);
 
-        if (response.data && response.data.length > 0) {
+        // Prefer selecting a pending task from the current month and year
+        const now = dayjs();
+        const currentMonthPending = response.data.filter((t: Task) => {
+          if (!t.planCreatedAt) return false;
+          return (
+            t.taskStatus === "PENDING" &&
+            dayjs(t.planCreatedAt).isSame(now, "month")
+          );
+        });
+
+        if (currentMonthPending && currentMonthPending.length > 0) {
+          selectTask(currentMonthPending[0]);
+        } else if (response.data && response.data.length > 0) {
           selectTask(response.data[0]);
         } else {
           setSelectedTask(null);
@@ -571,6 +580,15 @@ const TaskUpdate: React.FC = () => {
     return "Unknown Date";
   };
 
+  // Filter tasks to only those pending in the current month and year
+  const currentMonthPendingTasks = tasks.filter((t) => {
+    if (!t.planCreatedAt) return false;
+    return (
+      t.taskStatus === "PENDING" &&
+      dayjs(t.planCreatedAt).isSame(dayjs(), "month")
+    );
+  });
+
   return (
     <UserPanelLayout>
       <div className="max-w-6xl mx-auto px-2 sm:px-4 lg:px-6">
@@ -583,7 +601,8 @@ const TaskUpdate: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">
-                  {tasks.length} pending task{tasks.length === 1 ? "" : "s"}
+                  {currentMonthPendingTasks.length} pending task
+                  {currentMonthPendingTasks.length === 1 ? "" : "s"}
                 </span>
                 <Button
                   type="text"
@@ -612,11 +631,11 @@ const TaskUpdate: React.FC = () => {
             <div className="flex justify-center items-center py-8 sm:py-12">
               <Spin size="large" tip="Loading your tasks..." />
             </div>
-          ) : tasks.length > 0 ? (
+          ) : currentMonthPendingTasks.length > 0 ? (
             !tasksCollapsed ? (
               <List
                 itemLayout="vertical"
-                dataSource={tasks}
+                dataSource={currentMonthPendingTasks}
                 renderItem={(task) => {
                   const taskDate = getTaskDate(task);
 
@@ -663,36 +682,19 @@ const TaskUpdate: React.FC = () => {
                             >
                               {task.taskStatus}
                             </Tag>
-                            <Button
-                              type="text"
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleTaskItemClick(task);
-                              }}
-                              icon={
-                                expandedTaskId === task.id ? (
-                                  <UpOutlined style={{ color: "#008CBA" }} />
-                                ) : (
-                                  <DownOutlined style={{ color: "#008CBA" }} />
-                                )
-                              }
-                            />
                           </div>
                         </div>
-                        {expandedTaskId === task.id && (
-                          <div className="px-2 py-3 border-t border-gray-200 mt-1">
-                            <Paragraph
-                              className="text-gray-700 mb-0"
-                              style={{
-                                wordBreak: "break-word",
-                                paddingLeft: "6px",
-                              }}
-                            >
-                              {task.planOftheDay}
-                            </Paragraph>
-                          </div>
-                        )}
+                        <div className="px-2 py-3 border-t border-gray-200 mt-1">
+                          <Paragraph
+                            className="text-gray-700 mb-0"
+                            style={{
+                              wordBreak: "break-word",
+                              paddingLeft: "6px",
+                            }}
+                          >
+                            {task.planOftheDay}
+                          </Paragraph>
+                        </div>
                       </div>
                     </List.Item>
                   );

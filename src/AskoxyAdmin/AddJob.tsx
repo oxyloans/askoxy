@@ -165,7 +165,7 @@ const AddJob: React.FC = () => {
       const response = await axios.post(
         "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
         uploadFormData,
-        { headers: { "Content-Type": "multipart/form-data" } },
+        { headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${localStorage.getItem("accessToken")}` } },
       );
       if (response.data.uploadStatus === "UPLOADED") {
         setLogoUrl(response.data.documentPath);

@@ -62,19 +62,18 @@ const BlogsPage: React.FC = () => {
         ...c,
         campaignId: c.campaignId || c.id || "",
         id: c.id || c.campaignId || "",
-        imageUrls: Array.isArray(c.imageUrls)
+        imageUrls: Array.isArray(c.imageUrls) && c.imageUrls.length > 0
           ? c.imageUrls
-          : c.imageUrl
-            ? [{ imageUrl: c.imageUrl, status: true }]
-            : [],
+          : Array.isArray(c.images) && c.images.length > 0
+            ? c.images
+            : c.imageUrl
+              ? [{ imageUrl: c.imageUrl, status: true }]
+              : [],
         __originalIndex: index,
       }));
       const sorted = normalized
         .filter((c: any) => c.campainInputType === "BLOG")
-        .sort(
-          (a: any, b: any) =>
-            (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0),
-        );
+        .sort(sortNewestFirst);
       setMyBlogs(sorted as Campaign[]);
     } catch (err) {
       console.error("Error loading my blogs:", err);
@@ -260,21 +259,21 @@ const BlogsPage: React.FC = () => {
       (c: any) => c.campaignStatus === true && c.campainInputType === "BLOG",
     );
 
-    // Sort by most recent date first (same logic as AllCampaignDetail.tsx)
-    const sortedCampaigns = filteredCampaigns.sort((a: any, b: any) => {
-      const dateA = Number(a.createdAt) || 0;
-      const dateB = Number(b.createdAt) || 0;
-      return dateB - dateA; // Most recent first
-    });
-
-    return sortedCampaigns;
+    return sortNewestFirst(filteredCampaigns);
   }, [campaigns]);
 
   const gamesCampaigns = useMemo(() => {
-    const filtered = (games as any[]).filter(
-      (c: any) => c.campaignStatus === true,
-    );
-    return sortNewestFirst(filtered);
+    return (games as any[])
+      .filter((c: any) => c.campaignStatus === true)
+      .slice()
+      .sort((a: any, b: any) => {
+        const tA = parseDateValue(a?.createdAt);
+        const tB = parseDateValue(b?.createdAt);
+        if (tB !== tA) return tB - tA;
+        const iA = typeof a?.__originalIndex === "number" ? a.__originalIndex : 999999;
+        const iB = typeof b?.__originalIndex === "number" ? b.__originalIndex : 999999;
+        return iA - iB;
+      });
   }, [games]);
 
   // myBlogs is now from its own API call (state), not filtered from all campaigns
@@ -374,6 +373,8 @@ const BlogsPage: React.FC = () => {
     setEditCampaign(campaign);
     setEditDesc(campaign.campaignDescription || "");
     setEditCaption(campaign.socialMediaCaption || "");
+    // existing images tracked in editFileList with isNew:false
+    // newly uploaded files will be pushed in as isNew:true
     setEditFileList(
       existingImages.map((img: any) => ({
         imageId: img.imageId || img.id || "",
@@ -387,7 +388,15 @@ const BlogsPage: React.FC = () => {
   };
 
   const handleRemoveEditFile = (index: number) => {
-    setEditFileList((prev) => prev.filter((_, i) => i !== index));
+    setEditFileList((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? item.isNew
+            ? null  // new uploads: fully remove
+            : { ...item, status: false }  // existing: set status false so backend removes
+          : item
+      ).filter(Boolean)
+    );
   };
 
   const handleUploadChange = async (
@@ -408,7 +417,7 @@ const BlogsPage: React.FC = () => {
         const response = await axios.post(
           "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
           uploadFormData,
-          { headers: { "Content-Type": "multipart/form-data" } },
+          { headers: { "Content-Type": "multipart/form-data" ,Authorization: `Bearer ${localStorage.getItem("accessToken")}` } },
         );
 
         if (response.data?.uploadStatus === "UPLOADED") {
@@ -437,7 +446,24 @@ const BlogsPage: React.FC = () => {
   const handleEditSubmit = async () => {
     if (!editCampaign) return;
     setEditSubmitting(true);
+    setImageErrorMessage("");
     try {
+      // existing images: send ALL including status:false so backend removes deleted ones
+      const existingImages = editFileList
+        .filter((img: any) => !img.isNew)
+        .map((img: any) => ({
+          imageId: img.imageId,
+          imageUrl: img.imageUrl,
+          status: img.status !== undefined ? img.status : true,
+        }));
+      // new uploads: only active ones, no imageId
+      const newImages = editFileList
+        .filter((img: any) => img.isNew)
+        .map((img: any) => ({
+          imageUrl: img.imageUrl,
+          status: true,
+        }));
+
       const response = await axiosInstance.patch(
         `${BASE_URL}/marketing-service/campgin/addCampaignTypes`,
         {
@@ -450,21 +476,7 @@ const BlogsPage: React.FC = () => {
               campainInputType: editCampaign.campainInputType,
               socialMediaCaption: editCaption,
               createdPersonId: userId,
-              images: editFileList.map((img: any) => {
-                const imagePayload: any = {
-                  imageUrl: img.imageUrl,
-                  status: img.status !== undefined ? img.status : true,
-                };
-
-                // Existing campaign images need imageId. Newly uploaded files should be sent
-                // like AllCampaignDetail.tsx: imageUrl + status only. Sending upload id as
-                // imageId can stop the backend from attaching the new image to the campaign.
-                if (!img.isNew && img.imageId) {
-                  imagePayload.imageId = img.imageId;
-                }
-
-                return imagePayload;
-              }),
+              images: [...existingImages, ...newImages],
             },
           ],
         },
@@ -473,7 +485,10 @@ const BlogsPage: React.FC = () => {
         message.success("Blog updated successfully.");
         setEditModalVisible(false);
         setEditFileList([]);
-        await Promise.all([loadMyBlogs(), loadAllBlogsAndGames()]);
+        // loadAllBlogsAndGames first so fetchCampaigns returns updated imageUrls array,
+        // then loadMyBlogs so My Blogs tab also reflects the new image
+        await loadAllBlogsAndGames();
+        await loadMyBlogs();
       } else {
         message.error("Failed to update blog.");
       }
@@ -879,7 +894,7 @@ const BlogsPage: React.FC = () => {
               {editFileList.length > 0 && (
                 <div className="bpEditMediaGrid">
                   {editFileList
-                    .filter((file: any) => file.status !== false)
+                    .filter((file: any) => file.status !== false && file !== null)
                     .map((file: any, index: number) => {
                       const mediaUrl = buildMediaUrl(file.imageUrl || "");
                       const showImage = isImage(mediaUrl);
@@ -1164,11 +1179,12 @@ const BlogsPage: React.FC = () => {
   gap: 8px;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .bpCardActions .ant-btn {
-  flex: 1;
+  flex: 1 1 120px;
+  min-width: 120px;
   height: 40px;
   border-radius: 8px;
   font-weight: 600;
@@ -1293,6 +1309,7 @@ const BlogsPage: React.FC = () => {
           .bpCardTitle { font-size: 13px; }
           .bpCardDesc { font-size: 11px; }
           .bpCardBody { padding: 12px 14px 14px; }
+          .bpCardActions .ant-btn { min-width: 100%; }
         }
         @media (max-width: 420px) {
           .bpCardsGrid { grid-template-columns: 1fr; }

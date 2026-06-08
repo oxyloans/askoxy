@@ -686,25 +686,7 @@ const EmployeeProfilePage: React.FC = () => {
                         message: "Please select at least one employee role.",
                       },
                     ]}
-                    extra={
-                      !isEditMode && (selectedRoles?.length ?? 0) > 0 ? (
-                        <div style={{ marginTop: 8 }}>
-                          {selectedRoles!.map((role) => (
-                            <Tag
-                              key={role}
-                              color={PRIMARY}
-                              style={{ marginBottom: 4, marginRight: 4 }}
-                            >
-                              {role}
-                            </Tag>
-                          ))}
-                        </div>
-                      ) : (
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          Select one or more roles that match your work.
-                        </Text>
-                      )
-                    }
+                   
                   >
                     <Select
                       mode="multiple"

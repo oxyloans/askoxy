@@ -206,6 +206,7 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
 
               {/* Card body */}
               <div
+                className="uae-card-body"
                 style={{
                   padding: "1.25rem 1.25rem 1rem",
                   display: "flex",
@@ -216,6 +217,7 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
               >
                 {/* Logo */}
                 <div
+                  className="uae-logo-box"
                   style={{
                     width: 70,
                     height: 60,
@@ -284,6 +286,7 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
                     </span>
                   </div>
                   <div
+                    className="uae-bank-name"
                     style={{
                       fontSize: "clamp(13px,2vw,15px)",
                       fontWeight: 700,
@@ -294,14 +297,15 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
                   >
                     {bank.name}
                   </div>
-                  <div style={{ fontSize: 12, color: "#666", lineHeight: 1.5, marginBottom: 10 }}>
+                  <div className="uae-bank-desc" style={{ fontSize: 12, color: "#666", lineHeight: 1.5, marginBottom: 10 }}>
                     {bank.desc}
                   </div>
 
                   {/* AI Use Cases & Maturity Score FABs */}
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+                  <div className="uae-fabs-row" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
                     {/* AI Use Cases */}
                     <div
+                      className="uae-fab"
                       style={{
                         display: "inline-flex",
                         flexDirection: "column",
@@ -313,15 +317,16 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
                         minWidth: 90,
                       }}
                     >
-                      <span style={{ fontSize: 22, fontWeight: 800, color: bank.color, lineHeight: 1 }}>
+                      <span className="uae-fab-num" style={{ fontSize: 22, fontWeight: 800, color: bank.color, lineHeight: 1 }}>
                         {bank.useCases}
                       </span>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: bank.color, opacity: 0.8, marginTop: 3, letterSpacing: 0.3, textTransform: "uppercase" }}>
+                      <span className="uae-fab-label" style={{ fontSize: 10, fontWeight: 600, color: bank.color, opacity: 0.8, marginTop: 3, letterSpacing: 0.3, textTransform: "uppercase" }}>
                         AI Use Cases
                       </span>
                     </div>
                     {/* Maturity Score */}
                     <div
+                      className="uae-fab"
                       style={{
                         display: "inline-flex",
                         flexDirection: "column",
@@ -333,11 +338,11 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
                         minWidth: 90,
                       }}
                     >
-                      <span style={{ fontSize: 22, fontWeight: 800, color: "#c47d00", lineHeight: 1 }}>
+                      <span className="uae-fab-num" style={{ fontSize: 22, fontWeight: 800, color: "#c47d00", lineHeight: 1 }}>
                         {bank.maturityScore}
                         <span style={{ fontSize: 13, fontWeight: 600, color: "#c47d00" }}>/5</span>
                       </span>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: "#c47d00", opacity: 0.85, marginTop: 3, letterSpacing: 0.3, textTransform: "uppercase" }}>
+                      <span className="uae-fab-label" style={{ fontSize: 10, fontWeight: 600, color: "#c47d00", opacity: 0.85, marginTop: 3, letterSpacing: 0.3, textTransform: "uppercase" }}>
                         ★ AI Maturity Score
                       </span>
                     </div>
@@ -347,6 +352,7 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
 
               {/* Footer */}
               <div
+                className="uae-card-footer"
                 style={{
                   borderTop: "1px solid #f0f0e8",
                   padding: "10px 1.25rem",
@@ -387,6 +393,45 @@ const UAEBanksAIIntelligenceHub: React.FC = () => {
         </div>
 
         {/* Footer note */}
+        <style>{`
+          @media (max-width: 480px) {
+            .uae-card-body {
+              padding: 0.85rem 0.85rem 0.75rem !important;
+              gap: 10px !important;
+            }
+            .uae-logo-box {
+              width: 52px !important;
+              height: 46px !important;
+            }
+            .uae-bank-name {
+              font-size: 13px !important;
+            }
+            .uae-bank-desc {
+              font-size: 11px !important;
+              margin-bottom: 8px !important;
+            }
+            .uae-fabs-row {
+              display: grid !important;
+              grid-template-columns: 1fr 1fr !important;
+              gap: 8px !important;
+              width: 100% !important;
+            }
+            .uae-fab {
+              min-width: unset !important;
+              width: 100% !important;
+              padding: 7px 6px !important;
+            }
+            .uae-fab-num {
+              font-size: 18px !important;
+            }
+            .uae-fab-label {
+              font-size: 9px !important;
+            }
+            .uae-card-footer {
+              padding: 8px 0.85rem !important;
+            }
+          }
+        `}</style>
         <div
           style={{
             marginTop: "2.5rem",

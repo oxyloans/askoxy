@@ -322,7 +322,7 @@ const handleSignOut = (): void => {
         className="bg-gray-800 shadow-md"
         style={siderStyles}
       >
-        {/* Close Button for Mobile */}
+        {/* Close Button for Mobile
         {isMobile && !collapsed && (
           <button
             onClick={toggleCollapse}
@@ -331,7 +331,7 @@ const handleSignOut = (): void => {
           >
             &times;
           </button>
-        )}
+        )} */}
 
         <div className="mt-2 py-2 border-b border-gray-700">
           <Row justify="center" align="middle">

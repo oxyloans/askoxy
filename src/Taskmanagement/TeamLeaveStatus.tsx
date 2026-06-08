@@ -1,7 +1,5 @@
-
 import React, { useEffect, useState } from "react";
 import {
-  
   Table,
   Tag,
   Spin,
@@ -9,6 +7,8 @@ import {
   Empty,
   Tooltip,
   Typography,
+  Select,
+  Button,
 } from "antd";
 import { employeeApi } from "../utils/axiosInstances";
 import dayjs from "dayjs";
@@ -35,6 +35,7 @@ const LeaveStatus: React.FC = () => {
   const [leaveData, setLeaveData] = useState<LeaveData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const userId = sessionStorage.getItem("userId");
 
   useEffect(() => {
@@ -42,7 +43,7 @@ const LeaveStatus: React.FC = () => {
       try {
         if (!userId) throw new Error("User ID not found.");
         const response = await employeeApi.get<LeaveData[]>(
-          `${BASE_URL}/user-service/write/leaves/${userId}`
+          `${BASE_URL}/user-service/write/leaves/${userId}`,
         );
         setLeaveData(response.data.reverse());
       } catch (err) {
@@ -68,6 +69,18 @@ const LeaveStatus: React.FC = () => {
         return <Tag color="default">{status}</Tag>;
     }
   };
+
+  const filterOptions = [
+    { label: "ALL", value: "ALL" },
+    { label: "APPROVED", value: "APPROVED" },
+    { label: "PENDING", value: "PENDING" },
+    { label: "REJECTED", value: "REJECTED" },
+  ];
+
+  const filteredLeaveData =
+    filterStatus === "ALL"
+      ? leaveData
+      : leaveData.filter((item) => item.adminStatus === filterStatus);
 
   const columns = [
     {
@@ -167,10 +180,29 @@ const LeaveStatus: React.FC = () => {
   return (
     <UserPanelLayout>
       <div className="min-h-screen  py-6">
-        <div
-          className="shadow-sm rounded-md p-4"
-        >
-          <h2 className="text-start text-xl font-semibold">My Leave Status</h2>
+        <div className="shadow-sm rounded-md p-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <h2 className="text-start text-xl font-semibold">
+              My Leave Status
+            </h2>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Select
+                value={filterStatus}
+                options={filterOptions}
+                onChange={(value) => setFilterStatus(value as string)}
+                style={{ minWidth: 160 }}
+              />
+              <Button
+                type="primary"
+                style={{backgroundColor: "#008cba", borderColor: "#008cba" ,color:"white"}}
+                onClick={() => {
+                  window.location.href = "/leaveapproval";
+                }}
+              >
+                Apply for Leave
+              </Button>
+            </div>
+          </div>
           {loading ? (
             <div className="flex justify-center py-8">
               <Spin tip="Loading leave status..." />
@@ -182,7 +214,7 @@ const LeaveStatus: React.FC = () => {
           ) : (
             <div className="overflow-x-auto pt-4">
               <Table
-                dataSource={leaveData}
+                dataSource={filteredLeaveData}
                 columns={columns}
                 rowKey="id"
                 pagination={{ pageSize: 5 }}
@@ -227,13 +259,13 @@ const LeaveStatus: React.FC = () => {
 //   .ant-card {
 //     margin: 10px;
 //   }
-  
+
 //   .ant-table-thead > tr > th,
 //   .ant-table-tbody > tr > td {
 //     padding: 8px;
 //     font-size: 12px;
 //   }
-  
+
 //   .ant-card-title {
 //     font-size: 16px;
 //   }

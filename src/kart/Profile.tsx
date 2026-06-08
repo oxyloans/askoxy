@@ -9,6 +9,7 @@ import {
   FaMapMarkerAlt,
   FaTrash,
   FaPen,
+  FaEdit,
 } from "react-icons/fa";
 import { Loader2, AlertCircle, X, CheckCircle2 } from "lucide-react";
 import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
@@ -1042,30 +1043,40 @@ const ProfilePage = () => {
                                 <div className="flex items-center gap-2 shrink-0">
                                   <button
                                     onClick={() => handleEditAddress(address)}
-                                    className="text-gray-400 hover:text-purple-600 transition-colors"
+                                    className="flex items-center gap-1 text-gray-400 hover:text-purple-600 transition-colors"
                                     title="Edit"
                                   >
-                                    <FaPen size={13} />
+                                    <FaEdit size={15} />
+                                    <span>Edit</span>
                                   </button>
                                   {/* <button
                                     onClick={() => handleDeleteAddress(address.id!)}
                                     className="text-gray-400 hover:text-red-500 transition-colors"
                                     title="Delete"
                                   >
-                                    <FaTrash size={13} />
+                                    <FaTrash size={15} />
                                   </button> */}
                                 </div>
                               </div>
 
-                              <h3 className="mt-2 font-medium text-gray-900 truncate" title={address.flatNo}>
+                              <h3
+                                className="mt-2 font-medium text-gray-900 truncate"
+                                title={address.flatNo}
+                              >
                                 {address.flatNo}
                               </h3>
 
-                              <p className="mt-1 text-sm text-gray-500 truncate" title={address.landmark}>
+                              <p
+                                className="mt-1 text-sm text-gray-500 truncate"
+                                title={address.landmark}
+                              >
                                 {address.landmark}
                               </p>
 
-                              <p className="mt-1 text-sm text-gray-500 line-clamp-2 break-words" title={address.address}>
+                              <p
+                                className="mt-1 text-sm text-gray-500 line-clamp-2 break-words"
+                                title={address.address}
+                              >
                                 {address.address}
                               </p>
 
