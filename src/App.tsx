@@ -382,6 +382,9 @@ const CreateAssistant = lazy(
 const AssistantDashboard = lazy(
   () => import("./AskoxyAdmin/Assistants/Dashboard"),
 );
+const VectorStorePage = lazy(
+  () => import("./AskoxyAdmin/Assistants/VectorStorePage"),
+);
 const AssistantOverview = lazy(
   () => import("./AskoxyAdmin/Assistants/AssistantOverview"),
 );
@@ -1654,6 +1657,7 @@ const App: React.FC = () => {
                   element={<AssistantOverview />}
                 />
                 <Route path="createassistant" element={<CreateAssistant />} />
+                <Route path="vectorstore" element={<VectorStorePage />} />
                 <Route
                   path="partners-dashboard"
                   element={<Partnersdasboard />}
