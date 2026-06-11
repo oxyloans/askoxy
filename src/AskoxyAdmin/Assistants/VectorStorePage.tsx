@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -23,9 +23,20 @@ import {
   
 } from "@ant-design/icons";
 import { GrRefresh } from "react-icons/gr";
+import { AxiosError } from "axios";
 import { adminApi as axiosInstance } from "../../utils/axiosInstances";
 import BASE_URL from "../../Config";
 const BASE = `${BASE_URL}/ai-automation/vector-store`;
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  const err = error as AxiosError<{ message?: string; error?: string }>;
+  const status = err.response?.status;
+  const data = err.response?.data;
+  const msg = data?.message || data?.error;
+  if (msg) return status ? `[${status}] ${msg}` : msg;
+  if (status) return `[${status}] ${fallback}`;
+  return `Network error — ${fallback}`;
+};
 
 interface VectorStore {
   id: string;
@@ -68,8 +79,8 @@ const VectorStorePage: React.FC = () => {
       const { data: json } = await axiosInstance.get(`${BASE}/${id}`);
       if (json.success) { setFilteredStores([json.data]); setStorePage(1); }
       else { message.error(json.message || "Vector Store not found."); setFilteredStores([]); }
-    } catch {
-      message.error("Network error.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to search store."));
     } finally {
       setSearchLoading(false);
     }
@@ -96,27 +107,27 @@ const VectorStorePage: React.FC = () => {
       const { data: json } = await axiosInstance.get(`${BASE}/${viewTarget.id}/files/search`, { params: { name } });
       if (json.success) { setFilteredFiles([json.data]); setFilePage(1); }
       else { message.error(json.message || "File not found."); setFilteredFiles([]); }
-    } catch {
-      message.error("Network error.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to search file."));
     } finally {
       setFileSearchLoading(false);
     }
   };
 
-  const fetchAllStores = useCallback(async () => {
+  const fetchAllStores = async () => {
     setLoadingStores(true);
     try {
       const { data: json } = await axiosInstance.get(`${BASE}/getAllVectorStore`);
-      if (json.success) setStores(json.data);
+      if (json.success) setStores(json.data ?? []);
       else message.error(json.message || "Failed to fetch stores.");
-    } catch {
-      message.error("Network error while fetching stores.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to fetch stores."));
     } finally {
       setLoadingStores(false);
     }
-  }, []);
+  };
 
-  useEffect(() => { fetchAllStores(); }, [fetchAllStores]);
+  useEffect(() => { fetchAllStores(); }, []);
 
   const handleCreate = async (values: { name: string }) => {
     setCreating(true);
@@ -125,16 +136,17 @@ const VectorStorePage: React.FC = () => {
       if (json.success) {
         message.success(`Vector Store "${json.data.name}" created successfully!`);
         createForm.resetFields();
+        setCreating(false);
         setCreateModal(false);
         setFilteredStores(null);
         setSearchId("");
         await fetchAllStores();
       } else {
         message.error(json.message || "Failed to create store.");
+        setCreating(false);
       }
-    } catch {
-      message.error("Network error. Please try again.");
-    } finally {
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to create store."));
       setCreating(false);
     }
   };
@@ -158,8 +170,8 @@ const VectorStorePage: React.FC = () => {
       } else {
         message.error(json.message || "Upload failed.");
       }
-    } catch {
-      message.error("Upload error. Please try again.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Upload failed."));
     } finally {
       setUploading(false);
     }
@@ -188,8 +200,8 @@ const VectorStorePage: React.FC = () => {
           } else {
             message.error(json.message || "Failed to delete store.");
           }
-        } catch {
-          message.error("Network error. Please try again.");
+        } catch (error) {
+          message.error(getErrorMessage(error, "Failed to delete store."));
         } finally {
           setDeleting(null);
         }
@@ -220,8 +232,8 @@ const VectorStorePage: React.FC = () => {
           } else {
             message.error(json.message || "Failed to delete file.");
           }
-        } catch {
-          message.error("Network error. Please try again.");
+        } catch (error) {
+          message.error(getErrorMessage(error, "Failed to delete file."));
         } finally {
           setDeletingFile(null);
         }
@@ -241,8 +253,8 @@ const VectorStorePage: React.FC = () => {
       const { data: json } = await axiosInstance.get(`${BASE}/${store.id}/files`);
       if (json.success) setFiles(json.data);
       else message.error(json.message || "Failed to fetch files.");
-    } catch {
-      message.error("Network error.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to fetch files."));
     } finally {
       setLoadingFiles(false);
     }
@@ -250,7 +262,7 @@ const VectorStorePage: React.FC = () => {
 
   const storeColumns = [
     {
-      title: "#",
+      title: "SNo.",
       key: "index",
       align: "center" as const,
       width: 56,
@@ -341,7 +353,7 @@ const VectorStorePage: React.FC = () => {
 
   const fileColumns = [
     {
-      title: "#",
+      title: "SNo.",
       key: "index",
       align: "center" as const,
      
@@ -397,10 +409,10 @@ const VectorStorePage: React.FC = () => {
               Vector Store Manager
             </h1>
 
-            <p className="text-gray-500 text-sm sm:text-base mt-1 mb-0 max-w-2xl">
+            {/* <p className="text-gray-500 text-sm sm:text-base mt-1 mb-0 max-w-2xl">
               Create and manage your vector stores — upload files and view
               contents
-            </p>
+            </p> */}
           </div>
 
           {/* Actions Section */}
@@ -437,7 +449,7 @@ const VectorStorePage: React.FC = () => {
                 setCreateModal(true);
               }}
             >
-              New Vector Store
+              Create Vector Store
             </Button>
           </div>
         </div>
