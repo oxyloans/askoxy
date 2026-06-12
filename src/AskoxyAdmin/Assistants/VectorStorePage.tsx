@@ -130,6 +130,22 @@ const VectorStorePage: React.FC = () => {
   useEffect(() => { fetchAllStores(); }, []);
 
   const handleCreate = async (values: { name: string }) => {
+
+  const isDuplicate = stores.some(
+    (store) => store.name.trim().toLowerCase() === values.name.trim().toLowerCase()
+  );
+
+  if (isDuplicate) {
+    createForm.setFields([
+      {
+        name: "name",
+        errors: [
+          "A Vector Store with this name already exists. Please choose a different name.",
+        ],
+      },
+    ]);
+    return;
+  }
     setCreating(true);
     try {
       const { data: json } = await axiosInstance.post(`${BASE}/createVectorStore`, { name: values.name.trim() });
@@ -300,12 +316,12 @@ const VectorStorePage: React.FC = () => {
       key: "status",
       align: "center" as const,
       render: (status: string) => (
-        <Tag
-          className="rounded-full font-medium border-0 text-white px-3"
-          style={{ background: status === "ACTIVE" ? "#1ab394" : "#008cba" }}
+        <h3
+       
+          style={{ color: status === "ACTIVE" ? "#1ab394" : "#008cba" }}
         >
           {status}
-        </Tag>
+        </h3  >
       ),
     },
     {

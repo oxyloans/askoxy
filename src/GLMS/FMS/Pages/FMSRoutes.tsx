@@ -572,7 +572,7 @@ const FMSRouteRenderer: React.FC = () => {
               className="lg:col-span-2 hidden lg:block sticky top-[64px]"
               // style={{ height: `calc(100vh - 64px)` }}
             >
-              <div className="relative w-full h-full bg-gray-200 animate-pulse">
+              <div className="relative w-full h-full bg-gray-200">
                 <img
                   src={useCase.image}
                   alt={`${useCase.title} Illustration`}

@@ -673,7 +673,6 @@ const App: React.FC = () => {
       currentPath.startsWith("/leaveapproval") ||
       currentPath.startsWith("/leavestatus") ||
       currentPath.startsWith("/all-statuses") ||
-      
       currentPath.startsWith("/assigned-task") ||
       currentPath.startsWith("/techmahindra/jobs") ||
       currentPath.startsWith("/allcompanies/jobs") ||
@@ -685,16 +684,17 @@ const App: React.FC = () => {
       currentPath.startsWith("/home") ||
       // Admin routes
       currentPath.startsWith("/admin") ||
+      currentPath.startsWith("/glms") ||  
       currentPath.startsWith("/adminRegister") ||
       currentPath.startsWith("/accenture/jobs") ||
       currentPath.startsWith("/accenturestats") ||
       currentPath.startsWith("/accenture-presentation") ||
       currentPath.startsWith("/interview") ||
       currentPath.startsWith("/oxybfsai-landing") ||
-      currentPath.startsWith("/oxybfsai")  ||
+      currentPath.startsWith("/oxybfsai") ||
       currentPath.startsWith("/finvibe-code-builder") ||
       currentPath.startsWith("/insurvibe-code-builder") ||
-      currentPath.startsWith("/radhai-admin/") || 
+      currentPath.startsWith("/radhai-admin/") ||
       currentPath.startsWith("/radha/uae-banks-ai-intelligence") ||
       currentPath.startsWith("/radhai-admin")
     );
