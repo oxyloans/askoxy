@@ -12,6 +12,8 @@ import FreeAiBook from "./FreeAiBook";
 import ScrollToTop from "./ScrollToTop";
 import BMVCoinPromo from "./BMVCoinPromo";
 import Whiteboardtheme from "./whiteboardtheme";
+import RadhAISection from "./radhAIsection";
+
 
 const CurrentLandingPage: React.FC = () => {
   const heroRef = React.useRef<HTMLDivElement | null>(null);
@@ -59,6 +61,9 @@ const CurrentLandingPage: React.FC = () => {
 
           <section>
             <ServicesSlider />
+          </section>
+            <section>
+            <RadhAISection />
           </section>
 
           <section>
