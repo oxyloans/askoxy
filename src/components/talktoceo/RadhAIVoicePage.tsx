@@ -196,7 +196,7 @@ LANGUAGE RULES:
 - Keep the tone friendly, confident, and conversational.`;
 }
 
-const RADHA_CHAT_API = " ";
+const RADHA_CHAT_API = BASE_URL+"/ai-automation/chat";
 
 const callRadhaChatApi = async (message: string): Promise<string> => {
   console.log("Radha Chat API URL:", RADHA_CHAT_API);

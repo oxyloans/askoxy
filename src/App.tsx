@@ -696,7 +696,13 @@ const App: React.FC = () => {
       currentPath.startsWith("/insurvibe-code-builder") ||
       currentPath.startsWith("/radhai-admin/") || 
       currentPath.startsWith("/radha/uae-banks-ai-intelligence") ||
-      currentPath.startsWith("/radhai-admin")
+      currentPath.startsWith("/radhai-admin") || 
+      currentPath.startsWith("/use-case-engine") ||
+      currentPath.startsWith("/live-ai-demo") ||
+      currentPath.startsWith("/radhai") || 
+      currentPath.startsWith("/talktoceo") ||
+      currentPath.startsWith("/radhAI-talk") || 
+      currentPath.startsWith("/radhAI")
     );
   };
 
@@ -707,13 +713,9 @@ const App: React.FC = () => {
 
         <Suspense fallback={<LoadingSpinner />}>
           <div className="App">
-            {(localStorage.getItem("userId") ||
-              localStorage.getItem("admin_acToken") ||
-              localStorage.getItem("partner_Token")) &&
+            {localStorage.getItem("userId") &&
               !isRestrictedRoute() && <FloatingCallButton />}
-            {(localStorage.getItem("userId") ||
-              localStorage.getItem("admin_acToken") ||
-              localStorage.getItem("partner_Token")) &&
+            {localStorage.getItem("userId") &&
               !isRestrictedRoute() && <FloatingGiftOffersButton />}
             <Routes>
               {/* ===================================================== */}
