@@ -119,6 +119,20 @@ const getUserId = (): string | null => {
   }
 };
 
+const createAuthConfig = () => {
+  const token = getAccessToken();
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  };
+  return {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+};
+
 // Configure axios interceptor for token management
 apiClient.interceptors.request.use(
   (config) => {
@@ -336,7 +350,8 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => 
       
       const response = await apiClient.post<CoursesApiResponse>(
         '/student/getCountryBasedData?pageIndex=1&pageSize=100',
-        payload
+        payload,
+        createAuthConfig()
       );
 
       console.log('Courses response:', response.data);

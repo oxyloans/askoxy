@@ -194,14 +194,14 @@ const TestimonialsSection = () => {
             <div className="flex flex-col md:flex-row">
               {/* Left Side - Image */}
               <div className="md:w-2/5 bg-gradient-to-br from-purple-600 to-indigo-700 p-6 md:p-8 flex flex-col justify-center items-center text-white">
-                <div className="relative mb-6">
+                {/* <div className="relative mb-6">
                   <Quote className="absolute -top-4 -left-4 w-8 h-8 text-purple-300 opacity-50" />
                   <img
                     src={testimonials[currentTestimonial].image}
                     alt={testimonials[currentTestimonial].name}
                     className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-white/30 shadow-lg"
                   />
-                </div>
+                </div> */}
                 <h4 className="font-bold text-xl md:text-2xl text-center mb-1">
                   {testimonials[currentTestimonial].name}
                 </h4>

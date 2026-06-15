@@ -170,22 +170,21 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
             <img
               src={Logo}
               alt="AskOxy AI"
-              className="h-10 md:h-12 w-auto object-contain mr-3"
+              className="hidden sm:block h-10 md:h-12 w-auto object-contain mr-3"
             />
-
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full opacity-50 blur"></div>
-              <div className="relative bg-white rounded-full p-2">
-                <Globe className="h-7 w-7 text-purple-700" />
-              </div>
-            </div>
-
-            <div className="ml-3">
-              <span className="text-xl font-bold text-purple-900">
-                Study<span className="text-purple-600">Abroad</span>
-              </span>
-            </div>
           </Link>
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full opacity-50 blur"></div>
+            <div className="relative bg-white rounded-full p-2">
+              <Globe className="h-7 w-7 text-purple-700" />
+            </div>
+          </div>
+
+          <div className="ml-3">
+            <span className="text-xl font-bold text-purple-900">
+              Study<span className="text-purple-600">Abroad</span>
+            </span>
+          </div>
 
           <nav className="hidden md:flex flex-1 justify-center mt-4">
             <ul className="flex space-x-1 lg:space-x-2 bg-gradient-to-r from-purple-50 to-white rounded-full px-2 py-1 shadow-inner">
