@@ -538,11 +538,18 @@ const UniversitiesSection: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.post(
-        "https://meta.oxyloans.com/api/user-service/student/getCountryBasedData",
-        { countryName: "United Kingdom" },
-        { headers: getAuthHeaders() }
-      );
+     const accessToken = localStorage.getItem("accessToken");
+
+     const response = await axios.post(
+       "https://meta.oxyloans.com/api/user-service/student/getCountryBasedData",
+       { countryName: "United Kingdom" },
+       {
+         headers: {
+           Authorization: `Bearer ${accessToken}`,
+           "Content-Type": "application/json",
+         },
+       },
+     );
 
       if (
         response.data &&

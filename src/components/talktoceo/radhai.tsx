@@ -31,12 +31,134 @@ const GOOGLE_FORM_URL =
 
 const RadhAIPage: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, []);
 
-  const handleTalkToCEO = () => navigate("/talktoceo");
+  // After returning from WhatsApp login, auto-redirect to /talktoceo
+  useEffect(() => {
+    const redirectPath = sessionStorage.getItem("redirectPath");
+    if (redirectPath !== "/talktoceo") return;
+
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("token");
+
+    const userId =
+      sessionStorage.getItem("userId") ||
+      localStorage.getItem("userId");
+
+    if (!token || !userId || userId === "guest-user") return;
+
+    sessionStorage.removeItem("redirectPath");
+
+    loadUserProfile().then((userName) => {
+      navigate("/talktoceo", {
+        replace: true,
+        state: {
+          userName:
+            userName ||
+            sessionStorage.getItem("radhName") ||
+            sessionStorage.getItem("userName") ||
+            localStorage.getItem("radhName") ||
+            null,
+        },
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadUserProfile = async (): Promise<string | null> => {
+    try {
+      const token =
+        sessionStorage.getItem("accessToken") ||
+        localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("token") ||
+        localStorage.getItem("token");
+
+      if (!token) return null;
+
+      const response = await fetch("https://meta.oxyloans.com/api/user-service/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+
+      if (data.userId) {
+        sessionStorage.setItem("userId", data.userId);
+        localStorage.setItem("userId", data.userId);
+        if (!sessionStorage.getItem("accessToken") && token) {
+          sessionStorage.setItem("accessToken", token);
+          localStorage.setItem("accessToken", token);
+        }
+      }
+
+      const fullName =
+        data.name ||
+        `${data.firstName || ""} ${data.lastName || ""}`.trim();
+
+      sessionStorage.setItem("mobileNumber", data.mobileNumber || "");
+      sessionStorage.setItem("radhEmail", data.email || "");
+      sessionStorage.setItem("radhFirstName", data.firstName || "");
+      sessionStorage.setItem("radhLastName", data.lastName || "");
+      sessionStorage.setItem("radhName", fullName);
+      sessionStorage.setItem("userName", fullName);
+      sessionStorage.setItem("primaryType", data.primaryType || "");
+      sessionStorage.setItem("radhAIAdminLogin", "false");
+      localStorage.setItem("radhName", fullName);
+      localStorage.setItem("userName", fullName);
+
+      return fullName || null;
+    } catch (e) {
+      console.log("Profile API Error :", e);
+      return null;
+    }
+  };
+
+  const handleTalkToCEO = async () => {
+    setIsLoading(true);
+
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("token");
+
+    const userId =
+      sessionStorage.getItem("userId") ||
+      localStorage.getItem("userId");
+
+    if (!token || !userId || userId === "guest-user") {
+      sessionStorage.setItem("redirectPath", "/talktoceo");
+      setIsLoading(false);
+      navigate("/whatsapplogin");
+      return;
+    }
+
+    const userName = await loadUserProfile();
+
+    setIsLoading(false);
+    navigate("/talktoceo", {
+      state: {
+        userName:
+          userName ||
+          sessionStorage.getItem("radhName") ||
+          sessionStorage.getItem("userName") ||
+          localStorage.getItem("radhName") ||
+          null,
+      },
+    });
+  };
 
   const handleWriteToUs = () => {
     window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
@@ -131,17 +253,17 @@ const RadhAIPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,245,255,0.22),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(132,255,0,0.13),transparent_38%)]" />
-      <div className="absolute inset-0 opacity-[0.07] bg-[linear-gradient(to_right,#00f5ff_1px,transparent_1px),linear-gradient(to_bottom,#00f5ff_1px,transparent_1px)] bg-[size:44px_44px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,245,255,0.22),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(132,255,0,0.13),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.07] bg-[linear-gradient(to_right,#00f5ff_1px,transparent_1px),linear-gradient(to_bottom,#00f5ff_1px,transparent_1px)] bg-[size:44px_44px]" />
 
       <section className="relative z-10 mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-4 pb-14 pt-28 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-10 lg:pt-32">
         <motion.div
           initial={{ opacity: 0, x: -45 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative order-1"
+          className="relative order-1 z-10"
         >
-          <div className="absolute -inset-4 rounded-[36px] bg-gradient-to-r from-cyan-400/30 via-violet-500/30 to-lime-300/30 blur-2xl glow-pulse" />
+          <div className="pointer-events-none absolute -inset-4 rounded-[36px] bg-gradient-to-r from-cyan-400/30 via-violet-500/30 to-lime-300/30 blur-2xl glow-pulse" />
 
           <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden rounded-[30px] border border-cyan-300/25 bg-white/[0.045] p-4 shadow-[0_0_80px_rgba(0,245,255,0.15)] backdrop-blur-xl sm:min-h-[470px] lg:min-h-[560px]">
             <div className="scan-line pointer-events-none absolute left-0 top-0 h-24 w-full bg-gradient-to-b from-transparent via-cyan-300/20 to-transparent" />
@@ -195,7 +317,7 @@ const RadhAIPage: React.FC = () => {
           initial={{ opacity: 0, x: 45 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="order-2 text-center lg:text-left"
+          className="order-2 z-10 text-center lg:text-left"
         >
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
             <Sparkles size={16} />

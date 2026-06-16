@@ -111,6 +111,7 @@ import MashreqAIIntelligenceReport2026 from "./components/MashreqAIIntelligenceR
 import NBFAIIntelligenceReport2026 from "./components/NBFAIIntelligenceReport2026";
 import RAKBANKAIIntelligenceReport2026 from "./components/RAKBANKAIIntelligenceReport2026";
 import UAEBanksAIIntelligenceHub from "./components/UAEBanksAIIntelligenceHub";
+import RadhAIVoicePageCEO from "./components/talktoceo/RadhAIVoicePageLanguage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -673,7 +674,6 @@ const App: React.FC = () => {
       currentPath.startsWith("/leaveapproval") ||
       currentPath.startsWith("/leavestatus") ||
       currentPath.startsWith("/all-statuses") ||
-      
       currentPath.startsWith("/assigned-task") ||
       currentPath.startsWith("/techmahindra/jobs") ||
       currentPath.startsWith("/allcompanies/jobs") ||
@@ -685,23 +685,24 @@ const App: React.FC = () => {
       currentPath.startsWith("/home") ||
       // Admin routes
       currentPath.startsWith("/admin") ||
+      currentPath.startsWith("/glms") ||  
       currentPath.startsWith("/adminRegister") ||
       currentPath.startsWith("/accenture/jobs") ||
       currentPath.startsWith("/accenturestats") ||
       currentPath.startsWith("/accenture-presentation") ||
       currentPath.startsWith("/interview") ||
       currentPath.startsWith("/oxybfsai-landing") ||
-      currentPath.startsWith("/oxybfsai")  ||
+      currentPath.startsWith("/oxybfsai") ||
       currentPath.startsWith("/finvibe-code-builder") ||
       currentPath.startsWith("/insurvibe-code-builder") ||
-      currentPath.startsWith("/radhai-admin/") || 
+      currentPath.startsWith("/radhai-admin/") ||
       currentPath.startsWith("/radha/uae-banks-ai-intelligence") ||
       currentPath.startsWith("/radhai-admin") || 
       currentPath.startsWith("/use-case-engine") ||
       currentPath.startsWith("/live-ai-demo") ||
       currentPath.startsWith("/radhai") || 
       currentPath.startsWith("/talktoceo") ||
-      currentPath.startsWith("/radhAI-talk") || 
+      currentPath.startsWith("/radhai-connect") || 
       currentPath.startsWith("/radhAI")
     );
   };
@@ -792,7 +793,7 @@ const App: React.FC = () => {
                 element={<UAEBanksAIIntelligenceHub />}
               />
               <Route path="/radhAI" element={<RadhAIPage />} />
-              <Route path="/radhAI-talk" element={<RadhAIVoicePage />} />
+              <Route path="/radhai-connect" element={<RadhAIVoicePage />} />
               <Route path="/ceoclonevoice" element={<RadhAICloneAdminPage />} />
 
               <Route
@@ -802,6 +803,7 @@ const App: React.FC = () => {
 
               <Route path="/radhai-RandD" element={<RadhAIRAndDPage />} />
               <Route path="/talktoceo" element={<TalkToCEO />} />
+              <Route path="/radhai-assistant" element={<RadhAIVoicePageCEO />} />
               <Route path="/circleLend" element={<ProxyLendPage />} />
               <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
               <Route path="/mentors" element={<EmployerMentorSection />} />

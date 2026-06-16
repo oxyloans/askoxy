@@ -311,7 +311,16 @@ const ProfilePage = () => {
         `${BASE_URL}/user-service/getAllAdd?customerId=${customerId}`,
       );
 
-      setAddresses([...response.data].reverse());
+      const normalizedAddresses = (response.data || []).map((addr: any) => ({
+        id: addr.id || addr._id || "",
+        flatNo: addr.flatNo || "",
+        landmark: addr.landmark || addr.landMark || "", // Handle both naming conventions
+        address: addr.address || "",
+        pincode: addr.pincode || "",
+        addressType: addr.addressType || "Home",
+      }));
+
+      setAddresses([...normalizedAddresses].reverse());
     } catch (error) {
       setError("Error fetching addresses");
     } finally {
@@ -637,7 +646,13 @@ const ProfilePage = () => {
   };
 
   const handleEditAddress = (address: Address) => {
-    setAddressFormData(address);
+    setAddressFormData({
+      flatNo: address.flatNo || "",
+      landmark: address.landmark || "",
+      address: address.address || "",
+      pincode: address.pincode || "",
+      addressType: address.addressType || "Home",
+    });
     setEditingAddressId(address.id || null);
     setShowAddressForm(true);
     setError("");

@@ -194,7 +194,7 @@ const generateVideoHashtags = (video: VideoItem | null): string => {
     if (words.length >= 6) break;
   }
 
-return Array.from(new Set(words))    .slice(0, 6)
+return Array.from(new Set(words)).slice(0, 6)
     .map(w => `#${w.charAt(0).toUpperCase()}${w.slice(1)}`)
     .join(" ");
 };
@@ -392,6 +392,63 @@ function StatusBadge({ status }: { status?: string }) {
     <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${colors[s] || colors.PENDING}`}>
       {s}
     </span>
+  );
+}
+
+// ─── Pagination Controls ───────────────────────────────────────────────────────
+function PaginationControls({
+  currentPage, totalPages, onPageChange,
+}: { currentPage: number; totalPages: number; onPageChange: (p: number) => void }) {
+  const pages = useMemo(() => {
+    const arr: (number | "...")[] = [];
+    const windowSize = 1;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - windowSize && i <= currentPage + windowSize)) {
+        arr.push(i);
+      } else if (arr[arr.length - 1] !== "...") {
+        arr.push("...");
+      }
+    }
+    return arr;
+  }, [currentPage, totalPages]);
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className="flex h-9 items-center gap-1 rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-bold text-gray-700 disabled:opacity-40 hover:border-blue-300 hover:bg-blue-50"
+      >
+        <ChevronLeft size={14} />Prev
+      </button>
+
+      {pages.map((p, i) =>
+        p === "..." ? (
+          <span key={`ellipsis-${i}`} className="px-2 text-xs font-bold text-slate-400">…</span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onPageChange(p)}
+            className={`flex h-9 min-w-[36px] items-center justify-center rounded-xl border-2 px-3 text-xs font-bold transition
+              ${p === currentPage
+                ? "border-blue-300 bg-gradient-to-r from-blue-600 to-cyan-500 text-white"
+                : "border-slate-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50"}`}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className="flex h-9 items-center gap-1 rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-bold text-gray-700 disabled:opacity-40 hover:border-blue-300 hover:bg-blue-50"
+      >
+        Next<ChevronLeft size={14} className="rotate-180" />
+      </button>
+    </div>
   );
 }
 
@@ -906,7 +963,7 @@ function BlogPreviewCard({
   const [expanded, setExpanded] = useState(false);
 
   return (
-<div className="max-w-[900px] rounded-2xl border-2 border-blue-200 bg-blue-50 p-4 shadow-sm">
+<div className="w-full max-w-[680px] rounded-2xl border-2 border-blue-200 bg-blue-50 p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-black text-gray-900">
           Blog Preview
@@ -1378,6 +1435,10 @@ export default function VideoAIPage() {
   const [searchQ, setSearchQ]         = useState("");
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
 
+  // ─── Pagination state for the All Videos grid ──────────────────────────────
+  const [currentPage, setCurrentPage] = useState(1);
+  const VIDEOS_PER_PAGE = 8;
+
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastCounter = useRef(0);
 
@@ -1559,6 +1620,24 @@ export default function VideoAIPage() {
       (v.audioTranscript || "").toLowerCase().includes(q)
     );
   }, [allVideos, searchQ]);
+
+  // ─── Derived pagination values ─────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filteredVideos.length / VIDEOS_PER_PAGE));
+
+  const paginatedVideos = useMemo(() => {
+    const start = (currentPage - 1) * VIDEOS_PER_PAGE;
+    return filteredVideos.slice(start, start + VIDEOS_PER_PAGE);
+  }, [filteredVideos, currentPage]);
+
+  // Reset to first page whenever the search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQ]);
+
+  // Keep currentPage in range if the list shrinks (e.g. after refresh/search)
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
 
   // FIX 4: VIDEO_ONLY mode → no image URL passed to preview
   const uploadImgUrl = selectedBlogMode === "VIDEO_ONLY"
@@ -1750,9 +1829,8 @@ const uploadVideoSrc = uploadedData
             </div>
 
             {/* Sidebar */}
-            <aside className="space-y-4 xl:sticky xl:top-3 xl:self-start">
-              <div className="rounded-3xl border-2 border-slate-200 bg-white p-3 shadow-md backdrop-blur-xl sm:p-4">
-                <div className="mb-4 flex gap-3">
+<aside className="space-y-4 xl:sticky xl:top-3">
+<div className="rounded-3xl border-2 border-slate-200 bg-white p-3 shadow-md backdrop-blur-xl sm:p-4">                <div className="mb-4 flex gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#B6F269] to-[#5EDDF2] text-black">
                     <Eye size={21} />
                   </div>
@@ -1798,8 +1876,7 @@ const uploadVideoSrc = uploadedData
                     </button>
                   </div>
                 ) : (
-                  <div className="flex min-h-[220px] items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-                    <div>
+<div className="flex min-h-[220px] items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">                    <div>
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-blue-200 bg-blue-50 text-blue-700">
                         <Newspaper size={26} />
                       </div>
@@ -1848,11 +1925,18 @@ const uploadVideoSrc = uploadedData
                     {searchQ && <p className="text-xs mt-1">Try a different search term</p>}
                   </div>
                 ) : (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredVideos.map(v => (
-                      <VideoCard key={v.id} video={v} onClick={() => setSelectedVideo(v)} />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {paginatedVideos.map(v => (
+                        <VideoCard key={v.id} video={v} onClick={() => setSelectedVideo(v)} />
+                      ))}
+                    </div>
+                    <PaginationControls
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  </>
                 )}
               </>
             )}

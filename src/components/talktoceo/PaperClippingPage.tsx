@@ -25,6 +25,8 @@ import {
   Bookmark,
   Globe,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import BASE_URL from "../../Config";
 
@@ -90,7 +92,6 @@ type BlogPayload = {
   socialMediaCaptions?: string;
   addedBy?: string;
   imageUrl?: string | null;
-  imageUrls?: string[];
   videoUrl?: string;
   videoFileUrl?: string | null;
   status?: string;
@@ -384,6 +385,63 @@ const PaperclipListCard = React.memo(function PaperclipListCard({
   );
 });
 
+/* ─── Pagination Controls ─── */
+function PaginationControls({
+  currentPage, totalPages, onPageChange,
+}: { currentPage: number; totalPages: number; onPageChange: (p: number) => void }) {
+  const pages = useMemo(() => {
+    const arr: (number | "...")[] = [];
+    const windowSize = 1;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - windowSize && i <= currentPage + windowSize)) {
+        arr.push(i);
+      } else if (arr[arr.length - 1] !== "...") {
+        arr.push("...");
+      }
+    }
+    return arr;
+  }, [currentPage, totalPages]);
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className="flex h-9 items-center gap-1 rounded-xl border-2 border-violet-200 bg-white px-3 text-xs font-bold text-gray-700 disabled:opacity-40 hover:border-violet-300 hover:bg-violet-50"
+      >
+        <ChevronLeft size={14} />Prev
+      </button>
+
+      {pages.map((p, i) =>
+        p === "..." ? (
+          <span key={`ellipsis-${i}`} className="px-2 text-xs font-bold text-slate-400">…</span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onPageChange(p)}
+            className={`flex h-9 min-w-[36px] items-center justify-center rounded-xl border-2 px-3 text-xs font-bold transition
+              ${p === currentPage
+                ? "border-violet-400 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white"
+                : "border-violet-200 bg-white text-gray-700 hover:border-violet-300 hover:bg-violet-50"}`}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className="flex h-9 items-center gap-1 rounded-xl border-2 border-violet-200 bg-white px-3 text-xs font-bold text-gray-700 disabled:opacity-40 hover:border-violet-300 hover:bg-violet-50"
+      >
+        Next<ChevronRight size={14} />
+      </button>
+    </div>
+  );
+}
+
 export default function PaperClippingPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [paperclips, setPaperclips] = useState<PaperclipData[]>([]);
@@ -411,6 +469,10 @@ export default function PaperClippingPage() {
   const [blogGenerating, setBlogGenerating] = useState(false);
   const [isImageBlog, setIsImageBlog] = useState(false);
   const [activeView, setActiveView] = useState<"upload" | "allclips">("upload");
+
+  // ─── Pagination state for the All Paper Clips grid ─────────────────────────
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAPERCLIPS_PER_PAGE = 8;
 
   useEffect(() => {
     const saved = sessionStorage.getItem("paperclipState");
@@ -458,6 +520,24 @@ export default function PaperClippingPage() {
       return searchable.includes(q);
     });
   }, [paperclips, searchTerm]);
+
+  // ─── Derived pagination values ─────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filteredPaperclips.length / PAPERCLIPS_PER_PAGE));
+
+  const paginatedPaperclips = useMemo(() => {
+    const start = (currentPage - 1) * PAPERCLIPS_PER_PAGE;
+    return filteredPaperclips.slice(start, start + PAPERCLIPS_PER_PAGE);
+  }, [filteredPaperclips, currentPage]);
+
+  // Reset to first page whenever the search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Keep currentPage in range if the list shrinks (e.g. after refresh/search)
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
 
   const TABS: { id: Tab; label: string; count?: number }[] = [
     { id: "paperclip", label: "Paperclip" },
@@ -519,6 +599,7 @@ export default function PaperClippingPage() {
       const data = await fetchJson(PAPERCLIP_ALL_API);
       const list = Array.isArray(data?.data) ? data.data : [];
       setPaperclips(list);
+      setCurrentPage(1);
       toast("success", "All paper clips loaded");
       setTimeout(() => searchInputRef.current?.focus(), 150);
     } catch (error: any) {
@@ -541,6 +622,7 @@ export default function PaperClippingPage() {
       setSearchTerm("");
       setActiveTab("summary");
       setActiveView("upload");
+      setCurrentPage(1);
       if (fileInputRef.current) fileInputRef.current.value = "";
       toast("success", "Refreshed successfully");
     } finally {
@@ -567,6 +649,7 @@ export default function PaperClippingPage() {
     if (!files.length) return toast("warning", "Please choose files");
     const oversized = files.filter((f) => f.size > 200 * 1024 * 1024);
     if (oversized.length > 0) return toast("error", "Each file must be under 200 MB");
+    const uploadedFileNames = files.map((f) => f.name.toLowerCase());
     try {
       setUploading(true);
       setAnalyzingPaperclip(true);
@@ -591,6 +674,38 @@ export default function PaperClippingPage() {
       setFiles([]);
       toast("success", "Paper clipping analyzed successfully");
     } catch (error: any) {
+      const isFetchError =
+        error?.message?.toLowerCase().includes("failed to fetch") ||
+        error?.message?.toLowerCase().includes("networkerror") ||
+        error?.message?.toLowerCase().includes("network error");
+
+      if (isFetchError) {
+        // Analysis likely completed on backend — fetch all clips and auto-navigate
+        try {
+          const allData = await fetchJson(PAPERCLIP_ALL_API);
+          const list: PaperclipData[] = Array.isArray(allData?.data) ? allData.data : [];
+          if (list.length > 0) {
+            setPaperclips(list);
+            // Try to match by uploaded filename
+            const match = list.find((item) =>
+              uploadedFileNames.some((fname) =>
+                safeText(item.fileName).toLowerCase().includes(fname) ||
+                fname.includes(safeText(item.fileName).toLowerCase())
+              )
+            ) || list[0]; // fallback to most recent
+            setFiles([]);
+            setSelected(match);
+            setActiveTab("summary");
+            setBlogPreview(null);
+            setPublishedBlog(null);
+            setImageUrl("");
+            return; // skip error toast — we navigated successfully
+          }
+        } catch (_) {
+          // silently ignore secondary fetch error
+        }
+      }
+
       toast("error", error?.message || "Analyze failed");
     } finally {
       setUploading(false);
@@ -710,7 +825,6 @@ export default function PaperClippingPage() {
         entityId,
         entityType: "PAPERCLIP",
         imageUrl: formatted?.imageUrl || imageUrl || fallback.imageUrl || "",
-        imageUrls: selected.imageUrls || [],
         videoUrl: "",
         videoFileUrl: null,
         socialMediaCaptions: finalCaptions,
@@ -744,12 +858,13 @@ export default function PaperClippingPage() {
     if (!result.isConfirmed) return;
     try {
       setPublishLoading(true);
+      const { imageUrls: _drop, ...cleanPreview } = blogPreview as any;
       const payload: BlogPayload = {
-        ...buildFallbackBlog(selected, blogPreview),
-        ...blogPreview,
+        ...buildFallbackBlog(selected, cleanPreview),
+        ...cleanPreview,
         entityId,
         entityType: "PAPERCLIP",
-        imageUrl: blogPreview.imageUrl || imageUrl || "",
+        imageUrl: cleanPreview.imageUrl || imageUrl || "",
         videoUrl: "",
         videoFileUrl: null,
         status: "PUBLISHED",
@@ -1027,16 +1142,23 @@ export default function PaperClippingPage() {
                     <p className="text-sm text-gray-500">No clips match your search</p>
                   </div>
                 ) : activeView === "allclips" && (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredPaperclips.map((item) => (
-                      <PaperclipListCard
-                        key={safeText(item.paperclipId) || safeText(item.fileName)}
-                        item={item}
-                        isActive={false}
-                        onClick={() => handleSelectPaperclip(item)}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {paginatedPaperclips.map((item) => (
+                        <PaperclipListCard
+                          key={safeText(item.paperclipId) || safeText(item.fileName)}
+                          item={item}
+                          isActive={false}
+                          onClick={() => handleSelectPaperclip(item)}
+                        />
+                      ))}
+                    </div>
+                    <PaginationControls
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  </>
                 )}
               </div>
             )}
@@ -1303,17 +1425,17 @@ export default function PaperClippingPage() {
                           placeholder="Social media captions and hashtags"
                         />
                       </div>
-                      {(blogPreview.imageUrl || (blogPreview.imageUrls?.length ?? 0) > 0) && (
+                      {(blogPreview.imageUrl || (selected?.imageUrls?.length ?? 0) > 0) && (
                         <div>
                           <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-amber-600">Image</label>
-                          {(blogPreview.imageUrls ?? []).length > 1 ? (
+                          {(selected?.imageUrls ?? []).length > 1 ? (
                             <div className="grid grid-cols-2 gap-2 max-w-sm">
-                              <img src={(blogPreview.imageUrls ?? [])[0]} alt="" className="h-40 w-full rounded-xl object-cover border border-gray-200" />
+                              <img src={(selected?.imageUrls ?? [])[0]} alt="" className="h-40 w-full rounded-xl object-cover border border-gray-200" />
                               <div className="relative">
-                                <img src={(blogPreview.imageUrls ?? [])[1]} alt="" className="h-40 w-full rounded-xl object-cover border border-gray-200" />
-                                {(blogPreview.imageUrls ?? []).length > 2 && (
+                                <img src={(selected?.imageUrls ?? [])[1]} alt="" className="h-40 w-full rounded-xl object-cover border border-gray-200" />
+                                {(selected?.imageUrls ?? []).length > 2 && (
                                   <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/60 text-2xl font-black text-white">
-                                    +{(blogPreview.imageUrls ?? []).length - 2}
+                                    +{(selected?.imageUrls ?? []).length - 2}
                                   </div>
                                 )}
                               </div>

@@ -133,13 +133,12 @@ const PlanOfTheDay: React.FC = () => {
     const BYRADHA_USER_ID = "591e704d-e831-491f-807c-9dc04cb1b35c";
     const BYRAMA_USER_ID = "27223f9d-296b-465a-b845-1001ef0d0fc0";
     const checkSubmissionWindow = () => {
-     
       if (storedUserId === BYRADHA_USER_ID) {
         setIsSubmissionWindowOpen(true);
         return;
       }
       if (storedUserId === BYRAMA_USER_ID) {
-         setIsSubmissionWindowOpen(true);
+        setIsSubmissionWindowOpen(true);
         return;
       }
 
@@ -187,7 +186,7 @@ const PlanOfTheDay: React.FC = () => {
         {
           taskStatus: "PENDING",
           userId: userId,
-        }
+        },
       );
       const tasks: Task[] = response.data;
       console.log("tasks", tasks);
@@ -331,7 +330,7 @@ const PlanOfTheDay: React.FC = () => {
 
       const response = await employeeApi.patch<TaskResponse>(
         `${BASE_URL}/user-service/write/userTaskUpdate`,
-        payload
+        payload,
       );
 
       if (response.data.success) {
@@ -384,7 +383,6 @@ const PlanOfTheDay: React.FC = () => {
         confirmButtonText: "OK",
       });
     } finally {
-      
       setLoading(false);
     }
   };
@@ -417,7 +415,7 @@ const PlanOfTheDay: React.FC = () => {
               content: `${planText} - Plan by ${userName}`,
             },
           ],
-        }
+        },
       );
 
       if (response.data.assistant_reply) {
@@ -499,19 +497,21 @@ const PlanOfTheDay: React.FC = () => {
         />
       </Form.Item>
       {/* {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && ( */}
-        <div className="-mt-4 mb-3 flex justify-end">
-          <Button
-            type={isPodListening ? "primary" : "default"}
-            shape="round"
-            size="small"
-            icon={isPodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
-            onClick={togglePodVoice}
-            danger={isPodListening}
-            style={isPodListening ? {} : { borderColor: "#008cba", color: "#008cba" }}
-          >
-            {isPodListening ? "Stop" : "Speak"}
-          </Button>
-        </div>
+      <div className="-mt-4 mb-3 flex justify-end">
+        <Button
+          type={isPodListening ? "primary" : "default"}
+          shape="round"
+          size="small"
+          icon={isPodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+          onClick={togglePodVoice}
+          danger={isPodListening}
+          style={
+            isPodListening ? {} : { borderColor: "#008cba", color: "#008cba" }
+          }
+        >
+          {isPodListening ? "Stop" : "Speak"}
+        </Button>
+      </div>
       {/* )} */}
 
       <Form.Item
@@ -799,7 +799,7 @@ const PlanOfTheDay: React.FC = () => {
               form.resetFields();
               sessionStorage.removeItem("pod_draft");
               setIsEditing(false);
-              setLoading(false); 
+              setLoading(false);
             }}
             className="flex-1 h-8 rounded-md"
           >
@@ -851,7 +851,7 @@ const PlanOfTheDay: React.FC = () => {
         if (changedValues.planOftheDay !== undefined) {
           sessionStorage.setItem("pod_draft", changedValues.planOftheDay || "");
         }
-        form.validateFields(['planOftheDay']).catch(() => {});
+        form.validateFields(["planOftheDay"]).catch(() => {});
       }}
     >
       <Form.Item
@@ -869,10 +869,16 @@ const PlanOfTheDay: React.FC = () => {
           {
             validator: (_, value) => {
               if (!value || value.trim().length === 0) {
-                return Promise.reject(new Error("Please provide your daily plan"));
+                return Promise.reject(
+                  new Error("Please provide your daily plan"),
+                );
               }
               if (value.trim().length < 30) {
-                return Promise.reject(new Error(`Minimum 30 characters required (${value.trim().length}/30)`));
+                return Promise.reject(
+                  new Error(
+                    `Minimum 30 characters required (${value.trim().length}/30)`,
+                  ),
+                );
               }
               return Promise.resolve();
             },
@@ -889,19 +895,21 @@ const PlanOfTheDay: React.FC = () => {
         />
       </Form.Item>
       {/* {userId === "591e704d-e831-491f-807c-9dc04cb1b35c" && ( */}
-        <div className="-mt-4 mb-3 flex justify-end">
-          <Button
-            type={isPodListening ? "primary" : "default"}
-            shape="round"
-            size="small"
-            icon={isPodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
-            onClick={togglePodVoice}
-            danger={isPodListening}
-            style={isPodListening ? {} : { borderColor: "#008cba", color: "#008cba" }}
-          >
-            {isPodListening ? "Stop" : "Speak"}
-          </Button>
-        </div>
+      <div className="-mt-4 mb-3 flex justify-end">
+        <Button
+          type={isPodListening ? "primary" : "default"}
+          shape="round"
+          size="small"
+          icon={isPodListening ? <AudioMutedOutlined /> : <AudioOutlined />}
+          onClick={togglePodVoice}
+          danger={isPodListening}
+          style={
+            isPodListening ? {} : { borderColor: "#008cba", color: "#008cba" }
+          }
+        >
+          {isPodListening ? "Stop" : "Speak"}
+        </Button>
+      </div>
       {/* )} */}
 
       <Form.Item

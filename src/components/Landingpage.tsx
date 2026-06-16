@@ -17,10 +17,10 @@ const Landingpage: React.FC = () => {
         <Header />
       </section>
 
-      <section>
+      <section className="mt-10">
         <HorizontalScrollGallery />
       </section>
-      <section className="mt-0">
+      <section>
         <ServicesSlider />
       </section>
       <section>

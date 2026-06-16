@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { Globe, X, MapPin, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import Logo from "../assets/img/askoxylogonew.png";
 import { useNavigate } from "react-router-dom";
 import SALOGO from "../assets/img/sa.png";
 import { MessageCircle } from "lucide-react";
@@ -8,7 +9,7 @@ import { Sparkles } from "lucide-react";
 
 interface StudyAbroadHeaderProps {
   onNavClick: (
-    id: "home" | "workabroad" | "universities" | "countries" | "testimonials"
+    id: "home" | "workabroad" | "universities" | "countries" | "testimonials",
   ) => void;
   activeLink: string;
   isMainPage?: boolean; // Add prop to determine which logo to show
@@ -68,18 +69,17 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
     console.log("Navigating to /student-home");
   };
 
-const handleNavClick = useCallback(
-  (
-    id: "home" | "workabroad" | "universities" | "countries" | "testimonials"
-  ): void => {
-    requestAnimationFrame(() => {
-      onNavClick(id);      // parent handles scroll + activeLink
-      setIsMenuOpen(false);
-    });
-  },
-  [onNavClick]
-);
-
+  const handleNavClick = useCallback(
+    (
+      id: "home" | "workabroad" | "universities" | "countries" | "testimonials",
+    ): void => {
+      requestAnimationFrame(() => {
+        onNavClick(id); // parent handles scroll + activeLink
+        setIsMenuOpen(false);
+      });
+    },
+    [onNavClick],
+  );
 
   // Simplified click outside handler to prevent re-renders
   useEffect(() => {
@@ -123,9 +123,9 @@ const handleNavClick = useCallback(
         { id: "workabroad", label: "Work Abroad Pathways" }, // new
         { id: "universities", label: "Universities" },
         { id: "countries", label: "Countries" },
-        { id: "testimonials", label: "Success Stories" },
+        // { id: "testimonials", label: "Success Stories" },
       ] as const,
-    []
+    [],
   );
 
   const toggleMenu = useCallback((e: React.MouseEvent) => {
@@ -165,20 +165,26 @@ const handleNavClick = useCallback(
     >
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Left: Logo only - no text */}
+          {/* Left: AskOxy Logo + StudyAbroad */}
           <Link to="/" className="flex items-center cursor-pointer">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full opacity-50 blur"></div>
-              <div className="relative bg-white rounded-full p-2">
-                <Globe className="h-7 w-7 text-purple-700" />
-              </div>
-            </div>
-            <div className="ml-3">
-              <span className="text-xl font-bold text-purple-900">
-                Study<span className="text-purple-600">Abroad</span>
-              </span>
-            </div>
+            <img
+              src={Logo}
+              alt="AskOxy AI"
+              className="hidden sm:block h-10 md:h-12 w-auto object-contain mr-3"
+            />
           </Link>
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full opacity-50 blur"></div>
+            <div className="relative bg-white rounded-full p-2">
+              <Globe className="h-7 w-7 text-purple-700" />
+            </div>
+          </div>
+
+          <div className="ml-3">
+            <span className="text-xl font-bold text-purple-900">
+              Study<span className="text-purple-600">Abroad</span>
+            </span>
+          </div>
 
           <nav className="hidden md:flex flex-1 justify-center mt-4">
             <ul className="flex space-x-1 lg:space-x-2 bg-gradient-to-r from-purple-50 to-white rounded-full px-2 py-1 shadow-inner">

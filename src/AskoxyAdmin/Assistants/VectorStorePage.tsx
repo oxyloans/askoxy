@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -20,12 +20,23 @@ import {
   DeleteOutlined,
   UploadOutlined,
   FolderOpenOutlined,
-  
+  EditOutlined,
 } from "@ant-design/icons";
 import { GrRefresh } from "react-icons/gr";
+import { AxiosError } from "axios";
 import { adminApi as axiosInstance } from "../../utils/axiosInstances";
 import BASE_URL from "../../Config";
 const BASE = `${BASE_URL}/ai-automation/vector-store`;
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  const err = error as AxiosError<{ message?: string; error?: string }>;
+  const status = err.response?.status;
+  const data = err.response?.data;
+  const msg = data?.message || data?.error;
+  if (msg) return status ? `[${status}] ${msg}` : msg;
+  if (status) return `[${status}] ${fallback}`;
+  return `Network error — ${fallback}`;
+};
 
 interface VectorStore {
   id: string;
@@ -38,17 +49,33 @@ interface VectorFile {
   fileName: string;
 }
 
+interface VectorStoreListResponse {
+  success?: boolean;
+  message?: string;
+  data?: VectorStore[];
+  nextCursor?: string | null;
+  hasMore?: boolean;
+}
+
 const btnPrimary = { background: "#008cba", color: "#fff", border: "none" };
 const btnGreen = { background: "#1ab394", color: "#fff", border: "none" };
 
 const VectorStorePage: React.FC = () => {
   const [stores, setStores] = useState<VectorStore[]>([]);
   const [loadingStores, setLoadingStores] = useState(false);
+  const [loadingMoreStores, setLoadingMoreStores] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMoreStores, setHasMoreStores] = useState(false);
   const [storePage, setStorePage] = useState(1);
 
   const [createModal, setCreateModal] = useState(false);
   const [createForm] = Form.useForm();
   const [creating, setCreating] = useState(false);
+
+  const [renameModal, setRenameModal] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<VectorStore | null>(null);
+  const [renameForm] = Form.useForm();
+  const [renaming, setRenaming] = useState(false);
 
   const [uploadModal, setUploadModal] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<VectorStore | null>(null);
@@ -58,24 +85,63 @@ const VectorStorePage: React.FC = () => {
 
   const [searchId, setSearchId] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
-  const [filteredStores, setFilteredStores] = useState<VectorStore[] | null>(null);
+  const [filteredStores, setFilteredStores] = useState<VectorStore[] | null>(
+    null,
+  );
 
-  const handleSearchById = async () => {
-    const id = searchId.trim();
-    if (!id) { setFilteredStores(null); return; }
-    setSearchLoading(true);
-    try {
-      const { data: json } = await axiosInstance.get(`${BASE}/${id}`);
-      if (json.success) { setFilteredStores([json.data]); setStorePage(1); }
-      else { message.error(json.message || "Vector Store not found."); setFilteredStores([]); }
-    } catch {
-      message.error("Network error.");
-    } finally {
-      setSearchLoading(false);
-    }
+ const handleSearchStore = async () => {
+   const search = searchId.trim();
+
+   if (!search) {
+     setFilteredStores(null);
+     return;
+   }
+
+   setSearchLoading(true);
+
+   try {
+     const { data: json } = await axiosInstance.get(
+       `${BASE}/searchVectorStore`,
+       {
+         params: { search },
+       },
+     );
+
+     if (json.success && json.data) {
+       setFilteredStores(Array.isArray(json.data) ? json.data : [json.data]);
+       setStorePage(1);
+     } else {
+       message.error(json.message || "Vector Store not found.");
+       setFilteredStores([]);
+     }
+   } catch (error) {
+     message.error(getErrorMessage(error, "Failed to search store."));
+     setFilteredStores([]);
+   } finally {
+     setSearchLoading(false);
+   }
   };
+useEffect(() => {
+  const search = searchId.trim();
 
-  const handleClearSearch = () => { setSearchId(""); setFilteredStores(null); };
+  if (!search) {
+    setFilteredStores(null);
+    setSearchLoading(false);
+    return;
+  }
+
+  setSearchLoading(true);
+
+  const timer = setTimeout(() => {
+    handleSearchStore();
+  }, 500);
+
+  return () => clearTimeout(timer);
+}, [searchId]);
+  const handleClearSearch = () => {
+    setSearchId("");
+    setFilteredStores(null);
+  };
 
   const [viewModal, setViewModal] = useState(false);
   const [viewTarget, setViewTarget] = useState<VectorStore | null>(null);
@@ -88,54 +154,164 @@ const VectorStorePage: React.FC = () => {
   const [filteredFiles, setFilteredFiles] = useState<VectorFile[] | null>(null);
 
   const handleFileSearch = async () => {
-    const name = fileSearchName.trim();
-    if (!name) { setFilteredFiles(null); return; }
+    const fileName = fileSearchName.trim();
+    if (!fileName) {
+      setFilteredFiles(null);
+      return;
+    }
     if (!viewTarget) return;
     setFileSearchLoading(true);
     try {
-      const { data: json } = await axiosInstance.get(`${BASE}/${viewTarget.id}/files/search`, { params: { name } });
-      if (json.success) { setFilteredFiles([json.data]); setFilePage(1); }
-      else { message.error(json.message || "File not found."); setFilteredFiles([]); }
-    } catch {
-      message.error("Network error.");
+      const { data: json } = await axiosInstance.get(
+        `${BASE}/${viewTarget.id}/files/search`,
+        { params: { fileName } },
+      );
+      if (json.success) {
+        setFilteredFiles([json.data]);
+        setFilePage(1);
+      } else {
+        message.error(json.message || "File not found.");
+        setFilteredFiles([]);
+      }
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to search file."));
     } finally {
       setFileSearchLoading(false);
     }
   };
 
-  const fetchAllStores = useCallback(async () => {
-    setLoadingStores(true);
+  const normalizeStoreListResponse = (json: VectorStoreListResponse) => {
+    return {
+      data: json.data ?? [],
+      nextCursor: json.nextCursor ?? null,
+      hasMore: Boolean(json.hasMore),
+    };
+  };
+
+  const fetchAllStores = async (options?: {
+    after?: string;
+    append?: boolean;
+  }) => {
+    const isLoadMore = Boolean(options?.append);
+
+    if (isLoadMore) setLoadingMoreStores(true);
+    else setLoadingStores(true);
+
     try {
-      const { data: json } = await axiosInstance.get(`${BASE}/getAllVectorStore`);
-      if (json.success) setStores(json.data);
-      else message.error(json.message || "Failed to fetch stores.");
-    } catch {
-      message.error("Network error while fetching stores.");
+      const { data: json } = await axiosInstance.get<VectorStoreListResponse>(
+        `${BASE}/getAllVectorStore`,
+        {
+          params: {
+            limit: 20,
+            ...(options?.after ? { after: options.after } : {}),
+          },
+        },
+      );
+
+      if (json.success === false) {
+        message.error(json.message || "Failed to fetch stores.");
+        return;
+      }
+
+      const result = normalizeStoreListResponse(json);
+
+      setStores((prev) =>
+        options?.append ? [...prev, ...result.data] : result.data,
+      );
+      setNextCursor(result.nextCursor);
+      setHasMoreStores(result.hasMore);
+
+      if (!options?.append) setStorePage(1);
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to fetch stores."));
     } finally {
-      setLoadingStores(false);
+      if (isLoadMore) setLoadingMoreStores(false);
+      else setLoadingStores(false);
     }
+  };
+
+  const refreshStores = async () => {
+    setFilteredStores(null);
+    setSearchId("");
+    await fetchAllStores();
+  };
+
+  const loadMoreStores = async () => {
+    if (!nextCursor || loadingMoreStores) return;
+    await fetchAllStores({ after: nextCursor, append: true });
+  };
+
+  useEffect(() => {
+    fetchAllStores();
   }, []);
 
-  useEffect(() => { fetchAllStores(); }, [fetchAllStores]);
-
   const handleCreate = async (values: { name: string }) => {
+   
     setCreating(true);
     try {
-      const { data: json } = await axiosInstance.post(`${BASE}/createVectorStore`, { name: values.name.trim() });
+      const { data: json } = await axiosInstance.post(
+        `${BASE}/createVectorStore`,
+        { name: values.name.trim() },
+      );
       if (json.success) {
-        message.success(`Vector Store "${json.data.name}" created successfully!`);
+        message.success(
+          `Vector Store "${json.data.name}" created successfully!`,
+        );
         createForm.resetFields();
+        setCreating(false);
         setCreateModal(false);
-        setFilteredStores(null);
-        setSearchId("");
-        await fetchAllStores();
+        await refreshStores();
       } else {
         message.error(json.message || "Failed to create store.");
+        setCreating(false);
       }
-    } catch {
-      message.error("Network error. Please try again.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to create store."));
     } finally {
       setCreating(false);
+    }
+  };
+
+  const openRenameModal = (store: VectorStore) => {
+    setRenameTarget(store);
+    renameForm.setFieldsValue({ name: store.name });
+    setRenameModal(true);
+  };
+
+  const handleRename = async (values: { name: string }) => {
+    if (!renameTarget) return;
+
+    const newName = values.name.trim();
+   
+
+    if (newName === renameTarget.name.trim()) {
+      message.info("No changes found.");
+      return;
+    }
+
+    setRenaming(true);
+    try {
+      const { data: json } = await axiosInstance.patch(
+        `${BASE}/${renameTarget.id}/update-name`,
+        null,
+        { params: { name: newName } },
+      );
+
+      if (json.success) {
+        message.success(
+          json.message || "Vector Store name updated successfully.",
+        );
+        setRenameModal(false);
+        setRenameTarget(null);
+        renameForm.resetFields();
+        await refreshStores();
+      } else {
+        message.error(json.message || "Failed to update store name.");
+      }
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to update store name."));
+    } finally {
+      setRenaming(false);
     }
   };
 
@@ -148,9 +324,13 @@ const VectorStorePage: React.FC = () => {
     const formData = new FormData();
     formData.append("file", uploadFile);
     try {
-      const { data: json } = await axiosInstance.post(`${BASE}/${uploadTarget.id}/files`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data: json } = await axiosInstance.post(
+        `${BASE}/${uploadTarget.id}/files`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
       if (json.success) {
         message.success(`"${json.data.fileName}" uploaded successfully!`);
         setUploadFile(null);
@@ -158,8 +338,8 @@ const VectorStorePage: React.FC = () => {
       } else {
         message.error(json.message || "Upload failed.");
       }
-    } catch {
-      message.error("Upload error. Please try again.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Upload failed."));
     } finally {
       setUploading(false);
     }
@@ -170,8 +350,8 @@ const VectorStorePage: React.FC = () => {
       title: "Delete Vector Store",
       content: (
         <span>
-          Are you sure you want to delete{" "}
-          <strong>{store.name}</strong>? This action cannot be undone.
+          Are you sure you want to delete <strong>{store.name}</strong>? This
+          action cannot be undone.
         </span>
       ),
       okText: "Delete",
@@ -181,15 +361,17 @@ const VectorStorePage: React.FC = () => {
       onOk: async () => {
         setDeleting(store.id);
         try {
-          const { data: json } = await axiosInstance.delete(`${BASE}/${store.id}`);
+          const { data: json } = await axiosInstance.delete(
+            `${BASE}/${store.id}`,
+          );
           if (json.success) {
             message.success(`"${store.name}" deleted successfully!`);
-            fetchAllStores();
+            await refreshStores();
           } else {
             message.error(json.message || "Failed to delete store.");
           }
-        } catch {
-          message.error("Network error. Please try again.");
+        } catch (error) {
+          message.error(getErrorMessage(error, "Failed to delete store."));
         } finally {
           setDeleting(null);
         }
@@ -203,7 +385,8 @@ const VectorStorePage: React.FC = () => {
       title: "Delete File",
       content: (
         <span>
-          Are you sure you want to delete <strong>{file.fileName}</strong>? This cannot be undone.
+          Are you sure you want to delete <strong>{file.fileName}</strong>? This
+          cannot be undone.
         </span>
       ),
       okText: "Delete",
@@ -213,15 +396,17 @@ const VectorStorePage: React.FC = () => {
       onOk: async () => {
         setDeletingFile(file.fileId);
         try {
-          const { data: json } = await axiosInstance.delete(`${BASE}/${viewTarget.id}/files/${file.fileId}`);
+          const { data: json } = await axiosInstance.delete(
+            `${BASE}/${viewTarget.id}/files/${file.fileId}`,
+          );
           if (json.success) {
             message.success(`"${file.fileName}" deleted successfully!`);
             setFiles((prev) => prev.filter((f) => f.fileId !== file.fileId));
           } else {
             message.error(json.message || "Failed to delete file.");
           }
-        } catch {
-          message.error("Network error. Please try again.");
+        } catch (error) {
+          message.error(getErrorMessage(error, "Failed to delete file."));
         } finally {
           setDeletingFile(null);
         }
@@ -238,11 +423,13 @@ const VectorStorePage: React.FC = () => {
     setFileSearchName("");
     setFilteredFiles(null);
     try {
-      const { data: json } = await axiosInstance.get(`${BASE}/${store.id}/files`);
+      const { data: json } = await axiosInstance.get(
+        `${BASE}/${store.id}/files`,
+      );
       if (json.success) setFiles(json.data);
       else message.error(json.message || "Failed to fetch files.");
-    } catch {
-      message.error("Network error.");
+    } catch (error) {
+      message.error(getErrorMessage(error, "Failed to fetch files."));
     } finally {
       setLoadingFiles(false);
     }
@@ -250,15 +437,13 @@ const VectorStorePage: React.FC = () => {
 
   const storeColumns = [
     {
-      title: "#",
+      title: "SNo.",
       key: "index",
       align: "center" as const,
       width: 56,
-      render: (_: any, __: any, i: number) => (
-        <span className="text-gray-500 text-sm">
-          {(storePage - 1) * 10 + i + 1}
-        </span>
-      ),
+     render: (_: any, __: any, i: number) => (
+  <span className="text-gray-500 text-sm">{i + 1}</span>
+),
     },
     {
       title: "Store Name",
@@ -288,12 +473,9 @@ const VectorStorePage: React.FC = () => {
       key: "status",
       align: "center" as const,
       render: (status: string) => (
-        <Tag
-          className="rounded-full font-medium border-0 text-white px-3"
-          style={{ background: status === "ACTIVE" ? "#1ab394" : "#008cba" }}
-        >
+        <h3 style={{ color: status === "ACTIVE" ? "#1ab394" : "#008cba" }}>
           {status}
-        </Tag>
+        </h3>
       ),
     },
     {
@@ -302,6 +484,14 @@ const VectorStorePage: React.FC = () => {
       align: "center" as const,
       render: (_: any, record: VectorStore) => (
         <Space size={8}>
+          <Tooltip title="Edit Store">
+            <Button
+              size="middle"
+              shape="circle"
+              icon={<EditOutlined />}
+              onClick={() => openRenameModal(record)}
+            />
+          </Tooltip>
           <Tooltip title="Upload File">
             <Button
               size="middle"
@@ -341,18 +531,18 @@ const VectorStorePage: React.FC = () => {
 
   const fileColumns = [
     {
-      title: "#",
+      title: "SNo.",
       key: "index",
       align: "center" as const,
-     
+
       render: (_: any, __: any, i: number) => (
-        <span className="text-gray-500 text-sm">{(filePage - 1) * 10 + i + 1}</span>
+        <span className="text-gray-500 text-sm">{i + 1}</span>
       ),
     },
     {
       title: "File Name",
       dataIndex: "fileName",
-       align: "center" as const,
+      align: "center" as const,
       key: "fileName",
       render: (name: string) => <span className="text-gray-800">{name}</span>,
     },
@@ -397,36 +587,32 @@ const VectorStorePage: React.FC = () => {
               Vector Store Manager
             </h1>
 
-            <p className="text-gray-500 text-sm sm:text-base mt-1 mb-0 max-w-2xl">
+            {/* <p className="text-gray-500 text-sm sm:text-base mt-1 mb-0 max-w-2xl">
               Create and manage your vector stores — upload files and view
               contents
-            </p>
+            </p> */}
           </div>
 
           {/* Actions Section */}
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
             <Input
-              placeholder="Search by full Store ID…"
+              placeholder="Search by Store ID or Store Name…"
               value={searchId}
-              onChange={(e) => {
-                setSearchId(e.target.value);
-                if (!e.target.value.trim()) setFilteredStores(null);
-              }}
-              onPressEnter={handleSearchById}
+              onChange={(e) => setSearchId(e.target.value)}
               allowClear
               onClear={handleClearSearch}
               className="w-full rounded-lg sm:w-[260px]"
             />
 
-            <Button
+            {/* <Button
               size="middle"
               loading={searchLoading}
               style={btnPrimary}
               className="w-full rounded-lg font-semibold sm:w-auto"
-              onClick={handleSearchById}
+              onClick={handleSearchStore}
             >
               Search
-            </Button>
+            </Button> */}
 
             <Button
               size="middle"
@@ -437,7 +623,7 @@ const VectorStorePage: React.FC = () => {
                 setCreateModal(true);
               }}
             >
-              New Vector Store
+              Create Vector Store
             </Button>
           </div>
         </div>
@@ -449,14 +635,15 @@ const VectorStorePage: React.FC = () => {
               <h2 className="text-base font-semibold text-gray-800 m-0">
                 All Vector Stores
               </h2>
-              <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
+              {/* <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
                 {stores.length}
-              </span>
+                {hasMoreStores ? "+" : ""}
+              </span> */}
             </div>
             <Button
               size="middle"
               loading={loadingStores}
-              onClick={fetchAllStores}
+              onClick={refreshStores}
               icon={<GrRefresh />}
               className="rounded-md text-gray-600 border-gray-300"
             >
@@ -468,16 +655,17 @@ const VectorStorePage: React.FC = () => {
             dataSource={filteredStores ?? stores}
             columns={storeColumns}
             rowKey="id"
-            loading={loadingStores}
+            loading={loadingStores || searchLoading}
+            pagination={false}
             bordered
-            pagination={{
-              pageSize: 10,
-              current: storePage,
-              onChange: (p) => setStorePage(p),
-              showSizeChanger: false,
-              showTotal: (total, range) =>
-                `${range[0]}–${range[1]} of ${total}`,
-            }}
+            // pagination={{
+            //   pageSize: 20,
+            //   current: storePage,
+            //   onChange: (p) => setStorePage(p),
+            //   showSizeChanger: false,
+            //   showTotal: (total, range) =>
+            //     `${range[0]}–${range[1]} of ${total}`,
+            // }}
             locale={{
               emptyText: (
                 <Empty
@@ -499,6 +687,23 @@ const VectorStorePage: React.FC = () => {
             }}
             scroll={{ x: true }}
             className="[&_.ant-table-thead>tr>th]:bg-gray-50 [&_.ant-table-thead>tr>th]:text-gray-600 [&_.ant-table-thead>tr>th]:font-semibold [&_.ant-table-tbody>tr>td]:border-b-gray-100 [&_.ant-table-tbody>tr:hover>td]:bg-gray-50"
+            footer={() =>
+              !filteredStores && hasMoreStores ? (
+                <div className="flex justify-center">
+                  <Button
+                    loading={loadingMoreStores}
+                    disabled={!nextCursor}
+                    onClick={loadMoreStores}
+                    style={btnPrimary}
+                    className="rounded-lg font-semibold"
+                  >
+                    {loadingMoreStores
+                      ? "Loading more…"
+                      : "Load More Vector Stores"}
+                  </Button>
+                </div>
+              ) : null
+            }
           />
         </div>
       </div>
@@ -567,6 +772,77 @@ const VectorStorePage: React.FC = () => {
               className="rounded-lg font-semibold"
             >
               {creating ? "Creating…" : "Create Store"}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* MODAL 2 — Rename Vector Store */}
+      <Modal
+        title={
+          <span className="font-bold text-base text-gray-800">
+            Edit Vector Store Details
+          </span>
+        }
+        open={renameModal}
+        onCancel={() => {
+          if (renaming) return;
+          renameForm.resetFields();
+          setRenameTarget(null);
+          setRenameModal(false);
+        }}
+        centered
+        width={440}
+        footer={null}
+        maskClosable={!renaming}
+        closable={!renaming}
+      >
+        <Form form={renameForm} layout="vertical" onFinish={handleRename}>
+          <Form.Item
+            name="name"
+            label={
+              <span className="font-medium text-gray-700">Store Name</span>
+            }
+            rules={[
+              { required: true, message: "Store name is required." },
+              { min: 2, message: "Name must be at least 2 characters." },
+              { max: 60, message: "Name cannot exceed 60 characters." },
+              {
+                pattern: /^[a-zA-Z0-9_\- ]+$/,
+                message: "Only letters, numbers, spaces, - and _ allowed.",
+              },
+            ]}
+          >
+            <Input
+              placeholder="Enter updated store name"
+              size="large"
+              autoFocus
+              allowClear
+              className="rounded-lg"
+            />
+          </Form.Item>
+
+          <div className="flex justify-end gap-2 mt-2">
+            <Button
+              size="middle"
+              onClick={() => {
+                renameForm.resetFields();
+                setRenameTarget(null);
+                setRenameModal(false);
+              }}
+              disabled={renaming}
+              className="rounded-lg"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="middle"
+              htmlType="submit"
+              loading={renaming}
+              style={btnPrimary}
+              className="rounded-lg font-semibold"
+            >
+              {renaming ? "Updating…" : "Update Details"}
             </Button>
           </div>
         </Form>
@@ -804,7 +1080,7 @@ const VectorStorePage: React.FC = () => {
           rowKey="fileId"
           loading={loadingFiles}
           pagination={{
-            pageSize: 10,
+            pageSize: 20,
             current: filePage,
             onChange: (p) => setFilePage(p),
             showSizeChanger: false,
