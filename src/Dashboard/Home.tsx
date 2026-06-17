@@ -24,6 +24,10 @@ import {
   Sparkles,
   MessageSquare,
   Zap,
+  Tag,
+  Gift,
+  Percent,
+  Timer,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -41,6 +45,7 @@ import aibook from "../assets/img/aibook.png";
 
 import O5 from "../assets/img/cashewoffer1.png";
 import O6 from "../assets/img/35kg1.png";
+import CB1 from "../assets/img/document_Combo.png";
 import CB from "../assets/img/cashback offer png.png";
 import Cashew from "../assets/img/rakhi1.png";
 import Riceoffers from "../assets/img/rice offers.png";
@@ -195,6 +200,8 @@ const Home: React.FC = () => {
     status: {},
   });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [comboOffers, setComboOffers] = useState<DashboardItem[]>([]);
+  const [comboOffersLoading, setComboOffersLoading] = useState(false);
   const [bmvModalItem, setBmvModalItem] = useState<DashboardItem | null>(null);
 
   const [activeCategoryType, setActiveCategoryType] = useState<string>("");
@@ -265,9 +272,12 @@ const Home: React.FC = () => {
 
       try {
         const response = await customerApi.get(
-          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,{
-            headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}`, },
-          }
+          `${BASE_URL}/cart-service/cart/userCartInfo?customerId=${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          },
         );
 
         const cartList = response.data?.customerCartResponseList || [];
@@ -314,11 +324,7 @@ const Home: React.FC = () => {
     [updateCartCount, setCount],
   );
 
-  const {
-    handleItemAddedToCart,
-    freeItemsMap,
-  
-  } = ProductOfferModals({
+  const { handleItemAddedToCart, freeItemsMap } = ProductOfferModals({
     fetchCartData,
     cartData,
     cartItems,
@@ -454,22 +460,22 @@ const Home: React.FC = () => {
 
       // Collect all unique items grouped by categoryType
       const uniqueItemsMap = new Map<string, Item>();
-    data.forEach(
-      (categoryGroup: { categoryType: string; categories: Category[] }) => {
-        categoryGroup.categories.forEach((category: Category) => {
-          category.itemsResponseDtoList.forEach((item: Item) => {
-            // ✅ Keep unique by itemId only
-            if (!uniqueItemsMap.has(item.itemId)) {
-              uniqueItemsMap.set(item.itemId, {
-                ...item,
-                categoryName: category.categoryName || "Uncategorized",
-                categoryType: categoryGroup.categoryType,
-              });
-            }
+      data.forEach(
+        (categoryGroup: { categoryType: string; categories: Category[] }) => {
+          categoryGroup.categories.forEach((category: Category) => {
+            category.itemsResponseDtoList.forEach((item: Item) => {
+              // ✅ Keep unique by itemId only
+              if (!uniqueItemsMap.has(item.itemId)) {
+                uniqueItemsMap.set(item.itemId, {
+                  ...item,
+                  categoryName: category.categoryName || "Uncategorized",
+                  categoryType: categoryGroup.categoryType,
+                });
+              }
+            });
           });
-        });
-      },
-    );
+        },
+      );
 
       const uniqueItemsList = Array.from(uniqueItemsMap.values());
       const sortedUniqueItems = sortItemsByName(uniqueItemsList);
@@ -554,6 +560,37 @@ const Home: React.FC = () => {
       console.log("Rice Items Count:", riceItems.length);
       console.log("Gold Items Count:", goldItems.length);
 
+      // Extract "Combo Offers" items separately for the special deals section
+      const isComboItem = (item: Item) =>
+        item.categoryName?.toLowerCase() === "combo offers";
+
+      const comboOfferItems = sortedUniqueItems
+        .filter(isComboItem)
+        .map((item) => ({
+          itemId: item.itemId,
+          title: item.itemName,
+          image: item.itemImage || ProductImg1,
+          description: `₹${item.itemPrice || 0}`,
+          path: `/item/${item.itemId}`,
+          icon: <ShoppingBag className="text-orange-500" size={24} />,
+          itemPrice: item.itemPrice,
+          itemMrp: item.itemMrp,
+          quantity: item.quantity,
+          weight: item.weight,
+          units: item.units,
+          itemName: item.itemName,
+          itemImage: item.itemImage,
+          bmvCoins: item.bmvCoins,
+          isCombo: true,
+        }));
+      setComboOffers(comboOfferItems);
+      setComboOffersLoading(false);
+      console.log("Combo Offer Items:", comboOfferItems);
+
+      // Exclude combo items from all category lists
+      const nonComboItems = (items: Item[]) =>
+        items.filter((i) => !isComboItem(i));
+
       // Define default category images
       const defaultCategoryImages: Record<string, string> = {
         "All Items": allitems,
@@ -563,59 +600,72 @@ const Home: React.FC = () => {
         Silver: festive,
         "Rice Containers": ricecontainer1,
         "AI Book": aibook,
+        "Combo Offer": CB1,
       };
 
-      // Create fixed categories with images (filter out quantity: 0 items)
+      // Combo offer items as Item[] for the category
+      const comboAsItems: Item[] = sortedUniqueItems.filter(isComboItem);
+
+      // Create fixed categories with images
       const allCategories: Category[] = [
         {
           categoryName: "All Items",
           categoryImage: defaultCategoryImages["All Items"],
-          itemsResponseDtoList: allItems,
+          itemsResponseDtoList: nonComboItems(allItems),
           subCategories: [],
         },
         {
           categoryName: "Groceries",
           categoryImage: defaultCategoryImages["Groceries"],
-          itemsResponseDtoList: groceryItems,
+          itemsResponseDtoList: nonComboItems(groceryItems),
           subCategories: [],
         },
-
         {
           categoryName: "Rice",
           categoryImage: defaultCategoryImages["Rice"],
-          itemsResponseDtoList: riceItems,
+          itemsResponseDtoList: nonComboItems(riceItems),
           subCategories: [],
         },
         {
           categoryName: "Rice Containers",
           categoryImage: defaultCategoryImages["Rice Containers"],
-          itemsResponseDtoList: riceContainer,
+          itemsResponseDtoList: nonComboItems(riceContainer),
           subCategories: [],
         },
+         ...(comboAsItems.length > 0
+          ? [
+              {
+                categoryName: "Combo Offer",
+                categoryImage: defaultCategoryImages["Combo Offer"],
+                itemsResponseDtoList: comboAsItems,
+                subCategories: [],
+              },
+            ]
+          : []),
         {
           categoryName: "Gold",
           categoryImage: defaultCategoryImages["Gold"],
-          itemsResponseDtoList: goldItems,
+          itemsResponseDtoList: nonComboItems(goldItems),
           subCategories: [],
         },
         {
-          categoryName: "Silver", // show "Silver" but fetches SILVER items
+          categoryName: "Silver",
           categoryImage: defaultCategoryImages["Silver"],
-          itemsResponseDtoList: rakhiItems,
+          itemsResponseDtoList: nonComboItems(rakhiItems),
           subCategories: [],
         },
         {
-          categoryName: "AI Books", // show "AI Book" but fetches AI BOOK items
+          categoryName: "AI Books",
           categoryImage: defaultCategoryImages["AI Book"],
-          itemsResponseDtoList: booksTems,
+          itemsResponseDtoList: nonComboItems(booksTems),
           subCategories: [],
         },
+       
       ];
 
-    
       setCategories(allCategories);
-      updateProducts(allItems);
-      setActiveCategory("All Items"); // Set default category
+      updateProducts(nonComboItems(allItems));
+      setActiveCategory("All Items");
       categoriesFetched.current = true;
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -1383,36 +1433,33 @@ const Home: React.FC = () => {
   }, [products, displayCount, searchTerm, selectedWeight, activeCategory]);
 
   // *** Updated viewAllProducts function ***
+  const CATEGORY_TYPE_MAP: Record<string, string> = {
+    "All Items": "ALL",
+    Groceries: "GROCERY",
+    Rice: "RICE",
+    Gold: "GOLD",
+    Silver: "SILVER",
+    "Rice Containers": "CONTAINERS",
+    "AI Books": "AIBOOK",
+    "Combo Offer": "COMBO",
+   
+  };
+
   const viewAllProducts = () => {
     const selectedCategory = activeCategory || "All Items";
-   const CATEGORY_TYPE_MAP: Record<string, string> = {
-     "All Items": "ALL",
-     Groceries: "GROCERY",
-     Rice: "RICE",
-     Gold: "GOLD",
-     Silver: "SILVER",
-     "Rice Containers": "CONTAINERS",
+    const selectedType = CATEGORY_TYPE_MAP[selectedCategory] || "ALL";
 
-     "AI Books": "AIBOOK",
-   };
+    const queryParams = new URLSearchParams();
+    queryParams.append("type", selectedType.toUpperCase());
 
+    if (selectedWeight && selectedCategory === "Rice") {
+      queryParams.append("weight", selectedWeight);
+    }
 
-    // NEW: Get the category type based on the active category
-  const selectedType = CATEGORY_TYPE_MAP[selectedCategory] || "ALL";
-
-
-    // NEW: Construct query parameters to include type and weight (if applicable)
-   const queryParams = new URLSearchParams();
-  queryParams.append("type", selectedType.toUpperCase());
-
-  if (selectedWeight && selectedCategory === "Rice") {
-    queryParams.append("weight", selectedWeight);
-  }
-
-  navigate(`/main/dashboard/products?${queryParams.toString()}`, {
-    state: { selectedCategory },
-  });
-};
+    navigate(`/main/dashboard/products?${queryParams.toString()}`, {
+      state: { selectedCategory },
+    });
+  };
   const viewAllServices = () => {
     navigate("/main/dashboard/myservices");
   };
@@ -1433,12 +1480,10 @@ const Home: React.FC = () => {
       Rice: "RICE",
       Gold: "GOLD",
       Silver: "SILVER",
-
-      // ✅ correct
       "Rice Containers": "CONTAINERS",
-
-      // ✅ keep your actual category name key
       "AI Books": "AIBOOK",
+      "Combo Offer": "COMBO",
+     
     };
 
     // NEW: Update the active category type based on the selected category
@@ -1656,6 +1701,13 @@ const Home: React.FC = () => {
             -ms-overflow-style: auto;
             scrollbar-width: auto;
           }
+          @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 6px 2px rgba(251,146,60,0.4); }
+            50% { box-shadow: 0 0 18px 6px rgba(251,146,60,0.15); }
+          }
+          .animate-pulse-border {
+            animation: glowPulse 2s ease-in-out infinite;
+          }
         `}
       </style>
 
@@ -1689,7 +1741,7 @@ const Home: React.FC = () => {
               <div className="flex items-center gap-2 mb-3 flex-shrink-0">
                 <ShoppingBag className="text-purple-600" size={20} />
                 <h3 className="font-bold text-lg text-purple-800">
-                  Special Offers
+                  Special Combo Offers
                 </h3>
                 <div className="flex-1"></div>
                 <button
@@ -1898,7 +1950,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* Filter Tabs as Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2 sm:gap-3 mb-6">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2 sm:gap-3 mb-6">
             <AnimatePresence>
               {categories.map((category, index) => (
                 <motion.div
@@ -1915,7 +1967,11 @@ const Home: React.FC = () => {
                   className={`bg-white rounded-lg shadow-sm overflow-hidden relative border border-gray-100 ${
                     activeCategory === category.categoryName
                       ? "border-purple-200"
-                      : ""
+                      : ["Combo Offer", "Special Deals"].includes(
+                            category.categoryName,
+                          )
+                        ? "border-orange-200 animate-pulse-border"
+                        : ""
                   } cursor-pointer`}
                   onClick={() => handleCategoryChange(category.categoryName)}
                 >
@@ -1945,7 +2001,13 @@ const Home: React.FC = () => {
                     )}
                   </div>
                   <div className="p-2 text-center">
-                    <h3 className="font-bold text-purple-700 text-md hover:text-purple-600 transition-colors">
+                    <h3
+                      className={`font-bold text-md transition-colors ${
+                        category.categoryName === "Special Deals"
+                          ? "text-orange-600 hover:text-orange-500"
+                          : "text-purple-700 hover:text-purple-600"
+                      }`}
+                    >
                       {category.categoryName}
                     </h3>
                   </div>

@@ -31,6 +31,7 @@ import {
   FaTrophy,
   FaUserTie,
   FaLaptopCode,
+  FaGraduationCap,
 } from "react-icons/fa";
 import { RiFileUserLine } from "react-icons/ri";
 import {
@@ -374,6 +375,19 @@ const Sidebar: React.FC = () => {
           icon: <RiMapPin2Line className="text-purple-400" />,
           link: "/admin/pincodeorders",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
+      ],
+    },
+    {
+      title: "CBS Data",
+      icon: <FaGraduationCap className="text-teal-400" />,
+      roles: ["HELPDESKSUPERADMIN"],
+      items: [
+        {
+          title: "CBS Data",
+          icon: <FaGraduationCap className="text-teal-400" />,
+          link: "/admin/cbsdata",
+          roles: ["HELPDESKSUPERADMIN"],
         },
       ],
     },

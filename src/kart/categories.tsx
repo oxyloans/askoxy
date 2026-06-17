@@ -181,6 +181,7 @@ const Categories: React.FC<CategoriesProps> = ({
     "SILVER",
     "AIBOOK",
     "CONTAINERS",
+    "COMBO",
   ];
   const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
@@ -721,6 +722,13 @@ const Categories: React.FC<CategoriesProps> = ({
     if (!activeCategory || items.length === 0) {
       if (activeCategoryType === "ALL") {
         items = categories.flatMap((cat) => cat.itemsResponseDtoList || []);
+      } else if (activeCategoryType === "COMBO") {
+        items = categories
+          .filter((cat) => {
+            const name = cat.categoryName.toLowerCase();
+            return name === "combo offers" || name === "special deals" || name === "combo offer" || cat.categoryType?.toUpperCase() === "COMBO";
+          })
+          .flatMap((cat) => cat.itemsResponseDtoList || []);
       } else {
         items = categories
           .filter(
@@ -868,7 +876,11 @@ const Categories: React.FC<CategoriesProps> = ({
     if (activeCategoryType === "ALL") {
       return categories;
     }
-
+    if (activeCategoryType === "COMBO") {
+      return categories.filter(
+        (cat) => cat.categoryName.toLowerCase() === "combo offers" || cat.categoryType?.toUpperCase() === "COMBO",
+      );
+    }
     return categories.filter(
       (category) => category.categoryType?.toUpperCase() === activeCategoryType,
     );

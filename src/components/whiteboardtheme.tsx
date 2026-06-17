@@ -59,6 +59,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "loans",
       league: "IP2PL",
+      title:"Peer-to-Peer Lending",
       image: web1,
       color: "#6B35C7",
       shadow: "drop-shadow(0 10px 10px rgba(107,53,199,0.25))",
@@ -68,6 +69,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "jobs",
       league: "JPL",
+      title:"Jobs",
       image: web2,
       color: "#0B4697",
       shadow: "drop-shadow(0 10px 10px rgba(11,70,151,0.25))",
@@ -77,6 +79,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "studyabroad",
       league: "SAPL",
+      title:"Study Abroad",
       image: web3,
       color: "#D71D8E",
       shadow: "drop-shadow(0 10px 10px rgba(215,29,142,0.25))",
@@ -87,6 +90,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "oxybricks",
       league: "FPL",
+      title:"Fractional Ownership",
       image: web31,
       color: "#6B35C7",
       shadow: "drop-shadow(0 10px 10px rgba(107,53,199,0.25))",
@@ -97,6 +101,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "gold",
       league: "GPL",
+      title:"Gold",
       image: web4,
       color: "#C48A00",
       shadow: "drop-shadow(0 10px 10px rgba(196,138,0,0.25))",
@@ -106,6 +111,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "bharat",
       league: "AIPL",
+title:"Bharat AI Store",
       image: web5,
       color: "#5A5A5A",
       shadow: "drop-shadow(0 10px 10px rgba(90,90,90,0.22))",
@@ -150,7 +156,7 @@ const Whiteboardtheme: React.FC = () => {
               </span>
             </motion.h5>
 
-            <motion.div
+            {/* <motion.div
               onClick={() => {
                 window.location.href = "/radha/uae-banks-ai-intelligence";
               }}
@@ -158,7 +164,7 @@ const Whiteboardtheme: React.FC = () => {
               whileTap={{ scale: 0.9 }}
               className="h-3 w-3 cursor-pointer rounded-full border-2 border-dotted border-[#5543C8]"
               
-            />
+            /> */}
 
             <img
               src={arrow0}
@@ -232,7 +238,7 @@ const Whiteboardtheme: React.FC = () => {
                       opacity: isActive ? 1 : 0.9,
                     }}
                     transition={{ duration: 0.35 }}
-                    className="mt-1 flex h-[26px] items-start justify-center px-1 sm:mt-2 sm:h-[42px] md:h-[48px]"
+                    className="mt-1 flex h-auto flex-col items-center justify-start px-1 sm:mt-2"
                   >
                     <h3
                       className="text-center text-[14px] font-bold leading-[1.1] sm:text-[19px] md:text-[21px]"
@@ -240,6 +246,12 @@ const Whiteboardtheme: React.FC = () => {
                     >
                       {card.league}
                     </h3>
+
+                    <span
+                      className="mt-0.5 block text-center text-[11px] font-semibold leading-[1.2] text-gray-600 sm:mt-1 sm:text-[13px] md:text-[14px]"
+                    >
+                      {card.title}
+                    </span>
                   </motion.div>
                 </button>
               );

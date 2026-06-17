@@ -112,6 +112,7 @@ import NBFAIIntelligenceReport2026 from "./components/NBFAIIntelligenceReport202
 import RAKBANKAIIntelligenceReport2026 from "./components/RAKBANKAIIntelligenceReport2026";
 import UAEBanksAIIntelligenceHub from "./components/UAEBanksAIIntelligenceHub";
 import RadhAIVoicePageCEO from "./components/talktoceo/RadhAIVoicePageLanguage";
+import CbsDataPage from "./AskoxyAdmin/CbsDataPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -733,12 +734,11 @@ const App: React.FC = () => {
               <Route path="/Oxygpt" element={<OxyGPT />} />
 
               <Route path="/finvibe" element={<Finvibe3DLanding />} />
-            <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
-            <Route path="/live-ai-demo" element={<LiveAIDemo />} />
-            <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
-            <Route path="/oxybfsai" element={<Billing />} />
-            <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
-            
+              <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
+              <Route path="/live-ai-demo" element={<LiveAIDemo />} />
+              <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
+              <Route path="/oxybfsai" element={<Billing />} />
+              <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
 
               <Route
                 path="/finvibe-code-builder"
@@ -1289,7 +1289,7 @@ const App: React.FC = () => {
               <Route path="/future" element={<Landingpage />} />
               <Route path="/apidocs" element={<ApiDocs />} />
               <Route path="/womensday" element={<WomensDay />} />
-            
+
               <Route
                 path="/radha/emirates-nbd-ai-intelligence"
                 element={<EmiratesNBDAIIntelligenceReport2026 />}
@@ -1302,7 +1302,7 @@ const App: React.FC = () => {
                 path="/radha/uae-banks-ai-intelligence"
                 element={<UAEBanksAIIntelligenceHub />}
               />
-             
+
               <Route
                 path="/radha/adib-ai-intelligence"
                 element={<ADIBAIIntelligenceReport2026 />}
@@ -1329,16 +1329,16 @@ const App: React.FC = () => {
                 element={<NBFAIIntelligenceReport2026 />}
               />
               <Route
-  path="/radha/mashreq-ai-intelligence"
-  element={<MashreqAIIntelligenceReport2026 />}
-/>
-<Route
-  path="/radha/sib-ai-intelligence"
-  element={<SIBAIIntelligenceReport2026 />}
-/>
+                path="/radha/mashreq-ai-intelligence"
+                element={<MashreqAIIntelligenceReport2026 />}
+              />
+              <Route
+                path="/radha/sib-ai-intelligence"
+                element={<SIBAIIntelligenceReport2026 />}
+              />
               <Route path="/privacypolicy" element={<PrivacyPolicy />} />
               <Route path="/bmvpdf" element={<BMVPDF />} />
-              
+
               <Route path="/teststore" element={<TestStore />} />
               <Route
                 path="/teststore/assistant/:id/:agentId"
@@ -1653,6 +1653,7 @@ const App: React.FC = () => {
                   element={<SuperAdminComments />}
                 />
                 <Route path="pincodeorders" element={<OrdersByPincode />} />
+                <Route path="cbsdata" element={<CbsDataPage />} />
                 <Route path="alljobdetails" element={<JobsAdminPage />} />
                 <Route path="userAppliedJobs" element={<UserAppliedJob />} />
                 <Route path="assistants" element={<AssistantDashboard />} />
