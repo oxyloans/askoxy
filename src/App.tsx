@@ -65,6 +65,11 @@ import EmployeeLogin from "./FreelanceMarketplace/EmployeeLogin";
 import EmployeeRegister from "./FreelanceMarketplace/EmployeeRegister";
 import FinvibeLanding from "./Finvibe/Landing";
 import Finvide3DLanding from "./Finvibe/Finvibe3DLanding";
+import FinvibeLayout from "./Finvibe/FinvibeLayout";
+import FinvibeHomePage from "./Finvibe/components/HomePage";
+import FinvibeStage1Page from "./Finvibe/components/Stage1Page";
+import FinvibeStage2Page from "./Finvibe/components/Stage2Page";
+import FinvibeGenerationPage from "./Finvibe/components/GenerationPage";
 
 import OxyGPT from "./Finvibe/components/Oxyclaude";
 import Billing from "./Finvibe/components/Billing";
@@ -704,7 +709,11 @@ const App: React.FC = () => {
       currentPath.startsWith("/radhai") || 
       currentPath.startsWith("/talktoceo") ||
       currentPath.startsWith("/radhai-connect") || 
-      currentPath.startsWith("/radhAI")
+      currentPath.startsWith("/radhAI") ||
+      currentPath.startsWith("/radhai-admin") ||
+      currentPath.startsWith("/generate") ||
+      currentPath.startsWith("/generate/:id") 
+
     );
   };
 
@@ -720,9 +729,6 @@ const App: React.FC = () => {
             {localStorage.getItem("userId") &&
               !isRestrictedRoute() && <FloatingGiftOffersButton />}
             <Routes>
-              {/* ===================================================== */}
-              {/* ✅ PUBLIC ROUTES (No Auth Needed) */}
-              {/* ===================================================== */}
               <Route path="/shopretail" element={<HomePage />} />
 
               <Route path="/shop-form" element={<ShopFormPage />} />
@@ -739,6 +745,21 @@ const App: React.FC = () => {
               <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
               <Route path="/oxybfsai" element={<Billing />} />
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
+            <Route path="/finvibe" element={<Finvibe3DLanding />} />
+            <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
+            <Route path="/live-ai-demo" element={<LiveAIDemo />} />
+            <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
+            <Route path="/oxybfsai" element={<Billing />} />
+            <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
+
+            {/* OXY BFSAI Engine — full layout with fixed header */}
+            <Route element={<FinvibeLayout />}>
+              <Route path="/oxybfsai-engine" element={<FinvibeHomePage />} />
+              <Route path="/generate" element={<FinvibeStage1Page />} />
+              <Route path="/stage2/:sessionId" element={<FinvibeStage2Page />} />
+              <Route path="/generating/:sessionId" element={<FinvibeGenerationPage />} />
+            </Route>
+            
 
               <Route
                 path="/finvibe-code-builder"

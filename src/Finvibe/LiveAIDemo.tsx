@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { WORKFLOWS, SYSTEMS } from "./components/demoData";
+import { WORKFLOWS, SYSTEMS } from "./hooks/demoData";
 import { AgentPanel } from "./components/AgentPanel";
 import { OutputPanel } from "./components/OutputPanel";
 

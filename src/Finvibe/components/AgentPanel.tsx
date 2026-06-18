@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
-import { ENGINE_STEPS, PHASE_COLORS } from "./demoData";
+import { ENGINE_STEPS, PHASE_COLORS } from "../hooks/demoData";
 
 type Agent = { name: string; status: string };
 

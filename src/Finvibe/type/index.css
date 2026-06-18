@@ -1,0 +1,106 @@
+.finvibe-app {
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  background-color: #0a0e1a;
+  color: #f0f4ff;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image:
+    radial-gradient(
+      ellipse at 20% 0%,
+      rgba(0, 212, 255, 0.06) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 100%,
+      rgba(255, 183, 0, 0.04) 0%,
+      transparent 50%
+    );
+  background-attachment: fixed;
+}
+
+/* Scrollbar — scoped */
+.finvibe-app ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.finvibe-app ::-webkit-scrollbar-track {
+  background: #0f1525;
+}
+.finvibe-app ::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.12);
+  border-radius: 3px;
+}
+.finvibe-app ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.25);
+}
+
+/* Keyframes */
+@keyframes finvibe-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+}
+@keyframes finvibe-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes finvibe-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+@keyframes finvibe-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes finvibe-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Animation utility classes — scoped */
+.finvibe-app .animate-pulse-custom {
+  animation: finvibe-pulse 1.5s ease-in-out infinite;
+}
+.finvibe-app .animate-pulse-slow {
+  animation: finvibe-pulse 2s ease-in-out infinite;
+}
+.finvibe-app .animate-spin-custom {
+  animation: finvibe-spin 0.7s linear infinite;
+}
+.finvibe-app .animate-shimmer {
+  background-size: 200% 100%;
+  animation: finvibe-shimmer 1.5s infinite;
+}
+.finvibe-app .animate-float {
+  animation: finvibe-float 4s ease-in-out infinite;
+}
+.finvibe-app .animate-fade-in {
+  animation: finvibe-fadeIn 0.3s ease;
+}

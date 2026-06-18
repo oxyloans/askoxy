@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { WorkflowType, LANGS } from "./demoData";
+import { WorkflowType, LANGS } from "../hooks/demoData";
 
 type Props = {
   wf: WorkflowType;
