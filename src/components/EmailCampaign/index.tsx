@@ -1,20 +1,24 @@
-import React, { useState } from "react";
-import type { SectionKey } from "./constants";
+import React from "react";
 import EmailCampaignLayout from "./EmailCampaignLayout";
 import CompanyUploadPanel from "./CompanyUploadPanel";
 import CampaignPanel from "./CampaignPanel";
+import AllPdfsPage from "./AllPdfsPage";
+import AllCampaignsPage from "./AllCampaignsPage";
+import CampaignScorecard from "./CampaignScorecard";
+import CampaignConversations from "./CampaignConversations";
 
-const EmailCampaign: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<SectionKey>("upload");
+const wrap = (Page: React.FC) => () => (
+  <EmailCampaignLayout>
+    <Page />
+  </EmailCampaignLayout>
+);
 
-  return (
-    <EmailCampaignLayout
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-    >
-      {activeSection === "upload" ? <CompanyUploadPanel /> : <CampaignPanel />}
-    </EmailCampaignLayout>
-  );
-};
+export const UploadPage        = wrap(CompanyUploadPanel);
+export const SendCampaignPage  = wrap(CampaignPanel);
+export const AllDocumentsPage  = wrap(AllPdfsPage);
+export const AllCampaignsRoute = wrap(AllCampaignsPage);
+export const ScorecardPage     = wrap(CampaignScorecard);
+export const ConversationsPage = wrap(CampaignConversations);
 
-export default EmailCampaign;
+// default export redirects to /email-campaign/upload
+export { default } from "./EmailCampaignLayout";

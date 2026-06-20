@@ -223,7 +223,7 @@ const RadhAIPage: React.FC = () => {
               onClick={() => navigate("/")}
               src={ASKOXYLOGO1}
               alt="ASKOXY.AI"
-              className="h-9 w-auto cursor-pointer object-contain sm:h-11"
+              className="hidden h-9 w-auto cursor-pointer object-contain sm:block sm:h-11"
             />
             <img
               onClick={() => navigate("/radhAI")}
@@ -233,10 +233,10 @@ const RadhAIPage: React.FC = () => {
             />
           </div>
 
-          <div className="hidden items-center gap-3 sm:flex">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handleWriteToUs}
-              className="inline-flex items-center gap-2 rounded-full border border-lime-300/30 bg-lime-300/10 px-4 py-2 text-xs font-black text-lime-300 transition hover:bg-lime-300 hover:text-black"
+              className="hidden items-center gap-2 rounded-full border border-lime-300/30 bg-lime-300/10 px-4 py-2 text-xs font-black text-lime-300 transition hover:bg-lime-300 hover:text-black sm:inline-flex"
             >
               <Mail size={16} />
               Write to CEO
@@ -244,7 +244,7 @@ const RadhAIPage: React.FC = () => {
 
             <button
               onClick={handleTalkToCEO}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-lime-300 px-5 py-2.5 text-sm font-black text-black transition hover:scale-[1.03]"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-lime-300 px-3 py-2 text-xs font-black text-black transition hover:scale-[1.03] sm:px-5 sm:py-2.5 sm:text-sm"
             >
               <Mic size={17} />
               Talk to CEO
@@ -256,22 +256,22 @@ const RadhAIPage: React.FC = () => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,245,255,0.22),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(132,255,0,0.13),transparent_38%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.07] bg-[linear-gradient(to_right,#00f5ff_1px,transparent_1px),linear-gradient(to_bottom,#00f5ff_1px,transparent_1px)] bg-[size:44px_44px]" />
 
-      <section className="relative z-10 mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-4 pb-14 pt-28 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-10 lg:pt-32">
+      <section className="relative z-10 mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-4 pb-14 pt-24 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:px-10 lg:pt-32">
         <motion.div
           initial={{ opacity: 0, x: -45 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative order-1 z-10"
+          className="relative order-2 z-10 lg:order-1"
         >
           <div className="pointer-events-none absolute -inset-4 rounded-[36px] bg-gradient-to-r from-cyan-400/30 via-violet-500/30 to-lime-300/30 blur-2xl glow-pulse" />
 
-          <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden rounded-[30px] border border-cyan-300/25 bg-white/[0.045] p-4 shadow-[0_0_80px_rgba(0,245,255,0.15)] backdrop-blur-xl sm:min-h-[470px] lg:min-h-[560px]">
+          <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden rounded-[30px] border border-cyan-300/25 bg-white/[0.045] p-4 shadow-[0_0_80px_rgba(0,245,255,0.15)] backdrop-blur-xl sm:min-h-[470px] lg:min-h-[560px]">
             <div className="scan-line pointer-events-none absolute left-0 top-0 h-24 w-full bg-gradient-to-b from-transparent via-cyan-300/20 to-transparent" />
 
             <img
               src={RADHAI}
               alt="radhAI"
-              className="float-slow relative z-10 max-h-[305px] w-full object-contain drop-shadow-[0_0_45px_rgba(0,245,255,0.35)] sm:max-h-[450px] lg:max-h-[520px]"
+              className="float-slow relative z-10 max-h-[270px] w-full object-contain drop-shadow-[0_0_45px_rgba(0,245,255,0.35)] sm:max-h-[450px] lg:max-h-[520px]"
             />
 
             <div className="absolute left-4 top-4 z-20 rounded-full border border-lime-300/30 bg-black/50 px-3 py-2 text-[10px] font-bold text-lime-300 backdrop-blur-xl sm:px-4 sm:text-xs">
@@ -294,22 +294,28 @@ const RadhAIPage: React.FC = () => {
             })}
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:hidden">
-            <button
-              onClick={handleTalkToCEO}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-3 py-3 text-xs font-black text-black"
-            >
-              <Mic size={17} />
-              Talk to CEO
-            </button>
+          <div className="mt-7 rounded-[26px] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-xl sm:hidden">
+            <p className="text-sm font-bold text-slate-300">
+              Radhakrishna Thatavarti is the CEO & Founder of
+            </p>
 
-            <button
-              onClick={handleWriteToUs}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 text-xs font-black text-cyan-200"
-            >
-              <MessageCircle size={17} />
-              Write to CEO
-            </button>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {groupCompanies.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-[62px] items-center justify-center rounded-2xl bg-white p-2 transition hover:scale-[1.03]"
+                >
+                  <img
+                    src={item.logo}
+                    alt={item.name}
+                    className="max-h-[38px] max-w-full object-contain"
+                  />
+                </a>
+              ))}
+            </div>
           </div>
         </motion.div>
 
@@ -317,7 +323,7 @@ const RadhAIPage: React.FC = () => {
           initial={{ opacity: 0, x: 45 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="order-2 z-10 text-center lg:text-left"
+          className="order-1 z-10 text-center lg:order-2 lg:text-left"
         >
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
             <Sparkles size={16} />
@@ -335,6 +341,24 @@ const RadhAIPage: React.FC = () => {
             Clone of Radhakrishna Thatavarti
           </p>
 
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:hidden">
+            <button
+              onClick={handleTalkToCEO}
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-3 py-3 text-xs font-black text-black"
+            >
+              <Mic size={17} />
+              Talk to CEO
+            </button>
+
+            <button
+              onClick={handleWriteToUs}
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 text-xs font-black text-cyan-200"
+            >
+              <MessageCircle size={17} />
+              Write to CEO
+            </button>
+          </div>
+
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg lg:mx-0">
             <span className="font-semibold text-white">
               CEO AI Clone Built to Solve Problems 24/7
@@ -343,12 +367,12 @@ const RadhAIPage: React.FC = () => {
             with simple AI-powered support.
           </p>
 
-          <div className="mt-7 rounded-[26px] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-xl sm:p-5">
+          <div className="mt-7 hidden rounded-[26px] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-xl sm:block sm:p-5">
             <p className="text-sm font-bold text-slate-300">
               Radhakrishna Thatavarti is the CEO & Founder of
             </p>
 
-            <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {groupCompanies.map((item) => (
                 <a
                   key={item.name}

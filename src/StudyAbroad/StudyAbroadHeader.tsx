@@ -9,7 +9,13 @@ import { Sparkles } from "lucide-react";
 
 interface StudyAbroadHeaderProps {
   onNavClick: (
-    id: "home" | "workabroad" | "universities" | "countries" | "testimonials",
+    id:
+      | "home"
+      | "workabroad"
+      | "universities"
+      | "countries"
+      | "internships"
+      | "testimonials",
   ) => void;
   activeLink: string;
   isMainPage?: boolean; // Add prop to determine which logo to show
@@ -71,7 +77,13 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
 
   const handleNavClick = useCallback(
     (
-      id: "home" | "workabroad" | "universities" | "countries" | "testimonials",
+      id:
+        | "home"
+        | "workabroad"
+        | "universities"
+        | "countries"
+        | "internships"
+        | "testimonials",
     ): void => {
       requestAnimationFrame(() => {
         onNavClick(id); // parent handles scroll + activeLink
@@ -120,9 +132,10 @@ const StudyAbroadHeader = memo(function StudyAbroadHeader({
     () =>
       [
         { id: "home", label: "Home" },
-        { id: "workabroad", label: "Work Abroad Pathways" }, // new
+        { id: "workabroad", label: "Internships" }, // new
         { id: "universities", label: "Universities" },
         { id: "countries", label: "Countries" },
+        { id: "internships", label: "Work Abroad Pathways" }, // ← add this
         // { id: "testimonials", label: "Success Stories" },
       ] as const,
     [],

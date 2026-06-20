@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { ArrowRight, Globe, BookOpen, GraduationCap, FileText, Star, Gift, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  Globe,
+  BookOpen,
+  GraduationCap,
+  FileText,
+  Star,
+  Gift,
+  Zap,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png"
+import Heroimg from "../assets/img/heroimg3.9e623f6b9910c2a08a0d.png";
 
 function StudyAbroadHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -13,13 +22,13 @@ function StudyAbroadHeroSection() {
 
   useEffect(() => {
     setIsVisible(true);
-    
+
     // Typing animation effect that repeats every 45 seconds
     const startTypingAnimation = () => {
       let currentIndex = 0;
       setIsTypingComplete(false);
       setTypedText("");
-      
+
       const typingInterval = setInterval(() => {
         if (currentIndex < fullHeadingText.length) {
           setTypedText(fullHeadingText.slice(0, currentIndex + 1));
@@ -29,19 +38,19 @@ function StudyAbroadHeroSection() {
           setIsTypingComplete(true);
         }
       }, 100);
-      
+
       return typingInterval;
     };
-    
+
     // Start initial animation
     let typingInterval = startTypingAnimation();
-    
+
     // Restart animation every 45 seconds
     const repeatInterval = setInterval(() => {
       clearInterval(typingInterval);
       typingInterval = startTypingAnimation();
     }, 45000);
-    
+
     return () => {
       clearInterval(typingInterval);
       clearInterval(repeatInterval);
@@ -62,10 +71,9 @@ function StudyAbroadHeroSection() {
   };
 
   return (
-    <section className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 py-6 sm:py-8 lg:py-12 overflow-hidden min-h-screen flex items-center">
+    <section className="bg-white py-10 sm:py-12 lg:py-16 overflow-hidden min-h-screen flex items-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
-          
           {/* Left Content */}
           <div
             className={`lg:col-span-6 space-y-4 sm:space-y-6 text-center lg:text-left transform transition-all duration-700 ease-in-out motion-reduce:transition-none ${
@@ -88,18 +96,21 @@ function StudyAbroadHeroSection() {
             </div>
 
             <p className="text-gray-700 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0">
-              Empower <strong className="text-purple-700">1 million students</strong> to study abroad and
-              lead life-changing careers. Our vision is to help students fulfill 
-              their global dreams by 2030–2050.
+              Empower{" "}
+              <strong className="text-purple-700">1 million students</strong> to
+              study abroad and lead life-changing careers. Our vision is to help
+              students fulfill their global dreams by 2030–2050.
               <span className="block text-purple-600 mt-2 font-medium text-sm sm:text-base">
                 Operating in <strong>25+ countries</strong> with a{" "}
-                <strong className="text-green-600">95% visa success rate</strong>.
+                <strong className="text-green-600">
+                  95% visa success rate
+                </strong>
+                .
               </span>
             </p>
 
             {/* Highlighted Offers - Direct Display */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 mt-6">
-              
               {/* Cashback Offer */}
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
@@ -110,10 +121,16 @@ function StudyAbroadHeroSection() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-green-800 font-bold text-sm sm:text-base">5% Cashback</h3>
-                        <span className="bg-green-100 mb-2 text-green-800 text-xs px-2 py-1 rounded-full font-medium">HOT</span>
+                        <h3 className="text-green-800 font-bold text-sm sm:text-base">
+                          5% Cashback
+                        </h3>
+                        <span className="bg-green-100 mb-2 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                          HOT
+                        </span>
                       </div>
-                      <p className="text-green-700 text-xs sm:text-sm">Save up to ₹1,50,000 on offer universities</p>
+                      <p className="text-green-700 text-xs sm:text-sm">
+                        Save up to ₹1,50,000 on offer universities
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -129,10 +146,14 @@ function StudyAbroadHeroSection() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-yellow-800 font-bold text-sm sm:text-base">100% Scholarship</h3>
+                        <h3 className="text-yellow-800 font-bold text-sm sm:text-base">
+                          100% Scholarship
+                        </h3>
                         {/* <span className="bg-yellow-100 text-yellow-800 mb-2 text-xs px-2 py-1 rounded-full font-medium">NEW</span> */}
                       </div>
-                      <p className="text-yellow-700 text-xs sm:text-sm">Merit-based for eligible students</p>
+                      <p className="text-yellow-700 text-xs sm:text-sm">
+                        Merit-based for eligible students
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -180,7 +201,7 @@ function StudyAbroadHeroSection() {
             </div>
           </div>
 
-          {/* Right Content - Hero Image */}
+          {/* Right Content */}
           <div
             className={`lg:col-span-6 flex justify-center items-center transition-all duration-700 transform order-first lg:order-last ${
               isVisible
@@ -188,16 +209,24 @@ function StudyAbroadHeroSection() {
                 : "translate-x-10 opacity-0"
             }`}
           >
-            <div className="w-full max-w-lg lg:max-w-none">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-indigo-400/20 rounded-3xl blur-3xl transform rotate-6"></div>
-                <img
-                  src={Heroimg}
-                  alt="Study Abroad Hero"
-                  className="relative w-full h-auto object-contain drop-shadow-2xl"
-                  loading="eager"
-                />
-              </div>
+            <div className="relative flex justify-center items-center">
+              {/* Glow */}
+              <div className="absolute w-[420px] h-[420px] bg-purple-300/30 blur-[120px] rounded-full"></div>
+
+              {/* Hero Image */}
+              <img
+                src={Heroimg}
+                alt="Study Abroad"
+                className="
+        relative
+        w-full
+        max-w-[650px]
+        object-contain
+        drop-shadow-2xl
+        animate-float
+      "
+                loading="eager"
+              />
             </div>
           </div>
         </div>

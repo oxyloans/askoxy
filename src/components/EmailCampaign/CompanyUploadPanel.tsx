@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Card,
   Button,
   Alert,
-  Space,
-  Tag,
   Form,
+  Input,
   Table,
+  Tag,
   Typography,
   Upload,
   Grid,
@@ -16,18 +15,15 @@ import {
   UploadOutlined,
   FilePdfOutlined,
   CheckCircleOutlined,
-  ThunderboltOutlined,
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
 import customerApi from "../../utils/axiosInstances";
 import BASE_URL from "../../Config";
 import {
-  cardStyle,
   COLOR_BORDER,
   COLOR_PRIMARY,
   COLOR_TEXT,
   primaryButtonStyle,
-  SECTION_META,
 } from "./constants";
 import type { PdfRecord, UploadResponse } from "./types";
 import { getApiErrorMessage } from "./utils";
@@ -36,7 +32,15 @@ const { Dragger } = Upload;
 const { Text } = Typography;
 const { useBreakpoint } = Grid;
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
+
+const divSection: React.CSSProperties = {
+  background: "#ffffff",
+  border: `1px solid ${COLOR_BORDER}`,
+  borderRadius: 14,
+  padding: 24,
+  marginBottom: 20,
+};
 
 const CompanyUploadPanel: React.FC = () => {
   const screens = useBreakpoint();
@@ -48,6 +52,7 @@ const CompanyUploadPanel: React.FC = () => {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchText, setSearchText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchAllPdfs = useCallback(async () => {
@@ -144,30 +149,20 @@ const CompanyUploadPanel: React.FC = () => {
       ]
     : [];
 
-  const cardHeadStyle = {
-    background: "#ffffff",
-    borderBottom: `1px solid ${COLOR_BORDER}`,
-    minHeight: 58,
-  };
+  const filteredRecords = pdfRecords.filter((r) => {
+    const q = searchText.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      r.fileName?.toLowerCase().includes(q) ||
+      r.fileId?.toLowerCase().includes(q)
+    );
+  });
 
   return (
-    <div className="space-y-4">
-      <Card
-        className="ec-pro-card"
-        title={
-          <Space>
-            <FilePdfOutlined style={{ color: COLOR_PRIMARY }} />
-            <Text strong style={{ fontSize: 16, color: COLOR_TEXT }}>
-              {SECTION_META.upload.cardTitle}
-            </Text>
-          </Space>
-        }
-        style={cardStyle}
-        styles={{
-          header: cardHeadStyle,
-          body: { padding: screens.xs ? 16 : 24 },
-        }}
-      >
+    <div>
+      {/* Upload section */}
+      <div style={divSection}>
+        <Text strong style={{ fontSize: 15, color: COLOR_TEXT, display: "block", marginBottom: 16 }}>Upload PDF Document</Text>
         <input
           ref={fileInputRef}
           type="file"
@@ -271,115 +266,7 @@ const CompanyUploadPanel: React.FC = () => {
             Upload Another PDF
           </Button>
         )}
-      </Card>
-
-      <Card
-        className="ec-pro-card"
-        title={
-          <Space>
-            <ThunderboltOutlined style={{ color: COLOR_PRIMARY }} />
-            <Text strong style={{ fontSize: 16, color: COLOR_TEXT }}>
-              All Uploaded PDFs
-            </Text>
-          </Space>
-        }
-        extra={
-          <Button
-            size="small"
-            loading={pdfLoading}
-            onClick={fetchAllPdfs}
-            icon={<GrRefresh />}
-            style={primaryButtonStyle}
-          >
-            Reload
-          </Button>
-        }
-        style={cardStyle}
-        styles={{
-          header: cardHeadStyle,
-          body: { padding: screens.xs ? 16 : 24 },
-        }}
-      >
-        {pdfError && (
-          <Alert
-            type="error"
-            message={pdfError}
-            showIcon
-            style={{ marginBottom: 16, borderRadius: 12 }}
-          />
-        )}
-
-        <Table
-          rowKey="fileId"
-          loading={pdfLoading}
-          dataSource={pdfRecords}
-          pagination={{
-            pageSize: PAGE_SIZE,
-            current: currentPage,
-            showSizeChanger: false,
-            onChange: (page) => setCurrentPage(page),
-          }}
-          scroll={{ x: true }}
-          locale={{
-            emptyText: (
-              <div className="py-6 text-center text-gray-500">
-                No PDFs uploaded yet.
-              </div>
-            ),
-          }}
-          columns={[
-            {
-              title: "#",
-              key: "index",
-              width: 70,
-              align: "center" as const,
-              render: (_: unknown, __: PdfRecord, index: number) =>
-                (currentPage - 1) * PAGE_SIZE + index + 1,
-            },
-            {
-              title: "File Name",
-              dataIndex: "fileName",
-              align: "center" as const,
-              key: "fileName",
-              render: (value: string) => (
-                <span className="font-medium text-gray-800">{value}</span>
-              ),
-            },
-            {
-              title: "File ID",
-              dataIndex: "fileId",
-              align: "center" as const,
-              key: "fileId",
-              render: (value: string) => (
-                <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded select-all">
-                  {value}
-                </span>
-              ),
-            },
-            {
-              title: "Total Chunks",
-              key: "totalchunks",
-              align: "center" as const,
-              render: (_: unknown, record: PdfRecord) => (
-                <span className="text-gray-700">
-                  {record.totalChunks ?? "-"}
-                </span>
-              ),
-            },
-            {
-              title: "Status",
-              dataIndex: "status",
-              key: "status",
-              align: "center" as const,
-              render: (value: string) => (
-                <Tag color={value === "COMPLETED" ? "green" : "blue"}>
-                  {value}
-                </Tag>
-              ),
-            },
-          ]}
-        />
-      </Card>
+      </div>
     </div>
   );
 };

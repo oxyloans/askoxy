@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import DashboardOverview from "./DashboardOverview";
 import { Globe, X, MapPin, ChevronDown } from "lucide-react";
@@ -12,11 +12,13 @@ import CoursesPage from "./Course";
 import CashbackUniversitiesPage from "./univeristyoffers";
 import Support from "./Support";
 import TestScores from "./TestScore";
+import InternshipApplicationDashboard from "./InternshipApplicationDashboard";
 import { Link } from "react-router-dom";
 
 const StudentMainDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState((location.state as any)?.activeTab || "dashboard");
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,6 +84,8 @@ const StudentMainDashboard = () => {
     switch (activeTab) {
       case "dashboard":
         return <DashboardOverview onNavigate={handleNavigation} />;
+      case "internship-application":
+        return <InternshipApplicationDashboard />;
       case "cashback-universities": // Fixed: Match the exact ID from sidebar
         return <CashbackUniversitiesPage onNavigate={handleNavigation} />;
       case "courses":

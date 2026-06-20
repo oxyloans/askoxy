@@ -89,12 +89,20 @@ const handleLoginRedirect = (
       redirectPath || window.location.pathname,
     );
   }
-  if (!sessionStorage.getItem("fromAISTore")) {
+  // ✅ Preserve correct return context based on user type
+  const primaryType =
+    sessionStorage.getItem("primaryType") ||
+    localStorage.getItem("primaryType") ||
+    "CUSTOMER";
+
+  if (primaryType === "AGENT") {
     sessionStorage.setItem("fromAISTore", "true");
+    sessionStorage.removeItem("fromStudyAbroad");
+  } else if (primaryType === "STUDENT") {
+    sessionStorage.setItem("fromStudyAbroad", "true");
+    sessionStorage.removeItem("fromAISTore");
   }
-  // UPDATED: Handle primaryType for AGENT similar to STUDENT
-  const primaryType = localStorage.getItem("primaryType") || "CUSTOMER";
-  sessionStorage.setItem("fromStudyAbroad", "true");
+
   navigate(`/whatsapplogin?primaryType=${primaryType}`);
 };
 const WhatsappLogin: React.FC = () => {
@@ -232,8 +240,13 @@ const WhatsappLogin: React.FC = () => {
         if (userData && userData.userId) {
           // localStorage.setItem("userId", userData.userId); // Store userId (commented as per snippet)
           console.log("redirectPath", sessionStorage.getItem("redirectPath"));
-          const redirectPath =
-            sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+         const redirectPath =
+  sessionStorage.getItem("redirectPath") ||
+  (sessionStorage.getItem("fromAISTore") === "true"
+    ? "/bharath-aistore"
+    : sessionStorage.getItem("fromStudyAbroad") === "true"
+    ? "/studyabroad"
+    : "/main/dashboard/home");
           sessionStorage.removeItem("pendingGoogleAuth");
           // sessionStorage.removeItem("redirectPath");
           sessionStorage.removeItem("receiveNotifications");
@@ -662,8 +675,7 @@ const WhatsappLogin: React.FC = () => {
           localStorage.removeItem("salt");
           localStorage.removeItem("expiryTime");
 
-          sessionStorage.removeItem("fromStudyAbroad");
-          sessionStorage.removeItem("primaryType");
+          // ✅ Keep fromStudyAbroad/fromAISTore until after redirect fallback is resolved
           sessionStorage.removeItem("pendingGoogleAuth");
 
           setOtpError("");
@@ -674,7 +686,12 @@ const WhatsappLogin: React.FC = () => {
             if (loginAttemptRef.current !== currentAttempt) return;
 
             const redirectPath =
-              sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
+  sessionStorage.getItem("redirectPath") ||
+  (sessionStorage.getItem("fromAISTore") === "true"
+    ? "/bharath-aistore"
+    : sessionStorage.getItem("fromStudyAbroad") === "true"
+    ? "/studyabroad"
+    : "/main/dashboard/home");
 
             navigate(redirectPath, { replace: true });
 

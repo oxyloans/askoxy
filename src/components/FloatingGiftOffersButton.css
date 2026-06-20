@@ -1,15 +1,12 @@
 /* High-visibility floating offers entry — avoids blending with white dashboard */
 .floating-gift-offers-btn {
   position: fixed;
-  top: 50%;
   right: 0;
   z-index: 9998;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transform: translateY(calc(-50% - 4.5rem));
   padding: 0.65rem 1rem 0.65rem 0.85rem;
-  cursor: pointer;
   border: none;
   border-radius: 9999px 0 0 9999px;
   background: linear-gradient(115deg, #5b21b6 0%, #7c3aed 45%, #6d28d9 100%);
@@ -18,14 +15,13 @@
     0 0 0 2px rgba(251, 191, 36, 0.95),
     0 6px 28px rgba(91, 33, 182, 0.55),
     0 0 32px rgba(124, 58, 237, 0.45);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+  transition: box-shadow 0.25s ease;
   animation: floating-gift-pulse 2.2s ease-in-out infinite;
+  user-select: none;
+  touch-action: none;
 }
 
 .floating-gift-offers-btn:hover {
-  transform: translateY(calc(-50% - 4.5rem)) scale(1.04);
   box-shadow:
     0 0 0 3px rgba(253, 224, 71, 1),
     0 10px 36px rgba(91, 33, 182, 0.65),
@@ -33,7 +29,7 @@
 }
 
 .floating-gift-offers-btn:active {
-  transform: translateY(calc(-50% - 4.5rem)) scale(0.98);
+  opacity: 0.95;
 }
 
 @keyframes floating-gift-pulse {
@@ -99,10 +95,6 @@
 
 @media (max-width: 639px) {
   .floating-gift-offers-btn {
-    top: auto;
-    right: 14px;
-    bottom: 90px;
-    transform: none;
     padding: 0.72rem;
     border-radius: 9999px;
     gap: 0;
@@ -110,7 +102,7 @@
 
   .floating-gift-offers-btn:hover,
   .floating-gift-offers-btn:active {
-    transform: scale(1.04);
+    opacity: 0.95;
   }
 
   .floating-gift-offers-btn__label {

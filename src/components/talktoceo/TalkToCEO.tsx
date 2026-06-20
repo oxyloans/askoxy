@@ -232,15 +232,13 @@ const loadUserProfile = async () => {
           </button>
 
           <motion.img
-            initial={{ opacity: 0, x: -18 }}
+            initial={{ opacity: 0, x: 18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             src={TALKTOCEOLOGO}
             alt="Talk To CEO"
             className="h-9 w-auto object-contain sm:h-12"
           />
-
-          <div className="w-[60px]" />
         </div>
       </header>
 
@@ -272,13 +270,17 @@ const loadUserProfile = async () => {
           </p>
         </motion.section>
 
-        <section className="mx-auto mt-5 grid max-w-5xl grid-cols-3 gap-3 sm:mt-8 sm:gap-5 lg:mt-6 lg:gap-6">
-          {languages.map((item) => (
+        <section className="mx-auto mt-5 grid max-w-5xl grid-cols-2 gap-3 sm:mt-8 sm:grid-cols-3 sm:gap-5 lg:mt-6 lg:gap-6">
+          {languages.map((item, index) => (
             <motion.div
               key={item.code}
               whileHover={{ y: -4, scale: 1.02 }}
               transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="group rounded-2xl border border-white/10 bg-white/[0.075] p-2 text-center shadow-[0_18px_55px_rgba(0,0,0,0.35)] backdrop-blur-2xl sm:rounded-[24px] sm:p-4 lg:rounded-[26px] lg:p-5"
+              className={`group rounded-2xl border border-white/10 bg-white/[0.075] p-2 text-center shadow-[0_18px_55px_rgba(0,0,0,0.35)] backdrop-blur-2xl sm:rounded-[24px] sm:p-4 lg:rounded-[26px] lg:p-5 ${
+                index === 2
+                  ? "col-span-2 mx-auto w-full max-w-[calc(50%-0.375rem)] sm:col-span-1 sm:max-w-none"
+                  : ""
+              }`}
             >
               <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] sm:rounded-[18px]">
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cyan-300/10 via-transparent to-lime-300/10" />

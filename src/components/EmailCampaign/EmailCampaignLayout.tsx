@@ -5,51 +5,76 @@ import {
   Typography,
   Button,
   Space,
-  Tag,
-  Breadcrumb,
+  Divider,
   Grid,
 } from "antd";
 import type { MenuProps } from "antd";
 import {
   UploadOutlined,
   MailOutlined,
-  ThunderboltOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  HomeOutlined,
-  RightOutlined,
+  FilePdfOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
+import { useNavigate, useLocation } from "react-router-dom";
 import EmailCampaignStyles from "./EmailCampaignStyles";
 import {
   COLOR_BG,
   COLOR_BORDER,
   COLOR_MUTED,
-  COLOR_PRIMARY_DARK,
+  COLOR_PRIMARY,
   COLOR_SIDEBAR,
   COLOR_TEXT,
   EXPANDED_SIDEBAR_WIDTH,
   SECTION_META,
-  type SectionKey,
 } from "./constants";
 
 const { Header, Sider, Content, Footer } = Layout;
-const { Title, Paragraph, Text } = Typography;
+const { Text } = Typography;
 const { useBreakpoint } = Grid;
 
+const PAGE_TITLES: Record<string, string> = {
+  upload:       "Upload Document",
+  campaign:     "Send Campaign",
+  allpdfs:      "All Documents",
+  allcampaigns: "Campaign Manager",
+};
+
+const ROUTE_MAP: Record<string, string> = {
+  upload:       "/email-campaign/upload",
+  campaign:     "/email-campaign/send-campaign",
+  allpdfs:      "/email-campaign/all-documents",
+  allcampaigns: "/email-campaign/all-campaigns",
+};
+
+const PATH_TO_KEY: Record<string, string> = {
+  "/email-campaign/upload":          "upload",
+  "/email-campaign/send-campaign":   "campaign",
+  "/email-campaign/all-documents":   "allpdfs",
+  "/email-campaign/all-campaigns":   "allcampaigns",
+  "/email-campaign/scorecard":       "allcampaigns",
+  "/email-campaign/conversations":   "allcampaigns",
+};
+
+function getActiveKey(pathname: string): string {
+  if (pathname.startsWith("/email-campaign/scorecard"))    return "allcampaigns";
+  if (pathname.startsWith("/email-campaign/conversations")) return "allcampaigns";
+  return PATH_TO_KEY[pathname] ?? "upload";
+}
+
 interface EmailCampaignLayoutProps {
-  activeSection: SectionKey;
-  onSectionChange: (section: SectionKey) => void;
   children: React.ReactNode;
 }
 
-const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
-  activeSection,
-  onSectionChange,
-  children,
-}) => {
-  const screens = useBreakpoint();
+const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({ children }) => {
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const screens    = useBreakpoint();
   const [collapsed, setCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile,  setIsMobile]  = useState(false);
+
+  const activeKey  = getActiveKey(location.pathname);
 
   useEffect(() => {
     const handleResize = () => {
@@ -57,7 +82,6 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
       setIsMobile(mobile);
       if (mobile) setCollapsed(true);
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -67,47 +91,26 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
     if (screens.xs) setCollapsed(true);
   }, [screens.xs]);
 
-  const collapsedWidth = isMobile ? 0 : 80;
-  const effectiveSidebarWidth = screens.xs
-    ? 0
-    : collapsed
-      ? collapsedWidth
-      : EXPANDED_SIDEBAR_WIDTH;
-
-  const meta = SECTION_META[activeSection];
+  const collapsedWidth        = isMobile ? 0 : 80;
+  const effectiveSidebarWidth = screens.xs ? 0 : collapsed ? collapsedWidth : EXPANDED_SIDEBAR_WIDTH;
 
   const menuItems: MenuProps["items"] = [
-    {
-      key: "upload",
-      icon: <UploadOutlined />,
-      label: SECTION_META.upload.sidebarLabel,
-    },
-    {
-      key: "campaign",
-      icon: <MailOutlined />,
-      label: SECTION_META.campaign.sidebarLabel,
-    },
+    { key: "upload",       icon: <UploadOutlined />,    label: SECTION_META.upload.sidebarLabel },
+    { key: "campaign",     icon: <MailOutlined />,      label: SECTION_META.campaign.sidebarLabel },
+    { key: "allpdfs",      icon: <FilePdfOutlined />,   label: SECTION_META.allpdfs.sidebarLabel },
+    { key: "allcampaigns", icon: <AppstoreOutlined />,  label: SECTION_META.allcampaigns.sidebarLabel },
   ];
 
-  const toggleCollapse = () => setCollapsed((prev) => !prev);
-
-  const closeMobileSidebar = () => {
-    if (isMobile && !collapsed) setCollapsed(true);
-  };
-
   const onMenuClick: MenuProps["onClick"] = ({ key }) => {
-    onSectionChange(key as SectionKey);
+    const route = ROUTE_MAP[key];
+    if (route) navigate(route);
     if (isMobile) setCollapsed(true);
   };
 
   const sidebarStyles: React.CSSProperties = {
-    position: "fixed",
-    height: "100vh",
-    zIndex: 1000,
-    top: 0,
+    position: "fixed", height: "100vh", zIndex: 1000, top: 0,
     left: isMobile && collapsed ? -EXPANDED_SIDEBAR_WIDTH : 0,
-    overflowY: "auto",
-    background: COLOR_SIDEBAR,
+    overflowY: "auto", background: COLOR_SIDEBAR,
     borderRight: `1px solid ${COLOR_BORDER}`,
     boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
     transition: "left 0.25s ease-in-out",
@@ -117,13 +120,8 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
     padding: screens.xs ? "0 14px" : "0 24px",
     width: screens.xs ? "100%" : `calc(100% - ${effectiveSidebarWidth}px)`,
     marginLeft: screens.xs ? 0 : effectiveSidebarWidth,
-    position: "fixed",
-    top: 0,
-    zIndex: 900,
-    height: 72,
-    background: "#ffffff",
-    display: "flex",
-    alignItems: "center",
+    position: "fixed", top: 0, zIndex: 900, height: 72,
+    background: "#ffffff", display: "flex", alignItems: "center",
     justifyContent: "space-between",
     borderBottom: `1px solid ${COLOR_BORDER}`,
     boxShadow: "0 4px 18px rgba(15, 23, 42, 0.05)",
@@ -143,14 +141,10 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
   const footerStyles: React.CSSProperties = {
     width: screens.xs ? "100%" : `calc(100% - ${effectiveSidebarWidth}px)`,
     marginLeft: screens.xs ? 0 : effectiveSidebarWidth,
-    height: 56,
-    background: "#ffffff",
+    height: 56, background: "#ffffff",
     borderTop: `1px solid ${COLOR_BORDER}`,
-    textAlign: "center",
-    padding: "12px 16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    textAlign: "center", padding: "12px 16px",
+    display: "flex", alignItems: "center", justifyContent: "center",
     transition: "margin-left 0.25s ease-in-out, width 0.25s ease-in-out",
   };
 
@@ -158,7 +152,7 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
     <Layout className="ec-mail-layout" style={{ minHeight: "100vh" }}>
       {isMobile && !collapsed && (
         <div
-          onClick={closeMobileSidebar}
+          onClick={() => setCollapsed(true)}
           role="presentation"
           className="ec-mobile-overlay"
         />
@@ -168,9 +162,7 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
         collapsed={collapsed}
         onCollapse={setCollapsed}
         breakpoint="md"
-        onBreakpoint={(broken) => {
-          if (broken) setCollapsed(true);
-        }}
+        onBreakpoint={(broken) => { if (broken) setCollapsed(true); }}
         width={EXPANDED_SIDEBAR_WIDTH}
         collapsedWidth={collapsedWidth}
         theme="light"
@@ -178,37 +170,28 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
         style={sidebarStyles}
       >
         {isMobile && !collapsed && (
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            aria-label="Close sidebar"
-            className="ec-sidebar-close-btn"
-          >
-            ×
-          </button>
+          <button type="button" onClick={() => setCollapsed(true)}
+            aria-label="Close sidebar" className="ec-sidebar-close-btn">×</button>
         )}
 
-        <div
-          className={`ec-sidebar-brand${
-            collapsed && !isMobile ? " ec-sidebar-brand-collapsed" : ""
-          }`}
-        >
-          <div className="ec-brand-icon">
-            <ThunderboltOutlined />
-          </div>
+        <div className={`ec-sidebar-brand${collapsed && !isMobile ? " ec-sidebar-brand-collapsed" : ""}`}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
           {(!collapsed || isMobile) && (
-            <div>
-              <Text strong style={{ color: COLOR_TEXT, fontSize: 15 }}>
-                OxyMail AI
-              </Text>
-            </div>
+            <Text strong style={{
+              color: COLOR_PRIMARY,
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: "0.02em",
+              textAlign: "center",
+              display: "block",
+            }}>ASKOXY.AI</Text>
           )}
         </div>
 
         <Menu
           theme="light"
           mode="inline"
-          selectedKeys={[activeSection]}
+          selectedKeys={[activeKey]}
           items={menuItems}
           onClick={onMenuClick}
           className="ec-side-menu"
@@ -222,91 +205,28 @@ const EmailCampaignLayout: React.FC<EmailCampaignLayoutProps> = ({
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={toggleCollapse}
+              onClick={() => setCollapsed((p) => !p)}
               aria-label={collapsed ? "Expand menu" : "Collapse menu"}
               className="ec-menu-toggle"
             />
           </Space>
-
-          <Tag
-            style={{
-              color: COLOR_PRIMARY_DARK,
-              borderColor: "rgba(0, 140, 186, 0.18)",
-              background: "rgba(0, 140, 186, 0.08)",
-              borderRadius: 999,
-              padding: "4px 10px",
-              fontWeight: 700,
-            }}
-          >
-            <ThunderboltOutlined /> {screens.xs ? "AI" : "AI Powered"}
-          </Tag>
+          <Text style={{ fontSize: 13, color: COLOR_MUTED }}>
+            AI-Powered Email Campaign Platform
+          </Text>
         </Header>
 
         <Content style={contentStyles}>
           <div className="ec-page-container">
-            <div
-              className={
-                screens.xs ? "ec-top-row ec-top-row-mobile" : "ec-top-row"
-              }
-            >
-              <div className="ec-top-row-content">
-                <Title
-                  level={screens.xs ? 4 : 3}
-                  style={{
-                    margin: 0,
-                    color: COLOR_TEXT,
-                    fontWeight: 800,
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {meta.pageTitle}
-                </Title>
-                <Paragraph
-                  style={{
-                    margin: "8px 0 0",
-                    maxWidth: 720,
-                    color: COLOR_MUTED,
-                    fontSize: screens.xs ? 13 : 15,
-                    lineHeight: 1.65,
-                  }}
-                >
-                  {meta.pageSubtitle}
-                </Paragraph>
-              </div>
-
-              <Breadcrumb
-                separator={<RightOutlined style={{ fontSize: 10 }} />}
-                items={[
-                  {
-                    title: (
-                      <span>
-                        <HomeOutlined /> OxyMail AI
-                      </span>
-                    ),
-                  },
-                  { title: meta.breadcrumb },
-                ]}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  borderRadius: 0,
-                  padding: 0,
-                  boxShadow: "none",
-                  whiteSpace: "nowrap",
-                  color: COLOR_MUTED,
-                }}
-              />
-            </div>
-
             {children}
           </div>
         </Content>
 
         <Footer style={footerStyles}>
-          <Text style={{ fontSize: 13, color: COLOR_MUTED }}>
-            <strong className="ec-footer-brand">OxyMail AI</strong> ©{" "}
-            {new Date().getFullYear()} · Secure professional outreach
-          </Text>
+          <Space split={<Divider type="vertical" />} style={{ flexWrap: "wrap", justifyContent: "center" }}>
+            {/* <Text strong style={{ color: COLOR_PRIMARY, fontSize: 13 }}>ASKOXY.AI</Text> */}
+            <Text style={{ fontSize: 13, color: COLOR_MUTED }}>© {new Date().getFullYear()} OxyGlobal Technologies</Text>
+            <Text style={{ fontSize: 13, color: COLOR_MUTED }}>AI-Powered Email Campaigns</Text>
+          </Space>
         </Footer>
       </Layout>
 

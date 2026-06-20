@@ -506,6 +506,7 @@ import { Send, X } from "lucide-react";
 import StudyAbroadHeader from "./StudyAbroadHeader";
 import StudyAbroadHeroSection from "./StudyAbroadHeroSection";
 import CountriesSection from "./CountriesSection";
+import InternshipPage from "./InternshipPage";
 import UniversitiesSection from "./UniversitiesSection";
 import TestimonialsSection from "./TestimonialsSection";
 import StudyAbroadFooter from "./StudyAbroadFooter";
@@ -518,6 +519,7 @@ import {
   XMarkIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/solid";
+
 
 // Add type definition for window.gtag if using analytics
 declare global {
@@ -536,8 +538,17 @@ interface Message {
   isImage?: boolean;
 }
 
+type StudyAbroadSectionId =
+  | "home"
+  | "workabroad"
+  | "universities"
+  | "countries"
+  | "internships"
+  | "testimonials"
+  | "contact";
+
 export default function StudyAbroadLandingPage() {
-  const [activeLink, setActiveLink] = useState("home");
+  const [activeLink, setActiveLink] = useState<StudyAbroadSectionId>("home");
   const [pageEvents, setPageEvents] = useState({
     pageLoaded: false,
     scrollCount: 0,
@@ -625,11 +636,12 @@ export default function StudyAbroadLandingPage() {
   const homeRef = useRef<HTMLDivElement>(null);
   const workAbroadRef = useRef<HTMLDivElement>(null); // 👈 NEW
   const countriesRef = useRef<HTMLDivElement>(null);
+  const internshipsRef = useRef<HTMLDivElement>(null);
   const universitiesRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
-  const scrollToSection = (sectionId: string) => {
+  const scrollToSection = (sectionId: StudyAbroadSectionId) => {
     setActiveLink(sectionId);
     setPageEvents((p) => ({
       ...p,
@@ -643,10 +655,11 @@ export default function StudyAbroadLandingPage() {
         item_id: sectionId,
       });
     }
-    const refs: Record<string, React.RefObject<HTMLDivElement>> = {
+    const refs: Record<StudyAbroadSectionId, React.RefObject<HTMLDivElement>> = {
       home: homeRef,
       workabroad: workAbroadRef, // 👈 NEW
       countries: countriesRef,
+      internships: internshipsRef,
       universities: universitiesRef,
       testimonials: testimonialsRef,
       contact: contactRef,
@@ -665,10 +678,11 @@ export default function StudyAbroadLandingPage() {
   // Scroll observation
   useEffect(() => {
     const observeScroll = () => {
-      const sections = [
+      const sections: { id: StudyAbroadSectionId; ref: React.RefObject<HTMLDivElement> }[] = [
         { id: "home", ref: homeRef },
-        { id: "workabroad", ref: workAbroadRef }, // 👈 NEW
+        { id: "workabroad", ref: workAbroadRef },
         { id: "countries", ref: countriesRef },
+        { id: "internships", ref: internshipsRef },
         { id: "universities", ref: universitiesRef },
         { id: "testimonials", ref: testimonialsRef },
         { id: "contact", ref: contactRef },
@@ -737,15 +751,23 @@ export default function StudyAbroadLandingPage() {
     const hash = window.location.hash.replace("#", "");
     if (
       hash &&
-      ["home", "countries", "universities", "testimonials", "contact"].includes(
-        hash
-      )
+      [
+        "home",
+        "workabroad",
+        "countries",
+        "internships",
+        "universities",
+        "testimonials",
+        "contact",
+      ].includes(hash)
     ) {
       setTimeout(() => {
         scrollToSection(
           hash as
             | "home"
+            | "workabroad"
             | "countries"
+            | "internships"
             | "universities"
             | "testimonials"
             | "contact"
@@ -851,13 +873,16 @@ export default function StudyAbroadLandingPage() {
           <StudyAbroadHeroSection />
         </div>
         <div ref={workAbroadRef} id="workabroad">
-          <GlobalProgramsPage />
+          <InternshipPage />
         </div>
         <div ref={universitiesRef} id="universities">
           <UniversitiesSection />
         </div>
         <div ref={countriesRef} id="countries">
           <CountriesSection />
+        </div>
+        <div ref={internshipsRef} id="internships">
+        <GlobalProgramsPage />
         </div>
         <div ref={testimonialsRef} id="testimonials">
           <TestimonialsSection />

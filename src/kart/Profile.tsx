@@ -7,8 +7,7 @@ import {
   FaHome,
   FaBriefcase,
   FaMapMarkerAlt,
-  FaTrash,
-  FaPen,
+
   FaEdit,
 } from "react-icons/fa";
 import { Loader2, AlertCircle, X, CheckCircle2 } from "lucide-react";

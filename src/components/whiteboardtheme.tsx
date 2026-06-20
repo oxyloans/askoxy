@@ -247,11 +247,11 @@ title:"Bharat AI Store",
                       {card.league}
                     </h3>
 
-                    <span
-                      className="mt-0.5 block text-center text-[11px] font-semibold leading-[1.2] text-gray-600 sm:mt-1 sm:text-[13px] md:text-[14px]"
+                    <h1
+                      className="mt-0.5 block text-center text-[14px] font-bold leading-[1.2] text-gray-600 sm:mt-1 sm:text-[13px] md:text-[14px]"
                     >
                       {card.title}
-                    </span>
+                    </h1>
                   </motion.div>
                 </button>
               );

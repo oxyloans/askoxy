@@ -10,7 +10,7 @@ export const COLOR_BG = "#ffffff";
 export const COLOR_SIDEBAR = "#ffffff";
 export const COLOR_MENU_SELECTED = "#f9fafb";
 
-export type SectionKey = "upload" | "campaign";
+export type SectionKey = "upload" | "campaign" | "allpdfs" | "allcampaigns";
 
 export const SECTION_META: Record<
   SectionKey,
@@ -23,18 +23,32 @@ export const SECTION_META: Record<
   }
 > = {
   upload: {
-    sidebarLabel: "Company Upload Files",
-    pageTitle: "Company Upload Files",
-    pageSubtitle: "Upload company files for AI email campaigns.",
+    sidebarLabel: "Upload Document",
+    pageTitle: "Upload Company Document",
+    pageSubtitle: "Upload company PDF files to power AI email campaigns.",
     cardTitle: "Upload Company Document",
-    breadcrumb: "PDF Upload",
+    breadcrumb: "Upload Document",
   },
   campaign: {
-    sidebarLabel: "Email Campaign",
-    pageTitle: "Email Campaign",
-    pageSubtitle: "Create AI outreach emails for clients.",
+    sidebarLabel: "Send Campaign",
+    pageTitle: "Send Email Campaign",
+    pageSubtitle: "Generate and dispatch AI-powered outreach emails to clients.",
     cardTitle: "Client Campaign Details",
-    breadcrumb: "Campaign",
+    breadcrumb: "Send Campaign",
+  },
+  allpdfs: {
+    sidebarLabel: "All Documents",
+    pageTitle: "All Uploaded Documents",
+    pageSubtitle: "Browse and search all uploaded company PDF files.",
+    cardTitle: "All Uploaded Documents",
+    breadcrumb: "All Documents",
+  },
+  allcampaigns: {
+    sidebarLabel: "Campaign Manager",
+    pageTitle: "Campaign Manager",
+    pageSubtitle: "View all campaigns, scorecards and client conversations.",
+    cardTitle: "Campaign Manager",
+    breadcrumb: "Campaign Manager",
   },
 };
 

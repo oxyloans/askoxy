@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import axios from "axios";
 import { FaPhoneAlt } from "react-icons/fa";
 import { Phone, PhoneOff, Mic, Check, Copy } from "lucide-react";
@@ -39,6 +39,35 @@ const FloatingCallButton: React.FC = () => {
   const micStreamRef = useRef<MediaStream | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const bufferRef = useRef<string>("");
+
+  const [pos, setPos] = useState<{ top: number; right: number }>({ top: 50, right: 0 });
+  const dragRef = useRef<{ dragging: boolean; startY: number; startTop: number }>({ dragging: false, startY: 0, startTop: 50 });
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      if (!dragRef.current.dragging) return;
+      const clientY = "touches" in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+      const delta = clientY - dragRef.current.startY;
+      const newTop = Math.min(90, Math.max(10, dragRef.current.startTop + (delta / window.innerHeight) * 100));
+      setPos({ top: newTop, right: 0 });
+    };
+    const onUp = () => { dragRef.current.dragging = false; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, []);
+
+  const onDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    dragRef.current = { dragging: true, startY: clientY, startTop: pos.top };
+  };
 
   const getUserId = () => {
     try {
@@ -649,7 +678,10 @@ const FloatingCallButton: React.FC = () => {
 
       <button
         onClick={handleCallClick}
-        className="fixed top-1/2 right-0 -translate-y-1/2 bg-white rounded-l-full shadow-lg hover:shadow-xl z-[9999] flex items-center gap-2 px-4 py-3 transition-all duration-300 ease-in-out border-none cursor-pointer"
+        onMouseDown={onDragStart}
+        onTouchStart={onDragStart}
+        style={{ position: "fixed", top: `${pos.top}%`, right: `${pos.right}px`, transform: "translateY(-50%)", cursor: "grab" }}
+        className="bg-white rounded-l-full shadow-lg hover:shadow-xl z-[9999] flex items-center gap-2 px-4 py-3 transition-shadow duration-300 ease-in-out border-none select-none"
       >
         <div className="bg-green-500 rounded-full p-3 flex items-center justify-center">
           <FaPhoneAlt className="text-white text-mb" />

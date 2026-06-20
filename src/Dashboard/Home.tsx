@@ -572,7 +572,7 @@ const Home: React.FC = () => {
           image: item.itemImage || ProductImg1,
           description: `₹${item.itemPrice || 0}`,
           path: `/item/${item.itemId}`,
-          icon: <ShoppingBag className="text-orange-500" size={24} />,
+          icon: <ShoppingBag className="text-purple-500" size={24} />,
           itemPrice: item.itemPrice,
           itemMrp: item.itemMrp,
           quantity: item.quantity,
@@ -1702,8 +1702,8 @@ const Home: React.FC = () => {
             scrollbar-width: auto;
           }
           @keyframes glowPulse {
-            0%, 100% { box-shadow: 0 0 6px 2px rgba(251,146,60,0.4); }
-            50% { box-shadow: 0 0 18px 6px rgba(251,146,60,0.15); }
+            0%, 100% { box-shadow: 0 0 6px 2px rgba(60, 114, 251, 0.4); }
+            50% { box-shadow: 0 0 18px 6px rgba(60, 120, 251, 0.15); }
           }
           .animate-pulse-border {
             animation: glowPulse 2s ease-in-out infinite;
@@ -1970,7 +1970,7 @@ const Home: React.FC = () => {
                       : ["Combo Offer", "Special Deals"].includes(
                             category.categoryName,
                           )
-                        ? "border-orange-200 animate-pulse-border"
+                        ? "border-purple-300 animate-pulse-border"
                         : ""
                   } cursor-pointer`}
                   onClick={() => handleCategoryChange(category.categoryName)}
@@ -2004,7 +2004,7 @@ const Home: React.FC = () => {
                     <h3
                       className={`font-bold text-md transition-colors ${
                         category.categoryName === "Special Deals"
-                          ? "text-orange-600 hover:text-orange-500"
+                          ? "text-purple-600 hover:text-purple-500"
                           : "text-purple-700 hover:text-purple-600"
                       }`}
                     >

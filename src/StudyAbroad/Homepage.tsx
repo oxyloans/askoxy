@@ -262,10 +262,15 @@ const UserSelectionPage = () => {
   const [authRequired, setAuthRequired] = useState(false);
   const [activeLink, setActiveLink] = useState("home");
   const [isLoading, setIsLoading] = useState<boolean>(false);
- useEffect(() => {
-   sessionStorage.removeItem("primaryType");
-   sessionStorage.removeItem("redirectPath");
- }, []);
+useEffect(() => {
+  sessionStorage.setItem("primaryType", "STUDENT");
+  sessionStorage.setItem("fromStudyAbroad", "true");
+
+  if (!sessionStorage.getItem("redirectPath")) {
+    sessionStorage.setItem("redirectPath", "/studyabroad");
+  }
+}, []);
+  
     
   // Check if user is authenticated on component mount
   useEffect(() => {

@@ -96,7 +96,7 @@ import RadhAICloneAdminPage from "./components/talktoceo/RadhAICloneAdminPage";
 import SudheerVakkalagadda from "./AskoxyAdmin/SudheerVakkalagadda";
 import RadhAIRAndDPage from "./components/talktoceo/RadhAIRAndDPage";
 import RadhAIAdminDashboard from "./components/talktoceo/RadhAIAdminDashboard";
-import EmailCampaign from "./components/EmailCampaign";
+import EmailCampaignLayout, { UploadPage, SendCampaignPage, AllDocumentsPage, AllCampaignsRoute, ScorecardPage, ConversationsPage } from "./components/EmailCampaign/index";
 import GoogleAnalyticsDashboard from "./components/GoogleAnalyticsDashboard";
 import OxyBricksFractionalPage from "./components/FractionalPage";
 import Assignedtasksbasedstatus from "./Taskmanagement/Assignedtasksbasedstatus";
@@ -118,6 +118,7 @@ import RAKBANKAIIntelligenceReport2026 from "./components/RAKBANKAIIntelligenceR
 import UAEBanksAIIntelligenceHub from "./components/UAEBanksAIIntelligenceHub";
 import RadhAIVoicePageCEO from "./components/talktoceo/RadhAIVoicePageLanguage";
 import CbsDataPage from "./AskoxyAdmin/CbsDataPage";
+import InternshipPage from "./StudyAbroad/InternshipPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -824,6 +825,7 @@ const App: React.FC = () => {
 
               <Route path="/radhai-RandD" element={<RadhAIRAndDPage />} />
               <Route path="/talktoceo" element={<TalkToCEO />} />
+              <Route path="/internships" element={<InternshipPage />} />
               <Route path="/radhai-assistant" element={<RadhAIVoicePageCEO />} />
               <Route path="/circleLend" element={<ProxyLendPage />} />
               <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
@@ -1365,7 +1367,13 @@ const App: React.FC = () => {
                 path="/teststore/assistant/:id/:agentId"
                 element={<TestAgentDetails />}
               />
-              <Route path="/email-campaign" element={<EmailCampaign />} />
+              <Route path="/email-campaign" element={<UploadPage />} />
+              <Route path="/email-campaign/upload" element={<UploadPage />} />
+              <Route path="/email-campaign/send-campaign" element={<SendCampaignPage />} />
+              <Route path="/email-campaign/all-documents" element={<AllDocumentsPage />} />
+              <Route path="/email-campaign/all-campaigns" element={<AllCampaignsRoute />} />
+              <Route path="/email-campaign/scorecard/:batchId" element={<ScorecardPage />} />
+              <Route path="/email-campaign/conversations/:batchId" element={<ConversationsPage />} />
               <Route path="/may2Interview" element={<HiringLandingPage />} />
               <Route
                 path="/DRAcertification"
