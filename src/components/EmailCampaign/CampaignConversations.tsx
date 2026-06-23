@@ -78,11 +78,11 @@ const roundColumns: ColumnsType<ReplyRound & { key: string; serial: number }> = 
   { title: "Session ID",     dataIndex: "sessionId",            key: "sessionId",            onHeaderCell: ch, onCell: cc, render: (v) => <Text code style={{ fontSize: 12 }}>{v}</Text> },
   { title: "Client Reply",   dataIndex: "clientReplyContent",   key: "clientReplyContent",   onHeaderCell: ch, onCell: cc },
   { title: "Gen. Subject",   dataIndex: "generatedSubject",     key: "generatedSubject",     onHeaderCell: ch, onCell: cc },
-  { title: "Gen. Body",      dataIndex: "generatedBody",        key: "generatedBody",        onHeaderCell: ch, onCell: cc,
-    render: (v: string) => (
-      <Paragraph ellipsis={{ rows: 2, expandable: true }} style={{ margin: 0, fontSize: 12, maxWidth: 260 }}>{v}</Paragraph>
-    ),
-  },
+  // { title: "Gen. Body",      dataIndex: "generatedBody",        key: "generatedBody",        onHeaderCell: ch, onCell: cc,
+  //   render: (v: string) => (
+  //     <Paragraph ellipsis={{ rows: 2, expandable: true }} style={{ margin: 0, fontSize: 12, maxWidth: 260 }}>{v}</Paragraph>
+  //   ),
+  // },
   { title: "Status",         dataIndex: "status",               key: "status",               onHeaderCell: ch, onCell: cc,
     render: (v: string) => <Tag color={REPLY_STATUS_COLOR[v] ?? "default"} style={{ borderRadius: 20, fontWeight: 400 }}>{v}</Tag>,
   },
@@ -199,7 +199,7 @@ const CampaignConversations: React.FC = () => {
           onClick={() => { window.location.href = "/email-campaign/all-campaigns"; }}
           style={{ borderRadius: 8, fontWeight: 600, borderColor: COLOR_PRIMARY, color: COLOR_PRIMARY }}
         >
-          Back to Campaign Manager
+          Back to Campaign Details
         </Button>
       </div>
 

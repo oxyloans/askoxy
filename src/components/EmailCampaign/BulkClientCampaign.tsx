@@ -91,7 +91,7 @@ const BulkClientCampaign: React.FC = () => {
   return (
     <div>
       <Paragraph style={{ color: "#6b7280", marginBottom: 16 }}>
-        Upload a CSV or Excel file with client names and email addresses. The
+        Upload a CSV or Excel file with client name and client email. The
         campaign will be generated and sent to admin for WhatsApp approval.
       </Paragraph>
 

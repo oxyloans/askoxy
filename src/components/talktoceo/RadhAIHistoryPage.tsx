@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   MessageSquare, Search, ChevronRight, ChevronLeft, User, Clock,
   Mic, Globe, RefreshCw, X, AlertCircle, Inbox, Users, Volume2, MessageCircle,
@@ -426,14 +427,23 @@ export default function RadhAIHistoryPage() {
         ${mobileView === "list" ? "hidden lg:flex" : "flex"}
       `}>
 
-        {/* Compact inline conversation bar — sticky on mobile below topbar */}
+        {/* Compact inline conversation bar — docked just below the real topbar.
+            IMPORTANT: scrolling on mobile actually happens at the page/window level here,
+            not inside this component's own box. That means `position: sticky` measures
+            its offset from the top of the *viewport*, which is exactly where the real
+            header also lives. `top-0` would pin this bar to that same y=0 spot, and the
+            header (painted on top) would hide it as soon as you scroll — which is the
+            "disappears under the header" bug. Offsetting by the header's real height
+            (56px = h-14, matching the topbar) makes it dock right under the header
+            instead of fighting it for the same pixel row. `backdrop-blur` (no shadow)
+            keeps it reading as part of the same surface rather than a second header. */}
         {activeConv && (
-          <div className="sticky top-14 lg:static z-20 flex shrink-0 items-center gap-2 border-b border-slate-200/60 bg-white px-3 py-2 shadow-sm lg:shadow-none">
+          <div className="sticky top-14 lg:static z-20 flex shrink-0 items-center gap-2 border-b border-slate-200 bg-white/95 backdrop-blur-sm px-3 py-2">
             <button
               onClick={handleBack}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 lg:hidden"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 active:bg-slate-200 lg:hidden"
             >
-              <ChevronLeft size={15} />
+              <ChevronLeft size={16} />
             </button>
             <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] ${modeColors(activeConv.mode)}`}>
               {modeIcon(activeConv.mode, 12)}
@@ -445,7 +455,7 @@ export default function RadhAIHistoryPage() {
               </span>
             </p>
             {messages.length > 0 && (
-              <span className="shrink-0 text-[10px] text-slate-400">
+              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-500">
                 {messages.length} msg{messages.length !== 1 ? "s" : ""}
               </span>
             )}

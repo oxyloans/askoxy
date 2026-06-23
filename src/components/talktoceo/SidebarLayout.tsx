@@ -31,6 +31,17 @@ type NavItem = {
 
 const SIDEBAR_ITEMS: NavItem[] = [
   {
+    title: "Dashboard",
+    subtitle: "All links & reports",
+    path: "/radhai-admin/dashboard",
+    icon: LayoutDashboard,
+    accent: "#db2777",
+    lightBg: "#fce7f3",
+    activeBg: "#fce7f3",
+    activeText: "#9d174d",
+    activeBorder: "#f472b6",
+  },
+  {
     title: "My Clone",
     subtitle: "CEO AI Clone",
     path: "/radhai-admin/radhAI",
@@ -87,7 +98,7 @@ const SIDEBAR_ITEMS: NavItem[] = [
   },
   {
     title: "Google Workspace",
-    subtitle: "Coming soon",
+    subtitle: "CEO  Workspace",
     path: "/radhai-admin/my-google",
     icon: FcGoogle,
     accent: "#c2410c",

@@ -87,11 +87,11 @@ const detailColumns: ColumnsType<DetailRow> = [
   { title: "Campaign Name",    dataIndex: "campaignName",    key: "campaignName",    onHeaderCell: ch, onCell: cc },
   { title: "CSV File",         dataIndex: "csvFileName",     key: "csvFileName",     onHeaderCell: ch, onCell: cc },
   { title: "Total Recipients", dataIndex: "totalRecipients", key: "totalRecipients", onHeaderCell: ch, onCell: cc },
-  { title: "Status",           dataIndex: "status",          key: "status",          onHeaderCell: ch, onCell: cc },
+ 
   { title: "Created Date",    dataIndex: "createdAt",    key: "createdAt",    onHeaderCell: ch, onCell: cc, render: fmtDate },
   { title: "Last Updated",  dataIndex: "lastUpdatedAt", key: "lastUpdatedAt", onHeaderCell: ch, onCell: cc, render: fmtDate },
   { title: "Completed Date",  dataIndex: "completedAt",  key: "completedAt",  onHeaderCell: ch, onCell: cc, render: fmtDate },
- 
+  { title: "Status",           dataIndex: "status",          key: "status",          onHeaderCell: ch, onCell: cc },
 ];
 
 /* ── component ── */
@@ -168,7 +168,7 @@ const fetchScorecard = useCallback(async (batchId: string) => {
             onClick={() => { window.location.href = "/email-campaign/all-campaigns"; }}
             style={{ borderRadius: 8, fontWeight: 400, borderColor: COLOR_PRIMARY, color: COLOR_PRIMARY }}
           >
-            Back to Campaign Manager
+            Back to Campaign Details
           </Button>
         </div>
       )}

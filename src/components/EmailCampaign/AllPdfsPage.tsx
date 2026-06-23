@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Input, Table, Tag, Typography } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import { Alert, Button, Input, Modal, Table, Tag, Typography } from "antd";
+import { DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
 import customerApi from "../../utils/axiosInstances";
 import BASE_URL from "../../Config";
 import { COLOR_BORDER, COLOR_PRIMARY } from "./constants";
@@ -22,19 +22,22 @@ const tableStyle = `
   .ec-pdf-table .ant-table-tbody > tr > td { border-bottom: 1px solid ${COLOR_BORDER} !important; }
 `;
 
+const DELETE_API_BASE = "http://65.0.147.157:9041/api/ai-automation/pdf";
+
 const AllPdfsPage: React.FC = () => {
   const [records, setRecords] = useState<PdfRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
   const [search, setSearch]   = useState("");
   const [page, setPage]       = useState(1);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const { data } = await customerApi.get<PdfRecord[]>(`${BASE_URL}/ai-automation/pdf/all`);
-      setRecords(Array.isArray(data) ? data : []);
+      setRecords(Array.isArray(data) ? data.reverse() : []);
     } catch (e: any) {
       setError(getApiErrorMessage(e, "Failed to load PDFs."));
     } finally {
@@ -43,6 +46,36 @@ const AllPdfsPage: React.FC = () => {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  const handleDelete = useCallback((record: PdfRecord) => {
+    Modal.confirm({
+      title: "Delete Document",
+      content: (
+        <span>
+          Are you sure you want to delete <strong>{record.fileName}</strong>?
+          <br />
+          <Text type="secondary" style={{ fontSize: 12 }}>File ID: {record.fileId}</Text>
+        </span>
+      ),
+      okText: "Yes, Delete",
+      okType: "danger",
+      cancelText: "Cancel",
+      okButtonProps: { danger: true },
+      centered: true,
+      onOk: async () => {
+        setDeleting(record.fileId);
+        setError("");
+        try {
+          await customerApi.delete(`${DELETE_API_BASE}/${record.fileId}`);
+          setRecords((prev) => prev.filter((r) => r.fileId !== record.fileId));
+        } catch (e: any) {
+          setError(getApiErrorMessage(e, `Failed to delete "${record.fileName}".`));
+        } finally {
+          setDeleting(null);
+        }
+      },
+    });
+  }, []);
 
   const filtered = records.filter((r) => {
     const q = search.trim().toLowerCase();
@@ -85,7 +118,6 @@ const AllPdfsPage: React.FC = () => {
         bordered
         scroll={{ x: true }}
         size="middle"
-        // style={{ background: "transparent" }}
         className="ec-pdf-table"
         rowClassName={(_, idx) => (idx % 2 === 0 ? "ec-row-even" : "ec-row-odd")}
         pagination={{
@@ -121,6 +153,23 @@ const AllPdfsPage: React.FC = () => {
               <Tag color={v === "COMPLETED" ? "success" : "processing"} style={{ borderRadius: 20, fontWeight: 700 }}>
                 {v}
               </Tag>
+            ),
+          },
+          {
+            title: "Action", key: "action",
+            onHeaderCell: ch, onCell: cc,
+            render: (_: any, record: PdfRecord) => (
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                loading={deleting === record.fileId}
+                disabled={deleting !== null}
+                onClick={() => handleDelete(record)}
+                style={{ fontWeight: 600 }}
+              >
+                Delete
+              </Button>
             ),
           },
         ]}

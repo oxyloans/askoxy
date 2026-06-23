@@ -12,6 +12,7 @@ import {
   Form,
   message,
   Tooltip,
+  Tabs,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -79,7 +80,9 @@ const VectorStorePage: React.FC = () => {
 
   const [uploadModal, setUploadModal] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<VectorStore | null>(null);
+  const [uploadMode, setUploadMode] = useState<"single" | "multiple">("single");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -315,25 +318,53 @@ useEffect(() => {
     }
   };
 
+  const resetUploadState = () => {
+    setUploadMode("single");
+    setUploadFile(null);
+    setUploadFiles([]);
+  };
+
   const handleUpload = async () => {
-    if (!uploadTarget || !uploadFile) {
-      message.warning("Please select a file to upload.");
+    if (!uploadTarget) return;
+
+    const selectedFiles = uploadMode === "single" ? (uploadFile ? [uploadFile] : []) : uploadFiles;
+
+    if (!selectedFiles.length) {
+      message.warning(
+        uploadMode === "single"
+          ? "Please select a file to upload."
+          : "Please select one or more files to upload.",
+      );
       return;
     }
+
     setUploading(true);
     const formData = new FormData();
-    formData.append("file", uploadFile);
+
+    if (uploadMode === "single") {
+      formData.append("file", selectedFiles[0]);
+    } else {
+      selectedFiles.forEach((file) => formData.append("files", file));
+    }
+
+    const uploadUrl =
+      uploadMode === "single"
+        ? `${BASE}/${uploadTarget.id}/files`
+        : `${BASE}/${uploadTarget.id}/files/upload-multiple`;
+
     try {
-      const { data: json } = await axiosInstance.post(
-        `${BASE}/${uploadTarget.id}/files`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
+      const { data: json } = await axiosInstance.post(uploadUrl, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       if (json.success) {
-        message.success(`"${json.data.fileName}" uploaded successfully!`);
-        setUploadFile(null);
+        if (uploadMode === "single") {
+          message.success(`"${json.data?.fileName || selectedFiles[0].name}" uploaded successfully!`);
+        } else {
+          const uploadedCount = Array.isArray(json.data) ? json.data.length : selectedFiles.length;
+          message.success(`${uploadedCount} files uploaded successfully!`);
+        }
+        resetUploadState();
         setUploadModal(false);
       } else {
         message.error(json.message || "Upload failed.");
@@ -500,7 +531,7 @@ useEffect(() => {
               style={btnPrimary}
               onClick={() => {
                 setUploadTarget(record);
-                setUploadFile(null);
+                resetUploadState();
                 setUploadModal(true);
               }}
             />
@@ -852,13 +883,13 @@ useEffect(() => {
       <Modal
         title={
           <span className="font-bold text-base text-gray-800">
-            Upload Document
+            Upload Documents
           </span>
         }
         open={uploadModal}
         onCancel={() => {
           if (uploading) return;
-          setUploadFile(null);
+          resetUploadState();
           setUploadModal(false);
         }}
         centered
@@ -868,7 +899,7 @@ useEffect(() => {
         footer={
           <div className="flex items-center justify-between">
             <div>
-              {uploadFile && (
+              {uploadMode === "single" && uploadFile && (
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <CheckCircleOutlined style={{ color: "#1ab394" }} />
                   <span className="truncate max-w-[200px]">
@@ -876,12 +907,18 @@ useEffect(() => {
                   </span>
                 </div>
               )}
+              {uploadMode === "multiple" && uploadFiles.length > 0 && (
+                <div className="flex items-center gap-1 text-sm text-gray-500">
+                  <CheckCircleOutlined style={{ color: "#1ab394" }} />
+                  <span>{uploadFiles.length} files selected</span>
+                </div>
+              )}
             </div>
             <Space>
               <Button
                 size="middle"
                 onClick={() => {
-                  setUploadFile(null);
+                  resetUploadState();
                   setUploadModal(false);
                 }}
                 disabled={uploading}
@@ -893,11 +930,11 @@ useEffect(() => {
                 size="middle"
                 onClick={handleUpload}
                 loading={uploading}
-                disabled={!uploadFile}
+                disabled={uploadMode === "single" ? !uploadFile : uploadFiles.length === 0}
                 style={btnGreen}
                 className="rounded-lg font-semibold"
               >
-                {uploading ? "Uploading…" : "Confirm Upload"}
+                {uploading ? "Uploading…" : uploadMode === "single" ? "Upload File" : "Upload Files"}
               </Button>
             </Space>
           </div>
@@ -914,19 +951,94 @@ useEffect(() => {
           </div>
         )}
 
+        <Tabs
+          activeKey={uploadMode}
+          onChange={(key) => {
+            if (uploading) return;
+            setUploadMode(key as "single" | "multiple");
+            setUploadFile(null);
+            setUploadFiles([]);
+          }}
+          items={[
+            { key: "single", label: "Single Upload" },
+            { key: "multiple", label: "Multiple Upload" },
+          ]}
+          className="mb-3"
+        />
+
         <Upload.Dragger
-          name="file"
-          multiple={false}
+          name={uploadMode === "single" ? "file" : "files"}
+          multiple={uploadMode === "multiple"}
           beforeUpload={(file) => {
-            setUploadFile(file);
+            if (uploadMode === "single") {
+              setUploadFile(file);
+              setUploadFiles([]);
+            } else {
+              setUploadFile(null);
+              setUploadFiles((prev) => {
+                const exists = prev.some(
+                  (item) =>
+                    item.name === file.name &&
+                    item.size === file.size &&
+                    item.lastModified === file.lastModified,
+                );
+                return exists ? prev : [...prev, file];
+              });
+            }
             return false;
           }}
-          showUploadList={false}
+          onRemove={(file) => {
+            if (uploadMode === "single") {
+              setUploadFile(null);
+            } else {
+              setUploadFiles((prev) =>
+                prev.filter(
+                  (item) =>
+                    !(
+                      item.name === file.name &&
+                      item.size === file.size &&
+                      item.lastModified === file.lastModified
+                    ),
+                ),
+              );
+            }
+          }}
+          fileList={
+            uploadMode === "single"
+              ? uploadFile
+                ? [
+                    {
+                      uid: uploadFile.name,
+                      name: uploadFile.name,
+                      status: "done" as const,
+                    },
+                  ]
+                : []
+              : uploadFiles.map((file) => ({
+                  uid: `${file.name}-${file.lastModified}`,
+                  name: file.name,
+                  status: "done" as const,
+                }))
+          }
           disabled={uploading}
           className="rounded-xl"
           style={{
-            borderColor: uploadFile ? "#1ab394" : "#d9d9d9",
-            background: uploadFile ? "#f0fdf9" : "#fafafa",
+            borderColor:
+              uploadMode === "single"
+                ? uploadFile
+                  ? "#1ab394"
+                  : "#d9d9d9"
+                : uploadFiles.length
+                  ? "#1ab394"
+                  : "#d9d9d9",
+            background:
+              uploadMode === "single"
+                ? uploadFile
+                  ? "#f0fdf9"
+                  : "#fafafa"
+                : uploadFiles.length
+                  ? "#f0fdf9"
+                  : "#fafafa",
           }}
         >
           {uploading ? (
@@ -943,21 +1055,28 @@ useEffect(() => {
                 Uploading, please wait…
               </p>
             </div>
-          ) : uploadFile ? (
+          ) : (uploadMode === "single" && uploadFile) ||
+            (uploadMode === "multiple" && uploadFiles.length > 0) ? (
             <div className="py-6 text-center">
               <CheckCircleOutlined style={{ fontSize: 36, color: "#1ab394" }} />
               <p className="mt-2 font-semibold text-gray-800 text-sm">
-                {uploadFile.name}
+                {uploadMode === "single"
+                  ? uploadFile?.name
+                  : `${uploadFiles.length} files selected`}
               </p>
               <p className="text-xs text-gray-400 m-0">
-                Click or drag to replace
+                {uploadMode === "single"
+                  ? "Click or drag to replace"
+                  : "Click or drag more files to add"}
               </p>
             </div>
           ) : (
             <div className="py-6 text-center">
               <InboxOutlined style={{ fontSize: 40, color: "#008cba" }} />
               <p className="mt-2 font-semibold text-gray-700">
-                Click or drag a file here to upload
+                {uploadMode === "single"
+                  ? "Click or drag a file here to upload"
+                  : "Click or drag files here to upload"}
               </p>
               <p className="text-xs text-gray-400 m-0">
                 Supports PDF, DOCX, TXT, images and more

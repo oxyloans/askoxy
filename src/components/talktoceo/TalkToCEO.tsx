@@ -1,8 +1,8 @@
 import React, {useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Languages,
+ 
   Mic,
   ArrowRight,
   Briefcase,
@@ -12,6 +12,7 @@ import {
   TrendingUp,
   ArrowLeft,
   X,
+  MessageCircle,
 } from "lucide-react";
 
 import TALKTOCEOLOGO from "../../assets/img/talktoceo.png";
@@ -23,10 +24,22 @@ const TalkToCEO: React.FC = () => {
 const [firstName, setFirstName] = useState("");
 const [lastName, setLastName] = useState("");
 const [email, setEmail] = useState("");
-
+  const location = useLocation();
 useEffect(() => {
   loadUserProfile();
 }, []);
+const interactionMode = (
+    (location.state as any)?.interactionMode ||
+    sessionStorage.getItem("redirectInteractionMode") ||
+    "voice"
+  ) as "voice" | "chat";
+
+  useEffect(() => {
+    if (!( location.state as any)?.interactionMode) {
+      sessionStorage.removeItem("redirectInteractionMode");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
  const token =
       sessionStorage.getItem("accessToken") ||
       localStorage.getItem("accessToken");
@@ -79,7 +92,7 @@ const loadUserProfile = async () => {
         profile = await profileRes.json();
       }
     } catch {
-      // customerProfileDetails unavailable — fall back to /me data
+      
     }
 
     const fn = profile.firstName || profile.userFirstName || profile.name || meFirstName;
@@ -100,7 +113,7 @@ const loadUserProfile = async () => {
       }
       setShowProfileModal(false);
     } else {
-      // Only show modal if we truly have no name from any source
+     
       setEmail(resolvedEmail || meEmail);
       setShowProfileModal(true);
     }
@@ -195,7 +208,7 @@ const loadUserProfile = async () => {
     { name: "Investments", icon: TrendingUp },
   ];
 
-  const handleStart = (languageCode: string) => {
+const handleStart = (languageCode: string) => {
     const userName =
       sessionStorage.getItem("radhName") ||
       sessionStorage.getItem("userName") ||
@@ -215,10 +228,10 @@ const loadUserProfile = async () => {
       localStorage.getItem("userId") ||
       null;
     navigate("/radhai-connect", {
-      state: { languageCode, from: "user", userName, mobileNumber, email, userId },
+      state: { languageCode, from: "user", userName, mobileNumber, email, userId, interactionMode },
     });
   };
-
+const isChat = interactionMode === "chat";
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-[#050816]/85 backdrop-blur-2xl">
@@ -253,20 +266,22 @@ const loadUserProfile = async () => {
           className="mx-auto max-w-4xl text-center"
         >
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-cyan-300 backdrop-blur-xl sm:px-4 sm:text-xs">
-            <Languages size={13} />
-            Multi Language CEO AI Clone
+            {isChat ? <MessageCircle size={13} /> : <Mic size={13} />}
+            {isChat ? "Chat with CEO AI Clone" : "Talk to CEO AI Clone"}
           </div>
 
           <h1 className="text-2xl font-black leading-tight sm:text-4xl lg:text-5xl">
-            Talk to{" "}
+            {isChat ? "Chat with" : "Talk to"}{" "}
             <span className="bg-gradient-to-r from-cyan-300 via-violet-300 to-lime-300 bg-clip-text text-transparent">
               radhAI
             </span>
           </h1>
 
           <p className="mx-auto mt-2 max-w-2xl text-xs leading-6 text-slate-300 sm:text-sm sm:leading-7">
-            Choose Telugu, English or Hindi and speak with radhAI for quick
-            guidance on Jobs, AI, Gold, Loans and Investments.
+           {isChat
+              ? "Choose Telugu, English or Hindi and start chatting with radhAI."
+              : "Choose Telugu, English or Hindi and speak with radhAI."
+            }
           </p>
         </motion.section>
 
@@ -307,8 +322,8 @@ const loadUserProfile = async () => {
                 whileTap={{ scale: 0.96 }}
                 className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-lime-300 to-cyan-300 px-2 py-2 text-[10px] font-black text-black shadow-[0_10px_28px_rgba(0,245,255,0.22)] sm:mt-3 sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm lg:mt-4 lg:py-3 lg:text-sm"
               >
-                <Mic size={13} />
-                {item.buttonText}
+                {isChat ? <MessageCircle size={13} /> : <Mic size={13} />}
+                {isChat ? "Start Chat" : "Start Voice"}
                 <ArrowRight size={13} className="hidden sm:block" />
               </motion.button>
             </motion.div>
@@ -332,53 +347,54 @@ const loadUserProfile = async () => {
         </div>
       </main>
       {showProfileModal && (
-  <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70">
-    <div className="w-[90%] max-w-md rounded-2xl bg-[#101827] p-6">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70">
+          <div className="w-[90%] max-w-md rounded-2xl bg-[#101827] p-6">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">
+                Complete Your Profile
+              </h2>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-slate-400 transition hover:bg-white/20 hover:text-white"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="mb-5 text-center text-sm text-slate-400">
+              Please enter your name to continue talking to radhAI
+            </p>
 
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Complete Your Profile</h2>
-        <button
-          onClick={() => setShowProfileModal(false)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-slate-400 transition hover:bg-white/20 hover:text-white"
-        >
-          <X size={16} />
-        </button>
-      </div>
-      <p className="mb-5 text-center text-sm text-slate-400">
-        Please enter your name to continue talking to radhAI
-      </p>
+            <input
+              placeholder="First Name *"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="mb-3 w-full rounded-lg border border-cyan-400/30 bg-[#0d1a2e] p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
+            />
 
-      <input
-        placeholder="First Name *"
-        value={firstName}
-        onChange={(e) => setFirstName(e.target.value)}
-        className="mb-3 w-full rounded-lg border border-cyan-400/30 bg-[#0d1a2e] p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
-      />
+            <input
+              placeholder="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="mb-3 w-full rounded-lg border border-cyan-400/30 bg-[#0d1a2e] p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
+            />
 
-      <input
-        placeholder="Last Name"
-        value={lastName}
-        onChange={(e) => setLastName(e.target.value)}
-        className="mb-3 w-full rounded-lg border border-cyan-400/30 bg-[#0d1a2e] p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
-      />
+            <input
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mb-5 w-full rounded-lg border border-cyan-400/30 bg-[#0d1a2e] p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
+            />
 
-      <input
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="mb-5 w-full rounded-lg border border-cyan-400/30 bg-[#0d1a2e] p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
-      />
-
-      <button
-        onClick={saveProfile}
-        disabled={!firstName.trim()}
-        className="w-full rounded-lg bg-gradient-to-r from-lime-300 to-cyan-300 p-3 font-bold text-black disabled:opacity-50"
-      >
-        Save & Continue
-      </button>
-    </div>
-  </div>
-)}
+            <button
+              onClick={saveProfile}
+              disabled={!firstName.trim()}
+              className="w-full rounded-lg bg-gradient-to-r from-lime-300 to-cyan-300 p-3 font-bold text-black disabled:opacity-50"
+            >
+              Save & Continue
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

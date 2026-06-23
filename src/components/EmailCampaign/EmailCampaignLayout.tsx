@@ -38,7 +38,7 @@ const PAGE_TITLES: Record<string, string> = {
   upload:       "Upload Document",
   campaign:     "Send Campaign",
   allpdfs:      "All Documents",
-  allcampaigns: "Campaign Manager",
+  allcampaigns: "Campaign Details",
 };
 
 const ROUTE_MAP: Record<string, string> = {

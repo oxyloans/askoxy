@@ -194,7 +194,42 @@ const RadhAIPage: React.FC = () => {
     { name: "X", url: "https://x.com/RadhakrishnaIND", icon: SiX },
     { name: "YouTube", url: "https://www.youtube.com/@askoxyDOTai", icon: Youtube },
   ];
+const handleChatWithCEO = async () => {
+    setIsLoading(true);
 
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("token");
+
+    const userId =
+      sessionStorage.getItem("userId") ||
+      localStorage.getItem("userId");
+
+    if (!token || !userId || userId === "guest-user") {
+      sessionStorage.setItem("redirectPath", "/talktoceo");
+      sessionStorage.setItem("redirectInteractionMode", "chat");
+      setIsLoading(false);
+      navigate("/whatsapplogin");
+      return;
+    }
+
+    const userName = await loadUserProfile();
+
+    setIsLoading(false);
+    navigate("/talktoceo", {
+      state: {
+        userName:
+          userName ||
+          sessionStorage.getItem("radhName") ||
+          sessionStorage.getItem("userName") ||
+          localStorage.getItem("radhName") ||
+          null,
+        interactionMode: "chat",
+      },
+    });
+  };
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#030712] text-white">
       <style>{`
@@ -236,12 +271,18 @@ const RadhAIPage: React.FC = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handleWriteToUs}
-              className="hidden items-center gap-2 rounded-full border border-lime-300/30 bg-lime-300/10 px-4 py-2 text-xs font-black text-lime-300 transition hover:bg-lime-300 hover:text-black sm:inline-flex"
+              className="inline-flex items-center gap-2 rounded-full border border-lime-300/30 bg-lime-300/10 px-3 py-2 text-xs font-black text-lime-300 transition hover:bg-lime-300 hover:text-black sm:px-5 sm:py-2.5 sm:text-sm"
             >
               <Mail size={16} />
               Write to CEO
             </button>
-
+            <button
+              onClick={handleChatWithCEO}
+              className="inline-flex items-center gap-2 rounded-full border border-cyan-300/40 bg-white/[0.07] px-3 py-2 text-xs font-black text-cyan-200 transition hover:bg-cyan-300 hover:text-black sm:px-5 sm:py-2.5 sm:text-sm"
+            >
+              <MessageCircle size={17} />
+              Chat with CEO
+            </button>
             <button
               onClick={handleTalkToCEO}
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-lime-300 px-3 py-2 text-xs font-black text-black transition hover:scale-[1.03] sm:px-5 sm:py-2.5 sm:text-sm"
@@ -341,20 +382,26 @@ const RadhAIPage: React.FC = () => {
             Clone of Radhakrishna Thatavarti
           </p>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:hidden">
+          <div className="mt-5 grid grid-cols-3 gap-2 sm:hidden">
             <button
               onClick={handleTalkToCEO}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-3 py-3 text-xs font-black text-black"
+              className="flex min-h-[52px] items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-2 py-3 text-[11px] font-black text-black"
             >
-              <Mic size={17} />
+              <Mic size={15} />
               Talk to CEO
             </button>
-
+            <button
+              onClick={handleChatWithCEO}
+              className="flex min-h-[52px] items-center justify-center gap-1 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-2 py-3 text-[11px] font-black text-cyan-200"
+            >
+              <MessageCircle size={14} />
+              Chat with CEO
+            </button>
             <button
               onClick={handleWriteToUs}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-3 py-3 text-xs font-black text-cyan-200"
+              className="flex min-h-[52px] items-center justify-center gap-1 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-2 py-3 text-[11px] font-black text-cyan-200"
             >
-              <MessageCircle size={17} />
+              <Mail size={14} />
               Write to CEO
             </button>
           </div>
@@ -391,7 +438,7 @@ const RadhAIPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 hidden grid-cols-2 gap-3 sm:grid">
+          <div className="mt-6 hidden grid-cols-3 gap-3 sm:grid">
             <button
               onClick={handleTalkToCEO}
               className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 to-cyan-300 px-4 py-3 font-black text-black transition hover:scale-[1.02]"
@@ -399,12 +446,18 @@ const RadhAIPage: React.FC = () => {
               <Mic size={18} />
               Talk to CEO
             </button>
-
+            <button
+              onClick={handleChatWithCEO}
+              className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-4 py-3 font-black text-cyan-200 transition hover:bg-white/[0.12]"
+            >
+              <MessageCircle size={18} />
+              Chat with CEO
+            </button>
             <button
               onClick={handleWriteToUs}
               className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border border-cyan-300/40 bg-white/[0.07] px-4 py-3 font-black text-cyan-200 transition hover:bg-white/[0.12]"
             >
-              <MessageCircle size={18} />
+              <Mail size={18} />
               Write to CEO
             </button>
           </div>

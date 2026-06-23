@@ -12,7 +12,12 @@ import {
   Brain,
   Newspaper,
   ArrowRight,
+  Sparkles,
+  PenSquare,
+  Video,
+  FileText,
 } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 import Swal from "sweetalert2";
 
 import SidebarLayout from "./SidebarLayout";
@@ -20,6 +25,7 @@ import RadhAICloneAdminPage from "./RadhAICloneAdminPage";
 import RadhAIHistoryPage from "./RadhAIHistoryPage";
 import RadhAIRAndDPage from "./RadhAIRAndDPage";
 import PaperClippingPage from "./PaperClippingPage";
+import PaperclipDashboard from "./dashboard";
 import MyGooglePage from "./MyGooglePage";
 import MyClonePage from "./MyCloneAdminpage";
 import { Modal } from "antd";
@@ -31,7 +37,14 @@ export default function RadhAIAdminDashboard() {
   const navigate = useNavigate();
 
   if (!isLoggedIn) {
-    return <AdminLoginPage onLogin={() => setIsLoggedIn(true)} />;
+    return (
+      <AdminLoginPage
+        onLogin={() => {
+          setIsLoggedIn(true);
+          navigate("/radhai-admin/dashboard", { replace: true });
+        }}
+      />
+    );
   }
 
   const logout = () => {
@@ -43,14 +56,15 @@ export default function RadhAIAdminDashboard() {
   return (
     <Routes>
       <Route element={<SidebarLayout onLogout={logout} />}>
-        <Route index element={<Navigate to="my-clone" replace />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="radhAI" element={<MyClonePage />} />
+        <Route path="history" element={<RadhAIHistoryPage />} />
         <Route path="voice-clone" element={<RadhAICloneAdminPage />} />
         <Route path="research-development" element={<RadhAIRAndDPage />} />
         <Route path="paper-clipping" element={<PaperClippingPage />} />
+        <Route path="dashboard" element={<PaperclipDashboard />} />
         <Route path="my-google" element={<MyGooglePage />} />
-        <Route path="my-clone" element={<MyClonePage />} />
-        <Route path="history" element={<RadhAIHistoryPage />} />
-        <Route path="*" element={<Navigate to="my-clone" replace />} />
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
     </Routes>
   );
@@ -59,40 +73,57 @@ export default function RadhAIAdminDashboard() {
 const MODULES = [
   {
     icon: Bot,
+    label: "My Clone",
+    desc: "Personal AI clone setup & management",
+    accent: "#9008b2",
+    lightBg: "#c589d9",
+    tint: "rgba(170, 61, 172, 0.22)",
+    border: "rgba(115, 24, 130, 0.3)",
+  },
+  {
+    icon: PenSquare,
     label: "Radha's Input",
-    desc: "CEO input, content creation & clone workflow",
-    accent: "#1d4ed8",
-    bg: "#dbeafe",
-    border: "#93c5fd",
-    text: "#1e40af",
+    desc: "CEO input workflow",
+    accent: "#0369a1",
+    lightBg: "#e0f2fe",
+    tint: "rgba(3,105,161,0.14)",
+    border: "rgba(3,105,161,0.3)",
   },
   {
-    icon: Brain,
+    icon: Video,
     label: "R&D Video Upload",
-    desc: "Upload video, analyze reasoning & publish blog",
+    desc: "Video reasoning flow",
     accent: "#15803d",
-    bg: "#dcfce7",
-    border: "#86efac",
-    text: "#166534",
+    lightBg: "#dcfce7",
+    tint: "rgba(21,128,61,0.14)",
+    border: "rgba(21,128,61,0.3)",
   },
+
   {
-    icon: Globe,
-    label: "Google Workspace",
-    desc: "Coming soon · Disabled",
-    accent: "#c2410c",
-    bg: "#ffedd5",
-    border: "#fdba74",
-    text: "#9a3412",
-  },
-  {
-    icon: Newspaper,
+    icon: FileText,
     label: "Paper Clipping AI",
-    desc: "Paper clipping analysis & blog workflow",
+    desc: "Analyze paper clips",
     accent: "#6d28d9",
-    bg: "#ede9fe",
-    border: "#c4b5fd",
-    text: "#5b21b6",
+    lightBg: "#ede9fe",
+    tint: "rgba(109,40,217,0.14)",
+    border: "rgba(109,40,217,0.3)",
   },
+
+    {
+    icon: FcGoogle,
+    label: "Google Workspace",
+    desc: "CEO Workspace",
+    accent: "#e1d5d5",
+    lightBg: "#ffedd5",
+    tint: "rgba(194,65,12,0.14)",
+    border: "rgba(194,65,12,0.3)",
+  },
+];
+
+const STATS = [
+  { value: "5", label: "Modules" },
+  { value: "24/7", label: "Automated" },
+  { value: "100%", label: "Secure" },
 ];
 
 function AdminLoginPage({ onLogin }: { onLogin: () => void }) {
@@ -160,63 +191,95 @@ function AdminLoginPage({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
-      {/* Background */}
+    <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      {/* Ambient background glow */}
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(59,130,246,0.10),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_80%,rgba(34,197,94,0.08),transparent_40%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_90%,rgba(139,92,246,0.07),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_-5%,rgba(139,92,246,0.08),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_85%,rgba(20,184,166,0.07),transparent_45%)]" />
       </div>
-      <div className="pointer-events-none fixed inset-0 opacity-[0.04] bg-[linear-gradient(to_right,#3b82f6_1px,transparent_1px),linear-gradient(to_bottom,#3b82f6_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-      <main className="relative z-10 flex min-h-screen w-full items-start justify-center px-3 py-4 sm:py-8 lg:items-center">
-        <div className="w-full max-w-[1180px]">
+      <main className="relative z-10 flex min-h-screen w-full items-center justify-center px-3 py-5 sm:py-8">
+        <div className="w-full max-w-[680px]">
+          <section className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.12)] sm:rounded-[24px] md:grid md:grid-cols-2 md:min-h-[420px]">
 
-          {/* Badge */}
-          <div className="mb-4 flex justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full border-2 border-blue-200 bg-white px-3 py-1.5 text-[10px] font-black tracking-widest text-blue-700 uppercase shadow-sm sm:px-4 sm:text-[11px]">
-              <ShieldCheck size={11} className="text-blue-600" /> Restricted Admin Portal
-            </span>
-          </div>
+            {/* LEFT PANEL — brand / pitch */}
+            <div
+              className="relative flex flex-col justify-between gap-5 overflow-hidden p-5 sm:p-6 md:p-6 lg:p-7"
+              style={{
+                background:
+                  "linear-gradient(160deg, #0b1330 0%, #161b42 48%, #2b1f4d 100%)",
+              }}
+            >
+              {/* texture: faint neural dot grid */}
+              <div className="pointer-events-none absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle,#a78bfa_1px,transparent_1px)] bg-[size:22px_22px]" />
+              <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-violet-400/10 blur-3xl" />
 
-          {/* Main card */}
-          <section className="overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-[0_30px_80px_rgba(59,130,246,0.10)] sm:rounded-3xl lg:grid lg:grid-cols-2 lg:min-h-[620px]">
+              <div className="relative">
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-400/30 shadow-lg shadow-violet-500/20 backdrop-blur-sm">
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-400/20 to-transparent"></div>
+                    <Bot size={22} className="relative z-10 text-violet-300 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-black uppercase tracking-wider bg-gradient-to-r from-violet-300 via-purple-300 to-teal-300 bg-clip-text text-transparent drop-shadow-sm">
+                      radhAI
+                    </span>
+                    <span className="rounded-full border border-violet-400/30 bg-violet-500/10 px-2.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-violet-200 backdrop-blur-sm">
+                      Restricted Admin
+                    </span>
+                  </div>
+                </div>
 
-            {/* LEFT PANEL — desktop only */}
-            <div className="relative hidden flex-col border-r-2 border-slate-100 p-7 lg:flex">
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/60 via-transparent to-cyan-50/40 rounded-l-3xl" />
-              <div className="relative mb-7 flex items-center gap-3">
-                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-400 text-white shadow-lg shadow-blue-200">
-                  <Bot size={26} />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 shadow-md">
-                    <Zap size={10} className="text-white" />
+                <h2 className="text-[1.35rem] font-black leading-tight tracking-tight text-white sm:text-[1.55rem] lg:text-[1.7rem]">
+                  One dashboard.
+                  <br />
+                  <span className="bg-gradient-to-r from-violet-300 to-teal-300 bg-clip-text text-transparent">
+                    Total control.
                   </span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-black tracking-tight text-gray-900">radhAI Admin</h1>
-                  <p className="text-[11px] font-bold text-slate-500 tracking-wide">CEO Input Control Center</p>
-                </div>
+                </h2>
+                <p className="mt-2.5 max-w-sm text-[13px] leading-5 text-slate-400">
+                  Voice clone, R&amp;D publishing, paper analysis and Google
+                  workspace — all managed from a single secure command
+                  center.
+                </p>
               </div>
-              <h2 className="relative mb-2 text-[2.15rem] font-black leading-tight tracking-tight text-gray-900">
-                One dashboard.<br />
-                <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">Total control.</span>
-              </h2>
-              <p className="relative mb-6 text-sm leading-6 text-slate-500">
-                Voice clone, R&D publishing, paper analysis and Google workspace — all managed from a single secure interface.
-              </p>
-              <div className="relative mt-auto grid gap-2">
+
+              {/* Stats row, like a credibility strip */}
+              <div className="relative flex items-end gap-5">
+                {STATS.map((s) => (
+                  <div key={s.label}>
+                    <p className="text-xl font-black text-violet-400">{s.value}</p>
+                    <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                      {s.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Module list — full description cards, shown from tablet up (mobile gets a compact grid below the form instead) */}
+              <div className="relative hidden gap-1.5 md:grid">
                 {MODULES.map((m) => {
                   const Icon = m.icon;
                   return (
-                    <div key={m.label} className="group flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 transition-all hover:shadow-md" style={{ borderColor: m.border, backgroundColor: m.bg + "60" }}>
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: m.bg, color: m.accent, border: `2px solid ${m.border}` }}>
-                        <Icon size={16} />
+                    <div
+                      key={m.label}
+                      className="flex items-center gap-2.5 rounded-lg border px-2.5 py-2"
+                      style={{ backgroundColor: m.tint, borderColor: m.border }}
+                    >
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all"
+                        style={{
+                          background: m.accent,
+                          color: "#fff",
+                          boxShadow: `0 3px 10px ${m.accent}50`,
+                        }}
+                      >
+                        <Icon size={18} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-black text-gray-900">{m.label}</p>
-                        <p className="truncate text-[11px] font-semibold text-slate-500">{m.desc}</p>
+                        <p className="text-[11px] font-bold text-white">{m.label}</p>
+                        <p className="truncate text-[9.5px] font-medium text-slate-400">{m.desc}</p>
                       </div>
-                      <ArrowRight size={13} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
                     </div>
                   );
                 })}
@@ -224,103 +287,114 @@ function AdminLoginPage({ onLogin }: { onLogin: () => void }) {
             </div>
 
             {/* RIGHT PANEL — login form */}
-            <div className="flex flex-col justify-center p-4 sm:p-6 lg:p-7">
-
-              {/* Mobile brand */}
-              <div className="mb-5 text-center lg:hidden">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-400 text-white shadow-lg shadow-blue-200">
-                  <Bot size={22} />
-                </div>
-                <h1 className="text-lg font-black text-gray-900">radhAI Admin</h1>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">CEO Input Control Center</p>
-              </div>
-
-              {/* Login card */}
-              <div className="rounded-xl border-2 border-slate-200 bg-slate-50 p-4 shadow-inner sm:rounded-2xl sm:p-5">
-
-                {/* Mobile hero text */}
-                <div className="mb-4 text-center lg:hidden">
-                  <h2 className="text-[1.25rem] font-black leading-tight text-gray-900 sm:text-[1.4rem]">
-                    One dashboard.
-                    <br />
-                    <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">Total control.</span>
-                  </h2>
-                </div>
-
+            <div className="flex flex-col justify-center p-5 sm:p-6 md:p-7 lg:p-8">
+              <div className="mx-auto w-full max-w-sm">
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-blue-100 border-2 border-blue-200">
-                    <Lock size={13} className="text-blue-700" />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-50 border-2 border-violet-200">
+                    <Lock size={11} className="text-violet-600" />
                   </span>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-blue-700">Secure Access</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-violet-600">
+                    Secure Access
+                  </p>
                 </div>
-                <h2 className="mt-2 text-xl font-black tracking-tight text-gray-900 sm:text-2xl">Sign in</h2>
-                <p className="mt-1 text-xs font-semibold text-slate-500">Admin credentials required to continue.</p>
 
-                <div className="mt-5 space-y-3" style={shaking ? { animation: "shake 0.5s ease-in-out" } : {}}>
-                  <div className="group relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600" size={14} />
-                    <input
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Username"
-                      autoComplete="username"
-                      className="h-11 w-full rounded-xl border-2 border-slate-200 bg-white pl-10 pr-4 text-sm font-semibold text-gray-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.10)] sm:h-12 sm:text-base"
-                    />
+                <h1 className="mt-2.5 text-xl font-black tracking-tight text-gray-900 sm:text-[1.4rem]">
+                  Welcome back
+                </h1>
+                <p className="mt-1 text-[13px] font-medium text-slate-500">
+                  Sign in with your admin credentials to continue.
+                </p>
+
+                <div className="mt-4 space-y-2.5" style={shaking ? { animation: "shake 0.5s ease-in-out" } : {}}>
+                  <div>
+                    <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-slate-500">
+                      Admin Email
+                    </label>
+                    <div className="group relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-violet-500" size={13} />
+                      <input
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="you@radhai.com"
+                        autoComplete="username"
+                        className="h-10 w-full rounded-lg border-2 border-slate-200 bg-slate-50 pl-9 pr-4 text-[13px] font-semibold text-gray-900 outline-none placeholder:text-slate-400 placeholder:font-normal transition focus:border-violet-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(139,92,246,0.12)]"
+                      />
+                    </div>
                   </div>
-                  <div className="group relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600" size={14} />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && login()}
-                      placeholder="Password"
-                      autoComplete="current-password"
-                      className="h-11 w-full rounded-xl border-2 border-slate-200 bg-white pl-10 pr-11 text-sm font-semibold text-gray-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.10)] sm:h-12 sm:text-base"
-                    />
-                    <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition">
-                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
+
+                  <div>
+                    <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-slate-500">
+                      Password
+                    </label>
+                    <div className="group relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-violet-500" size={13} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && login()}
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                        className="h-10 w-full rounded-lg border-2 border-slate-200 bg-slate-50 pl-9 pr-10 text-[13px] font-semibold text-gray-900 outline-none placeholder:text-slate-400 placeholder:font-normal transition focus:border-violet-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(139,92,246,0.12)]"
+                      />
+                      <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition">
+                        {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
                   </div>
+
                   <button
                     onClick={login}
                     disabled={loading}
-                    className="group relative h-11 w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-sm font-black text-white shadow-lg shadow-blue-300 transition active:scale-[0.98] disabled:opacity-70 sm:h-12"
+                    className="group relative h-10 w-full overflow-hidden rounded-lg bg-gradient-to-r from-violet-500 to-teal-400 text-[13px] font-black text-white shadow-lg shadow-violet-200 transition active:scale-[0.98] disabled:opacity-70"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      <ShieldCheck size={14} />
-                      {loading ? "Authenticating..." : "Enter Admin Dashboard"}
+                      {loading ? "Authenticating..." : "Sign in"}
+                      {!loading && <ArrowRight size={14} />}
                     </span>
                   </button>
                 </div>
 
-                <p className="mt-3 text-center text-[10px] font-semibold text-slate-400">
+                <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[9px] font-semibold text-slate-400">
+                  <ShieldCheck size={10} className="text-slate-400" />
                   Protected by radhAI · CEO-only access
                 </p>
-              </div>
 
-              {/* Mobile module grid */}
-              <div className="mt-4 grid grid-cols-2 gap-2 lg:hidden">
-                {MODULES.map((m) => {
-                  const Icon = m.icon;
-                  return (
-                    <div
-                      key={m.label}
-                      className="flex items-center gap-2 rounded-xl border-2 p-2.5"
-                      style={{ borderColor: m.border, backgroundColor: m.bg + "80" }}
-                    >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: m.bg, color: m.accent }}>
-                        <Icon size={14} />
-                      </span>
-                      <p className="text-[11px] font-black leading-tight" style={{ color: m.text }}>{m.label}</p>
-                    </div>
-                  );
-                })}
+                {/* All modules — compact boxes, side by side, mobile only (tablet/desktop see the full list up top) */}
+                <div className="mt-4 md:hidden">
+                  <p className="mb-1 text-center text-[7px] font-black uppercase tracking-widest text-slate-400">
+                    All Modules
+                  </p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {MODULES.filter((m) => m.label !== "My Clone").map((m) => {
+                      const Icon = m.icon;
+                      return (
+                        <div
+                          key={m.label}
+                          className="flex flex-col items-center gap-0.5 rounded-md border px-1 py-1.5 text-center"
+                          style={{ backgroundColor: m.tint, borderColor: m.border }}
+                        >
+                          <span
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all"
+                            style={{
+                              background: m.accent,
+                              color: "#fff",
+                              boxShadow: `0 3px 10px ${m.accent}50`,
+                            }}
+                          >
+                            <Icon size={18} />
+                          </span>
+                          <p className="text-[7.5px] font-bold leading-tight text-gray-800">{m.label}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           </section>
 
-          <p className="mt-4 text-center text-[10px] font-semibold text-slate-400">
+          <p className="mt-3 text-center text-[9px] font-semibold text-slate-500">
             © {new Date().getFullYear()} radhAI · All rights reserved
           </p>
         </div>

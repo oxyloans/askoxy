@@ -17,6 +17,8 @@ import {
 } from "antd";
 
 import BASE_URL from "../Config";
+const { Search } = Input;
+
 
 const { TabPane } = Tabs;
 
@@ -90,10 +92,13 @@ const AllCampaignsDetails: React.FC = () => {
     return null;
   };
 
-  // 1) Add these states near your other useState hooks
+ 
   const [activeTab, setActiveTab] = useState<string>(() => {
     return localStorage.getItem("allCampaigns_activeTab") || "wearehiring";
   });
+
+  
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // 2) Save scroll position before refresh/route change and restore on mount
   useEffect(() => {
@@ -812,6 +817,20 @@ const AllCampaignsDetails: React.FC = () => {
     (c) => c.addServiceType === "WEAREHIRING"
   );
 
+  // 🔍 Filter campaigns based on search query
+  const filterBySearch = (campaigns: Campaign[]): Campaign[] => {
+    if (!searchQuery.trim()) return campaigns;
+    const query = searchQuery.toLowerCase().trim();
+    return campaigns.filter(
+      (c) =>
+        c.campaignType?.toLowerCase().includes(query) ||
+        c.campaignDescription?.toLowerCase().includes(query) ||
+        c.campaignTypeAddBy?.toLowerCase().includes(query) ||
+        c.campaignId?.toLowerCase().includes(query) ||
+        c.campainInputType?.toLowerCase().includes(query)
+    );
+  };
+
   const renderTable = (
     data: Campaign[],
     type: string,
@@ -832,9 +851,20 @@ const AllCampaignsDetails: React.FC = () => {
   return (
     <div className="flex flex-col md:flex-row">
       <div className="flex-3 pt-0 px-4 sm:px-6 lg:px-8 mx-auto w-full max-w-full">
-        <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4">
-          All Campaign Details
-        </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h1 className="text-xl md:text-3xl font-bold text-gray-800">
+            All Campaign Details
+          </h1>
+          <Search
+            placeholder="Search campaigns..."
+            allowClear
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onSearch={(value) => setSearchQuery(value)}
+            style={{ maxWidth: 400 }}
+            className="w-full sm:w-auto"
+          />
+        </div>
 
         {loading ? (
           <div className="flex justify-center items-center">
@@ -858,25 +888,25 @@ const AllCampaignsDetails: React.FC = () => {
               tab={`We are Hiring (${weAreHiringCampaigns.length})`}
               key="wearehiring"
             >
-              {renderTable(weAreHiringCampaigns, "We are Hiring")}
+              {renderTable(filterBySearch(weAreHiringCampaigns), "We are Hiring")}
             </TabPane>
 
             <TabPane
               tab={`Services (${serviceCampaigns.length})`}
               key="service"
             >
-              {renderTable(serviceCampaigns, "Service")}
+              {renderTable(filterBySearch(serviceCampaigns), "Service")}
             </TabPane>
 
             <TabPane
               tab={`Products (${productCampaigns.length})`}
               key="product"
             >
-              {renderTable(productCampaigns, "Product")}
+              {renderTable(filterBySearch(productCampaigns), "Product")}
             </TabPane>
 
             <TabPane tab={`Blogs (${blogCampaigns.length})`} key="blog">
-              {renderTable(blogCampaigns, "Blog", true)}
+              {renderTable(filterBySearch(blogCampaigns), "Blog", true)}
             </TabPane>
           </Tabs>
         )}

@@ -44,11 +44,11 @@ export const SECTION_META: Record<
     breadcrumb: "All Documents",
   },
   allcampaigns: {
-    sidebarLabel: "Campaign Manager",
-    pageTitle: "Campaign Manager",
+    sidebarLabel: "Campaign Details",
+    pageTitle: "Campaign Details",
     pageSubtitle: "View all campaigns, scorecards and client conversations.",
-    cardTitle: "Campaign Manager",
-    breadcrumb: "Campaign Manager",
+    cardTitle: "Campaign Details",
+    breadcrumb: "Campaign Details",
   },
 };
 

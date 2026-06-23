@@ -109,9 +109,9 @@ const AddBlog: React.FC = () => {
     }
 
     if (name === "socialMediaCaption") {
-      if (value.length < 25) {
+      if (value.length < 5) {
         setSocialMediaCaptionErrorMessage(
-          "Please enter a social media caption with at least 25 characters.",
+          "Please enter a social media caption with at least 5 characters.",
         );
       } else {
         setSocialMediaCaptionErrorMessage("");
@@ -342,9 +342,9 @@ const AddBlog: React.FC = () => {
     if (formData.socialMediaCaption.trim() === "") {
       setSocialMediaCaptionErrorMessage("Social Media Caption is required");
       isValid = false;
-    } else if (formData.socialMediaCaption.length < 25) {
+    } else if (formData.socialMediaCaption.length < 5) {
       setSocialMediaCaptionErrorMessage(
-        "Social Media Caption must be between 25 and 250 characters",
+        "Social Media Caption must be between 5 and 250 characters",
       );
       isValid = false;
     }
@@ -431,12 +431,12 @@ const AddBlog: React.FC = () => {
                 onChange={handleInputChange}
                 rows={3}
                 maxLength={250}
-                placeholder="Please enter a social media caption with at least 25 characters."
+                placeholder="Please enter a social media caption with at least 5 characters."
                 className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               ></textarea>
               <div className="text-sm text-gray-500 mt-1">
-                {charCounts.socialMediaCaption}/250 characters (minimum 25
+                {charCounts.socialMediaCaption}/250 characters (minimum 5
                 required)
               </div>
               {socialMediaCaptionErrorMessage && (

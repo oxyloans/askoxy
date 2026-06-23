@@ -106,7 +106,7 @@ const AllCampaignsPage: React.FC = () => {
       <style>{tableStyle}</style>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <Title level={4} style={{ margin: 0 }}>Campaign Manager</Title>
+        <Title level={4} style={{ margin: 0 }}>Campaign Details</Title>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <Input.Search
             placeholder="Search by campaign ID"

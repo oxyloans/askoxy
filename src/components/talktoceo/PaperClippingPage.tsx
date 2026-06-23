@@ -258,7 +258,7 @@ function PaperclipTab({
     return <EmptyTab icon={<FileText size={24} />} text="No file URL available for this paperclip." />;
 
   return (
-    <div className="w-full">
+    <div className="w-full pb-6">
       <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-violet-700">
         Uploaded Files ({allUrls.length})
       </p>
@@ -282,6 +282,7 @@ function PaperclipTab({
                 </div>
                 <button
                   onClick={() => setPreviewImage(url)}
+                  title="Open file preview"
                   className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 text-[11px] font-bold text-violet-700 transition hover:bg-violet-100"
                 >
                   <ExternalLink size={11} />
@@ -759,12 +760,12 @@ export default function PaperClippingPage() {
       });
     } catch (error: any) {
       Swal.fire({
-        title: "Failed",
-        text: error?.message || "Add to clone failed",
+        toast: true,
+        position: "top-end",
         icon: "error",
-        confirmButtonText: "OK",
-        background: "#080C18",
-        color: "#166534",
+        title: error?.message || "Add to clone failed",
+        showConfirmButton: false,
+        timer: 3000,
       });
     } finally {
       setCloneLoading(false);
@@ -887,12 +888,12 @@ export default function PaperClippingPage() {
       });
     } catch (error: any) {
       Swal.fire({
-        title: "Publish Failed",
-        text: error?.message || "Blog publish failed",
+        toast: true,
+        position: "top-end",
         icon: "error",
-        confirmButtonText: "OK",
-        background: "#080C18",
-        color: "#166534",
+        title: error?.message || "Blog publish failed",
+        showConfirmButton: false,
+        timer: 3000,
       });
     } finally {
       setPublishLoading(false);
@@ -1055,7 +1056,7 @@ export default function PaperClippingPage() {
                         Ready For Analysis
                       </span>
                     </div>
-                    <div className="max-h-40 space-y-2 overflow-y-auto">
+                    <div className="max-h-40 space-y-2 overflow-y-auto scroll-pb-2">
                       {files.map((file, index) => (
                         <div
                           key={`${file.name}-${file.size}-${index}`}
@@ -1071,6 +1072,7 @@ export default function PaperClippingPage() {
                           <button
                             type="button"
                             onClick={() => setFiles((prev) => prev.filter((_, i) => i !== index))}
+                            title="Remove file"
                             className="rounded-full p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                           >
                             <X size={13} />
@@ -1108,11 +1110,13 @@ export default function PaperClippingPage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search paper clips, people, companies..."
+                        aria-label="Search paper clips"
                         className="h-11 w-full rounded-2xl border border-gray-200 bg-white pl-11 pr-10 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
                       />
                       {searchTerm && (
                         <button
                           onClick={() => setSearchTerm("")}
+                          title="Clear search"
                           className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-red-500"
                         >
                           <X size={13} />
@@ -1222,7 +1226,7 @@ export default function PaperClippingPage() {
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-y-auto overscroll-contain bg-gray-50 p-4 sm:p-5">
+            <div className="flex-1 overflow-y-auto overscroll-contain bg-gray-50 p-4 pt-5 sm:p-5 sm:pt-6">
 
               {activeTab === "paperclip" && (
                 <PaperclipTab selected={selected} setPreviewImage={setPreviewImage} />
@@ -1345,14 +1349,25 @@ export default function PaperClippingPage() {
                           <p className="text-sm font-bold text-gray-900">{safeText(report.title) || "Untitled Report"}</p>
                           <p className="mt-1 text-xs text-gray-500">{safeText(report.source) || "Source not available"}</p>
                           {isValidUrl(report.downloadUrl) && (
-                            <a
-                              href={safeText(report.downloadUrl)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-[11px] font-bold text-cyan-700 transition hover:bg-cyan-100"
-                            >
-                              <Download size={11} /> Download
-                            </a>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <a
+                                href={safeText(report.downloadUrl)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 text-[11px] font-bold text-sky-700 transition hover:bg-sky-100"
+                              >
+                                <ExternalLink size={11} /> View
+                              </a>
+                              <a
+                                href={safeText(report.downloadUrl)}
+                                target="_blank"
+                                rel="noreferrer"
+                                download
+                                className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-[11px] font-bold text-cyan-700 transition hover:bg-cyan-100"
+                              >
+                                <Download size={11} /> Download
+                              </a>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -1482,7 +1497,8 @@ export default function PaperClippingPage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80">
           <button
             onClick={() => setPreviewImage("")}
-            className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white text-xl font-bold transition hover:bg-white/20"
+            title="Close preview"
+            className="absolute right-5 top-16 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white text-xl font-bold transition hover:bg-white/20"
           >
             <X size={18} />
           </button>

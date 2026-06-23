@@ -2154,9 +2154,6 @@ const micStream = await navigator.mediaDevices.getUserMedia({
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-4 [scrollbar-width:thin]">
-                    <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-[#7A8499]">
-                      Active Instructions ({instrList.length})
-                    </p>
                     {instrLoading && (
                       <div className="flex items-center justify-center py-8">
                         <RefreshCw size={18} className="animate-spin text-[#B8FF5E]" />
@@ -2169,24 +2166,31 @@ const micStream = await navigator.mediaDevices.getUserMedia({
                         <p className="text-[10px] text-[#5A6280]">Add instructions above — the clone follows them immediately</p>
                       </div>
                     )}
-                    <div className="space-y-2">
-                      {instrList.map((instr, idx) => (
-                        <motion.div
-                          key={instr.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.04 }}
-                          className="rounded-xl border border-[#B8FF5E]/15 bg-[#0a1628]/80 p-3"
-                        >
-                          <div className="flex items-start gap-2">
-                            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#B8FF5E]/20 text-[#B8FF5E]">
-                              <Sparkles size={10} />
-                            </div>
-                            <p className="flex-1 text-[11px] leading-5 text-[#E9FBFF] whitespace-pre-wrap">{instr.content}</p>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
+                    {!instrLoading && instrList.length > 0 && (
+                      <>
+                        <p className="mb-3 px-1 text-[10px] font-black uppercase tracking-widest text-[#7A8499]">
+                          Saved Instructions ({instrList.length})
+                        </p>
+                        <div className="space-y-2">
+                          {instrList.map((instr, idx) => (
+                            <motion.div
+                              key={instr.id}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: idx * 0.04 }}
+                              className="rounded-xl border border-[#B8FF5E]/15 bg-[#0a1628]/80 p-3"
+                            >
+                              <div className="flex items-start gap-2">
+                                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#B8FF5E]/20 text-[#B8FF5E]">
+                                  <Sparkles size={10} />
+                                </div>
+                                <p className="flex-1 text-[11px] leading-5 text-[#E9FBFF] whitespace-pre-wrap">{instr.content}</p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}

@@ -959,7 +959,14 @@ const Assignedtasksbasedstatus: React.FC = () => {
       return task?.id && hasValidAssignee && hasValidTaskName;
     });
   };
+// const normalizeTasks = (list: any[]): Task[] => {
+//   return (Array.isArray(list) ? list : []).filter((task: any) => {
+//     const hasValidTaskName =
+//       typeof task?.taskName === "string";
 
+//     return task?.id && hasValidTaskName;
+//   });
+// };
   const filterByStatus = (list: Task[], status: string) => {
     return list.filter(
       (task) => task.status?.toUpperCase() === status.toUpperCase(),
