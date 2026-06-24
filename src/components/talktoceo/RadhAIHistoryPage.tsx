@@ -5,6 +5,7 @@ import {
   MessageSquare, Search, ChevronRight, ChevronLeft, User, Clock,
   Mic, Globe, RefreshCw, X, AlertCircle, Inbox, Users, Volume2, MessageCircle,
 } from "lucide-react";
+import { RadhAIMessageContent } from "./RadhAIMessageContent";
 
 const RADHAI_IMAGE = "https://i.ibb.co/RpvNHZCj/ceoai.png";
 const RAILWAY_BASE = "https://meta.oxyloans.com/api";
@@ -518,7 +519,13 @@ export default function RadhAIHistoryPage() {
                     {msg.role === "assistant" && (
                       <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-cyan-600 sm:text-[10px]">radhAI</p>
                     )}
-                    <p className="whitespace-pre-wrap text-[12.5px] leading-5 sm:text-[13.5px] sm:leading-6">{msg.content}</p>
+                    <p className="whitespace-pre-wrap text-[12.5px] leading-5 sm:text-[13.5px] sm:leading-6">
+                      <RadhAIMessageContent
+                        text={msg.content}
+                        theme={msg.role === "user" ? "user" : "assistant-light"}
+                        asMarkdown={msg.role === "assistant"}
+                      />
+                    </p>
                     <div className={`mt-1.5 flex items-center gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <span className={`text-[9px] sm:text-[10px] ${msg.role === "user" ? "text-indigo-200" : "text-slate-400"}`}>
                         {fmtDate(msg.createdAt)}

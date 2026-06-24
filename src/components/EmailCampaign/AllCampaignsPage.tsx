@@ -3,10 +3,10 @@ import { Alert, Button, Input, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { ReloadOutlined } from "@ant-design/icons";
 import { COLOR_BORDER, COLOR_PRIMARY } from "./constants";
-
+import BASE_URL from "../../Config";
 const { Text, Title } = Typography;
 
-const BASE = "http://65.0.147.157:9041/api/ai-automation";
+const BASE = `${BASE_URL}/ai-automation`;
 
 interface CampaignRow {
   key: string;

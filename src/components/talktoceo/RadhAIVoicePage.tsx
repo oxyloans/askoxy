@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
+import { RadhAIMessageContent } from "./RadhAIMessageContent";
 import {
   Bot,
   Briefcase,
@@ -2163,7 +2162,7 @@ const toggleMode = async () => {
                                 <div className="flex flex-col items-end gap-1 max-w-[75%] sm:max-w-[68%]">
                                   <div className="rounded-2xl rounded-tr-sm bg-indigo-600 px-4 py-3 text-sm leading-6 text-white shadow-xl">
                                     <p className="whitespace-pre-wrap">
-                                      {msg.text}
+                                      <RadhAIMessageContent text={msg.text} theme="user" />
                                     </p>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -2216,11 +2215,11 @@ const toggleMode = async () => {
                                   <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-[#5CE1E6]">
                                     RADHAI
                                   </p>
-                                  <div className="markdown-body">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                      {msg.text}
-                                    </ReactMarkdown>
-                                  </div>
+                                  <RadhAIMessageContent
+                                    text={msg.text}
+                                    theme="assistant-dark"
+                                    asMarkdown
+                                  />
                                 </div>
                                 <div className="mt-1 flex items-center gap-2 px-1">
                                   <span className="text-[10px] text-[#7ACFD8]">
@@ -2269,7 +2268,7 @@ const toggleMode = async () => {
                                 <div className="rounded-2xl rounded-tr-sm bg-indigo-600/80 px-4 py-3 text-sm text-white shadow-xl max-w-[75%] sm:max-w-[68%]">
                                   {liveVoiceTranscript.trim().length > 0 ? (
                                     <p className="whitespace-pre-wrap leading-6">
-                                      {liveVoiceTranscript}
+                                      <RadhAIMessageContent text={liveVoiceTranscript} theme="user" />
                                       <span className="ml-0.5 inline-block w-0.5 h-4 align-middle animate-pulse bg-indigo-200" />
                                     </p>
                                   ) : (
@@ -2403,10 +2402,12 @@ const toggleMode = async () => {
                                   <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-[#5CE1E6]">
                                     RADHAI
                                   </p>
-                                  <div className="markdown-body">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                      {streamingBubble}
-                                    </ReactMarkdown>
+                                  <div>
+                                    <RadhAIMessageContent
+                                      text={streamingBubble}
+                                      theme="assistant-dark"
+                                      asMarkdown
+                                    />
                                     <span className="ml-0.5 inline-block w-0.5 h-4 align-middle animate-pulse bg-[#B8FF5E]" />
                                   </div>
                                 </div>
@@ -2700,7 +2701,7 @@ const toggleMode = async () => {
                                     <div className="flex flex-col items-end gap-1 max-w-[80%]">
                                       <div className="rounded-2xl rounded-tr-sm bg-indigo-600 px-3 py-2 text-[12px] leading-6 text-white">
                                         <p className="whitespace-pre-wrap">
-                                          {msg.content}
+                                          <RadhAIMessageContent text={msg.content} theme="user" />
                                         </p>
                                       </div>
                                       <div className="flex items-center gap-1.5">
@@ -2731,9 +2732,11 @@ const toggleMode = async () => {
                                         <p className="mb-0.5 text-[9px] font-black uppercase tracking-widest text-[#5CE1E6]">
                                           RADHAI
                                         </p>
-                                        <p className="whitespace-pre-wrap">
-                                          {msg.content}
-                                        </p>
+                                        <RadhAIMessageContent
+                                          text={msg.content}
+                                          theme="assistant-dark"
+                                          asMarkdown
+                                        />
                                       </div>
                                       <div className="mt-1 flex items-center gap-1.5 px-1">
                                         <span className="text-[9px] text-[#7ACFD8]">

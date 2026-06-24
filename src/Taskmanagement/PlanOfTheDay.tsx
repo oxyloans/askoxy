@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import UserPanelLayout from "./UserPanelLayout";
 import BASE_URL from "../Config";
 import {
@@ -32,7 +32,6 @@ import {
   AudioMutedOutlined,
 } from "@ant-design/icons";
 import { employeeApi } from "../utils/axiosInstances";
-import useSpeechToText from "../hooks/useSpeechToText";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -81,13 +80,146 @@ interface Task {
 const PlanOfTheDay: React.FC = () => {
   const [form] = Form.useForm<TaskFormValues>();
 
-  const { isListening: isPodListening, toggle: togglePodVoice } =
-    useSpeechToText((transcript) => {
-      const current = form.getFieldValue("planOftheDay") || "";
-      const updated = current ? `${current} ${transcript}` : transcript;
-      form.setFieldsValue({ planOftheDay: updated });
-      sessionStorage.setItem("pod_draft", updated);
-    });
+  const [isPodListening, setIsPodListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const shouldKeepListeningRef = useRef(false);
+  const basePlanTextRef = useRef("");
+  const finalTranscriptRef = useRef("");
+
+  const cleanTranscriptText = (value: string) =>
+    value
+      .replace(/\s+/g, " ")
+      .replace(/\s+([.,!?])/g, "$1")
+      .trim();
+
+  const updatePlanFromVoice = (spokenText: string) => {
+    const baseText = basePlanTextRef.current.trim();
+    const cleanedSpeech = cleanTranscriptText(spokenText);
+    const updatedPlan = cleanTranscriptText(
+      baseText ? `${baseText} ${cleanedSpeech}` : cleanedSpeech,
+    );
+
+    form.setFieldsValue({ planOftheDay: updatedPlan });
+    sessionStorage.setItem("pod_draft", updatedPlan);
+  };
+
+  const startPodVoice = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      Swal.fire({
+        icon: "warning",
+        title: "Voice Not Supported",
+        text: "Your browser does not support voice typing. Please use Chrome or Edge.",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    const currentText = form.getFieldValue("planOftheDay") || "";
+    basePlanTextRef.current = currentText;
+    finalTranscriptRef.current = "";
+    shouldKeepListeningRef.current = true;
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = "en-IN";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const transcript = result?.[0]?.transcript || "";
+
+        if (result.isFinal) {
+          finalTranscriptRef.current = cleanTranscriptText(
+            `${finalTranscriptRef.current} ${transcript}`,
+          );
+        } else {
+          interimTranscript = cleanTranscriptText(
+            `${interimTranscript} ${transcript}`,
+          );
+        }
+      }
+
+      const spokenText = cleanTranscriptText(
+        `${finalTranscriptRef.current} ${interimTranscript}`,
+      );
+
+      if (spokenText) {
+        updatePlanFromVoice(spokenText);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event?.error === "no-speech" || event?.error === "aborted") return;
+      shouldKeepListeningRef.current = false;
+      setIsPodListening(false);
+      Swal.fire({
+        icon: "error",
+        title: "Voice Typing Error",
+        text: "Unable to capture your voice. Please check microphone permission and try again.",
+        confirmButtonText: "OK",
+      });
+    };
+
+    recognition.onend = () => {
+      if (shouldKeepListeningRef.current) {
+        try {
+          recognition.start();
+        } catch {
+          // Browser may already be restarting recognition.
+        }
+        return;
+      }
+
+      setIsPodListening(false);
+    };
+
+    try {
+      recognition.start();
+      setIsPodListening(true);
+    } catch {
+      setIsPodListening(false);
+    }
+  };
+
+  const stopPodVoice = () => {
+    shouldKeepListeningRef.current = false;
+    setIsPodListening(false);
+
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      // Voice recognition is already stopped.
+    }
+  };
+
+  const togglePodVoice = () => {
+    if (isPodListening) {
+      stopPodVoice();
+      return;
+    }
+
+    startPodVoice();
+  };
+  useEffect(() => {
+    return () => {
+      shouldKeepListeningRef.current = false;
+
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        // Voice recognition is already stopped.
+      }
+    };
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [fetchingStatus, setFetchingStatus] = useState(true);
@@ -147,7 +279,7 @@ const PlanOfTheDay: React.FC = () => {
       const minutes = now.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
       const openTimeInMinutes = 7 * 60 + 0;
-      const closeTimeInMinutes = 10 * 60 + 45;
+      const closeTimeInMinutes = 21 * 60 + 45;
       setIsSubmissionWindowOpen(
         currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes,

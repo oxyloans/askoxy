@@ -4,22 +4,19 @@ import {
   Globe,
   Scale,
   Users,
-  Factory,
-  Briefcase,
   Search,
   GraduationCap,
-  Award,Building,
-  FileText,
+  Building,
 } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Header1 from "../components/Header";
 import Footer from "../components/Footer";
 import Loader from "../components/Loader";
-import { motion } from "framer-motion";
+
 import { message } from "antd";
 import VideoImage from "../assets/img/Videothumb.png";
 import { fetchCampaigns, Campaign } from "../components/servicesapi";
-import {uploadurlwithId } from "../Config";
+import { uploadurlwithId } from "../Config";
 
 interface DashboardItem {
   title: string;
@@ -40,25 +37,26 @@ type TabKey = "SERVICES" | "WE_ARE_HIRING";
 const ServicesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [campaigns, setCampaigns] = useState<CampaignWithId[]>([]);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
   const [activeTab, setActiveTab] = useState<TabKey>("SERVICES");
   const [loading, setLoading] = useState(false);
 
-  const location = useLocation();
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
-console.log({uploadurlwithId})
+  console.log({ uploadurlwithId });
   useEffect(() => {
     const loadCampaigns = async () => {
       setLoading(true);
       try {
         const data = await fetchCampaigns();
-        const campaignsWithIds: CampaignWithId[] = data.map((campaign: any) => ({
-          ...campaign,
-          id: campaign.campaignId,
-          addServiceType: campaign?.addServiceType ?? null,
-        }));
+        const campaignsWithIds: CampaignWithId[] = data.map(
+          (campaign: any) => ({
+            ...campaign,
+            id: campaign.campaignId,
+            addServiceType: campaign?.addServiceType ?? null,
+          }),
+        );
         setCampaigns(campaignsWithIds);
       } catch (err) {
         console.error("Error loading campaigns:", err);
@@ -81,13 +79,12 @@ console.log({uploadurlwithId})
         category: "Finance",
       },
       {
-        title: "OXYBRICKS.WORLD - Fractional Ownership ", 
-        image: "https://i.ibb.co/ZzyBDnm9/oxybricks.png", 
-        description:
-          "Fractional Ownership in Lands & Buildings", 
+        title: "OXYBRICKS.WORLD - Fractional Ownership ",
+        image: "https://i.ibb.co/ZzyBDnm9/oxybricks.png",
+        description: "Fractional Ownership in Lands & Buildings",
         path: `https://oxybricks.world/`,
-        icon: <Building className="text-purple-600" size={24} />, 
-        category: "RealEstate", 
+        icon: <Building className="text-purple-600" size={24} />,
+        category: "RealEstate",
       },
       {
         title: "Free AI & Gen AI Training",
@@ -136,7 +133,7 @@ console.log({uploadurlwithId})
       // },
       // Note: “We Are Hiring” static card is moved under the hiring tab via campaigns, so we keep static services clean.
     ],
-    [accessToken]
+    [accessToken],
   );
 
   const slugify = (text: string) =>
@@ -155,15 +152,15 @@ console.log({uploadurlwithId})
     ) {
       navigate(
         `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
-          (campaign as any).campaignType ?? "service"
-        )}`
+          (campaign as any).campaignType ?? "service",
+        )}`,
       );
     }
   };
 
   const handleStudyAbroadClick = () => {
     window.open(
-      "https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback"
+      "https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback",
     );
   };
 
@@ -172,7 +169,7 @@ console.log({uploadurlwithId})
       navigate("/whatsappregister");
       sessionStorage.setItem(
         "redirectPath",
-        "/main/dashboard/offer-letter-samples"
+        "/main/dashboard/offer-letter-samples",
       );
       message.warning("Please login to submit your interest.");
       return;
@@ -190,9 +187,9 @@ console.log({uploadurlwithId})
           (c.addServiceType === null ||
             c.addServiceType === undefined ||
             c.addServiceType === "" ||
-            c.addServiceType === "SERVICES")
+            c.addServiceType === "SERVICES"),
       ),
-    [campaigns]
+    [campaigns],
   );
 
   const hiringCampaigns = useMemo(
@@ -201,9 +198,9 @@ console.log({uploadurlwithId})
         (c) =>
           c.campaignStatus !== false &&
           (c as any).campainInputType !== "BLOG" &&
-          c.addServiceType === "WEAREHIRING"
+          c.addServiceType === "WEAREHIRING",
       ),
-    [campaigns]
+    [campaigns],
   );
 
   /** Search helpers */
@@ -211,24 +208,30 @@ console.log({uploadurlwithId})
     (text ?? "").toLowerCase().includes(searchQuery.toLowerCase());
 
   const filteredServiceCards = useMemo(
-    () => services.filter((s) => matchQuery(s.title) || matchQuery(s.description) || matchQuery(s.category)),
-    [services, searchQuery]
+    () =>
+      services.filter(
+        (s) =>
+          matchQuery(s.title) ||
+          matchQuery(s.description) ||
+          matchQuery(s.category),
+      ),
+    [services, searchQuery],
   );
 
   const filteredServiceCampaigns = useMemo(
     () =>
       serviceCampaigns.filter(
-        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description)
+        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description),
       ),
-    [serviceCampaigns, searchQuery]
+    [serviceCampaigns, searchQuery],
   );
 
   const filteredHiringCampaigns = useMemo(
     () =>
       hiringCampaigns.filter(
-        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description)
+        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description),
       ),
-    [hiringCampaigns, searchQuery]
+    [hiringCampaigns, searchQuery],
   );
 
   const TabButton: React.FC<{
@@ -243,8 +246,10 @@ console.log({uploadurlwithId})
     >
       {label}
       {typeof count === "number" && (
-        <span className={`ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 rounded-full
-          ${activeTab === k ? "bg-white/20 text-white" : "bg-gray-200 text-gray-700"}`}>
+        <span
+          className={`ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 rounded-full
+          ${activeTab === k ? "bg-white/20 text-white" : "bg-gray-200 text-gray-700"}`}
+        >
           {count}
         </span>
       )}
@@ -256,32 +261,34 @@ console.log({uploadurlwithId})
       <div className="mb-4 p-2">{!userId ? <Header1 /> : null}</div>
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-2 lg:p-2">
-          {/* Search + Tabs */}
-          <div className="flex flex-col gap-3 mb-3">
-            <div className="relative">
+          {/* Tabs + Search */}
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 md:pb-0">
+              <TabButton
+                k="SERVICES"
+                label="Services"
+                count={
+                  filteredServiceCards.length + filteredServiceCampaigns.length
+                }
+              />
+              <TabButton
+                k="WE_ARE_HIRING"
+                label="We Are Hiring"
+                count={filteredHiringCampaigns.length}
+              />
+            </div>
+
+            <div className="relative w-full md:w-[360px] lg:w-[420px]">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={20}
               />
               <input
                 type="text"
-                placeholder="Search services & campaigns..."
+                placeholder="Search services & jobs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <TabButton
-                k="SERVICES"
-                label="Services"
-                count={filteredServiceCards.length + filteredServiceCampaigns.length}
-              />
-              <TabButton
-                k="WE_ARE_HIRING"
-                label="We Are Hiring"
-                count={filteredHiringCampaigns.length}
               />
             </div>
           </div>
@@ -296,94 +303,92 @@ console.log({uploadurlwithId})
           {/* Grid */}
           {!loading && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
-            {activeTab === "SERVICES" && (
-              <>
-                {/* Static Services */}
-                {filteredServiceCards.map((item, index) => (
-                  <div
-                    key={`svc-${index}`}
-                    onClick={() => {
-                      if (item.path.startsWith("https")) {
-                        window.open(item.path, "_blank");
-                      } else {
-                        navigate(item.path);
-                      }
-                    }}
-                    className="group cursor-pointer flex flex-col items-center text-center"
-                  >
-                    <div className="mb-2">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
-                      />
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                      {item.title}
-                    </h3>
-                  </div>
-                ))}
-
-                {/* Campaigns routed to Services (addServiceType = null/empty/others) */}
-                {filteredServiceCampaigns.map((campaign: any) => (
-                  <div
-                    key={campaign.campaignId}
-                    className="group cursor-pointer flex flex-col items-center text-center"
-                    onClick={() => handleCampaignClick(campaign)}
-                  >
-                    <div className="mb-2">
-                      {campaign.imageUrls && campaign.imageUrls.length > 0 && (
+              {activeTab === "SERVICES" && (
+                <>
+                  {/* Static Services */}
+                  {filteredServiceCards.map((item, index) => (
+                    <div
+                      key={`svc-${index}`}
+                      onClick={() => {
+                        if (item.path.startsWith("https")) {
+                          window.open(item.path, "_blank");
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
+                      className="group cursor-pointer flex flex-col items-center text-center"
+                    >
+                      <div className="mb-2">
                         <img
-                          // src={campaign.imageUrls[0].imageUrl}
-                          src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
-
-                          alt={`${campaign.campaignType}`}
-                          className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
+                          src={item.image}
+                          alt={item.title}
+                          className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
                         />
-                      )}
+                      </div>
+                      <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        {item.title}
+                      </h3>
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                      {campaign.campaignType} 
-                    </h3>
-                  </div>
-                ))}
-              </>
-            )}
+                  ))}
 
-            {activeTab === "WE_ARE_HIRING" && (
-              <>
-                {filteredHiringCampaigns.length === 0 && (
-                  <div className="col-span-full text-center text-gray-500 py-8">
-                    No hiring posts yet.
-                  </div>
-                )}
-                {filteredHiringCampaigns.map((campaign: any) => (
-                  <div
-                    key={campaign.campaignId}
-                    className="group cursor-pointer flex flex-col items-center text-center"
-                    onClick={() => handleCampaignClick(campaign)}
-                  >
-                    <div className="mb-2">
-                      {campaign.imageUrls && campaign.imageUrls.length > 0 && (
-                        <img
-                          src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
-                          alt={`${campaign.campaignType}`}
-                          className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
-                        />
-                      )}
+                  {/* Campaigns routed to Services (addServiceType = null/empty/others) */}
+                  {filteredServiceCampaigns.map((campaign: any) => (
+                    <div
+                      key={campaign.campaignId}
+                      className="group cursor-pointer flex flex-col items-center text-center"
+                      onClick={() => handleCampaignClick(campaign)}
+                    >
+                      <div className="mb-2">
+                        {campaign.imageUrls &&
+                          campaign.imageUrls.length > 0 && (
+                            <img
+                              // src={campaign.imageUrls[0].imageUrl}
+                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
+                              alt={`${campaign.campaignType}`}
+                              className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
+                            />
+                          )}
+                      </div>
+                      <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        {campaign.campaignType}
+                      </h3>
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                      {campaign.campaignType}
-                    </h3>
-                  </div>
-                ))}
-              </>
-            )}
+                  ))}
+                </>
+              )}
+
+              {activeTab === "WE_ARE_HIRING" && (
+                <>
+                  {filteredHiringCampaigns.length === 0 && (
+                    <div className="col-span-full text-center text-gray-500 py-8">
+                      No hiring posts yet.
+                    </div>
+                  )}
+                  {filteredHiringCampaigns.map((campaign: any) => (
+                    <div
+                      key={campaign.campaignId}
+                      className="group cursor-pointer flex flex-col items-center text-center"
+                      onClick={() => handleCampaignClick(campaign)}
+                    >
+                      <div className="mb-2">
+                        {campaign.imageUrls &&
+                          campaign.imageUrls.length > 0 && (
+                            <img
+                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
+                              alt={`${campaign.campaignType}`}
+                              className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
+                            />
+                          )}
+                      </div>
+                      <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        {campaign.campaignType}
+                      </h3>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
-
-          {/* (Optional) Study Abroad Section kept commented in original */}
-          {/* ... original section left unchanged ... */}
 
           <Footer />
         </div>

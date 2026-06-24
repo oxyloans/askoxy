@@ -22,7 +22,7 @@ const tableStyle = `
   .ec-pdf-table .ant-table-tbody > tr > td { border-bottom: 1px solid ${COLOR_BORDER} !important; }
 `;
 
-const DELETE_API_BASE = "http://65.0.147.157:9041/api/ai-automation/pdf";
+const DELETE_API_BASE = `${BASE_URL}/ai-automation/pdf`;
 
 const AllPdfsPage: React.FC = () => {
   const [records, setRecords] = useState<PdfRecord[]>([]);

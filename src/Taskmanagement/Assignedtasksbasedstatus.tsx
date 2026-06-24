@@ -1083,6 +1083,15 @@ const Assignedtasksbasedstatus: React.FC = () => {
     [currentPage, pageSize, statusFilter, searchText],
   );
 
+  const fetchGroupMessages = useCallback(async () => {
+    try {
+      // API hit only. Response data is intentionally not displayed anywhere.
+      await employeeApi.get(`${BASE_URL}/ai-service/agent/getAllMessagesFromGroupss`);
+    } catch (error) {
+      console.error("Failed to fetch group messages", error);
+    }
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchText(searchInput.trim());
@@ -1091,6 +1100,10 @@ const Assignedtasksbasedstatus: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  useEffect(() => {
+    fetchGroupMessages();
+  }, [fetchGroupMessages]);
 
   useEffect(() => {
     fetchTasks(currentPage, pageSize, statusFilter, searchText);

@@ -13,6 +13,7 @@ import ScrollToTop from "./ScrollToTop";
 import BMVCoinPromo from "./BMVCoinPromo";
 import Whiteboardtheme from "./whiteboardtheme";
 import RadhAISection from "./radhAIsection";
+import RadhAiCeo from "./RadhAiCeo";
 
 
 const CurrentLandingPage: React.FC = () => {
@@ -43,6 +44,9 @@ const CurrentLandingPage: React.FC = () => {
         <Header />
 
         <div className="pt-[60px] overflow-visible">
+           {/*<section className="relative z-[1] overflow-visible">
+            <RadhAiCeo />
+          </section>*/}
           <section className="relative z-[1] overflow-visible">
             <Whiteboardtheme />
           </section>

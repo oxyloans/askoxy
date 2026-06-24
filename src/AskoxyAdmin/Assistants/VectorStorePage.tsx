@@ -10,6 +10,7 @@ import {
   Empty,
   Modal,
   Form,
+  Alert,
   message,
   Tooltip,
   Tabs,
@@ -879,212 +880,160 @@ useEffect(() => {
         </Form>
       </Modal>
 
-      {/* MODAL 2 — Upload File */}
-      <Modal
-        title={
-          <span className="font-bold text-base text-gray-800">
-            Upload Documents
-          </span>
-        }
-        open={uploadModal}
-        onCancel={() => {
-          if (uploading) return;
-          resetUploadState();
-          setUploadModal(false);
-        }}
-        centered
-        width={480}
-        maskClosable={!uploading}
-        closable={!uploading}
-        footer={
-          <div className="flex items-center justify-between">
-            <div>
-              {uploadMode === "single" && uploadFile && (
-                <div className="flex items-center gap-1 text-sm text-gray-500">
-                  <CheckCircleOutlined style={{ color: "#1ab394" }} />
-                  <span className="truncate max-w-[200px]">
-                    {uploadFile.name}
-                  </span>
-                </div>
-              )}
-              {uploadMode === "multiple" && uploadFiles.length > 0 && (
-                <div className="flex items-center gap-1 text-sm text-gray-500">
-                  <CheckCircleOutlined style={{ color: "#1ab394" }} />
-                  <span>{uploadFiles.length} files selected</span>
-                </div>
-              )}
-            </div>
-            <Space>
-              <Button
-                size="middle"
-                onClick={() => {
-                  resetUploadState();
-                  setUploadModal(false);
-                }}
-                disabled={uploading}
-                className="rounded-lg"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="middle"
-                onClick={handleUpload}
-                loading={uploading}
-                disabled={uploadMode === "single" ? !uploadFile : uploadFiles.length === 0}
-                style={btnGreen}
-                className="rounded-lg font-semibold"
-              >
-                {uploading ? "Uploading…" : uploadMode === "single" ? "Upload File" : "Upload Files"}
-              </Button>
-            </Space>
-          </div>
-        }
-      >
-        {uploadTarget && (
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4">
-            <span className="text-sm text-gray-600">
-              Destination:{" "}
-              <span className="font-semibold text-gray-800">
-                {uploadTarget.name}
-              </span>
-            </span>
-          </div>
-        )}
+    <Modal
+  title="Upload Documents"
+  open={uploadModal}
+  onCancel={() => {
+    if (uploading) return;
+    resetUploadState();
+    setUploadModal(false);
+  }}
+  centered
+  width={500}
+  maskClosable={!uploading}
+  closable={!uploading}
+  destroyOnClose
+  footer={[
+    <Button
+      key="cancel"
+      onClick={() => {
+        resetUploadState();
+        setUploadModal(false);
+      }}
+      disabled={uploading}
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="upload"
+    
+      loading={uploading}
+      disabled={
+        uploadMode === "single" ? !uploadFile : uploadFiles.length === 0
+      }
+      onClick={handleUpload}
+      style={{ background: "#008cba", borderColor: "#008bca" ,color:"white" }}
+    >
+      {uploading
+        ? "Uploading..."
+        : uploadMode === "single"
+          ? "Upload File"
+          : "Upload Files"}
+    </Button>,
+  ]}
+>
+  {uploadTarget && (
+    <Alert
+      type="info"
+     
+      className="mb-4"
+      message={
+        <span>
+          Destination: <strong>{uploadTarget.name}</strong>
+        </span>
+      }
+    />
+  )}
 
-        <Tabs
-          activeKey={uploadMode}
-          onChange={(key) => {
-            if (uploading) return;
-            setUploadMode(key as "single" | "multiple");
-            setUploadFile(null);
-            setUploadFiles([]);
-          }}
-          items={[
-            { key: "single", label: "Single Upload" },
-            { key: "multiple", label: "Multiple Upload" },
-          ]}
-          className="mb-3"
-        />
+  <Tabs
+    activeKey={uploadMode}
+    onChange={(key) => {
+      if (uploading) return;
+      setUploadMode(key as "single" | "multiple");
+      setUploadFile(null);
+      setUploadFiles([]);
+    }}
+    items={[
+      { key: "single", label: "Single Upload" },
+      { key: "multiple", label: "Multiple Upload" },
+    ]}
+  />
 
-        <Upload.Dragger
-          name={uploadMode === "single" ? "file" : "files"}
-          multiple={uploadMode === "multiple"}
-          beforeUpload={(file) => {
-            if (uploadMode === "single") {
-              setUploadFile(file);
-              setUploadFiles([]);
-            } else {
-              setUploadFile(null);
-              setUploadFiles((prev) => {
-                const exists = prev.some(
-                  (item) =>
-                    item.name === file.name &&
-                    item.size === file.size &&
-                    item.lastModified === file.lastModified,
-                );
-                return exists ? prev : [...prev, file];
-              });
-            }
-            return false;
-          }}
-          onRemove={(file) => {
-            if (uploadMode === "single") {
-              setUploadFile(null);
-            } else {
-              setUploadFiles((prev) =>
-                prev.filter(
-                  (item) =>
-                    !(
-                      item.name === file.name &&
-                      item.size === file.size &&
-                      item.lastModified === file.lastModified
-                    ),
-                ),
-              );
-            }
-          }}
-          fileList={
-            uploadMode === "single"
-              ? uploadFile
-                ? [
-                    {
-                      uid: uploadFile.name,
-                      name: uploadFile.name,
-                      status: "done" as const,
-                    },
-                  ]
-                : []
-              : uploadFiles.map((file) => ({
-                  uid: `${file.name}-${file.lastModified}`,
-                  name: file.name,
-                  status: "done" as const,
-                }))
-          }
-          disabled={uploading}
-          className="rounded-xl"
-          style={{
-            borderColor:
-              uploadMode === "single"
-                ? uploadFile
-                  ? "#1ab394"
-                  : "#d9d9d9"
-                : uploadFiles.length
-                  ? "#1ab394"
-                  : "#d9d9d9",
-            background:
-              uploadMode === "single"
-                ? uploadFile
-                  ? "#f0fdf9"
-                  : "#fafafa"
-                : uploadFiles.length
-                  ? "#f0fdf9"
-                  : "#fafafa",
-          }}
-        >
-          {uploading ? (
-            <div className="py-6 text-center">
-              <Spin
-                indicator={
-                  <LoadingOutlined
-                    style={{ fontSize: 36, color: "#1ab394" }}
-                    spin
-                  />
-                }
-              />
-              <p className="mt-3 text-sm font-medium text-gray-600">
-                Uploading, please wait…
-              </p>
-            </div>
-          ) : (uploadMode === "single" && uploadFile) ||
-            (uploadMode === "multiple" && uploadFiles.length > 0) ? (
-            <div className="py-6 text-center">
-              <CheckCircleOutlined style={{ fontSize: 36, color: "#1ab394" }} />
-              <p className="mt-2 font-semibold text-gray-800 text-sm">
-                {uploadMode === "single"
-                  ? uploadFile?.name
-                  : `${uploadFiles.length} files selected`}
-              </p>
-              <p className="text-xs text-gray-400 m-0">
-                {uploadMode === "single"
-                  ? "Click or drag to replace"
-                  : "Click or drag more files to add"}
-              </p>
-            </div>
-          ) : (
-            <div className="py-6 text-center">
-              <InboxOutlined style={{ fontSize: 40, color: "#008cba" }} />
-              <p className="mt-2 font-semibold text-gray-700">
-                {uploadMode === "single"
-                  ? "Click or drag a file here to upload"
-                  : "Click or drag files here to upload"}
-              </p>
-              <p className="text-xs text-gray-400 m-0">
-                Supports PDF, DOCX, TXT, images and more
-              </p>
-            </div>
-          )}
-        </Upload.Dragger>
-      </Modal>
+  <Upload.Dragger
+    name={uploadMode === "single" ? "file" : "files"}
+    multiple={uploadMode === "multiple"}
+    disabled={uploading}
+    beforeUpload={(file) => {
+      if (uploadMode === "single") {
+        setUploadFile(file);
+        setUploadFiles([]);
+      } else {
+        setUploadFile(null);
+        setUploadFiles((prev) => {
+          const exists = prev.some(
+            (item) =>
+              item.name === file.name &&
+              item.size === file.size &&
+              item.lastModified === file.lastModified,
+          );
+          return exists ? prev : [...prev, file];
+        });
+      }
+      return false;
+    }}
+    onRemove={(file) => {
+      if (uploadMode === "single") {
+        setUploadFile(null);
+      } else {
+        setUploadFiles((prev) =>
+          prev.filter(
+            (item) =>
+              !(
+                item.name === file.name &&
+                item.size === file.size &&
+                item.lastModified === file.lastModified
+              ),
+          ),
+        );
+      }
+    }}
+    fileList={
+      uploadMode === "single"
+        ? uploadFile
+          ? [
+              {
+                uid: uploadFile.name,
+                name: uploadFile.name,
+                status: "done" as const,
+              },
+            ]
+          : []
+        : uploadFiles.map((file) => ({
+            uid: `${file.name}-${file.lastModified}`,
+            name: file.name,
+            status: "done" as const,
+          }))
+    }
+  >
+    {uploading ? (
+      <div style={{ padding: "28px 0" }}>
+        <Spin size="large" />
+        <p className="mt-3 mb-0 text-gray-500">Uploading files...</p>
+      </div>
+    ) : (
+      <div style={{ padding: "28px 0" }}>
+        <InboxOutlined style={{ fontSize: 44, color: "#008cba" }} />
+        <p className="ant-upload-text mt-3">
+          {uploadMode === "single"
+            ? "Click or drag file to this area"
+            : "Click or drag files to this area"}
+        </p>
+        <p className="ant-upload-hint">
+          Supports PDF, DOCX, TXT, images and other document formats.
+        </p>
+      </div>
+    )}
+  </Upload.Dragger>
+
+  {(uploadFile || uploadFiles.length > 0) && (
+    <div className="mt-4 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
+      <CheckCircleOutlined className="mr-2" />
+      {uploadMode === "single"
+        ? uploadFile?.name
+        : `${uploadFiles.length} files selected`}
+    </div>
+  )}
+</Modal>
 
       {/* MODAL 3 — View Files */}
       <Modal

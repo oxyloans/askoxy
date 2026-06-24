@@ -37,7 +37,6 @@ import {
 } from "@ant-design/icons";
 import UserPanelLayout from "./UserPanelLayout";
 import { employeeApi } from "../utils/axiosInstances";
-import useSpeechToText from "../hooks/useSpeechToText";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -186,13 +185,146 @@ const TaskUpdate: React.FC = () => {
     [form],
   );
 
-  const { isListening: isEodListening, toggle: toggleEodVoice } =
-    useSpeechToText((transcript) => {
-      const current = form.getFieldValue("endOftheDay") || "";
-      const updated = current ? `${current} ${transcript}` : transcript;
-      form.setFieldsValue({ endOftheDay: updated });
-      sessionStorage.setItem("eod_draft", updated);
-    });
+  const [isEodListening, setIsEodListening] = useState<boolean>(false);
+  const recognitionRef = useRef<any>(null);
+  const shouldKeepListeningRef = useRef<boolean>(false);
+  const baseTextRef = useRef<string>("");
+  const finalTranscriptRef = useRef<string>("");
+
+  const cleanVoiceText = (text: string) => {
+    return text
+      .replace(/\s+/g, " ")
+      .replace(/\s+([,.!?])/g, "$1")
+      .replace(/\bi\b/g, "I")
+      .trim();
+  };
+
+  const updateEodVoiceText = (interimText: string = "") => {
+    const parts = [
+      baseTextRef.current,
+      finalTranscriptRef.current,
+      interimText,
+    ].filter((part) => part && part.trim());
+
+    const updated = cleanVoiceText(parts.join(" "));
+    form.setFieldsValue({ endOftheDay: updated });
+    sessionStorage.setItem("eod_draft", updated);
+  };
+
+  const stopEodVoice = () => {
+    shouldKeepListeningRef.current = false;
+    setIsEodListening(false);
+
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+  };
+
+  const startEodVoice = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      Swal.fire({
+        icon: "warning",
+        title: "Voice Not Supported",
+        text: "Your browser does not support voice typing. Please use Chrome or Edge.",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    stopEodVoice();
+
+    baseTextRef.current = cleanVoiceText(form.getFieldValue("endOftheDay") || "");
+    finalTranscriptRef.current = "";
+    shouldKeepListeningRef.current = true;
+    setIsEodListening(true);
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-IN";
+
+    recognition.onresult = (event: any) => {
+      let interimText = "";
+      let finalText = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const transcript = event.results[i][0]?.transcript || "";
+
+        if (event.results[i].isFinal) {
+          finalText += ` ${transcript}`;
+        } else {
+          interimText += ` ${transcript}`;
+        }
+      }
+
+      if (finalText.trim()) {
+        finalTranscriptRef.current = cleanVoiceText(
+          `${finalTranscriptRef.current} ${finalText}`,
+        );
+      }
+
+      updateEodVoiceText(cleanVoiceText(interimText));
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event?.error === "not-allowed" || event?.error === "service-not-allowed") {
+        stopEodVoice();
+        Swal.fire({
+          icon: "warning",
+          title: "Microphone Permission Needed",
+          text: "Please allow microphone access and try again.",
+          confirmButtonText: "OK",
+        });
+      }
+    };
+
+    recognition.onend = () => {
+      if (!shouldKeepListeningRef.current) return;
+
+      try {
+        recognition.start();
+      } catch {
+        setTimeout(() => {
+          if (shouldKeepListeningRef.current) {
+            try {
+              recognition.start();
+            } catch {
+              // Browser may still be stopping; user can press Speak again if needed.
+            }
+          }
+        }, 300);
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch {
+      setIsEodListening(false);
+      shouldKeepListeningRef.current = false;
+    }
+  };
+
+  const toggleEodVoice = () => {
+    if (isEodListening) {
+      stopEodVoice();
+      return;
+    }
+
+    startEodVoice();
+  };
+
+  useEffect(() => {
+    return () => {
+      stopEodVoice();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Add state to track if form fields should be visible
   const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
