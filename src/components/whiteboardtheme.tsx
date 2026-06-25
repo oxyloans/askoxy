@@ -10,6 +10,9 @@ import web4 from "../assets/img/web4.png";
 import web5 from "../assets/img/web5.png";
 
 import arrow0 from "../assets/img/arrow0.png";
+import arrow1 from "../assets/img/arrow1.png";
+import speak1 from "../assets/img/speak1.png";
+
 import line1 from "../assets/img/line1.png";
 import line2 from "../assets/img/line2.png";
 import line3 from "../assets/img/line3.png";
@@ -47,19 +50,11 @@ const Whiteboardtheme: React.FC = () => {
     if (type === "oxybricks") return navigate("/fpl");
   };
 
-  const handleAdcbAiClick = () => {
-    window.open(
-      "https://www.askoxy.ai/radha/fab-ai-intelligence",
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
-  
   const cards = [
     {
       key: "loans",
       league: "IP2PL",
-      title:"Peer-to-Peer Lending",
+      title: "Peer-to-Peer Lending",
       image: web1,
       color: "#6B35C7",
       shadow: "drop-shadow(0 10px 10px rgba(107,53,199,0.25))",
@@ -69,7 +64,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "jobs",
       league: "JPL",
-      title:"Jobs",
+      title: "Jobs",
       image: web2,
       color: "#0B4697",
       shadow: "drop-shadow(0 10px 10px rgba(11,70,151,0.25))",
@@ -79,7 +74,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "studyabroad",
       league: "SAPL",
-      title:"Study Abroad",
+      title: "Study Abroad",
       image: web3,
       color: "#D71D8E",
       shadow: "drop-shadow(0 10px 10px rgba(215,29,142,0.25))",
@@ -90,7 +85,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "oxybricks",
       league: "FPL",
-      title:"Fractional Ownership",
+      title: "Fractional Ownership",
       image: web31,
       color: "#6B35C7",
       shadow: "drop-shadow(0 10px 10px rgba(107,53,199,0.25))",
@@ -101,7 +96,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "gold",
       league: "GPL",
-      title:"Gold",
+      title: "Gold",
       image: web4,
       color: "#C48A00",
       shadow: "drop-shadow(0 10px 10px rgba(196,138,0,0.25))",
@@ -111,7 +106,7 @@ const Whiteboardtheme: React.FC = () => {
     {
       key: "bharat",
       league: "AIPL",
-title:"Bharat AI Store",
+      title: "Bharat AI Store",
       image: web5,
       color: "#5A5A5A",
       shadow: "drop-shadow(0 10px 10px rgba(90,90,90,0.22))",
@@ -140,7 +135,7 @@ title:"Bharat AI Store",
       <div className="pointer-events-none absolute bottom-10 left-1/3 h-72 w-72 rounded-full bg-[#C48A00]/16 blur-[95px]" />
       <div className="pointer-events-none absolute bottom-24 right-1/4 h-72 w-72 rounded-full bg-[#1F9D38]/12 blur-[100px]" />
 
-      <div className="relative z-10 mx-auto max-w-[1540px] px-3 pb-5 pt-6 sm:px-6 sm:pb-7 sm:pt-8 md:px-8 lg:px-10 lg:pb-8 lg:pt-10 xl:px-12">
+      <div className="relative z-10 mx-auto max-w-[1540px] px-3 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-8 md:px-8 lg:px-10 lg:pb-7 lg:pt-8 xl:px-12">
         <div className="mx-auto w-full max-w-[1440px]">
           <div className="relative mx-auto max-w-[1320px] text-center">
             <motion.h5 className="mx-auto max-w-[1320px] text-center text-[28px] leading-[1.08] tracking-[-0.04em] sm:text-[38px] md:text-[48px] lg:text-[58px] xl:text-[64px]">
@@ -166,20 +161,68 @@ title:"Bharat AI Store",
               
             /> */}
 
-            <img
-              src={arrow0}
-              alt="arrow"
-              className="pointer-events-none absolute hidden object-contain lg:block"
-              style={{
-                left: "14%",
-                top: "120%",
-                width: "clamp(90px, 7.5vw, 140px)",
-                transform: "translateY(10px) rotate(-8deg)",
-              }}
-            />
           </div>
 
-          <div className="mt-8 grid grid-cols-3 items-end gap-x-1 gap-y-4 sm:mt-9 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:mt-12 md:grid-cols-6 md:gap-x-2 lg:gap-x-3 xl:gap-x-4">
+          <div className="relative 
+          ">
+            {/* Speak + arrows aligned to league grid — desktop only */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-[130px] md:block lg:h-[145px] xl:h-[155px]">
+              <button
+                type="button"
+                onClick={() => navigate("/radhai")}
+                className="pointer-events-auto absolute top-0 -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105"
+                style={{ left: "16.666%" }}
+                aria-label="Speak with radhAI"
+              >
+                <img
+                  src={speak1}
+                  alt="Speak with radhAI"
+                  className="h-auto object-contain"
+                  style={{ width: "clamp(110px, 10vw, 160px)" }}
+                />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/radhai")}
+                className="pointer-events-auto absolute top-0 -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105"
+                style={{ left: "83.333%" }}
+                aria-label="Speak with radhAI"
+              >
+                <img
+                  src={speak1}
+                  alt="Speak with radhAI"
+                  className="h-auto object-contain"
+                  style={{ width: "clamp(110px, 10vw, 160px)" }}
+                />
+              </button>
+
+              <img
+                src={arrow0}
+                alt=""
+                className="absolute object-contain"
+                style={{
+                  left: "22%",
+                  top: "62%",
+                  width: "clamp(65px, 6vw, 100px)",
+                  transform: "rotate(-4deg)",
+                }}
+              />
+
+              <img
+                src={arrow1}
+                alt=""
+                className="absolute object-contain"
+                style={{
+                  left: "73%",
+                  top: "62%",
+                  width: "clamp(65px, 6vw, 100px)",
+                  transform: "rotate(4deg)",
+                }}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 items-end gap-x-1 gap-y-4 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-6 md:gap-x-2 md:pt-[68px] lg:gap-x-3 lg:pt-[76px] xl:gap-x-4 xl:pt-[84px]">
             {cards.map((card, index) => {
               const isActive = activeIndex === index;
 
@@ -247,15 +290,14 @@ title:"Bharat AI Store",
                       {card.league}
                     </h3>
 
-                    <h1
-                      className="mt-0.5 block text-center text-[14px] font-bold leading-[1.2] text-gray-600 sm:mt-1 sm:text-[13px] md:text-[14px]"
-                    >
+                    <h1 className="mt-0.5 block text-center text-[14px] font-bold leading-[1.2] text-gray-600 sm:mt-1 sm:text-[13px] md:text-[14px]">
                       {card.title}
                     </h1>
                   </motion.div>
                 </button>
               );
             })}
+            </div>
           </div>
 
           <motion.div

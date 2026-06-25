@@ -1,7 +1,7 @@
 import React from "react";
 import { Check, Download } from "lucide-react";
 import A from "../assets/img/app (1).png";
-import P from "../assets/img/play (1).png";
+
 
 const ThankYouPage = () => {
   return (
@@ -34,7 +34,11 @@ const ThankYouPage = () => {
             className="flex items-center bg-black px-4 py-3 rounded-lg shadow-md hover:bg-gray-800 transition duration-300"
           >
             <Download size={20} className="text-white mr-2" />
-            <img src={P} alt="Google Play" className="w-28 h-auto" />
+            <img
+              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+              alt="Google Play"
+              className="w-28 h-auto"
+            />
           </a>
 
           {/* Android APK Link */}
@@ -44,7 +48,7 @@ const ThankYouPage = () => {
             className="flex items-center bg-[#04AA6D] px-4 py-3 rounded-lg shadow-md hover:bg-green-600 transition duration-300"
           >
             <Download size={20} className="text-white mr-2" />
-            <img src={A} alt="Ios" className="w-28 h-auto" />
+            <img src="https://s2.rdbuz.com/web/images/homeV2/appinstall/playStore.svg" alt="Ios" className="w-28 h-auto" />
           </a>
         </div>
 

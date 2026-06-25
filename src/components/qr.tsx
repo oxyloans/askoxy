@@ -1,7 +1,7 @@
 import React from "react";
 import { Facebook, Instagram, LinkedinIcon } from "lucide-react";
 import PlayStore from "../assets/img/play (1).png";
-import AppStore from "../assets/img/app (1).png";
+
 import Logo from "../assets/img/logo.png";
 
 const QR = () => {
@@ -84,7 +84,7 @@ const QR = () => {
           >
             <span className="text-base sm:text-lg font-semibold">iOS App</span>
             <img
-              src={AppStore}
+              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
               alt="iOS App Store"
               className="w-20 sm:w-24 h-auto"
             />
