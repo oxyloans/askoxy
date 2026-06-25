@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import type React from "react";
 import BASE_URL from "../../Config";
+import { notification } from "antd";
 
 type Role = "user" | "assistant";
 
@@ -8,7 +10,7 @@ interface Message {
   id: string;
   role: Role;
   content: string;
- fileNames?: string[];
+  fileNames?: string[];
   timestamp: Date;
 }
 
@@ -19,14 +21,93 @@ interface AttachedFile {
   isImage: boolean;
 }
 
-const CHAT_URL = `${BASE_URL}/vibecode-service/claude/chat`;
-const FILE_URL = `${BASE_URL}/vibecode-service/claude/chat/file`;
+interface Session {
+  id: number;
+  userId: string;
+  sessionId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  lastProvider: string;
+  lastModel: string;
+}
 
-const ANTHROPIC_MODELS = [
-  { id: "claude-opus-4-6", label: "Claude Opus 4.6", desc: "Most capable" },
-  { id: "claude-sonnet-4-5", label: "Claude Sonnet 4.5", desc: "Balanced" },
-  { id: "claude-opus-4-0", label: "Claude Opus 4", desc: "Powerful" },
-  { id: "claude-sonnet-4-0", label: "Claude Sonnet 4", desc: "Smart" },
+const SESSION_CHAT_URL = `${BASE_URL}/vibecode-service/claude/session/chat`;
+const FILE_URL = `${BASE_URL}/vibecode-service/claude/chat/file`;
+const SESSIONS_URL = (userId: string) =>
+  `${BASE_URL}/vibecode-service/claude/sessions/${userId}`;
+const HISTORY_URL = (sessionId: string) =>
+  `${BASE_URL}/vibecode-service/claude/history/${sessionId}`;
+const KNOWLEDGE_BASE_URL = `${BASE_URL}/ai-automation/add-to-clone`;
+
+const CLAUDE_MODELS = [
+  {
+    id: "claude-opus-4-6",
+    label: "Claude Opus 4.6",
+    desc: "Most capable",
+    provider: "Claude",
+  },
+  {
+    id: "claude-sonnet-4-5",
+    label: "Claude Sonnet 4.5",
+    desc: "Balanced",
+    provider: "Claude",
+  },
+  {
+    id: "claude-opus-4-0",
+    label: "Claude Opus 4",
+    desc: "Powerful",
+    provider: "Claude",
+  },
+  {
+    id: "claude-sonnet-4-0",
+    label: "Claude Sonnet 4",
+    desc: "Smart",
+    provider: "Claude",
+  },
+  {
+    id: "gpt-4o",
+    label: "GPT-4o",
+    desc: "OpenAI flagship",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-4o-mini",
+    label: "GPT-4o Mini",
+    desc: "Fast & efficient",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-4o",
+    label: "GPT-4o",
+    desc: "OpenAI flagship",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-4o-mini",
+    label: "GPT-4o Mini",
+    desc: "Fast & efficient",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-4-turbo",
+    label: "GPT-4 Turbo",
+    desc: "Powerful",
+    provider: "OpenAI",
+  },
+  { id: "o1-mini", label: "O1 Mini", desc: "Reasoning", provider: "OpenAI" },
+  {
+    id: "gpt-5.5",
+    label: "GPT-5.5",
+    desc: "Top expensive",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-5-mini",
+    label: "GPT-5 Mini",
+    desc: "Fast & smart",
+    provider: "OpenAI",
+  },
 ];
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -39,28 +120,52 @@ const fmtBytes = (b: number) =>
       ? `${(b / 1024).toFixed(1)} KB`
       : `${(b / 1048576).toFixed(1)} MB`;
 
-// ── API calls — plain JSON { status, response } ───────────────────────────────
-async function callChat(
-  history: { role: string; content: string }[],
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// REPLACE WITH:
+function getUserId(): string {
+  return localStorage.getItem("userId") ?? "";
+}
+function getDisplayName(): string {
+  try {
+    const raw = localStorage.getItem("profileData");
+    if (!raw) return "Guest User";
+    const profile = JSON.parse(raw);
+    const first = profile.userFirstName ?? "";
+    const last = profile.userLastName ?? "";
+    const full = `${first} ${last}`.trim();
+    return full || "Guest User";
+  } catch {
+    return "Guest User";
+  }
+}
+
+async function callSessionChat(
+  userId: string,
+  message: string,
   model: string,
+  provider: string,
+  sessionId: string | null,
   signal: AbortSignal,
-): Promise<string> {
-  const res = await fetch(`${CHAT_URL}?model=${encodeURIComponent(model)}`, {
+): Promise<{ sessionId: string; response: string }> {
+  const body: any = { userId, provider, model, message };
+  if (sessionId) body.sessionId = sessionId;
+  const res = await fetch(SESSION_CHAT_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(history),
+    body: JSON.stringify(body),
     signal,
   });
   if (!res.ok) throw new Error(`Server error ${res.status}`);
-  const text = await res.text();
-
-  try {
-    const json = JSON.parse(text);
-    return json.response ?? "";
-  } catch (e) {
-    console.error("Invalid JSON response:", text);
-    throw new Error("Server returned invalid response (streaming detected)");
-  }
+  const json = await res.json();
+  return { sessionId: json.sessionId, response: json.response ?? "" };
 }
 
 async function callChatWithFiles(
@@ -70,143 +175,207 @@ async function callChatWithFiles(
   signal: AbortSignal,
 ): Promise<string> {
   const form = new FormData();
-
-  files.forEach((file) => {
-    form.append("files", file); // 🔥 important
-  });
-
+  files.forEach((f) => form.append("files", f));
   form.append("message", message);
-
-  const res = await fetch(
-    `http://localhost:9876/api/vibecode-service/claude/chat/files?model=${encodeURIComponent(model)}`,
-    {
-      method: "POST",
-      body: form,
-      signal,
-    },
-  );
-
+  const res = await fetch(`${FILE_URL}?model=${encodeURIComponent(model)}`, {
+    method: "POST",
+    body: form,
+    signal,
+  });
   if (!res.ok) throw new Error(`Server error ${res.status}`);
-
   const json = await res.json();
   return json.response ?? "";
+}
+
+async function fetchSessions(userId: string): Promise<Session[]> {
+  try {
+    const res = await fetch(SESSIONS_URL(userId), {
+      headers: { accept: "*/*" },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchHistory(sessionId: string): Promise<Message[]> {
+  try {
+    const res = await fetch(HISTORY_URL(sessionId), {
+      headers: { accept: "*/*" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.messages || []).map((m: any) => ({
+      id: String(m.id),
+      role: m.role as Role,
+      content: m.content,
+      timestamp: new Date(m.createdAt),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function addToKnowledgeBase(
+  content: string,
+  messageId: string,
+): Promise<boolean> {
+  try {
+    const accessToken = localStorage.getItem("accessToken") ?? "";
+    const res = await fetch(KNOWLEDGE_BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        entityId: messageId,
+        entityType: "OXYGPT",
+        editedContent: content,
+        confirmed: true,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 function ThinkingLoader() {
   return (
-    <div className="flex gap-3 items-start">
-      <div
-        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md"
-        style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-      >
+    <div className="flex gap-3 items-start max-w-3xl mx-auto w-full px-4">
+      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold bg-gradient-to-br from-violet-600 to-violet-800">
         AI
       </div>
-      <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-3">
-        <div className="flex gap-1.5">
+      <div className="flex items-center gap-2 py-2">
+        <div className="flex gap-1">
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
+              className="w-2 h-2 rounded-full animate-bounce bg-violet-500"
               style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}
         </div>
-        <span className="text-xs text-slate-400 font-medium">Thinking…</span>
+        <span className="text-xs text-violet-500">Thinking…</span>
       </div>
     </div>
   );
 }
 
-function renderInline(text: string, isUser: boolean): React.ReactNode[] {
+// ── Markdown ──────────────────────────────────────────────────────────────────
+function renderInline(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   const re = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[([^\]]+)\]\(([^)]+)\))/g;
-
   let last = 0,
     m: RegExpExecArray | null,
     key = 0;
-
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
-
     const raw = m[0];
-
-    if (raw.startsWith("`")) {
+    if (raw.startsWith("`"))
       parts.push(
         <code
           key={key++}
-          className={`rounded px-1 py-0.5 text-[12px] font-mono ${
-            isUser ? "bg-white/20 text-white" : "bg-slate-200 text-slate-800"
-          }`}
+          className="rounded px-1.5 py-0.5 text-[12px] font-mono bg-violet-100 text-violet-700 border border-violet-200"
         >
           {raw.slice(1, -1)}
         </code>,
       );
-    } else if (raw.startsWith("**")) {
+    else if (raw.startsWith("**"))
       parts.push(
-        <strong key={key++} className="font-semibold">
+        <strong key={key++} className="font-semibold text-slate-800">
           {raw.slice(2, -2)}
         </strong>,
       );
-    } else if (raw.startsWith("*")) {
-      parts.push(<em key={key++}>{raw.slice(1, -1)}</em>);
-    } else if (raw.startsWith("[")) {
+    else if (raw.startsWith("*"))
+      parts.push(
+        <em key={key++} className="italic text-slate-600">
+          {raw.slice(1, -1)}
+        </em>,
+      );
+    else if (raw.startsWith("["))
       parts.push(
         <a
           key={key++}
           href={m[3]}
           target="_blank"
           rel="noreferrer"
-          className={`underline ${isUser ? "text-white" : "text-indigo-600"}`}
+          className="underline text-violet-600 hover:text-violet-800 transition-colors"
         >
           {m[2]}
         </a>,
       );
-    }
-
     last = m.index + raw.length;
   }
-
   if (last < text.length) parts.push(text.slice(last));
-
   return parts;
 }
 
-function startsWithEmoji(s: string): boolean {
-  const trimmed = s.trim();
-  if (!trimmed) return false;
-  const cp = trimmed.codePointAt(0);
-  if (cp === undefined) return false;
+// ── Table Markdown ────────────────────────────────────────────────────────────
+function MarkdownTable({ rows }: { rows: string[] }) {
+  if (rows.length < 2) return null;
+
+  const parseRow = (row: string) =>
+    row
+      .split("|")
+      .map((c) => c.trim())
+      .filter((c) => c !== "");
+
+  const headerCells = parseRow(rows[0]);
+  // rows[1] is the separator line (--- | --- | ---)
+  const bodyRows = rows.slice(2).map(parseRow);
+
   return (
-    (cp >= 0x1f300 && cp <= 0x1faff) || // Misc symbols, emoticons, transport, etc.
-    (cp >= 0x2600 && cp <= 0x27bf) || // Misc symbols & dingbats
-    (cp >= 0xfe00 && cp <= 0xfe0f) || // Variation selectors
-    cp === 0x200d // ZWJ
+    <div className="my-4 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+      <table className="w-full text-[12.5px] border-collapse">
+        <thead>
+          <tr className="bg-violet-50">
+            {headerCells.map((cell, i) => (
+              <th
+                key={i}
+                className="px-4 py-2.5 text-left font-semibold text-violet-800 border-b border-violet-200 whitespace-nowrap"
+              >
+                {renderInline(cell)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {bodyRows.map((row, ri) => (
+            <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+              {row.map((cell, ci) => (
+                <td
+                  key={ci}
+                  className="px-4 py-2.5 text-slate-700 border-b border-slate-100 align-top"
+                >
+                  {renderInline(cell)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
-// A proper markdown table row: starts AND ends with |, and has 2+ cells
-function isTableRow(s: string): boolean {
-  const t = s.trim();
-  if (!t.startsWith("|") || !t.endsWith("|")) return false;
-  return t.split("|").length - 2 >= 2;
-}
-
-function renderCodeBlock(lang: string, code: string, key: string) {
+function CodeCopyButton({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
   return (
-    <div
-      key={key}
-      className="my-3 rounded-xl overflow-hidden border border-slate-200"
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(code).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+      className="text-violet-400 hover:text-violet-700 transition-colors normal-case tracking-normal font-sans"
     >
-      {lang && (
-        <div className="bg-slate-100 px-3 py-1 text-[10px] font-mono text-slate-500 border-b border-slate-200 uppercase tracking-wider">
-          {lang}
-        </div>
-      )}
-      <pre className="bg-slate-950 text-slate-100 text-[12px] font-mono p-4 overflow-x-auto leading-relaxed">
-        <code>{code}</code>
-      </pre>
-    </div>
+      {copied ? "✓ Copied!" : "Copy"}
+    </button>
   );
 }
 
@@ -217,9 +386,6 @@ function MarkdownContent({
   content: string;
   isUser?: boolean;
 }) {
-  const textColor = isUser ? "text-white" : "text-slate-700";
-  const headingColor = isUser ? "text-white" : "text-slate-900";
-
   const lines = content.split("\n");
   const nodes: React.ReactNode[] = [];
   let i = 0;
@@ -228,13 +394,14 @@ function MarkdownContent({
     const line = lines[i];
     const trimmed = line.trim();
 
+    // Blank line
     if (trimmed === "") {
       nodes.push(<div key={`bl-${i}`} className="h-2" />);
       i++;
       continue;
     }
 
-    // Code block
+    // Fenced code block
     if (trimmed.startsWith("```")) {
       const lang = trimmed.slice(3).trim();
       const codeLines: string[] = [];
@@ -243,53 +410,87 @@ function MarkdownContent({
         codeLines.push(lines[i]);
         i++;
       }
-
       nodes.push(
         <div
           key={`code-${i}`}
-          className="my-3 rounded-xl overflow-hidden border border-slate-200"
+          className="my-4 rounded-xl overflow-hidden border border-violet-200 shadow-sm"
         >
           {lang && (
-            <div className="bg-slate-100 px-3 py-1 text-[10px] text-slate-500 border-b">
-              {lang}
+            <div className="px-4 py-1.5 text-[10px] border-b border-violet-200 bg-violet-50 text-violet-600 font-mono font-semibold uppercase tracking-wider flex items-center justify-between">
+              <span>{lang}</span>
+
+              <CodeCopyButton code={codeLines.join("\n")} />
             </div>
           )}
-          <pre className="bg-slate-100 text-slate-800 text-[12px] font-mono p-4 overflow-x-auto leading-relaxed">
+          <pre className="text-[12px] font-mono p-4 overflow-x-auto leading-relaxed bg-slate-900 text-slate-100">
             <code>{codeLines.join("\n")}</code>
           </pre>
         </div>,
       );
-
       i++;
+      continue;
+    }
+
+    // Table detection: line contains | and next line is separator
+    if (
+      trimmed.includes("|") &&
+      i + 1 < lines.length &&
+      /^\|?[\s\-:]+(\|[\s\-:]+)+\|?$/.test(lines[i + 1].trim())
+    ) {
+      const tableRows: string[] = [];
+      while (i < lines.length && lines[i].trim().includes("|")) {
+        tableRows.push(lines[i]);
+        i++;
+      }
+      nodes.push(<MarkdownTable key={`tbl-${i}`} rows={tableRows} />);
       continue;
     }
 
     // Headings
     const hMatch = trimmed.match(/^(#{1,4})\s+(.+)/);
     if (hMatch) {
+      const level = hMatch[1].length;
+      const sizes = [
+        "text-[18px]",
+        "text-[16px]",
+        "text-[14px]",
+        "text-[13px]",
+      ];
       nodes.push(
-        <p key={`h-${i}`} className={`font-bold mt-3 ${headingColor}`}>
-          {hMatch[2]}
+        <p
+          key={`h-${i}`}
+          className={`font-bold mt-4 mb-1 text-slate-800 ${sizes[level - 1]}`}
+        >
+          {renderInline(hMatch[2])}
         </p>,
       );
       i++;
       continue;
     }
 
-    // Lists
-    if (/^[-*]\s/.test(trimmed)) {
+    // Horizontal rule
+    if (/^---+$/.test(trimmed) || /^\*\*\*+$/.test(trimmed)) {
+      nodes.push(<hr key={`hr-${i}`} className="my-3 border-slate-200" />);
+      i++;
+      continue;
+    }
+
+    // Unordered list
+    if (/^[-*+]\s/.test(trimmed)) {
       const items: string[] = [];
-      while (i < lines.length && /^[-*]\s/.test(lines[i].trim())) {
-        items.push(lines[i].replace(/^[-*]\s+/, ""));
+      while (i < lines.length && /^[-*+]\s/.test(lines[i].trim())) {
+        items.push(lines[i].replace(/^[-*+]\s+/, ""));
         i++;
       }
-
       nodes.push(
-        <ul key={`ul-${i}`} className="pl-2 space-y-1">
+        <ul key={`ul-${i}`} className="pl-1 space-y-1.5 my-2">
           {items.map((it, idx) => (
-            <li key={idx} className={`flex gap-2 ${textColor}`}>
-              <span>•</span>
-              <span>{renderInline(it, isUser)}</span>
+            <li
+              key={idx}
+              className="flex gap-2 text-[13.5px] text-slate-700 leading-relaxed"
+            >
+              <span className="text-violet-400 flex-shrink-0 mt-0.5">•</span>
+              <span>{renderInline(it)}</span>
             </li>
           ))}
         </ul>,
@@ -297,13 +498,66 @@ function MarkdownContent({
       continue;
     }
 
+    // Ordered list
+    if (/^\d+\.\s/.test(trimmed)) {
+      const items: string[] = [];
+      let startNum = parseInt(trimmed.match(/^(\d+)\./)?.[1] || "1", 10);
+      while (i < lines.length && /^\d+\.\s/.test(lines[i].trim())) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ""));
+        i++;
+      }
+      nodes.push(
+        <ol key={`ol-${i}`} className="pl-1 space-y-1.5 my-2" start={startNum}>
+          {items.map((it, idx) => (
+            <li
+              key={idx}
+              className="flex gap-2 text-[13.5px] text-slate-700 leading-relaxed"
+            >
+              <span className="text-violet-500 font-semibold flex-shrink-0 min-w-[1.25rem]">
+                {startNum + idx}.
+              </span>
+              <span>{renderInline(it)}</span>
+            </li>
+          ))}
+        </ol>,
+      );
+      continue;
+    }
+
+    // Blockquote
+    if (trimmed.startsWith(">")) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith(">")) {
+        quoteLines.push(lines[i].replace(/^>\s?/, ""));
+        i++;
+      }
+      nodes.push(
+        <blockquote
+          key={`bq-${i}`}
+          className="my-3 pl-4 border-l-[3px] border-violet-300 bg-violet-50/50 py-2 pr-3 rounded-r-lg"
+        >
+          {quoteLines.map((ql, qi) => (
+            <p
+              key={qi}
+              className="text-[13px] text-slate-600 italic leading-relaxed"
+            >
+              {renderInline(ql)}
+            </p>
+          ))}
+        </blockquote>,
+      );
+      continue;
+    }
+
     // Paragraph
     nodes.push(
-      <p key={`p-${i}`} className={`text-[13.5px] ${textColor}`}>
-        {renderInline(trimmed, isUser)}
+      <p
+        key={`p-${i}`}
+        className="text-[13.5px] leading-relaxed text-slate-700"
+      >
+        {renderInline(trimmed)}
       </p>,
     );
-
     i++;
   }
 
@@ -312,17 +566,15 @@ function MarkdownContent({
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  };
   return (
     <button
-      onClick={copy}
-      title="Copy response"
-      className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100"
+      onClick={() => {
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-violet-500 hover:bg-violet-100"
     >
       {copied ? (
         <svg
@@ -353,63 +605,128 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+// REPLACE THE ENTIRE KBButton WITH:
+function KBButton({
+  content,
+  messageId,
+}: {
+  content: string;
+  messageId: string;
+}) {
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const handle = async () => {
+    setStatus("loading");
+    const ok = await addToKnowledgeBase(content, messageId);
+    if (ok) {
+      setStatus("idle");
+      notification.success({
+        message: "Saved to RadhAI",
+        description: "Response added to Radha-AI knowledge base successfully.",
+        placement: "topRight",
+        duration: 0,
+      });
+    } else {
+      setStatus("error");
+      notification.error({
+        message: "Failed to Save",
+        description:
+          "Could not add to Radha-AI knowledge base. Please try again.",
+        placement: "topRight",
+        duration: 0,
+      });
+      setTimeout(() => setStatus("idle"), 2000);
+    }
+  };
+  return (
+    <button
+      onClick={handle}
+      disabled={status === "loading"}
+      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] hover:bg-violet-100 disabled:opacity-50 ${
+        status === "error" ? "text-red-500" : "text-violet-500"
+      }`}
+      title="Move to Radha Knowledge Base"
+    >
+      {status === "loading" ? (
+        <svg
+          className="animate-spin"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+          <path d="M12 2a10 10 0 0110 10" />
+        </svg>
+      ) : (
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+          <line x1="12" y1="8" x2="12" y2="14" />
+          <line x1="9" y1="11" x2="15" y2="11" />
+        </svg>
+      )}
+      {status === "error" ? "Failed" : "→ Move to RadhAI"}
+    </button>
+  );
+}
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";
   return (
     <div
-      className={`flex gap-3 group ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      className={`flex gap-3 group max-w-3xl mx-auto w-full px-4 ${isUser ? "flex-row-reverse" : "flex-row"}`}
     >
       <div
-        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm select-none text-white"
-        style={{
-          background: isUser
-            ? "linear-gradient(135deg,#6366f1,#4f46e5)"
-            : "linear-gradient(135deg,#6366f1,#8b5cf6)",
-        }}
+        className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white mt-0.5 bg-gradient-to-br ${isUser ? "from-violet-600 to-violet-900" : "from-violet-500 to-violet-700"}`}
       >
         {isUser ? "U" : "AI"}
       </div>
-
       <div
-        className={`max-w-[78%] flex flex-col gap-1 ${
-          isUser ? "items-end" : "items-start"
-        }`}
+        className={`flex flex-col gap-1 ${isUser ? "items-end max-w-[75%]" : "items-start flex-1 min-w-0"}`}
       >
-       {msg.fileNames && msg.fileNames.length > 0 && (
-  <div className="flex flex-wrap gap-1">
-    {msg.fileNames.map((name, i) => (
-      <span
-        key={i}
-        className="text-[10px] font-semibold text-indigo-500 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full"
-      >
-        📎 {name}
-      </span>
-    ))}
-  </div>
-)}
+        {msg.fileNames && msg.fileNames.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-1">
+            {msg.fileNames.map((name, i) => (
+              <span
+                key={i}
+                className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200"
+              >
+                📎 {name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {isUser ? (
+          /* User message: styled bubble */
+          <div className="border border-violet-300 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-full bg-white">
+            <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap break-words text-slate-800">
+              {msg.content}
+            </p>
+          </div>
+        ) : (
+          /* Assistant message: full markdown */
+          <div className="w-full min-w-0 overflow-x-hidden">
+            <MarkdownContent content={msg.content} />
+          </div>
+        )}
+
         <div
-          className={`px-4 py-3 rounded-2xl shadow-md backdrop-blur-sm ${
-            isUser
-              ? "text-white rounded-tr-sm"
-              : "bg-white/90 border border-slate-200 rounded-tl-sm"
-          }`}
-          style={
-            isUser
-              ? { background: "linear-gradient(135deg,#6366f1,#4f46e5)" }
-              : {}
-          }
+          className={`flex items-center gap-1 ${isUser ? "self-end" : "self-start"}`}
         >
-          <MarkdownContent content={msg.content} isUser={isUser} />
-        </div>
-        <div
-          className={`flex items-center gap-2 ${
-            isUser ? "self-end" : "self-start"
-          }`}
-        >
-          <span className="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-[10px] text-slate-400">
             {fmtTime(msg.timestamp)}
           </span>
-          {!isUser && <CopyButton text={msg.content} />}
+          <CopyButton text={msg.content} />
+          {!isUser && <KBButton content={msg.content} messageId={msg.id} />}
         </div>
       </div>
     </div>
@@ -426,17 +743,16 @@ function FileChip({
   const isImage = file.raw.type.startsWith("image/");
   const isExcel = file.name.endsWith(".xls") || file.name.endsWith(".xlsx");
   const isPdf = file.raw.type === "application/pdf";
-
   return (
-    <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1 text-xs max-w-[260px]">
+    <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs max-w-[240px] bg-violet-100 border border-violet-200 text-violet-700">
       <span>{isImage ? "🖼️" : isExcel ? "📊" : isPdf ? "📄" : "📁"}</span>
-      <span className="truncate text-indigo-700 font-medium">{file.name}</span>
-      <span className="text-slate-400 flex-shrink-0">
+      <span className="truncate font-medium">{file.name}</span>
+      <span className="text-violet-400 flex-shrink-0">
         {fmtBytes(file.size)}
       </span>
       <button
         onClick={onRemove}
-        className="ml-0.5 text-slate-400 hover:text-red-500"
+        className="ml-0.5 hover:text-red-500 text-violet-400"
       >
         ✕
       </button>
@@ -444,63 +760,230 @@ function FileChip({
   );
 }
 
-// ── Voice Recorder Hook ──────────────────────────────────────────────────────
 function useVoiceRecorder(onResult: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
-
   useEffect(() => {
-    const SpeechRecognition =
+    const SR =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
-    setIsSupported(!!SpeechRecognition);
+    setIsSupported(!!SR);
   }, []);
-
   const startRecording = useCallback(() => {
-    const SpeechRecognition =
+    const SR =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    let finalTranscript = "";
-
-    recognition.onresult = (e: any) => {
+    if (!SR) return;
+    const r = new SR();
+    r.continuous = true;
+    r.interimResults = true;
+    r.lang = "en-US";
+    let final = "";
+    r.onresult = (e: any) => {
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) finalTranscript += t + " ";
+        if (e.results[i].isFinal) final += t + " ";
         else interim = t;
       }
-      onResult((finalTranscript + interim).trimStart());
+      onResult((final + interim).trimStart());
     };
-
-    recognition.onerror = () => {
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
+    r.onerror = () => setIsRecording(false);
+    r.onend = () => setIsRecording(false);
+    recognitionRef.current = r;
+    r.start();
     setIsRecording(true);
   }, [onResult]);
-
   const stopRecording = useCallback(() => {
     recognitionRef.current?.stop();
     setIsRecording(false);
   }, []);
-
   return { isRecording, isSupported, startRecording, stopRecording };
 }
 
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function Sidebar({
+  sessions,
+  activeSessionId,
+  onNewChat,
+  onSelectSession,
+  isOpen,
+  onToggle,
+  userId,
+}: {
+  sessions: Session[];
+  activeSessionId: string | null;
+  onNewChat: () => void;
+  onSelectSession: (s: Session) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  userId: string;
+}) {
+  const lastFour = userId.slice(-4).toUpperCase();
+  const displayName = getDisplayName();
+  return (
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 lg:hidden bg-black/40"
+          onClick={onToggle}
+        />
+      )}
+      <aside
+        className="fixed lg:static inset-y-0 left-0 z-40 flex flex-col h-full transition-all duration-300 bg-white border-r border-slate-200"
+        style={{
+          width: isOpen ? "256px" : "0px",
+          minWidth: isOpen ? "256px" : "0px",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{ width: "256px", minWidth: "256px" }}
+          className="flex flex-col h-full"
+        >
+          {/* Header */}
+          <div className="px-4 py-3 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-sm flex-shrink-0">
+                <span className="text-white text-[8px]">◈</span>
+              </div>
+              <div className="flex flex-col">
+                <h2 className="text-[13px] font-semibold text-slate-800 leading-none">
+                  OXY GPT
+                </h2>
+                <p className="mt-0.5 text-[11px] text-slate-500 leading-none">
+                  GPT for Radha
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mx-4 mb-3 h-px bg-slate-100" />
+
+          {/* New Chat */}
+          <div className="px-3 pb-3 flex-shrink-0">
+            <button
+              onClick={onNewChat}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[12.5px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 transition-all"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              New chat
+            </button>
+          </div>
+
+          <div className="mx-4 mb-2 h-px bg-slate-100" />
+
+          {/* Recent label */}
+          <div className="px-4 pb-1 flex items-center gap-2 flex-shrink-0">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Recent
+            </span>
+            {sessions.length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-violet-100 text-violet-700">
+                {sessions.length}
+              </span>
+            )}
+          </div>
+
+          {/* Sessions */}
+          <div
+            className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5"
+            style={{ scrollbarWidth: "thin" }}
+          >
+            {sessions.length === 0 && (
+              <div className="px-3 py-8 text-center">
+                <p className="text-[12px] text-slate-400">
+                  No conversations yet
+                </p>
+                <p className="text-[11px] mt-1 text-slate-300">
+                  Start chatting to see history
+                </p>
+              </div>
+            )}
+            {sessions.map((s) => (
+              <button
+                key={s.sessionId}
+                onClick={() => onSelectSession(s)}
+                className={`w-full text-left px-3 py-2 rounded-xl transition-all ${
+                  activeSessionId === s.sessionId
+                    ? "bg-violet-100 border border-violet-200 text-violet-800"
+                    : "border border-transparent text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[12px] font-medium leading-snug truncate flex-1 min-w-0">
+                    {s.title || "Untitled"}
+                  </p>
+                  <p className="text-[10px] text-slate-400 flex-shrink-0">
+                    {fmtDate(s.updatedAt)}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Bottom user info */}
+          <div className="px-3 py-3 flex-shrink-0 border-t border-slate-100">
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 bg-gradient-to-br from-violet-600 to-violet-800">
+                {displayName?.charAt(0).toUpperCase() || "G"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold text-slate-700 leading-none">
+                  {displayName}
+                </p>
+                <p className="text-[10px] mt-0.5 text-slate-400">
+                  ···{lastFour}
+                </p>
+              </div>
+              <div className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400" />
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+// ── CEO Suggestion Cards ──────────────────────────────────────────────────────
+const CEO_SUGGESTIONS = [
+  {
+    icon: "📊",
+    title: "OxyLoans Portfolio Overview",
+    prompt:
+      "Give me a comprehensive overview of OxyLoans' current loan portfolio — AUM, active lenders, borrowers, and growth trends.",
+  },
+  {
+    icon: "🤖",
+    title: "AskOxy.ai Capabilities",
+    prompt:
+      "What are the key AI capabilities of AskOxy.ai and how can it improve lender and borrower experiences on the OxyLoans platform?",
+  },
+  {
+    icon: "📈",
+    title: "P2P Lending Market Trends",
+    prompt:
+      "What are the latest regulatory and market trends in India's P2P lending sector that OxyLoans should be aware of in 2025–2026?",
+  },
+  {
+    icon: "⚙️",
+    title: "Risk & Compliance Strategy",
+    prompt:
+      "Outline a risk assessment and compliance framework for OxyLoans to manage credit risk, RBI guidelines, and borrower defaults effectively.",
+  },
+];
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function OxyClaude() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -508,8 +991,12 @@ export default function OxyClaude() {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState(ANTHROPIC_MODELS[0].id);
+  const [selectedModel, setSelectedModel] = useState(CLAUDE_MODELS[4].id);
   const [modelOpen, setModelOpen] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -518,30 +1005,38 @@ export default function OxyClaude() {
   const abortRef = useRef<AbortController | null>(null);
   const userScrolledUp = useRef(false);
 
+  const navigate = useNavigate();
+  const userId = getUserId();
+
+  useEffect(() => {
+    if (!userId) {
+      sessionStorage.setItem("redirectPath", "/oxygpt"); // change to your actual route
+      navigate("/whatsapplogin");
+    }
+  }, [userId, navigate]);
+
   const { isRecording, isSupported, startRecording, stopRecording } =
     useVoiceRecorder((text) => setInput(text));
+
+  useEffect(() => {
+    fetchSessions(userId).then(setSessions);
+  }, [userId]);
 
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
     const onScroll = () => {
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-      userScrolledUp.current = !atBottom;
+      userScrolledUp.current =
+        el.scrollHeight - el.scrollTop - el.clientHeight > 80;
     };
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    if (!userScrolledUp.current) {
+    if (!userScrolledUp.current)
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
   }, [messages, isLoading]);
-
-  const scrollToBottom = () => {
-    userScrolledUp.current = false;
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -550,14 +1045,16 @@ export default function OxyClaude() {
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, [input]);
 
+  useEffect(() => {
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+  }, []);
+
   const handleFile = useCallback((file: File) => {
     if (!file) return;
-
     if (file.size > 20 * 1024 * 1024) {
       setError("File must be under 20 MB.");
       return;
     }
-
     setAttachedFiles((prev) => [
       ...prev,
       {
@@ -567,7 +1064,6 @@ export default function OxyClaude() {
         isImage: file.type.startsWith("image/"),
       },
     ]);
-
     setError(null);
   }, []);
 
@@ -575,8 +1071,7 @@ export default function OxyClaude() {
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragOver(false);
-      const files = Array.from(e.dataTransfer.files);
-      files.forEach(handleFile);
+      Array.from(e.dataTransfer.files).forEach(handleFile);
     },
     [handleFile],
   );
@@ -588,6 +1083,26 @@ export default function OxyClaude() {
     setAttachedFiles([]);
     setError(null);
     setIsLoading(false);
+    setCurrentSessionId(null);
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+  };
+
+  const handleSelectSession = async (session: Session) => {
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+    setHistoryLoading(true);
+    setError(null);
+    setCurrentSessionId(session.sessionId);
+    const matchedModel = CLAUDE_MODELS.find(
+      (m) => m.id === session.lastModel && m.provider === session.lastProvider,
+    );
+    if (matchedModel) setSelectedModel(matchedModel.id);
+    const history = await fetchHistory(session.sessionId);
+    setMessages(history);
+    setHistoryLoading(false);
+    setTimeout(
+      () => bottomRef.current?.scrollIntoView({ behavior: "smooth" }),
+      100,
+    );
   };
 
   const handleSend = async () => {
@@ -600,39 +1115,50 @@ export default function OxyClaude() {
       role: "user",
       content: text || "Please analyse this file.",
       fileNames:
-  attachedFiles.length > 0
-    ? attachedFiles.map(f => f.name)
-    : undefined,
+        attachedFiles.length > 0 ? attachedFiles.map((f) => f.name) : undefined,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    scrollToBottom();
     setIsLoading(true);
     setError(null);
+    userScrolledUp.current = false;
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 
     const filesSnap = attachedFiles;
     setAttachedFiles([]);
-
     const ac = new AbortController();
     abortRef.current = ac;
-
-    const history = [
-      ...messages.map((m) => ({ role: m.role, content: m.content })),
-      { role: "user", content: userMsg.content },
-    ];
+    const modelInfo = CLAUDE_MODELS.find((m) => m.id === selectedModel)!;
 
     try {
-      const response =
-        filesSnap.length > 0
-          ? await callChatWithFiles(
-              filesSnap.map((f) => f.raw),
-              userMsg.content,
-              selectedModel,
-              ac.signal,
-            )
-          : await callChat(history, selectedModel, ac.signal);
+      let response: string;
+      let newSessionId = currentSessionId;
+
+      if (filesSnap.length > 0) {
+        response = await callChatWithFiles(
+          filesSnap.map((f) => f.raw),
+          userMsg.content,
+          selectedModel,
+          ac.signal,
+        );
+      } else {
+        const result = await callSessionChat(
+          userId,
+          userMsg.content,
+          modelInfo.id,
+          modelInfo.provider,
+          currentSessionId,
+          ac.signal,
+        );
+        response = result.response;
+        newSessionId = result.sessionId;
+        if (!currentSessionId) {
+          setCurrentSessionId(newSessionId);
+          fetchSessions(userId).then(setSessions);
+        }
+      }
 
       setMessages((prev) => [
         ...prev,
@@ -648,7 +1174,7 @@ export default function OxyClaude() {
         const msg = err instanceof Error ? err.message : "";
         setError(
           msg.includes("500")
-            ? "Unable to get a response from this model. Please try again later or switch to a different model."
+            ? "Unable to get a response. Please try again or switch model."
             : msg || "Something went wrong.",
         );
       }
@@ -666,21 +1192,12 @@ export default function OxyClaude() {
   };
 
   const isEmpty = messages.length === 0;
-  const suggestions = [
-    "What are the latest news updates today?",
-    "Explain how AI works in simple terms",
-    "Write a React component for a login form",
-    "What are the trending technologies in 2026?",
-  ];
+  const selectedModelInfo = CLAUDE_MODELS.find((m) => m.id === selectedModel)!;
 
   return (
     <div
-      className="flex flex-col h-screen overflow-hidden text-slate-900"
-      style={{
-        fontFamily: "'Inter','Segoe UI',system-ui,sans-serif",
-        background:
-          "linear-gradient(135deg,#f0f4ff 0%,#faf5ff 50%,#f0f9ff 100%)",
-      }}
+      className="flex h-screen overflow-hidden bg-slate-50 text-slate-800"
+      style={{ fontFamily: "'Inter','Segoe UI',system-ui,sans-serif" }}
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);
@@ -688,197 +1205,212 @@ export default function OxyClaude() {
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
     >
-      {/* Dot grid */}
+      {/* Subtle dot grid */}
       <div
         className="fixed inset-0 pointer-events-none"
         aria-hidden
         style={{
           backgroundImage:
-            "radial-gradient(circle at 1px 1px,rgba(99,102,241,0.07) 1px,transparent 0)",
+            "radial-gradient(circle at 1px 1px, rgba(99,102,241,0.06) 1px, transparent 0)",
           backgroundSize: "28px 28px",
         }}
       />
 
       {/* Top accent bar */}
-      <div
-        className="fixed top-0 inset-x-0 h-[3px] pointer-events-none z-20"
-        style={{ background: "linear-gradient(90deg,#6366f1,#8b5cf6,#a78bfa)" }}
+      <div className="fixed top-0 inset-x-0 h-[3px] pointer-events-none z-50 bg-gradient-to-r from-violet-600 via-violet-500 to-indigo-400" />
+
+      {/* Sidebar */}
+      <Sidebar
+        sessions={sessions}
+        activeSessionId={currentSessionId}
+        onNewChat={handleNewChat}
+        onSelectSession={handleSelectSession}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen((v) => !v)}
+        userId={userId}
       />
 
-      {/* ── Header ── */}
-      <header
-        className="relative z-10 flex-shrink-0 backdrop-blur-xl bg-white/70 border-b border-white/60 shadow-sm"
-        style={{ background: "rgba(255,255,255,0.85)" }}
-      >
-        <div className="max-w-3xl mx-auto px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-bold shadow-md"
-              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-            >
-              ◈
-            </div>
-            <div>
-              <h1
-                className="text-[15px] font-extrabold tracking-tight leading-none"
-                style={{
-                  background: "linear-gradient(135deg,#4f46e5,#7c3aed)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                OXY GPT
-              </h1>
-              <p className="text-[9px] tracking-[0.18em] uppercase text-slate-400 font-medium mt-0.5">
-                Intelligent · Precise · Aware
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleNewChat}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm"
-            >
+      {/* Main */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
+        {/* ── FIX 3: Sticky header bar — sits above scroll content, never overlaps ── */}
+        <div className="flex-shrink-0 relative z-20 bg-slate-50/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <button
+            onClick={() => setSidebarOpen((v) => !v)}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-all flex-shrink-0"
+            title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {sidebarOpen ? (
               <svg
-                width="11"
-                height="11"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2"
               >
-                <path d="M12 5v14M5 12h14" />
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+                <path d="M5 12h4M7 10l-2 2 2 2" />
               </svg>
-              New Chat
-            </button>
-            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] text-emerald-700 font-semibold uppercase tracking-wide">
-                Live
-              </span>
+            ) : (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+                <path d="M13 12h4M15 10l2 2-2 2" />
+              </svg>
+            )}
+          </button>
+
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold bg-gradient-to-br from-violet-600 to-violet-800">
+              ◈
             </div>
+            <span className="text-[14px] font-bold text-slate-800">
+              OXY GPT
+            </span>
           </div>
         </div>
-      </header>
 
-      {/* ── Messages ── */}
-      <main
-        ref={mainRef}
-        className="flex-1 overflow-y-auto relative z-10 min-h-0"
-      >
-        <div className="max-w-3xl mx-auto px-5 py-6 flex flex-col gap-4">
-          {isEmpty && (
-            <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
-              <div
-                className="w-20 h-20 rounded-3xl flex items-center justify-center text-white text-3xl shadow-xl"
-                style={{
-                  background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                }}
-              >
-                ◈
-              </div>
-              <div className="max-w-sm">
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                  How can I help you Today?
-                </h2>
-                <p className="text-slate-500 text-sm leading-relaxed">
-                  Ask anything — code, AI, news, or upload a file.
-                </p>
-              </div>
-              <div className="flex gap-2 flex-wrap justify-center">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setInput(s)}
-                    className="px-4 py-2 text-xs font-medium border border-slate-200 bg-white text-slate-500 rounded-full hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} msg={msg} />
-          ))}
-
-          {isLoading && <ThinkingLoader />}
-
-          <div ref={bottomRef} />
-        </div>
-      </main>
-
-      {/* Drag overlay */}
-      {dragOver && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+        {/* Messages — scrolls independently below the sticky header */}
+        <main
+          ref={mainRef}
+          className="flex-1 overflow-y-auto relative z-10 min-h-0"
           style={{
-            background: "rgba(255,255,255,0.92)",
-            border: "2px dashed #6366f1",
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(139,92,246,0.2) transparent",
           }}
         >
-          <div className="text-center">
-            <div className="text-6xl mb-4">📂</div>
-            <p className="text-indigo-600 text-xl font-bold">
-              Drop your file here
-            </p>
-            <p className="text-slate-500 text-sm mt-1">Any file · max 20 MB</p>
+          <div className="py-6 flex flex-col gap-5">
+            {/* ── FIX 3 & 4: Welcome screen with CEO-grade OxyLoans suggestion cards ── */}
+            {isEmpty && !historyLoading && (
+              <div className="flex flex-col items-center justify-center py-12 gap-8 text-center px-6">
+                <div>
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-violet-200 bg-gradient-to-br from-violet-600 to-violet-800 mx-auto mb-4">
+                    ◈
+                  </div>
+                  <h2 className="text-[22px] font-bold text-slate-800 mb-1">
+                    Good day. How can I assist?
+                  </h2>
+                  <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                    Ask about OxyLoans, AskOxy.ai, market insights, or upload a
+                    document for analysis.
+                  </p>
+                </div>
+
+                {/* ── FIX 4: 2×2 CEO suggestion cards, clean grid layout ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
+                  {CEO_SUGGESTIONS.map((s) => (
+                    <button
+                      key={s.title}
+                      onClick={() => setInput(s.prompt)}
+                      className="group text-left px-4 py-3.5 rounded-2xl border border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50 hover:shadow-md transition-all duration-200 shadow-sm"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl flex-shrink-0 mt-0.5">
+                          {s.icon}
+                        </span>
+                        <div>
+                          <p className="text-[12.5px] font-semibold text-slate-700 group-hover:text-violet-800 transition-colors leading-snug">
+                            {s.title}
+                          </p>
+                          <p className="text-[11px] text-slate-400 mt-1 leading-snug line-clamp-2">
+                            {s.prompt}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {historyLoading && (
+              <div className="flex items-center justify-center py-20">
+                <div className="flex gap-2 items-center text-sm text-violet-500">
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="w-2 h-2 rounded-full animate-bounce bg-violet-400"
+                        style={{ animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                  Loading history…
+                </div>
+              </div>
+            )}
+
+            {messages.map((msg) => (
+              <MessageBubble key={msg.id} msg={msg} />
+            ))}
+            {isLoading && <ThinkingLoader />}
+            <div ref={bottomRef} />
           </div>
-        </div>
-      )}
+        </main>
 
-      {/* ── Footer ── */}
-      <footer
-        className="relative z-10 flex-shrink-0 backdrop-blur-md border-t border-white/60 shadow-[0_-4px_24px_rgba(99,102,241,0.06)]"
-        style={{ background: "rgba(255,255,255,0.9)" }}
-      >
-        <div className="max-w-3xl mx-auto px-5 py-3 flex flex-col gap-2">
-          {error && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs">
-              <span>⚠</span>
-              <span className="flex-1">{error}</span>
-              <button
-                onClick={() => setError(null)}
-                className="text-red-400 hover:text-red-600 transition-colors"
-              >
-                ✕
-              </button>
+        {/* Drag overlay */}
+        {dragOver && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/80 border-2 border-dashed border-violet-400">
+            <div className="text-center">
+              <div className="text-5xl mb-3">📂</div>
+              <p className="text-lg font-bold text-violet-700">
+                Drop your file here
+              </p>
+              <p className="text-sm mt-1 text-violet-400">
+                Any file · max 20 MB
+              </p>
             </div>
-          )}
+          </div>
+        )}
 
-          {attachedFiles.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {attachedFiles.map((file, index) => (
-                <FileChip
-                  key={index}
-                  file={file}
-                  onRemove={() =>
-                    setAttachedFiles((prev) =>
-                      prev.filter((_, i) => i !== index),
-                    )
-                  }
-                />
-              ))}
-            </div>
-          )}
+        {/* Input footer */}
+        <div className="flex-shrink-0 px-4 pb-3 pt-2 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent">
+          <div className="max-w-3xl mx-auto flex flex-col gap-2">
+            {error && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs bg-red-50 border border-red-200 text-red-600">
+                <span>⚠</span>
+                <span className="flex-1">{error}</span>
+                <button
+                  onClick={() => setError(null)}
+                  className="hover:text-red-800 text-red-400"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
-          <div className="flex items-end gap-2">
-            {/* Input box */}
+            {attachedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 px-1">
+                {attachedFiles.map((file, index) => (
+                  <FileChip
+                    key={index}
+                    file={file}
+                    onRemove={() =>
+                      setAttachedFiles((prev) =>
+                        prev.filter((_, i) => i !== index),
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            )}
+
             <div
-              className={`flex-1 flex items-end gap-2 bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-md px-3 py-2.5 transition-all duration-200 shadow-sm
-                ${
-                  dragOver
-                    ? "ring-2 ring-indigo-400"
-                    : "ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-400 focus-within:shadow-md focus-within:shadow-indigo-50"
-                }`}
+              className={`flex items-end gap-2 rounded-2xl px-3 py-2.5 bg-white border shadow-sm transition-all ${dragOver ? "border-violet-400 shadow-violet-100" : "border-slate-200 shadow-slate-100 focus-within:border-violet-300 focus-within:shadow-violet-100"}`}
             >
+              {/* Upload */}
               <button
                 onClick={() => fileRef.current?.click()}
-                title="Upload any file"
-                className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mb-0.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-all"
+                title="Upload file"
+                className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mb-0.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-all"
               >
                 <svg
                   width="16"
@@ -899,12 +1431,12 @@ export default function OxyClaude() {
                 multiple
                 className="hidden"
                 onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  files.forEach(handleFile);
+                  Array.from(e.target.files || []).forEach(handleFile);
                   e.target.value = "";
                 }}
               />
 
+              {/* Textarea */}
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -918,29 +1450,26 @@ export default function OxyClaude() {
                       : "Message OXY GPT…"
                 }
                 rows={1}
-                disabled={false}
-                className="flex-1 bg-transparent resize-none outline-none text-slate-800 text-[13.5px] placeholder-slate-400 leading-relaxed py-0.5 disabled:opacity-50"
+                className="flex-1 bg-transparent resize-none outline-none text-[13.5px] leading-relaxed py-0.5 text-slate-800 placeholder:text-slate-400"
                 style={{ minHeight: "22px", maxHeight: "120px" }}
               />
 
-              {/* Voice recorder button */}
+              {/* Mic */}
               {isSupported && (
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
-                  title={isRecording ? "Stop recording" : "Start voice input"}
-                  disabled={false}
                   className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mb-0.5 transition-all ${
                     isRecording
-                      ? "bg-red-50 text-red-500 border border-red-300 hover:bg-red-100"
-                      : "text-slate-400 hover:text-indigo-500 hover:bg-indigo-50"
-                  } disabled:opacity-40`}
+                      ? "bg-red-50 text-red-500 border border-red-200"
+                      : "text-slate-400 hover:text-violet-600 hover:bg-violet-50"
+                  }`}
                 >
                   {isRecording ? (
                     <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full animate-pulse bg-red-500" />
                       <svg
-                        width="12"
-                        height="12"
+                        width="11"
+                        height="11"
                         viewBox="0 0 24 24"
                         fill="currentColor"
                       >
@@ -964,25 +1493,23 @@ export default function OxyClaude() {
                   )}
                 </button>
               )}
+
+              {/* Model picker */}
               <div className="relative">
                 <button
                   onClick={() => setModelOpen((v) => !v)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-[11px] font-semibold whitespace-nowrap hover:bg-indigo-100 transition-all"
+                  className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100 transition-all"
                 >
-                  ✨{" "}
-                  {
-                    ANTHROPIC_MODELS.find(
-                      (m) => m.id === selectedModel,
-                    )?.label?.split(" ")[1]
-                  }
+                  {selectedModelInfo.provider === "OpenAI" ? "🤖" : "✨"}{" "}
+                  {selectedModelInfo.label.split(" ").slice(0, 2).join(" ")}
                   <svg
-                    width="10"
-                    height="10"
+                    width="9"
+                    height="9"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2"
-                    className="ml-1"
+                    strokeWidth="2.5"
+                    className="ml-0.5"
                   >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
@@ -994,81 +1521,101 @@ export default function OxyClaude() {
                       className="fixed inset-0 z-40"
                       onClick={() => setModelOpen(false)}
                     />
-
-                    <div className="absolute bottom-12 left-0 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                      <div className="px-3 py-2 border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase">
-                        Models
+                    <div className="absolute bottom-10 right-0 w-60 rounded-2xl shadow-xl z-50 overflow-hidden bg-white border border-slate-200">
+                      <div className="px-3 py-2 border-b border-slate-100">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600">
+                          Claude
+                        </p>
                       </div>
-
-                      {ANTHROPIC_MODELS.map((m) => (
-                        <button
-                          key={m.id}
-                          onClick={() => {
-                            setSelectedModel(m.id);
-                            setModelOpen(false);
-                          }}
-                          className={`w-full flex justify-between px-3 py-2 text-sm hover:bg-indigo-50 transition ${
-                            selectedModel === m.id
-                              ? "bg-indigo-50 text-indigo-600 font-semibold"
-                              : "text-slate-700"
-                          }`}
-                        >
-                          <span>{m.label}</span>
-                        </button>
-                      ))}
+                      {CLAUDE_MODELS.filter((m) => m.provider === "Claude").map(
+                        (m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => {
+                              setSelectedModel(m.id);
+                              setModelOpen(false);
+                            }}
+                            className={`w-full flex justify-between items-center px-3 py-2 text-[12.5px] transition-all hover:bg-violet-50 ${selectedModel === m.id ? "bg-violet-50 text-violet-800 font-semibold" : "text-slate-600"}`}
+                          >
+                            <span>{m.label}</span>
+                            <span className="text-[10px] text-violet-400">
+                              {m.desc}
+                            </span>
+                          </button>
+                        ),
+                      )}
+                      <div className="px-3 py-2 border-t border-slate-100">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                          OpenAI
+                        </p>
+                      </div>
+                      {CLAUDE_MODELS.filter((m) => m.provider === "OpenAI").map(
+                        (m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => {
+                              setSelectedModel(m.id);
+                              setModelOpen(false);
+                            }}
+                            className={`w-full flex justify-between items-center px-3 py-2 text-[12.5px] transition-all hover:bg-emerald-50 ${selectedModel === m.id ? "bg-emerald-50 text-emerald-800 font-semibold" : "text-slate-600"}`}
+                          >
+                            <span>{m.label}</span>
+                            <span className="text-[10px] text-emerald-500">
+                              {m.desc}
+                            </span>
+                          </button>
+                        ),
+                      )}
                     </div>
                   </>
                 )}
-              </div>
+              </div>  
 
-              {!isLoading && (
+              {isLoading ? (
+                <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mb-0.5">
+                  <svg
+                    className="animate-spin w-4 h-4 text-violet-500"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0110 10" />
+                  </svg>
+                </div>
+              ) : (
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() && attachedFiles.length === 0}
-                  className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-200
-    ${
-      !input.trim() && attachedFiles.length === 0
-        ? "bg-slate-100 text-slate-300 cursor-not-allowed"
-        : "text-white hover:opacity-90 active:scale-95 shadow-md"
-    }`}
-                  style={
+                  className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-200 active:scale-95 ${
                     !input.trim() && attachedFiles.length === 0
-                      ? {}
-                      : {
-                          background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                        }
-                  }
+                      ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                      : "bg-gradient-to-br from-violet-600 to-violet-800 text-white shadow-md shadow-violet-200 hover:shadow-violet-300"
+                  }`}
                 >
-                  {isLoading ? (
-                    <svg
-                      className="animate-spin w-4 h-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
-                      <path d="M12 2a10 10 0 0110 10" />
-                    </svg>
-                  ) : (
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                    >
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>
-                  )}
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                  >
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
                 </button>
               )}
             </div>
+
+          
+            <p className="text-center text-[10.5px] text-slate-400 leading-relaxed">
+               OXY GPT may produce mistakes. Please verify important information.
+            </p>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
