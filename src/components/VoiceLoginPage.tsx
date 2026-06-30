@@ -1347,7 +1347,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
         </div>
       </div>
     </>
-  );
+  ); 
 };
 
 export default VoiceLoginPage;

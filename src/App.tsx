@@ -640,7 +640,9 @@ const App: React.FC = () => {
       localStorage.setItem("entryPoint", location.pathname);
     }
   }, [location.pathname]);
-
+const isDashboardHomeRoute = location.pathname === "/main/dashboard/home";
+const isRootRoute = location.pathname === "/";
+const isLoggedIn = !!localStorage.getItem("userId");
   const isRestrictedRoute = () => {
     const currentPath = location.pathname;
     return (
@@ -659,11 +661,13 @@ const App: React.FC = () => {
       currentPath.startsWith("/goldrates") ||
       currentPath.startsWith("/all-different-gold-rates") ||
       currentPath.startsWith("/allgoldrates") ||
-      // currentPath.startsWith("/radha/bos-ai-intelligence") ||
+
+
+      currentPath.startsWith("/employee-freelancers/:companyId/:requirementId") ||
       currentPath.startsWith("/radha/adcb-ai-intelligence") ||
       currentPath.startsWith("/radha/emirates-nbd-ai-intelligence") ||
       currentPath.startsWith("/radha/fab-ai-intelligence") ||
-      // currentPath.startsWith("/radha/ajman-bank-ai-intelligence") ||
+      currentPath.startsWith("/employee-assigned-freelancers/:companyId") ||
       currentPath.startsWith("/radha/adib-ai-intelligence") ||
       currentPath.startsWith("/radha/dib-ai-intelligence") ||
       currentPath.startsWith("/radha/cbd-ai-intelligence") ||
@@ -725,10 +729,18 @@ const App: React.FC = () => {
 
         <Suspense fallback={<LoadingSpinner />}>
           <div className="App">
-            {localStorage.getItem("userId") &&
+            {/* {localStorage.getItem("userId") &&
               !isRestrictedRoute() && <FloatingCallButton />}
             {localStorage.getItem("userId") &&
-              !isRestrictedRoute() && <FloatingGiftOffersButton />}
+              !isRestrictedRoute() && <FloatingGiftOffersButton />} */}
+            {isLoggedIn && isRootRoute && <FloatingCallButton />}
+
+            {isLoggedIn && isDashboardHomeRoute && (
+              <>
+                <FloatingCallButton />
+                <FloatingGiftOffersButton />
+              </>
+            )}
             <Routes>
               <Route path="/shopretail" element={<HomePage />} />
 
@@ -746,21 +758,26 @@ const App: React.FC = () => {
               <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
               <Route path="/oxybfsai" element={<Billing />} />
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
-            <Route path="/finvibe" element={<Finvibe3DLanding />} />
-            <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
-            <Route path="/live-ai-demo" element={<LiveAIDemo />} />
-            <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
-            <Route path="/oxybfsai" element={<Billing />} />
-            <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
+              <Route path="/finvibe" element={<Finvibe3DLanding />} />
+              <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
+              <Route path="/live-ai-demo" element={<LiveAIDemo />} />
+              <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
+              <Route path="/oxybfsai" element={<Billing />} />
+              <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
 
-            {/* OXY BFSAI Engine — full layout with fixed header */}
-            <Route element={<FinvibeLayout />}>
-              <Route path="/oxybfsai-engine" element={<FinvibeHomePage />} />
-              <Route path="/generate" element={<FinvibeStage1Page />} />
-              <Route path="/stage2/:sessionId" element={<FinvibeStage2Page />} />
-              <Route path="/generating/:sessionId" element={<FinvibeGenerationPage />} />
-            </Route>
-            
+              {/* OXY BFSAI Engine — full layout with fixed header */}
+              <Route element={<FinvibeLayout />}>
+                <Route path="/oxybfsai-engine" element={<FinvibeHomePage />} />
+                <Route path="/generate" element={<FinvibeStage1Page />} />
+                <Route
+                  path="/stage2/:sessionId"
+                  element={<FinvibeStage2Page />}
+                />
+                <Route
+                  path="/generating/:sessionId"
+                  element={<FinvibeGenerationPage />}
+                />
+              </Route>
 
               <Route
                 path="/finvibe-code-builder"
@@ -826,7 +843,10 @@ const App: React.FC = () => {
               <Route path="/radhai-RandD" element={<RadhAIRAndDPage />} />
               <Route path="/talktoceo" element={<TalkToCEO />} />
               <Route path="/internships" element={<InternshipPage />} />
-              <Route path="/radhai-assistant" element={<RadhAIVoicePageCEO />} />
+              <Route
+                path="/radhai-assistant"
+                element={<RadhAIVoicePageCEO />}
+              />
               <Route path="/circleLend" element={<ProxyLendPage />} />
               <Route path="/resume-ai" element={<ResumeAIToolsPage />} />
               <Route path="/mentors" element={<EmployerMentorSection />} />
@@ -1369,11 +1389,26 @@ const App: React.FC = () => {
               />
               <Route path="/email-campaign" element={<UploadPage />} />
               <Route path="/email-campaign/upload" element={<UploadPage />} />
-              <Route path="/email-campaign/send-campaign" element={<SendCampaignPage />} />
-              <Route path="/email-campaign/all-documents" element={<AllDocumentsPage />} />
-              <Route path="/email-campaign/all-campaigns" element={<AllCampaignsRoute />} />
-              <Route path="/email-campaign/scorecard/:batchId" element={<ScorecardPage />} />
-              <Route path="/email-campaign/conversations/:batchId" element={<ConversationsPage />} />
+              <Route
+                path="/email-campaign/send-campaign"
+                element={<SendCampaignPage />}
+              />
+              <Route
+                path="/email-campaign/all-documents"
+                element={<AllDocumentsPage />}
+              />
+              <Route
+                path="/email-campaign/all-campaigns"
+                element={<AllCampaignsRoute />}
+              />
+              <Route
+                path="/email-campaign/scorecard/:batchId"
+                element={<ScorecardPage />}
+              />
+              <Route
+                path="/email-campaign/conversations/:batchId"
+                element={<ConversationsPage />}
+              />
               <Route path="/may2Interview" element={<HiringLandingPage />} />
               <Route
                 path="/DRAcertification"

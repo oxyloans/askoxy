@@ -1,42 +1,12 @@
 import React, { useState, useEffect } from "react";
-import {
-  Table,
-  Space,
-  Form,
-  Input,
-  Button,
-  message,
-  Typography,
-  Spin,
-  Row,
-  Col,
-  Tag,
-  Modal,
-  Avatar,
-  Empty,
-  Tooltip,
-  Card,
-} from "antd";
-import axios from "axios";
 import BASE_URL from "../Config";
 import { useNavigate } from "react-router-dom";
-import {
-  EditOutlined,
-  SaveOutlined,
-  EnvironmentOutlined,
-  ShopOutlined,
-  PlusOutlined,
-  CloseOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  ReloadOutlined,
-  IdcardOutlined,
-} from "@ant-design/icons";
 import { freelanceApi } from "../utils/axiosInstances";
 import EmployeeLayout from "./EmployeeLayout";
-
-const { Title, Text } = Typography;
+import StatusAlert from "./StatusAlert";
+import { extractApiError, extractResponseMessage } from "./apiUtils";
+import { LoadingCenter, pageContainerClass } from "./marketplaceUi";
+import { message } from "antd";
 
 interface CompanyProfile {
   id: string;
@@ -47,998 +17,371 @@ interface CompanyProfile {
   companyStatus?: string;
 }
 
-const statusConfig: Record<string, { color: string; icon: React.ReactNode; bg: string; border: string }> = {
-  APPROVED: {
-    color: "#52c41a",
-    icon: <CheckCircleOutlined />,
-    bg: "#f6ffed",
-    border: "#b7eb8f",
-  },
-  PENDING: {
-    color: "#faad14",
-    icon: <ClockCircleOutlined />,
-    bg: "#fffbe6",
-    border: "#ffe58f",
-  },
-  REJECTED: {
-    color: "#ff4d4f",
-    icon: <ExclamationCircleOutlined />,
-    bg: "#fff2f0",
-    border: "#ffccc7",
-  },
+type FormValues = { companyName: string; companyLocation: string };
+type ReqValues = { title: string; skillName: string; experience: string; budget: string; positions: string };
+
+const inp = "w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50";
+const label = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500";
+const btnBlue = "rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50";
+const btnGreen = "rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50";
+const btnGhost = "rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:border-indigo-300 hover:text-indigo-600";
+
+const statusColor: Record<string, string> = {
+  APPROVED: "text-emerald-700 bg-emerald-50 border-emerald-200",
+  PENDING:  "text-amber-700  bg-amber-50  border-amber-200",
+  REJECTED: "text-red-700    bg-red-50    border-red-200",
 };
 
 const EmployeeDashboard: React.FC = () => {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [submitting, setSubmitting] = useState<boolean>(false);
   const [profiles, setProfiles] = useState<CompanyProfile[]>([]);
-  const [editingProfile, setEditingProfile] = useState<CompanyProfile | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isRequirementModalOpen, setIsRequirementModalOpen] = useState<boolean>(false);
-  const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [requirementForm] = Form.useForm();
-  const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth < 768);
+
+  // Company form panel
+  const [showCompanyPanel, setShowCompanyPanel] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<CompanyProfile | null>(null);
+  const [companyForm, setCompanyForm] = useState<FormValues>({ companyName: "", companyLocation: "" });
+  const [companyFormError, setCompanyFormError] = useState<string | null>(null);
+  const [companyFormSuccess, setCompanyFormSuccess] = useState<string | null>(null);
+
+  // Requirement form panel
+  const [showReqPanel, setShowReqPanel] = useState(false);
+  const [reqTarget, setReqTarget] = useState<CompanyProfile | null>(null);
+  const [reqForm, setReqForm] = useState<ReqValues>({ title: "", skillName: "", experience: "", budget: "", positions: "" });
+  const [reqFormError, setReqFormError] = useState<string | null>(null);
+  const [reqFormSuccess, setReqFormSuccess] = useState<string | null>(null);
+
   const navigate = useNavigate();
+  const userId = sessionStorage.getItem("userId");
 
-  useEffect(() => {
-    const handleResize = () => setIsMobileScreen(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  useEffect(() => { fetchProfiles(); }, []);
+  useEffect(() => { if (error) { const t = setTimeout(() => setError(null), 6000); return () => clearTimeout(t); } }, [error]);
 
-  useEffect(() => {
-    fetchCompanyProfiles();
-  }, []);
-
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 6000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
-const userId = sessionStorage.getItem("userId");
-
-
-
-  const fetchCompanyProfiles = async () => {
+  const fetchProfiles = async () => {
     try {
       setLoading(true);
       setError(null);
-     
-
-      const response = await freelanceApi.get<CompanyProfile[]>(
+      const res = await freelanceApi.get<CompanyProfile[]>(
         `${BASE_URL}/user-service/showingCompanyDetailsBasedOnUserId?userId=${userId}`
       );
-
-      if (response.data && response.data.length > 0) {
-        setProfiles(response.data);
-      } else {
-        setProfiles([]);
-      }
-    } catch (err: any) {
-      let errorMessage = "Failed to load company profiles.";
-      if (axios.isAxiosError(err)) {
-        errorMessage = 
-          err.response?.data?.message || 
-          err.response?.data?.error || 
-          err.message || 
-          "Failed to load profiles.";
-      }
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+      setProfiles(res.data?.length ? res.data : []);
+    } catch (err: unknown) { setError(extractApiError(err)); }
+    finally { setLoading(false); }
   };
 
-  const openEditModal = (profile: CompanyProfile) => {
-    setEditingProfile(profile);
-    setIsCreating(false);
-    form.setFieldsValue({
-      companyName: profile.companyName,
-      companyLocation: profile.companyLocation,
-    });
-    setIsModalOpen(true);
-  };
-
-  const openCreateModal = () => {
-    setEditingProfile(null);
+  /* ── Company panel ── */
+  const openCreate = () => {
     setIsCreating(true);
-    form.resetFields();
-    setIsModalOpen(true);
+    setEditingProfile(null);
+    setCompanyForm({ companyName: "", companyLocation: "" });
+    setCompanyFormError(null);
+    setCompanyFormSuccess(null);
+    setShowCompanyPanel(true);
+    setShowReqPanel(false);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingProfile(null);
+  const openEdit = (p: CompanyProfile) => {
     setIsCreating(false);
-    form.resetFields();
+    setEditingProfile(p);
+    setCompanyForm({ companyName: p.companyName, companyLocation: p.companyLocation });
+    setCompanyFormError(null);
+    setCompanyFormSuccess(null);
+    setShowCompanyPanel(true);
+    setShowReqPanel(false);
   };
 
-  const openRequirementModal = (profile: CompanyProfile) => {
-    setEditingProfile(profile);
-    requirementForm.resetFields();
-    setIsRequirementModalOpen(true);
-  };
+  const closeCompanyPanel = () => { setShowCompanyPanel(false); setEditingProfile(null); };
 
-  const closeRequirementModal = () => {
-    setIsRequirementModalOpen(false);
-    setEditingProfile(null);
-    requirementForm.resetFields();
-  };
-
-  const handleSaveOrUpdate = async (values: any) => {
+  const handleCompanySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!companyForm.companyName.trim()) { setCompanyFormError("Company name is required."); return; }
+    if (!companyForm.companyLocation.trim()) { setCompanyFormError("Location is required."); return; }
     try {
       setSubmitting(true);
-     
-      const userId = sessionStorage.getItem("userId");
-
-
-      const payload: any = {
-        companyName: values.companyName.trim(),
-        companyLocation: values.companyLocation.trim(),
-        userId: userId,
+      setCompanyFormError(null);
+      const payload: Record<string, string> = {
+        companyName: companyForm.companyName.trim(),
+        companyLocation: companyForm.companyLocation.trim(),
+        userId: userId || "",
       };
-
-      if (editingProfile?.id) {
-        payload.id = editingProfile.id;
+      if (editingProfile?.id) payload.id = editingProfile.id;
+      const res = await freelanceApi.patch(`${BASE_URL}/user-service/companyProfile`, payload);
+      if (res.status === 200 || res.status === 201) {
+        const msg = extractResponseMessage(res.data);
+        setCompanyFormSuccess(msg || "Saved successfully.");
+        if (msg) message.success(msg);
+        fetchProfiles();
+        setTimeout(closeCompanyPanel, 1200);
+      } else {
+        setCompanyFormError(extractResponseMessage(res.data) || "Could not save.");
       }
-
-      const response = await freelanceApi.patch(
-        `${BASE_URL}/user-service/companyProfile`,
-        payload
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        message.success(
-          editingProfile?.id
-            ? "Profile updated successfully"
-            : "Company profile created successfully"
-        );
-        closeModal();
-        fetchCompanyProfiles();
-      }
-    } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.message || 
-        err.response?.data?.error || 
-        err.message || 
-        "An error occurred while saving.";
-      message.error(errorMsg);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err: unknown) { setCompanyFormError(extractApiError(err)); }
+    finally { setSubmitting(false); }
   };
 
-  const handleAddRequirement = async (values: any) => {
+  /* ── Requirement panel ── */
+  const openReq = (p: CompanyProfile) => {
+    setReqTarget(p);
+    setReqForm({ title: "", skillName: "", experience: "", budget: "", positions: "" });
+    setReqFormError(null);
+    setReqFormSuccess(null);
+    setShowReqPanel(true);
+    setShowCompanyPanel(false);
+  };
+
+  const closeReqPanel = () => { setShowReqPanel(false); setReqTarget(null); };
+
+  const handleReqSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reqForm.title.trim() || !reqForm.skillName.trim() || !reqForm.experience.trim() || !reqForm.budget || !reqForm.positions) {
+      setReqFormError("All fields are required.");
+      return;
+    }
     try {
       setSubmitting(true);
-   
-      const userId = sessionStorage.getItem("userId");
-
-      if (!userId) {
-        message.error("Session expired. Please login again.");
-        return;
+      setReqFormError(null);
+      const res = await freelanceApi.patch(`${BASE_URL}/user-service/companyRequirement`, {
+        budget: Number(reqForm.budget),
+        experience: reqForm.experience.trim(),
+        positions: Number(reqForm.positions),
+        title: reqForm.title.trim(),
+        skillName: reqForm.skillName.trim(),
+        companyId: reqTarget?.id,
+      });
+      if (res.status === 200 || res.status === 201) {
+        const msg = extractResponseMessage(res.data);
+        setReqFormSuccess(msg || "Requirement posted.");
+        if (msg) message.success(msg);
+        fetchProfiles();
+        setTimeout(closeReqPanel, 1200);
+      } else {
+        setReqFormError(extractResponseMessage(res.data) || "Could not post.");
       }
-
-      if (!editingProfile?.id) {
-        message.error("Please select a company first.");
-        return;
-      }
-
-      const payload = {
-        budget: Number(values.budget),
-        experience: values.experience.trim(),
-        positions: Number(values.positions),
-        title: values.title.trim(),
-        skillName: values.skillName.trim(),
-        companyId: editingProfile.id,
-      };
-
-      const response = await freelanceApi.patch(
-        `${BASE_URL}/user-service/companyRequirement`,
-        payload
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        message.success("Requirement published successfully");
-        closeRequirementModal();
-        fetchCompanyProfiles();
-      }
-    } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.message || 
-        err.response?.data?.error || 
-        err.message || 
-        "Failed to add requirement.";
-      message.error(errorMsg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-  const getStatus = (status?: string) => {
-    const s = status?.toUpperCase() || "";
-    return statusConfig[s] || statusConfig.PENDING;
+    } catch (err: unknown) { setReqFormError(extractApiError(err)); }
+    finally { setSubmitting(false); }
   };
 
-  if (loading) {
-    return (
-      <EmployeeLayout>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: "60vh",
-          }}
-        >
-          <Spin size="large" tip="Loading profiles..." />
-        </div>
-      </EmployeeLayout>
-    );
-  }
+  const approved = profiles.filter((p) => p.companyStatus === "APPROVED").length;
+  const pending  = profiles.filter((p) => p.companyStatus === "PENDING" || !p.companyStatus).length;
+
+  if (loading) return <EmployeeLayout><LoadingCenter tip="Loading company profiles…" /></EmployeeLayout>;
 
   return (
     <EmployeeLayout>
-      {/* Page Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 24,
-          flexWrap: "wrap",
-          gap: 12,
-        }}
-      >
-        <div>
-          <Title
-            level={3}
-            style={{ margin: 0, fontWeight: 700, color: "#1a1d2e" }}
-          >
-            Company Profiles
-          </Title>
-          <Text style={{ color: "#888", fontSize: 13 }}>
-            Manage your company profiles and information
-          </Text>
+      <div className={pageContainerClass}>
+
+        {/* ── Page title row ── */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">My Companies</h1>
+            <p className="mt-0.5 text-sm text-gray-500">Register and manage your company profiles, then post hiring requirements</p>
+          </div>
+          <button onClick={openCreate} className={btnBlue}>+ Register Company</button>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
-          {/* <Tooltip title="Refresh">
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchCompanyProfiles}
-              style={{ borderRadius: 10, height: 40, color: "#008cba", border: "1px solid #d4e8f0", background: "#f0f8fb" }}
-            />
-          </Tooltip> */}
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}
-            style={{
-              borderRadius: 10,
-              height: 40,
-              fontWeight: 600,
-              background: "#008cba",
-              border: "none",
-              boxShadow: "0 4px 14px rgba(0, 140, 186, 0.35)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {!isMobileScreen && "Add Company"}
-          </Button>
+        {/* ── Stat cards ── */}
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { label: "Registered Companies", value: profiles.length, accent: "bg-indigo-600" },
+            { label: "Approved & Active",     value: approved,         accent: "bg-emerald-600" },
+            { label: "Awaiting Approval",      value: pending,          accent: "bg-amber-500"   },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${s.accent}`}>
+                <span className="text-lg font-bold text-white">{s.value}</span>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{s.label}</p>
+                <p className="mt-0.5 text-2xl font-bold text-gray-900">{s.value}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Stats Section */}
-      <div style={{ marginBottom: 32 }}>
-        <Row gutter={[20, 20]}>
-          <Col xs={24} sm={8}>
-            <div
-              style={{
-                borderRadius: 20,
-                padding: "24px",
-                background: "#fff",
-                boxShadow:
-                  "0 10px 25px -5px rgba(0,0,0,0.04), 0 8px 10px -6px rgba(0,0,0,0.04)",
-                display: "flex",
-                alignItems: "center",
-                gap: 20,
-                border: "1px solid #f0f0f0",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: 54,
-                  height: 54,
-                  borderRadius: 14,
-                  background:
-                    "linear-gradient(135deg, #e8ecff 0%, #f0f3ff 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "inset 0 0 0 1px rgba(102, 126, 234, 0.1)",
-                }}
-              >
-                <ShopOutlined style={{ color: "#667eea", fontSize: 24 }} />
-              </div>
-              <div style={{ zIndex: 1 }}>
-                <Text
-                  style={{
-                    color: "#8c8c8c",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    display: "block",
-                    marginBottom: 4,
-                  }}
-                >
-                  Total Companies
-                </Text>
-                <Title
-                  level={3}
-                  style={{ margin: 0, fontWeight: 800, color: "#1a1d2e" }}
-                >
-                  {profiles.length}
-                </Title>
-              </div>
-              {/* <div style={{ position: "absolute", right: -15, bottom: -15, opacity: 0.03, fontSize: 80 }}>
-                <ShopOutlined />
-              </div> */}
-            </div>
-          </Col>
-          <Col xs={24} sm={8}>
-            <div
-              style={{
-                borderRadius: 20,
-                padding: "24px",
-                background: "#fff",
-                boxShadow:
-                  "0 10px 25px -5px rgba(0,0,0,0.04), 0 8px 10px -6px rgba(0,0,0,0.04)",
-                display: "flex",
-                alignItems: "center",
-                gap: 20,
-                border: "1px solid #f0f0f0",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: 54,
-                  height: 54,
-                  borderRadius: 14,
-                  background:
-                    "linear-gradient(135deg, #f6ffed 0%, #f9fff0 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "inset 0 0 0 1px rgba(82, 196, 26, 0.1)",
-                }}
-              >
-                <CheckCircleOutlined
-                  style={{ color: "#52c41a", fontSize: 24 }}
-                />
-              </div>
-              <div style={{ zIndex: 1 }}>
-                <Text
-                  style={{
-                    color: "#8c8c8c",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    display: "block",
-                    marginBottom: 4,
-                  }}
-                >
-                  Approved
-                </Text>
-                <Title
-                  level={3}
-                  style={{ margin: 0, fontWeight: 800, color: "#1a1d2e" }}
-                >
-                  {
-                    profiles.filter((p) => p.companyStatus === "APPROVED")
-                      .length
-                  }
-                </Title>
-              </div>
-              {/* <div style={{ position: "absolute", right: -15, bottom: -15, opacity: 0.03, fontSize: 80 }}>
-                <CheckCircleOutlined />
-              </div> */}
-            </div>
-          </Col>
-          <Col xs={24} sm={8}>
-            <div
-              style={{
-                borderRadius: 20,
-                padding: "24px",
-                background: "#fff",
-                boxShadow:
-                  "0 10px 25px -5px rgba(0,0,0,0.04), 0 8px 10px -6px rgba(0,0,0,0.04)",
-                display: "flex",
-                alignItems: "center",
-                gap: 20,
-                border: "1px solid #f0f0f0",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: 54,
-                  height: 54,
-                  borderRadius: 14,
-                  background:
-                    "linear-gradient(135deg, #fffbe6 0%, #fffef0 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "inset 0 0 0 1px rgba(250, 173, 20, 0.1)",
-                }}
-              >
-                <ClockCircleOutlined
-                  style={{ color: "#faad14", fontSize: 24 }}
-                />
-              </div>
-              <div style={{ zIndex: 1 }}>
-                <Text
-                  style={{
-                    color: "#8c8c8c",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    display: "block",
-                    marginBottom: 4,
-                  }}
-                >
-                  Pending
-                </Text>
-                <Title
-                  level={3}
-                  style={{ margin: 0, fontWeight: 800, color: "#1a1d2e" }}
-                >
-                  {
-                    profiles.filter(
-                      (p) => p.companyStatus === "PENDING" || !p.companyStatus,
-                    ).length
-                  }
-                </Title>
-              </div>
-              {/* <div style={{ position: "absolute", right: -15, bottom: -15, opacity: 0.03, fontSize: 80 }}>
-                <ClockCircleOutlined />
-              </div> */}
-            </div>
-          </Col>
-        </Row>
-      </div>
-      {/* Error Banner */}
-      {error && (
-        <div
-          style={{
-            background: "#fff2f0",
-            border: "1px solid #ffccc7",
-            borderRadius: 12,
-            padding: "12px 16px",
-            marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <ExclamationCircleOutlined
-            style={{ color: "#ff4d4f", fontSize: 18 }}
-          />
-          <Text style={{ color: "#cf1322", flex: 1 }}>{error}</Text>
-        </div>
-      )}
+        {error && <StatusAlert message={error} variant="error" onDismiss={() => setError(null)} className="mb-5" />}
 
-      {/* Profiles Table */}
-      <div
-        style={{
-          borderRadius: 16,
-          background: "#fff",
-          boxShadow: "0 10px 30px -5px rgba(0,0,0,0.05)",
-          padding: "24px",
-          border: "1px solid #f0f0f0",
-          overflow: "hidden",
-        }}
-      >
-        <Table
-          dataSource={profiles}
-          rowKey="id"
-          bordered
-          loading={loading}
-          scroll={{ x: 1000 }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} companies`,
-            style: { padding: "16px 20px" },
-          }}
-          columns={[
-            {
-              title: "S.No",
-              key: "sno",
-              width: 70,
-              align: "center",
-              render: (_: any, __: any, index: number) => (
-                <Text style={{ fontWeight: 600, color: "#999" }}>
-                  {index + 1}
-                </Text>
-              ),
-            },
-            {
-              title: "Company",
-              key: "company",
-              align: "center",
-              render: (record: CompanyProfile) => (
+        {/* ── Inline Company Form Panel ── */}
+        {showCompanyPanel && (
+          <div className="mb-6 rounded-xl border border-indigo-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h2 className="text-base font-bold text-gray-800">
+                {isCreating ? "Register New Company" : `Edit Company — ${editingProfile?.companyName}`}
+              </h2>
+              <button onClick={closeCompanyPanel} className="rounded-lg px-3 py-1.5 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+                Cancel
+              </button>
+            </div>
+            <form onSubmit={handleCompanySubmit} className="p-6">
+              {companyFormError  && <StatusAlert message={companyFormError}  variant="error"   onDismiss={() => setCompanyFormError(null)}  className="mb-4" />}
+              {companyFormSuccess && <StatusAlert message={companyFormSuccess} variant="success" onDismiss={() => setCompanyFormSuccess(null)} className="mb-4" />}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Text
-                    strong
-                    style={{
-                      fontSize: 14,
-                      display: "block",
-                      color: "#1a1d2e",
-                    }}
-                  >
-                    {record.companyName}
-                  </Text>
+                  <label className={label}>Company Name</label>
+                  <input
+                    className={inp}
+                    placeholder="e.g. Acme Technologies Pvt. Ltd."
+                    value={companyForm.companyName}
+                    onChange={(e) => setCompanyForm((f) => ({ ...f, companyName: e.target.value }))}
+                  />
                 </div>
-              ),
-            },
-            {
-              title: "Location",
-              dataIndex: "companyLocation",
-              align: "center",
-              key: "location",
-              render: (text: string) => (
-                <Space>
-                  <EnvironmentOutlined style={{ color: "#888" }} />
-                  <Text style={{ color: "#444" }}>{text}</Text>
-                </Space>
-              ),
-            },
-            {
-              title: "Status",
-              align: "center",
-              dataIndex: "companyStatus",
-              key: "status",
-
-              render: (status?: string) => {
-                const st = getStatus(status);
-                return (
-                  <Tag
-                    icon={st.icon}
-                    style={{
-                      borderRadius: 6,
-                      padding: "4px 12px",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: st.color,
-                      background: st.bg,
-                      border: `1px solid ${st.border}`,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {status || "PENDING"}
-                  </Tag>
-                );
-              },
-            },
-            {
-              title: "Code Name",
-              align: "center",
-              key: "codeName",
-              render: (record: CompanyProfile) => (
-                <div
-                  style={{
-                    background: "#f8f9ff",
-                    borderRadius: 8,
-                    padding: "4px 10px",
-                    border: "1px solid #e8ecff",
-                    display: "inline-block",
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "'Courier New', monospace",
-                      fontWeight: 700,
-                      color: "#667eea",
-                      fontSize: 12,
-                    }}
-                  >
-                    {(record.companyName || "")
-                      .toUpperCase()
-                      .replace(/\s+/g, "_")}
-                  </Text>
+                <div>
+                  <label className={label}>Office Location</label>
+                  <input
+                    className={inp}
+                    placeholder="e.g. Hyderabad, Telangana"
+                    value={companyForm.companyLocation}
+                    onChange={(e) => setCompanyForm((f) => ({ ...f, companyLocation: e.target.value }))}
+                  />
                 </div>
-              ),
-            },
-            {
-              title: "Action",
-              key: "action",
-              align: "center",
-              render: (record: CompanyProfile) => (
-                <Space size="middle">
-                  <Tooltip title="Edit Profile">
-                    <Button
-                      type="primary"
-                      shape="circle"
-                      icon={<EditOutlined />}
-                      onClick={() => openEditModal(record)}
-                      style={{
-                        background: "#008cba",
-                        border: "none",
-                        boxShadow: "0 2px 8px rgba(0, 140, 186, 0.25)",
-                      }}
-                    >
-                      {/* Edit Profile */}
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    title={
-                      record.companyStatus === "APPROVED"
-                        ? "Add Requirement"
-                        : "Company must be APPROVED to add requirements"
-                    }
-                  >
-                    <Button
-                      type="primary"
-                      shape="circle"
-                      icon={<PlusOutlined />}
-                      onClick={() => openRequirementModal(record)}
-                      disabled={record.companyStatus !== "APPROVED"}
-                      style={{
-                        background:
-                          record.companyStatus === "APPROVED"
-                            ? "#1ab394"
-                            : "#f5f5f5",
-                        border: "none",
-                        boxShadow:
-                          record.companyStatus === "APPROVED"
-                            ? "0 2px 8px rgba(26, 179, 148, 0.25)"
-                            : "none",
-                      }}
-                    >
-                      {/* Add Requirement */}
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="View Assigned Freelancers">
-                    <Button
-                      type="primary"
-                      shape="circle"
-                      icon={<ShopOutlined />}
-                      onClick={() =>
-                        navigate(`/employee-assigned-freelancers/${record.id}`)
-                      }
-                      style={{
-                        background: "#008cba",
-                        border: "none",
-                        boxShadow: "0 2px 8px rgba(0, 140, 186, 0.25)",
-                      }}
-                    >
-                      {/* View Freelancers */}
-                    </Button>
-                  </Tooltip>
-                </Space>
-              ),
-            },
-          ]}
-          locale={{
-            emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="No company profiles found"
-              >
-                <Button type="primary" onClick={openCreateModal}>
-                  Create Profile
-                </Button>
-              </Empty>
-            ),
-          }}
-        />
-      </div>
-
-      <style>
-        {`
-          .ant-table-thead > tr > th {
-            background: #fafbff !important;
-            color: #1a1d2e !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            font-size: 11px !important;
-            letter-spacing: 0.5px !important;
-            padding: 16px !important;
-            border-bottom: 2px solid #f0f2f5 !important;
-          }
-          .ant-table-tbody > tr > td {
-            padding: 16px !important;
-          }
-          .ant-table-row:hover {
-            background-color: #fcfdff !important;
-          }
-        `}
-      </style>
-
-      {/* Edit / Create Modal */}
-      <Modal
-        title={isCreating ? "Create Company Profile" : "Edit Company Profile"}
-        open={isModalOpen}
-        onCancel={closeModal}
-        footer={null}
-        centered
-        width={500}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSaveOrUpdate}
-          autoComplete="off"
-          // requiredMark={false}
-          size="large"
-          style={{ marginTop: 8 }}
-        >
-          <Form.Item
-            required
-            label={
-              <span style={{ fontWeight: 600, color: "#333" }}>
-                Company Name
-              </span>
-            }
-            name="companyName"
-            rules={[
-              {
-                required: true,
-                message: "Please enter the legal name of your company",
-              },
-              { min: 3, message: "Name must be at least 3 characters long" },
-              { max: 100, message: "Name cannot exceed 100 characters" },
-              {
-                pattern: /^[a-zA-Z0-9\s&'-]+$/,
-                message: "Only letters, numbers, and (&, ', -) are allowed",
-              },
-            ]}
-          >
-            <Input
-              placeholder="e.g. Acme Corporation Pvt Ltd"
-              style={{ borderRadius: 10, height: 44 }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            required
-            label={
-              <span style={{ fontWeight: 600, color: "#333" }}>
-                Headquarters Location
-              </span>
-            }
-            name="companyLocation"
-            rules={[
-              {
-                required: true,
-                message: "Please provide the headquarters location",
-              },
-              { min: 2, message: "Location name is too short" },
-              { max: 150, message: "Location name is too long" },
-            ]}
-          >
-            <Input
-              placeholder="e.g. Hyderabad, India"
-              style={{ borderRadius: 10, height: 44 }}
-            />
-          </Form.Item>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              marginTop: 32,
-              paddingTop: 20,
-              borderTop: "1px solid #f0f0f0",
-            }}
-          >
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={submitting}
-              block
-              size="large"
-              style={{
-                borderRadius: 10,
-                background: "#008cba",
-                border: "none",
-                boxShadow: "0 4px 12px rgba(0, 140, 186, 0.25)",
-              }}
-            >
-              {submitting
-                ? "Saving..."
-                : isCreating
-                  ? "Create Business Profile"
-                  : "Save Changes"}
-            </Button>
-
-            <Button
-              size="large"
-              onClick={closeModal}
-              style={{ borderRadius: 10 }}
-            >
-              Discard
-            </Button>
+              </div>
+              <div className="mt-5 flex gap-3">
+                <button type="submit" disabled={submitting} className={btnBlue}>
+                  {submitting ? "Saving…" : isCreating ? "Register Company" : "Save Changes"}
+                </button>
+                <button type="button" onClick={closeCompanyPanel} className={btnGhost}>Cancel</button>
+              </div>
+            </form>
           </div>
-        </Form>
-      </Modal>
-      <Modal
-        title={
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div>
-              <Text strong style={{ fontSize: 17 }}>
-                Post New Requirement
-              </Text>
-              <br />
-              <Text style={{ fontSize: 12, color: "#999" }}>
-                Company:{" "}
-                <span style={{ color: "#667eea", fontWeight: 600 }}>
-                  {editingProfile?.companyName}
-                </span>
-              </Text>
+        )}
+
+        {/* ── Inline Requirement Form Panel ── */}
+        {showReqPanel && (
+          <div className="mb-6 rounded-xl border border-emerald-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <div>
+                <h2 className="text-base font-bold text-gray-800">Post a Job Requirement</h2>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Company: <span className="font-semibold text-indigo-600">{reqTarget?.companyName}</span>
+                </p>
+              </div>
+              <button onClick={closeReqPanel} className="rounded-lg px-3 py-1.5 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+                Cancel
+              </button>
             </div>
+            <form onSubmit={handleReqSubmit} className="p-6">
+              {reqFormError   && <StatusAlert message={reqFormError}   variant="error"   onDismiss={() => setReqFormError(null)}   className="mb-4" />}
+              {reqFormSuccess && <StatusAlert message={reqFormSuccess} variant="success" onDismiss={() => setReqFormSuccess(null)} className="mb-4" />}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className={label}>Job Title / Role</label>
+                  <input className={inp} placeholder="e.g. Senior React Developer" value={reqForm.title} onChange={(e) => setReqForm((f) => ({ ...f, title: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={label}>Required Skills</label>
+                  <input className={inp} placeholder="e.g. React, Node.js, TypeScript" value={reqForm.skillName} onChange={(e) => setReqForm((f) => ({ ...f, skillName: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={label}>Years of Experience</label>
+                  <input className={inp} placeholder="e.g. 4+ Years" value={reqForm.experience} onChange={(e) => setReqForm((f) => ({ ...f, experience: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={label}>Monthly Budget (₹)</label>
+                  <input className={inp} type="number" placeholder="e.g. 80000" value={reqForm.budget} onChange={(e) => setReqForm((f) => ({ ...f, budget: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={label}>Number of Openings</label>
+                  <input className={inp} type="number" placeholder="e.g. 3" value={reqForm.positions} onChange={(e) => setReqForm((f) => ({ ...f, positions: e.target.value }))} />
+                </div>
+              </div>
+              <div className="mt-5 flex gap-3">
+                <button type="submit" disabled={submitting} className={btnGreen}>
+                  {submitting ? "Posting…" : "Publish Requirement"}
+                </button>
+                <button type="button" onClick={closeReqPanel} className={btnGhost}>Cancel</button>
+              </div>
+            </form>
           </div>
-        }
-        open={isRequirementModalOpen}
-        onCancel={closeRequirementModal}
-        footer={null}
-        centered
-        width={560}
-      >
-        <Form
-          form={requirementForm}
-          layout="vertical"
-          onFinish={handleAddRequirement}
-          autoComplete="off"
-          // requiredMark="optional"
-          size="large"
-          style={{ marginTop: 16 }}
-        >
-          <Form.Item
-            label={<span style={{ fontWeight: 600 }}>Job Title / Role</span>}
-            name="title"
-            rules={[
-              { required: true, message: "Please enter the job title" },
-              { min: 5, message: "Title should be descriptive (min 5 chars)" },
-            ]}
-          >
-            <Input
-              placeholder="e.g. Lead Product Designer"
-              style={{ borderRadius: 10 }}
-            />
-          </Form.Item>
+        )}
 
-          <Row gutter={20}>
-            <Col span={12}>
-              <Form.Item
-                label={<span style={{ fontWeight: 600 }}>Required Skills</span>}
-                name="skillName"
-                rules={[{ required: true, message: "Skills are mandatory" }]}
-              >
-                <Input
-                  placeholder="e.g. React, Figma, Tailwind"
-                  style={{ borderRadius: 10 }}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label={<span style={{ fontWeight: 600 }}>Experience</span>}
-                name="experience"
-                rules={[
-                  { required: true, message: "Experience level is required" },
-                ]}
-              >
-                <Input
-                  placeholder="e.g. 4+ Years"
-                  style={{ borderRadius: 10 }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={20}>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <span style={{ fontWeight: 600 }}>Annual Budget (₹)</span>
-                }
-                name="budget"
-                rules={[
-                  { required: true, message: "Budget is required" },
-                  { pattern: /^[1-9]\d*$/, message: "Invalid budget amount" },
-                ]}
-              >
-                <Input type="number" prefix="₹" style={{ borderRadius: 10 }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label={<span style={{ fontWeight: 600 }}>Open Positions</span>}
-                name="positions"
-                rules={[
-                  { required: true, message: "Position count is required" },
-                  { pattern: /^[1-9]\d*$/, message: "Minimum 1 position" },
-                ]}
-              >
-                <Input type="number" style={{ borderRadius: 10 }} />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              marginTop: 32,
-              paddingTop: 24,
-              borderTop: "1px solid #f0f0f0",
-            }}
-          >
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={submitting}
-              size="large"
-              style={{
-                borderRadius: 8,
-                fontWeight: 600,
-                background: "#1ab394",
-                border: "none",
-                boxShadow: "0 4px 15px rgba(26, 179, 148, 0.3)",
-                flex: 1,
-                height: 48,
-              }}
-            >
-              Post Requirement
-            </Button>
-
-            <Button
-              onClick={closeRequirementModal}
-              size="large"
-              style={{ borderRadius: 8, width: 120, height: 48 }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </Form>
-      </Modal>
-
-      {/* Card hover animation */}
-      <style>
-        {`
-          .ant-card-hoverable:hover {
-            transform: translateY(-4px) !important;
-            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15) !important;
-          }
-          .ant-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          }
-          .ant-modal .ant-input:focus,
-          .ant-modal .ant-input-focused {
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1) !important;
-          }
-          .ant-btn-primary:not(.ant-btn-dangerous):hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
-          }
-        `}
-      </style>
+        {/* ── Table ── */}
+        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          {profiles.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
+                <svg className="h-7 w-7 text-indigo-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                </svg>
+              </div>
+              <p className="text-base font-semibold text-gray-700">No Companies Registered Yet</p>
+              <p className="mt-1 text-sm text-gray-400">Register your first company to start posting requirements and hiring talent</p>
+              <button onClick={openCreate} className={`${btnBlue} mt-5`}>+ Register Company</button>
+            </div>
+          ) : (
+            <>
+              <div className="border-b border-gray-100 px-6 py-4">
+                <p className="text-sm font-semibold text-gray-700">{profiles.length} {profiles.length === 1 ? "Company Registered" : "Companies Registered"}</p>
+              </div>
+              {/* Mobile cards */}
+              <div className="divide-y divide-gray-50 sm:hidden">
+                {profiles.map((p) => (
+                  <div key={p.id} className="p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-gray-900">{p.companyName}</p>
+                        <p className="text-xs text-gray-400">{p.companyLocation}</p>
+                      </div>
+                      <span className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase ${statusColor[p.companyStatus?.toUpperCase() || ""] ?? "bg-gray-50 border-gray-200 text-gray-500"}`}>
+                        {p.companyStatus || "Pending"}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button onClick={() => openEdit(p)} className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100">Edit Profile</button>
+                      {p.companyStatus === "APPROVED" ? (
+                        <button onClick={() => openReq(p)} className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100">Post Requirement</button>
+                      ) : (
+                        <span className="cursor-not-allowed rounded-lg bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-400">Post Requirement</span>
+                      )}
+                      <button onClick={() => navigate(`/employee-assigned-freelancers/${p.id}`)} className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">Assigned Talent</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="min-w-full divide-y divide-gray-50 text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {["#", "Company", "Location", "Status", "Actions"].map((h) => (
+                        <th key={h} className={`px-5 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-gray-400 ${h === "Location" ? "hidden md:table-cell" : ""}`}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 bg-white">
+                    {profiles.map((p, i) => (
+                      <tr key={p.id} className="group transition hover:bg-gray-50/80">
+                        <td className="px-5 py-4 text-center text-gray-400">{i + 1}</td>
+                        <td className="px-5 py-4 text-center">
+                          <p className="font-semibold text-gray-900">{p.companyName}</p>
+                          <p className="text-xs text-gray-400 md:hidden">{p.companyLocation}</p>
+                        </td>
+                        <td className="hidden px-5 py-4 text-center text-gray-500 md:table-cell">{p.companyLocation}</td>
+                        <td className="px-5 py-4 text-center">
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${statusColor[p.companyStatus?.toUpperCase() || ""] ?? "bg-gray-50 border-gray-200 text-gray-500"}`}>
+                            {p.companyStatus || "Pending"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            <button onClick={() => openEdit(p)} className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100">Edit Profile</button>
+                            {p.companyStatus === "APPROVED" ? (
+                              <button onClick={() => openReq(p)} className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100">Post Requirement</button>
+                            ) : (
+                              <span className="cursor-not-allowed rounded-lg bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-400" title="Company must be approved before posting requirements">Post Requirement</span>
+                            )}
+                            <button onClick={() => navigate(`/employee-assigned-freelancers/${p.id}`)} className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">Assigned Talent</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </EmployeeLayout>
   );
 };

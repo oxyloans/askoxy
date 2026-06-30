@@ -8,11 +8,17 @@ import {
   setEmployeeRefreshToken,
   removeEmployeeAccessToken,
   removeEmployeeRefreshToken,
+  getFreelanceRefreshToken,
+  setFreelanceAccessToken,
+  setFreelanceRefreshToken,
+  removeFreelanceAccessToken,
+  removeFreelanceRefreshToken,
 } from "./cookieUtils";
 
 let refreshTokenInterval: NodeJS.Timeout | null = null;
 let pendingRefresh: Promise<boolean> | null = null;
 let pendingEmployeeRefresh: Promise<boolean> | null = null;
+let pendingFreelanceRefresh: Promise<boolean> | null = null;
 export const refreshAccessToken = async (): Promise<boolean> => {
   // Return the in-flight promise to prevent concurrent refresh calls
   if (pendingRefresh) return pendingRefresh;
@@ -100,6 +106,55 @@ export const refreshEmployeeAccessToken = async (): Promise<boolean> => {
   })();
 
   return pendingEmployeeRefresh;
+};
+
+export const refreshFreelanceAccessToken = async (): Promise<boolean> => {
+  if (pendingFreelanceRefresh) return pendingFreelanceRefresh;
+
+  const refreshToken = getFreelanceRefreshToken();
+
+  if (!refreshToken) return false;
+
+  pendingFreelanceRefresh = (async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user-service/refresh-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok)
+        throw new Error(`Freelance refresh failed: ${response.status}`);
+
+      const data = await response.json();
+
+      if (data.mobileNumber) {
+        setFreelanceAccessToken(data.mobileNumber);
+      }
+
+      if (data.mobileOtpSession) {
+        setFreelanceRefreshToken(data.mobileOtpSession);
+      }
+
+      return true;
+    } catch (error) {
+      removeFreelanceAccessToken();
+      removeFreelanceRefreshToken();
+      sessionStorage.removeItem("userId");
+      sessionStorage.removeItem("Name");
+      sessionStorage.removeItem("primaryType");
+
+      const currentPath = window.location.pathname + window.location.search;
+      sessionStorage.setItem("redirectPath", currentPath);
+      window.location.href = "/employee-login";
+
+      return false;
+    } finally {
+      pendingFreelanceRefresh = null;
+    }
+  })();
+
+  return pendingFreelanceRefresh;
 };
 
 export const startTokenRefresh = (): void => {

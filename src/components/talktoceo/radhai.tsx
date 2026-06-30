@@ -24,7 +24,7 @@ import { SiX } from "react-icons/si";
 import RADHAI from "../../assets/img/radhai.png";
 import TALKTOCEOLOGO from "../../assets/img/talktoceo.png";
 import ASKOXYLOGO from "../../assets/img/askoxylogonew.png";
-import ASKOXYLOGO1 from "../../assets/img/askoxylogoblack.png";
+import ASKOXYLOGO1 from "../../assets/img/walkinwhite.png";
 
 const GOOGLE_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSd7BMOmvNIfXgpnefXGoGeqJuLp1hege82srbNmQ9E3e-Lkjg/viewform";
@@ -32,7 +32,24 @@ const GOOGLE_FORM_URL =
 const RadhAIPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = React.useState(false);
-
+    const LOGIN_URL = "/whatsapplogin";
+ const handleSignIn = () => {
+    try {
+      setIsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
+      if (userId) {
+        navigate(redirectPath);
+      } else {
+        sessionStorage.setItem("redirectPath", redirectPath);
+        window.location.href = LOGIN_URL;
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, []);
@@ -255,7 +272,7 @@ const handleChatWithCEO = async () => {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
           <div className="flex items-center gap-3">
             <img
-              onClick={() => navigate("/")}
+              onClick={handleSignIn}
               src={ASKOXYLOGO1}
               alt="ASKOXY.AI"
               className="hidden h-9 w-auto cursor-pointer object-contain sm:block sm:h-11"

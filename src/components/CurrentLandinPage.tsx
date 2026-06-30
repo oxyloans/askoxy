@@ -38,24 +38,24 @@ const CurrentLandingPage: React.FC = () => {
 
   return (
     <>
-      <ScrollToTop />
+      {/* <ScrollToTop /> */}
 
       <div className="relative z-[1] overflow-visible">
         <Header />
 
         <div className="pt-[60px] overflow-visible">
-           {/*<section className="relative z-[1] overflow-visible">
+          {/*<section className="relative z-[1] overflow-visible">
             <RadhAiCeo />
           </section>*/}
-          <section className="relative z-[1] overflow-visible">
+          <section className="relative z-1">
             <Whiteboardtheme />
           </section>
 
-          <section className="relative z-[5] overflow-visible">
+          <section className="relative z-1">
             <OXYGroupCompanies />
           </section>
 
-          <section ref={heroRef} className="relative z-[1]">
+          <section ref={heroRef} className="relative z-1 ">
             <UnicornGrid />
           </section>
 
@@ -66,7 +66,7 @@ const CurrentLandingPage: React.FC = () => {
           <section>
             <ServicesSlider />
           </section>
-            <section>
+          <section>
             <RadhAISection />
           </section>
 

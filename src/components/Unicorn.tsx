@@ -14,9 +14,7 @@ import s9 from '../assets/img/s9.png';
 // Left side big image (phone)
 import leftImage from '../assets/img/megahero.png';
 
-// Two background PNGs for decorative elements
-import purpleLines from '../assets/img/purplelines.png';
-import goldLines from '../assets/img/goldlines.png';
+
 
 const gridImages = [
   { id: 's1', src: s1, route: '/ai-blockchain' },

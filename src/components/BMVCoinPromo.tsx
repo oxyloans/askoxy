@@ -50,7 +50,7 @@ const BMVCoinPromo: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-100 rounded-full blur-3xl opacity-30 -mb-10 -ml-10"></div>
       </div>
 
-      <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between px-3 sm:px-4 md:px-6 lg:px-12 xl:px-16 py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-0">
+      <div className="relative  flex flex-col lg:flex-row items-center justify-between px-3 sm:px-4 md:px-6 lg:px-12 xl:px-16 py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-0">
         {/* Left Content */}
         <div className="w-full lg:w-3/5 text-center lg:text-left">
           <div className="bg-white bg-opacity-90 backdrop-blur-md border border-purple-100 rounded-xl sm:rounded-2xl shadow-md p-4 sm:p-6 lg:p-8">

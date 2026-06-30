@@ -418,7 +418,7 @@ const ServicesSlider: React.FC = () => {
 
   return (
     <section className="py-10 min-h-screen px-4 sm:px-6 lg:px-8 bg-white">
-      <div className="relative z-10">
+      <div className="relative ">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="text-center sm:text-left flex-1">
             <motion.div
@@ -516,7 +516,7 @@ const ServicesSlider: React.FC = () => {
 
       <hr className="p-2 mt-12" />
 
-      <div className="relative z-10">
+      <div className="relative ">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="text-center sm:text-left flex-1">
             <motion.div
@@ -667,7 +667,7 @@ const ServicesSlider: React.FC = () => {
 
       <hr className="p-2 mt-12" />
 
-      <div className="relative z-10">
+      <div className="relative">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="text-center sm:text-left flex-1">
             <motion.div

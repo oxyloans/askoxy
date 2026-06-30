@@ -23,7 +23,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import { store } from "../store";
-import { refreshAccessToken, refreshEmployeeAccessToken } from "./tokenRefresh";
+import { refreshAccessToken, refreshEmployeeAccessToken, refreshFreelanceAccessToken } from "./tokenRefresh";
 import {
   getCustomerAccessToken,
   removeCustomerAccessToken,
@@ -37,6 +37,9 @@ import {
   getEmployeeAccessToken,
   removeEmployeeAccessToken,
   removeEmployeeRefreshToken,
+  getFreelanceAccessToken,
+  removeFreelanceAccessToken,
+  removeFreelanceRefreshToken,
 } from "./cookieUtils";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -70,6 +73,8 @@ const partnerToken: TokenResolver = () => getPartnerAccessToken();
 
 const employeeToken: TokenResolver = () => getEmployeeAccessToken();
 
+const freelanceToken: TokenResolver = () => getFreelanceAccessToken();
+
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
 interface InstanceOptions {
@@ -80,7 +85,7 @@ interface InstanceOptions {
    * "refresh" → attempt token refresh then retry (customer flow).
    * "redirect" → clear storage and send user to login page.
    */
-  on401: "refresh" | "employee-refresh" | "redirect";
+  on401: "refresh" | "employee-refresh" | "freelance-refresh" | "redirect";
   /** Login page path used when on401 === "redirect" */
   loginRoute?: string;
   /** Clears this module's tokens before redirecting on 401 */
@@ -140,11 +145,21 @@ function createInstance({
 
         if (refreshed) {
           const newToken = getToken();
-
           if (newToken && original.headers) {
             original.headers.Authorization = `Bearer ${newToken}`;
           }
+          return instance(original);
+        }
+      }
 
+      if (on401 === "freelance-refresh") {
+        const refreshed = await refreshFreelanceAccessToken();
+
+        if (refreshed) {
+          const newToken = getToken();
+          if (newToken && original.headers) {
+            original.headers.Authorization = `Bearer ${newToken}`;
+          }
           return instance(original);
         }
       }
@@ -185,11 +200,6 @@ const resolvePortalLoginRoute = (): string => {
   return LOGIN_ROUTES.admin;
 };
 
-/**
- * Shared portal API — for pages mounted under both /admin/* and /home/*.
- * Built directly (not via createInstance) so there is exactly ONE
- * request interceptor and ONE response interceptor with no conflicts.
- */
 export const sharedApi = axios.create({ headers: BASE_HEADERS });
 
 sharedApi.interceptors.request.use(
@@ -269,17 +279,23 @@ export const employeeApi = createInstance({
     if (eodDraft) sessionStorage.setItem("eod_draft", eodDraft);
   },
 });
-/** Freelance Marketplace portal — redirects to /employee-login on 401 */
+/** Freelance Marketplace portal — silent token refresh, then redirects to /employee-login on 401 */
 export const freelanceApi = createInstance({
-  getToken: employeeToken,
-  on401: "redirect",
+  getToken: freelanceToken,
+  on401: "freelance-refresh",
   loginRoute: LOGIN_ROUTES.freelancer,
   clearTokens: () => {
-    removeEmployeeAccessToken();
-    removeEmployeeRefreshToken();
+    const planDraft = sessionStorage.getItem("pod_draft");
+    const eodDraft = sessionStorage.getItem("eod_draft");
+
+    removeFreelanceAccessToken();
+    removeFreelanceRefreshToken();
     sessionStorage.removeItem("userId");
     sessionStorage.removeItem("Name");
     sessionStorage.removeItem("primaryType");
+
+    if (planDraft) sessionStorage.setItem("pod_draft", planDraft);
+    if (eodDraft) sessionStorage.setItem("eod_draft", eodDraft);
   },
 });
 

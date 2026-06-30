@@ -7,7 +7,6 @@ import {
   FaHome,
   FaBriefcase,
   FaMapMarkerAlt,
-
   FaEdit,
 } from "react-icons/fa";
 import { Loader2, AlertCircle, X, CheckCircle2 } from "lucide-react";
@@ -576,10 +575,7 @@ const ProfilePage = () => {
       };
 
       if (editingAddressId) {
-        await customerApi.patch(
-          `${BASE_URL}/user-service/updateAddress`,
-          data,
-        );
+        await customerApi.patch(`${BASE_URL}/user-service/updateAddress`, data);
 
         if (typeof window !== "undefined" && window.gtag) {
           window.gtag("event", "update_address", {

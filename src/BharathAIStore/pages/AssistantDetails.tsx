@@ -193,8 +193,10 @@ const AssistantDetails: React.FC = () => {
   //   // sessionStorage.removeItem("redirectPath");
   // }, []);
   const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
-    const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
-    return saved ? JSON.parse(saved) : false;
+    // Right sidebar should open by default on every desktop page load.
+    // Old localStorage value can be "false" from previous mobile/close state,
+    // so do not use it as the initial value.
+    return true;
   });
   const loadingMessages: string[] = [
     "Thinking longer for a better answer",
@@ -478,9 +480,11 @@ const AssistantDetails: React.FC = () => {
       const isXsScreen =
         "matches" in e ? e.matches : (e as MediaQueryList).matches;
       setIsXs(isXsScreen);
-      if (isXsScreen) setSidebarOpen(false);
       if (isXsScreen) {
-        setRightSidebarOpen(false); // Auto-close right on mobile
+        setSidebarOpen(false);
+        setRightSidebarOpen(false); // hide on mobile
+      } else {
+        setRightSidebarOpen(true); // open by default on desktop
       }
     };
     onChange(mql);
@@ -2416,13 +2420,24 @@ ${url}`.trim();
     [leftOffset, rightOffset],
   );
 
-  // Add effect to persist right sidebar state (mirror left)
+  // Keep right sidebar open by default on desktop.
+  // Do not let an old/mobile localStorage value keep it closed on reload.
   useEffect(() => {
-    localStorage.setItem(
-      RIGHT_SIDEBAR_STATE_KEY,
-      JSON.stringify(rightSidebarOpen),
-    );
-  }, [rightSidebarOpen]);
+    if (!isXs) {
+      setRightSidebarOpen(true);
+      localStorage.setItem(RIGHT_SIDEBAR_STATE_KEY, JSON.stringify(true));
+    }
+  }, [isXs, location.pathname]);
+
+  // Persist only desktop manual changes. Mobile auto-close should not become desktop default.
+  useEffect(() => {
+    if (!isXs) {
+      localStorage.setItem(
+        RIGHT_SIDEBAR_STATE_KEY,
+        JSON.stringify(rightSidebarOpen),
+      );
+    }
+  }, [rightSidebarOpen, isXs]);
 
   return (
     <>

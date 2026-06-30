@@ -1,43 +1,13 @@
 import React, { useState, useEffect } from "react";
-import {
-  Card,
-  Row,
-  Col,
-  Button,
-  Typography,
-  Tag,
-  Spin,
-  Empty,
-  Input,
-  Select,
-  Space,
-  Tooltip,
-  message,
-  Divider,
-  Avatar,
-  Modal,
-  Form,
-  Drawer,
-} from "antd";
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  DownloadOutlined,
-  CheckCircleOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  FileTextOutlined,
-  DollarOutlined,
-} from "@ant-design/icons";
-import axios from "axios";
+import { message } from "antd";
 import EmployeeLayout from "./EmployeeLayout";
-import { getEmployeeAccessToken } from "../utils/cookieUtils";
 import BASE_URL, { uploadurlwithId } from "../Config";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { freelanceApi } from "../utils/axiosInstances";
 import { decryptParam } from "../utils/urlEncryption";
-
-const { Title, Text } = Typography;
+import StatusAlert from "./StatusAlert";
+import { extractApiError, extractResponseMessage } from "./apiUtils";
+import { LoadingCenter, pageContainerClass } from "./marketplaceUi";
 
 interface Freelancer {
   id: string | null;
@@ -54,478 +24,186 @@ interface Freelancer {
   resumeUrl: string;
 }
 
-const FreelancerProfiles: React.FC = () => {
-  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [priceFilter, setPriceFilter] = useState<string>("all");
-  const [screenSize, setScreenSize] = useState<"mobile" | "tablet" | "desktop">(
-    window.innerWidth < 768 ? "mobile" : window.innerWidth < 1024 ? "tablet" : "desktop"
-  );
-  const [selectedFreelancer, setSelectedFreelancer] = useState<Freelancer | null>(null);
-  const [assigning, setAssigning] = useState(false);
-  const navigate = useNavigate();
-  const { companyId: encryptedCompanyId, requirementId: encryptedRequirementId } = useParams();
-  const companyId = decryptParam(encryptedCompanyId || '');
-  const requirementId = decryptParam(encryptedRequirementId || '');
+const FILTERS = [
+  { value: "all",     label: "All Freelancers"     },
+  { value: "budget",  label: "Budget  ≤ ₹100/hr"   },
+  { value: "mid",     label: "Mid-Range ₹100–250/hr" },
+  { value: "premium", label: "Premium  > ₹250/hr"   },
+];
 
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      if (width < 768) setScreenSize("mobile");
-      else if (width < 1024) setScreenSize("tablet");
-      else setScreenSize("desktop");
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+const FreelancerProfiles: React.FC = () => {
+  const [freelancers, setFreelancers]     = useState<Freelancer[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [priceFilter, setPriceFilter]     = useState("all");
+  const [assigning, setAssigning]         = useState(false);
+  const [assigningId, setAssigningId]     = useState<string | null>(null);
+  const [pageError, setPageError]         = useState<string | null>(null);
+  const [assignFeedback, setAssignFeedback] = useState<{ text: string; variant: "success" | "error" } | null>(null);
+
+  const { companyId: encCompany, requirementId: encReq } = useParams();
+  const companyId     = decryptParam(encCompany  || "");
+  const requirementId = decryptParam(encReq      || "");
 
   const fetchFreelancers = async () => {
     try {
       setLoading(true);
-
-      const response = await freelanceApi.get<Freelancer[]>(
-        `${BASE_URL}/ai-service/agent/getAllFreeLancers`
-      );
-
-      if (response.data && Array.isArray(response.data)) {
-        setFreelancers(response.data);
-      } else {
-        setFreelancers([]);
-      }
-    } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        "Failed to load freelancers.";
-      message.error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
+      setPageError(null);
+      const res = await freelanceApi.get<Freelancer[]>(`${BASE_URL}/ai-service/agent/getAllFreeLancers`);
+      setFreelancers(Array.isArray(res.data) ? res.data : []);
+    } catch (err: unknown) { setPageError(extractApiError(err)); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchFreelancers();
-  }, []);
+  useEffect(() => { fetchFreelancers(); }, []);
 
-  const filteredFreelancers = freelancers.filter((freelancer) => {
-    const matchesPrice =
-      priceFilter === "all" ||
-      (priceFilter === "budget" && freelancer.perHour <= 100) ||
-      (priceFilter === "mid" &&
-        freelancer.perHour > 100 &&
-        freelancer.perHour <= 250) ||
-      (priceFilter === "premium" && freelancer.perHour > 250);
-
-    return matchesPrice;
+  const filtered = freelancers.filter((f) => {
+    if (priceFilter === "budget")  return f.perHour <= 100;
+    if (priceFilter === "mid")     return f.perHour > 100 && f.perHour <= 250;
+    if (priceFilter === "premium") return f.perHour > 250;
+    return true;
   });
 
-  const handleDownloadResume = (resumeUrl: string) => {
-    if (!resumeUrl) {
-      message.warning("Resume not available for this freelancer.");
-      return;
-    }
-    const fullUrl = `${uploadurlwithId}${resumeUrl}`;
-    window.open(fullUrl, "_blank");
+  const handleDownload = (url: string) => {
+    if (!url) { message.warning("Resume not available."); return; }
+    window.open(`${uploadurlwithId}${url}`, "_blank");
   };
 
-  const handleAssignFreelancer = async (freelancer: Freelancer) => {
-    if (!companyId || !requirementId || !freelancer?.userId1) {
-      message.error("Missing required information to assign freelancer.");
+  const handleAssign = async (f: Freelancer) => {
+    if (!companyId || !requirementId || !f.userId1) {
+      setAssignFeedback({ text: "Missing required information.", variant: "error" });
       return;
     }
-
     try {
       setAssigning(true);
-
-      const payload = {
-        companyId,
-        id: requirementId,
-        freelancerId: freelancer.userId1,
-      };
-
-      const response = await freelanceApi.post(
-        `${BASE_URL}/user-service/partnerAssignedFreelancer`,
-        payload
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        message.success("Freelancer assigned successfully!");
-        setSelectedFreelancer(null);
+      setAssigningId(f.userId1);
+      setAssignFeedback(null);
+      const res = await freelanceApi.post(`${BASE_URL}/user-service/partnerAssignedFreelancer`, {
+        companyId, id: requirementId, freelancerId: f.userId1,
+      });
+      if (res.status === 200 || res.status === 201) {
+        const msg = extractResponseMessage(res.data);
+        setAssignFeedback({ text: msg || "Freelancer assigned successfully.", variant: "success" });
+        if (msg) message.success(msg);
+      } else {
+        setAssignFeedback({ text: extractResponseMessage(res.data) || "Could not assign.", variant: "error" });
       }
-    } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        "Failed to assign freelancer.";
-      message.error(errorMsg);
-    } finally {
-      setAssigning(false);
-    }
+    } catch (err: unknown) { setAssignFeedback({ text: extractApiError(err), variant: "error" }); }
+    finally { setAssigning(false); setAssigningId(null); }
   };
 
-  const FreelancerCard = ({ freelancer }: { freelancer: Freelancer }) => (
-    <Card
-      hoverable
-      style={{
-        borderRadius: 16,
-        border: "1px solid #f0f0f0",
-        height: "100%",
-      }}
-      className="freelancer-card"
-    >
-      <div style={{ marginBottom: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 12,
-          }}
-        >
-          <Avatar
-            size={48}
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              fontWeight: 700,
-              fontSize: 18,
-            }}
-          >
-            {(freelancer.email || "F").charAt(0).toUpperCase()}
-          </Avatar>
-          <Tag
-            icon={<CheckCircleOutlined />}
-            color="success"
-            style={{ borderRadius: 6 }}
-          >
-            Available
-          </Tag>
-        </div>
-      </div>
-
-      <Divider style={{ margin: "12px 0" }} />
-
-      <div style={{ marginBottom: 16 }}>
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: "uppercase",
-            color: "#999",
-            letterSpacing: "0.5px",
-            display: "block",
-            marginBottom: 8,
-            textAlign: "center",
-          }}
-        >
-          Pricing
-        </Text>
-        <Row gutter={[8, 8]}>
-          <Col span={12}>
-            <div
-              style={{
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid #e8ecff",
-                textAlign: "center",
-              }}
-            >
-              <Text style={{ fontSize: 11, color: "#999", display: "block" }}>Per Hour</Text>
-              <Text
-                strong
-                style={{
-                  fontSize: 14,
-                  color: "#667eea",
-                  display: "block",
-                }}
-              >
-                ₹{freelancer.perHour.toLocaleString()}
-              </Text>
-            </div>
-          </Col>
-          <Col span={12}>
-            <div
-              style={{
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid #e8ecff",
-                textAlign: "center",
-              }}
-            >
-              <Text style={{ fontSize: 11, color: "#999", display: "block" }}>Per Day</Text>
-              <Text
-                strong
-                style={{
-                  fontSize: 14,
-                  color: "#667eea",
-                  display: "block",
-                }}
-              >
-                ₹{freelancer.perDay.toLocaleString()}
-              </Text>
-            </div>
-          </Col>
-          <Col span={12}>
-            <div
-              style={{
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid #e8ecff",
-                textAlign: "center",
-              }}
-            >
-              <Text style={{ fontSize: 11, color: "#999", display: "block" }}>Per Week</Text>
-              <Text
-                strong
-                style={{
-                  fontSize: 14,
-                  color: "#667eea",
-                  display: "block",
-                }}
-              >
-                ₹{freelancer.perWeek.toLocaleString()}
-              </Text>
-            </div>
-          </Col>
-          <Col span={12}>
-            <div
-              style={{
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid #e8ecff",
-                textAlign: "center",
-              }}
-            >
-              <Text style={{ fontSize: 11, color: "#999", display: "block" }}>Per Month</Text>
-              <Text
-                strong
-                style={{
-                  fontSize: 14,
-                  color: "#667eea",
-                  display: "block",
-                }}
-              >
-                ₹{freelancer.perMonth.toLocaleString()}
-              </Text>
-            </div>
-          </Col>
-        </Row>
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <Row gutter={[8, 8]}>
-          <Col span={12}>
-            <div
-              style={{
-                padding: "12px",
-                borderRadius: 8,
-                border: "1px solid #b3d9ff",
-                textAlign: "center",
-              }}
-            >
-              <Text style={{ fontSize: 11, color: "#0050b3", display: "block" }}>Per Year</Text>
-              <Text
-                strong
-                style={{
-                  fontSize: 14,
-                  color: "#0050b3",
-                  display: "block",
-                }}
-              >
-                ₹{freelancer.perYear.toLocaleString()}
-              </Text>
-            </div>
-          </Col>
-          <Col span={12}>
-            <div
-              style={{
-                padding: "12px",
-                borderRadius: 8,
-                border:
-                  freelancer.amountNegotiable === "YES"
-                    ? "1px solid #b7eb8f"
-                    : "1px solid #ffccc7",
-                textAlign: "center",
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 11,
-                  color:
-                    freelancer.amountNegotiable === "YES"
-                      ? "#274e0b"
-                      : "#cf1322",
-                  display: "block",
-                }}
-              >
-                Negotiable
-              </Text>
-              <Text
-                strong
-                style={{
-                  fontSize: 14,
-                  color:
-                    freelancer.amountNegotiable === "YES"
-                      ? "#52c41a"
-                      : "#ff4d4f",
-                  display: "block",
-                }}
-              >
-                {freelancer.amountNegotiable}
-              </Text>
-            </div>
-          </Col>
-        </Row>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, flexDirection: screenSize === "mobile" ? "column" : "row" }}>
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          onClick={() => handleDownloadResume(freelancer.resumeUrl)}
-          style={{
-            borderRadius: 8,
-            height: 40,
-            fontWeight: 600,
-            background: "#008cba",
-            border: "none",
-            boxShadow: "0 4px 12px rgba(0, 140, 186, 0.25)",
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-          }}
-        >
-          {screenSize === "mobile" ? null : screenSize === "tablet" ? (
-            <>
-              <DownloadOutlined />
-              <span>Resume</span>
-            </>
-          ) : (
-            "View Resume"
-          )}
-        </Button>
-        {companyId && requirementId && (
-          <Button
-            type="primary"
-            icon={<CheckCircleOutlined />}
-            loading={assigning && selectedFreelancer?.userId1 === freelancer.userId1}
-            onClick={() => handleAssignFreelancer(freelancer)}
-            style={{
-              borderRadius: 8,
-              height: 40,
-              fontWeight: 600,
-              background: "#1ab394",
-              border: "none",
-              boxShadow: "0 4px 12px rgba(26, 179, 148, 0.25)",
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-            }}
-          >
-            {screenSize === "mobile" ? null : screenSize === "tablet" ? (
-              <>
-                <CheckCircleOutlined />
-                <span>Assign</span>
-              </>
-            ) : (
-              "Assign Freelancer"
-            )}
-          </Button>
-        )}
-      </div>
-    </Card>
-  );
-
-  if (loading) {
-    return (
-      <EmployeeLayout>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: "60vh",
-          }}
-        >
-          <Spin size="large" tip="Loading freelancer profiles..." />
-        </div>
-      </EmployeeLayout>
-    );
-  }
+  if (loading) return <EmployeeLayout><LoadingCenter tip="Loading freelancers…" /></EmployeeLayout>;
 
   return (
     <EmployeeLayout>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-        <div>
-          <Title
-            level={3}
-            style={{ margin: 0, fontWeight: 700, color: "#1a1d2e" }}
-          >
-            Available Freelancers
-          </Title>
-          <Text style={{ color: "#888", fontSize: 13 }}>
-            Browse and hire talented freelancers for your projects
-          </Text>
-        </div>
-        <Text style={{ color: "#999", fontSize: 13 }}>
-          Found {filteredFreelancers.length} freelancer
-          {filteredFreelancers.length !== 1 ? "s" : ""}
-        </Text>
-      </div>
+      <div className={pageContainerClass}>
 
-      {filteredFreelancers.length > 0 ? (
-        <Row gutter={[20, 20]}>
-          {filteredFreelancers.map((freelancer) => (
-            <Col key={freelancer.userId1} xs={24} sm={12} md={8}>
-              <FreelancerCard freelancer={freelancer} />
-            </Col>
-          ))}
-        </Row>
-      ) : (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="No Freelancers Available"
-          style={{ marginTop: 60, padding: "40px 20px" }}
-        >
-          <Text style={{ color: "#999", fontSize: 13, display: "block", marginBottom: 16 }}>
-            {freelancers.length === 0 
-              ? "No freelancers are currently available in the system."
-              : "No freelancers match your selected filters."}
-          </Text>
-          {freelancers.length > 0 && (
-            <Button
-              type="primary"
-              onClick={() => setPriceFilter("all")}
-              style={{
-                borderRadius: 10,
-                height: 40,
-                fontWeight: 600,
-                background: "#008cba",
-                border: "none",
-              }}
+        {/* Header */}
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Browse Freelance Talent</h1>
+            <p className="mt-0.5 text-sm text-gray-500">Discover skilled freelancers and assign them to your open requirements</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={priceFilter}
+              onChange={(e) => setPriceFilter(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
             >
-              Clear Filters
-            </Button>
-          )}
-        </Empty>
-      )}
+              {FILTERS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+            </select>
+            <span className="whitespace-nowrap rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600">
+              {filtered.length} freelancer{filtered.length !== 1 ? "s" : ""} found
+            </span>
+          </div>
+        </div>
 
-      <style>
-        {`
-          .freelancer-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          }
-          .freelancer-card:hover {
-            transform: translateY(-8px) !important;
-            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.15) !important;
-          }
-        `}
-      </style>
+        {pageError    && <StatusAlert message={pageError}            variant="error"   onDismiss={() => setPageError(null)}      className="mb-5" />}
+        {assignFeedback && <StatusAlert message={assignFeedback.text} variant={assignFeedback.variant} onDismiss={() => setAssignFeedback(null)} className="mb-5" />}
+
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-gray-100 bg-white py-20 text-center shadow-sm">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-50">
+              <svg className="h-7 w-7 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+            <p className="text-base font-semibold text-gray-700">No Freelancers Found</p>
+            <p className="mt-1 text-sm text-gray-400">Try a different rate filter or check back later</p>
+            {freelancers.length > 0 && (
+              <button onClick={() => setPriceFilter("all")} className="mt-5 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                Show All Freelancers
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((f) => (
+              <div key={f.userId1} className="flex flex-col rounded-xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md hover:-translate-y-0.5">
+                {/* Card top */}
+                <div className="flex items-center justify-between border-b border-gray-50 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+                      {(f.email || "F").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="max-w-[130px] truncate text-sm font-semibold text-gray-800">{f.email}</p>
+                      <p className="text-[10px] text-gray-400">Independent Contractor</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600">
+                    Open to Work
+                  </span>
+                </div>
+
+                {/* Pricing */}
+                <div className="px-5 py-4">
+                  <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Rate Card</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Per Hour",  value: f.perHour  },
+                      { label: "Per Day",   value: f.perDay   },
+                      { label: "Per Week",  value: f.perWeek  },
+                      { label: "Per Month", value: f.perMonth },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                        <p className="text-[10px] text-gray-400">{label}</p>
+                        <p className="text-sm font-bold text-indigo-600">₹{(value || 0).toLocaleString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Negotiable */}
+                <div className="mx-5 mb-4 flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-2.5">
+                  <span className="text-xs text-gray-500">Open to Negotiation</span>
+                  <span className={`text-xs font-bold ${f.amountNegotiable === "YES" ? "text-emerald-600" : "text-red-500"}`}>
+                    {f.amountNegotiable === "YES" ? "Yes" : "No"}
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-auto flex gap-2 border-t border-gray-50 px-5 py-4">
+                  <button
+                    onClick={() => handleDownload(f.resumeUrl)}
+                    className="flex-1 rounded-lg border border-gray-200 py-2.5 text-xs font-semibold text-gray-600 transition hover:border-indigo-300 hover:text-indigo-600"
+                  >
+                    View Resume
+                  </button>
+                  {companyId && requirementId && (
+                    <button
+                      disabled={assigning && assigningId === f.userId1}
+                      onClick={() => handleAssign(f)}
+                      className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {assigning && assigningId === f.userId1 ? "Assigning…" : "Assign to Role"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </EmployeeLayout>
   );
 };

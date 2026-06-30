@@ -24,7 +24,7 @@ const teamMembers = [
     name: "Ramadevi.T",
     role: "Co-Founder",
     img: Rama,
-    linkedin: "https://www.linkedin.com/in/ramadevi-thatavarti-969828284/",
+    linkedin: "https://www.linkedin.com/in/ramadevi-thatavarti/",
     bio: "Strategic thinker passionate about building sustainable business models and fostering growth through people-centric leadership.",
   },
   {

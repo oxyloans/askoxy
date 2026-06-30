@@ -248,18 +248,18 @@ const Sidebar: React.FC = () => {
           link: "/admin/mumbaidata",
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
-        // {
-        //   title: "Freelancers Partners",
-        //   icon: <FaHandshake className="text-orange-400" />,
-        //   link: "/admin/partners-dashboard",
-        //   roles: ["HELPDESKSUPERADMIN"],
-        // },
-        // {
-        //   title: "Freelance Requirements",
-        //   icon: <RiListUnordered className="text-blue-400" />,
-        //   link: "/admin/freelance-requirements",
-        //   roles: ["HELPDESKSUPERADMIN"],
-        // },
+        {
+          title: "Freelancers Partners",
+          icon: <FaHandshake className="text-orange-400" />,
+          link: "/admin/partners-dashboard",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
+          title: "Freelance Requirements",
+          icon: <RiListUnordered className="text-blue-400" />,
+          link: "/admin/freelance-requirements",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
         {
           title: "Assigned Talwar Data",
           icon: <RiFileCheckLine className="text-red-500" />,

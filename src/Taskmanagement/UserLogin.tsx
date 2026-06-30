@@ -63,6 +63,12 @@ const UserLogin: React.FC = () => {
   useEffect(() => {
     const token = getEmployeeAccessToken();
     const type = sessionStorage.getItem("primaryType");
+    // If token exists but primaryType is not EMPLOYEE, clear stale e_at and stay on login
+    if (token && type !== "EMPLOYEE") {
+      removeEmployeeAccessToken();
+      removeEmployeeRefreshToken();
+      return;
+    }
     if (token && type === "EMPLOYEE") {
       window.history.replaceState(null, '', '/userPanelLayout');
       navigate("/userPanelLayout", { replace: true });
@@ -91,7 +97,7 @@ const UserLogin: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          timeout: 10000, // 10 seconds timeout (fixed from 1000)
+          timeout: 10000, 
         }
       );
 

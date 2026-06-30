@@ -13,6 +13,7 @@ import { MenuUnfoldOutlined, MenuFoldOutlined, UserOutlined } from "@ant-design/
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdLogout } from "react-icons/md";
 import Swal from "sweetalert2";
+import { removeEmployeeAccessToken, removeEmployeeRefreshToken } from "../utils/cookieUtils";
 
 import { FaTasks, FaUserCircle, FaWhatsapp } from "react-icons/fa";
 import {
@@ -136,6 +137,8 @@ const handleSignOut = (): void => {
     const podDraft = sessionStorage.getItem("pod_draft");
     const eodDraft = sessionStorage.getItem("eod_draft");
 
+    removeEmployeeAccessToken();
+    removeEmployeeRefreshToken();
     sessionStorage.clear();
 
     if (mobileNumber) sessionStorage.setItem("mobileNumber", mobileNumber);

@@ -33,6 +33,9 @@ export const COOKIE_KEYS = {
   // Employee
   employeeAccess:  "e_at",
   employeeRefresh: "e_rt",
+  // Freelance
+  freelanceAccess:  "f_at",
+  freelanceRefresh: "f_rt",
 } as const;
 
 // ─── Customer ─────────────────────────────────────────────────────────────────
@@ -94,3 +97,18 @@ export const setEmployeeRefreshToken = (token: string): void =>
   cookieUtils.set(COOKIE_KEYS.employeeRefresh, token);
 export const removeEmployeeRefreshToken = (): void =>
   cookieUtils.remove(COOKIE_KEYS.employeeRefresh);
+
+// ─── Freelance ────────────────────────────────────────────────────────────────
+export const getFreelanceAccessToken = (): string | null =>
+  cookieUtils.get(COOKIE_KEYS.freelanceAccess);
+export const setFreelanceAccessToken = (token: string): void =>
+  cookieUtils.set(COOKIE_KEYS.freelanceAccess, token);
+export const removeFreelanceAccessToken = (): void =>
+  cookieUtils.remove(COOKIE_KEYS.freelanceAccess);
+
+export const getFreelanceRefreshToken = (): string | null =>
+  cookieUtils.get(COOKIE_KEYS.freelanceRefresh);
+export const setFreelanceRefreshToken = (token: string): void =>
+  cookieUtils.set(COOKIE_KEYS.freelanceRefresh, token);
+export const removeFreelanceRefreshToken = (): void =>
+  cookieUtils.remove(COOKIE_KEYS.freelanceRefresh);
