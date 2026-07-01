@@ -1,8 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type React from "react";
 import BASE_URL from "../../Config";
 import { notification } from "antd";
+import {
+  AudioOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  PauseOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+
+// const BASE_URL = "http://localhost:9876/api";
 
 type Role = "user" | "assistant";
 
@@ -41,6 +50,9 @@ const HISTORY_URL = (sessionId: string) =>
 const KNOWLEDGE_BASE_URL = `${BASE_URL}/ai-automation/add-to-clone`;
 
 const CLAUDE_MODELS = [
+  // ==========================
+  // Anthropic Claude Models
+  // ==========================
   {
     id: "claude-opus-4-6",
     label: "Claude Opus 4.6",
@@ -48,45 +60,55 @@ const CLAUDE_MODELS = [
     provider: "Claude",
   },
   {
-    id: "claude-sonnet-4-5",
-    label: "Claude Sonnet 4.5",
+    id: "claude-sonnet-4-6",
+    label: "Claude Sonnet 4.6",
     desc: "Balanced",
     provider: "Claude",
   },
   {
-    id: "claude-opus-4-0",
-    label: "Claude Opus 4",
-    desc: "Powerful",
+    id: "claude-haiku-4-5",
+    label: "Claude Haiku 4.5",
+    desc: "Fast & low cost",
     provider: "Claude",
   },
-  {
-    id: "claude-sonnet-4-0",
-    label: "Claude Sonnet 4",
-    desc: "Smart",
-    provider: "Claude",
-  },
-  {
-    id: "gpt-4o",
-    label: "GPT-4o",
-    desc: "OpenAI flagship",
-    provider: "OpenAI",
-  },
-  {
-    id: "gpt-4o-mini",
-    label: "GPT-4o Mini",
-    desc: "Fast & efficient",
-    provider: "OpenAI",
-  },
+
+  // ==========================
+  // OpenAI Models
+  // ==========================
   {
     id: "gpt-5.5",
     label: "GPT-5.5",
-    desc: "Top expensive",
+    desc: "Most capable",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-5",
+    label: "GPT-5",
+    desc: "Advanced reasoning",
     provider: "OpenAI",
   },
   {
     id: "gpt-5-mini",
     label: "GPT-5 Mini",
     desc: "Fast & smart",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-5-nano",
+    label: "GPT-5 Nano",
+    desc: "Lowest cost",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-4o",
+    label: "GPT-4o",
+    desc: "Multimodal flagship",
+    provider: "OpenAI",
+  },
+  {
+    id: "gpt-4o-mini",
+    label: "GPT-4o Mini",
+    desc: "Fast & efficient",
     provider: "OpenAI",
   },
 ];
@@ -134,9 +156,10 @@ async function callSessionChat(
   model: string,
   provider: string,
   sessionId: string | null,
+  webSearch: boolean,
   signal: AbortSignal,
 ): Promise<{ sessionId: string; response: string }> {
-  const body: any = { userId, provider, model, message };
+  const body: any = { userId, provider, model, message, webSearch };
   if (sessionId) body.sessionId = sessionId;
   const res = await fetch(SESSION_CHAT_URL, {
     method: "POST",
@@ -153,23 +176,30 @@ async function callChatWithFiles(
   files: File[],
   message: string,
   model: string,
+  provider: string,
+  sessionId: string | null,
+  userId: string,
+  webSearch: boolean,
   signal: AbortSignal,
-): Promise<string> {
+): Promise<{ sessionId: string; response: string }> {
   const accessToken = localStorage.getItem("accessToken") ?? "";
   const form = new FormData();
   files.forEach((f) => form.append("files", f));
   form.append("message", message);
+  form.append("provider", provider);
+  form.append("userId", userId);
+  form.append("webSearch", String(webSearch));
+  if (sessionId) form.append("sessionId", sessionId);
+
   const res = await fetch(`${FILE_URL}?model=${encodeURIComponent(model)}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+    headers: { Authorization: `Bearer ${accessToken}` },
     body: form,
     signal,
   });
   if (!res.ok) throw new Error(`Server error ${res.status}`);
   const json = await res.json();
-  return json.response ?? "";
+  return { sessionId: json.sessionId, response: json.response ?? "" };
 }
 
 async function fetchSessions(userId: string): Promise<Session[]> {
@@ -1023,29 +1053,34 @@ export default function OxyClaude() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
-
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const userScrolledUp = useRef(false);
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const { sessionId: urlSessionId } = useParams<{ sessionId?: string }>();
+  const handleShare = () => {
+    if (!currentSessionId) return;
+    const url = `${window.location.origin}/oxygpt/share/${currentSessionId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    });
+  };
 
   const navigate = useNavigate();
   const userId = getUserId();
 
   useEffect(() => {
     if (!userId) {
-      sessionStorage.setItem("redirectPath", "/oxygpt"); // change to your actual route
+      sessionStorage.setItem("redirectPath", window.location.pathname);
       navigate("/whatsapplogin");
     }
   }, [userId, navigate]);
-  useEffect(() => {
-    if (attachedFiles.length > 0) {
-      setSelectedModel("claude-opus-4-6");
-      setModelOpen(false);
-    }
-  }, [attachedFiles.length]);
 
   const { isRecording, isSupported, startRecording, stopRecording } =
     useVoiceRecorder((text) => setInput(text));
@@ -1053,6 +1088,21 @@ export default function OxyClaude() {
   useEffect(() => {
     fetchSessions(userId).then(setSessions);
   }, [userId]);
+
+  useEffect(() => {
+    if (!urlSessionId || !userId) return;
+    (async () => {
+      setHistoryLoading(true);
+      setCurrentSessionId(urlSessionId);
+      const history = await fetchHistory(urlSessionId);
+      setMessages(history);
+      setHistoryLoading(false);
+      setTimeout(
+        () => bottomRef.current?.scrollIntoView({ behavior: "smooth" }),
+        100,
+      );
+    })();
+  }, [urlSessionId, userId]);
 
   useEffect(() => {
     const el = mainRef.current;
@@ -1169,12 +1219,22 @@ export default function OxyClaude() {
       let newSessionId = currentSessionId;
 
       if (filesSnap.length > 0) {
-        response = await callChatWithFiles(
+        const result = await callChatWithFiles(
           filesSnap.map((f) => f.raw),
           userMsg.content,
           selectedModel,
+          modelInfo.provider,
+          currentSessionId,
+          userId,
+          webSearchEnabled,
           ac.signal,
         );
+        response = result.response;
+        newSessionId = result.sessionId;
+        if (!currentSessionId) {
+          setCurrentSessionId(newSessionId);
+          fetchSessions(userId).then(setSessions);
+        }
       } else {
         const result = await callSessionChat(
           userId,
@@ -1182,6 +1242,7 @@ export default function OxyClaude() {
           modelInfo.id,
           modelInfo.provider,
           currentSessionId,
+          webSearchEnabled,
           ac.signal,
         );
         response = result.response;
@@ -1268,35 +1329,13 @@ export default function OxyClaude() {
         <div className="flex-shrink-0 relative z-20 bg-slate-50/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
           <button
             onClick={() => setSidebarOpen((v) => !v)}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-all flex-shrink-0"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-800 hover:text-violet-900 hover:bg-violet-100 transition-all flex-shrink-0"
             title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
             {sidebarOpen ? (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <line x1="9" y1="3" x2="9" y2="21" />
-                <path d="M5 12h4M7 10l-2 2 2 2" />
-              </svg>
+              <MenuFoldOutlined style={{ fontSize: 16 }} />
             ) : (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <line x1="9" y1="3" x2="9" y2="21" />
-                <path d="M13 12h4M15 10l2 2-2 2" />
-              </svg>
+              <MenuUnfoldOutlined style={{ fontSize: 16 }} />
             )}
           </button>
 
@@ -1308,6 +1347,30 @@ export default function OxyClaude() {
               OXY GPT
             </span>
           </div>
+
+          {currentSessionId && (
+            <button
+              onClick={handleShare}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 transition-all"
+              title="Share this conversation"
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              {shareCopied ? "Link copied!" : "Share"}
+            </button>
+          )}
         </div>
 
         {/* Messages — scrolls independently below the sticky header */}
@@ -1436,27 +1499,92 @@ export default function OxyClaude() {
             )}
 
             <div
-              className={`flex items-end gap-2 rounded-2xl px-3 py-2.5 bg-white border shadow-sm transition-all ${dragOver ? "border-violet-400 shadow-violet-100" : "border-slate-200 shadow-slate-100 focus-within:border-violet-300 focus-within:shadow-violet-100"}`}
+              className={`flex items-end gap-2 rounded-2xl px-3 py-2.5 bg-white border shadow-sm transition-all ${dragOver ? "border-violet-400 shadow-violet-400" : "border-slate-400 shadow-slate-400 focus-within:border-violet-600 focus-within:shadow-violet-500"}`}
             >
-              {/* Upload */}
-              <button
-                onClick={() => fileRef.current?.click()}
-                title="Upload file"
-                className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mb-0.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-all"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
+              <div className="relative">
+                <button
+                  onClick={() => setPlusMenuOpen((v) => !v)}
+                  title="Add"
+                  className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center mb-0.5 transition-all ${
+                    plusMenuOpen
+                      ? "bg-violet-400 text-violet-700 border border-violet-300"
+                      : "text-slate-600 hover:text-violet-600 hover:bg-violet-50"
+                  }`}
                 >
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-              </button>
+                  <PlusOutlined style={{ fontSize: 19 }} />
+                </button>
+
+                {plusMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setPlusMenuOpen(false)}
+                    />
+                    <div className="absolute bottom-10 left-0 w-52 rounded-2xl shadow-xl z-50 overflow-hidden bg-white border border-slate-200">
+                      {/* Upload file */}
+                      <button
+                        onClick={() => {
+                          fileRef.current?.click();
+                          setPlusMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12.5px] text-slate-700 hover:bg-violet-50 transition-all"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                        >
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        Upload file
+                      </button>
+
+                      <div className="h-px bg-slate-100 mx-3" />
+
+                      {/* Web search toggle */}
+                      <button
+                        onClick={() => setWebSearchEnabled((v) => !v)}
+                        className="w-full flex items-center justify-between gap-2.5 px-3 py-2.5 text-[12.5px] text-slate-700 hover:bg-violet-50 transition-all"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <circle cx="11" cy="11" r="7" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                          </svg>
+                          Web search
+                        </span>
+                        <span
+                          className={`w-8 h-4.5 rounded-full flex items-center px-0.5 transition-all ${
+                            webSearchEnabled
+                              ? "bg-violet-600 justify-end"
+                              : "bg-slate-200 justify-start"
+                          }`}
+                          style={{ height: "18px" }}
+                        >
+                          <span className="w-3.5 h-3.5 rounded-full bg-white shadow" />
+                        </span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+              {webSearchEnabled && (
+                <span className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700 border border-violet-200 mb-0.5">
+                  🔍 Web
+                </span>
+              )}
               <input
                 ref={fileRef}
                 type="file"
@@ -1499,29 +1627,10 @@ export default function OxyClaude() {
                   {isRecording ? (
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full animate-pulse bg-red-500" />
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                      </svg>
+                      <PauseOutlined style={{ fontSize: 13 }} />
                     </span>
                   ) : (
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                    >
-                      <rect x="9" y="2" width="6" height="12" rx="3" />
-                      <path d="M5 10a7 7 0 0014 0" />
-                      <line x1="12" y1="19" x2="12" y2="22" />
-                      <line x1="9" y1="22" x2="15" y2="22" />
-                    </svg>
+                    <AudioOutlined style={{ fontSize: 16 }} />
                   )}
                 </button>
               )}

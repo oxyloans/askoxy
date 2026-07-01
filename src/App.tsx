@@ -751,7 +751,7 @@ const isLoggedIn = !!localStorage.getItem("userId");
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
               <Route path="/Oxygpt" element={<OxyGPT />} />
-
+              <Route path="/oxygpt/share/:sessionId" element={<OxyGPT />} />
               <Route path="/finvibe" element={<Finvibe3DLanding />} />
               <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
               <Route path="/live-ai-demo" element={<LiveAIDemo />} />
