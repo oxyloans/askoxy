@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Modal, Upload, Button, message, Spin, Steps } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
@@ -50,7 +49,7 @@ const ResumeUploadModal: React.FC<Props> = ({
       const uploadRes = await axios.post(
         `${BASE_URL}/marketing-service/campgin/upload`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
 
       const fileUrl = uploadRes.data?.documentPath;
@@ -66,11 +65,19 @@ const ResumeUploadModal: React.FC<Props> = ({
       setCurrentStep(1);
       setStatusText("Checking ATS...");
 
-      const atsRes = await axios.get(
-        `${BASE_URL}/marketing-service/campgin/ats-score-checker?jobId=${jobId}&ResumeUrl=${encodeURIComponent(fileUrl)}&type=ATS`
+      const atsRes = await axios.post(
+        `${BASE_URL}/marketing-service/campgin/ats-score-checker-new`,
+        {
+          userId,
+          jobId,
+          resumeUrl: fileUrl,
+          type: "ATS",
+        },
       );
 
       const isEligible = atsRes.data?.status === true;
+
+      const atsScoreHistoryId = atsRes.data?.atsHistoryData?.id;
 
       // 🔹 STEP 3: EXAM STEP
       setCurrentStep(2);
@@ -89,16 +96,14 @@ const ResumeUploadModal: React.FC<Props> = ({
               jobDesignation,
               companyName,
               matchScore: atsRes.data?.data?.matchScore,
+              atsScoreHistoryId,
               fileUrl,
             },
           });
         }, 1500);
-
       } else {
         setStatusText("Not eligible. Redirecting...");
-        message.warning(
-          atsRes.data?.message || "You are not eligible."
-        );
+        message.warning(atsRes.data?.message || "You are not eligible.");
 
         setTimeout(() => {
           navigate("/main/job-analysis-result", {
@@ -111,7 +116,6 @@ const ResumeUploadModal: React.FC<Props> = ({
           });
         }, 1500);
       }
-
     } catch (err) {
       console.error(err);
       message.error("Something went wrong");
@@ -140,12 +144,7 @@ const ResumeUploadModal: React.FC<Props> = ({
         maxCount={1}
         disabled={loading}
       >
-        <Button
-          icon={<UploadOutlined />}
-          loading={loading}
-          block
-          size="large"
-        >
+        <Button icon={<UploadOutlined />} loading={loading} block size="large">
           {loading ? "Processing..." : "Upload Resume"}
         </Button>
       </Upload>
@@ -165,9 +164,7 @@ const ResumeUploadModal: React.FC<Props> = ({
 
           <div className="text-center mt-4">
             <Spin spinning={loading} />
-            <p className="mt-2 text-gray-600 font-medium">
-              {statusText}
-            </p>
+            <p className="mt-2 text-gray-600 font-medium">{statusText}</p>
           </div>
         </div>
       )}
@@ -176,12 +173,3 @@ const ResumeUploadModal: React.FC<Props> = ({
 };
 
 export default ResumeUploadModal;
-
-
-
-
-
-
-
-
-

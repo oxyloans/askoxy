@@ -9,29 +9,98 @@ import {
   message,
   Modal,
   Grid,
+  Descriptions,
+  List,
+  Space,
 } from "antd";
 import BASE_URL from "../Config";
 import {
   PlusOutlined,
   ExclamationCircleOutlined,
   FileTextOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import customerApi from "../utils/axiosInstances";
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { confirm } = Modal;
 const { useBreakpoint } = Grid;
 
+type MarketingJobInfo = {
+  companyName?: string | null;
+  companyLogo?: string | null;
+  jobTitle?: string | null;
+  jobDesignation?: string | null;
+  jobLocations?: string | null;
+  experience?: string | null;
+};
+
 type JobRow = {
   id: string;
+  userName?: string;
+  companyName?: string;
+  companyLogo?: string;
   jobTitle?: string;
+  jobDesignation?: string;
+  jobLocations?: string;
+  experience?: string;
   coverLetter?: string;
   noticePeriod?: string;
   resumeUrl?: string;
   appliedAt?: string;
   updatedAt?: string;
   jobStatus?: boolean; // ✅ backend field
-  // status?: boolean; // ❌ avoid confusion
+  atsScoreViewerId?: string | null; // ✅ null = no exam feature for this application
+  marketingJobs?: MarketingJobInfo | null;
+};
+
+export const getAppliedJobDisplayData = (
+  job: Partial<JobRow> & { marketingJobs?: MarketingJobInfo | null },
+) => ({
+  companyName: job.marketingJobs?.companyName || job.companyName || "N/A",
+  companyLogo: job.marketingJobs?.companyLogo || job.companyLogo || "",
+  jobTitle: job.marketingJobs?.jobTitle || job.jobTitle || "N/A",
+  jobDesignation:
+    job.marketingJobs?.jobDesignation || job.jobDesignation || "N/A",
+  jobLocations: job.marketingJobs?.jobLocations || job.jobLocations || "N/A",
+  experience: job.marketingJobs?.experience || job.experience || "N/A",
+});
+
+type ExamQuestion = {
+  question: string;
+  questionType: "single" | "multiple" | string;
+  options: string[];
+  openAiAnswer: string[];
+  userAnswer: string;
+};
+
+type AtsHistoryEntry = {
+  id: string;
+  atsScoreViewerId: string;
+  candidateExamStatus: string; // e.g. STARTED, COMPLETED_ELIGIBLE, COMPLETED_INELIGIBLE
+  totalQuestions: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+type ExamAttempt = {
+  id: string;
+  userId: string;
+  jobId: string;
+  atsScoreViewerId: string;
+  score: number;
+  percentage: number;
+  status: boolean;
+  totalQuestions: number;
+  appliedAt: number;
+  updatedAt: number;
+  examQuestions: ExamQuestion[];
+};
+
+type ExamResultData = {
+  atsHistory: AtsHistoryEntry[];
+  examAttempt: ExamAttempt | null;
+  isEligible: boolean;
 };
 
 const AppliedJobs: React.FC = () => {
@@ -50,6 +119,11 @@ const AppliedJobs: React.FC = () => {
   const [openCover, setOpenCover] = useState(false);
   const [coverText, setCoverText] = useState<string>("");
 
+  // Exam result modal
+  const [openExam, setOpenExam] = useState(false);
+  const [examLoading, setExamLoading] = useState(false);
+  const [examData, setExamData] = useState<ExamResultData | null>(null);
+
   const isMobile = !screens.md; // < md = mobile/tablet small
 
   useEffect(() => {
@@ -62,11 +136,19 @@ const AppliedJobs: React.FC = () => {
       setLoading(true);
       const userId = localStorage.getItem("userId") || "";
       const res = await customerApi.get(
-        `${BASE_URL}/marketing-service/campgin/getuserandallusersappliedjobs?page=${pg}&size=${size}&userId=${userId}`
+        `${BASE_URL}/marketing-service/campgin/getuserandallusersappliedjobs?page=${pg}&size=${size}&userId=${userId}`,
       );
 
       const data = res.data;
-      setJobs(data?.content || []);
+      const rawJobs = Array.isArray(data?.content) ? data.content : [];
+      const normalizedJobs = rawJobs.map((job: Partial<JobRow>) => ({
+        ...job,
+        ...getAppliedJobDisplayData(
+          job as Partial<JobRow> & { marketingJobs?: MarketingJobInfo | null },
+        ),
+      }));
+
+      setJobs(normalizedJobs as JobRow[]);
       setTotalElements(data?.totalElements || 0);
       setPage(data?.number || 0);
       setPageSize(data?.size || 10);
@@ -78,7 +160,7 @@ const AppliedJobs: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string | number) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-IN", {
@@ -91,6 +173,38 @@ const AppliedJobs: React.FC = () => {
   const openCoverLetter = (text?: string) => {
     setCoverText(text || "N/A");
     setOpenCover(true);
+  };
+
+  // ✅ Fetch and show exam results for a job that has an atsScoreViewerId
+  const openExamResult = async (atsScoreViewerId?: string | null) => {
+    if (!atsScoreViewerId) return;
+
+    setOpenExam(true);
+    setExamLoading(true);
+    setExamData(null);
+
+    try {
+      const res = await customerApi.get(
+        `${BASE_URL}/marketing-service/campgin/answers-info-of-applied-job`,
+        { params: { atsScoreViewerId } },
+      );
+
+      const body = res.data;
+
+      if (!body?.success) {
+        message.error(body?.message || "Failed to load exam results");
+        setOpenExam(false);
+        return;
+      }
+
+      setExamData(body.data as ExamResultData);
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to load exam results");
+      setOpenExam(false);
+    } finally {
+      setExamLoading(false);
+    }
   };
 
   const handleStatusToggle = (jobId: string, currentStatus?: boolean) => {
@@ -111,17 +225,17 @@ const AppliedJobs: React.FC = () => {
             {
               id: jobId,
               jobStatus: !currentStatus,
-            }
+            },
           );
 
           setJobs((prev) =>
             prev.map((job) =>
-              job.id === jobId ? { ...job, jobStatus: !currentStatus } : job
-            )
+              job.id === jobId ? { ...job, jobStatus: !currentStatus } : job,
+            ),
           );
 
           message.success(
-            `Job ${!currentStatus ? "activated" : "deactivated"} successfully`
+            `Job ${!currentStatus ? "activated" : "deactivated"} successfully`,
           );
         } catch (error) {
           console.error(error);
@@ -142,7 +256,7 @@ const AppliedJobs: React.FC = () => {
         width: 80,
         render: (_: any, __: JobRow, index: number) =>
           page * pageSize + index + 1,
-        responsive: ["md"] as any, // show only on md+
+        responsive: ["md"] as any,
       },
       {
         title: "Name",
@@ -151,17 +265,39 @@ const AppliedJobs: React.FC = () => {
         render: (userName: string) => <Text strong>{userName || "N/A"}</Text>,
       },
       {
+        title: "Company",
+        dataIndex: "companyName",
+        key: "companyName",
+        width: 220,
+        render: (_: string, record: JobRow) => {
+          const display = getAppliedJobDisplayData(record);
+          return (
+            <div className="min-w-[180px]">
+              <Text strong>{display.companyName || "N/A"}</Text>
+              {display.jobDesignation && display.jobDesignation !== "N/A" && (
+                <div className="text-xs text-slate-500">
+                  {display.jobDesignation}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         title: "Job Title",
         dataIndex: "jobTitle",
         key: "jobTitle",
-        render: (jobTitle: string) => <Text strong>{jobTitle || "N/A"}</Text>,
+        render: (_: string, record: JobRow) => {
+          const display = getAppliedJobDisplayData(record);
+          return <Text strong>{display.jobTitle || "N/A"}</Text>;
+        },
       },
       {
         title: "Notice Period",
         dataIndex: "noticePeriod",
         key: "noticePeriod",
         align: "center" as const,
-        responsive: ["lg"] as any, // show only on lg+
+        responsive: ["lg"] as any,
         render: (text: string) => text || "N/A",
       },
       {
@@ -192,10 +328,10 @@ const AppliedJobs: React.FC = () => {
               size="small"
               type="primary"
               onClick={() => {
-                const link = document.createElement('a');
+                const link = document.createElement("a");
                 link.href = url;
-                link.download = 'resume.pdf';
-                link.target = '_blank';
+                link.download = "resume.pdf";
+                link.target = "_blank";
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -215,31 +351,33 @@ const AppliedJobs: React.FC = () => {
         responsive: ["lg"] as any,
         render: (date: string) => formatDate(date),
       },
-    
-      //   {
-      //     title: "Action",
-      //     key: "actions",
-      //     align: "center" as const,
-      //     width: 140,
-      //     render: (_: any, record: JobRow) => (
-      //       <Button
-      //         size="small"
-      //         loading={updateLoading === record.id}
-      //         onClick={() => handleStatusToggle(record.id, record.jobStatus)}
-      //         style={{
-      //           background: record.jobStatus ? "#1ab394" : "#dc2626",
-      //           borderColor: record.jobStatus ? "#1ab394" : "#dc2626",
-      //           color: "white",
-      //           borderRadius: 8,
-      //           width: 110,
-      //         }}
-      //       >
-      //         {record.jobStatus ? "Deactivate" : "Activate"}
-      //       </Button>
-      //     ),
-      //   },
+      // ✅ New: Exam Result column — only meaningful when atsScoreViewerId exists
+      {
+        title: "Exam",
+        dataIndex: "atsScoreViewerId",
+        key: "atsScoreViewerId",
+        align: "center" as const,
+        width: 150,
+        render: (atsScoreViewerId: string | null, record: JobRow) =>
+          atsScoreViewerId ? (
+            <Button
+              size="small"
+              icon={<TrophyOutlined />}
+              onClick={() => openExamResult(atsScoreViewerId)}
+              style={{
+                borderRadius: 8,
+                borderColor: "#0089c4",
+                color: "#0089c4",
+              }}
+            >
+              View Result
+            </Button>
+          ) : (
+            <Text type="secondary">Not required</Text>
+          ),
+      },
     ],
-    [page, pageSize, updateLoading]
+    [page, pageSize, updateLoading],
   );
 
   // ✅ Mobile Card UI (best UX)
@@ -253,7 +391,10 @@ const AppliedJobs: React.FC = () => {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-base font-semibold text-slate-900 truncate">
-                {job.jobTitle || "N/A"}
+                {getAppliedJobDisplayData(job).jobTitle || "N/A"}
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                {getAppliedJobDisplayData(job).companyName || "N/A"}
               </div>
               <div className="mt-1 text-xs text-slate-500">
                 Applied: {formatDate(job.appliedAt)} • Updated:{" "}
@@ -284,10 +425,10 @@ const AppliedJobs: React.FC = () => {
                 size="small"
                 type="primary"
                 onClick={() => {
-                  const link = document.createElement('a');
+                  const link = document.createElement("a");
                   link.href = job.resumeUrl!;
-                  link.download = 'resume.pdf';
-                  link.target = '_blank';
+                  link.download = "resume.pdf";
+                  link.target = "_blank";
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
@@ -298,6 +439,21 @@ const AppliedJobs: React.FC = () => {
             ) : (
               <Button size="small" disabled>
                 Resume N/A
+              </Button>
+            )}
+
+            {job.atsScoreViewerId && (
+              <Button
+                size="small"
+                icon={<TrophyOutlined />}
+                onClick={() => openExamResult(job.atsScoreViewerId)}
+                style={{
+                  borderRadius: 8,
+                  borderColor: "#0089c4",
+                  color: "#0089c4",
+                }}
+              >
+                Exam Result
               </Button>
             )}
 
@@ -405,6 +561,115 @@ const AppliedJobs: React.FC = () => {
         <div className="max-h-[50vh] overflow-auto whitespace-pre-wrap text-sm text-slate-700">
           {coverText}
         </div>
+      </Modal>
+
+      {/* ✅ Exam Result Modal */}
+      <Modal
+        title="Exam Result"
+        open={openExam}
+        onCancel={() => setOpenExam(false)}
+        width={720}
+        footer={[
+          <Button key="close" onClick={() => setOpenExam(false)}>
+            Close
+          </Button>,
+        ]}
+      >
+        {examLoading ? (
+          <div className="flex justify-center items-center py-10">
+            <Spin size="large" tip="Loading exam result..." />
+          </div>
+        ) : !examData ? (
+          <Empty description="No exam data found." />
+        ) : !examData.examAttempt ? (
+          // Exam started/in-progress but not completed & eligible yet
+          <div>
+            <Paragraph type="secondary">
+              This candidate hasn't completed the exam yet, or didn't meet the
+              eligibility threshold.
+            </Paragraph>
+            <List
+              size="small"
+              header={<Text strong>Attempt History</Text>}
+              bordered
+              dataSource={examData.atsHistory}
+              renderItem={(h) => (
+                <List.Item>
+                  <Space direction="vertical" size={0}>
+                    <Text>
+                      Status: <Tag>{h.candidateExamStatus}</Tag>
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {h.totalQuestions} questions • Updated{" "}
+                      {formatDate(h.updatedAt)}
+                    </Text>
+                  </Space>
+                </List.Item>
+              )}
+            />
+          </div>
+        ) : (
+          <div>
+            <Descriptions bordered size="small" column={2} className="mb-4">
+              <Descriptions.Item label="Score">
+                {examData.examAttempt.score} /{" "}
+                {examData.examAttempt.totalQuestions}
+              </Descriptions.Item>
+              <Descriptions.Item label="Percentage">
+                {examData.examAttempt.percentage}%
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Title level={5}>Question Breakdown</Title>
+            <div className="max-h-[45vh] overflow-auto">
+              <List
+                dataSource={examData.examAttempt.examQuestions || []}
+                renderItem={(q, idx) => {
+                  const correctSet = new Set(
+                    (q.openAiAnswer || []).map((a) => a.trim()),
+                  );
+                  const userSet = new Set(
+                    (q.userAnswer || "")
+                      .split(",")
+                      .map((a) => a.trim())
+                      .filter(Boolean),
+                  );
+                  const isCorrect =
+                    correctSet.size === userSet.size &&
+                    Array.from(correctSet).every((a) => userSet.has(a));
+
+                  return (
+                    <List.Item>
+                      <div className="w-full">
+                        <div className="flex items-start justify-between gap-2">
+                          <Text strong>
+                            {idx + 1}. {q.question}
+                          </Text>
+                          {isCorrect ? (
+                            <Tag color="green">Correct</Tag>
+                          ) : (
+                            <Tag color="red">Incorrect</Tag>
+                          )}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          {q.options?.map((opt) => (
+                            <div key={opt}>{opt}</div>
+                          ))}
+                        </div>
+                        <div className="mt-1 text-xs">
+                          <Text type="secondary">
+                            Your answer: {q.userAnswer || "N/A"} • Correct
+                            answer: {(q.openAiAnswer || []).join(", ")}
+                          </Text>
+                        </div>
+                      </div>
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

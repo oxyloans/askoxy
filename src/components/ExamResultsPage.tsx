@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
-
-
 import axios from "axios";
 
 interface ExamDto {
@@ -16,36 +14,32 @@ interface ExamDto {
 const ExamResultsPage: React.FC = () => {
   const location = useLocation();
   const state = location.state as any;
+  const userId = localStorage.getItem("userId");
+  const { examData, answers, jobId, fileUrl, atsScoreHistoryId } = state || {};
 
-const userId = localStorage.getItem("userId");
-
-  const { examData, answers, jobId ,fileUrl} = state || {};
-    const [result, setResult] = useState<any>(null);
-
-    const navigate = useNavigate();
+  const [result, setResult] = useState<any>(null);
+  const navigate = useNavigate();
 
   // ✅ Build DTO
   const dtos: ExamDto[] = React.useMemo(() => {
     if (!examData?.questions || !answers) return [];
-
     return examData.questions.map((q: any) => {
-      return answers[q.questionId] ?? {
-        question: q.question,
-        questionType: q.type,
-        options: Object.entries(q.options).map(([k, v]) => `${k}. ${v}`),
-        openAiAnswer: q.correctAnswers,
-        userAnswer: "",
-      };
+      return (
+        answers[q.questionId] ?? {
+          question: q.question,
+          questionType: q.type,
+          options: Object.entries(q.options).map(([k, v]) => `${k}. ${v}`),
+          openAiAnswer: q.correctAnswers,
+          userAnswer: "",
+        }
+      );
     });
   }, [examData, answers]);
-
 
   const calledRef = useRef(false);
 
   useEffect(() => {
-    if (calledRef.current){
-return;
-    }
+    if (calledRef.current) return;
     if (!jobId || !userId || dtos.length === 0) return;
 
     calledRef.current = true;
@@ -53,11 +47,21 @@ return;
     const submitScore = async () => {
       try {
         const res = await axios.post(
-          `${BASE_URL}/marketing-service/campgin/exam-score?jobId=${jobId}&userId=${userId}`,
-          dtos
+          `${BASE_URL}/marketing-service/campgin/exam-score-new?jobId=${jobId}&userId=${userId}&atsScoreHistoryId=${atsScoreHistoryId}`,
+          dtos,
         );
 
+        //console.log("res.data", res.data);
         setResult(res.data);
+
+        // 🔹 Use backend status (not client-side percentage logic)
+        // Store atsScoreViewerId in sessionStorage so JobApplicationModal can use it
+        if (res.data?.status === true && res.data?.atsScoreViewerId) {
+          sessionStorage.setItem(
+            "atsScoreViewerId",
+            String(res.data.atsScoreViewerId),
+          );
+        }
       } catch (err) {
         console.error(err);
       }
@@ -65,8 +69,10 @@ return;
 
     submitScore();
   }, [dtos, jobId, userId]);
-const percentage = result?.percentage ?? 0;
-  const isPassed = percentage >= 80;
+
+  // 🔹 Use backend status field — not client-side percentage threshold
+  const isPassed = result?.status === true;
+  const percentage = result?.percentage ?? 0;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-start pt-8 sm:pt-16 p-4">
@@ -82,7 +88,6 @@ const percentage = result?.percentage ?? 0;
       {/* 🎯 RESULT CARD */}
       {result && (
         <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 text-center border border-slate-200">
-
           {/* SCORE CIRCLE */}
           <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-5 shadow-md rounded-full">
             <div
@@ -122,7 +127,7 @@ const percentage = result?.percentage ?? 0;
           <p className="mt-5 text-slate-600 text-xs sm:text-sm leading-relaxed px-1">
             {isPassed
               ? "Excellent performance. You have successfully met the assessment requirements for this position."
-              : "A minimum score of 80% is required. Your current score does not meet the eligibility criteria for this application. We encourage you to keep practicing."}
+              : "Your current score does not meet the eligibility criteria for this application. We encourage you to keep practicing."}
           </p>
         </div>
       )}
@@ -132,11 +137,10 @@ const percentage = result?.percentage ?? 0;
           <button
             onClick={() => {
               sessionStorage.setItem("examPassed", "true");
-
               if (fileUrl) {
                 sessionStorage.setItem("resumeUrl", fileUrl);
               }
-
+              // atsScoreViewerId is already stored in sessionStorage above
               navigate(`/main/viewjobdetails/${jobId}/ALL`, {
                 state: {
                   openApplyModal: true,
@@ -162,6 +166,3 @@ const percentage = result?.percentage ?? 0;
 };
 
 export default ExamResultsPage;
-
-
-

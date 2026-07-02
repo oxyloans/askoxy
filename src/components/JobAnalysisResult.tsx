@@ -59,12 +59,15 @@ const JobAnalysisResult: React.FC = () => {
     }
   }, []);
 
-
-   useEffect(() => {
+  useEffect(() => {
     if (!atsData) return;
 
-
-    if (isEligible && atsData?.examStarted && atsData?.runId && atsData?.threadId) {
+    if (
+      isEligible &&
+      atsData?.examStarted &&
+      atsData?.runId &&
+      atsData?.threadId
+    ) {
       navigate("/main/exam", {
         replace: true,
         state: {
@@ -78,8 +81,6 @@ const JobAnalysisResult: React.FC = () => {
       });
     }
   }, []);
-
-
 
   const pollExamStatus = async (runId: string, threadId: string) => {
     setExamStatus("generating");
@@ -692,15 +693,3 @@ const JobAnalysisResult: React.FC = () => {
 };
 
 export default JobAnalysisResult;
-
-
-
-
-
-
-
-
-
-
-
-

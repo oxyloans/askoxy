@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -16,12 +13,22 @@ interface ExamDto {
 const QUESTION_TIME = 60;
 
 const ExamQuestionPage: React.FC = () => {
+
+
+
+
+
+
   const { questionNumber } = useParams<{ questionNumber: string }>();
   const location = useLocation();
   const navigate = useNavigate();
 
   // 🔥 Get from state OR sessionStorage
   const state = location.state as any;
+
+      const  atsScoreHistoryId  = state?.atsScoreHistoryId;
+
+
 
   const examData =
     state?.examData ||
@@ -58,6 +65,13 @@ const ExamQuestionPage: React.FC = () => {
   useEffect(() => { qIndexRef.current = qIndex; }, [qIndex]);
   useEffect(() => { totalQRef.current = totalQ; }, [totalQ]);
 
+
+  useEffect(() => {
+
+    console.log("atsScoreHistoryId in state:", state);
+    console.log("atsScoreHistoryId in state:", atsScoreHistoryId);
+  }, []);
+
   // 🚀 ADVANCE FUNCTION
   const advance = useCallback((chosenKeys: string[]) => {
     if (hasAdvanced.current) return;
@@ -93,11 +107,11 @@ const ExamQuestionPage: React.FC = () => {
     setTimeout(() => {
       if (nextQ > totalQRef.current) {
         navigate("/main/exam/results", {
-          state: { examData, jobDesignation, companyName, matchScore, answers: newAnswers, jobId,fileUrl},
+          state: { examData, jobDesignation, companyName, matchScore, answers: newAnswers, jobId,fileUrl,atsScoreHistoryId},
         });
       } else {
         navigate(`/main/exam/question/${nextQ}`, {
-          state: { examData, jobDesignation, companyName, matchScore, answers: newAnswers, jobId ,fileUrl},
+          state: { examData, jobDesignation, companyName, matchScore, answers: newAnswers, jobId ,fileUrl,atsScoreHistoryId},
         });
       }
     }, 200);
@@ -170,12 +184,12 @@ const ExamQuestionPage: React.FC = () => {
       <div className="mb-4 w-full max-w-xl bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-lg relative overflow-hidden">
         {/* Top gradient highlight bar */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-        
+
         <div className="flex flex-wrap gap-2 justify-between items-center mb-3">
           <span className="bg-blue-50/80 border border-blue-200 text-blue-600 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
             Question {qIndex + 1} / {totalQ}
           </span>
-          
+
           <span className="bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-sm">
             {question.type === "single" ? "Single Choice" : "Multiple Choice"}
           </span>
@@ -200,7 +214,7 @@ const ExamQuestionPage: React.FC = () => {
                   : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
               }`}
             >
-              <div 
+              <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-colors ${
                   isSelected ? "border-blue-500" : "border-slate-300 group-hover:border-slate-400"
                 }`}

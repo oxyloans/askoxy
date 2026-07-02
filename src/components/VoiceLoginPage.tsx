@@ -113,6 +113,13 @@ function hasMeaningfulVoiceInput(text?: string, audioBlob?: Blob | null) {
   return (text || "").trim().length > 0 || (!!audioBlob && audioBlob.size > 1200);
 }
 
+function cleanTranscriptText(value: string) {
+  return (value || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([.,!?])/g, "$1")
+    .trim();
+}
+
 const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   const navigate = useNavigate();
 
@@ -132,6 +139,9 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
   const transcriptRef = useRef("");
+  const finalTranscriptRef = useRef("");
+  const latestTranscriptRef = useRef("");
+  const shouldKeepSpeechRecognitionRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const silenceTimerRef = useRef<number | null>(null);
   const recordingStartedAtRef = useRef<number>(0);
@@ -203,6 +213,115 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     }
   };
 
+  const stopSpeechRecognition = () => {
+    shouldKeepSpeechRecognitionRef.current = false;
+
+    try {
+      if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop?.();
+        recognitionRef.current = null;
+      }
+    } catch {
+      recognitionRef.current = null;
+    }
+  };
+
+  const startSpeechRecognition = () => {
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      message.warning(
+        "Voice recognition is not supported in this browser. Please use Chrome or Edge."
+      );
+      return;
+    }
+
+    stopSpeechRecognition();
+
+    shouldKeepSpeechRecognitionRef.current = true;
+    finalTranscriptRef.current = "";
+    latestTranscriptRef.current = "";
+    transcriptRef.current = "";
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = "en-IN";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const transcript = result?.[0]?.transcript || "";
+
+        if (result.isFinal) {
+          finalTranscriptRef.current = cleanTranscriptText(
+            `${finalTranscriptRef.current} ${transcript}`
+          );
+        } else {
+          interimTranscript = cleanTranscriptText(
+            `${interimTranscript} ${transcript}`
+          );
+        }
+      }
+
+      const spokenText = cleanTranscriptText(
+        `${finalTranscriptRef.current} ${interimTranscript}`
+      );
+
+      if (spokenText) {
+        transcriptRef.current = spokenText;
+        latestTranscriptRef.current = spokenText;
+        setLiveTranscript(spokenText);
+        startSilenceTimer();
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event?.error === "no-speech" || event?.error === "aborted") {
+        return;
+      }
+
+      if (isListeningRef.current) {
+        startSilenceTimer();
+      }
+    };
+
+    recognition.onend = () => {
+      recognitionRef.current = null;
+
+      if (
+        shouldKeepSpeechRecognitionRef.current &&
+        isListeningRef.current &&
+        !isSubmittingRef.current &&
+        !isAssistantSpeakingRef.current
+      ) {
+        window.setTimeout(() => {
+          try {
+            startSpeechRecognition();
+          } catch {
+            // Browser may already be restarting recognition.
+          }
+        }, 150);
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    try {
+      recognition.start();
+    } catch {
+      // Recognition may already be running in the browser.
+    }
+  };
+
   const {
     status,
     startRecording,
@@ -219,9 +338,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       setIsListening(false);
       clearSilenceTimer();
 
-      try {
-        recognitionRef.current?.stop?.();
-      } catch {}
+      stopSpeechRecognition();
 
       if (!shouldSubmitAfterStopRef.current) return;
 
@@ -229,7 +346,14 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
       if (isAssistantSpeakingRef.current || isSubmittingRef.current) return;
 
-      await submitVoice(blob, transcriptRef.current);
+      const finalSpokenText = cleanTranscriptText(
+        finalTranscriptRef.current ||
+          transcriptRef.current ||
+          latestTranscriptRef.current ||
+          ""
+      );
+
+      await submitVoice(blob, finalSpokenText);
     },
   });
 
@@ -252,56 +376,6 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
   };
 
   useEffect(() => {
-    const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognitionAPI) return;
-
-    const recognition = new SpeechRecognitionAPI();
-    recognition.lang = "en-IN";
-    recognition.interimResults = true;
-    recognition.continuous = true;
-
-    recognition.onresult = (event: any) => {
-      let combinedText = "";
-
-      for (let i = 0; i < event.results.length; i++) {
-        combinedText += event.results[i][0].transcript + " ";
-      }
-
-      const finalText = combinedText.trim();
-
-      if (finalText) {
-        transcriptRef.current = finalText;
-        setLiveTranscript(finalText);
-        startSilenceTimer();
-      }
-    };
-
-    recognition.onerror = () => {
-      if (isListeningRef.current) startSilenceTimer();
-    };
-
-    recognition.onend = () => {
-      if (isListeningRef.current && !isSubmittingRef.current) {
-        try {
-          recognition.start();
-        } catch {}
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      clearSilenceTimer();
-      try {
-        recognition.stop();
-      } catch {}
-    };
-  }, [isListening]);
-
-  useEffect(() => {
     const container = chatListRef.current;
     if (!container) return;
 
@@ -320,9 +394,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       stopAssistantAudio();
       clearBlobUrl();
 
-      try {
-        recognitionRef.current?.stop?.();
-      } catch {}
+      stopSpeechRecognition();
     };
   }, [clearBlobUrl]);
 
@@ -331,7 +403,10 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
     setMessages([]);
     setLiveTranscript("");
     transcriptRef.current = "";
+    finalTranscriptRef.current = "";
+    latestTranscriptRef.current = "";
     shouldSubmitAfterStopRef.current = false;
+    stopSpeechRecognition();
     stopAssistantAudio();
     clearBlobUrl();
   };
@@ -478,19 +553,20 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
       setLiveTranscript("");
       transcriptRef.current = "";
+      finalTranscriptRef.current = "";
+      latestTranscriptRef.current = "";
       shouldSubmitAfterStopRef.current = true;
       recordingStartedAtRef.current = Date.now();
 
       startRecording();
       setIsListening(true);
-
-      try {
-        recognitionRef.current?.start?.();
-      } catch {}
-
+      isListeningRef.current = true;
+      startSpeechRecognition();
       startSilenceTimer();
     } catch {
       setIsListening(false);
+      isListeningRef.current = false;
+      stopSpeechRecognition();
       clearSilenceTimer();
       message.error("Unable to access microphone.");
     }
@@ -501,11 +577,10 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
 
     clearSilenceTimer();
     setIsListening(false);
+    isListeningRef.current = false;
     shouldSubmitAfterStopRef.current = true;
 
-    try {
-      recognitionRef.current?.stop?.();
-    } catch {}
+    stopSpeechRecognition();
 
     stopRecording();
   };
@@ -667,10 +742,31 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
       setIsLoading(false);
       setLiveTranscript("");
       transcriptRef.current = "";
+      finalTranscriptRef.current = "";
+      latestTranscriptRef.current = "";
       isSubmittingRef.current = false;
       shouldSubmitAfterStopRef.current = false;
       clearBlobUrl();
     }
+  };
+
+  const handleClose = () => {
+    clearSilenceTimer();
+    shouldSubmitAfterStopRef.current = false;
+    stopSpeechRecognition();
+
+    if (isListeningRef.current) {
+      try {
+        stopRecording();
+      } catch {
+        // Recorder may already be stopped.
+      }
+    }
+
+    setIsListening(false);
+    stopAssistantAudio();
+    clearBlobUrl();
+    onClose();
   };
 
   return (
@@ -1169,7 +1265,7 @@ const VoiceLoginPage: React.FC<VoiceLoginPageProps> = ({ onClose }) => {
             <button
               type="button"
               className="oxy-voice-icon-btn"
-              onClick={onClose}
+              onClick={handleClose}
               aria-label="Close voice assistant"
             >
               <X size={14} />

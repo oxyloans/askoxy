@@ -837,6 +837,7 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
   const recordingStartedAtRef = useRef<number>(0);
   const isListeningRef = useRef(false);
   const isVoiceLoadingRef = useRef(false);
+  const shouldKeepVoiceRecognitionRef = useRef(false);
 
   const assistantAudioRef = useRef<HTMLAudioElement | null>(null);
   const assistantAudioUrlRef = useRef<string | null>(null);
@@ -1209,10 +1210,8 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
     setPendingQueryType("query");
     setUploadedDocumentId("");
 
-    transcriptRef.current = "";
-    finalTranscriptRef.current = "";
-    lastUserSpokenTextRef.current = "";
-    latestUserTranscriptRef.current = "";
+    resetVoiceTranscriptRefs();
+    stopSpeechRecognition();
     stopAssistantAudio();
   };
 
@@ -1224,7 +1223,23 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
     }
   };
 
+  const cleanTranscriptText = (value: string) =>
+    value
+      .replace(/\s+/g, " ")
+      .replace(/\s+([.,!?])/g, "$1")
+      .trim();
+
+  const resetVoiceTranscriptRefs = () => {
+    transcriptRef.current = "";
+    finalTranscriptRef.current = "";
+    lastUserSpokenTextRef.current = "";
+    latestUserTranscriptRef.current = "";
+    setLiveTranscript("");
+  };
+
   const stopSpeechRecognition = () => {
+    shouldKeepVoiceRecognitionRef.current = false;
+
     try {
       if (recognitionRef.current) {
         recognitionRef.current.onend = null;
@@ -1234,7 +1249,7 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
         recognitionRef.current = null;
       }
     } catch {
-      //
+      recognitionRef.current = null;
     }
   };
 
@@ -1248,61 +1263,81 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
       return;
     }
 
+    stopSpeechRecognition();
+
+    shouldKeepVoiceRecognitionRef.current = true;
+    transcriptRef.current = "";
+    finalTranscriptRef.current = "";
+    latestUserTranscriptRef.current = "";
+
     const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+
     recognition.lang = "en-IN";
-    recognition.interimResults = true;
     recognition.continuous = true;
-    recognition.maxAlternatives = 3;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = (event: any) => {
-      let finalText = "";
-      let interimText = "";
+      let interimTranscript = "";
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const result = event.results[i];
-        const text = result[0]?.transcript || "";
+        const transcript = result?.[0]?.transcript || "";
 
-        if (result.isFinal) finalText += `${text} `;
-        else interimText += `${text} `;
+        if (result.isFinal) {
+          finalTranscriptRef.current = cleanTranscriptText(
+            `${finalTranscriptRef.current} ${transcript}`,
+          );
+        } else {
+          interimTranscript = cleanTranscriptText(
+            `${interimTranscript} ${transcript}`,
+          );
+        }
       }
 
-      if (finalText.trim()) {
-        finalTranscriptRef.current =
-          `${finalTranscriptRef.current} ${finalText}`.trim();
-      }
+      const spokenText = cleanTranscriptText(
+        `${finalTranscriptRef.current} ${interimTranscript}`,
+      );
 
-      const finalClean = finalTranscriptRef.current.trim();
-      const interimClean = interimText.trim();
-
-      // Always show REAL spoken words (no placeholder)
-      const displayText = finalClean || interimClean;
-
-      transcriptRef.current = displayText;
-      if (displayText.trim()) {
-        latestUserTranscriptRef.current = displayText.trim();
-        lastUserSpokenTextRef.current = displayText.trim();
+      if (spokenText) {
+        transcriptRef.current = spokenText;
+        latestUserTranscriptRef.current = spokenText;
+        lastUserSpokenTextRef.current = spokenText;
+        setLiveTranscript(spokenText);
         startVoiceSilenceTimer();
       }
-      setLiveTranscript(displayText);
     };
 
-    recognition.onerror = () => {
-      if (isListeningRef.current) startVoiceSilenceTimer();
+    recognition.onerror = (event: any) => {
+      if (event?.error === "no-speech" || event?.error === "aborted") return;
+
+      shouldKeepVoiceRecognitionRef.current = false;
+      setIsListening(false);
     };
+
     recognition.onend = () => {
       recognitionRef.current = null;
 
-      if (isListeningRef.current && !isVoiceLoadingRef.current) {
-        window.setTimeout(() => startLiveSpeechRecognition(), 150);
+      if (
+        shouldKeepVoiceRecognitionRef.current &&
+        isListeningRef.current &&
+        !isVoiceLoadingRef.current
+      ) {
+        window.setTimeout(() => {
+          try {
+            startLiveSpeechRecognition();
+          } catch {
+            // Browser may already be restarting recognition.
+          }
+        }, 150);
       }
     };
-
-    recognitionRef.current = recognition;
 
     try {
       recognition.start();
     } catch {
-      //
+      // Browser may already have an active recognition instance.
     }
   };
 
@@ -1601,6 +1636,7 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
   };
 
   const handleStopVoiceAssistant = () => {
+    shouldKeepVoiceRecognitionRef.current = false;
     stopAssistantAudio();
     clearVoiceSilenceTimer();
 
@@ -1638,6 +1674,8 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
     try {
       if (!isListening) {
         stopAssistantAudio();
+        stopSpeechRecognition();
+        clearVoiceSilenceTimer();
 
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -1667,12 +1705,16 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
         recorder.onstop = async () => {
           clearVoiceSilenceTimer();
 
-          const spokenText =
-            finalTranscriptRef.current.trim() ||
-            transcriptRef.current.trim() ||
-            latestUserTranscriptRef.current.trim() ||
-            lastUserSpokenTextRef.current.trim() ||
-            "";
+          shouldKeepVoiceRecognitionRef.current = false;
+          stopSpeechRecognition();
+
+          const spokenText = cleanTranscriptText(
+            finalTranscriptRef.current ||
+              transcriptRef.current ||
+              latestUserTranscriptRef.current ||
+              lastUserSpokenTextRef.current ||
+              "",
+          );
 
           const audioBlob = new Blob(audioChunksRef.current, {
             type: "audio/webm",
@@ -2336,6 +2378,8 @@ const VoiceWindow: React.FC<VoiceWindowProps> = ({ onClose }) => {
   };
 
   const handleClose = () => {
+    shouldKeepVoiceRecognitionRef.current = false;
+
     if (isListening) {
       setIsListening(false);
       stopSpeechRecognition();

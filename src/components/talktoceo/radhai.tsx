@@ -269,19 +269,19 @@ const handleChatWithCEO = async () => {
       `}</style>
 
       <header className="fixed left-0 top-0 z-50 w-full border-b border-cyan-400/10 bg-[#050816]/85 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-10">
           <div className="flex items-center gap-3">
             <img
               onClick={handleSignIn}
               src={ASKOXYLOGO1}
-              alt="ASKOXY.AI"
-              className="hidden h-9 w-auto cursor-pointer object-contain sm:block sm:h-11"
+              alt="Walk-in Interview"
+              className="hidden h-10 w-auto cursor-pointer object-contain sm:block sm:h-14 lg:h-16"
             />
             <img
               onClick={() => navigate("/radhAI")}
               src={TALKTOCEOLOGO}
               alt="Talk To CEO"
-              className="h-9 w-auto cursor-pointer object-contain sm:h-12"
+              className="hidden h-8 w-auto cursor-pointer object-contain sm:block sm:h-11 lg:h-13"
             />
           </div>
 
@@ -395,9 +395,28 @@ const handleChatWithCEO = async () => {
             </span>
           </h1>
 
-          <p className="mt-3 text-base font-semibold text-cyan-200 sm:text-lg">
-            Clone of Radhakrishna Thatavarti
-          </p>
+          <div className="mt-2 flex items-stretch gap-2">
+            <div className="flex flex-1 items-center px-4 py-2.5">
+              <p className="text-sm font-semibold text-cyan-200 sm:text-base">
+                Clone of Radhakrishna Thatavarti
+              </p>
+            </div>
+            <div
+              onClick={handleSignIn}
+              className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl  bg-lime-300/10 px-3 py-2.5 transition hover:bg-lime-300/20"
+            >
+              <span className="text-[11px] font-black uppercase tracking-wider text-lime-300 sm:text-xs">
+                🗓 Walk-in: July 11 &amp; 25
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleSignIn(); }}
+                className="inline-flex items-center gap-1 rounded-full bg-lime-300 px-2.5 py-0.5 text-[10px] font-black text-black transition hover:scale-105"
+              >
+                <Briefcase size={11} />
+                Visit Our Jobs
+              </button>
+            </div>
+          </div>
 
           <div className="mt-5 grid grid-cols-3 gap-2 sm:hidden">
             <button

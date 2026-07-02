@@ -552,8 +552,7 @@ export default function PaperclipDashboard() {
 
   const filteredRows = useMemo(() => {
     const q = searchTerm.toLowerCase().trim();
-    if (!q) return paperclips;
-    return paperclips.filter((item) => {
+    const matches = (item: PaperclipData) => {
       const searchable = [
         item.fileName,
         item.paperclipId,
@@ -571,7 +570,15 @@ export default function PaperclipDashboard() {
         .join(" ")
         .toLowerCase();
       return searchable.includes(q);
+    };
+
+    const sorted = [...paperclips].sort((a, b) => {
+      const dateA = new Date(a.uploadedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.uploadedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
     });
+
+    return q ? sorted.filter(matches) : sorted;
   }, [paperclips, searchTerm, feedbackMap, addedByMap]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / ITEMS_PER_PAGE));

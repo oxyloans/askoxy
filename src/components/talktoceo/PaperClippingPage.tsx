@@ -149,6 +149,14 @@ const formatDate = (date?: string | null) => {
 const isImageFile = (value?: string | null) =>
   /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(safeText(value));
 
+// ─── Sorting helper: latest uploaded first ─────────────────────────────────
+const sortByLatest = (list: PaperclipData[]): PaperclipData[] =>
+  [...list].sort((a, b) => {
+    const dateA = new Date(a.uploadedAt || 0).getTime();
+    const dateB = new Date(b.uploadedAt || 0).getTime();
+    return dateB - dateA;
+  });
+
 const generateHashtags = (sources: (string | null | undefined)[], limit = 6): string => {
   return sources
     .filter(Boolean)
@@ -599,7 +607,8 @@ export default function PaperClippingPage() {
       setListLoading(true);
       const data = await fetchJson(PAPERCLIP_ALL_API);
       const list = Array.isArray(data?.data) ? data.data : [];
-      setPaperclips(list);
+      // ── Sort latest uploaded first ──
+      setPaperclips(sortByLatest(list));
       setCurrentPage(1);
       toast("success", "All paper clips loaded");
       setTimeout(() => searchInputRef.current?.focus(), 150);
@@ -669,7 +678,8 @@ export default function PaperClippingPage() {
         setPaperclips((prev) => {
           const existingIds = new Set(prev.map((p) => safeText(p.paperclipId)));
           const fresh = analyzedItems.filter((p) => !existingIds.has(safeText(p.paperclipId)));
-          return [...fresh, ...prev];
+          // ── Sort latest uploaded first after merging newly analyzed items ──
+          return sortByLatest([...fresh, ...prev]);
         });
       }
       setFiles([]);
@@ -685,15 +695,17 @@ export default function PaperClippingPage() {
         try {
           const allData = await fetchJson(PAPERCLIP_ALL_API);
           const list: PaperclipData[] = Array.isArray(allData?.data) ? allData.data : [];
-          if (list.length > 0) {
-            setPaperclips(list);
+          // ── Sort latest uploaded first ──
+          const sortedList = sortByLatest(list);
+          if (sortedList.length > 0) {
+            setPaperclips(sortedList);
             // Try to match by uploaded filename
-            const match = list.find((item) =>
+            const match = sortedList.find((item) =>
               uploadedFileNames.some((fname) =>
                 safeText(item.fileName).toLowerCase().includes(fname) ||
                 fname.includes(safeText(item.fileName).toLowerCase())
               )
-            ) || list[0]; // fallback to most recent
+            ) || sortedList[0]; // fallback to most recent
             setFiles([]);
             setSelected(match);
             setActiveTab("summary");
