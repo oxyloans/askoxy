@@ -382,6 +382,9 @@ const ChatInterface = lazy(() => import("./components/ChatInterfaceAi"));
 const WalletEligibilitySlabs = lazy(
   () => import("./PartnerWeb/CartAmountBasedOrder"),
 );
+const CreateFromImageText = lazy(
+  () => import("./PartnerWeb/CreateFromImageText"),
+);
 const OurAIVideos = lazy(() => import("./FREEAIBOOK/MasterClasses"));
 
 const CreateAssistant = lazy(
@@ -1645,6 +1648,10 @@ const isLoggedIn = !!localStorage.getItem("userId");
                 <Route
                   path="cartamountbasedorderplaces"
                   element={<WalletEligibilitySlabs />}
+                />
+                <Route
+                  path="createFromImageText"
+                  element={<CreateFromImageText />}
                 />
               </Route>
 

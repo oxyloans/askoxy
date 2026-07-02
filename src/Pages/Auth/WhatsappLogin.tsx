@@ -550,18 +550,18 @@ const WhatsappLogin: React.FC = () => {
         }
       }
     } catch (err) {
-      const error = err as AxiosError<ErrorResponse>;
+      const error = err as AxiosError<any>;
+      const msg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "An error occurred. Please try again later.";
       if (
-        error.response?.data?.message ===
-        "User already registered with this Mobile Number, please log in."
+        msg === "User already registered with this Mobile Number, please log in."
       ) {
-        setError("You are already registered with this number. Please log in.");
+        setError(msg);
         setTimeout(() => navigate("/whatsapplogin"), 1500);
       } else {
-        setError(
-          error.response?.data?.message ||
-            "An error occurred. Please try again later.",
-        );
+        setError(msg);
       }
     } finally {
       setIsLoading(false);
@@ -712,10 +712,12 @@ const WhatsappLogin: React.FC = () => {
     } catch (err) {
       clearLoginRedirectTimer();
 
-      const error = err as AxiosError<ErrorResponse>;
+      const error = err as AxiosError<any>;
 
       setOtpError(
-        error.response?.data?.message || "Invalid OTP. Please try again.",
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Invalid OTP. Please try again.",
       );
 
       setShowSuccessPopup(false);
@@ -778,10 +780,11 @@ const WhatsappLogin: React.FC = () => {
           }, 3000);
         }
       } catch (err) {
-        const error = err as AxiosError<ErrorResponse>;
+        const error = err as AxiosError<any>;
         setError(
           error.response?.data?.message ||
-            "An error occurred. Please try again later.",
+          error.response?.data?.error ||
+          "An error occurred. Please try again later.",
         );
       } finally {
         setIsLoading(false);

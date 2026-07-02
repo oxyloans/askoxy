@@ -283,6 +283,9 @@ if (primaryType === "AGENT") {
     const accessToken = localStorage.getItem("accessToken");
     const pendingGoogleAuth = sessionStorage.getItem("pendingGoogleAuth");
 
+    // Don't auto-redirect if user is in the middle of OTP verification
+    if (showOtp) return;
+
     if (userId && accessToken) {
       fetchUserDetails(accessToken).then((userData) => {
         if (userData && userData.userId) {
@@ -369,7 +372,7 @@ if (primaryType === "AGENT") {
     } else {
       setPrimaryType("CUSTOMER");
     }
-  }, [navigate, location]);
+  }, [navigate, location, showOtp]);
 
   useEffect(() => {
     if (resendDisabled) {
@@ -614,12 +617,16 @@ if (primaryType === "AGENT") {
     } catch (err: any) {
       if (err.response?.status === 401) {
         setError(
+          err.response?.data?.message ||
+          err.response?.data?.error ||
           "Unauthorized: Invalid or missing access token. Please log in again."
         );
         handleAuthError(err, navigate);
       } else if (err.response?.status === 409) {
         setShowSuccessPopup(false);
         setError(
+          err.response?.data?.message ||
+          err.response?.data?.error ||
           "This phone number is already registered. Please login to continue."
         );
 
@@ -632,7 +639,8 @@ if (primaryType === "AGENT") {
       } else {
         setError(
           err.response?.data?.message ||
-            "An error occurred. Please try again later."
+          err.response?.data?.error ||
+          "An error occurred. Please try again later."
         );
       }
     } finally {
@@ -646,26 +654,23 @@ if (primaryType === "AGENT") {
     setOtpError("");
     setMessage("");
     setIsLoading(true);
-    setIsRegistering(true);
+    // Don't set isRegistering=true here — only set it on confirmed success
 
     if (!phoneNumber || phoneNumber === countryCode || !isValidPhoneNumber(phoneNumber)) {
       setOtpError("Please enter a valid phone number.");
       setIsLoading(false);
-      setIsRegistering(false);
       return;
     }
 
     if (!credentials) {
       setOtpError("Please enter the complete OTP");
       setIsLoading(false);
-      setIsRegistering(false);
       return;
     }
 
     if (otpMethod === "whatsapp" && credentials.otp.join("").length !== 4) {
       setOtpError("Please enter the complete WhatsApp OTP");
       setIsLoading(false);
-      setIsRegistering(false);
       return;
     } else if (
       otpMethod === "mobile" &&
@@ -673,7 +678,6 @@ if (primaryType === "AGENT") {
     ) {
       setOtpError("Please enter the complete Mobile OTP");
       setIsLoading(false);
-      setIsRegistering(false);
       return;
     }
 
@@ -717,6 +721,8 @@ if (primaryType === "AGENT") {
       );
 
       if (response.data && response.data.accessToken && response.data.userId) {
+        // Only now mark as registering (shows spinner)
+        setIsRegistering(true);
         setShowSuccessPopup(true);
 
         localStorage.setItem("userId", response.data.userId);
@@ -730,8 +736,6 @@ if (primaryType === "AGENT") {
         }
 
         localStorage.removeItem("refferrerId");
-        // ✅ Keep fromStudyAbroad/fromAISTore until after redirect fallback is resolved
-
         savePreferences();
 
         const userData = await fetchUserDetails(response.data.accessToken);
@@ -758,32 +762,37 @@ if (primaryType === "AGENT") {
           setIsRegistering(false);
         }
       } else {
-        setOtpError("No access token or user ID received. Please try again.");
-        setIsRegistering(false);
+        // API returned 2xx but no token — treat as invalid OTP
+        autoSubmitRef.current = false;
+        setOtpError(
+          response.data?.message ||
+          response.data?.error ||
+          "Invalid OTP. Please try again."
+        );
       }
     } catch (err: any) {
-      if (err.response?.status === 401) {
-        setOtpError(
-          "Unauthorized: Invalid or missing access token. Please log in again."
-        );
-        handleAuthError(err, navigate);
-      } else if (err.response?.status === 409) {
-        setOtpError(
-          "This number is already registered. Redirecting you to the login page..."
-        );
+      // Reset autoSubmit so user can re-enter OTP
+      autoSubmitRef.current = false;
 
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Invalid OTP. Please try again.";
+
+      // Only redirect away for 409 (already registered), never for OTP errors
+      if (err.response?.status === 409) {
+        setOtpError(msg);
         const loginUrl =
           primaryType === "STUDENT" || primaryType === "AGENT"
             ? `/whatsapplogin?primaryType=${primaryType}`
             : "/whatsapplogin";
-
         setTimeout(() => navigate(loginUrl), 1000);
       } else {
-        setOtpError(err.response?.data?.message || "Invalid OTP");
+        // 400, 500, or any other status — just show the error, stay on page
+        setOtpError(msg);
       }
 
       setOtpSession(null);
-      setIsRegistering(false);
     } finally {
       setIsLoading(false);
     }
@@ -872,11 +881,15 @@ if (primaryType === "AGENT") {
       } catch (err: any) {
         if (err.response?.status === 401) {
           setError(
+            err.response?.data?.message ||
+            err.response?.data?.error ||
             "Unauthorized: Invalid or missing access token. Please log in again."
           );
           handleAuthError(err, navigate);
         } else if (err.response?.data?.message) {
           setError(err.response.data.message);
+        } else if (err.response?.data?.error) {
+          setError(err.response.data.error);
         } else {
           setError("Failed to resend OTP. Please try again.");
         }

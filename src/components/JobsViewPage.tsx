@@ -440,11 +440,15 @@ const JobViewPage: React.FC = () => {
         companyName: selectedJob.companyName,
       });
 
-      // Always open ResumeUploadModal directly
-      setShowResumeModal(true);
+      const examPassed = sessionStorage.getItem("examPassed");
+      if (examPassed === "true") {
+        // Coming from exam flow — open JobApplicationModal directly
+        setIsModalOpen(true);
+      } else {
+        setShowResumeModal(true);
+      }
 
       const { openApplyModal, ...restState } = location.state || {};
-
       navigate(location.pathname, {
         replace: true,
         state: restState,

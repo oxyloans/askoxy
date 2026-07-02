@@ -242,18 +242,18 @@ const ExamQuestionPage: React.FC = () => {
       {/* ACTIONS */}
       <div className="flex gap-3 mt-6">
         <button
+          onClick={() => advance([])}
+          className="px-8 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition"
+        >
+          Skip
+        </button>
+
+        <button
           onClick={handleSubmit}
           disabled={selected.length === 0}
           className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Next
-        </button>
-
-        <button
-          onClick={() => advance([])}
-          className="px-8 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition"
-        >
-          Skip
         </button>
       </div>
     </div>

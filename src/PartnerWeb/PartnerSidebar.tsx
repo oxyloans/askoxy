@@ -147,6 +147,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <ShoppingCartOutlined />,
       label: "Cart Amount Based Order Places",
     },
+    {
+      key: "/home/createFromImageText",
+      icon: <FileTextOutlined />,
+      label: "Create From Image & Text",
+    },
 
     // {
     //   key: "/home/feedback",
