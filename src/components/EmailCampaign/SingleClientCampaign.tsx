@@ -3,12 +3,14 @@ import {
   Button,
   Input,
   Form,
+  Select,
   message,
 } from "antd";
 import {
   RocketOutlined,
   MailOutlined,
   UserOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import customerApi from "../../utils/axiosInstances";
 import BASE_URL from "../../Config";
@@ -17,6 +19,13 @@ import {
 } from "./constants";
 import type { CampaignResponse } from "./types";
 import { getApiErrorMessage } from "./utils";
+
+const PLATFORM_OPTIONS = [
+  { label: "OxyLoans",  value: "oxyloans"  },
+  { label: "OxyBricks", value: "oxybricks" },
+  { label: "AskOxy",   value: "askoxy"    },
+  { label: "OxyBFSAI", value: "oxybfsai"  },
+];
 
 
 const SingleClientCampaign: React.FC = () => {
@@ -28,6 +37,7 @@ const SingleClientCampaign: React.FC = () => {
   const handleSendCampaign = async (values: {
     clientName: string;
     clientEmail: string;
+    platform: string;
   }) => {
     setCampaignLoading(true);
 
@@ -37,6 +47,7 @@ const SingleClientCampaign: React.FC = () => {
         {
           clientName: values.clientName.trim(),
           clientEmail: values.clientEmail.trim(),
+          platform: values.platform,
         },
         { headers: { "Content-Type": "application/json" } },
       );
@@ -68,6 +79,24 @@ const SingleClientCampaign: React.FC = () => {
       initialValues={{ clientName, clientEmail }}
       onFinish={handleSendCampaign}
     >
+      <Form.Item
+        name="platform"
+        label={
+          <span className="ec-form-label">
+            Platform <span className="ec-required">*</span>
+          </span>
+        }
+        rules={[{ required: true, message: "Please select a platform." }]}
+      >
+        <Select
+          size="large"
+          placeholder="Select platform"
+          suffixIcon={<AppstoreOutlined style={{ color: "#9ca3af" }} />}
+          options={PLATFORM_OPTIONS}
+          style={{ width: "100%" }}
+        />
+      </Form.Item>
+
       <Form.Item
         name="clientName"
         label={

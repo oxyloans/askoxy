@@ -99,7 +99,7 @@ const JobApplicationModal: React.FC<Props> = ({
       sessionStorage.removeItem("atsScoreHistoryId");
       sessionStorage.removeItem("examPassed");
 
-      navigate("/main/appliedjobs");
+      navigate("/main/appliedjobs", { replace: true });
     } catch (err: any) {
       if (err?.errorFields?.length) {
         message.error(

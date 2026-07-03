@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import axios from "axios";
+import { message } from "antd";
 
 interface ExamDto {
   question: string;
@@ -19,6 +20,18 @@ const ExamResultsPage: React.FC = () => {
 
   const [result, setResult] = useState<any>(null);
   const navigate = useNavigate();
+
+  // 🔒 Block back AND forward navigation on results page
+  useEffect(() => {
+    window.history.pushState(null, "", window.location.href);
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      message.warning("You cannot navigate away from the results page.");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // ✅ Build DTO
   const dtos: ExamDto[] = React.useMemo(() => {
@@ -146,6 +159,7 @@ const ExamResultsPage: React.FC = () => {
                   openApplyModal: true,
                   id: jobId,
                 },
+                replace: true,
               });
             }}
             className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg text-white"
@@ -154,7 +168,7 @@ const ExamResultsPage: React.FC = () => {
           </button>
         ) : (
           <button
-            onClick={() => navigate("/main/viewjobdetails/default/ALL")}
+            onClick={() => navigate("/main/viewjobdetails/default/ALL", { replace: true })}
             className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 rounded-xl font-semibold transition shadow-lg text-white"
           >
             🔍 Go to Job Details

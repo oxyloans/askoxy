@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Input, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { ReloadOutlined } from "@ant-design/icons";
+import customerApi from "../../utils/axiosInstances";
 import { COLOR_BORDER, COLOR_PRIMARY } from "./constants";
 import BASE_URL from "../../Config";
 const { Text, Title } = Typography;
@@ -39,14 +40,14 @@ const AllCampaignsPage: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      const r = await fetch(`${BASE}/admin/campaigns/ids`);
-      if (!r.ok) throw new Error(`Failed to load campaigns (${r.status})`);
-      const data: { campaignId: string; totalClients: number }[] = await r.json();
+      const { data } = await customerApi.get<{ campaignId: string; totalClients: number }[]>(
+        `${BASE}/admin/campaigns/ids`
+      );
       setCampaigns(
         data.map((d, i) => ({ key: d.campaignId, serial: i + 1, campaignId: d.campaignId, totalClients: d.totalClients }))
       );
     } catch (e: any) {
-      setError(e?.message ?? "Failed to load campaigns.");
+      setError(e?.response?.data?.message ?? e?.message ?? "Failed to load campaigns.");
     } finally {
       setLoading(false);
     }

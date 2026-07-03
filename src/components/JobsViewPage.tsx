@@ -105,24 +105,22 @@ const JobViewPage: React.FC = () => {
   const cleanLocation = (location: string): string => {
     if (!location) return "";
 
-   
     let cleaned = location
-      .replace(/\b\d{6}\b/g, "") 
-      .replace(/\b\d{5}\b/g, "") 
-      .replace(/\b[A-Z]{2,3}\b/g, "") 
-      .replace(/\bnodioa\b/gi, "") 
-      .replace(/\b\d+th\s+floor\b/gi, "") 
-      .replace(/\bfloor\b/gi, "") 
+      .replace(/\b\d{6}\b/g, "")
+      .replace(/\b\d{5}\b/g, "")
+      .replace(/\b[A-Z]{2,3}\b/g, "")
+      .replace(/\bnodioa\b/gi, "")
+      .replace(/\b\d+th\s+floor\b/gi, "")
+      .replace(/\bfloor\b/gi, "")
       .replace(/\bdoor\s+no\b/gi, "")
-      .replace(/\bplot\s+no\b/gi, "") 
-      .replace(/\bplot\b/gi, "") 
-      .replace(/\b\d+-\d+\b/g, "") 
-      .replace(/\b\d+\b/g, "") 
-      .replace(/[,\s]+/g, " ") 
+      .replace(/\bplot\s+no\b/gi, "")
+      .replace(/\bplot\b/gi, "")
+      .replace(/\b\d+-\d+\b/g, "")
+      .replace(/\b\d+\b/g, "")
+      .replace(/[,\s]+/g, " ")
       .replace(/[^a-zA-Z\s]/g, "")
       .trim();
 
-   
     const validCities = {
       hyderabad: "Hyderabad",
       bangalore: "Bangalore",
@@ -230,51 +228,44 @@ const JobViewPage: React.FC = () => {
 
     const lowerCleaned = cleaned.toLowerCase();
 
-   
     for (const [key, value] of Object.entries(validCities)) {
       if (lowerCleaned.includes(key)) {
         return value;
       }
     }
 
-    
     return "";
   };
 
   const cleanExperience = (experience: string): string => {
     if (!experience) return "";
 
-    
     let cleaned = experience
-      .replace(/\bgood\s+years?\b/gi, "") 
-      .replace(/\bprofessional\b/gi, "") 
-      .replace(/\bexperience\b/gi, "") 
-      .replace(/[,\s]+/g, " ") 
+      .replace(/\bgood\s+years?\b/gi, "")
+      .replace(/\bprofessional\b/gi, "")
+      .replace(/\bexperience\b/gi, "")
+      .replace(/[,\s]+/g, " ")
       .trim();
 
-    
     const validPatterns = [
       /^\d+-\d+\s*years?$/i,
-      /^\d+\s*years?$/i, 
-      /^\d+\+\s*years?$/i, 
+      /^\d+\s*years?$/i,
+      /^\d+\+\s*years?$/i,
       /^fresher$/i,
-      /^entry\s*level$/i, 
-      /^senior$/i, 
-      /^junior$/i, 
+      /^entry\s*level$/i,
+      /^senior$/i,
+      /^junior$/i,
     ];
 
-    
     const isValid = validPatterns.some((pattern) => pattern.test(cleaned));
 
     if (isValid) {
-      
       if (/^\d+$/.test(cleaned)) {
         return `${cleaned} years`;
       }
       return cleaned;
     }
 
-    
     return "";
   };
 
@@ -285,7 +276,7 @@ const JobViewPage: React.FC = () => {
         return job.jobLocations
           .split(",")
           .map((loc) => cleanLocation(loc.trim()))
-          .filter((loc) => loc && loc.length > 0); 
+          .filter((loc) => loc && loc.length > 0);
       }),
     ),
   ).sort((a, b) => a.localeCompare(b));
@@ -294,7 +285,7 @@ const JobViewPage: React.FC = () => {
     new Set(
       jobs
         .map((job) => cleanExperience(job.experience?.trim() || ""))
-        .filter((exp) => exp && exp.length > 0), 
+        .filter((exp) => exp && exp.length > 0),
     ),
   ).sort();
 
@@ -332,8 +323,6 @@ const JobViewPage: React.FC = () => {
     ),
   ).sort();
 
-  
-
   const safeSplit = (value: any): string[] => {
     if (!value || typeof value !== "string") return [];
 
@@ -345,7 +334,6 @@ const JobViewPage: React.FC = () => {
           v && v.toLowerCase() !== "null" && v.toLowerCase() !== "undefined",
       );
   };
-
 
   useEffect(() => {
     console.log("this is the id from state" + id);
@@ -458,7 +446,7 @@ const JobViewPage: React.FC = () => {
 
   useEffect(() => {
     filterJobs();
-    setDisplayedJobsCount(20); 
+    setDisplayedJobsCount(20);
   }, [jobs, searchTerm, filters]);
 
   const fetchJobs = async (compName: string) => {
@@ -559,7 +547,7 @@ const JobViewPage: React.FC = () => {
   };
 
   const getUniqueValues = (key: keyof Job): string[] => {
-    const valueMap = new Map<string, string>(); 
+    const valueMap = new Map<string, string>();
 
     jobs.forEach((job) => {
       const rawValue = job[key];
@@ -600,7 +588,6 @@ const JobViewPage: React.FC = () => {
 
   const handleFilterChange = (key: string, value: string) => {
     if (key === "industry" && value === "AI Jobs") {
-
       const token = localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       const prefix =
@@ -658,7 +645,7 @@ const JobViewPage: React.FC = () => {
 
     const success = await submitWriteToUsQuery(
       safeEmail,
-      safeMobile, 
+      safeMobile,
       query,
       "FREESAMPLE",
       safeUserId,
@@ -701,10 +688,10 @@ const JobViewPage: React.FC = () => {
     if (!min && !max) {
       return "Salary not specified";
     }
-    
+
     const minSalary = min || 0;
     const maxSalary = max || 0;
-    
+
     const salaryRange = `₹${minSalary.toLocaleString()} - ₹${maxSalary.toLocaleString()}`;
     return payRateFrequencyType
       ? `${salaryRange} ${payRateFrequencyType}`
@@ -1474,7 +1461,7 @@ const JobViewPage: React.FC = () => {
               </div>
             ) : null;
           })()}
-    
+
         {filteredJobs.length === 0 && (
           <div className="text-center py-16 bg-white rounded-xl shadow-sm border">
             <div className="text-5xl mb-3">🔍</div>
@@ -1611,8 +1598,6 @@ const JobViewPage: React.FC = () => {
           companyName={selectedJob.companyName}
         />
       )}
-
-
     </div>
   );
 };

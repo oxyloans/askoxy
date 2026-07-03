@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { message } from "antd";
 
 interface ExamDto {
   question: string;
@@ -65,12 +66,18 @@ const ExamQuestionPage: React.FC = () => {
   useEffect(() => { qIndexRef.current = qIndex; }, [qIndex]);
   useEffect(() => { totalQRef.current = totalQ; }, [totalQ]);
 
-
+  // 🔒 Block browser back AND forward navigation during exam
   useEffect(() => {
-
-    console.log("atsScoreHistoryId in state:", state);
-    console.log("atsScoreHistoryId in state:", atsScoreHistoryId);
-  }, []);
+    // Push two entries so both back and forward are trapped
+    window.history.pushState(null, "", window.location.href);
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      message.warning("You cannot navigate away during the exam.");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [questionNumber]);
 
   // 🚀 ADVANCE FUNCTION
   const advance = useCallback((chosenKeys: string[]) => {
@@ -158,6 +165,7 @@ const ExamQuestionPage: React.FC = () => {
     }
   };
 
+  const isLastQuestion = qIndex + 1 === totalQ;
   const handleSubmit = () => advance(selected);
 
   // ❌ SAFETY
@@ -253,7 +261,7 @@ const ExamQuestionPage: React.FC = () => {
           disabled={selected.length === 0}
           className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Next
+          {isLastQuestion ? "Submit" : "Next"}
         </button>
       </div>
     </div>

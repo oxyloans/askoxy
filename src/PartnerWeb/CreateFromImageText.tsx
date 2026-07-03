@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Input, Card, message, Spin, Select, Upload } from "antd";
 import { UploadOutlined, SendOutlined, DownloadOutlined } from "@ant-design/icons";
+import { WhatsAppOutlined } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
 import { partnerApi } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
@@ -133,6 +134,7 @@ const CreateFromImageText: React.FC = () => {
                 className="w-full"
                 onClick={handleSubmit}
                 loading={loading}
+                style={{ backgroundColor: "#008cba", borderColor: "#008cba", color: "#fff" }}
               >
                 Generate Video
               </Button>
@@ -189,17 +191,40 @@ const CreateFromImageText: React.FC = () => {
                           }}
                         />
                       </div>
-                      <a
-                        href={response.videoUrl}
-                        download
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full"
-                      >
-                        <Button icon={<DownloadOutlined />} size="large" type="primary" className="w-full">
-                          Download Video
-                        </Button>
-                      </a>
+                      <div className="w-full flex flex-col sm:flex-row gap-3">
+                        <a
+                          href={response.videoUrl}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1"
+                        >
+                          <Button
+                            icon={<DownloadOutlined />}
+                            size="large"
+                            type="primary"
+                            className="w-full"
+                            style={{ backgroundColor: "#008cba", borderColor: "#008cba", color: "#fff" }}
+                          >
+                            Download Video
+                          </Button>
+                        </a>
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent("Check out this video: " + response.videoUrl)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1"
+                        >
+                          <Button
+                            icon={<WhatsAppOutlined />}
+                            size="large"
+                            className="w-full"
+                            style={{ backgroundColor: "#25D366", borderColor: "#25D366", color: "#fff" }}
+                          >
+                            Share on WhatsApp
+                          </Button>
+                        </a>
+                      </div>
                     </>
                   ) : (
                     <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-auto max-h-96 whitespace-pre-wrap break-words w-full">

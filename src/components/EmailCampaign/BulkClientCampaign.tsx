@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Button, Form, Upload, Typography, message } from "antd";
+import { Button, Form, Upload, Typography, message, Select } from "antd";
 import {
   FileExcelOutlined,
   RocketOutlined,
   UploadOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
 import customerApi from "../../utils/axiosInstances";
@@ -11,6 +12,13 @@ import BASE_URL from "../../Config";
 import { COLOR_PRIMARY, successButtonStyle } from "./constants";
 import type { BulkCampaignResponse } from "./types";
 import { getApiErrorMessage, isValidBulkCampaignFile } from "./utils";
+
+const PLATFORM_OPTIONS = [
+  { label: "OxyLoans",  value: "oxyloans"  },
+  { label: "OxyBricks", value: "oxybricks" },
+  { label: "AskOxy",   value: "askoxy"    },
+  { label: "OxyBFSAI", value: "oxybfsai"  },
+];
 
 const { Dragger } = Upload;
 const { Paragraph } = Typography;
@@ -28,6 +36,7 @@ type UpdatedBulkCampaignResponse = BulkCampaignResponse & {
 
 const BulkClientCampaign: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [platform, setPlatform] = useState<string | undefined>(undefined);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +55,10 @@ const BulkClientCampaign: React.FC = () => {
       message.error("Please select a CSV or Excel file before uploading.");
       return;
     }
+    if (!platform) {
+      message.error("Please select a platform before sending.");
+      return;
+    }
 
     setUploadLoading(true);
 
@@ -54,7 +67,7 @@ const BulkClientCampaign: React.FC = () => {
       fd.append("file", file);
 
       const { data } = await customerApi.post<UpdatedBulkCampaignResponse>(
-        `${BASE_URL}/ai-automation/email/send-campaign/bulk`,
+        `${BASE_URL}/ai-automation/email/send-campaign/bulk?platform=${platform}`,
         fd,
         { headers: { "Content-Type": "multipart/form-data" } },
       );
@@ -80,6 +93,7 @@ const BulkClientCampaign: React.FC = () => {
 
   const resetBulkUpload = () => {
     setFile(null);
+    setPlatform(undefined);
     setSent(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -112,6 +126,24 @@ const BulkClientCampaign: React.FC = () => {
         <Form.Item
           label={
             <span className="ec-form-label">
+              Platform <span className="ec-required">*</span>
+            </span>
+          }
+        >
+          <Select
+            size="large"
+            placeholder="Select platform"
+            value={platform}
+            onChange={(val) => setPlatform(val)}
+            suffixIcon={<AppstoreOutlined style={{ color: "#9ca3af" }} />}
+            options={PLATFORM_OPTIONS}
+            style={{ width: "100%" }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={
+            <span className="ec-form-label">
               Client List File <span className="ec-required">*</span>
             </span>
           }
@@ -141,7 +173,7 @@ const BulkClientCampaign: React.FC = () => {
         className="ec-success-btn"
         icon={sent ? <UploadOutlined /> : <RocketOutlined />}
         loading={uploadLoading}
-        disabled={!file && !sent}
+        disabled={!sent && (!file || !platform)}
         onClick={sent ? resetBulkUpload : handleBulkUpload}
         style={{ ...successButtonStyle, minHeight: 46, letterSpacing: 0.25 }}
       >

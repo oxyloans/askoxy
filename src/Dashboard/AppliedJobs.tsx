@@ -21,6 +21,7 @@ import {
   TrophyOutlined,
 } from "@ant-design/icons";
 import customerApi from "../utils/axiosInstances";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text, Paragraph } = Typography;
 const { confirm } = Modal;
@@ -105,6 +106,25 @@ type ExamResultData = {
 
 const AppliedJobs: React.FC = () => {
   const screens = useBreakpoint();
+  const navigate = useNavigate();
+
+  // 🔒 Block all back/forward history — one allowed back goes to job list
+  useEffect(() => {
+    // Push extra entry so forward is also trapped
+    window.history.pushState(null, "", window.location.href);
+    window.history.pushState(null, "", window.location.href);
+    let allowedOnce = true;
+    const handlePopState = () => {
+      if (allowedOnce) {
+        allowedOnce = false;
+        navigate("/main/viewjobdetails/default/ALL", { replace: true });
+      } else {
+        window.history.pushState(null, "", window.location.href);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [loading, setLoading] = useState(true);

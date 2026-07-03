@@ -77,6 +77,7 @@ import SendPollBasedRewards from "./AskoxyAdmin/SendPollBasedRewards";
 import ViewPollBasedRewards from "./AskoxyAdmin/ViewPollBasedRewards";
 import PlatformRedirect from "./components/PlatformRedirect";
 import HiringLandingPage from "./components/HiringLandingPage";
+import WalkInJourneyPage from "./components/WalkInJourneyPage";
 import DRACertificationLanding from "./components/DRACertificationLanding";
 import GCCMate from "./components/GCCMateLandingPage/GCCMate";
 import EmployerJobSeekerPage from "./components/JPL/EmployerJobSeekerPage";
@@ -1413,6 +1414,7 @@ const isLoggedIn = !!localStorage.getItem("userId");
                 element={<ConversationsPage />}
               />
               <Route path="/may2Interview" element={<HiringLandingPage />} />
+              <Route path="/walkin-journey" element={<WalkInJourneyPage />} />
               <Route
                 path="/DRAcertification"
                 element={<DRACertificationLanding />}
