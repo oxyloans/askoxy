@@ -72,6 +72,7 @@ import FinvibeStage2Page from "./Finvibe/components/Stage2Page";
 import FinvibeGenerationPage from "./Finvibe/components/GenerationPage";
 
 import OxyGPT from "./Finvibe/components/Oxyclaude";
+import OxyStreamClaude from "./Finvibe/OxyStreamClaude";
 import Billing from "./Finvibe/components/Billing";
 import SendPollBasedRewards from "./AskoxyAdmin/SendPollBasedRewards";
 import ViewPollBasedRewards from "./AskoxyAdmin/ViewPollBasedRewards";
@@ -721,8 +722,9 @@ const isLoggedIn = !!localStorage.getItem("userId");
       currentPath.startsWith("/radhAI") ||
       currentPath.startsWith("/radhai-admin") ||
       currentPath.startsWith("/generate") ||
-      currentPath.startsWith("/generate/:id") 
-
+      currentPath.startsWith("/generate/:id") ||
+      currentPath.startsWith("/stage2/:sessionId") ||
+      currentPath.startsWith("/oxygpt/claude")
     );
   };
 
@@ -755,6 +757,7 @@ const isLoggedIn = !!localStorage.getItem("userId");
               <Route path="/carnival-form" element={<CarnivalFormPage />} />
               <Route path="/carnival-list" element={<CarnivalListPage />} />
               <Route path="/Oxygpt" element={<OxyGPT />} />
+              <Route path="/oxygpt/claude" element={<OxyStreamClaude />} />
               <Route path="/oxygpt/share/:sessionId" element={<OxyGPT />} />
               <Route path="/finvibe" element={<Finvibe3DLanding />} />
               <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />

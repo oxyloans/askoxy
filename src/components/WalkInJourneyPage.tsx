@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import WalkInInterviewStepsModal from "./WalkInInterviewStepsModal";
 
 const FLOWS = [
   {
@@ -76,6 +77,7 @@ const COMMON_STEPS = [
 const WalkInJourneyPage: React.FC = () => {
   const navigate = useNavigate();
   const [active, setActive] = useState("walkin");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const flow = FLOWS.find((f) => f.id === active)!;
 
   const uniqueSteps = [
@@ -107,6 +109,11 @@ const WalkInJourneyPage: React.FC = () => {
           display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
           box-shadow: 0 1px 3px rgba(0,0,0,.06); }
         .wj-back:hover { background: #111; color: #fff; border-color: #111; }
+        .wj-guide-btn { font-size: 13px; font-weight: 700; color: #fff; background: #6D28D9;
+          border: 1px solid #6D28D9; padding: 7px 16px; border-radius: 8px; cursor: pointer;
+          display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
+          box-shadow: 0 4px 6px -1px rgba(109, 40, 217, 0.2); }
+        .wj-guide-btn:hover { background: #5b21b6; border-color: #5b21b6; transform: translateY(-1px); }
 
         /* ── HERO ── */
         .wj-hero { background: linear-gradient(135deg,#1E1B4B 0%,#312E81 50%,#4C1D95 100%);
@@ -224,6 +231,9 @@ const WalkInJourneyPage: React.FC = () => {
         {/* Topbar */}
         <div className="wj-topbar">
           <button className="wj-back" onClick={() => navigate(-1)}>← Back</button>
+          <button className="wj-guide-btn" onClick={() => setIsModalOpen(true)}>
+            📋 Step-by-Step Guide
+          </button>
         </div>
 
         {/* Hero */}
@@ -372,6 +382,12 @@ const WalkInJourneyPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Plug and Play Modal */}
+      <WalkInInterviewStepsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };

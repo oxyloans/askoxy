@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import WalkInInterviewStepsModal from "./WalkInInterviewStepsModal";
 
 import web1 from "../assets/img/web1.png";
 import web2 from "../assets/img/web2.png";
@@ -35,6 +36,8 @@ const Whiteboardtheme: React.FC = () => {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+  const [modalActionType, setModalActionType] = useState<"signin" | "hiring">("signin");
   const LOGIN_URL = "/whatsapplogin";
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
   const handleSignIn = () => {
@@ -198,8 +201,11 @@ const Whiteboardtheme: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <button
                     type="button"
-                    onClick={handleSignIn}
-                    className="cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 active:scale-95"
+                    onClick={() => {
+                      setModalActionType("signin");
+                      setIsWalkInModalOpen(true);
+                    }}
+                    className="cursor-pointer border-0 bg-transparent p-0 transition-transform duration-305 active:scale-95"
                     aria-label="Walk in interviews"
                   >
                     <img
@@ -234,7 +240,10 @@ const Whiteboardtheme: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={handleSignIn}
+                  onClick={() => {
+                    setModalActionType("signin");
+                    setIsWalkInModalOpen(true);
+                  }}
                   className="pointer-events-auto absolute top-0 -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105"
                   style={{ left: "83.333%" }}
                   aria-label="Walk in interviews"
@@ -437,7 +446,10 @@ const Whiteboardtheme: React.FC = () => {
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <button
-          onClick={() => navigate("/wearehiring")}
+          onClick={() => {
+            setModalActionType("hiring");
+            setIsWalkInModalOpen(true);
+          }}
           className=" transition-transform duration-300 hover:scale-105 active:scale-95"
           aria-label="We are hiring"
           title="We are hiring"
@@ -453,6 +465,12 @@ const Whiteboardtheme: React.FC = () => {
           />
         </button>
       </div>
+
+      <WalkInInterviewStepsModal
+        isOpen={isWalkInModalOpen}
+        onClose={() => setIsWalkInModalOpen(false)}
+        onActionClick={modalActionType === "signin" ? handleSignIn : () => navigate("/wearehiring")}
+      />
     </>
   );
 };

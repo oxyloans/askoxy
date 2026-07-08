@@ -42,11 +42,14 @@ const accessToken = localStorage.getItem("accessToken")
     try {
       setLoading(true);
       const response = await axios.get(
-        `${BASE_URL}/marketing-service/campgin/getuserandllusersappliedjobs`,
+        `${BASE_URL}/marketing-service/campgin/getuserandallusersappliedjobs?page=0&size=10`,
         { headers: { Authorization: `Bearer ${accessToken}` } },        
       );
-      if (Array.isArray(response.data)) {
-        setAppliedJobs(response.data);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setAppliedJobs(data);
+      } else if (data && Array.isArray(data.content)) {
+        setAppliedJobs(data.content);
       } else {
         setAppliedJobs([]);
         message.warning("No applied jobs data received");

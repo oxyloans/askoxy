@@ -18,6 +18,10 @@ import {
   Users,
   BrainCircuit,
   Bot,
+  Building2,
+  BarChart3,
+  ShieldCheck,
+  ExternalLink,
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 
@@ -29,15 +33,88 @@ import ASKOXYLOGO1 from "../../assets/img/walkinwhite.png";
 const GOOGLE_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSd7BMOmvNIfXgpnefXGoGeqJuLp1hege82srbNmQ9E3e-Lkjg/viewform";
 
+type ResourceLink = {
+  id: number;
+  title: string;
+  description: string;
+  url: string;
+  icon: React.ReactNode;
+  gradient: string;
+};
+
+const resourceLinks: ResourceLink[] = [
+  {
+    id: 1,
+    title: "OXY BFS AI Platform",
+    description: "Banking, Financial Services & Insurance AI platform.",
+    url: "https://www.askoxy.ai/oxybfsai",
+    icon: <Building2 size={22} />,
+    gradient: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
+  },
+  {
+    id: 2,
+    title: "Model Banking Demo",
+    description: "Interactive FinVibe model banking demo.",
+    url: "https://vibecoding-finvibe.vercel.app/",
+    icon: <BarChart3 size={22} />,
+    gradient: "linear-gradient(135deg, #7C3AED 0%, #6d28d9 100%)",
+  },
+  {
+    id: 3,
+    title: "RBI AI Store",
+    description: "RBI Master Directions AI Store for compliance use cases.",
+    url: "https://www.askoxy.ai/ai-store/rbi-master-directions-ai-store",
+    icon: <ShieldCheck size={22} />,
+    gradient: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+  },
+  {
+    id: 4,
+    title: "BFS AI Use Case Engine",
+    description: "30+ AI use cases for BFSI innovation and automation.",
+    url: "https://www.askoxy.ai/use-case-engine",
+    icon: <Cpu size={22} />,
+    gradient: "linear-gradient(135deg, #DC2626 0%, #b91c1c 100%)",
+  },
+];
+
+const expertLinks: ResourceLink[] = [
+  {
+    id: 1,
+    title: "RadhAI as RBI Expert",
+    description: "RBI Master Directions AI Store for compliance guidance.",
+    url: "https://www.askoxy.ai/ai-store/rbi-master-directions-ai-store",
+    icon: <ShieldCheck size={22} />,
+    gradient: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+  },
+  {
+    id: 2,
+    title: "RadhAI as IRDAI Expert",
+    description: "AI assistant for insurance and regulatory support.",
+    url: "https://www.askoxy.ai/genoxy/chat",
+    icon: <Landmark size={22} />,
+    gradient: "linear-gradient(135deg, #7C3AED 0%, #6d28d9 100%)",
+  },
+  {
+    id: 3,
+    title: "RadhAI as UAE CB Expert",
+    description: "UAE Central Bank AI Store for banking compliance use cases.",
+    url: "https://www.askoxy.ai/ai-store/uae-central-bank-ai-store",
+    icon: <Building2 size={22} />,
+    gradient: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
+  },
+];
+
 const RadhAIPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = React.useState(false);
-    const LOGIN_URL = "/whatsapplogin";
- const handleSignIn = () => {
+  const LOGIN_URL = "/whatsapplogin";
+
+  const handleSignIn = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
       const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
+
       if (userId) {
         navigate(redirectPath);
       } else {
@@ -50,11 +127,11 @@ const RadhAIPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, []);
 
-  // After returning from WhatsApp login, auto-redirect to /talktoceo
   useEffect(() => {
     const redirectPath = sessionStorage.getItem("redirectPath");
     if (redirectPath !== "/talktoceo") return;
@@ -66,8 +143,7 @@ const RadhAIPage: React.FC = () => {
       localStorage.getItem("token");
 
     const userId =
-      sessionStorage.getItem("userId") ||
-      localStorage.getItem("userId");
+      sessionStorage.getItem("userId") || localStorage.getItem("userId");
 
     if (!token || !userId || userId === "guest-user") return;
 
@@ -86,7 +162,7 @@ const RadhAIPage: React.FC = () => {
         },
       });
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUserProfile = async (): Promise<string | null> => {
@@ -99,13 +175,16 @@ const RadhAIPage: React.FC = () => {
 
       if (!token) return null;
 
-      const response = await fetch("https://meta.oxyloans.com/api/user-service/me", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        "https://meta.oxyloans.com/api/user-service/me",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) return null;
 
@@ -114,6 +193,7 @@ const RadhAIPage: React.FC = () => {
       if (data.userId) {
         sessionStorage.setItem("userId", data.userId);
         localStorage.setItem("userId", data.userId);
+
         if (!sessionStorage.getItem("accessToken") && token) {
           sessionStorage.setItem("accessToken", token);
           localStorage.setItem("accessToken", token);
@@ -121,8 +201,7 @@ const RadhAIPage: React.FC = () => {
       }
 
       const fullName =
-        data.name ||
-        `${data.firstName || ""} ${data.lastName || ""}`.trim();
+        data.name || `${data.firstName || ""} ${data.lastName || ""}`.trim();
 
       sessionStorage.setItem("mobileNumber", data.mobileNumber || "");
       sessionStorage.setItem("radhEmail", data.email || "");
@@ -152,8 +231,7 @@ const RadhAIPage: React.FC = () => {
       localStorage.getItem("token");
 
     const userId =
-      sessionStorage.getItem("userId") ||
-      localStorage.getItem("userId");
+      sessionStorage.getItem("userId") || localStorage.getItem("userId");
 
     if (!token || !userId || userId === "guest-user") {
       sessionStorage.setItem("redirectPath", "/talktoceo");
@@ -177,41 +255,7 @@ const RadhAIPage: React.FC = () => {
     });
   };
 
-  const handleWriteToUs = () => {
-    window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
-  };
-
-  const solutions = [
-    { title: "Jobs", icon: Briefcase },
-    { title: "AI", icon: Cpu },
-    { title: "Loans", icon: Landmark },
-    { title: "Investments", icon: TrendingUp },
-    { title: "Gold", icon: Coins },
-  ];
-
-  const stats = [
-    { icon: Users, count: "100+", label: "Employees" },
-    { icon: BrainCircuit, count: "100+", label: "LLMs" },
-    { icon: Bot, count: "1000+", label: "AI Agents" },
-  ];
-
-  const groupCompanies = [
-    { logo: ASKOXYLOGO, name: "ASKOXY.AI", link: "https://askoxy.ai/" },
-    { logo: "https://i.ibb.co/s4CW2mg/l1.png", name: "OXYGLOBAL.TECH", link: "https://www.oxyglobal.tech/" },
-    { logo: "https://i.ibb.co/B5xsVChY/l2.png", name: "OXYLOANS", link: "https://oxyloans.com/" },
-    { logo: "https://i.ibb.co/k2snG0YW/l3.png", name: "OXYBRICKS.WORLD", link: "https://oxybricks.world/" },
-    { logo: "https://i.ibb.co/PGYYDvL9/l4.png", name: "OXYGOLD.AI", link: "https://www.oxygold.ai/" },
-    { logo: "https://i.ibb.co/B2NcQ7Nj/l5.png", name: "OXYCHAIN", link: "http://bmv.money:2750/" },
-  ];
-
-  const socialLinks = [
-    { name: "LinkedIn", url: "https://www.linkedin.com/in/oxyradhakrishna/", icon: Linkedin },
-    { name: "Instagram", url: "https://www.instagram.com/tvradhakrishna/", icon: Instagram },
-    { name: "Facebook", url: "https://www.facebook.com/thatavarti.venkataradhakrishna/", icon: Facebook },
-    { name: "X", url: "https://x.com/RadhakrishnaIND", icon: SiX },
-    { name: "YouTube", url: "https://www.youtube.com/@askoxyDOTai", icon: Youtube },
-  ];
-const handleChatWithCEO = async () => {
+  const handleChatWithCEO = async () => {
     setIsLoading(true);
 
     const token =
@@ -221,8 +265,7 @@ const handleChatWithCEO = async () => {
       localStorage.getItem("token");
 
     const userId =
-      sessionStorage.getItem("userId") ||
-      localStorage.getItem("userId");
+      sessionStorage.getItem("userId") || localStorage.getItem("userId");
 
     if (!token || !userId || userId === "guest-user") {
       sessionStorage.setItem("redirectPath", "/talktoceo");
@@ -247,6 +290,105 @@ const handleChatWithCEO = async () => {
       },
     });
   };
+
+  const handleWriteToUs = () => {
+    window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
+  };
+
+  const solutions = [
+    { title: "Jobs", icon: Briefcase },
+    { title: "AI", icon: Cpu },
+    { title: "Loans", icon: Landmark },
+    { title: "Investments", icon: TrendingUp },
+    { title: "Gold", icon: Coins },
+  ];
+
+  const stats = [
+    { icon: Users, count: "100+", label: "Employees" },
+    { icon: BrainCircuit, count: "100+", label: "LLMs" },
+    { icon: Bot, count: "1000+", label: "AI Agents" },
+  ];
+
+  const groupCompanies = [
+    { logo: ASKOXYLOGO, name: "ASKOXY.AI", link: "https://askoxy.ai/" },
+    {
+      logo: "https://i.ibb.co/s4CW2mg/l1.png",
+      name: "OXYGLOBAL.TECH",
+      link: "https://www.oxyglobal.tech/",
+    },
+    {
+      logo: "https://i.ibb.co/B5xsVChY/l2.png",
+      name: "OXYLOANS",
+      link: "https://oxyloans.com/",
+    },
+    {
+      logo: "https://i.ibb.co/k2snG0YW/l3.png",
+      name: "OXYBRICKS.WORLD",
+      link: "https://oxybricks.world/",
+    },
+    {
+      logo: "https://i.ibb.co/PGYYDvL9/l4.png",
+      name: "OXYGOLD.AI",
+      link: "https://www.oxygold.ai/",
+    },
+    {
+      logo: "https://i.ibb.co/B2NcQ7Nj/l5.png",
+      name: "OXYCHAIN",
+      link: "http://bmv.money:2750/",
+    },
+  ];
+
+  const socialLinks = [
+    {
+      name: "LinkedIn",
+      url: "https://www.linkedin.com/in/oxyradhakrishna/",
+      icon: Linkedin,
+    },
+    {
+      name: "Instagram",
+      url: "https://www.instagram.com/tvradhakrishna/",
+      icon: Instagram,
+    },
+    {
+      name: "Facebook",
+      url: "https://www.facebook.com/thatavarti.venkataradhakrishna/",
+      icon: Facebook,
+    },
+    { name: "X", url: "https://x.com/RadhakrishnaIND", icon: SiX },
+    {
+      name: "YouTube",
+      url: "https://www.youtube.com/@askoxyDOTai",
+      icon: Youtube,
+    },
+  ];
+
+  const renderResourceCard = (item: ResourceLink) => (
+    <a
+      key={item.id}
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group rounded-[26px] border border-white/10 bg-white/[0.055] p-5 text-left backdrop-blur-xl transition hover:-translate-y-1 hover:border-cyan-300/40 hover:bg-white/[0.08]"
+    >
+      <div
+        className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg"
+        style={{ background: item.gradient }}
+      >
+        {item.icon}
+      </div>
+
+      <h3 className="text-lg font-black text-white">{item.title}</h3>
+
+      <p className="mt-2 min-h-[48px] text-sm leading-6 text-slate-300">
+        {item.description}
+      </p>
+
+      <div className="mt-5 inline-flex items-center gap-2 text-sm font-black text-cyan-300 transition group-hover:text-lime-300">
+        Visit platform
+        <ExternalLink size={15} />
+      </div>
+    </a>
+  );
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#030712] text-white">
       <style>{`
@@ -517,6 +659,46 @@ const handleChatWithCEO = async () => {
           </div>
         </motion.div>
       </section>
+
+      <section className="relative z-10 px-4 pb-10 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-black leading-tight sm:text-4xl">
+              radhAI for{" "}
+              <span className="text-lime-300">
+                Software Developers, IT Companies & Banks
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-4xl text-base leading-7 text-slate-300 sm:text-lg">
+              Explore AI platforms, banking solutions, compliance tools, and
+              digital ecosystems built to drive growth, automation, and
+              innovation.
+            </p>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {resourceLinks.map(renderResourceCard)}
+          </div>
+
+          <div className="mb-8 mt-12 text-center">
+            <h2 className="text-3xl font-black leading-tight sm:text-4xl">
+              radhAI as{" "}
+              <span className="text-cyan-300">Regulatory Expert</span>
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
+              Access AI-powered regulatory experts for RBI, IRDAI, and UAE
+              Central Bank compliance use cases.
+            </p>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {expertLinks.map(renderResourceCard)}
+          </div>
+        </div>
+      </section>
+
 
       <section className="relative z-10 px-4 pb-20 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-7xl rounded-[34px] border border-cyan-300/20 bg-white/[0.045] p-7 text-center shadow-[0_0_70px_rgba(0,245,255,0.12)] backdrop-blur-xl sm:p-10 lg:p-14">
