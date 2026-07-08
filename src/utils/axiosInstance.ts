@@ -14,5 +14,6 @@ export {
   freelanceApi,
   employeeApi,
   sharedApi,
+  businessCardApi,
   resolvePortalToken,
 } from "./axiosInstances";

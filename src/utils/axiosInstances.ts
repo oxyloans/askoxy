@@ -23,7 +23,12 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import { store } from "../store";
-import { refreshAccessToken, refreshEmployeeAccessToken, refreshFreelanceAccessToken } from "./tokenRefresh";
+import {
+  refreshAccessToken,
+  refreshEmployeeAccessToken,
+  refreshFreelanceAccessToken,
+  refreshBusinessCardAccessToken,
+} from "./tokenRefresh";
 import {
   getCustomerAccessToken,
   removeCustomerAccessToken,
@@ -40,6 +45,9 @@ import {
   getFreelanceAccessToken,
   removeFreelanceAccessToken,
   removeFreelanceRefreshToken,
+  getBusinessCardAccessToken,
+  removeBusinessCardAccessToken,
+  removeBusinessCardRefreshToken,
 } from "./cookieUtils";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -58,6 +66,7 @@ const LOGIN_ROUTES = {
   partner: "/partnerlogin",
   employee: "/userlogin",
   freelancer: "/employee-login",
+  businessCard: "/business-card/login",
 } as const;
 
 // ─── Token resolvers ─────────────────────────────────────────────────────────
@@ -74,6 +83,7 @@ const partnerToken: TokenResolver = () => getPartnerAccessToken();
 const employeeToken: TokenResolver = () => getEmployeeAccessToken();
 
 const freelanceToken: TokenResolver = () => getFreelanceAccessToken();
+const businessCardToken: TokenResolver = () => getBusinessCardAccessToken();
 
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
@@ -85,7 +95,7 @@ interface InstanceOptions {
    * "refresh" → attempt token refresh then retry (customer flow).
    * "redirect" → clear storage and send user to login page.
    */
-  on401: "refresh" | "employee-refresh" | "freelance-refresh" | "redirect";
+  on401: "refresh" | "employee-refresh" | "freelance-refresh" | "redirect" | "business-card-refresh";
   /** Login page path used when on401 === "redirect" */
   loginRoute?: string;
   /** Clears this module's tokens before redirecting on 401 */
@@ -163,7 +173,19 @@ function createInstance({
           return instance(original);
         }
       }
+if (on401 === "business-card-refresh") {
+  const refreshed = await refreshBusinessCardAccessToken();
 
+  if (refreshed) {
+    const newToken = getToken();
+
+    if (newToken && original.headers) {
+      original.headers.Authorization = `Bearer ${newToken}`;
+    }
+
+    return instance(original);
+  }
+}
       // Redirect flow (or refresh failed): clear the module's tokens then send to login
       if (clearTokens) clearTokens();
       if (loginRoute) {
@@ -299,6 +321,19 @@ export const freelanceApi = createInstance({
   },
 });
 
+/** Business Card portal — separate cookies (bc_at / bc_rt), redirects to /business-card/login on 401 */
+export const businessCardApi = createInstance({
+  getToken: businessCardToken,
+  on401: "business-card-refresh",
+  loginRoute: LOGIN_ROUTES.businessCard,
+  clearTokens: () => {
+    removeBusinessCardAccessToken();
+    removeBusinessCardRefreshToken();
+    sessionStorage.removeItem("userId");
+    sessionStorage.removeItem("Name");
+    sessionStorage.removeItem("primaryType");
+  },
+});
 // ─── Default export (backwards-compatible) ───────────────────────────────────
 // Existing code that imports axiosInstance from this file keeps working.
 export default customerApi;

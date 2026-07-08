@@ -30,12 +30,14 @@ import {
   AlertCircle,
   Loader2,
   BadgeCheck,
+  ArrowLeft,
 } from "lucide-react";
 
 import BASE_URL from "../../Config";
 import Swal from "sweetalert2";
 
 const COMPANY_UPLOAD_API = `${BASE_URL}/ai-automation/upload/company`;
+const COMPANY_UPLOAD_FILES_API = `${BASE_URL}/ai-automation/upload/companies/files`;
 const CONTENT_SUBMIT_API = `${BASE_URL}/ai-automation/content/submit`;
 const ADD_TO_CLONE_API = `${BASE_URL}/ai-automation/add-to-clone`;
 const IMAGE_API = `${BASE_URL}/ai-automation/image`;
@@ -98,6 +100,21 @@ type BlogPayload = {
   imageUrl?: string | null;
   status?: string;
   blogPostId?: string | null;
+};
+
+// ─── Uploaded (company knowledge) file record — matches RadhaAiUploadedFile ──
+type UploadedFileRecord = {
+  id?: number;
+  createdAt?: string;
+  fileId: string;
+  fileName?: string;
+  fileType?: string;
+  uploadStatus?: string;
+  clientName?: string;
+  totalChunks?: number;
+  vectorStoreId?: string;
+  knowledgeType?: string;
+  campaignId?: string;
 };
 
 const getEntityId = (data: any) =>
@@ -260,6 +277,16 @@ export default function RadhAICloneAdminPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [companyFileAttempted, setCompanyFileAttempted] = useState(false);
   const [submitContentAttempted, setSubmitContentAttempted] = useState(false);
+
+  // ── Uploaded company files — full-page view (platform-wise grouped list) ──
+  // Backend exposes GET /ai-automation/upload/companies/files?platformType=X
+  // (single-platform lookup — there is no "get all platforms" endpoint).
+  // So the page's data is built by calling that endpoint once per platform and grouping the
+  // full file list under each platform, all shown at once (no drill-down needed).
+  const [platformCounts, setPlatformCounts] = useState<Record<string, number>>({});
+  const [platformFilesMap, setPlatformFilesMap] = useState<Record<string, UploadedFileRecord[]>>({});
+  const [isLoadingUploadedFiles, setIsLoadingUploadedFiles] = useState(false);
+  const [uploadedFilesPageOpen, setUploadedFilesPageOpen] = useState(false);
 
   const [contentId, setContentId] = useState("");
   const [generatedContext, setGeneratedContext] = useState("");
@@ -533,6 +560,50 @@ ${
   const removeAttachment = (index: number) =>
     setAttachments((prev) => prev.filter((_, i) => i !== index));
 
+  // ── Build platform-wise file lists for the uploaded-files page ──
+  // Backend has no "get all platforms" endpoint, so we call
+  // GET /ai-automation/upload/companies/files?platformType=X once per real platform
+  // (skipping "OTHER", which isn't a fixed platformType), collect the full
+  // file arrays, and group them under each platform for display all at once.
+  const handleFetchUploadedFiles = async () => {
+    try {
+      setIsLoadingUploadedFiles(true);
+      const realPlatforms = PLATFORMS.filter((p) => p.key !== "OTHER");
+      const results = await Promise.allSettled(
+        realPlatforms.map(async (p) => {
+          const params = new URLSearchParams();
+          params.append("platformType", p.key);
+          const res = await fetch(`${COMPANY_UPLOAD_FILES_API}?${params.toString()}`, {
+            method: "GET",
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (!res.ok || data?.success === false) {
+            throw new Error(data?.message || `Failed to fetch ${p.key}`);
+          }
+          const files: UploadedFileRecord[] = Array.isArray(data?.data) ? data.data : [];
+          return { key: p.key, files };
+        })
+      );
+      const counts: Record<string, number> = {};
+      const filesMap: Record<string, UploadedFileRecord[]> = {};
+      results.forEach((r) => {
+        if (r.status === "fulfilled") {
+          counts[r.value.key] = r.value.files.length;
+          filesMap[r.value.key] = r.value.files;
+        }
+      });
+      setPlatformCounts(counts);
+      setPlatformFilesMap(filesMap);
+    } catch (error: any) {
+      toast("error", error?.message || "Could not load uploaded files");
+      setPlatformCounts({});
+      setPlatformFilesMap({});
+    } finally {
+      setIsLoadingUploadedFiles(false);
+    }
+  };
+
   const handleCompanyFileUpload = async () => {
     if (!companyPlatform) { toast("warning", "Please select platform"); return; }
     if (companyPlatform === "OTHER" && !customCompanyPlatformName.trim()) {
@@ -559,6 +630,10 @@ ${
       }
       setCompanyFiles([]);
       setShowCompanyUploadSuccess(true);
+      // Refresh the uploaded-files page data if it's currently open
+      if (uploadedFilesPageOpen) {
+        handleFetchUploadedFiles();
+      }
     } catch (error: any) {
       toast("error", error?.message || "Upload failed");
     } finally {
@@ -803,6 +878,9 @@ ${
     setSubmitPlatform("");
     setCustomPlatformName("");
     setCustomCompanyPlatformName("");
+    setPlatformCounts({});
+    setPlatformFilesMap({});
+    setUploadedFilesPageOpen(false);
     toast("success", "Refreshed successfully");
   };
 
@@ -865,6 +943,125 @@ ${
             </motion.button>
           </div>
         </motion.div>
+      </div>
+    );
+  }
+
+  // ─── Uploaded Files — Full Page View (platform-wise grouped list) ────────
+  if (uploadedFilesPageOpen) {
+    const realPlatforms = PLATFORMS.filter((p) => p.key !== "OTHER");
+    const platformsWithFiles = realPlatforms.filter(
+      (p) => (platformFilesMap[p.key]?.length || 0) > 0
+    );
+
+    return (
+      <div className="relative min-h-screen overflow-x-hidden bg-gray-50 text-gray-900">
+        <ToastContainer />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(46,229,255,0.12),transparent_30%),radial-gradient(circle_at_85%_18%,rgba(143,116,255,0.13),transparent_32%)]" />
+        <main className="relative z-10 w-full px-3 py-4 sm:px-4 lg:px-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ y: -1, scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={() => setUploadedFilesPageOpen(false)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-cyan-300 bg-white px-3 text-xs font-black text-cyan-700 shadow-sm transition hover:bg-cyan-50 cursor-pointer"
+              >
+                <ArrowLeft size={14} />
+                Back
+              </motion.button>
+              <h1 className="text-base font-black text-gray-900 sm:text-lg">
+                Uploaded Company Files
+              </h1>
+            </div>
+
+            <motion.button
+              whileHover={{ y: -1, scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
+              type="button"
+              onClick={handleFetchUploadedFiles}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-cyan-300 bg-white px-3 text-xs font-black text-cyan-700 shadow-sm transition hover:bg-cyan-50 cursor-pointer"
+            >
+              <RotateCcw size={13} />
+              Refresh
+            </motion.button>
+          </div>
+
+          {isLoadingUploadedFiles ? (
+            <div className="flex items-center justify-center gap-2 py-14 text-sm text-gray-500">
+              <Loader2 size={16} className="animate-spin" />
+              Loading uploaded files...
+            </div>
+          ) : platformsWithFiles.length === 0 ? (
+            <p className="py-14 text-center text-sm text-gray-400">
+              No files uploaded yet for any platform.
+            </p>
+          ) : (
+            <div className="space-y-5">
+              {platformsWithFiles.map((p) => {
+                const files = (platformFilesMap[p.key] || [])
+                  .slice()
+                  .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+                return (
+                  <div
+                    key={p.key}
+                    className="rounded-2xl border-2 border-cyan-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <h2 className="flex items-center gap-2 text-sm font-black text-cyan-800">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-100 text-[11px] font-black text-cyan-700">
+                          {files.length}
+                        </span>
+                        {p.label}
+                      </h2>
+                    </div>
+
+                    <div className="space-y-2">
+                      {files.map((f) => (
+                        <div
+                          key={f.fileId}
+                          className="flex items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold text-gray-800">
+                              {f.fileName || "Untitled file"}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-gray-500">
+                              {f.fileType || "UNKNOWN"} • {f.totalChunks ?? 0} chunks
+                              {f.createdAt && (
+                                <>
+                                  {" "}
+                                  •{" "}
+                                  {new Date(f.createdAt).toLocaleDateString(undefined, {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </>
+                              )}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              f.uploadStatus === "STORED"
+                                ? "bg-lime-100 text-lime-700"
+                                : f.uploadStatus === "FAILED"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
+                            {f.uploadStatus || "UNKNOWN"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </main>
       </div>
     );
   }
@@ -998,7 +1195,10 @@ ${
                 <PlatformPicker
                   label="Please select platform"
                   value={companyPlatform}
-                  onChange={(v) => { setCompanyPlatform(v); setCompanyFileAttempted(false); }}
+                  onChange={(v) => {
+                    setCompanyPlatform(v);
+                    setCompanyFileAttempted(false);
+                  }}
                 />
 
                 {companyPlatform === "OTHER" && (
@@ -1069,6 +1269,19 @@ ${
                     className="rounded-xl border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold text-red-600 transition-all duration-200 hover:bg-red-100 hover:border-red-300 hover:shadow-sm cursor-pointer"
                   >
                     Clear files
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ y: -1, scale: 1.03 }}
+                    whileTap={{ scale: 0.96 }}
+                    type="button"
+                    onClick={() => {
+                      setUploadedFilesPageOpen(true);
+                      handleFetchUploadedFiles();
+                    }}
+                    className="cursor-pointer rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold text-cyan-700 transition-all duration-200 hover:bg-cyan-100 hover:border-cyan-300 hover:shadow-sm"
+                  >
+                    View Uploaded Files
                   </motion.button>
                 </div>
 

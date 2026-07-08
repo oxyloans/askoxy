@@ -36,6 +36,8 @@ export const COOKIE_KEYS = {
   // Freelance
   freelanceAccess:  "f_at",
   freelanceRefresh: "f_rt",
+  businessCardAccess:  "bc_at",
+  businessCardRefresh: "bc_rt",
 } as const;
 
 // ─── Customer ─────────────────────────────────────────────────────────────────
@@ -112,3 +114,18 @@ export const setFreelanceRefreshToken = (token: string): void =>
   cookieUtils.set(COOKIE_KEYS.freelanceRefresh, token);
 export const removeFreelanceRefreshToken = (): void =>
   cookieUtils.remove(COOKIE_KEYS.freelanceRefresh);
+
+// ─── Business Card ────────────────────────────────────────────────────────────
+export const getBusinessCardAccessToken = (): string | null =>
+  cookieUtils.get(COOKIE_KEYS.businessCardAccess);
+export const setBusinessCardAccessToken = (token: string): void =>
+  cookieUtils.set(COOKIE_KEYS.businessCardAccess, token);
+export const removeBusinessCardAccessToken = (): void =>
+  cookieUtils.remove(COOKIE_KEYS.businessCardAccess);
+
+export const getBusinessCardRefreshToken = (): string | null =>
+  cookieUtils.get(COOKIE_KEYS.businessCardRefresh);
+export const setBusinessCardRefreshToken = (token: string): void =>
+  cookieUtils.set(COOKIE_KEYS.businessCardRefresh, token);
+export const removeBusinessCardRefreshToken = (): void =>
+  cookieUtils.remove(COOKIE_KEYS.businessCardRefresh);

@@ -98,7 +98,14 @@ import RadhAICloneAdminPage from "./components/talktoceo/RadhAICloneAdminPage";
 import SudheerVakkalagadda from "./AskoxyAdmin/SudheerVakkalagadda";
 import RadhAIRAndDPage from "./components/talktoceo/RadhAIRAndDPage";
 import RadhAIAdminDashboard from "./components/talktoceo/RadhAIAdminDashboard";
-import EmailCampaignLayout, { UploadPage, SendCampaignPage, AllDocumentsPage, AllCampaignsRoute, ScorecardPage, ConversationsPage } from "./components/EmailCampaign/index";
+import EmailCampaignLayout, {
+  UploadPage,
+  SendCampaignPage,
+  AllDocumentsPage,
+  AllCampaignsRoute,
+  ScorecardPage,
+  ConversationsPage,
+} from "./components/EmailCampaign/index";
 import GoogleAnalyticsDashboard from "./components/GoogleAnalyticsDashboard";
 import OxyBricksFractionalPage from "./components/FractionalPage";
 import Assignedtasksbasedstatus from "./Taskmanagement/Assignedtasksbasedstatus";
@@ -121,6 +128,13 @@ import UAEBanksAIIntelligenceHub from "./components/UAEBanksAIIntelligenceHub";
 import RadhAIVoicePageCEO from "./components/talktoceo/RadhAIVoicePageLanguage";
 import CbsDataPage from "./AskoxyAdmin/CbsDataPage";
 import InternshipPage from "./StudyAbroad/InternshipPage";
+import BusinessCardLogin from "./BusinessCard/BusinessCardLogin";
+import BusinessCardRegister from "./BusinessCard/BusinessCardRegister";
+import BusinessCardProtectedRoute from "./auth/BusinessCardProtectedRoute";
+import CeoDetailsPage from "./BusinessCard/CeoDetailsPage";
+import ProcessBusinessCardPage from "./BusinessCard/ProcessBusinessCardPage";
+import CeoUploadDetailsPage from "./BusinessCard/CeoUploadDetailsPage";
+import CeoDetailsListPage from "./BusinessCard/CeoDetailsListPage";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -645,9 +659,9 @@ const App: React.FC = () => {
       localStorage.setItem("entryPoint", location.pathname);
     }
   }, [location.pathname]);
-const isDashboardHomeRoute = location.pathname === "/main/dashboard/home";
-const isRootRoute = location.pathname === "/";
-const isLoggedIn = !!localStorage.getItem("userId");
+  const isDashboardHomeRoute = location.pathname === "/main/dashboard/home";
+  const isRootRoute = location.pathname === "/";
+  const isLoggedIn = !!localStorage.getItem("userId");
   const isRestrictedRoute = () => {
     const currentPath = location.pathname;
     return (
@@ -666,9 +680,9 @@ const isLoggedIn = !!localStorage.getItem("userId");
       currentPath.startsWith("/goldrates") ||
       currentPath.startsWith("/all-different-gold-rates") ||
       currentPath.startsWith("/allgoldrates") ||
-
-
-      currentPath.startsWith("/employee-freelancers/:companyId/:requirementId") ||
+      currentPath.startsWith(
+        "/employee-freelancers/:companyId/:requirementId",
+      ) ||
       currentPath.startsWith("/radha/adcb-ai-intelligence") ||
       currentPath.startsWith("/radha/emirates-nbd-ai-intelligence") ||
       currentPath.startsWith("/radha/fab-ai-intelligence") ||
@@ -701,7 +715,7 @@ const isLoggedIn = !!localStorage.getItem("userId");
       currentPath.startsWith("/home") ||
       // Admin routes
       currentPath.startsWith("/admin") ||
-      currentPath.startsWith("/glms") ||  
+      currentPath.startsWith("/glms") ||
       currentPath.startsWith("/adminRegister") ||
       currentPath.startsWith("/accenture/jobs") ||
       currentPath.startsWith("/accenturestats") ||
@@ -713,12 +727,12 @@ const isLoggedIn = !!localStorage.getItem("userId");
       currentPath.startsWith("/insurvibe-code-builder") ||
       currentPath.startsWith("/radhai-admin/") ||
       currentPath.startsWith("/radha/uae-banks-ai-intelligence") ||
-      currentPath.startsWith("/radhai-admin") || 
+      currentPath.startsWith("/radhai-admin") ||
       currentPath.startsWith("/use-case-engine") ||
       currentPath.startsWith("/live-ai-demo") ||
-      currentPath.startsWith("/radhai") || 
+      currentPath.startsWith("/radhai") ||
       currentPath.startsWith("/talktoceo") ||
-      currentPath.startsWith("/radhai-connect") || 
+      currentPath.startsWith("/radhai-connect") ||
       currentPath.startsWith("/radhAI") ||
       currentPath.startsWith("/radhai-admin") ||
       currentPath.startsWith("/generate") ||
@@ -1187,7 +1201,82 @@ const isLoggedIn = !!localStorage.getItem("userId");
               />
               <Route path="/nyayagpt" element={<Nyayagpt />} />
               <Route path="/gstonrice" element={<GSTRiceFAQ />} />
-
+              <Route
+                path="/business-card/login"
+                element={<BusinessCardLogin />}
+              />
+              <Route
+                path="/business-card/register"
+                element={<BusinessCardRegister />}
+              />
+              <Route
+                path="/business-card/ceo-details"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <CeoDetailsPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              <Route
+                path="/business-card/process"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <ProcessBusinessCardPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              <Route
+                path="/business-card/upload-details"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <CeoUploadDetailsPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              <Route
+                path="/business-card/ceo-details-list"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <CeoDetailsListPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              {/* ✅ FREELANCE MARKETPLACE ROUTES (EMPLOYEE/COMPANY) */}
+              {/* ===================================================== */}
+              <Route path="/employee-login" element={<EmployeeLogin />} />
+              <Route path="/employee-register" element={<EmployeeRegister />} />
+              <Route
+                path="/employee-dashboard"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <EmployeeDashboard />
+                  </EmployeeProtectedRoutes>
+                }
+              />
+              <Route
+                path="/employee-requirement-list"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <RequirementList />
+                  </EmployeeProtectedRoutes>
+                }
+              />
+              <Route
+                path="/employee-freelancers/:companyId/:requirementId"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <FreelancerProfiles />
+                  </EmployeeProtectedRoutes>
+                }
+              />
+              <Route
+                path="/employee-assigned-freelancers/:companyId"
+                element={
+                  <EmployeeProtectedRoutes>
+                    <AssignedFreelancersPage />
+                  </EmployeeProtectedRoutes>
+                }
+              />
               {/* Employee / Internal */}
               <Route
                 path="/userPanelLayout"

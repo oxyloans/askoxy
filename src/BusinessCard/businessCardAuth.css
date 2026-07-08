@@ -1,0 +1,91 @@
+/* Ant Design form overrides — layout uses Tailwind in AuthShell */
+
+.bc-auth-form-prompt a {
+  color: #008cba;
+  font-weight: 600;
+}
+
+.bc-auth-form-prompt a:hover {
+  color: #0079a3;
+}
+
+.bc-auth-form .ant-form-item {
+  margin-bottom: 12px;
+}
+
+.bc-auth-form .ant-form-item-label > label {
+  color: #475569;
+  font-weight: 500;
+  font-size: 12px;
+  height: auto;
+}
+
+.bc-auth-form .ant-form-item-extra {
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.bc-auth-form .ant-input,
+.bc-auth-form .ant-input-affix-wrapper,
+.bc-auth-form .ant-input-password {
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.bc-auth-form .ant-input-affix-wrapper {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.bc-auth-form .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover,
+.bc-auth-form .ant-input:hover {
+  border-color: #008cba;
+}
+
+.bc-auth-form .ant-input-affix-wrapper-focused,
+.bc-auth-form .ant-input:focus {
+  border-color: #008cba;
+  box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.1);
+}
+
+.bc-auth-form .ant-steps {
+  margin-bottom: 14px !important;
+}
+
+.bc-auth-form .ant-steps-item-title {
+  font-size: 12px !important;
+}
+
+.bc-auth-submit-btn.ant-btn-primary {
+  background: #008cba;
+  border-color: #008cba;
+}
+
+.bc-auth-submit-btn.ant-btn-primary:hover,
+.bc-auth-submit-btn.ant-btn-primary:focus {
+  background: #0079a3 !important;
+  border-color: #0079a3 !important;
+}
+
+.bc-auth-outline-btn {
+  border-color: #1ab394;
+  color: #1ab394;
+}
+
+.bc-auth-success-btn {
+  background: #1ab394;
+  border-color: #1ab394;
+  color: #ffffff;
+}
+
+.bc-auth-form .ant-result {
+  padding: 6px 0;
+}
+
+.bc-auth-form .ant-result-title {
+  font-size: 15px !important;
+}
+
+.bc-auth-form .ant-result-subtitle {
+  font-size: 12px !important;
+}

@@ -27,8 +27,10 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  MessageCircleQuestion,
 } from "lucide-react";
 import BASE_URL from "../../Config";
+import PaperclipAssistant from "./PaperclipAssistant"; // NEW — Ask Article popup
 
 const PAPERCLIP_ANALYZE_API = `${BASE_URL}/ai-automation/paperclip/analyze`;
 const PAPERCLIP_ALL_API = `${BASE_URL}/ai-automation/paperclip/all`;
@@ -324,10 +326,12 @@ const PaperclipListCard = React.memo(function PaperclipListCard({
   item,
   isActive,
   onClick,
+  onAsk, // NEW — opens the Ask Article assistant for this specific card
 }: {
   item: PaperclipData;
   isActive: boolean;
   onClick: () => void;
+  onAsk?: () => void; // NEW
 }) {
   const fnames = safeText(item.fileName).split(",").map((f) => f.trim()).filter(Boolean);
   const displayName = fnames.length > 1 ? `${fnames[0]} +${fnames.length - 1}` : fnames[0] || "Untitled";
@@ -389,6 +393,19 @@ const PaperclipListCard = React.memo(function PaperclipListCard({
             </span>
           )}
         </div>
+      )}
+
+      {/* NEW — quick "Ask" chip. stopPropagation so it doesn't also trigger onClick (open detail view) */}
+      {onAsk && (
+        <span
+          onClick={(e) => {
+            e.stopPropagation();
+            onAsk();
+          }}
+          className="mt-2 inline-flex w-fit items-center gap-1 rounded-full border border-fuchsia-200 bg-fuchsia-50 px-2.5 py-1 text-[10px] font-bold text-fuchsia-700 transition hover:bg-fuchsia-100"
+        >
+          🤖 Ask
+        </span>
       )}
     </button>
   );
@@ -478,6 +495,10 @@ export default function PaperClippingPage() {
   const [blogGenerating, setBlogGenerating] = useState(false);
   const [isImageBlog, setIsImageBlog] = useState(false);
   const [activeView, setActiveView] = useState<"upload" | "allclips">("upload");
+
+  // ─── NEW — Ask Article assistant state ─────────────────────────────────────
+  const [showAssistant, setShowAssistant] = useState(false);
+  const [assistantTarget, setAssistantTarget] = useState<PaperclipData | null>(null);
 
   // ─── Pagination state for the All Paper Clips grid ─────────────────────────
   const [currentPage, setCurrentPage] = useState(1);
@@ -936,7 +957,7 @@ export default function PaperClippingPage() {
               Analyze newspaper clippings to uncover trends, opportunities, market intelligence, and strategic insights.
             </p>
           </div>
-         <div className="flex items-center gap-2">
+         <div className="flex items-center gap-2.5">
             {selected && (
               <button
                 onClick={() => { setSelected(null); setBlogPreview(null); setPublishedBlog(null); setImageUrl(""); }}
@@ -945,14 +966,20 @@ export default function PaperClippingPage() {
                 <ArrowLeft size={12} /> Back
               </button>
             )}
-           {/* {!selected && paperclips.length > 0 && (
+
+            {/* ── NEW — "Ask Article" moved up here, unique size/color so it stands out from Back/Refresh ── */}
+            {selected && (
               <button
-                onClick={() => { setPaperclips([]); setSearchTerm(""); setActiveView("upload"); }}
-                className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-violet-300 bg-violet-50 px-3 text-[11px] font-bold text-violet-700 transition hover:bg-violet-100"
+                onClick={() => { setAssistantTarget(selected); setShowAssistant(true); }}
+                title="Ask this article a question"
+                className="group relative inline-flex h-10 items-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-fuchsia-600 via-orange-700 to-indigo-600 px-4 text-[13px] font-black text-white shadow-[0_4px_14px_rgba(192,38,211,0.45)] transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_6px_20px_rgba(192,38,211,0.6)]"
               >
-                <ArrowLeft size={12} /> Back
+                <span className="absolute inset-0 -translate-x-full bg-white/20 skew-x-[-20deg] transition-transform duration-500 group-hover:translate-x-full" />
+                <MessageCircleQuestion size={16} className="relative" />
+                <span className="relative">Ask Article</span>
               </button>
-            )} */}
+            )}
+
             <button
               onClick={handleRefreshPage}
               disabled={refreshLoading}
@@ -1166,6 +1193,7 @@ export default function PaperClippingPage() {
                           item={item}
                           isActive={false}
                           onClick={() => handleSelectPaperclip(item)}
+                          onAsk={() => { setAssistantTarget(item); setShowAssistant(true); }}
                         />
                       ))}
                     </div>
@@ -1205,6 +1233,7 @@ export default function PaperClippingPage() {
                   </h2>
                 </div>
 
+                {/* NEW — "Ask Article" removed from here; now lives in the top bar next to Back/Refresh */}
                 <div className="flex gap-2 overflow-x-auto shrink-0 pb-0.5 sm:flex-wrap sm:overflow-visible">
                   <ActionChip label="Add to Clone" loading={cloneLoading} onClick={handleAddToClone} color="cyan" icon={<CheckCircle size={11} />} />
                   <ActionChip label="Blog with Paperclip" loading={formatLoading} onClick={() => handleFormatBlog(false)} color="violet" icon={<Eye size={11} />} />
@@ -1503,6 +1532,30 @@ export default function PaperClippingPage() {
           </div>
         )}
       </div>
+
+      {/* ── NEW — Ask Article assistant popup ── */}
+   {showAssistant && assistantTarget && (
+  <PaperclipAssistant
+    paperclipId={safeText(assistantTarget.paperclipId)}
+    articleTitle={safeText(assistantTarget.fileName)}
+    articleContext={{
+      fileName: assistantTarget.fileName,
+      shortSummary: assistantTarget.analysis?.summary?.shortSummary,
+      detailedSummary: assistantTarget.analysis?.summary?.detailedSummary,
+      keyPoints: assistantTarget.analysis?.summary?.keyPoints,
+      actionItems: assistantTarget.analysis?.summary?.actionItems,
+      people: assistantTarget.analysis?.people,
+      companies: assistantTarget.analysis?.companies,
+      reports: assistantTarget.analysis?.reports,
+      imageUrls: assistantTarget.imageUrls?.length
+        ? assistantTarget.imageUrls
+        : assistantTarget.imageUrl
+        ? [assistantTarget.imageUrl]
+        : [],
+    }}
+    onClose={() => setShowAssistant(false)}
+  />
+)}
 
       {/* ── Full-screen image preview ── */}
       {previewImage && (

@@ -6,6 +6,7 @@ import {
   getEmployeeRefreshToken,
   setEmployeeAccessToken,
   setEmployeeRefreshToken,
+  getBusinessCardRefreshToken,
   removeEmployeeAccessToken,
   removeEmployeeRefreshToken,
   getFreelanceRefreshToken,
@@ -13,12 +14,17 @@ import {
   setFreelanceRefreshToken,
   removeFreelanceAccessToken,
   removeFreelanceRefreshToken,
+  setBusinessCardAccessToken,
+  setBusinessCardRefreshToken,
+  removeBusinessCardAccessToken,
+  removeBusinessCardRefreshToken,
 } from "./cookieUtils";
 
 let refreshTokenInterval: NodeJS.Timeout | null = null;
 let pendingRefresh: Promise<boolean> | null = null;
 let pendingEmployeeRefresh: Promise<boolean> | null = null;
 let pendingFreelanceRefresh: Promise<boolean> | null = null;
+let pendingBusinessCardRefresh: Promise<boolean> | null = null;
 export const refreshAccessToken = async (): Promise<boolean> => {
   // Return the in-flight promise to prevent concurrent refresh calls
   if (pendingRefresh) return pendingRefresh;
@@ -107,7 +113,51 @@ export const refreshEmployeeAccessToken = async (): Promise<boolean> => {
 
   return pendingEmployeeRefresh;
 };
+export const refreshBusinessCardAccessToken = async (): Promise<boolean> => {
+  if (pendingBusinessCardRefresh) return pendingBusinessCardRefresh;
 
+  const refreshToken = getBusinessCardRefreshToken();
+  if (!refreshToken) return false;
+
+  pendingBusinessCardRefresh = (async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user-service/refresh-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Business Card refresh failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.mobileNumber) {
+        setBusinessCardAccessToken(data.mobileNumber);
+      }
+
+      if (data.mobileOtpSession) {
+        setBusinessCardRefreshToken(data.mobileOtpSession);
+      }
+
+      return true;
+    } catch {
+      removeBusinessCardAccessToken();
+      removeBusinessCardRefreshToken();
+
+      const currentPath = window.location.pathname + window.location.search;
+      sessionStorage.setItem("redirectPath", currentPath);
+      window.location.href = "/business-card/login";
+
+      return false;
+    } finally {
+      pendingBusinessCardRefresh = null;
+    }
+  })();
+
+  return pendingBusinessCardRefresh;
+};
 export const refreshFreelanceAccessToken = async (): Promise<boolean> => {
   if (pendingFreelanceRefresh) return pendingFreelanceRefresh;
 
