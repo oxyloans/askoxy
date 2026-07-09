@@ -292,9 +292,15 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN"],
         },
         {
-          title: "Add Role Based Blogs",
+          title: "Add We are hiring",
+          icon: <FaBriefcase className="text-green-400" />,
+          link: "/admin/wearehiringadd",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
+          title: "Add League Journey",
           icon: <FaPlusCircle className="text-yellow-400" />,
-          link: "/admin/addroleblogs",
+          link: "/admin/addleaguejourney",
           roles: ["HELPDESKSUPERADMIN"],
         },
         {

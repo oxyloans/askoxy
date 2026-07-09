@@ -1374,11 +1374,12 @@ const Agentcreation: React.FC = () => {
 
       const data = res.data;
 
-      // ❌ Backend returned error
-      if (data.status === "FAILED" || data.message) {
+   
+
+      if (data.status === "FAILED") {
         notification.error({
-          message: "Processing Failed",
-          description: data.message || "Failed to process business card.",
+          message: "Upload Failed",
+          description: data.message ,
         });
         return;
       }
@@ -1389,7 +1390,7 @@ const Agentcreation: React.FC = () => {
       if (!aiData) {
         notification.error({
           message: "AI Processing Error",
-          description: "No AI data received from the business card.",
+          description: data.message || "No AI data received from the business card.",
         });
         return;
       }
@@ -1514,11 +1515,13 @@ const Agentcreation: React.FC = () => {
         }
       }, 300);
     } catch (e: any) {
+      const errMsg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "Something went wrong while processing the business card.";
       notification.error({
-        message: "Unexpected Error",
-        description:
-          e?.message ||
-          "Something went wrong while processing the business card.",
+        message: "Upload Failed",
+        description: errMsg,
       });
     } finally {
       setBusinessCardUploading(false);

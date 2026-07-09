@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import BASE_URL from "../Config";
 import {
   Alert,
   Button,
-  Card,
   Col,
-  Divider,
+  Form,
+  Input,
   Row,
+  Select,
   Space,
   Spin,
   Table,
@@ -15,12 +15,16 @@ import {
   Typography,
   Grid,
   Modal,
+  message,
+  Upload,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
   ReloadOutlined,
-  FilePdfOutlined,
   ArrowLeftOutlined,
+  EditOutlined,
+  UploadOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import customerApi from "../utils/axiosInstances";
@@ -29,6 +33,7 @@ const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
 
 const PRIMARY = "#008cba";
+const PURPLE = "#7e22ce";
 
 type Freelancer = {
   id: string;
@@ -49,6 +54,50 @@ function formatMoney(n: number | null | undefined) {
   return n.toLocaleString("en-IN");
 }
 
+const RatesCell: React.FC<{ r: Freelancer }> = ({ r }) => {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div style={{ minWidth: 120 }}>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <Text type="secondary" style={{ fontSize: 11 }}>₹/Hr</Text>
+          <div><b>{formatMoney(r.perHour)}</b></div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <Text type="secondary" style={{ fontSize: 11 }}>₹/Day</Text>
+          <div><b>{formatMoney(r.perDay)}</b></div>
+        </div>
+      </div>
+      {expanded && (
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginTop: 6 }}>
+          <div style={{ textAlign: "center" }}>
+            <Text type="secondary" style={{ fontSize: 11 }}>₹/Week</Text>
+            <div><b>{formatMoney(r.perWeek)}</b></div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <Text type="secondary" style={{ fontSize: 11 }}>₹/Month</Text>
+            <div><b>{formatMoney(r.perMonth)}</b></div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <Text type="secondary" style={{ fontSize: 11 }}>₹/Year</Text>
+            <div><b>{formatMoney(r.perYear)}</b></div>
+          </div>
+        </div>
+      )}
+      <div style={{ textAlign: "center", marginTop: 4 }}>
+        <Button
+          type="link"
+          size="small"
+          style={{ padding: 0, fontSize: 11, color: PRIMARY }}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "View Less ▲" : "View More ▼"}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const FreelancersByUserId: React.FC = () => {
   const navigate = useNavigate();
   const screens = useBreakpoint();
@@ -59,234 +108,197 @@ const FreelancersByUserId: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-  const [showResumeModal, setShowResumeModal] = useState(false);
-  const [currentResumeUrl, setCurrentResumeUrl] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [resumeError, setResumeError] = useState(false);
 
-  const getAccessToken = (): string | null => {
-    return localStorage.getItem("accessToken");
-  };
+
+
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateRecord, setUpdateRecord] = useState<Freelancer | null>(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [newResumeUrl, setNewResumeUrl] = useState<string | null>(null);
+  const [updateForm] = Form.useForm();
+
+  const getAccessToken = () => localStorage.getItem("accessToken");
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-
     let userId = localStorage.getItem("userId");
     let token = getAccessToken();
 
-    // ─── Fix for race condition after login redirect ───
     if (!token || !userId) {
-      console.log("No token/userId found initially → waiting briefly...");
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((r) => setTimeout(r, 400));
       token = getAccessToken();
       userId = localStorage.getItem("userId");
-
-      if (!token) {
-        setError("Authentication token not found. Please login again.");
-        setLoading(false);
-        return;
-      }
-      if (!userId) {
-        setError("User ID not found. Please login again.");
+      if (!token || !userId) {
+        setError("Authentication required. Please login again.");
         setLoading(false);
         return;
       }
     }
-   
-
-    const API_URL = `${BASE_URL}/ai-service/agent/getFreeLancersData/${userId}`;
-    console.log("Using token:", token.substring(0, 10) + "...");
 
     try {
-      const res = await customerApi.get<Freelancer[]>(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const result = Array.isArray(res.data) ? res.data : [];
-      setData(result);
-      console.log(`Loaded ${result.length} freelancers`);
+      const res = await customerApi.get<Freelancer[]>(
+        `${BASE_URL}/ai-service/agent/getFreeLancersData/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setData(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      const errMsg =
-        e?.response?.data?.message ||
-        e?.response?.statusText ||
-        e?.message ||
-        "Failed to load freelancers";
-
-      console.error("Fetch error:", e);
-      setError(errMsg);
-
-      // Optional: auto-logout on 401
-      if (e?.response?.status === 401) {
-        setError("Session expired or unauthorized. Please login again.");
-        // localStorage.removeItem("accessToken"); // uncomment if you want auto-logout
-      }
+      const msg = e?.response?.data?.message || e?.message || "Failed to load";
+      setError(e?.response?.status === 401 ? "Session expired. Please login again." : msg);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
+
+  const openUpdateModal = (r: Freelancer) => {
+    setUpdateRecord(r);
+    setNewResumeUrl(null);
+    updateForm.setFieldsValue({
+      email: r.email,
+      perHour: r.perHour,
+      perDay: r.perDay,
+      perWeek: r.perWeek,
+      perMonth: r.perMonth,
+      perYear: r.perYear,
+      openForFreeLancing: r.openForFreeLancing,
+      amountNegotiable: r.amountNegotiable,
+    });
+    setShowUpdateModal(true);
+  };
+
+
+
+  const handleUpdate = async () => {
+    if (!updateRecord) return;
+    try {
+      await updateForm.validateFields();
+      const values = updateForm.getFieldsValue();
+      setUpdateLoading(true);
+      await customerApi.patch(
+        `${BASE_URL}/ai-service/agent/freeLancerInfo/${updateRecord.id}`,
+        {
+          email: values.email ?? updateRecord.email,
+          userId: updateRecord.userId,
+          ...values,
+          resumeUrl: newResumeUrl ?? updateRecord.resumeUrl,
+        },
+        { headers: { Authorization: `Bearer ${getAccessToken()}` } }
+      );
+      message.success("Updated successfully!");
+      setShowUpdateModal(false);
+      fetchData();
+    } catch (e: any) {
+      message.error(e?.response?.data?.message || "Update failed");
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
 
   const columns: ColumnsType<Freelancer> = [
     {
       title: "S.No",
-      key: "serial",
+      key: "sno",
       align: "center",
-      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
+      width: 60,
+      render: (_, __, i) => (currentPage - 1) * pageSize + i + 1,
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
       align: "center",
-      render: (v: string) => (
-        <Text style={{ fontWeight: 700 }}>{v || "-"}</Text>
-      ),
+      render: (v: string) => <Text strong>{v || "-"}</Text>,
     },
     {
       title: "Rates",
       key: "rates",
       align: "center",
-      render: (_, r) => (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: 6,
-          }}
-        >
-          <div>
-            <Text type="secondary">₹/Hour</Text>
-            <br />
-            <b>{formatMoney(r.perHour)}</b>
-          </div>
-          <div>
-            <Text type="secondary">₹/Day</Text>
-            <br />
-            <b>{formatMoney(r.perDay)}</b>
-          </div>
-          <div>
-            <Text type="secondary">₹/Week</Text>
-            <br />
-            <b>{formatMoney(r.perWeek)}</b>
-          </div>
-          <div>
-            <Text type="secondary">₹/Month</Text>
-            <br />
-            <b>{formatMoney(r.perMonth)}</b>
-          </div>
-          <div style={{ gridColumn: "span 2" }}>
-            <Text type="secondary">₹/Year</Text>
-            <br />
-            <b>{formatMoney(r.perYear)}</b>
-          </div>
-        </div>
-      ),
+      render: (_, r) => <RatesCell r={r} />,
     },
     {
       title: "Available",
       dataIndex: "openForFreeLancing",
       key: "openForFreeLancing",
       align: "center",
-      render: (v: string) => (
-        <Tag color={v === "YES" ? "green" : "red"}>{v || "-"}</Tag>
-      ),
+     
+      render: (v: string) => <Tag color={v === "YES" ? "green" : "red"}>{v || "-"}</Tag>,
     },
     {
       title: "Negotiable",
       dataIndex: "amountNegotiable",
       key: "amountNegotiable",
       align: "center",
-      render: (v: string) => (
-        <Tag color={v === "YES" ? "geekblue" : "default"}>{v || "-"}</Tag>
-      ),
+     
+      render: (v: string) => <Tag color={v === "YES" ? "geekblue" : "default"}>{v || "-"}</Tag>,
     },
     {
       title: "Resume",
       key: "resume",
       align: "center",
+    
       render: (_, r) => (
         <Button
-          icon={<FilePdfOutlined />}
+          icon={<EyeOutlined />}
+          size="small"
           disabled={!r.resumeUrl}
-          onClick={() => {
-            if (!r.resumeUrl) {
-              Modal.error({
-                title: 'Resume Not Available',
-                content: 'This freelancer has not uploaded a resume yet.',
-              });
-              return;
-            }
-            const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
-              r.resumeUrl,
-            )}&embedded=true`;
-            setCurrentResumeUrl(viewerUrl);
-            setShowResumeModal(true);
-            setIsLoading(true);
-            setResumeError(false);
-          }}
-          style={{
-            background: PRIMARY,
-            borderColor: PRIMARY,
-            color: "#fff",
-            fontWeight: 700,
-            borderRadius: 8,
-          }}
+          onClick={() => r.resumeUrl && window.open(r.resumeUrl, "_blank")}
+          style={{ background: PRIMARY, borderColor: PRIMARY, color: "#fff", borderRadius: 6 }}
         >
           View Resume
+        </Button>
+      ),
+    },
+    {
+      title: "Action",
+      key: "action",
+      align: "center",
+    
+      render: (_, r) => (
+        <Button
+          icon={<EditOutlined />}
+          size="small"
+          onClick={() => openUpdateModal(r)}
+          style={{ background: PURPLE, borderColor: PURPLE, color: "#fff", borderRadius: 6 }}
+        >
+          Update
         </Button>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: 20, background: "#f6f8fb", minHeight: "100vh" }}>
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 16,
-          padding: 18,
-          border: "1px solid #e5e7eb",
-          boxShadow: "0 8px 22px rgba(0,0,0,0.05)",
-        }}
-      >
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Title level={3} style={{ margin: 0 }}>
-              Freelancer Applied List
-            </Title>
-          </Col>
-          <Col>
-            <Space>
-              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-                Back
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={fetchData}
-                style={{ color: PRIMARY, borderColor: PRIMARY }}
-              >
-                Refresh
-              </Button>
-            </Space>
-          </Col>
-        </Row>
-      </div>
-
-      <div style={{ height: 16 }} />
+    <div style={{ padding: isMobile ? 12 : 24, background: "white", minHeight: "100vh" }}>
+      {/* Header */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Col>
+          <Title level={isMobile ? 4 : 3} style={{ margin: 0, color: "#1a1a2e" }}>
+             Freelancer Applications
+          </Title>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Manage and review all freelancer profiles
+          </Text>
+        </Col>
+        <Col>
+          <Space>
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+              Back
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchData}
+              style={{ color: PRIMARY, borderColor: PRIMARY }}
+            >
+              Refresh
+            </Button>
+          </Space>
+        </Col>
+      </Row>
 
       {loading ? (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "300px",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300 }}>
           <Spin size="large" tip="Loading freelancers..." />
         </div>
       ) : error ? (
@@ -295,89 +307,128 @@ const FreelancersByUserId: React.FC = () => {
           message="Error"
           description={error}
           showIcon
-          action={
-            <Button size="middle" type="primary" onClick={fetchData}>
-              Try Again
-            </Button>
-          }
+          action={<Button type="primary" onClick={fetchData}>Try Again</Button>}
         />
       ) : data.length === 0 ? (
-        <Alert
-          type="info"
-          message="No freelancers found"
-          description="No one has applied yet or the list is empty."
-          showIcon
-        />
+        <Alert type="info" message="No freelancers found" description="No applications yet." showIcon />
       ) : (
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: 16,
-            border: "1px solid #e5e7eb",
-            padding: 10,
-          }}
-        >
+        <div style={{  overflow: "hidden", border: "1px solid #e5e7eb" }}>
           <Table
             rowKey="id"
             columns={columns}
             dataSource={data}
             bordered
-            scroll={{ x: "100%" }}
-            pagination={{
-              pageSize,
-              onChange: (page) => setCurrentPage(page),
-            }}
+            size={isMobile ? "small" : "middle"}
+            scroll={{ x: "true" }}
+            pagination={{ pageSize, onChange: setCurrentPage, showSizeChanger: false }}
           />
         </div>
       )}
 
+      {/* Update Modal */}
       <Modal
-        title="Resume Viewer"
-        open={showResumeModal}
-        onCancel={() => {
-          setShowResumeModal(false);
-          setIsLoading(true);
-          setResumeError(false);
-        }}
-        footer={[
-          <Button key="close" onClick={() => setShowResumeModal(false)}>
-            Close
-          </Button>
-        ]}
-        width={isMobile ? "90%" : "60%"}
-        style={{ top: 20 }}
-        bodyStyle={{ height: isMobile ? '70vh' : '75vh', padding: 0 }}
-        maskClosable={true}
-        keyboard={true}
+        title={
+          <Space>
+            <EditOutlined style={{ color: PURPLE }} />
+            <span style={{ fontWeight: 700 }}>Update Freelancer Profile</span>
+          </Space>
+        }
+        open={showUpdateModal}
+        onCancel={() => setShowUpdateModal(false)}
+        onOk={handleUpdate}
+        confirmLoading={updateLoading}
+        okText="Save Changes"
+        okButtonProps={{ style: { background: PURPLE, borderColor: PURPLE } }}
+        width={isMobile ? "95vw" : 520}
+        centered
+        destroyOnClose
       >
-        {isLoading && !resumeError && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <Spin size="large" tip="Loading..." />
-          </div>
-        )}
-        {resumeError && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 20 }}>
-            <Alert
-              type="error"
-              message="Failed to load resume"
-              description="The resume file could not be displayed."
-              showIcon
-            />
-          </div>
-        )}
-        {!resumeError && (
-          <iframe
-            src={currentResumeUrl}
-            style={{ width: '100%', height: '100%', border: 'none', display: isLoading ? 'none' : 'block' }}
-            title="Resume Viewer"
-            onLoad={() => setIsLoading(false)}
-            onError={() => {
-              setIsLoading(false);
-              setResumeError(true);
-            }}
-          />
-        )}
+        <Form form={updateForm} layout="vertical" style={{ marginTop: 8 }}>
+          <Row gutter={[12, 0]}>
+            <Col span={24}>
+              <Form.Item label="Email" name="email">
+                <Input placeholder="Email" />
+              </Form.Item>
+            </Col>
+            {[
+              { label: "Per Hour", name: "perHour" },
+              { label: "Per Day", name: "perDay" },
+              { label: "Per Week", name: "perWeek" },
+              { label: "Per Month", name: "perMonth" },
+              { label: "Per Year", name: "perYear" },
+            ].map(({ label, name }) => (
+              <Col xs={8} sm={8} key={name}>
+                <Form.Item label={label} name={name}>
+                  <Input type="number" prefix="₹" placeholder="0" />
+                </Form.Item>
+              </Col>
+            ))}
+            <Col xs={8} sm={8}>
+              <Form.Item label="Open for Freelancing" name="openForFreeLancing">
+                <Select options={[{ value: "YES", label: "Yes" }, { value: "NO", label: "No" }]} />
+              </Form.Item>
+            </Col>
+            <Col xs={8} sm={8}>
+              <Form.Item label="Amount Negotiable" name="amountNegotiable">
+                <Select options={[{ value: "YES", label: "Yes" }, { value: "NO", label: "No" }]} />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item label="Upload Resume">
+                <Upload
+                  accept=".pdf,.doc,.docx"
+                  maxCount={1}
+                  showUploadList={{ showRemoveIcon: true }}
+                  beforeUpload={async (file) => {
+                    setUploadLoading(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append("file", file);
+                      const res = await customerApi.post(
+                        `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
+                        formData,
+                        {
+                          headers: {
+                            "Content-Type": "multipart/form-data",
+                            Authorization: `Bearer ${getAccessToken()}`,
+                          },
+                        }
+                      );
+                      setNewResumeUrl(res.data.documentPath);
+                      message.success("Resume uploaded successfully!");
+                    } catch {
+                      message.error("Upload failed. Please try again.");
+                    } finally {
+                      setUploadLoading(false);
+                    }
+                    return false;
+                  }}
+                >
+                  <Button
+                    icon={uploadLoading ? <Spin size="small" /> : <UploadOutlined />}
+                    disabled={uploadLoading}
+                    style={{ width: "100%" }}
+                  >
+                    {uploadLoading ? "Uploading..." : "Click or Drag to Upload"}
+                  </Button>
+                </Upload>
+                {newResumeUrl && (
+                  <Text style={{ color: "#10b981", fontSize: 12, display: "block", marginTop: 4 }}>
+                    ✓ New resume ready to save
+                  </Text>
+                )}
+                {!newResumeUrl && updateRecord?.resumeUrl && (
+                  <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
+                    Current: {updateRecord.resumeUrl.split("/").pop()}
+                  </Text>
+                )}
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </Modal>
+
+
     </div>
   );
 };

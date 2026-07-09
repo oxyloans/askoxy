@@ -135,6 +135,7 @@ import CeoDetailsPage from "./BusinessCard/CeoDetailsPage";
 import ProcessBusinessCardPage from "./BusinessCard/ProcessBusinessCardPage";
 import CeoUploadDetailsPage from "./BusinessCard/CeoUploadDetailsPage";
 import CeoDetailsListPage from "./BusinessCard/CeoDetailsListPage";
+import AddLeagueJourney from "./AskoxyAdmin/AddLeagueJourney";
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -1765,6 +1766,7 @@ const App: React.FC = () => {
                 <Route path="campaignsadd" element={<CampaignsAdd />} />
                 <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
                 <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
+                <Route path="addleaguejourney" element={<AddLeagueJourney />} />
                 <Route path="advocates" element={<AdvocatesDataPage />} />
                 <Route path="talwardata" element={<TalwarDataPage />} />
                 <Route path="mumbaidata" element={<MumbaiDataPage />} />

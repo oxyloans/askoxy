@@ -95,11 +95,11 @@ export default function SuperOurApp() {
 
   const tiles: Tile[] = [
     {
-          id: "s16",
-          src: s16,
-          onClick: handleFreelancerChoice,
-          title: "Freelance Marketplace",
-        },
+      id: "s16",
+      src: s16,
+      onClick: handleFreelanceSignIn,
+      title: "Freelance Marketplace",
+    },
     {
       id: "s7",
       src: s7,

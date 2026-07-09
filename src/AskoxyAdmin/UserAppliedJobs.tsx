@@ -13,6 +13,9 @@ import {
   DatePicker,
   Space,
   Card,
+  Row,
+  Col,
+  Alert,
 } from "antd";
 import { adminApi as axiosInstance } from "../utils/axiosInstances";
 import BASE_URL from "../Config";
@@ -23,6 +26,7 @@ import {
   TrophyOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  FilePdfOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -132,6 +136,8 @@ const AppliedJobsDashboard: React.FC = () => {
   // Resume modal
   const [resumeModal, setResumeModal] = useState<boolean>(false);
   const [resumeUrl, setResumeUrl] = useState<string>("");
+  const [iframeLoading, setIframeLoading] = useState<boolean>(true);
+  const [resumeError, setResumeError] = useState<boolean>(false);
 
   // Result modal
   const [resultModal, setResultModal] = useState<boolean>(false);
@@ -287,6 +293,13 @@ const AppliedJobsDashboard: React.FC = () => {
       render: (v: string | null) => v || "N/A",
     },
     {
+      title: "Email",
+      dataIndex: "message",
+      key: "email",
+      align: "center" as const,
+      render: (_: unknown, record: AppliedJob) => record.message || "N/A",
+    },
+    {
       title: "Cover Letter",
       dataIndex: "coverLetter",
       key: "coverLetter",
@@ -310,21 +323,23 @@ const AppliedJobsDashboard: React.FC = () => {
       dataIndex: "resumeUrl",
       key: "resumeUrl",
       align: "center" as const,
-      render: (url: string | null) =>
-        url ? (
-          <Button
-            size="small"
-            style={{ color: "#1677ff", borderColor: "#1677ff" }}
-            onClick={() => {
-              setResumeUrl("");
-              setTimeout(() => { setResumeUrl(url); setResumeModal(true); }, 0);
-            }}
-          >
-            View Resume
-          </Button>
-        ) : (
-          "N/A"
-        ),
+      render: (url: string | null) => (
+        <Button
+          size="small"
+          icon={<FilePdfOutlined />}
+          disabled={!url}
+          style={url ? { background: "#008cba", borderColor: "#008cba", color: "#fff" } : {}}
+          onClick={() => {
+            if (!url) return;
+            setResumeUrl(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`);
+            setIframeLoading(true);
+            setResumeError(false);
+            setResumeModal(true);
+          }}
+        >
+          View Resume
+        </Button>
+      ),
     },
     {
       title: "Applied Date",
@@ -514,21 +529,45 @@ const AppliedJobsDashboard: React.FC = () => {
 
         {/* Resume Modal */}
         <Modal
-          title="Resume"
+          title={
+            <Space>
+              <FilePdfOutlined style={{ color: "#008cba" }} />
+              <span style={{ fontWeight: 700 }}>Resume Viewer</span>
+            </Space>
+          }
           open={resumeModal}
-          onCancel={() => { setResumeModal(false); setResumeUrl(""); }}
-          footer={[<Button key="close" onClick={() => { setResumeModal(false); setResumeUrl(""); }}>Close</Button>]}
-          width={860}
-          styles={{ body: { padding: 0, height: "75vh" } }}
+          onCancel={() => { setResumeModal(false); setIframeLoading(true); setResumeError(false); }}
+          footer={<Button onClick={() => setResumeModal(false)}>Close</Button>}
+          width="75vw"
+          style={{ top: 16, maxWidth: 1000 }}
+          styles={{ body: { height: "78vh", padding: 0, overflow: "hidden" } }}
+          destroyOnClose
+          maskClosable
         >
-          <iframe
-            key={resumeUrl}
-            src={`https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=true`}
-            title="Resume"
-            width="100%"
-            height="100%"
-            style={{ border: "none", minHeight: "70vh" }}
-          />
+          {iframeLoading && !resumeError && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <Spin size="large" tip="Loading resume..." />
+            </div>
+          )}
+          {resumeError && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: 24 }}>
+              <Alert
+                type="error"
+                message="Unable to load resume"
+                description="The file could not be displayed."
+                showIcon
+              />
+            </div>
+          )}
+          {!resumeError && (
+            <iframe
+              src={resumeUrl}
+              title="Resume Viewer"
+              style={{ width: "100%", height: "100%", border: "none", display: iframeLoading ? "none" : "block" }}
+              onLoad={() => setIframeLoading(false)}
+              onError={() => { setIframeLoading(false); setResumeError(true); }}
+            />
+          )}
         </Modal>
 
         {/* Cover Letter Modal */}
