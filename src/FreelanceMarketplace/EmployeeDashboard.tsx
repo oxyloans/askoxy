@@ -6,7 +6,7 @@ import EmployeeLayout from "./EmployeeLayout";
 import StatusAlert from "./StatusAlert";
 import { extractApiError, extractResponseMessage } from "./apiUtils";
 import { LoadingCenter, pageContainerClass } from "./marketplaceUi";
-import { message } from "antd";
+import Swal from "sweetalert2";
 
 interface CompanyProfile {
   id: string;
@@ -109,9 +109,9 @@ const EmployeeDashboard: React.FC = () => {
       if (editingProfile?.id) payload.id = editingProfile.id;
       const res = await freelanceApi.patch(`${BASE_URL}/user-service/companyProfile`, payload);
       if (res.status === 200 || res.status === 201) {
-        const msg = extractResponseMessage(res.data);
-        setCompanyFormSuccess(msg || "Saved successfully.");
-        if (msg) message.success(msg);
+        const msg = extractResponseMessage(res.data) || "Saved successfully.";
+        setCompanyFormSuccess(msg);
+        Swal.fire({ icon: "success", title: "Success", text: msg, timer: 1800, showConfirmButton: false, toast: true, position: "top-end" });
         fetchProfiles();
         setTimeout(closeCompanyPanel, 1200);
       } else {
@@ -151,9 +151,9 @@ const EmployeeDashboard: React.FC = () => {
         companyId: reqTarget?.id,
       });
       if (res.status === 200 || res.status === 201) {
-        const msg = extractResponseMessage(res.data);
-        setReqFormSuccess(msg || "Requirement posted.");
-        if (msg) message.success(msg);
+        const msg = extractResponseMessage(res.data) || "Requirement posted.";
+        setReqFormSuccess(msg);
+        Swal.fire({ icon: "success", title: "Success", text: msg, timer: 1800, showConfirmButton: false, toast: true, position: "top-end" });
         fetchProfiles();
         setTimeout(closeReqPanel, 1200);
       } else {

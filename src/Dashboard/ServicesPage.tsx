@@ -32,7 +32,7 @@ type CampaignWithId = Campaign & {
   addServiceType?: string | null; // may come as undefined/null
 };
 
-type TabKey = "SERVICES" | "WE_ARE_HIRING";
+type TabKey = "SERVICES" | "WE_ARE_HIRING" | "LEAGUE_JOURNEYS";
 
 const ServicesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -203,6 +203,17 @@ const ServicesPage: React.FC = () => {
     [campaigns],
   );
 
+  const leagueJourneyCampaigns = useMemo(
+    () =>
+      campaigns.filter(
+        (c) =>
+          c.campaignStatus !== false &&
+          (c as any).campainInputType !== "BLOG" &&
+          c.addServiceType === "LEAGUEJOURNEYS",
+      ),
+    [campaigns],
+  );
+
   /** Search helpers */
   const matchQuery = (text?: string) =>
     (text ?? "").toLowerCase().includes(searchQuery.toLowerCase());
@@ -234,13 +245,22 @@ const ServicesPage: React.FC = () => {
     [hiringCampaigns, searchQuery],
   );
 
+  const filteredLeagueJourneyCampaigns = useMemo(
+    () =>
+      leagueJourneyCampaigns.filter(
+        (c: any) => matchQuery(c.campaignType) || matchQuery(c.description),
+      ),
+    [leagueJourneyCampaigns, searchQuery],
+  );
+
   const TabButton: React.FC<{
     k: TabKey;
     label: string;
     count?: number;
-  }> = ({ k, label, count }) => (
+    onClick?: () => void;
+  }> = ({ k, label, count, onClick }) => (
     <button
-      onClick={() => setActiveTab(k)}
+      onClick={() => (onClick ? onClick() : setActiveTab(k))}
       className={`px-4 py-2 rounded-full text-sm font-medium border transition
         ${activeTab === k ? "bg-purple-600 text-white border-purple-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}
     >
@@ -275,6 +295,11 @@ const ServicesPage: React.FC = () => {
                 k="WE_ARE_HIRING"
                 label="We Are Hiring"
                 count={filteredHiringCampaigns.length}
+              />
+              <TabButton
+                k="LEAGUE_JOURNEYS"
+                label="League Journeys"
+                count={filteredLeagueJourneyCampaigns.length}
               />
             </div>
 
@@ -377,6 +402,37 @@ const ServicesPage: React.FC = () => {
                               src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
                               alt={`${campaign.campaignType}`}
                               className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
+                            />
+                          )}
+                      </div>
+                      <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        {campaign.campaignType}
+                      </h3>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {activeTab === "LEAGUE_JOURNEYS" && (
+                <>
+                  {filteredLeagueJourneyCampaigns.length === 0 && (
+                    <div className="col-span-full text-center text-gray-500 py-8">
+                      No league journey posts yet.
+                    </div>
+                  )}
+                  {filteredLeagueJourneyCampaigns.map((campaign: any) => (
+                    <div
+                      key={campaign.campaignId}
+                      className="group cursor-pointer flex flex-col items-center text-center"
+                      onClick={() => handleCampaignClick(campaign)}
+                    >
+                      <div className="mb-2">
+                        {campaign.imageUrls &&
+                          campaign.imageUrls.length > 0 && (
+                            <img
+                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
+                              alt={`${campaign.campaignType}`}
+                              className="w-80 h-48 object-contain transition-all duration-300 group-hover:border-purple-300 rounded-lg"
                             />
                           )}
                       </div>

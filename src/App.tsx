@@ -472,6 +472,7 @@ const ChatBasedAgent = lazy(
 const WeAreHiringAdd = lazy(() => import("./AskoxyAdmin/WeAreHiringAdd"));
 const AdvocatesDataPage = lazy(() => import("./AskoxyAdmin/Advoatedata"));
 const HiringPages = lazy(() => import("./Dashboard/hiringpages"));
+const LeagueJourneysPage = lazy(() => import("./Dashboard/LeagueJourneysPage"));
 const KukatpallyAssignedDataPage = lazy(
   () => import("./AskoxyAdmin/KukatapallyAssignedData"),
 );
@@ -1076,6 +1077,7 @@ const App: React.FC = () => {
               />
               <Route path="/myblogs" element={<BlogsPage />} />
               <Route path="/wearehiring" element={<HiringPages />} />
+              <Route path="/leaguejourneys" element={<LeagueJourneysPage />} />
               <Route path="/myservices" element={<ServicesPage />} />
               <Route path="/celebshield" element={<CelebShieldPage />} />
               <Route
@@ -1616,6 +1618,7 @@ const App: React.FC = () => {
                 {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
+                           <Route path="dashboard/leaguejourneys" element={<LeagueJourneysPage />} />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
                 <Route path="jobdetails/:id" element={<JobDetails />} />

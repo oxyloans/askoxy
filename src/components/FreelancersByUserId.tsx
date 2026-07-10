@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 import {
   Alert,
   Button,
@@ -24,7 +24,7 @@ import {
   ArrowLeftOutlined,
   EditOutlined,
   UploadOutlined,
-  EyeOutlined,
+  
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import customerApi from "../utils/axiosInstances";
@@ -112,6 +112,9 @@ const FreelancersByUserId: React.FC = () => {
 
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [resumeModal, setResumeModal] = useState(false);
+  const [resumePreviewUrl, setResumePreviewUrl] = useState("");
+  const [resumeLoading, setResumeLoading] = useState(false);
   const [updateRecord, setUpdateRecord] = useState<Freelancer | null>(null);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -153,9 +156,17 @@ const FreelancersByUserId: React.FC = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  const openResumeModal = (url: string) => {
+    setResumePreviewUrl("");
+    setResumeLoading(true);
+    setResumeModal(true);
+    setTimeout(() => { setResumePreviewUrl(`${uploadurlwithId}${url}`); }, 50);
+  };
+
   const openUpdateModal = (r: Freelancer) => {
     setUpdateRecord(r);
     setNewResumeUrl(null);
+    updateForm.resetFields();
     updateForm.setFieldsValue({
       email: r.email,
       perHour: r.perHour,
@@ -241,10 +252,9 @@ const FreelancersByUserId: React.FC = () => {
     
       render: (_, r) => (
         <Button
-          icon={<EyeOutlined />}
           size="small"
           disabled={!r.resumeUrl}
-          onClick={() => r.resumeUrl && window.open(r.resumeUrl, "_blank")}
+          onClick={() => r.resumeUrl && openResumeModal(r.resumeUrl)}
           style={{ background: PRIMARY, borderColor: PRIMARY, color: "#fff", borderRadius: 6 }}
         >
           View Resume
@@ -258,10 +268,10 @@ const FreelancersByUserId: React.FC = () => {
     
       render: (_, r) => (
         <Button
-          icon={<EditOutlined />}
+         
           size="small"
           onClick={() => openUpdateModal(r)}
-          style={{ background: PURPLE, borderColor: PURPLE, color: "#fff", borderRadius: 6 }}
+          style={{ background: "#1ab394", borderColor: "#1ab394", color: "#fff", borderRadius: 6 }}
         >
           Update
         </Button>
@@ -325,6 +335,41 @@ const FreelancersByUserId: React.FC = () => {
         </div>
       )}
 
+      <Modal
+        title="📄 Resume Preview"
+        open={resumeModal}
+        onCancel={() => { setResumeModal(false); setResumePreviewUrl(""); setResumeLoading(false); }}
+        footer={[
+       
+          <Button key="close" type="primary" onClick={() => { setResumeModal(false); setResumePreviewUrl(""); setResumeLoading(false); }}>Close</Button>,
+        ]}
+        width={860}
+        styles={{ body: { padding: 0, height: "75vh", position: "relative" } }}
+        centered
+        destroyOnClose
+      >
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        {resumeLoading && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", zIndex: 10 }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ width: 40, height: 40, border: "4px solid #e5e7eb", borderTop: "4px solid #008cba", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 8px" }} />
+              <span style={{ fontSize: 13, color: "#6b7280" }}>Loading resume…</span>
+            </div>
+          </div>
+        )}
+        {resumePreviewUrl && (
+          <iframe
+            key={resumePreviewUrl}
+            src={`https://docs.google.com/gview?url=${encodeURIComponent(resumePreviewUrl)}&embedded=true`}
+            title="Resume"
+            width="100%"
+            height="100%"
+            style={{ border: "none", minHeight: "70vh", display: "block" }}
+            onLoad={() => setResumeLoading(false)}
+          />
+        )}
+      </Modal>
+
       {/* Update Modal */}
       <Modal
         title={
@@ -385,7 +430,7 @@ const FreelancersByUserId: React.FC = () => {
                       const formData = new FormData();
                       formData.append("file", file);
                       const res = await customerApi.post(
-                        `https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
+                        `${BASE_URL}/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
                         formData,
                         {
                           headers: {

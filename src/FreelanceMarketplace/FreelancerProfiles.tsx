@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { message } from "antd";
+import { Modal, Button } from "antd";
+import Swal from "sweetalert2";
 import EmployeeLayout from "./EmployeeLayout";
 import BASE_URL, { uploadurlwithId } from "../Config";
 import { useParams } from "react-router-dom";
@@ -39,6 +40,9 @@ const FreelancerProfiles: React.FC = () => {
   const [assigningId, setAssigningId]     = useState<string | null>(null);
   const [pageError, setPageError]         = useState<string | null>(null);
   const [assignFeedback, setAssignFeedback] = useState<{ text: string; variant: "success" | "error" } | null>(null);
+  const [resumeModal, setResumeModal] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   const { companyId: encCompany, requirementId: encReq } = useParams();
   const companyId     = decryptParam(encCompany  || "");
@@ -63,9 +67,13 @@ const FreelancerProfiles: React.FC = () => {
     return true;
   });
 
-  const handleDownload = (url: string) => {
-    if (!url) { message.warning("Resume not available."); return; }
-    window.open(`${uploadurlwithId}${url}`, "_blank");
+  const handleViewResume = (url: string) => {
+    if (!url) { Swal.fire({ icon: "warning", title: "Not Available", text: "Resume not available.", timer: 1800, showConfirmButton: false, toast: true, position: "top-end" }); return; }
+    const fullUrl = `${uploadurlwithId}${url}`;
+    setResumeUrl("");
+    setResumeLoading(true);
+    setResumeModal(true);
+    setTimeout(() => { setResumeUrl(fullUrl); }, 50);
   };
 
   const handleAssign = async (f: Freelancer) => {
@@ -81,9 +89,9 @@ const FreelancerProfiles: React.FC = () => {
         companyId, id: requirementId, freelancerId: f.userId1,
       });
       if (res.status === 200 || res.status === 201) {
-        const msg = extractResponseMessage(res.data);
-        setAssignFeedback({ text: msg || "Freelancer assigned successfully.", variant: "success" });
-        if (msg) message.success(msg);
+        const msg = extractResponseMessage(res.data) || "Freelancer assigned successfully.";
+        setAssignFeedback({ text: msg, variant: "success" });
+        Swal.fire({ icon: "success", title: "Assigned!", text: msg, timer: 1800, showConfirmButton: false, toast: true, position: "top-end" });
       } else {
         setAssignFeedback({ text: extractResponseMessage(res.data) || "Could not assign.", variant: "error" });
       }
@@ -95,6 +103,7 @@ const FreelancerProfiles: React.FC = () => {
 
   return (
     <EmployeeLayout>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div className={pageContainerClass}>
 
         {/* Header */}
@@ -184,10 +193,10 @@ const FreelancerProfiles: React.FC = () => {
                 {/* Actions */}
                 <div className="mt-auto flex gap-2 border-t border-gray-50 px-5 py-4">
                   <button
-                    onClick={() => handleDownload(f.resumeUrl)}
+                    onClick={() => handleViewResume(f.resumeUrl)}
                     className="flex-1 rounded-lg border border-gray-200 py-2.5 text-xs font-semibold text-gray-600 transition hover:border-indigo-300 hover:text-indigo-600"
                   >
-                    View Resume
+                    📄 View Resume
                   </button>
                   {companyId && requirementId && (
                     <button
@@ -204,6 +213,38 @@ const FreelancerProfiles: React.FC = () => {
           </div>
         )}
       </div>
+      <Modal
+        title="📄 Resume Preview"
+        open={resumeModal}
+        onCancel={() => { setResumeModal(false); setResumeUrl(""); setResumeLoading(false); }}
+        footer={[
+          <Button key="close" type="primary" onClick={() => { setResumeModal(false); setResumeUrl(""); setResumeLoading(false); }}>Close</Button>,
+        ]}
+        width={860}
+        styles={{ body: { padding: 0, height: "75vh", position: "relative" } }}
+        centered
+        destroyOnClose
+      >
+        {resumeLoading && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", zIndex: 10 }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ width: 40, height: 40, border: "4px solid #e5e7eb", borderTop: "4px solid #4f46e5", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 8px" }} />
+              <span style={{ fontSize: 13, color: "#6b7280" }}>Loading resume…</span>
+            </div>
+          </div>
+        )}
+        {resumeUrl && (
+          <iframe
+            key={resumeUrl}
+            src={`https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=true`}
+            title="Resume"
+            width="100%"
+            height="100%"
+            style={{ border: "none", minHeight: "70vh", display: "block" }}
+            onLoad={() => setResumeLoading(false)}
+          />
+        )}
+      </Modal>
     </EmployeeLayout>
   );
 };

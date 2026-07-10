@@ -84,11 +84,11 @@ const AllCampaignsDetails: React.FC = () => {
   const resolveAddServiceType = (
     c?: Campaign | null,
     tab?: string
-  ): "WEAREHIRING" | null => {
-    // If the campaign itself is flagged, keep it.
+  ): "WEAREHIRING" | "LEAGUEJOURNEYS" | null => {
     if (c?.addServiceType === "WEAREHIRING") return "WEAREHIRING";
-    // Or if user is on the We Are Hiring tab, treat it as hiring.
     if ((tab || activeTab) === "wearehiring") return "WEAREHIRING";
+    if (c?.addServiceType === "LEAGUEJOURNEYS") return "LEAGUEJOURNEYS";
+    if ((tab || activeTab) === "leaguejourneys") return "LEAGUEJOURNEYS";
     return null;
   };
 
@@ -804,17 +804,21 @@ const AllCampaignsDetails: React.FC = () => {
     },
   ];
 
-  const serviceCampaigns = campaigns.filter(
-    (campaign) => campaign.campainInputType === "SERVICE"
-  );
-  const productCampaigns = campaigns.filter(
-    (campaign) => campaign.campainInputType === "PRODUCT"
-  );
-  const blogCampaigns = campaigns.filter(
-    (campaign) => campaign.campainInputType === "BLOG"
-  );
   const weAreHiringCampaigns = campaigns.filter(
     (c) => c.addServiceType === "WEAREHIRING"
+  );
+  const leagueJourneysCampaigns = campaigns.filter(
+    (c) => c.addServiceType === "LEAGUEJOURNEYS"
+  );
+  const specialTypes = new Set(["WEAREHIRING", "LEAGUEJOURNEYS"]);
+  const serviceCampaigns = campaigns.filter(
+    (c) => c.campainInputType === "SERVICE" && !specialTypes.has(c.addServiceType || "")
+  );
+  const productCampaigns = campaigns.filter(
+    (c) => c.campainInputType === "PRODUCT" && !specialTypes.has(c.addServiceType || "")
+  );
+  const blogCampaigns = campaigns.filter(
+    (c) => c.campainInputType === "BLOG" && !specialTypes.has(c.addServiceType || "")
   );
 
   // 🔍 Filter campaigns based on search query
@@ -907,6 +911,13 @@ const AllCampaignsDetails: React.FC = () => {
 
             <TabPane tab={`Blogs (${blogCampaigns.length})`} key="blog">
               {renderTable(filterBySearch(blogCampaigns), "Blog", true)}
+            </TabPane>
+
+            <TabPane
+              tab={`League Journeys (${leagueJourneysCampaigns.length})`}
+              key="leaguejourneys"
+            >
+              {renderTable(filterBySearch(leagueJourneysCampaigns), "League Journeys")}
             </TabPane>
           </Tabs>
         )}

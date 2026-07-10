@@ -291,12 +291,7 @@ const Sidebar: React.FC = () => {
           link: "/admin/wearehiringadd",
           roles: ["HELPDESKSUPERADMIN"],
         },
-        {
-          title: "Add We are hiring",
-          icon: <FaBriefcase className="text-green-400" />,
-          link: "/admin/wearehiringadd",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
+       
         {
           title: "Add League Journey",
           icon: <FaPlusCircle className="text-yellow-400" />,

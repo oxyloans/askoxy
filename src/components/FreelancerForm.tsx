@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Form, Button, message, Modal } from "antd";
 import { Briefcase, FileUp, CheckCircle2 } from "lucide-react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../Config";
 import customerApi from "../utils/axiosInstances";
@@ -73,78 +72,49 @@ const FreelancerForm: React.FC = () => {
   const userId = localStorage.getItem("userId") || "";
   const userDetails = localStorage.getItem("profileData");
 
-  const persistFreelancerData = (updates: Record<string, any>) => {
-    try {
-      const existingData = localStorage.getItem("freelancerFormData");
-      const parsedData = existingData ? JSON.parse(existingData) : {};
-      const nextData = { ...parsedData, ...updates };
-      localStorage.setItem("freelancerFormData", JSON.stringify(nextData));
-    } catch (error) {
-      console.error("Error saving freelancer form data:", error);
-    }
-  };
-
-  const loadStoredFreelancerData = () => {
-    try {
-      const storedData = localStorage.getItem("freelancerFormData");
-      return storedData ? JSON.parse(storedData) : null;
-    } catch (error) {
-      console.error("Error loading freelancer form data:", error);
-      return null;
-    }
+  const findRateRange = (period: RatePeriod, amount: number): string => {
+    if (!amount) return "";
+    return rateOptions[period].find((opt) => opt.startsWith(String(amount))) || "";
   };
 
   useEffect(() => {
     const parsedUserDetails = userDetails ? JSON.parse(userDetails) : null;
-    const firstName = parsedUserDetails?.userFirstName || "";
-    const lastName = parsedUserDetails?.userLastName || "";
-    const email = parsedUserDetails?.customerEmail || "";
-    const mobileNumber = parsedUserDetails?.alterMobileNumber || "";
-    const whatsappNumber = localStorage.getItem("whatsappNumber") || "";
-
     setProfileData({
-      firstName,
-      lastName,
-      email,
-      mobileNumber,
-      whatsappNumber,
+      firstName: parsedUserDetails?.userFirstName || "",
+      lastName: parsedUserDetails?.userLastName || "",
+      email: parsedUserDetails?.customerEmail || "",
+      mobileNumber: parsedUserDetails?.alterMobileNumber || "",
+      whatsappNumber: localStorage.getItem("whatsappNumber") || "",
     });
 
-    const storedData = loadStoredFreelancerData();
-    if (storedData) {
-      if (typeof storedData.isOpenForFreelancing === "string") {
-        setIsOpenForFreelancing(storedData.isOpenForFreelancing);
-      }
-      if (typeof storedData.isRateNegotiable === "string") {
-        setIsRateNegotiable(storedData.isRateNegotiable);
-      }
-      if (storedData.rateCard) {
+    if (!userId) return;
+    customerApi
+      .get(`${BASE_URL}/ai-service/agent/freeLancerInfo/${userId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+      })
+      .then((res) => {
+        const d = res.data;
+        if (!d) return;
+        const openVal = d.openForFreeLancing?.toLowerCase() || "";
+        setIsOpenForFreelancing(openVal);
+        setIsRateNegotiable(d.amountNegotiable?.toLowerCase() || "");
         setRateCard({
-          hour: storedData.rateCard.hour || "",
-          day: storedData.rateCard.day || "",
-          week: storedData.rateCard.week || "",
-          month: storedData.rateCard.month || "",
-          year: storedData.rateCard.year || "",
+          hour: findRateRange("hour", d.perHour),
+          day: findRateRange("day", d.perDay),
+          week: findRateRange("week", d.perWeek),
+          month: findRateRange("month", d.perMonth),
+          year: findRateRange("year", d.perYear),
         });
-      }
-      if (storedData.documentPath) {
-        setDocumentPath(storedData.documentPath);
-        const fileName =
-          storedData.documentPath.split("/").pop() || "Resume.pdf";
-        setResumeFile(new File([], fileName));
-      }
-    }
-  }, [form, userDetails, userId]);
+        if (d.resumeUrl) {
+          setDocumentPath(d.resumeUrl);
+          setResumeFile(new File([], d.resumeUrl.split("/").pop() || "Resume.pdf"));
+        }
+      })
+      .catch(() => {});
+  }, [userId, userDetails]);
 
   const handleRateChange = (period: RatePeriod, value: string) => {
-    setRateCard((prev) => {
-      const nextRateCard = {
-        ...prev,
-        [period]: value,
-      };
-      persistFreelancerData({ rateCard: nextRateCard });
-      return nextRateCard;
-    });
+    setRateCard((prev) => ({ ...prev, [period]: value }));
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,7 +139,6 @@ const FreelancerForm: React.FC = () => {
         );
         console.log("Upload response:", response.data);
         setDocumentPath(response.data.documentPath);
-        persistFreelancerData({ documentPath: response.data.documentPath });
         message.success("Resume uploaded successfully!");
       } catch (error) {
         console.error("Upload error:", error);
@@ -234,14 +203,6 @@ const FreelancerForm: React.FC = () => {
         resumeUrl: documentPath || "",
         userId,
       };
-
-      persistFreelancerData({
-        ...payload,
-        rateCard,
-        documentPath,
-        isOpenForFreelancing,
-        isRateNegotiable,
-      });
 
       await customerApi.patch(
         `${BASE_URL}/ai-service/agent/freeLancerInfo`,
@@ -394,11 +355,7 @@ const FreelancerForm: React.FC = () => {
                     name="freelancing"
                     value="yes"
                     checked={isOpenForFreelancing === "yes"}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setIsOpenForFreelancing(value);
-                      persistFreelancerData({ isOpenForFreelancing: value });
-                    }}
+                    onChange={(e) => setIsOpenForFreelancing(e.target.value)}
                     style={{ display: "none" }}
                   />
                 </label>
@@ -438,11 +395,7 @@ const FreelancerForm: React.FC = () => {
                     name="freelancing"
                     value="no"
                     checked={isOpenForFreelancing === "no"}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setIsOpenForFreelancing(value);
-                      persistFreelancerData({ isOpenForFreelancing: value });
-                    }}
+                    onChange={(e) => setIsOpenForFreelancing(e.target.value)}
                     style={{ display: "none" }}
                   />
                 </label>
@@ -599,11 +552,7 @@ const FreelancerForm: React.FC = () => {
                           name="negotiable"
                           value="yes"
                           checked={isRateNegotiable === "yes"}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setIsRateNegotiable(value);
-                            persistFreelancerData({ isRateNegotiable: value });
-                          }}
+                          onChange={(e) => setIsRateNegotiable(e.target.value)}
                           style={{ display: "none" }}
                         />
                       </label>
@@ -643,11 +592,7 @@ const FreelancerForm: React.FC = () => {
                           name="negotiable"
                           value="no"
                           checked={isRateNegotiable === "no"}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setIsRateNegotiable(value);
-                            persistFreelancerData({ isRateNegotiable: value });
-                          }}
+                          onChange={(e) => setIsRateNegotiable(e.target.value)}
                           style={{ display: "none" }}
                         />
                       </label>

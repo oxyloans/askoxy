@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { freelanceApi } from "../utils/axiosInstances";
 import { encryptParam } from "../utils/urlEncryption";
 import BASE_URL from "../Config";
-import { message } from "antd";
+import Swal from "sweetalert2";
 import EmployeeLayout from "./EmployeeLayout";
 import StatusAlert from "./StatusAlert";
 import { extractApiError, extractResponseMessage } from "./apiUtils";
@@ -88,9 +88,9 @@ const RequirementList: React.FC = () => {
         title: form.title,
       });
       if (res.status === 200 || res.status === 201) {
-        const msg = extractResponseMessage(res.data);
-        setFormSuccess(msg || "Updated successfully.");
-        if (msg) message.success(msg);
+        const msg = extractResponseMessage(res.data) || "Updated successfully.";
+        setFormSuccess(msg);
+        Swal.fire({ icon: "success", title: "Updated!", text: msg, timer: 1800, showConfirmButton: false, toast: true, position: "top-end" });
         fetchRequirements();
         setTimeout(closeEdit, 1200);
       } else {

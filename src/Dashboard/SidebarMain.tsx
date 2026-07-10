@@ -269,6 +269,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaTools size={16} />,
         },
         {
+          to: "/main/dashboard/leaguejourneys",
+          label: "League Journeys",
+          icon: <HiSparkles size={16} />,
+        },
+        {
           to: "/main/dashboard/myblogs",
           label: "My Blogs",
           icon: <AiFillFileText size={16} />,
