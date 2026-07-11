@@ -548,7 +548,7 @@ const RadhAIPage: React.FC = () => {
               className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl  bg-lime-300/10 px-3 py-2.5 transition hover:bg-lime-300/20"
             >
               <span className="text-[11px] font-black uppercase tracking-wider text-lime-300 sm:text-xs">
-                🗓 Walk-in: July 11 &amp; 25
+                🗓 Walk-in: July 25
               </span>
               <button
                 onClick={(e) => { e.stopPropagation(); handleSignIn(); }}

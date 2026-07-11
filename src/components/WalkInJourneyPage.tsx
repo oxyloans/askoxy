@@ -5,7 +5,7 @@ import WalkInInterviewStepsModal from "./WalkInInterviewStepsModal";
 const FLOWS = [
   {
     id: "walkin",
-    badge: "JULY 11 & 25",
+    badge: "JULY 25",
     title: "Walk-in Interview",
     subtitle: "via ASKOXY.AI Landing Page",
     url: "https://www.askoxy.ai/",
@@ -16,7 +16,7 @@ const FLOWS = [
     border: "#DDD6FE",
     icon: "🏢",
     entryStep: 'Open askoxy.ai in your browser and press Enter.',
-    step2Title: 'Click "July 11 & 25 Walk-in Interview" Banner',
+    step2Title: 'Click "July 25 Walk-in Interview" Banner',
     step2Desc: "On the ASKOXY.AI landing page, click the banner to proceed.",
     jobsPage: "Find Your Next Opportunity",
     hasStep2: true,

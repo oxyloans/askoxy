@@ -281,7 +281,7 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
               <div className="flex items-center gap-2 mb-1">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/20">
                   <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse"></span>
-                  July 11 & 25 Walk-in Interview
+                  July 25 Walk-in Interview
                 </span>
                 <span className="text-slate-500 text-xs">•</span>
                 <span className="text-slate-400 text-xs font-mono">{STEPS_DATA.length} Core Steps</span>
