@@ -16,7 +16,7 @@ import Loader from "../components/Loader";
 import { message } from "antd";
 import VideoImage from "../assets/img/Videothumb.png";
 import { fetchCampaigns, Campaign } from "../components/servicesapi";
-import { uploadurlwithId } from "../Config";
+import { uploadurlwithId, resolveAskoxyUrl } from "../Config";
 
 interface DashboardItem {
   title: string;
@@ -45,6 +45,22 @@ const ServicesPage: React.FC = () => {
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
   console.log({ uploadurlwithId });
+  const buildMediaUrl = (path: string) => {
+    if (!path) return "";
+    const clean = path.trim();
+    if (/^https?:\/\//i.test(clean)) {
+      return resolveAskoxyUrl(clean);
+    }
+    const hasNullPrefix = clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") || clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+    if (hasNullPrefix) {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return resolveAskoxyUrl(`https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`);
+    } else {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return resolveAskoxyUrl(`${uploadurlwithId}${separator}${clean}`);
+    }
+  };
+
   useEffect(() => {
     const loadCampaigns = async () => {
       setLoading(true);
@@ -367,8 +383,7 @@ const ServicesPage: React.FC = () => {
                         {campaign.imageUrls &&
                           campaign.imageUrls.length > 0 && (
                             <img
-                              // src={campaign.imageUrls[0].imageUrl}
-                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
+                              src={buildMediaUrl(campaign.imageUrls[0].imageUrl)}
                               alt={`${campaign.campaignType}`}
                               className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
                             />
@@ -399,7 +414,7 @@ const ServicesPage: React.FC = () => {
                         {campaign.imageUrls &&
                           campaign.imageUrls.length > 0 && (
                             <img
-                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
+                              src={buildMediaUrl(campaign.imageUrls[0].imageUrl)}
                               alt={`${campaign.campaignType}`}
                               className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
                             />

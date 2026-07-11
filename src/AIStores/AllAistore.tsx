@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSearch } from "../BharathAIStore/context/SearchContext";
-import BASE_URL, { uploadurlwithId } from "../Config";
+import BASE_URL, { uploadurlwithId, resolveAskoxyUrl } from "../Config";
 import axiosInstance from "../utils/axiosInstance";
 import axios from "axios";
 import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
@@ -1359,7 +1359,7 @@ const AllAIStore: React.FC = () => {
                                 {/* Image on top if valid */}
                                 {hasValidImage && (
                                   <img
-                                    src={`https://askoxy.s3.ap-south-1.amazonaws.com${agent.profileImageUrl!}`}
+                                    src={resolveAskoxyUrl(agent.profileImageUrl!)}
                                     alt={agent.agentName ?? ''}
                                     className="absolute inset-0 h-full w-full object-cover bg-white"
                                     loading="lazy"

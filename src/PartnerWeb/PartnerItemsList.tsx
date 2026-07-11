@@ -16,7 +16,7 @@ import {
   UploadOutlined,
 } from "@ant-design/icons";
 import { partnerApi } from "../utils/axiosInstances";
-import BASE_URL from "../Config";
+import BASE_URL,{resolveAskoxyUrl} from "../Config";
 
 // Define the type for the item based on the new API response
 interface Item {
@@ -331,7 +331,7 @@ const PartnerItemsList: React.FC = () => {
           >
             <div className="aspect-square mb-3 overflow-hidden rounded-t-lg bg-gray-50">
               <img
-                src={item.itemImage ?? "https://via.placeholder.com/150"}
+                src={resolveAskoxyUrl(item.itemImage) ?? "https://via.placeholder.com/150"}
                 alt={item.itemName}
                 className="w-full h-full object-contain"
               />

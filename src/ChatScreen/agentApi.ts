@@ -1,4 +1,4 @@
-import { resolveCartAgentBase, uploadurlwithId } from "../Config";
+import { resolveCartAgentBase, uploadurlwithId, resolveAskoxyUrl } from "../Config";
 import { customerApi } from "../utils/axiosInstances";
 
 function cartAgentBase(): string {
@@ -192,6 +192,12 @@ export function resolveProductImageUrl(raw?: string | null): string | null {
   if (raw == null) return null;
   const path = String(raw).trim();
   if (!path || path === "null" || path === "undefined") return null;
+  if (path.includes("askoxy.s3.ap-south-1.amazonaws.com") || path.includes("askoxy.s3.amazonaws.com")) {
+    return resolveAskoxyUrl(path);
+  }
+  if (path.startsWith("/") && !path.startsWith("/null/")) {
+    return resolveAskoxyUrl(path);
+  }
   if (/^https?:\/\//i.test(path)) return path;
   if (path.startsWith("null/")) {
     return `https://oxybricksv1.s3.ap-south-1.amazonaws.com/${path.slice(5)}`;

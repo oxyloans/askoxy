@@ -5,7 +5,7 @@ import axios from "axios";
 import { message, Modal } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import BASE_URL from "../Config";
+import BASE_URL, { resolveAskoxyUrl } from "../Config";
 import { ShoppingBag, ChevronLeft, ChevronRight, Info } from "lucide-react";
 
 interface Item {
@@ -1103,7 +1103,7 @@ const Categories: React.FC<CategoriesProps> = ({
                 {category.categoryLogo || category.categoryImage ? (
                   <img
                     src={
-                      (category.categoryLogo || category.categoryImage) ?? ""
+                      resolveAskoxyUrl((category.categoryLogo || category.categoryImage) ?? "")
                     }
                     alt={category.categoryName}
                     className="w-full h-full object-cover rounded-md"
@@ -1238,7 +1238,7 @@ const Categories: React.FC<CategoriesProps> = ({
 
                     {item.itemImage ? (
                       <img
-                        src={item.itemImage}
+                        src={resolveAskoxyUrl(item.itemImage)}
                         alt={item.itemName}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -1516,7 +1516,7 @@ const Categories: React.FC<CategoriesProps> = ({
                   <div className="w-2/3 sm:w-3/4 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
                     {addonItem.itemImage ? (
                       <img
-                        src={addonItem.itemImage}
+                        src={resolveAskoxyUrl(addonItem.itemImage)}
                         alt={addonItem.itemName}
                         className="w-full h-full object-contain p-1.5"
                         onError={(e) => {

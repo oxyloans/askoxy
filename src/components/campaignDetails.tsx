@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 import { message, Modal, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import Header1 from "./Header";
-import { uploadurlwithId } from "../Config";
+import { uploadurlwithId, resolveAskoxyUrl } from "../Config";
 
 import {
   fetchCampaigns,
@@ -136,6 +136,22 @@ const CampaignDetails: React.FC = () => {
     return (
       videoExtensions.some((ext) => u.includes(ext)) || u.includes("video")
     );
+  };
+
+  const buildMediaUrl = (path: string) => {
+    if (!path) return "";
+    const clean = path.trim();
+    if (/^https?:\/\//i.test(clean)) {
+      return resolveAskoxyUrl(clean);
+    }
+    const hasNullPrefix = clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") || clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+    if (hasNullPrefix) {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return resolveAskoxyUrl(`https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`);
+    } else {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return resolveAskoxyUrl(`${uploadurlwithId}${separator}${clean}`);
+    }
   };
 
   const scrollToIndex = (idx: number, smooth = true) => {
@@ -507,20 +523,20 @@ const success = await submitWriteToUsQuery(
                         key={image.imageId}
                         className="snap-center shrink-0 basis-full w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-[520px] flex items-start justify-center rounded-xl overflow-hidden"
                       >
-                        {isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) ? (
+                        {isVideoUrl(buildMediaUrl(image.imageUrl || "")) ? (
                           <video
                             controls
                             className="max-w-full max-h-full w-auto h-auto self-start"
                             preload="metadata"
                           >
                             <source
-                              src={`${uploadurlwithId}${image.imageUrl}`}
+                              src={buildMediaUrl(image.imageUrl || "")}
                               type="video/mp4"
                             />
                           </video>
                         ) : (
                           <img
-                            src={`${uploadurlwithId}${image.imageUrl}`}
+                            src={buildMediaUrl(image.imageUrl || "")}
                             alt={`${campaign?.campaignType || "Campaign"} - ${idx + 1}`}
                             className="w-full h-auto object-contain sm:object-cover rounded-lg"
                             style={{

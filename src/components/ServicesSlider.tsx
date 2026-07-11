@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Modal } from "antd";
 
 import { fetchCampaigns, fetchAllGames, Campaign } from "./servicesapi";
-import BASE_URL, { uploadurlwithId } from "../Config";
+import BASE_URL, { uploadurlwithId, askoxyImgUrl, resolveAskoxyUrl } from "../Config";
 
 type Freelancer = {
   id: string;
@@ -86,11 +86,12 @@ const ServicesSlider: React.FC = () => {
           campaign.imageUrl ||
           campaign.images?.[0]?.imageUrl ||
           "";
-
     if (!firstImage) return "";
-    return firstImage.startsWith("http")
-      ? firstImage
-      : `${uploadurlwithId}${firstImage}`;
+    const clean = firstImage.trim();
+    if (/^https?:\/\//i.test(clean)) {
+      return clean;
+    }
+    return `${uploadurlwithId}/${clean.replace(/^\//, "")}`;
   };
 
   const fetchJobs = async () => {
@@ -484,7 +485,7 @@ const ServicesSlider: React.FC = () => {
               >
                 <div className="w-full h-36 flex items-center justify-center mb-3 overflow-hidden">
                   <img
-                    src={service.image}
+                    src={service.image} 
                     alt={service.title}
                     className="w-full h-full object-contain transition-transform duration-300"
                     loading="lazy"

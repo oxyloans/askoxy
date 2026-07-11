@@ -29,7 +29,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 
-import BASE_URL,{uploadurlwithId} from "../Config";
+import BASE_URL,{uploadurlwithId, resolveAskoxyUrl} from "../Config";
 import type { FormInstance } from "antd/es/form";
 import customerApi from "../utils/axiosInstances";
 
@@ -1670,9 +1670,7 @@ const saveAgentsToStore = async (): Promise<void> => {
                   if (!url || url === "null" || url === "undefined") {
                     return <div style={{ textAlign: "center", color: "#999", fontSize: 12 }}>No Image</div>;
                   }
-                  const src = url.startsWith("http")
-                    ? url
-                    : `https://askoxy.s3.ap-south-1.amazonaws.com${url}`;
+                  const src = resolveAskoxyUrl(url);
                   return (
                     <div style={{ textAlign: "center" }}>
                       <Image

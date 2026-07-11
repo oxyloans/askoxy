@@ -18,7 +18,7 @@ import {
   Alert,
 } from "antd";
 import { ArrowLeft, Loader2, Home, ChevronRight } from "lucide-react";
-import BASE_URL from "../Config";
+import BASE_URL, { resolveAskoxyUrl } from "../Config";
 import axios from "axios";
 import { message } from "antd";
 import "./SearchMain.css";
@@ -856,7 +856,7 @@ const SearchMain: React.FC = () => {
                                 >
                                   {isValidImageUrl(product.itemImage) ? (
                                     <Image
-                                      src={product.itemImage}
+                                      src={resolveAskoxyUrl(product.itemImage)}
                                       alt={product.itemName}
                                       height={160}
                                       width="100%"
@@ -1167,7 +1167,7 @@ const SearchMain: React.FC = () => {
                                   >
                                     {isValidImageUrl(product.itemImage) ? (
                                       <Image
-                                        src={product.itemImage}
+                                        src={resolveAskoxyUrl(product.itemImage)}
                                         alt={product.itemName}
                                         height={160}
                                         width="100%"

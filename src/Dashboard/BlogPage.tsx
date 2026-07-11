@@ -14,9 +14,8 @@ import {
   TrophyOutlined,
   EditOutlined,
 } from "@ant-design/icons";
-import { uploadurlwithId } from "../Config";
 import axiosInstance from "../utils/axiosInstance";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId, resolveAskoxyUrl } from "../Config";
 
 const Header1 = React.lazy(() => import("../components/Header"));
 const Footer = React.lazy(() => import("../components/Footer"));
@@ -173,14 +172,16 @@ const BlogsPage: React.FC = () => {
     }
   };
 
-  const isImage = (url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  const isImage = (url: string) => /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url);
   const isVideo = (url: string) =>
-    /\.(mp4|webm|ogg|mov|m4v|avi|wmv|flv|mkv)$/i.test(url);
+    /\.(mp4|webm|ogg|mov|m4v|avi|wmv|flv|mkv)(\?|$)/i.test(url);
 
   const buildMediaUrl = (url: string) => {
     if (!url) return "";
-    if (/^https?:\/\//i.test(url)) return url;
-    return `${uploadurlwithId}${url}`;
+    const clean = url.trim();
+    if (/^https?:\/\//i.test(clean)) return clean;
+    const separator = clean.startsWith("/") ? "" : "/";
+    return `${uploadurlwithId}${separator}${clean}`;
   };
 
   const getMediaUrl = (campaign: any) => {
@@ -574,6 +575,7 @@ const BlogsPage: React.FC = () => {
       <div className="bpCardsGrid">
         {list.map((campaign) => {
           const mediaUrl = getMediaUrl(campaign);
+          console.log("mediaUrl for campaign:", mediaUrl);
           const showImage = !!mediaUrl && isImage(mediaUrl);
           const showVideo = !!mediaUrl && isVideo(mediaUrl);
           const cId = getCampaignId(campaign);
@@ -896,7 +898,12 @@ const BlogsPage: React.FC = () => {
                   {editFileList
                     .filter((file: any) => file.status !== false && file !== null)
                     .map((file: any, index: number) => {
-                      const mediaUrl = buildMediaUrl(file.imageUrl || "");
+                      const rawUrl = file.imageUrl || "";
+                      // console.log("rawUrl from blogs:", rawUrl);
+                      // console.log("rawUrl from blogs:", `${buildMediaUrl}`);
+                      const mediaUrl = rawUrl
+                        ? buildMediaUrl(rawUrl)
+                        : "";
                       const showImage = isImage(mediaUrl);
                       const showVideo = isVideo(mediaUrl);
 

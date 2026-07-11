@@ -37,5 +37,32 @@ const encryptedUploadUrl =
 // decrypt function
 export const uploadurlwithId = atob(encryptedUploadUrl);
 
+// export const uploadurlwithId = "d15sy6qj2uhi5q.cloudfront.net/null/45880e62-acaf-4645-a83e-d1c8498e923e";
+
 export default BASE_URL;
+
+export const askoxyImgUrl = () => {
+  return "d15sy6qj2uhi5q.cloudfront.net";
+};
+
+export const resolveAskoxyUrl = (url?: string | null): string => {
+  if (!url) return "";
+  const cleanUrl = url.trim();
+  if (cleanUrl.includes("askoxy.s3.ap-south-1.amazonaws.com")) {
+    return cleanUrl.replace("askoxy.s3.ap-south-1.amazonaws.com", askoxyImgUrl());
+  }
+  if (cleanUrl.includes("oxybricksv1.s3.ap-south-1.amazonaws.com")) {
+    return cleanUrl.replace("oxybricksv1.s3.ap-south-1.amazonaws.com", askoxyImgUrl());
+  }
+  if (cleanUrl.includes("askoxy.s3.amazonaws.com")) {
+    return cleanUrl.replace("askoxy.s3.amazonaws.com", askoxyImgUrl());
+  }
+  if (cleanUrl.startsWith("/")) {
+    return `https://${askoxyImgUrl()}${cleanUrl}`;
+  }
+  if (!/^https?:\/\//i.test(cleanUrl) && !cleanUrl.startsWith("data:") && !cleanUrl.startsWith("static/")) {
+    return `https://${askoxyImgUrl()}/${cleanUrl}`;
+  }
+  return cleanUrl;
+};
 

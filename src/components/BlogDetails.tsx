@@ -29,7 +29,7 @@ import {
   submitWriteToUsQuery,
 } from "./servicesapi";
 import type { Campaign } from "./servicesapi";
-import { uploadurlwithId } from "../Config";
+import { uploadurlwithId, resolveAskoxyUrl } from "../Config";
 
 const { TextArea } = Input;
 
@@ -226,7 +226,18 @@ const BlogDetails: React.FC = () => {
 
   const buildMediaUrl = (path: string) => {
     if (!path) return "";
-    return /^https?:\/\//i.test(path) ? path : `${uploadurlwithId}${path}`;
+    const clean = path.trim();
+    if (/^https?:\/\//i.test(clean)) {
+      return resolveAskoxyUrl(clean);
+    }
+    const hasNullPrefix = clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") || clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
+    if (hasNullPrefix) {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return resolveAskoxyUrl(`https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`);
+    } else {
+      const separator = clean.startsWith("/") ? "" : "/";
+      return resolveAskoxyUrl(`${uploadurlwithId}${separator}${clean}`);
+    }
   };
 
   const redirectToLogin = (redirectPath: string = BLOGS_DASHBOARD_PATH) => {

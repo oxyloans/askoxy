@@ -18,7 +18,7 @@ import { Button, message, Modal, Input, Tag } from "antd";
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { LoadingOutlined } from "@ant-design/icons";
-import BASE_URL from "../Config";
+import BASE_URL, { resolveAskoxyUrl } from "../Config";
 // import DeliveryFee from "./DeliveryFee";
 import { calculateDeliveryFee } from "./DeliveryFee";
 import { RiArrowDropDownLine } from "react-icons/ri";
@@ -1878,7 +1878,7 @@ const CartPage: React.FC = () => {
                             aria-label={`View ${item.itemName}`}
                           >
                             <img
-                              src={item.image}
+                              src={resolveAskoxyUrl(item.image)}
                               alt={item.itemName}
                               className="w-full h-full object-cover"
                             />
@@ -2070,6 +2070,21 @@ const CartPage: React.FC = () => {
             </main>
 
             <div className="w-full lg:w-1/4 lg:sticky lg:top-4 self-start">
+              {/* Delivery Promise Banner */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-100 rounded-xl p-4 mb-4 shadow-sm flex items-start gap-3">
+                <div className="p-2.5 bg-purple-600 rounded-lg text-white shadow-sm flex-shrink-0">
+                  <Package className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-purple-900 text-sm flex items-center gap-1.5">
+                    Delivery Promise
+                  </h4>
+                  <p className="text-xs text-purple-700 mt-1 leading-relaxed font-medium">
+                    ⚡ Guaranteed dispatch within 24 hours. Fresh and secure delivery straight to your doorstep!
+                  </p>
+                </div>
+              </div>
+
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border">
                 <div className="flex items-center w-full min-w-0 mb-4">
                   {/* Title shrinks gracefully and never overlaps */}

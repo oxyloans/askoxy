@@ -31,7 +31,7 @@ import {
 import Footer from "../components/Footer";
 import { CartContext } from "../until/CartContext";
 import { AxiosError } from "axios";
-import BASE_URL from "../Config";
+import BASE_URL, { resolveAskoxyUrl } from "../Config";
 
 interface Item {
   itemId: string;
@@ -1105,7 +1105,7 @@ const ItemDisplayPage = () => {
                     {getAllImages().length > 0 ? (
                       <>
                         <img
-                          src={getAllImages()[currentImageIndex]?.imageUrl}
+                          src={resolveAskoxyUrl(getAllImages()[currentImageIndex]?.imageUrl)}
                           alt={itemDetails?.itemName}
                           onClick={() =>
                             openFullscreen(
@@ -1168,7 +1168,7 @@ const ItemDisplayPage = () => {
                           }`}
                         >
                           <img
-                            src={image.imageUrl}
+                            src={resolveAskoxyUrl(image.imageUrl)}
                             alt={`${itemDetails?.itemName} ${index + 1}`}
                             className="w-full h-full object-contain"
                           />
@@ -1498,7 +1498,7 @@ const ItemDisplayPage = () => {
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                             {item.itemImage || item.image ? (
                               <img
-                                src={item.itemImage || item.image}
+                                src={resolveAskoxyUrl(item.itemImage || item.image)}
                                 alt={item.itemName}
                                 className="w-full h-full object-contain"
                               />
@@ -1573,7 +1573,7 @@ const ItemDisplayPage = () => {
                 {goldPriceModal.images.map((image, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={image.imageUrl}
+                      src={resolveAskoxyUrl(image.imageUrl)}
                       alt={`Gold item ${index + 1}`}
                       className="w-full h-32 object-contain rounded-lg bg-gray-50 cursor-pointer transition-transform hover:scale-105"
                       onClick={() => openFullscreen(image, index)}
@@ -1639,7 +1639,7 @@ const ItemDisplayPage = () => {
             </div>
 
             <img
-              src={fullscreenImage.imageUrl}
+              src={resolveAskoxyUrl(fullscreenImage.imageUrl)}
               alt={`Gold item ${fullscreenImage.index + 1} - Fullscreen`}
               className="max-w-full max-h-full object-contain"
               onClick={(e) => e.stopPropagation()}
@@ -1790,7 +1790,7 @@ const ItemDisplayPage = () => {
                   <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
                     {addonItem.itemImage ? (
                       <img
-                        src={addonItem.itemImage}
+                        src={resolveAskoxyUrl(addonItem.itemImage)}
                         alt={addonItem.itemName}
                         className="w-full h-full object-contain p-1.5"
                         onError={(e) => {

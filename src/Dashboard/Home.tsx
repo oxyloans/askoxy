@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
-import BASE_URL from "../Config";
+import BASE_URL, { resolveAskoxyUrl } from "../Config";
 import checkProfileCompletion from "../until/ProfileCheck";
 import { CartContext } from "../until/CartContext";
 import ProductOfferModals from "./ProductOffermodals";
@@ -1207,7 +1207,7 @@ const Home: React.FC = () => {
         >
           <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative group">
             <motion.img
-              src={item.image ?? "https://via.placeholder.com/150"}
+              src={resolveAskoxyUrl(item.image) || "https://via.placeholder.com/150"}
               alt={item.title}
               className="w-full h-full object-contain"
               whileHover={{ scale: 1.05 }}
@@ -2131,7 +2131,7 @@ const Home: React.FC = () => {
                   >
                     <div className="aspect-video overflow-hidden">
                       <img
-                        src={service.image}
+                        src={resolveAskoxyUrl(service.image)}
                         alt={service.title}
                         className="w-full h-full object-contain"
                       />
@@ -2331,7 +2331,7 @@ const Home: React.FC = () => {
                   <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
                     {addonItem.itemImage ? (
                       <img
-                        src={addonItem.itemImage}
+                        src={resolveAskoxyUrl(addonItem.itemImage)}
                         alt={addonItem.itemName}
                         className="w-full h-full object-contain p-1.5"
                         onError={(e) => {
