@@ -47,6 +47,7 @@ type Freelancer = {
   openForFreeLancing: "YES" | "NO" | string;
   amountNegotiable: "YES" | "NO" | string;
   resumeUrl: string | null;
+  activeStatus: boolean | null;
 };
 
 function formatMoney(n: number | null | undefined) {
@@ -119,6 +120,7 @@ const FreelancersByUserId: React.FC = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [newResumeUrl, setNewResumeUrl] = useState<string | null>(null);
+  const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
   const [updateForm] = Form.useForm();
 
   const getAccessToken = () => localStorage.getItem("accessToken");
@@ -181,6 +183,31 @@ const FreelancersByUserId: React.FC = () => {
   };
 
 
+
+  const handleStatusToggle = (r: Freelancer) => {
+    const next = !r.activeStatus;
+    Modal.confirm({
+      title: "Confirm",
+      content: `Are you sure you want to mark this as ${next ? "Active" : "Inactive"}?`,
+      okText: "Yes",
+      onOk: async () => {
+        setStatusLoadingId(r.id);
+        try {
+          await customerApi.patch(
+            `${BASE_URL}/ai-service/agent/freeLancerInfo/${r.id}/activeOrInactive/${next}`,
+            {},
+            { headers: { Authorization: `Bearer ${getAccessToken()}` } }
+          );
+          message.success(`Marked as ${next ? "Active" : "Inactive"} successfully!`);
+          fetchData();
+        } catch (e: any) {
+          message.error(e?.response?.data?.message || "Status update failed");
+        } finally {
+          setStatusLoadingId(null);
+        }
+      },
+    });
+  };
 
   const handleUpdate = async () => {
     if (!updateRecord) return;
@@ -265,16 +292,29 @@ const FreelancersByUserId: React.FC = () => {
       title: "Action",
       key: "action",
       align: "center",
-    
       render: (_, r) => (
-        <Button
-         
-          size="small"
-          onClick={() => openUpdateModal(r)}
-          style={{ background: "#1ab394", borderColor: "#1ab394", color: "#fff", borderRadius: 6 }}
-        >
-          Update
-        </Button>
+        <Space size={4}>
+          <Button
+            size="small"
+            onClick={() => openUpdateModal(r)}
+            style={{ background: "#1ab394", borderColor: "#1ab394", color: "#fff", borderRadius: 6 }}
+          >
+            Update
+          </Button>
+          {/* <Button
+            size="small"
+            loading={statusLoadingId === r.id}
+            onClick={() => handleStatusToggle(r)}
+            style={{
+              background: r.activeStatus ? "#10b981" : "#ef4444",
+              borderColor: r.activeStatus ? "#10b981" : "#ef4444",
+              color: "#fff",
+              borderRadius: 6,
+            }}
+          >
+            {r.activeStatus ? "Active" : "Inactive"}
+          </Button> */}
+        </Space>
       ),
     },
   ];

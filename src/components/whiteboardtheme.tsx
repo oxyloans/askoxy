@@ -13,15 +13,22 @@ import web5 from "../assets/img/web5.png";
 import arrow0 from "../assets/img/arrow0.png";
 import arrow1 from "../assets/img/arrow1.png";
 import speak1 from "../assets/img/speak1.png";
-import speak2 from "../assets/img/walkin.png";
 import line1 from "../assets/img/line1.png";
 import line2 from "../assets/img/line2.png";
 import line3 from "../assets/img/line3.png";
 import line4 from "../assets/img/line4.png";
+import BASE_URL from "../Config";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   show: { opacity: 1, y: 0 },
+};
+
+const JOBS_COUNT_API = `${BASE_URL}/marketing-service/campgin/companies-jobs-count`;
+
+type JobsCount = {
+  activeJobs: number;
+  totalCompanies: number;
 };
 
 type CardType =
@@ -37,14 +44,21 @@ const Whiteboardtheme: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
-  const [modalActionType, setModalActionType] = useState<"signin" | "hiring">("signin");
+  const [jobsCount, setJobsCount] = useState<JobsCount>({
+    activeJobs: 0,
+    totalCompanies: 0,
+  });
+  const [isJobsCountLoading, setIsJobsCountLoading] = useState(true);
+  const [modalActionType, setModalActionType] = useState<"signin" | "hiring">(
+    "signin",
+  );
   const LOGIN_URL = "/whatsapplogin";
   const ASK_OXY_ICON_URL = "https://i.ibb.co/d0Hs3TVv/hireicon.png";
   const handleSignIn = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/viewjobdetails/default/ASKOXY_AI";
+      const redirectPath = "/main/viewjobdetails/default/ALL";
       if (userId) {
         navigate(redirectPath);
       } else {
@@ -59,6 +73,37 @@ const Whiteboardtheme: React.FC = () => {
   };
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const getJobsCount = async () => {
+      try {
+        const response = await fetch(JOBS_COUNT_API, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Unable to load jobs count (${response.status})`);
+        }
+
+        const data: JobsCount = await response.json();
+        setJobsCount({
+          activeJobs: Number(data.activeJobs) || 0,
+          totalCompanies: Number(data.totalCompanies) || 0,
+        });
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("Jobs count error:", error);
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsJobsCountLoading(false);
+      }
+    };
+
+    getJobsCount();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -77,6 +122,63 @@ const Whiteboardtheme: React.FC = () => {
     if (type === "loans") return navigate("/loansandinvest");
     if (type === "oxybricks") return navigate("/fpl");
   };
+
+  const openWalkInModal = () => {
+    setModalActionType("signin");
+    setIsWalkInModalOpen(true);
+  };
+
+  const jobsCountCard = (desktop = false) => (
+    <button
+      type="button"
+      onClick={openWalkInModal}
+      className="flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-[9px] bg-gray-50 text-center transition-all duration-300 hover:-translate-y-1 active:scale-95"
+      style={{ width: desktop ? "clamp(130px, 11vw, 175px)" : "90px" }}
+      aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
+    >
+      {/* counts */}
+      <span className="flex flex-col items-center gap-2 px-2 pt-2 pb-1">
+        <span className="flex items-center gap-2">
+          <strong className="text-[24px] font-extrabold leading-none text-[#5543C8] sm:text-[14px] md:text-[16px]">
+            {isJobsCountLoading ? "—" : jobsCount.activeJobs}
+          </strong>
+          <span className="border-l border-[#ded9ff] pl-1.5 text-[12px] font-bold leading-tight text-[#333] sm:text-[11px] md:text-[12px]">
+            Active Jobs
+          </span>
+        </span>
+        <span className="flex items-center gap-2">
+          <strong className="text-[24px] font-extrabold leading-none text-[#D71D8E] sm:text-[14px] md:text-[16px]">
+            {isJobsCountLoading ? "—" : jobsCount.totalCompanies}
+          </strong>
+          <span className="border-l border-[#ded9ff] pl-1.5 text-[12px] font-bold leading-tight text-[#333] sm:text-[11px] md:text-[12px]">
+            Total Companies
+          </span>
+        </span>
+      </span>
+
+      {/* divider */}
+      <span className="mx-2 block border-t border-[#e8e3ff]" />
+
+      {/* Apply Now */}
+      <span className="flex w-full items-center justify-center gap-1 px-2 py-1.5 text-[13px] font-bold leading-none text-gray-700 sm:text-[10px] md:text-[12px]">
+        Apply Now
+        <svg
+          viewBox="0 0 20 20"
+          fill="none"
+          aria-hidden="true"
+          className="h-3 w-3"
+        >
+          <path
+            d="M4 10h11m-4-4 4 4-4 4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </button>
+  );
 
   const cards = [
     {
@@ -199,21 +301,7 @@ const Whiteboardtheme: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setModalActionType("signin");
-                      setIsWalkInModalOpen(true);
-                    }}
-                    className="cursor-pointer border-0 bg-transparent p-0 transition-transform duration-305 active:scale-95"
-                    aria-label="Walk in interviews"
-                  >
-                    <img
-                      src={speak2}
-                      alt="Walk in interviews"
-                      className="h-auto w-[78px] object-contain sm:w-[96px]"
-                    />
-                  </button>
+                  <div className="w-[78px] sm:w-[96px]">{jobsCountCard()}</div>
                   <img
                     src={arrow1}
                     alt=""
@@ -238,23 +326,12 @@ const Whiteboardtheme: React.FC = () => {
                   />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModalActionType("signin");
-                    setIsWalkInModalOpen(true);
-                  }}
-                  className="pointer-events-auto absolute top-0 -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105"
+                <div
+                  className="pointer-events-auto absolute top-5 -translate-x-1/2"
                   style={{ left: "83.333%" }}
-                  aria-label="Walk in interviews"
                 >
-                  <img
-                    src={speak2}
-                    alt="Walk in interviews"
-                    className="h-auto object-contain"
-                    style={{ width: "clamp(110px, 10vw, 160px)" }}
-                  />
-                </button>
+                  {jobsCountCard(true)}
+                </div>
 
                 <img
                   src={arrow0}
@@ -469,7 +546,11 @@ const Whiteboardtheme: React.FC = () => {
       <WalkInInterviewStepsModal
         isOpen={isWalkInModalOpen}
         onClose={() => setIsWalkInModalOpen(false)}
-        onActionClick={modalActionType === "signin" ? handleSignIn : () => navigate("/wearehiring")}
+        onActionClick={
+          modalActionType === "signin"
+            ? handleSignIn
+            : () => navigate("/wearehiring")
+        }
       />
     </>
   );

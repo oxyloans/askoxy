@@ -1179,22 +1179,33 @@ const JobViewPage: React.FC = () => {
         <div className="mb-6 p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Building2 className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-blue-500" />
+
               <select
                 value={currentCompany}
                 onChange={(e) => {
                   const token = localStorage.getItem("accessToken");
                   const userId = localStorage.getItem("userId");
+
                   const prefix =
                     token && userId
                       ? "/main/viewjobdetails"
                       : "/viewjobdetails";
+
                   navigate(`${prefix}/default/${e.target.value}`);
                 }}
-                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-800 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
+                className="
+      w-full appearance-none cursor-pointer rounded-lg
+      border-2 border-blue-500 bg-white
+      py-2 pl-8 pr-4 font-medium text-gray-800
+      shadow-[0_0_0_3px_rgba(59,130,246,0.18)]
+      animate-pulse transition-colors
+      hover:border-blue-600
+      focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300
+    "
               >
-                <option value="ALL"> All Companies Jobs</option>
-                {/* <option value="AI Jobs">AI Jobs</option> */}
+                <option value="ALL">All Companies Jobs</option>
+
                 {Object.entries(companyNames)
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([label, value]) => (

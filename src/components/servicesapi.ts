@@ -1,5 +1,5 @@
 import axiosInstance from "../utils/axiosInstance";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 
 export interface Image {
   imageId?: string;
@@ -119,25 +119,41 @@ const buildPollOptions = (data: any): CampaignPollOption[] => {
   return options;
 };
 
+const resolveImageUrl = (raw?: string): string => {
+  if (!raw) return "";
+  const trimmed = String(raw).trim();
+  if (!trimmed) return "";
+  // If already absolute, return as-is
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // If upload base is available, join paths
+  if (uploadurlwithId) {
+    // avoid double slashes
+    return (
+      uploadurlwithId.replace(/\/+$/, "") + "/" + trimmed.replace(/^\/+/, "")
+    );
+  }
+  return trimmed;
+};
+
 const normalizeCampaign = (item: any): Campaign => {
   const imageUrls: Image[] = Array.isArray(item?.imageUrls)
     ? item.imageUrls.map((img: any) =>
         typeof img === "string"
-          ? { imageUrl: img, status: true }
+          ? { imageUrl: resolveImageUrl(img), status: true }
           : {
               imageId: img?.imageId,
-              imageUrl: img?.imageUrl,
+              imageUrl: resolveImageUrl(img?.imageUrl),
               status: img?.status,
-            }
+            },
       )
     : item?.imageUrl
-    ? [{ imageUrl: item.imageUrl, status: true }]
-    : Array.isArray(item?.images)
-    ? item.images.map((img: any) => ({
-        imageUrl: img?.imageUrl,
-        status: img?.status,
-      }))
-    : [];
+      ? [{ imageUrl: resolveImageUrl(item.imageUrl), status: true }]
+      : Array.isArray(item?.images)
+        ? item.images.map((img: any) => ({
+            imageUrl: resolveImageUrl(img?.imageUrl),
+            status: img?.status,
+          }))
+        : [];
 
   return {
     campaignId: item?.campaignId || item?.id || "",
@@ -146,7 +162,9 @@ const normalizeCampaign = (item: any): Campaign => {
     campaignTitle: item?.campaignTitle || item?.campaignType || "Blog",
     campaignDescription: item?.campaignDescription || "",
     imageUrls,
-    imageUrl: item?.imageUrl || imageUrls?.[0]?.imageUrl || "",
+    imageUrl: item?.imageUrl
+      ? resolveImageUrl(item.imageUrl)
+      : imageUrls?.[0]?.imageUrl || "",
     images: Array.isArray(item?.images) ? item.images : [],
     campaignTypeAddBy: item?.campaignTypeAddBy || "ADMIN",
     campaignStatus: item?.campaignStatus !== false,
@@ -177,7 +195,7 @@ const extractArray = (data: any): any[] => {
 export const fetchCampaigns = async (): Promise<Campaign[]> => {
   try {
     const { data } = await axiosInstance.get(
-      `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`
+      `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`,
     );
     return extractArray(data).map(normalizeCampaign);
   } catch (error) {
@@ -189,7 +207,7 @@ export const fetchCampaigns = async (): Promise<Campaign[]> => {
 export const fetchAllGames = async (): Promise<Campaign[]> => {
   try {
     const { data } = await axiosInstance.get(
-      `${BASE_URL}/marketing-service/campgin/get-all-games`
+      `${BASE_URL}/marketing-service/campgin/get-all-games`,
     );
     return extractArray(data).map(normalizeCampaign);
   } catch (error) {
@@ -200,7 +218,7 @@ export const fetchAllGames = async (): Promise<Campaign[]> => {
 
 export const fetchLikesAndComments = async (
   campaignId: string,
-  userId: string | null
+  userId: string | null,
 ): Promise<CampaignLikesAndCommentsResponse> => {
   const url = userId
     ? `${BASE_URL}/marketing-service/campgin/getcampainlikesandcommentsbycamapignid?campaignId=${campaignId}&userId=${userId}`
@@ -259,7 +277,7 @@ export const submitWriteToUsQuery = async (
   mobileNumber: string | null,
   query: string,
   campaignType: string,
-  userId: string | null
+  userId: string | null,
 ): Promise<WriteToUsResponse> => {
   try {
     const { data, status } = await axiosInstance.post(
@@ -279,7 +297,7 @@ export const submitWriteToUsQuery = async (
         userDocumentId: "",
         query,
         userId,
-      }
+      },
     );
 
     return {
@@ -305,16 +323,18 @@ export const submitWriteToUsQuery = async (
 
 export const checkUserInterest = async (
   userId: string,
-  campaignType: string
+  campaignType: string,
 ): Promise<{ exists: boolean; userRole?: string }> => {
   try {
     const { data, status } = await axiosInstance.post(
       `${BASE_URL}/marketing-service/campgin/allOfferesDetailsForAUser`,
-      { userId }
+      { userId },
     );
 
     if (status === 200 && Array.isArray(data)) {
-      const match = data.find((offer: any) => offer.askOxyOfers === campaignType);
+      const match = data.find(
+        (offer: any) => offer.askOxyOfers === campaignType,
+      );
       if (match) {
         return { exists: true, userRole: match.userRole };
       }
@@ -331,7 +351,7 @@ export const submitInterest = async (
   campaignType: string,
   mobileNumber: string | null,
   userId: string | null,
-  userRole: string
+  userRole: string,
 ): Promise<boolean> => {
   try {
     const { status, data } = await axiosInstance.post(
@@ -342,7 +362,7 @@ export const submitInterest = async (
         userId,
         projectType: "ASKOXY",
         userRole,
-      }
+      },
     );
 
     if (status === 200) {
@@ -370,7 +390,7 @@ type InteractionPayload = {
 };
 
 export const submitUserInteraction = async (
-  interaction: InteractionPayload
+  interaction: InteractionPayload,
 ): Promise<boolean> => {
   try {
     const payload: Record<string, any> = {
@@ -399,7 +419,7 @@ export const submitUserInteraction = async (
 
     const { status } = await axiosInstance.post(
       `${BASE_URL}/marketing-service/campgin/filluserinteractions`,
-      payload
+      payload,
     );
 
     return status === 200 || status === 201;
@@ -412,12 +432,12 @@ export const submitUserInteraction = async (
 export const submitSubComment = async (
   mainCommentId: string,
   subComment: string,
-  userId: string
+  userId: string,
 ): Promise<boolean> => {
   try {
     const { status } = await axiosInstance.post(
       `${BASE_URL}/marketing-service/campgin/fillusersubinteractioncomments`,
-      { mainCommentId, subComment, userId }
+      { mainCommentId, subComment, userId },
     );
     return status === 200;
   } catch (error) {
@@ -427,14 +447,14 @@ export const submitSubComment = async (
 };
 
 export const fetchAppliedJobsByUserId = async (
-  userId: string | null
+  userId: string | null,
 ): Promise<AppliedJob[]> => {
   if (!userId) return [];
 
   try {
     const { data } = await axiosInstance.get(
       `${BASE_URL}/marketing-service/campgin/get-user-apply-jobs`,
-      { params: { userId } }
+      { params: { userId } },
     );
     return data?.data || [];
   } catch (error) {

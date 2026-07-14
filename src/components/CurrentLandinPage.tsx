@@ -48,7 +48,7 @@ const CurrentLandingPage: React.FC = () => {
             <RadhAiCeo />
           </section>*/}
           <section className="relative z-1">
-            <Whiteboardtheme />
+            <Whiteboardtheme/>
           </section>
 
           <section className="relative z-1">
