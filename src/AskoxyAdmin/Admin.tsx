@@ -124,7 +124,7 @@ const Admin: React.FC = () => {
   useEffect(() => {
     const t = setTimeout(
       () => setDebouncedTerm(searchText.trim().toLowerCase()),
-      250
+      250,
     );
     return () => clearTimeout(t);
   }, [searchText]);
@@ -137,7 +137,7 @@ const Admin: React.FC = () => {
         axios.get(`${BASE_URL}/auth-service/auth/usersOfferesDetails`),
         axios.get(`${BASE_URL}/auth-service/auth/AllusersAddress`),
         axios.get(
-          `${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`
+          `${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`,
         ),
         axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
       ]);
@@ -193,7 +193,7 @@ const Admin: React.FC = () => {
   // options: known + dynamic, unique
   const serviceOptions = useMemo(() => {
     const all = Array.from(
-      new Set([...knownOfferTypes, ...dynamicLabels])
+      new Set([...knownOfferTypes, ...dynamicLabels]),
     ).filter(Boolean);
     return all.map((s) => ({ label: s, value: s }));
   }, [dynamicLabels]);
@@ -210,7 +210,7 @@ const Admin: React.FC = () => {
       _createdAtMs: u._createdAtMs,
     }));
     return [...rawOffers, ...syntheticFromUsers].sort(
-      (a, b) => (b._createdAtMs || 0) - (a._createdAtMs || 0)
+      (a, b) => (b._createdAtMs || 0) - (a._createdAtMs || 0),
     );
   }, [rawOffers, users]);
 
@@ -223,7 +223,7 @@ const Admin: React.FC = () => {
       if (serviceFilter.length > 0 && !serviceFilter.includes("WEAREHIRING")) {
         const val = normalizeOffer(o.askOxyOfers);
         const matchesFilter = serviceFilter.some(
-          (f) => val === normalizeOffer(f)
+          (f) => val === normalizeOffer(f),
         );
         if (!matchesFilter) return false;
       }
@@ -276,7 +276,7 @@ const Admin: React.FC = () => {
 
   /** ---------- Table columns (desktop/tablet) ---------- */
   const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | null>(
-    "descend"
+    "descend",
   );
   const columns: TableProps<OfferDetails>["columns"] = [
     {
@@ -355,7 +355,7 @@ const Admin: React.FC = () => {
       setServiceFilter((prev) =>
         prev.includes(filter)
           ? prev.filter((f) => f !== filter)
-          : [...prev, filter]
+          : [...prev, filter],
       );
     }
     setCurrentPage(1);
@@ -428,7 +428,7 @@ const Admin: React.FC = () => {
                 }}
                 onClick={() => {
                   setServiceFilter((prev) =>
-                    prev.includes("WEAREHIRING") ? [] : ["WEAREHIRING"]
+                    prev.includes("WEAREHIRING") ? [] : ["WEAREHIRING"],
                   );
                   setCurrentPage(1);
                 }}
@@ -553,7 +553,7 @@ const Admin: React.FC = () => {
             title="Samples"
             value={
               filteredRows.filter((o) =>
-                (o.askOxyOfers || "").toUpperCase().includes("SAMPLE")
+                (o.askOxyOfers || "").toUpperCase().includes("SAMPLE"),
               ).length
             }
           />
@@ -561,7 +561,7 @@ const Admin: React.FC = () => {
             title="Rudraksha"
             value={
               filteredRows.filter((o) =>
-                (o.askOxyOfers || "").toUpperCase().includes("RUDRAK")
+                (o.askOxyOfers || "").toUpperCase().includes("RUDRAK"),
               ).length
             }
           />
@@ -569,7 +569,7 @@ const Admin: React.FC = () => {
             title="Free AI"
             value={
               filteredRows.filter((o) =>
-                (o.askOxyOfers || "").toUpperCase().includes("FREEAI")
+                (o.askOxyOfers || "").toUpperCase().includes("FREEAI"),
               ).length
             }
           />
@@ -577,7 +577,7 @@ const Admin: React.FC = () => {
             title="Study"
             value={
               filteredRows.filter((o) =>
-                (o.askOxyOfers || "").toUpperCase().includes("STUDY")
+                (o.askOxyOfers || "").toUpperCase().includes("STUDY"),
               ).length
             }
           />
@@ -585,7 +585,7 @@ const Admin: React.FC = () => {
             title="Legal"
             value={
               filteredRows.filter((o) =>
-                (o.askOxyOfers || "").toUpperCase().includes("LEGAL")
+                (o.askOxyOfers || "").toUpperCase().includes("LEGAL"),
               ).length
             }
           />

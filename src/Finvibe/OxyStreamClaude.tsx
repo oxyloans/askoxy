@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type React from "react";
 import BASE_URL from "../Config";
-import { notification } from "antd";
+import { notification, Modal } from "antd";
 import {
   AudioOutlined,
   MenuFoldOutlined,
@@ -60,6 +60,7 @@ const CLAUDE_MODELS = [
     desc: "Most capable",
     provider: "Claude",
     apiProvider: "CLAUDE",
+    isPremium: true,
   },
   {
     id: "claude-sonnet-4-6",
@@ -67,6 +68,7 @@ const CLAUDE_MODELS = [
     desc: "Balanced",
     provider: "Claude",
     apiProvider: "CLAUDE",
+    isPremium: true,
   },
   {
     id: "claude-haiku-4-5",
@@ -75,6 +77,13 @@ const CLAUDE_MODELS = [
     provider: "Claude",
     apiProvider: "CLAUDE",
   },
+  // {
+  //   id: "claude-3-5-haiku-20241022",
+  //   label: "Claude Haiku 3.5",
+  //   desc: "Lowest cost",
+  //   provider: "Claude",
+  //   apiProvider: "CLAUDE",
+  // },
 
   // ==========================
   // OpenAI Models
@@ -85,6 +94,7 @@ const CLAUDE_MODELS = [
     desc: "Most capable",
     provider: "OpenAI",
     apiProvider: "OPENAI",
+     isPremium: true,
   },
   {
     id: "gpt-5.4-mini",
@@ -99,6 +109,7 @@ const CLAUDE_MODELS = [
     desc: "Advanced reasoning",
     provider: "OpenAI",
     apiProvider: "OPENAI",
+     isPremium: true,
   },
   {
     id: "gpt-5-mini",
@@ -232,7 +243,14 @@ async function streamSessionChat(
       "Content-Type": "application/json",
       Accept: "text/event-stream, text/plain, */*",
     },
-    body: JSON.stringify({ sessionId, userId, provider, model, message, webSearch }),
+    body: JSON.stringify({
+      sessionId,
+      userId,
+      provider,
+      model,
+      message,
+      webSearch,
+    }),
     signal,
   });
 
@@ -269,7 +287,8 @@ async function streamSessionChat(
       if (typeof parsed === "string") {
         onChunk(parsed);
       } else if (parsed && typeof parsed === "object") {
-        if (typeof parsed.sessionId === "string") onSessionId?.(parsed.sessionId);
+        if (typeof parsed.sessionId === "string")
+          onSessionId?.(parsed.sessionId);
         const text =
           parsed.content ?? parsed.delta ?? parsed.token ?? parsed.text ?? "";
         if (text) onChunk(text);
@@ -1860,12 +1879,29 @@ export default function OxyStreamClaude() {
                           <button
                             key={m.id}
                             onClick={() => {
-                              setSelectedModel(m.id);
                               setModelOpen(false);
+                              if ((m as any).isPremium) {
+                                Modal.confirm({
+                                  title: "Heads up",
+                                  content: `${m.label} may consume more money. Please confirm — do you really want to use this model for your conversation?`,
+                                  okText: "Yes, use it",
+                                  cancelText: "Cancel",
+                                  onOk: () => setSelectedModel(m.id),
+                                });
+                              } else {
+                                setSelectedModel(m.id);
+                              }
                             }}
                             className={`w-full flex justify-between items-center px-3 py-2 text-[12.5px] transition-all hover:bg-violet-50 ${selectedModel === m.id ? "bg-violet-50 text-violet-800 font-semibold" : "text-slate-600"}`}
                           >
-                            <span>{m.label}</span>
+                            <span className="flex items-center gap-1.5">
+                              {m.label}
+                              {(m as any).isPremium && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                                  PRO
+                                </span>
+                              )}
+                            </span>
                             <span className="text-[10px] text-violet-400">
                               {m.desc}
                             </span>
@@ -1882,12 +1918,29 @@ export default function OxyStreamClaude() {
                           <button
                             key={m.id}
                             onClick={() => {
-                              setSelectedModel(m.id);
                               setModelOpen(false);
+                              if ((m as any).isPremium) {
+                                Modal.confirm({
+                                  title: "Heads up",
+                                  content: `${m.label} may consume more money. Please confirm — do you really want to use this model for your conversation?`,
+                                  okText: "Yes, use it",
+                                  cancelText: "Cancel",
+                                  onOk: () => setSelectedModel(m.id),
+                                });
+                              } else {
+                                setSelectedModel(m.id);
+                              }
                             }}
                             className={`w-full flex justify-between items-center px-3 py-2 text-[12.5px] transition-all hover:bg-emerald-50 ${selectedModel === m.id ? "bg-emerald-50 text-emerald-800 font-semibold" : "text-slate-600"}`}
                           >
-                            <span>{m.label}</span>
+                            <span className="flex items-center gap-1.5">
+                              {m.label}
+                              {(m as any).isPremium && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                                  PRO
+                                </span>
+                              )}
+                            </span>
                             <span className="text-[10px] text-emerald-500">
                               {m.desc}
                             </span>

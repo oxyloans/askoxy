@@ -73,7 +73,7 @@ type PaperclipData = {
   imageUrl?: string | null;
   imageUrls?: string[] | null;
   uploadedAt?: string | null;
-  analysis?: {
+analysis?: {
     summary?: {
       shortSummary?: string | null;
       detailedSummary?: string | null;
@@ -83,6 +83,12 @@ type PaperclipData = {
     people?: Person[] | null;
     companies?: Company[] | null;
     reports?: Report[] | null;
+    serviceRecommendations?: {
+      service?: string | null;
+      businessImpact?: string | null;
+      actionItems?: string[] | null;
+      priority?: string | null;
+    }[] | null;
   } | null;
 };
 
@@ -967,17 +973,11 @@ export default function PaperClippingPage() {
               </button>
             )}
 
-            {/* ── NEW — "Ask Article" moved up here, unique size/color so it stands out from Back/Refresh ── */}
+            {/* ── "Ask Article" — top bar, next to Back/Refresh ── */}
             {selected && (
-              <button
+              <AskArticleButton
                 onClick={() => { setAssistantTarget(selected); setShowAssistant(true); }}
-                title="Ask this article a question"
-                className="group relative inline-flex h-10 items-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-fuchsia-600 via-orange-700 to-indigo-600 px-4 text-[13px] font-black text-white shadow-[0_4px_14px_rgba(192,38,211,0.45)] transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_6px_20px_rgba(192,38,211,0.6)]"
-              >
-                <span className="absolute inset-0 -translate-x-full bg-white/20 skew-x-[-20deg] transition-transform duration-500 group-hover:translate-x-full" />
-                <MessageCircleQuestion size={16} className="relative" />
-                <span className="relative">Ask Article</span>
-              </button>
+              />
             )}
 
             <button
@@ -1233,7 +1233,7 @@ export default function PaperClippingPage() {
                   </h2>
                 </div>
 
-                {/* NEW — "Ask Article" removed from here; now lives in the top bar next to Back/Refresh */}
+                {/* NOTE — "Ask Article" now lives in the top bar next to Back/Refresh */}
                 <div className="flex gap-2 overflow-x-auto shrink-0 pb-0.5 sm:flex-wrap sm:overflow-visible">
                   <ActionChip label="Add to Clone" loading={cloneLoading} onClick={handleAddToClone} color="cyan" icon={<CheckCircle size={11} />} />
                   <ActionChip label="Blog with Paperclip" loading={formatLoading} onClick={() => handleFormatBlog(false)} color="violet" icon={<Eye size={11} />} />
@@ -1325,6 +1325,61 @@ export default function PaperClippingPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* ── NEW — Ask Article, placed directly above OxyGroup Recommendations ── */}
+                  {(selected?.analysis?.serviceRecommendations?.length ?? 0) > 0 && (
+                    <div className="flex justify-end">
+                      <AskArticleButton
+                        onClick={() => { setAssistantTarget(selected); setShowAssistant(true); }}
+                        className="h-9 px-3.5 text-[12px]"
+                      />
+                    </div>
+                  )}
+
+                {(selected?.analysis?.serviceRecommendations?.length ?? 0) > 0 && (
+                    <div className="rounded-2xl border border-fuchsia-200 bg-white p-4 sm:p-5">
+                      <p className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-fuchsia-700">
+                        <Sparkles size={11} /> OxyGroup Recommendations
+                      </p>
+                      <div className="space-y-3">
+                        {selected!.analysis!.serviceRecommendations!.map((rec, i) => (
+                          <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-black text-gray-900">{rec.service}</p>
+                              {rec.priority && (
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                                    rec.priority === "High"
+                                      ? "bg-rose-100 text-rose-700"
+                                      : rec.priority === "Medium"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-gray-100 text-gray-600"
+                                  }`}
+                                >
+                                  {rec.priority}
+                                </span>
+                              )}
+                            </div>
+                            {rec.businessImpact && (
+                              <p className="mt-1 text-xs text-gray-600">{rec.businessImpact}</p>
+                            )}
+                            {(rec.actionItems || []).length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {rec.actionItems!.map((item, j) => (
+                                  <div key={j} className="flex gap-2">
+                                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-fuchsia-50 text-[8px] font-black text-fuchsia-700">
+                                      {j + 1}
+                                    </span>
+                                    <p className="text-xs leading-5 text-gray-700">{item}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {imageUrl && (
                     <div className="rounded-2xl border border-gray-200 bg-white p-4">
                       <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-600">Generated Image</p>
@@ -1528,6 +1583,15 @@ export default function PaperClippingPage() {
                 </div>
               )}
 
+              {/* ── NEW — Ask Article, bottom of the detail page (shows under every tab) ── */}
+              {selected && (
+                <div className="mt-8 flex justify-center border-t border-gray-200 pt-6">
+                  <AskArticleButton
+                    onClick={() => { setAssistantTarget(selected); setShowAssistant(true); }}
+                  />
+                </div>
+              )}
+
             </div>
           </div>
         )}
@@ -1579,6 +1643,21 @@ export default function PaperClippingPage() {
 }
 
 /* ── Mini components ── */
+
+// NEW — reusable "Ask Article" button (used in header, above OxyGroup Recommendations, and at page bottom)
+function AskArticleButton({ onClick, className = "" }: { onClick: () => void; className?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      title="Ask this article a question"
+      className={`group relative inline-flex h-10 items-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-fuchsia-600 via-orange-700 to-indigo-600 px-4 text-[13px] font-black text-white shadow-[0_4px_14px_rgba(192,38,211,0.45)] transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_6px_20px_rgba(192,38,211,0.6)] ${className}`}
+    >
+      <span className="absolute inset-0 -translate-x-full bg-white/20 skew-x-[-20deg] transition-transform duration-500 group-hover:translate-x-full" />
+      <MessageCircleQuestion size={16} className="relative" />
+      <span className="relative">Ask Article</span>
+    </button>
+  );
+}
 
 function ActionChip({ label, icon, loading, disabled, onClick, color }: {
   label: string; icon: React.ReactNode; loading?: boolean; disabled?: boolean; onClick: () => void;

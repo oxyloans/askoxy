@@ -188,16 +188,22 @@ const Sidebar: React.FC = () => {
           roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
+          title: "League Journey Users",
+          icon: <FaGraduationCap className="text-cyan-400" />,
+          link: "/admin/leaguejourneyusers",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
+        {
           title: "Askoxy Assigned Data",
           icon: <FaClipboardList className="text-yellow-400" />,
           link: "/admin/assignedData",
-          roles: ["HELPDESKADMIN"],
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
         {
           title: "Users Recent Orders ",
           icon: <FaClipboardList className="text-yellow-400" />,
           link: "/admin/userOrdersIntegration",
-          roles: ["HELPDESKADMIN"],
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
         },
 
         {
@@ -291,13 +297,14 @@ const Sidebar: React.FC = () => {
           link: "/admin/wearehiringadd",
           roles: ["HELPDESKSUPERADMIN"],
         },
-       
+
         {
           title: "Add League Journey",
           icon: <FaPlusCircle className="text-yellow-400" />,
           link: "/admin/addleaguejourney",
           roles: ["HELPDESKSUPERADMIN"],
         },
+
         {
           title: "All Role Based Blogs",
           icon: <RiListUnordered className="text-purple-400" />,

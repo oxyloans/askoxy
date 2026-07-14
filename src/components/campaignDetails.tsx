@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 import { message, Modal, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import Header1 from "./Header";
-import { uploadurlwithId, resolveAskoxyUrl } from "../Config";
+import { uploadurlwithId } from "../Config";
 
 import {
   fetchCampaigns,
@@ -54,6 +54,8 @@ const CampaignDetails: React.FC = () => {
 
   const mediaItems = campaign?.imageUrls ?? [];
   const isHiringCampaign = campaign?.addServiceType === "WEAREHIRING";
+
+  const isJourney = campaign?.addServiceType === "LEAGUEJOURNEYS";
 
   useEffect(() => {
     const loadCampaign = async () => {
@@ -138,22 +140,6 @@ const CampaignDetails: React.FC = () => {
     );
   };
 
-  const buildMediaUrl = (path: string) => {
-    if (!path) return "";
-    const clean = path.trim();
-    if (/^https?:\/\//i.test(clean)) {
-      return resolveAskoxyUrl(clean);
-    }
-    const hasNullPrefix = clean.startsWith("/null/45880e62-acaf-4645-a83e-d1c8498e923e") || clean.startsWith("null/45880e62-acaf-4645-a83e-d1c8498e923e");
-    if (hasNullPrefix) {
-      const separator = clean.startsWith("/") ? "" : "/";
-      return resolveAskoxyUrl(`https://oxybricksv1.s3.ap-south-1.amazonaws.com${separator}${clean}`);
-    } else {
-      const separator = clean.startsWith("/") ? "" : "/";
-      return resolveAskoxyUrl(`${uploadurlwithId}${separator}${clean}`);
-    }
-  };
-
   const scrollToIndex = (idx: number, smooth = true) => {
     if (!mediaScrollRef.current) return;
     const container = mediaScrollRef.current;
@@ -209,38 +195,38 @@ const CampaignDetails: React.FC = () => {
     }
   };
 
- const handleWriteToUsSubmitButton = async () => {
-  if (!comments || comments.trim() === "") {
-    setCommentsError("Please enter your message before submitting.");
-    return;
-  }
-
-  if (!email || !finalMobileNumber) {
-    message.error("Email and Mobile Number are required");
-    return;
-  }
-
-  try {
-const success = await submitWriteToUsQuery(
-  email || "",
-  finalMobileNumber, // ✅ no error now
-  comments.trim(),
-  "SERVICES",
-  userId || ""
-);
-
-    if (success) {
-      setSuccessOpen(true);
-      setIsOpen(false);
-      setComments("");
-      setCommentsError(undefined);
-    } else {
-      message.error("Failed to send comments. Please try again.");
+  const handleWriteToUsSubmitButton = async () => {
+    if (!comments || comments.trim() === "") {
+      setCommentsError("Please enter your message before submitting.");
+      return;
     }
-  } catch {
-    message.error("Something went wrong. Please try again.");
-  }
-};
+
+    if (!email || !finalMobileNumber) {
+      message.error("Email and Mobile Number are required");
+      return;
+    }
+
+    try {
+      const success = await submitWriteToUsQuery(
+        email || "",
+        finalMobileNumber, // ✅ no error now
+        comments.trim(),
+        "SERVICES",
+        userId || "",
+      );
+
+      if (success) {
+        setSuccessOpen(true);
+        setIsOpen(false);
+        setComments("");
+        setCommentsError(undefined);
+      } else {
+        message.error("Failed to send comments. Please try again.");
+      }
+    } catch {
+      message.error("Something went wrong. Please try again.");
+    }
+  };
 
   const handleLoadOffersAndCheckInterest = async () => {
     if (!userId || !campaign?.campaignType) return;
@@ -329,13 +315,16 @@ const success = await submitWriteToUsQuery(
       sessionStorage.setItem("campaigntype", campaign.campaignType);
     }
 
+    const roleParam = isJourney ? "LEAGUEJOURNEYS" : "EMPLOYEE";
+    const roleLabel = isJourney ? "Journey" : "Employee";
+
     Modal.confirm({
       title: "Confirm Participation",
-      content: "Are you sure you want to join as Employee for this campaign?",
+      content: `Are you sure you want to join as ${roleLabel} for this campaign?`,
       okText: "Yes, I'm sure",
       cancelText: "Cancel",
       onOk: async () => {
-        await submitInterestHandler("EMPLOYEE");
+        await submitInterestHandler(roleParam);
         setIsRoleModalOpen(false);
       },
     });
@@ -363,14 +352,25 @@ const success = await submitWriteToUsQuery(
     if (!userId) {
       message.warning("Please login to buy now.");
       navigate("/whatsappregister");
-      
-      if (window.location.href.includes("/main/services/71e3/gold-silver-diamonds")) {
-        sessionStorage.setItem("redirectPath", "/main/dashboard/products?type=GOLD");
+
+      if (
+        window.location.href.includes(
+          "/main/services/71e3/gold-silver-diamonds",
+        )
+      ) {
+        sessionStorage.setItem(
+          "redirectPath",
+          "/main/dashboard/products?type=GOLD",
+        );
       } else {
         sessionStorage.setItem("redirectPath", "/main/dashboard/products");
       }
     } else {
-      if (window.location.href.includes("/main/services/71e3/gold-silver-diamonds")) {
+      if (
+        window.location.href.includes(
+          "/main/services/71e3/gold-silver-diamonds",
+        )
+      ) {
         navigate("/main/dashboard/products?type=GOLD");
       } else {
         navigate("/main/dashboard/products");
@@ -523,20 +523,20 @@ const success = await submitWriteToUsQuery(
                         key={image.imageId}
                         className="snap-center shrink-0 basis-full w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-[520px] flex items-start justify-center rounded-xl overflow-hidden"
                       >
-                        {isVideoUrl(buildMediaUrl(image.imageUrl || "")) ? (
+                        {isVideoUrl(`${uploadurlwithId}${image.imageUrl}`) ? (
                           <video
                             controls
                             className="max-w-full max-h-full w-auto h-auto self-start"
                             preload="metadata"
                           >
                             <source
-                              src={buildMediaUrl(image.imageUrl || "")}
+                              src={`${uploadurlwithId}${image.imageUrl}`}
                               type="video/mp4"
                             />
                           </video>
                         ) : (
                           <img
-                            src={buildMediaUrl(image.imageUrl || "")}
+                            src={`${uploadurlwithId}${image.imageUrl}`}
                             alt={`${campaign?.campaignType || "Campaign"} - ${idx + 1}`}
                             className="w-full h-auto object-contain sm:object-cover rounded-lg"
                             style={{
@@ -752,7 +752,7 @@ const success = await submitWriteToUsQuery(
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-semibold text-blue-700">Alert!</h2>
               <button
-                className="text-red-600 text-xl font-bold hover:text-red-700"
+                className="text-red-600 text-4xl font-bold hover:text-red-700"
                 onClick={() => setIsprofileOpen(false)}
               >
                 ×
@@ -775,9 +775,9 @@ const success = await submitWriteToUsQuery(
 
       {isRoleModalOpen && (
         <div className="fixed inset-0 bg-black/75 flex justify-center items-center z-50 px-4">
-          <div className="bg-white relative rounded-xl p-6 shadow-xl w-full max-w-3xl">
+          <div className="bg-white relative rounded-xl p-6 shadow-xl w-full max-w-md">
             <button
-              className="absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-2xl font-bold text-gray-500 hover:text-gray-700"
               onClick={() => {
                 setIsRoleModalOpen(false);
                 sessionStorage.removeItem("submitclicks");
@@ -788,22 +788,19 @@ const success = await submitWriteToUsQuery(
               ×
             </button>
 
-            <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">
-                {isHiringCampaign ? "Join as Employee" : "Join ASKOXY.AI"}
-              </h2>
-              <p className="text-gray-600 text-sm">
-                {isHiringCampaign
-                  ? "Become part of our AI-first team."
-                  : `Choose how you'd like to participate in our ${campaign?.campaignType} offer`}
-              </p>
-            </div>
-
-            {isHiringCampaign ? (
-              <HiringEmployeeCard
-                onConfirm={handleEmployeeInterest}
-                disabled={isButtonDisabled || interested}
-              />
+            {isHiringCampaign || isJourney ? (
+              <div className="flex justify-center">
+                <HiringEmployeeCard
+                  onConfirm={handleEmployeeInterest}
+                  disabled={isButtonDisabled || interested}
+                  title={isJourney ? "Start your journey" : "Join as Employee"}
+                  description={
+                    isJourney
+                      ? "Take the first step toward your next milestone with ASKOXY.AI."
+                      : "Join our AI team and build the future! Explore exciting roles across tech, marketing, operations, and innovation."
+                  }
+                />
+              </div>
             ) : (
               <ThreeJoinCards
                 selectedRole={selectedRole}
@@ -939,23 +936,19 @@ const Article: React.FC<{ description: string }> = ({ description }) => {
 const HiringEmployeeCard: React.FC<{
   onConfirm: () => void;
   disabled?: boolean;
-}> = ({ onConfirm, disabled }) => (
-  <div className="w-full max-w-3xl mx-auto">
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold">
-          AI
-        </div>
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
-          Join as Employee
-        </h3>
-      </div>
+  title?: string;
+  description?: string;
+}> = ({ onConfirm, disabled, title, description }) => (
+  <div className="w-full max-w-3xl mx-auto text-center">
+    <div className="rounded-2xl bg-white p-5 sm:p-6">
+      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+        {title || "Join as Employee"}
+      </h3>
       <p className="text-gray-700 text-sm sm:text-base mb-4">
-        Join our AI team and build the future! Explore exciting roles across
-        tech, marketing, operations, and innovation.
+        {description ||
+          "Join our AI team and build the future! Explore exciting roles across tech, marketing, operations, and innovation."}
       </p>
-
-      <div className="flex flex-wrap gap-2">
+      <div className="flex justify-center">
         <button
           className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700 disabled:opacity-50"
           onClick={onConfirm}
@@ -1041,9 +1034,7 @@ const ThreeJoinCards: React.FC<{
             F
           </div>
           <div>
-            <div className="font-semibold text-gray-900">
-              Join as Franchise
-            </div>
+            <div className="font-semibold text-gray-900">Join as Franchise</div>
             <div className="text-xs text-gray-600">
               Grow with our business network
             </div>

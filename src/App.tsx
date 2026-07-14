@@ -136,6 +136,9 @@ import ProcessBusinessCardPage from "./BusinessCard/ProcessBusinessCardPage";
 import CeoUploadDetailsPage from "./BusinessCard/CeoUploadDetailsPage";
 import CeoDetailsListPage from "./BusinessCard/CeoDetailsListPage";
 import AddLeagueJourney from "./AskoxyAdmin/AddLeagueJourney";
+import BorrowerChatPage from "./components/BorrowerChatPage";
+import AdminDashboardPage from "./components/Admindashboardpage";
+const LeagueJourneysAdmin = lazy(() => import("./AskoxyAdmin/LeagueJourneysAdmin"));
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -512,36 +515,31 @@ const LoadingSpinner = React.memo(() => {
   React.useEffect(() => {
     const style = document.createElement("style");
     style.textContent = `
-      .loader {
-        width: 50px;
-        aspect-ratio: 1;
-        display: grid;
-        border: 4px solid #0000;
-        border-radius: 50%;
-        border-right-color: #5c3391;
-        animation: l15 1s infinite linear;
+      @keyframes oxy-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.08); opacity: 0.85; }
       }
-      .loader::before,
-      .loader::after {
-        content: "";
-        grid-area: 1/1;
-        margin: 2px;
-        border: inherit;
-        border-radius: 50%;
-        animation: l15 2s infinite;
+      @keyframes oxy-bar {
+        0% { width: 0%; }
+        60% { width: 80%; }
+        100% { width: 100%; }
       }
-      .loader::after {
-        margin: 8px;
-        animation-duration: 3s;
+      @keyframes oxy-dot {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
       }
-      @keyframes l15 {
-        100% { transform: rotate(1turn); }
+      .oxy-logo-wrap {
+        animation: oxy-pulse 1.8s ease-in-out infinite;
       }
+      .oxy-progress-bar {
+        animation: oxy-bar 2s ease-in-out infinite;
+      }
+      .oxy-dot { animation: oxy-dot 1.2s ease-in-out infinite; }
+      .oxy-dot:nth-child(2) { animation-delay: 0.2s; }
+      .oxy-dot:nth-child(3) { animation-delay: 0.4s; }
     `;
     document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
+    return () => { document.head.removeChild(style); };
   }, []);
 
   return (
@@ -552,13 +550,59 @@ const LoadingSpinner = React.memo(() => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        backgroundColor: "#f8f9fa",
+        background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)",
         fontFamily: "Arial, sans-serif",
+        gap: 0,
       }}
     >
-      <div className="loader" />
-      <div style={{ fontSize: "18px", color: "#333", marginTop: "16px" }}>
-        Loading...
+      {/* Card */}
+      <div
+        style={{
+         
+          padding: "40px 48px 36px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 24,
+          minWidth: 280,
+        }}
+      >
+        {/* Logo */}
+        <div className="oxy-logo-wrap">
+          <img
+            src={require("./assets/img/askoxylogonew.png")}
+            alt="AskOxy"
+            style={{ height: 56, objectFit: "contain", display: "block" }}
+          />
+        </div>
+
+        {/* Progress bar */}
+        <div
+          style={{
+            width: "100%",
+            height: 4,
+            background: "#ede9f6",
+            borderRadius: 99,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            className="oxy-progress-bar"
+            style={{
+              height: "100%",
+              background: "linear-gradient(90deg, #5c3391, #1ab394)",
+              borderRadius: 99,
+            }}
+          />
+        </div>
+
+       
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          
+          <span style={{ fontSize: 14, color: "#6b7280", marginLeft: 6, fontWeight: 500 }}>
+            Loading, please wait…
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -774,6 +818,8 @@ const App: React.FC = () => {
               <Route path="/carnival-list" element={<CarnivalListPage />} />
               <Route path="/Oxygpt" element={<OxyGPT />} />
               <Route path="/oxygpt/claude" element={<OxyStreamClaude />} />
+              <Route path="/loan-application" element={<BorrowerChatPage />} />
+              <Route path="/application-status" element={<AdminDashboardPage />} />
               <Route path="/oxygpt/share/:sessionId" element={<OxyGPT />} />
               <Route path="/finvibe" element={<Finvibe3DLanding />} />
               <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
@@ -1770,6 +1816,7 @@ const App: React.FC = () => {
                 <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
                 <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
                 <Route path="addleaguejourney" element={<AddLeagueJourney />} />
+                <Route path="leaguejourneyusers" element={<LeagueJourneysAdmin />} />
                 <Route path="advocates" element={<AdvocatesDataPage />} />
                 <Route path="talwardata" element={<TalwarDataPage />} />
                 <Route path="mumbaidata" element={<MumbaiDataPage />} />

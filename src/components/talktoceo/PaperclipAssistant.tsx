@@ -91,11 +91,19 @@ const WEB_SEARCH_TRIGGERS = [
   "right now",
 ];
 
+// NEW — added "OxyGroup relevance" so users can quickly surface the
+// AI-generated OxyGroup Service Recommendations block (service fit,
+// business impact, action items) without having to know it exists or
+// type it out themselves. Also added "Risks & challenges" to keep the
+// grid balanced at 8 items (4 rows x 2 columns) instead of leaving an
+// orphaned single button in the last row.
 const QUICK_QUESTIONS = [
   { label: "Explain this article", emoji: "📰" },
   { label: "Key takeaways", emoji: "🔑" },
   { label: "Business opportunities", emoji: "💡" },
   { label: "Who's involved?", emoji: "👥" },
+  { label: "OxyGroup relevance", emoji: "🧩" },
+  { label: "Risks & challenges", emoji: "⚠️" },
   { label: "Related news", emoji: "🌍" },
   { label: "Latest updates", emoji: "🌍" },
 ];
