@@ -383,7 +383,7 @@ const ServicesPage: React.FC = () => {
                         {campaign.imageUrls &&
                           campaign.imageUrls.length > 0 && (
                             <img
-                              src={buildMediaUrl(campaign.imageUrls[0].imageUrl)}
+                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
                               alt={`${campaign.campaignType}`}
                               className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
                             />
@@ -414,7 +414,7 @@ const ServicesPage: React.FC = () => {
                         {campaign.imageUrls &&
                           campaign.imageUrls.length > 0 && (
                             <img
-                              src={buildMediaUrl(campaign.imageUrls[0].imageUrl)}
+                              src={`${uploadurlwithId}${campaign.imageUrls[0].imageUrl}`}
                               alt={`${campaign.campaignType}`}
                               className="w-80 h-48 object-contain transition-all duration-300  group-hover:border-purple-300 rounded-lg"
                             />

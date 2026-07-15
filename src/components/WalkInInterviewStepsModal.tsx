@@ -199,9 +199,20 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
             <div className="grid grid-cols-1 gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
               {STEPS_DATA.map((step, index) => {
                 const isActive = activeStep === index;
+                const desktopGridPosition =
+                  index === 4
+                    ? "lg:col-start-4 lg:row-start-2"
+                    : index === 5
+                      ? "lg:col-start-3 lg:row-start-2"
+                      : index === 6
+                        ? "lg:col-start-2 lg:row-start-2"
+                        : "";
 
                 return (
-                  <div className="relative" key={step.id}>
+                  <div
+                    className={`relative ${desktopGridPosition}`}
+                    key={step.id}
+                  >
                     <button
                       onClick={() => setActiveStep(index)}
                       className={`group relative flex h-52 w-full flex-col overflow-y-auto rounded-xl border bg-white px-3 py-3 text-left transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
@@ -249,11 +260,11 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
                             ? "-bottom-6 left-1/2 -translate-x-1/2"
                             : "-bottom-6 left-1/2 -translate-x-1/2 sm:-right-7 sm:bottom-auto sm:left-auto sm:top-1/2 sm:translate-x-0 sm:-translate-y-1/2"
                         } ${
-                          index === 3
-                            ? "lg:-bottom-6 lg:left-1/2 lg:right-auto lg:top-auto lg:flex lg:-translate-x-1/2 lg:translate-y-0"
-                            : index % 2 === 1
-                              ? "lg:-right-7 lg:bottom-auto lg:left-auto lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2"
-                              : ""
+                          index <= 2
+                            ? "lg:-right-7 lg:bottom-auto lg:left-auto lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2"
+                            : index === 3
+                              ? "lg:-bottom-6 lg:left-1/2 lg:right-auto lg:top-auto lg:-translate-x-1/2 lg:translate-y-0"
+                              : "lg:bottom-auto lg:-left-7 lg:right-auto lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2"
                         }`}
                         aria-hidden="true"
                       >
@@ -262,7 +273,13 @@ const WalkInInterviewStepsModal: React.FC<WalkInInterviewStepsModalProps> = ({
                             index % 2 === 1
                               ? "rotate-90 lg:rotate-0"
                               : "rotate-90 sm:rotate-0"
-                          } ${index === 3 ? "lg:rotate-90" : ""}`}
+                          } ${
+                            index === 3
+                              ? "lg:rotate-90"
+                              : index >= 4
+                                ? "lg:rotate-180"
+                                : "lg:rotate-0"
+                          }`}
                         />
                       </div>
                     )}

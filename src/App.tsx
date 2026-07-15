@@ -799,7 +799,9 @@ const App: React.FC = () => {
               !isRestrictedRoute() && <FloatingCallButton />}
             {localStorage.getItem("userId") &&
               !isRestrictedRoute() && <FloatingGiftOffersButton />} */}
-            {isLoggedIn && isRootRoute && <FloatingCallButton />}
+            {isLoggedIn && isRootRoute && (
+              <FloatingCallButton hideOnMobile />
+            )}
 
             {isLoggedIn && isDashboardHomeRoute && (
               <>
@@ -1135,7 +1137,7 @@ const App: React.FC = () => {
                 element={<LenderBorrowerPartnerLandingPage />}
               />
               <Route path="/oxygold" element={<GoldLandingPage />} />
-              <Route path="/jobspremierleague" element={<JPLLandingPage />} />
+              <Route path="/jpl" element={<JPLLandingPage />} />
               <Route path="/fpl" element={<OxyBricksFractionalPage />} />
 
               <Route path="/rcsconsentform" element={<RCSConsentForm />} />

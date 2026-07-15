@@ -19,7 +19,13 @@ interface ChatMessage {
   timestamp: string;
 }
 
-const FloatingCallButton: React.FC = () => {
+type FloatingCallButtonProps = {
+  hideOnMobile?: boolean;
+};
+
+const FloatingCallButton: React.FC<FloatingCallButtonProps> = ({
+  hideOnMobile = false,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [callerInfo, setCallerInfo] = useState<CallerInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -681,7 +687,7 @@ const FloatingCallButton: React.FC = () => {
         onMouseDown={onDragStart}
         onTouchStart={onDragStart}
         style={{ position: "fixed", top: `${pos.top}%`, right: `${pos.right}px`, transform: "translateY(-50%)", cursor: "grab" }}
-        className="bg-white rounded-l-full shadow-lg hover:shadow-xl z-[9999] flex items-center gap-2 px-4 py-3 transition-shadow duration-300 ease-in-out border-none select-none"
+        className={`${hideOnMobile ? "hidden sm:flex" : "flex"} bg-white rounded-l-full shadow-lg hover:shadow-xl z-[9999] items-center gap-2 px-4 py-3 transition-shadow duration-300 ease-in-out border-none select-none`}
       >
         <div className="bg-green-500 rounded-full p-3 flex items-center justify-center">
           <FaPhoneAlt className="text-white text-mb" />

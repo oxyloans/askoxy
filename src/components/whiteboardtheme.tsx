@@ -108,7 +108,7 @@ const Whiteboardtheme: React.FC = () => {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % 6);
+      setActiveIndex((prev: any) => (prev + 1) % 6);
     }, 2800);
 
     return () => window.clearInterval(interval);
@@ -117,7 +117,7 @@ const Whiteboardtheme: React.FC = () => {
   const handleCardClick = (type: CardType) => {
     if (type === "studyabroad") return navigate("/studyabroad");
     if (type === "bharat") return navigate("/bharath-aistore");
-    if (type === "jobs") return navigate("/jobspremierleague");
+    if (type === "jobs") return navigate("/jpl");
     if (type === "gold") return navigate("/oxygold");
     if (type === "loans") return navigate("/loansandinvest");
     if (type === "oxybricks") return navigate("/fpl");
@@ -132,25 +132,25 @@ const Whiteboardtheme: React.FC = () => {
     <button
       type="button"
       onClick={openWalkInModal}
-      className="flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-[9px] bg-gray-50 text-center transition-all duration-300 hover:-translate-y-1 active:scale-95"
-      style={{ width: desktop ? "clamp(130px, 11vw, 175px)" : "90px" }}
+      className="flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl   text-center  transition-all duration-300 hover:-translate-y-1 active:scale-95"
+      style={{ width: desktop ? "clamp(130px, 11vw, 175px)" : "132px" }}
       aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
     >
       {/* counts */}
-      <span className="flex flex-col items-center gap-2 px-2 pt-2 pb-1">
-        <span className="flex items-center gap-2">
-          <strong className="text-[24px] font-extrabold leading-none text-[#5543C8] sm:text-[14px] md:text-[16px]">
+      <span className="flex flex-col gap-2 px-2.5 pb-2 pt-2.5">
+        <span className="grid grid-cols-[44px_1fr] items-center gap-1.5">
+          <strong className="text-right text-[18px] font-extrabold leading-none text-[#5543C8] sm:text-[14px] md:text-[16px]">
             {isJobsCountLoading ? "—" : jobsCount.activeJobs}
           </strong>
-          <span className="border-l border-[#ded9ff] pl-1.5 text-[12px] font-bold leading-tight text-[#333] sm:text-[11px] md:text-[12px]">
+          <span className="border-l border-[#ded9ff] pl-1.5 text-left text-[9px] font-bold leading-[1.15] text-[#333] sm:text-[11px] md:text-[12px]">
             Active Jobs
           </span>
         </span>
-        <span className="flex items-center gap-2">
-          <strong className="text-[24px] font-extrabold leading-none text-[#D71D8E] sm:text-[14px] md:text-[16px]">
+        <span className="grid grid-cols-[44px_1fr] items-center gap-1.5">
+          <strong className="text-right text-[18px] font-extrabold leading-none text-[#D71D8E] sm:text-[14px] md:text-[16px]">
             {isJobsCountLoading ? "—" : jobsCount.totalCompanies}
           </strong>
-          <span className="border-l border-[#ded9ff] pl-1.5 text-[12px] font-bold leading-tight text-[#333] sm:text-[11px] md:text-[12px]">
+          <span className="border-l border-[#ded9ff] pl-1.5 text-left text-[9px] font-bold leading-[1.15] text-[#333] sm:text-[11px] md:text-[12px]">
             Total Companies
           </span>
         </span>
@@ -160,7 +160,7 @@ const Whiteboardtheme: React.FC = () => {
       <span className="mx-2 block border-t border-[#e8e3ff]" />
 
       {/* Apply Now */}
-      <span className="flex w-full items-center justify-center gap-1 px-2 py-1.5 text-[13px] font-bold leading-none text-gray-700 sm:text-[10px] md:text-[12px]">
+      <span className="flex w-full items-center justify-center gap-1 whitespace-nowrap px-2 py-2 text-[10px] font-bold leading-none text-[#5543C8] sm:text-[10px] md:text-[12px]">
         Apply Now
         <svg
           viewBox="0 0 20 20"
@@ -279,33 +279,35 @@ const Whiteboardtheme: React.FC = () => {
             </div>
 
             <div className="relative">
-              <div className="relative z-20 mb-3 flex items-start justify-between px-1 sm:mb-4 sm:px-4 md:hidden">
-                <div className="flex flex-col items-center">
+              <div className="relative z-20 mb-2 grid grid-cols-2 items-start px-3 sm:mb-4 sm:px-6 md:hidden">
+                <div className="relative flex h-[158px] w-[132px] flex-col items-center sm:h-[170px]">
                   <button
                     type="button"
                     onClick={() => navigate("/radhai")}
-                    className="cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 active:scale-95"
+                    className="absolute left-0 top-0 flex h-[132px] w-[132px] cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 active:scale-95"
                     aria-label="Speak with radhAI"
                   >
                     <img
                       src={speak1}
                       alt="Speak with radhAI"
-                      className="h-auto w-[78px] object-contain sm:w-[96px]"
+                      className="h-full w-full object-contain"
                     />
                   </button>
                   <img
                     src={arrow0}
                     alt=""
-                    className="mt-1 h-auto w-[44px] object-contain sm:w-[56px]"
+                    className="absolute bottom-1 left-1/2 h-[48px] w-[48px] -translate-x-1/2 object-contain sm:h-[54px] sm:w-[54px]"
                   />
                 </div>
 
-                <div className="flex flex-col items-center">
-                  <div className="w-[78px] sm:w-[96px]">{jobsCountCard()}</div>
+                <div className="relative ml-auto flex h-[158px] w-[132px] flex-col items-center sm:h-[170px]">
+                  <div className="flex h-[132px] w-[132px] items-center justify-center pt-4 sm:pt-3">
+                    {jobsCountCard()}
+                  </div>
                   <img
                     src={arrow1}
                     alt=""
-                    className="mt-1 h-auto w-[44px] object-contain sm:w-[56px]"
+                    className="absolute bottom-1 left-1/2 h-[48px] w-[48px] -translate-x-1/2 object-contain sm:h-[54px] sm:w-[54px]"
                   />
                 </div>
               </div>
@@ -327,7 +329,7 @@ const Whiteboardtheme: React.FC = () => {
                 </button>
 
                 <div
-                  className="pointer-events-auto absolute top-5 -translate-x-1/2"
+                  className="pointer-events-auto absolute top-0 -translate-x-1/2"
                   style={{ left: "83.333%" }}
                 >
                   {jobsCountCard(true)}
@@ -355,7 +357,7 @@ const Whiteboardtheme: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-3 items-end gap-x-1 gap-y-6 pt-1 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-7 sm:pt-2 md:grid-cols-6 md:gap-x-2 md:gap-y-6 md:pt-[70px] lg:gap-x-3 lg:pt-[74px] xl:gap-x-4 xl:pt-[83px]">
+              <div className="grid grid-cols-3 items-stretch gap-x-2 gap-y-7 pt-1 sm:gap-x-5 sm:gap-y-8 sm:pt-2 md:grid-cols-6 md:gap-x-3 md:gap-y-6 md:pt-[70px] lg:items-end lg:gap-x-3 lg:pt-[74px] xl:gap-x-4 xl:pt-[83px]">
                 {cards.map((card, index) => {
                   const isActive = activeIndex === index;
 
@@ -363,7 +365,7 @@ const Whiteboardtheme: React.FC = () => {
                     <button
                       key={card.key}
                       onClick={card.onClick}
-                      className="group flex w-full cursor-pointer flex-col items-center justify-end border-0 bg-transparent p-0"
+                      className="group flex h-full w-full cursor-pointer flex-col items-center justify-end border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5543C8] focus-visible:ring-offset-2"
                       type="button"
                     >
                       <motion.div
@@ -376,8 +378,8 @@ const Whiteboardtheme: React.FC = () => {
                         }}
                         className={`relative flex w-full items-end justify-center rounded-[24px] ${
                           card.big
-                            ? "h-[142px] sm:h-[246px] md:h-[350px]"
-                            : "h-[128px] sm:h-[208px] md:h-[270px]"
+                            ? "h-[120px] sm:h-[220px] md:h-[250px] lg:h-[350px]"
+                            : "h-[108px] sm:h-[190px] md:h-[210px] lg:h-[270px]"
                         }`}
                       >
                         <motion.img
@@ -385,8 +387,8 @@ const Whiteboardtheme: React.FC = () => {
                           alt={card.league}
                           className={`relative z-10 w-full object-contain ${
                             card.big
-                              ? "max-w-[118px] sm:max-w-[232px] md:max-w-[305px]"
-                              : "max-w-[106px] sm:max-w-[172px] md:max-w-[224px]"
+                              ? "max-w-[118px] sm:max-w-[200px] md:max-w-[180px] lg:max-w-[305px]"
+                              : "max-w-[106px] sm:max-w-[165px] md:max-w-[145px] lg:max-w-[224px]"
                           }`}
                           style={{
                             filter: isActive ? card.hoverShadow : card.shadow,
@@ -411,10 +413,10 @@ const Whiteboardtheme: React.FC = () => {
                           opacity: isActive ? 1 : 0.9,
                         }}
                         transition={{ duration: 0.35 }}
-                        className="mt-1.5 flex h-auto flex-col items-center justify-start px-0.5 sm:mt-2 sm:px-1"
+                        className="mt-2 flex min-h-[48px] flex-col items-center justify-start px-0.5 sm:min-h-[54px] sm:px-1 md:min-h-[62px] lg:h-auto lg:min-h-0"
                       >
                         <h3
-                          className="text-center text-[14px] font-bold leading-[1.1] sm:text-[19px] md:text-[21px]"
+                          className="text-center text-[14px] font-bold leading-[1.1] sm:text-[18px] md:text-[17px] lg:text-[21px]"
                           style={{ color: card.color }}
                         >
                           {card.league}

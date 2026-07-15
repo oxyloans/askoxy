@@ -16,7 +16,7 @@ import {
   CalendarX2,
 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import BASE_URL from "../Config";
+import BASE_URL,{uploadurlwithId} from "../Config";
 import { submitWriteToUsQuery, fetchAppliedJobsByUserId } from "./servicesapi";
 import { Button, message, Select } from "antd";
 import JobApplicationModal from "./JobApplyModal";
@@ -47,6 +47,7 @@ interface Job {
   contactNumber: string;
   countryCode: string;
   payRateFrequencyType: string;
+
 }
 
 type FilterKey =
@@ -793,7 +794,7 @@ const JobViewPage: React.FC = () => {
           <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
             <img
               src={
-                job.companyLogo ||
+              `${uploadurlwithId}${job.companyLogo}`||
                 "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png"
               }
               className="w-40 h-20 object-contain transition-transform duration-300"
@@ -893,7 +894,7 @@ const JobViewPage: React.FC = () => {
               <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 bg-white border border-gray-100 rounded-xl p-2 flex items-center justify-center shadow-sm">
                 <img
                   src={
-                    job.companyLogo ||
+                    `${uploadurlwithId}${job.companyLogo}` ||
                     "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png"
                   }
                   alt={job.companyName}
