@@ -592,7 +592,7 @@ const AllUniversities: React.FC = () => {
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-[1400px] mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
@@ -633,7 +633,7 @@ const AllUniversities: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="max-w-[1400px] mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -730,7 +730,7 @@ const AllUniversities: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-[1400px] mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <div className="text-sm text-gray-600">
               Showing {universities.length > 0 ? startIndex : 0} - {endIndex} of {totalCount} results

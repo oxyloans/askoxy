@@ -71,8 +71,8 @@ function StudyAbroadHeroSection() {
   };
 
   return (
-    <section className="bg-white py-10 sm:py-12 lg:py-16 overflow-hidden min-h-screen flex items-center">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <section className="bg-white  overflow-hidden  flex items-center relative">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
           {/* Left Content */}
           <div
@@ -149,7 +149,6 @@ function StudyAbroadHeroSection() {
                         <h3 className="text-yellow-800 font-bold text-sm sm:text-base">
                           100% Scholarship
                         </h3>
-                        {/* <span className="bg-yellow-100 text-yellow-800 mb-2 text-xs px-2 py-1 rounded-full font-medium">NEW</span> */}
                       </div>
                       <p className="text-yellow-700 text-xs sm:text-sm">
                         Merit-based for eligible students
@@ -158,25 +157,6 @@ function StudyAbroadHeroSection() {
                   </div>
                 </div>
               </div>
-
-              {/* Quick Offer Letter */}
-              {/* <div className="relative group sm:col-span-2 lg:col-span-1 xl:col-span-2">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
-                <div className="relative bg-white rounded-xl p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-blue-800 font-bold text-sm sm:text-base">Instant Offer Letter</h3>
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">FAST</span>
-                      </div>
-                      <p className="text-blue-700 text-xs sm:text-sm">Get sample offers in just 10 minutes</p>
-                    </div>
-                  </div>
-                </div>
-              </div> */}
             </div>
 
             {/* Action Buttons */}

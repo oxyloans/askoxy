@@ -43,6 +43,7 @@ const StudentSidebar: React.FC<SidebarProps> = ({
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
+    { id: "offer-letter", label: "7 Day Offer Letter", icon: GraduationCap, badge: "NEW" },
     { id: "internship-application", label: "Internship Application", icon: GraduationCap },
     {
       id: "cashback-universities",

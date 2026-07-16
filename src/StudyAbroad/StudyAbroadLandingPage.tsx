@@ -505,6 +505,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Send, X } from "lucide-react";
 import StudyAbroadHeader from "./StudyAbroadHeader";
 import StudyAbroadHeroSection from "./StudyAbroadHeroSection";
+import OfferLetterSection from "./components/OfferLetterSection";
 import CountriesSection from "./CountriesSection";
 import InternshipPage from "./InternshipPage";
 import UniversitiesSection from "./UniversitiesSection";
@@ -512,6 +513,7 @@ import TestimonialsSection from "./TestimonialsSection";
 import StudyAbroadFooter from "./StudyAbroadFooter";
 import GlobalProgramsPage from "./GlobalProgramsPage";
 import CallToActionSection from "./CallToActionSection";
+import BookingModal from "./components/BookingModal";
 import BASE_URL from "../Config";
 import ReactMarkdown from "react-markdown";
 import {
@@ -520,14 +522,13 @@ import {
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/solid";
 
-
 // Add type definition for window.gtag if using analytics
 declare global {
   interface Window {
     gtag?: (
       command: string,
       action: string,
-      params?: { [key: string]: any }
+      params?: { [key: string]: any },
     ) => void;
   }
 }
@@ -540,6 +541,7 @@ interface Message {
 
 type StudyAbroadSectionId =
   | "home"
+  | "offerletter"
   | "workabroad"
   | "universities"
   | "countries"
@@ -549,6 +551,7 @@ type StudyAbroadSectionId =
 
 export default function StudyAbroadLandingPage() {
   const [activeLink, setActiveLink] = useState<StudyAbroadSectionId>("home");
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [pageEvents, setPageEvents] = useState({
     pageLoaded: false,
     scrollCount: 0,
@@ -618,7 +621,7 @@ export default function StudyAbroadLandingPage() {
         setLoading(false);
       }
     },
-    [messages, input]
+    [messages, input],
   );
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -634,12 +637,14 @@ export default function StudyAbroadLandingPage() {
   };
 
   const homeRef = useRef<HTMLDivElement>(null);
-  const workAbroadRef = useRef<HTMLDivElement>(null); // 👈 NEW
+  const offerLetterRef = useRef<HTMLDivElement>(null);
+  const workAbroadRef = useRef<HTMLDivElement>(null);
   const countriesRef = useRef<HTMLDivElement>(null);
   const internshipsRef = useRef<HTMLDivElement>(null);
   const universitiesRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
 
   const scrollToSection = (sectionId: StudyAbroadSectionId) => {
     setActiveLink(sectionId);
@@ -655,9 +660,13 @@ export default function StudyAbroadLandingPage() {
         item_id: sectionId,
       });
     }
-    const refs: Record<StudyAbroadSectionId, React.RefObject<HTMLDivElement>> = {
+    const refs: Record<
+      StudyAbroadSectionId,
+      React.RefObject<HTMLDivElement>
+    > = {
       home: homeRef,
-      workabroad: workAbroadRef, // 👈 NEW
+      offerletter: offerLetterRef,
+      workabroad: workAbroadRef,
       countries: countriesRef,
       internships: internshipsRef,
       universities: universitiesRef,
@@ -675,11 +684,26 @@ export default function StudyAbroadLandingPage() {
     }
   };
 
+  const handleBookingFormSubmit = (formData: any) => {
+    console.log("Booking form submitted:", formData);
+    // Here you can send the form data to your backend API
+    // Example:
+    // fetch('/api/counselling/book', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(formData)
+    // });
+  };
+
   // Scroll observation
   useEffect(() => {
     const observeScroll = () => {
-      const sections: { id: StudyAbroadSectionId; ref: React.RefObject<HTMLDivElement> }[] = [
+      const sections: {
+        id: StudyAbroadSectionId;
+        ref: React.RefObject<HTMLDivElement>;
+      }[] = [
         { id: "home", ref: homeRef },
+        { id: "offerletter", ref: offerLetterRef },
         { id: "workabroad", ref: workAbroadRef },
         { id: "countries", ref: countriesRef },
         { id: "internships", ref: internshipsRef },
@@ -720,16 +744,16 @@ export default function StudyAbroadLandingPage() {
         document.body.offsetHeight,
         document.documentElement.clientHeight,
         document.documentElement.scrollHeight,
-        document.documentElement.offsetHeight
+        document.documentElement.offsetHeight,
       );
       const scrollTop =
         window.pageYOffset || document.documentElement.scrollTop;
       const scrollPercentage = Math.floor(
-        (scrollTop / (documentHeight - windowHeight)) * 100
+        (scrollTop / (documentHeight - windowHeight)) * 100,
       );
       const thresholdToTrack = scrollDepthThresholds.find(
         (threshold) =>
-          threshold > lastScrollDepthTracked && scrollPercentage >= threshold
+          threshold > lastScrollDepthTracked && scrollPercentage >= threshold,
       );
       if (thresholdToTrack) {
         lastScrollDepthTracked = thresholdToTrack;
@@ -753,6 +777,7 @@ export default function StudyAbroadLandingPage() {
       hash &&
       [
         "home",
+        "offerletter",
         "workabroad",
         "countries",
         "internships",
@@ -765,12 +790,13 @@ export default function StudyAbroadLandingPage() {
         scrollToSection(
           hash as
             | "home"
+            | "offerletter"
             | "workabroad"
             | "countries"
             | "internships"
             | "universities"
             | "testimonials"
-            | "contact"
+            | "contact",
         );
       }, 100);
     }
@@ -867,10 +893,14 @@ export default function StudyAbroadLandingPage() {
         onNavClick={scrollToSection}
         activeLink={activeLink}
         onOpenChat={() => setShowChat(true)}
+        onOpenBookingModal={() => setIsBookingModalOpen(true)}
       />
       <main className="flex-grow">
         <div ref={homeRef} id="home">
           <StudyAbroadHeroSection />
+        </div>
+        <div ref={offerLetterRef} id="offer-letter">
+          <OfferLetterSection />
         </div>
         <div ref={workAbroadRef} id="workabroad">
           <InternshipPage />
@@ -882,15 +912,15 @@ export default function StudyAbroadLandingPage() {
           <CountriesSection />
         </div>
         <div ref={internshipsRef} id="internships">
-        <GlobalProgramsPage />
+          <GlobalProgramsPage />
         </div>
         <div ref={testimonialsRef} id="testimonials">
           <TestimonialsSection />
         </div>
-        <div ref={contactRef} id="contact">
+        <div ref={contactRef} id="register">
           <CallToActionSection />
         </div>
-        <div ref={contactRef} id="contact">
+        <div ref={footerRef} id="contact">
           <StudyAbroadFooter />
         </div>
       </main>
@@ -1051,6 +1081,13 @@ export default function StudyAbroadLandingPage() {
           background-color: #4b5563;
         }
       `}</style>
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+        onSubmit={handleBookingFormSubmit}
+      />
     </div>
   );
 }

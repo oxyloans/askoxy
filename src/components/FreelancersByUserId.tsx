@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import BASE_URL, { uploadurlwithId } from "../Config";
+import BASE_URL from "../Config";
 import {
   Alert,
   Button,
@@ -10,6 +10,7 @@ import {
   Select,
   Space,
   Spin,
+  Switch,
   Table,
   Tag,
   Typography,
@@ -24,7 +25,6 @@ import {
   ArrowLeftOutlined,
   EditOutlined,
   UploadOutlined,
-  
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import customerApi from "../utils/axiosInstances";
@@ -47,7 +47,8 @@ type Freelancer = {
   openForFreeLancing: "YES" | "NO" | string;
   amountNegotiable: "YES" | "NO" | string;
   resumeUrl: string | null;
-  activeStatus: boolean | null;
+  status: 0 | 1 | number;
+  activeStatus?: boolean | null;
 };
 
 function formatMoney(n: number | null | undefined) {
@@ -59,29 +60,64 @@ const RatesCell: React.FC<{ r: Freelancer }> = ({ r }) => {
   const [expanded, setExpanded] = useState(false);
   return (
     <div style={{ minWidth: 120 }}>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
         <div style={{ textAlign: "center" }}>
-          <Text type="secondary" style={{ fontSize: 11 }}>₹/Hr</Text>
-          <div><b>{formatMoney(r.perHour)}</b></div>
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            ₹/Hr
+          </Text>
+          <div>
+            <b>{formatMoney(r.perHour)}</b>
+          </div>
         </div>
         <div style={{ textAlign: "center" }}>
-          <Text type="secondary" style={{ fontSize: 11 }}>₹/Day</Text>
-          <div><b>{formatMoney(r.perDay)}</b></div>
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            ₹/Day
+          </Text>
+          <div>
+            <b>{formatMoney(r.perDay)}</b>
+          </div>
         </div>
       </div>
       {expanded && (
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginTop: 6 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            flexWrap: "wrap",
+            justifyContent: "center",
+            marginTop: 6,
+          }}
+        >
           <div style={{ textAlign: "center" }}>
-            <Text type="secondary" style={{ fontSize: 11 }}>₹/Week</Text>
-            <div><b>{formatMoney(r.perWeek)}</b></div>
+            <Text type="secondary" style={{ fontSize: 11 }}>
+              ₹/Week
+            </Text>
+            <div>
+              <b>{formatMoney(r.perWeek)}</b>
+            </div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <Text type="secondary" style={{ fontSize: 11 }}>₹/Month</Text>
-            <div><b>{formatMoney(r.perMonth)}</b></div>
+            <Text type="secondary" style={{ fontSize: 11 }}>
+              ₹/Month
+            </Text>
+            <div>
+              <b>{formatMoney(r.perMonth)}</b>
+            </div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <Text type="secondary" style={{ fontSize: 11 }}>₹/Year</Text>
-            <div><b>{formatMoney(r.perYear)}</b></div>
+            <Text type="secondary" style={{ fontSize: 11 }}>
+              ₹/Year
+            </Text>
+            <div>
+              <b>{formatMoney(r.perYear)}</b>
+            </div>
           </div>
         </div>
       )}
@@ -109,8 +145,6 @@ const FreelancersByUserId: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-
-
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [resumeModal, setResumeModal] = useState(false);
@@ -145,24 +179,34 @@ const FreelancersByUserId: React.FC = () => {
     try {
       const res = await customerApi.get<Freelancer[]>(
         `${BASE_URL}/ai-service/agent/getFreeLancersData/${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setData(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
       const msg = e?.response?.data?.message || e?.message || "Failed to load";
-      setError(e?.response?.status === 401 ? "Session expired. Please login again." : msg);
+      setError(
+        e?.response?.status === 401
+          ? "Session expired. Please login again."
+          : msg,
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
-
+  useEffect(() => {
+    fetchData();
+  }, []);
   const openResumeModal = (url: string) => {
-    setResumePreviewUrl("");
+    const directResumeUrl = url.trim();
+    if (!directResumeUrl) {
+      message.warning("Resume URL is not available.");
+      return;
+    }
+
     setResumeLoading(true);
+    setResumePreviewUrl(directResumeUrl);
     setResumeModal(true);
-    setTimeout(() => { setResumePreviewUrl(`${uploadurlwithId}${url}`); }, 50);
   };
 
   const openUpdateModal = (r: Freelancer) => {
@@ -182,24 +226,51 @@ const FreelancersByUserId: React.FC = () => {
     setShowUpdateModal(true);
   };
 
+  const isFreelancerActive = (r: Freelancer) =>
+    r.status !== null && r.status !== undefined
+      ? Number(r.status) === 1
+      : r.activeStatus === true;
 
+  const handleStatusToggle = (r: Freelancer, checked: boolean) => {
+    const currentActive = isFreelancerActive(r);
+    const nextStatus: 0 | 1 = checked ? 1 : 0;
 
-  const handleStatusToggle = (r: Freelancer) => {
-    const next = !r.activeStatus;
+    if (currentActive === checked) return;
+
     Modal.confirm({
-      title: "Confirm",
-      content: `Are you sure you want to mark this as ${next ? "Active" : "Inactive"}?`,
-      okText: "Yes",
+      title: checked ? "Activate Freelancer?" : "Deactivate Freelancer?",
+      content: checked
+        ? "This freelancer profile will become active and available in the system."
+        : "This freelancer profile will become inactive and will no longer be available in the system.",
+      okText: checked ? "Activate" : "Deactivate",
+      cancelText: "Cancel",
+      centered: true,
+      okButtonProps: {
+        danger: !checked,
+        style: checked
+          ? { background: "#10b981", borderColor: "#10b981" }
+          : undefined,
+      },
       onOk: async () => {
         setStatusLoadingId(r.id);
         try {
           await customerApi.patch(
-            `${BASE_URL}/ai-service/agent/freeLancerInfo/${r.id}/activeOrInactive/${next}`,
+            `${BASE_URL}/ai-service/agent/freeLancerInfo/${r.id}/activeOrInactive/${nextStatus}`,
             {},
-            { headers: { Authorization: `Bearer ${getAccessToken()}` } }
+            { headers: { Authorization: `Bearer ${getAccessToken()}` } },
           );
-          message.success(`Marked as ${next ? "Active" : "Inactive"} successfully!`);
-          fetchData();
+          setData((previous) =>
+            previous.map((item) =>
+              item.id === r.id
+                ? { ...item, status: nextStatus, activeStatus: checked }
+                : item,
+            ),
+          );
+          message.success(
+            checked
+              ? "Freelancer activated successfully."
+              : "Freelancer deactivated successfully.",
+          );
         } catch (e: any) {
           message.error(e?.response?.data?.message || "Status update failed");
         } finally {
@@ -223,7 +294,7 @@ const FreelancersByUserId: React.FC = () => {
           ...values,
           resumeUrl: newResumeUrl ?? updateRecord.resumeUrl,
         },
-        { headers: { Authorization: `Bearer ${getAccessToken()}` } }
+        { headers: { Authorization: `Bearer ${getAccessToken()}` } },
       );
       message.success("Updated successfully!");
       setShowUpdateModal(false);
@@ -261,31 +332,75 @@ const FreelancersByUserId: React.FC = () => {
       dataIndex: "openForFreeLancing",
       key: "openForFreeLancing",
       align: "center",
-     
-      render: (v: string) => <Tag color={v === "YES" ? "green" : "red"}>{v || "-"}</Tag>,
+
+      render: (v: string) => (
+        <Tag color={v === "YES" ? "green" : "red"}>{v || "-"}</Tag>
+      ),
     },
     {
       title: "Negotiable",
       dataIndex: "amountNegotiable",
       key: "amountNegotiable",
       align: "center",
-     
-      render: (v: string) => <Tag color={v === "YES" ? "geekblue" : "default"}>{v || "-"}</Tag>,
+
+      render: (v: string) => (
+        <Tag color={v === "YES" ? "geekblue" : "default"}>{v || "-"}</Tag>
+      ),
     },
     {
       title: "Resume",
       key: "resume",
       align: "center",
-    
+
       render: (_, r) => (
         <Button
           size="small"
           disabled={!r.resumeUrl}
           onClick={() => r.resumeUrl && openResumeModal(r.resumeUrl)}
-          style={{ background: PRIMARY, borderColor: PRIMARY, color: "#fff", borderRadius: 6 }}
+          style={{
+            background: PRIMARY,
+            borderColor: PRIMARY,
+            color: "#fff",
+            borderRadius: 6,
+          }}
         >
           View Resume
         </Button>
+      ),
+    },
+    {
+      title: "Status",
+      key: "status",
+      align: "center",
+      render: (_, r) => (
+        <div style={{ minWidth: 110 }}>
+          <Switch
+            checked={isFreelancerActive(r)}
+            loading={statusLoadingId === r.id}
+            onChange={(checked) => handleStatusToggle(r, checked)}
+            checkedChildren="Active"
+            unCheckedChildren="Inactive"
+            aria-label={`Mark freelancer as ${isFreelancerActive(r) ? "inactive" : "active"}`}
+            style={{
+              minWidth: 86,
+              backgroundColor: isFreelancerActive(r) ? "#16a34a" : "#ef4444",
+            }}
+          />
+          <div style={{ marginTop: 5 }}>
+            <Text
+              style={{
+                color: isFreelancerActive(r) ? "#15803d" : "#dc2626",
+                fontSize: 11,
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {isFreelancerActive(r)
+                ? "Currently active"
+                : "Currently inactive"}
+            </Text>
+          </div>
+        </div>
       ),
     },
     {
@@ -293,39 +408,42 @@ const FreelancersByUserId: React.FC = () => {
       key: "action",
       align: "center",
       render: (_, r) => (
-        <Space size={4}>
+        <Space size={8}>
           <Button
-            size="small"
+            size="middle"
+            icon={<EditOutlined />}
             onClick={() => openUpdateModal(r)}
-            style={{ background: "#1ab394", borderColor: "#1ab394", color: "#fff", borderRadius: 6 }}
+            style={{
+              background: "#1ab394",
+              borderColor: "#1ab394",
+              color: "#fff",
+              borderRadius: 8,
+              fontWeight: 600,
+            }}
           >
             Update
           </Button>
-          {/* <Button
-            size="small"
-            loading={statusLoadingId === r.id}
-            onClick={() => handleStatusToggle(r)}
-            style={{
-              background: r.activeStatus ? "#10b981" : "#ef4444",
-              borderColor: r.activeStatus ? "#10b981" : "#ef4444",
-              color: "#fff",
-              borderRadius: 6,
-            }}
-          >
-            {r.activeStatus ? "Active" : "Inactive"}
-          </Button> */}
         </Space>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: isMobile ? 12 : 24, background: "white", minHeight: "100vh" }}>
+    <div
+      style={{
+        padding: isMobile ? 12 : 24,
+        background: "white",
+        minHeight: "100vh",
+      }}
+    >
       {/* Header */}
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
-          <Title level={isMobile ? 4 : 3} style={{ margin: 0, color: "#1a1a2e" }}>
-             Freelancer Applications
+          <Title
+            level={isMobile ? 4 : 3}
+            style={{ margin: 0, color: "#1a1a2e" }}
+          >
+            Freelancer Applications
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
             Manage and review all freelancer profiles
@@ -348,7 +466,14 @@ const FreelancersByUserId: React.FC = () => {
       </Row>
 
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: 300,
+          }}
+        >
           <Spin size="large" tip="Loading freelancers..." />
         </div>
       ) : error ? (
@@ -357,20 +482,33 @@ const FreelancersByUserId: React.FC = () => {
           message="Error"
           description={error}
           showIcon
-          action={<Button type="primary" onClick={fetchData}>Try Again</Button>}
+          action={
+            <Button type="primary" onClick={fetchData}>
+              Try Again
+            </Button>
+          }
         />
       ) : data.length === 0 ? (
-        <Alert type="info" message="No freelancers found" description="No applications yet." showIcon />
+        <Alert
+          type="info"
+          message="No freelancers found"
+          description="No applications yet."
+          showIcon
+        />
       ) : (
-        <div style={{  overflow: "hidden", border: "1px solid #e5e7eb" }}>
+        <div style={{ overflow: "hidden", border: "1px solid #e5e7eb" }}>
           <Table
             rowKey="id"
             columns={columns}
             dataSource={data}
             bordered
             size={isMobile ? "small" : "middle"}
-            scroll={{ x: "true" }}
-            pagination={{ pageSize, onChange: setCurrentPage, showSizeChanger: false }}
+            scroll={{ x: 1050 }}
+            pagination={{
+              pageSize,
+              onChange: setCurrentPage,
+              showSizeChanger: false,
+            }}
           />
         </div>
       )}
@@ -378,11 +516,27 @@ const FreelancersByUserId: React.FC = () => {
       <Modal
         title="📄 Resume Preview"
         open={resumeModal}
-        onCancel={() => { setResumeModal(false); setResumePreviewUrl(""); setResumeLoading(false); }}
+        onCancel={() => {
+          setResumeModal(false);
+          setResumePreviewUrl("");
+          setResumeLoading(false);
+        }}
         footer={[
-       
-          <Button key="close" type="primary" onClick={() => { setResumeModal(false); setResumePreviewUrl(""); setResumeLoading(false); }}>Close</Button>,
-        ]}
+          resumePreviewUrl ? (
+            null
+          ) : null,
+          <Button
+            key="close"
+            type="primary"
+            onClick={() => {
+              setResumeModal(false);
+              setResumePreviewUrl("");
+              setResumeLoading(false);
+            }}
+          >
+            Close
+          </Button>,
+        ].filter(Boolean)}
         width={860}
         styles={{ body: { padding: 0, height: "75vh", position: "relative" } }}
         centered
@@ -390,10 +544,32 @@ const FreelancersByUserId: React.FC = () => {
       >
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         {resumeLoading && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", zIndex: 10 }}>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#fff",
+              zIndex: 10,
+            }}
+          >
             <div style={{ textAlign: "center" }}>
-              <div style={{ width: 40, height: 40, border: "4px solid #e5e7eb", borderTop: "4px solid #008cba", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 8px" }} />
-              <span style={{ fontSize: 13, color: "#6b7280" }}>Loading resume…</span>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  border: "4px solid #e5e7eb",
+                  borderTop: "4px solid #008cba",
+                  borderRadius: "50%",
+                  animation: "spin 0.8s linear infinite",
+                  margin: "0 auto 8px",
+                }}
+              />
+              <span style={{ fontSize: 13, color: "#6b7280" }}>
+                Loading resume…
+              </span>
             </div>
           </div>
         )}
@@ -406,6 +582,12 @@ const FreelancersByUserId: React.FC = () => {
             height="100%"
             style={{ border: "none", minHeight: "70vh", display: "block" }}
             onLoad={() => setResumeLoading(false)}
+            onError={() => {
+              setResumeLoading(false);
+              message.error(
+                "Preview could not be loaded. Please open the resume in a new tab.",
+              );
+            }}
           />
         )}
       </Modal>
@@ -450,12 +632,22 @@ const FreelancersByUserId: React.FC = () => {
             ))}
             <Col xs={8} sm={8}>
               <Form.Item label="Open for Freelancing" name="openForFreeLancing">
-                <Select options={[{ value: "YES", label: "Yes" }, { value: "NO", label: "No" }]} />
+                <Select
+                  options={[
+                    { value: "YES", label: "Yes" },
+                    { value: "NO", label: "No" },
+                  ]}
+                />
               </Form.Item>
             </Col>
             <Col xs={8} sm={8}>
               <Form.Item label="Amount Negotiable" name="amountNegotiable">
-                <Select options={[{ value: "YES", label: "Yes" }, { value: "NO", label: "No" }]} />
+                <Select
+                  options={[
+                    { value: "YES", label: "Yes" },
+                    { value: "NO", label: "No" },
+                  ]}
+                />
               </Form.Item>
             </Col>
             <Col span={24}>
@@ -477,7 +669,7 @@ const FreelancersByUserId: React.FC = () => {
                             "Content-Type": "multipart/form-data",
                             Authorization: `Bearer ${getAccessToken()}`,
                           },
-                        }
+                        },
                       );
                       setNewResumeUrl(res.data.documentPath);
                       message.success("Resume uploaded successfully!");
@@ -490,7 +682,9 @@ const FreelancersByUserId: React.FC = () => {
                   }}
                 >
                   <Button
-                    icon={uploadLoading ? <Spin size="small" /> : <UploadOutlined />}
+                    icon={
+                      uploadLoading ? <Spin size="small" /> : <UploadOutlined />
+                    }
                     disabled={uploadLoading}
                     style={{ width: "100%" }}
                   >
@@ -498,12 +692,22 @@ const FreelancersByUserId: React.FC = () => {
                   </Button>
                 </Upload>
                 {newResumeUrl && (
-                  <Text style={{ color: "#10b981", fontSize: 12, display: "block", marginTop: 4 }}>
+                  <Text
+                    style={{
+                      color: "#10b981",
+                      fontSize: 12,
+                      display: "block",
+                      marginTop: 4,
+                    }}
+                  >
                     ✓ New resume ready to save
                   </Text>
                 )}
                 {!newResumeUrl && updateRecord?.resumeUrl && (
-                  <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 12, display: "block", marginTop: 4 }}
+                  >
                     Current: {updateRecord.resumeUrl.split("/").pop()}
                   </Text>
                 )}
@@ -512,8 +716,6 @@ const FreelancersByUserId: React.FC = () => {
           </Row>
         </Form>
       </Modal>
-
-
     </div>
   );
 };

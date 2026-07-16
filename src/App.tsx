@@ -6,6 +6,7 @@ import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
 import { SearchProvider } from "./until/SearchContext";
 import { useTokenRefresh } from "./utils/useTokenRefresh";
 import { initGA, trackPage } from "./utils/analytics";
+import { initEnhancedTracking } from "./utils/enhancedTracking";
 import { useTaskTokenExpiry } from "./utils/taskTokenManager";
 import AppliedJobs from "./Dashboard/AppliedJobs";
 import NinetyDayPlanPage from "./components/NinetyDayPlanPage";
@@ -662,6 +663,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     initGA();
+    const cleanup = initEnhancedTracking();
+    return cleanup;
   }, []);
 
   useEffect(() => {
@@ -698,6 +701,7 @@ const App: React.FC = () => {
       "/allcompanies/jobs",
       "/broadridge/jobs",
       "/credera/jobs",
+      "/jpl","/fpl","/oxygold",
       "/viewjobdetails/default/ALL",
     ];
     if (validEntryPoints.includes(location.pathname)) {

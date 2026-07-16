@@ -397,7 +397,7 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 p-6">
+      <div className="max-w-[1400px] mx-auto space-y-6 p-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4 animate-spin" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading documents...</h3>
@@ -409,7 +409,7 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
 
   if (fetchError) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 p-6">
+      <div className="max-w-[1400px] mx-auto space-y-6 p-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <AlertCircle className="w-16 h-16 text-red-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Error loading documents</h3>
@@ -426,7 +426,7 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 p-6">
+    <div className="max-w-[1400px] mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6">

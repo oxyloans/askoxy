@@ -353,7 +353,7 @@ export default function InternshipApplicationDashboard() {
   return (
     <div className="min-h-screen bg-[#FAF7FF] text-[#221133]">
       <header className="sticky top-0 z-40 border-b border-purple-100 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-purple-600 sm:text-xs">
               Hospitality Internships
@@ -376,7 +376,7 @@ export default function InternshipApplicationDashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+      <main className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
         <section className="mb-4 overflow-hidden rounded-3xl border border-purple-100 bg-white p-3 shadow-[0_16px_45px_rgba(88,28,135,0.08)]">
           <div className="mb-3 flex items-center justify-between gap-3 px-1">
             <div>

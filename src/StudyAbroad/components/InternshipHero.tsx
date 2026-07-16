@@ -33,7 +33,7 @@ export default function InternshipHero() {
       <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-purple-100/70 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-28 -left-28 h-72 w-72 rounded-full bg-yellow-100/70 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+      <div className="relative mx-auto max-w-[1400px] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
         <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-between lg:gap-14">
           <motion.div
             initial={{ opacity: 0, y: 24 }}

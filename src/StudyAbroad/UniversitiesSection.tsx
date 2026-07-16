@@ -839,7 +839,7 @@ const UniversitiesSection: React.FC = () => {
   if (loading && universities.length === 0) {
     return (
       <section className="py-12 bg-gradient-to-br from-purple-50 via-white to-blue-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-3">
               <div className="h-px w-12 sm:w-20 bg-gradient-to-r from-transparent to-purple-500"></div>
@@ -861,7 +861,7 @@ const UniversitiesSection: React.FC = () => {
 
   return (
     <section className="py-12 bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Title - REDUCED SIZE */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-3">

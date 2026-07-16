@@ -746,7 +746,7 @@ const StudentProfile: React.FC<ProfileProps> = ({ onNavigate }) => {
   }, [successMessage, error]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-[1400px] mx-auto space-y-6 p-4 sm:p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
           <div className="flex-1">

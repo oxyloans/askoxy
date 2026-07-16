@@ -491,7 +491,7 @@ const TestScores: React.FC<TestScoresProps> = ({ onNavigate }) => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 p-6">
+      <div className="max-w-[1400px] mx-auto space-y-6 p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-violet-600 mx-auto mb-4" />
@@ -503,7 +503,7 @@ const TestScores: React.FC<TestScoresProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 p-6">
+    <div className="max-w-[1400px] mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6">

@@ -13,12 +13,16 @@ import CashbackUniversitiesPage from "./univeristyoffers";
 import Support from "./Support";
 import TestScores from "./TestScore";
 import InternshipApplicationDashboard from "./InternshipApplicationDashboard";
+import OfferLetterUploadPage from "./OfferLetterUploadPage";
 import { Link } from "react-router-dom";
 
 const StudentMainDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState((location.state as any)?.activeTab || "dashboard");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (sessionStorage.getItem("pendingApplyUniversityId")) return "offer-letter";
+    return (location.state as any)?.activeTab || "dashboard";
+  });
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +88,8 @@ const StudentMainDashboard = () => {
     switch (activeTab) {
       case "dashboard":
         return <DashboardOverview onNavigate={handleNavigation} />;
+      case "offer-letter":
+        return <OfferLetterUploadPage />;
       case "internship-application":
         return <InternshipApplicationDashboard />;
       case "cashback-universities": // Fixed: Match the exact ID from sidebar

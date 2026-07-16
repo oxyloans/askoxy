@@ -9,7 +9,7 @@ const yellowGradient = "linear-gradient(135deg, #facc15 0%, #f59e0b 100%)";
 export default function WhyChooseInternships() {
   return (
     <section className="bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-10">
         <div className="mb-10 text-center">
           <span className="inline-flex rounded-full px-5 py-2 text-xs font-black uppercase tracking-[0.18em] text-white shadow-lg" style={{ background: purpleGradient }}>
             Why Choose Us

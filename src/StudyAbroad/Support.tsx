@@ -205,7 +205,7 @@ const Support: React.FC<SupportProps> = ({ onNavigate }) => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 p-4 md:p-6">
+    <div className="max-w-[1400px] mx-auto space-y-4 md:space-y-6 p-4 md:p-6">
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
         <div className="text-center mb-6">

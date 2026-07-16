@@ -168,7 +168,7 @@ export default function CountryCards() {
 
   return (
     <section className="bg-white text-slate-950">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18 lg:px-10">
+      <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-6 sm:py-18 lg:px-10">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}

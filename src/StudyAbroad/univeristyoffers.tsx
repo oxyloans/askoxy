@@ -625,7 +625,7 @@ const CashbackUniversitiesPage: React.FC<CashbackUniversitiesPageProps> = ({ onN
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">🏆 Top 20 UK Universities with 5% Cashback</h2>

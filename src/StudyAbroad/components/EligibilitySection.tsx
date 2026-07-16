@@ -9,7 +9,7 @@ export default function EligibilitySection() {
   return (
     <section className="relative overflow-hidden bg-white py-16">
       <div className="pointer-events-none absolute -right-24 top-12 h-72 w-72 rounded-full bg-purple-200/35 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
+      <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
         <div className="mb-10 text-center">
           <span className="inline-flex rounded-full px-5 py-2 text-xs font-black uppercase tracking-[0.18em] text-white shadow-lg" style={{ background: purpleGradient }}>
             Eligibility

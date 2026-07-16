@@ -214,7 +214,7 @@ const Applications: React.FC<ApplicationsProps> = ({ onNavigate }) => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 p-6">
+      <div className="max-w-[1400px] mx-auto space-y-6 p-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <Loader2 className="w-16 h-16 text-violet-500 mx-auto mb-4 animate-spin" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Applications</h3>
@@ -226,7 +226,7 @@ const Applications: React.FC<ApplicationsProps> = ({ onNavigate }) => {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 p-6">
+      <div className="max-w-[1400px] mx-auto space-y-6 p-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
           <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Applications</h3>
@@ -243,7 +243,7 @@ const Applications: React.FC<ApplicationsProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 p-6">
+    <div className="max-w-[1400px] mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6">
