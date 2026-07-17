@@ -150,7 +150,7 @@ function HeroSection() {
   };
 
   const handleExploreBlogs = () => navigate("/myblogs");
-  const handleApplyJobs = () => navigate("/jobdetails");
+  const handleApplyJobs = () => navigate("/viewjobdetails/default/ALL");
 
   return (
     <section className="bg-gradient-to-tr from-white via-blue-50 to-purple-100 py-20 px-6 sm:px-10 lg:px-20">

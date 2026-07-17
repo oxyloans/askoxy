@@ -1,111 +1,108 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FaAmazon } from "react-icons/fa";
 import { ArrowRight } from "lucide-react";
-import { message } from "antd";
 
 import aiImage from "../assets/img/gt.png";
-import BASE_URL from "../Config";
-import customerApi from "../utils/axiosInstances";
+
+// Animation variants are stable — defined outside the component to avoid
+// recreating them on every render (framer-motion re-diffs on reference change).
+const cardAnimation = {
+  hidden: { opacity: 0, y: 35 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: "easeOut" },
+  },
+};
+
+const imageLeftAnimation = {
+  hidden: { opacity: 0, x: -35 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const imageRightAnimation = {
+  hidden: { opacity: 0, x: 35 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const JOB_PLAN_IMAGE_URL = "https://i.ibb.co/twj7WCX3/90-dayl.png";
+const CAMPAIGN_ID = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
 
 const FreeAiBook: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  // YouTube facade: only embed the iframe after the user clicks play
+  const [ytReady, setYtReady] = useState(false);
 
-  const userId = localStorage.getItem("userId");
-  const mobileNumber = localStorage.getItem("mobileNumber");
-  const whatsappNumber = localStorage.getItem("whatsappNumber");
-
-  const jobPlanImageUrl = "https://i.ibb.co/twj7WCX3/90-dayl.png";
-  const campaignId = "6972eb83-3bc4-4fa9-91a2-e1872b7c04bc";
-
-  const openAmazon = () => {
+  const openAmazon = useCallback(() => {
     window.open("https://amzn.in/d/2Ie3hEg", "_blank");
-  };
+  }, []);
 
-  useEffect(() => {
-    const sendMarketingRequest = async () => {
-      if (!userId) return;
+  // useEffect(() => {
+  //   const sendMarketingRequest = async () => {
+  //     if (!userId) return;
 
-      try {
-        setIsLoading(true);
+  //     try {
+  //       setIsLoading(true);
 
-        const response = await customerApi.post(
-          `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
-          {
-            askOxyOfers: "FREEAIBOOK",
-            mobileNumber: mobileNumber || whatsappNumber,
-            userId,
-            projectType: "ASKOXY",
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            },
-          },
-        );
+  //       const response = await customerApi.post(
+  //         `${BASE_URL}/marketing-service/campgin/askOxyOfferes`,
+  //         {
+  //           askOxyOfers: "FREEAIBOOK",
+  //           mobileNumber: mobileNumber || whatsappNumber,
+  //           userId,
+  //           projectType: "ASKOXY",
+  //         },
+  //         {
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+  //           },
+  //         },
+  //       );
 
-        if (response.status === 200) {
-          message.success("Welcome to Free AI Book");
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  //       if (response.status === 200) {
+  //         message.success("Welcome to Free AI Book");
+  //       }
+  //     } catch (error) {
+  //       console.error(error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    sendMarketingRequest();
-  }, [userId, mobileNumber, whatsappNumber]);
+  //   sendMarketingRequest();
+  // }, [userId, mobileNumber, whatsappNumber]);
 
-  const handleSignIn = () => {
+  const handleSignIn = useCallback(() => {
     setIsLoading(true);
 
-    const slicedCampaignId = campaignId.slice(0, 8);
+    const slicedCampaignId = CAMPAIGN_ID.slice(0, 8);
     const redirectPath = `/campaign/${slicedCampaignId}`;
 
-    sessionStorage.setItem(`campaignFull:${slicedCampaignId}`, campaignId);
+    sessionStorage.setItem(`campaignFull:${slicedCampaignId}`, CAMPAIGN_ID);
     sessionStorage.setItem("redirectPath", redirectPath);
 
     const uid = localStorage.getItem("userId");
 
     if (uid) {
-      navigate(redirectPath);
       setIsLoading(false);
+      navigate(redirectPath);
       return;
     }
 
     window.location.href = "/whatsappregister";
-  };
-
-  const cardAnimation = {
-    hidden: { opacity: 0, y: 35 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.55, ease: "easeOut" },
-    },
-  };
-
-  const imageLeftAnimation = {
-    hidden: { opacity: 0, x: -35 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
-    },
-  };
-
-  const imageRightAnimation = {
-    hidden: { opacity: 0, x: 35 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
-    },
-  };
+  }, [navigate]);
 
   const cardClass =
     "mb-8 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_14px_45px_rgba(15,23,42,0.08)]";
@@ -168,6 +165,8 @@ const FreeAiBook: React.FC = () => {
                 alt="AI Book"
                 onClick={openAmazon}
                 className={imageClass}
+                loading="eager"
+                decoding="async"
               />
             </motion.div>
 
@@ -248,10 +247,11 @@ const FreeAiBook: React.FC = () => {
               className="order-1 flex h-full items-center justify-center lg:order-2"
             >
               <img
-                src={jobPlanImageUrl}
+                src={JOB_PLAN_IMAGE_URL}
                 alt="90 Days Job Plan"
                 className={imageClass}
                 loading="lazy"
+                decoding="async"
               />
             </motion.div>
           </div>
@@ -273,17 +273,41 @@ const FreeAiBook: React.FC = () => {
               viewport={{ once: true }}
               className="flex h-full items-center justify-center"
             >
-              <div className="aspect-video w-full max-w-[500px] overflow-hidden rounded-xl bg-black shadow-md">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube.com/embed/FR0y9kmy2eY"
-                  title="CelebShield"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="h-full w-full"
-                />
+              {/* YouTube facade — iframe only loads after user interaction */}
+              <div
+                className="aspect-video w-full max-w-[500px] overflow-hidden rounded-xl bg-black shadow-md relative cursor-pointer"
+                onClick={() => setYtReady(true)}
+              >
+                {ytReady ? (
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src="https://www.youtube.com/embed/FR0y9kmy2eY?autoplay=1"
+                    title="CelebShield"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <>
+                    <img
+                      src={`https://i.ytimg.com/vi/FR0y9kmy2eY/hqdefault.jpg`}
+                      alt="CelebShield video thumbnail"
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 shadow-lg">
+                        <svg viewBox="0 0 24 24" fill="white" className="h-8 w-8 translate-x-0.5">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </motion.div>
 

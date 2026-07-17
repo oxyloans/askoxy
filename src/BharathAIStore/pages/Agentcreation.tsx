@@ -2620,7 +2620,7 @@ const Agentcreation: React.FC = () => {
           localStorage.removeItem("agentJobContext");
         } catch {}
 
-        navigate("/main/jobdetails", {
+        navigate("/main/viewjobdetails/default/ALL", {
           state: {
             id: jobContext.fromJobId,
             openApplyModal: true,

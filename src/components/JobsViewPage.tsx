@@ -895,14 +895,14 @@ const JobViewPage: React.FC = () => {
                 <img
                   src={
                     `${uploadurlwithId}${job.companyLogo}` ||
-                    "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png"
+                    "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
                   }
                   alt={job.companyName}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;
                     target.src =
-                      "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png";
+                      "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
                   }}
                   className="max-w-full max-h-full object-contain"
                 />

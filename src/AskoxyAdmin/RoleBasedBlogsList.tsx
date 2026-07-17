@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { adminApi as axios } from "../utils/axiosInstances";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 import { message } from "antd";
 import { useNavigate } from "react-router-dom";
 
@@ -393,7 +393,7 @@ const RoleBasedBlogsList: React.FC = () => {
                           <div className="flex items-center justify-center">
                             {previewImage ? (
                               <img
-                                src={previewImage}
+                                src={`${uploadurlwithId}${previewImage}`}
                                 alt={item.campaignTitle || "Media"}
                                 className="h-20 w-full rounded-lg border border-slate-200 object-cover"
                               />

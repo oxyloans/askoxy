@@ -96,9 +96,9 @@
       src="https://www.googletagmanager.com/gtag/js?id=G-7F5MXCYZ7W"
     ></script>
 
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-   
-    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async></script>
+    <!-- Cashfree SDK: deferred so it never blocks HTML parsing -->
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js" defer></script>
     <!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   X,
   CheckCircle,
@@ -16,6 +17,7 @@ import {
   Sparkles,
   AlertCircle,
 } from "lucide-react";
+import BASE_URL from "../../Config";
 
 interface University {
   id: number;
@@ -49,7 +51,7 @@ const scorePlaceholder: Record<string, string> = {
 };
 
 const SUBMIT_APPLICATION_API_URL =
-  "http://65.0.147.157:9024/api/user-service/applications/submitApplication";
+  `${BASE_URL}/user-service/applications/submitApplication`;
 
 const UniversityApplicationModal: React.FC<Props> = ({
   isOpen,
