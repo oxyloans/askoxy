@@ -413,10 +413,16 @@ const Sidebar: React.FC = () => {
       ],
     },
     {
-      title: "Comments & Calls",
+      title: "Lender Callbacks",
       icon: <FaComments className="text-pink-400" />,
       roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
       items: [
+        {
+          title: "Lender Calling Follow-ups",
+          icon: <FaHeadset className="text-emerald-400" />,
+          link: "/admin/lender-calling-followups",
+          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        },
         {
           title: "Super Admin Comments",
           icon: <RiAdminLine className="text-purple-400" />,
@@ -571,7 +577,13 @@ const Sidebar: React.FC = () => {
                   : "-translate-x-full"
                 : "translate-x-0"
             }
-            ${collapsed && !isMobileOpen ? "w-20" : "w-64"}
+            ${
+              isMobile
+                ? "w-[86vw] max-w-72"
+                : collapsed && !isMobileOpen
+                ? "w-20"
+                : "w-64"
+            }
           `}
           style={{
             boxShadow: "2px 0 15px rgba(0,0,0,0.15)",
@@ -820,7 +832,7 @@ const Sidebar: React.FC = () => {
         </aside>
 
         <header
-          className="fixed top-0 right-0 z-20 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-lg"
+          className="fixed right-0 top-0 z-20 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-3 shadow-lg sm:px-6"
           style={{
             width: isMobile
               ? "100%"
@@ -859,7 +871,7 @@ const Sidebar: React.FC = () => {
               className="flex cursor-pointer items-center rounded-lg px-4 py-2 text-gray-600 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md hover:scale-105"
             >
               <FaSignOutAlt className="mr-2" />
-              <span className="text-sm font-medium">Log out</span>
+              <span className="hidden text-sm font-medium sm:inline">Log out</span>
             </div>
           </div>
         </header>
@@ -875,7 +887,7 @@ const Sidebar: React.FC = () => {
             paddingBottom: "2rem",
           }}
         >
-          <main className="p-6">
+          <main className="p-3 sm:p-4 lg:p-6">
             <Outlet />
           </main>
         </div>

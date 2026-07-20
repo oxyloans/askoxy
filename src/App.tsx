@@ -8,6 +8,10 @@ import { initEnhancedTracking } from "./utils/enhancedTracking";
 import { useTaskTokenExpiry } from "./utils/taskTokenManager";
 import { initGA, trackPage } from "./utils/analytics";
 import { useGtagPageView } from "./Pages/Auth/useGtagPageView";
+import SalariedBorrowerChatPage from "./components/SalariedBorrowerChatPage";
+import LenderHomePage from "./components/LenderHomepage";
+import CallingTeamCallbackRequests from "./AskoxyAdmin/CallingTeamCallbackRequests";
+import ATSResumeChecker from "./components/JPL/FreeATSResumeChecker";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -807,7 +811,6 @@ const App: React.FC = () => {
             )}
             <Routes>
               <Route path="/shopretail" element={<HomePage />} />
-
               <Route path="/shop-form" element={<ShopFormPage />} />
               <Route path="/shop-list" element={<ShopListPage />} />
               <Route path="/shop-edit/:id" element={<ShopEditForm />} />
@@ -817,7 +820,9 @@ const App: React.FC = () => {
               <Route path="/Oxygpt" element={<OxyGPT />} />
               <Route path="/oxygpt/claude" element={<OxyStreamClaude />} />
               <Route path="/loan-application" element={<BorrowerChatPage />} />
+              <Route path="/salaried-br-loan-application" element={<SalariedBorrowerChatPage />} />
               <Route path="/application-status" element={<AdminDashboardPage />} />
+              
               <Route path="/oxygpt/share/:sessionId" element={<OxyGPT />} />
               <Route path="/finvibe" element={<Finvibe3DLanding />} />
               <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
@@ -1554,6 +1559,8 @@ const App: React.FC = () => {
               />
               <Route path="/may2Interview" element={<HiringLandingPage />} />
               <Route path="/walkin-journey" element={<WalkInJourneyPage />} />
+              <Route path="/lenderjourney" element={<LenderHomePage />} />
+              <Route path="/resume-ai-interview" element={<ATSResumeChecker />} />
               <Route
                 path="/DRAcertification"
                 element={<DRACertificationLanding />}
@@ -1595,6 +1602,7 @@ const App: React.FC = () => {
                   path="/main/dashboard/informationaboutcountries-gpt"
                   element={<InformationAboutCountries />}
                 />
+                
                 <Route
                   path="/main/dashboard/loans-gpt"
                   element={<LoansGpt />}
@@ -1732,6 +1740,7 @@ const App: React.FC = () => {
                 <Route path="crypto" element={<MyCrypto />} />
                 <Route path="tickethistory" element={<TicketHistoryPage />} />
                 <Route path="search-main" element={<SearchMain />} />
+                <Route path="lenderjourney" element={<LenderHomePage />} />
                 <Route path="checkout" element={<CheckoutPage />} />
                 <Route
                   path="manageaddresses"
@@ -1816,6 +1825,10 @@ const App: React.FC = () => {
                 <Route path="addleaguejourney" element={<AddLeagueJourney />} />
                 <Route path="leaguejourneyusers" element={<LeagueJourneysAdmin />} />
                 <Route path="advocates" element={<AdvocatesDataPage />} />
+                <Route
+                  path="lender-calling-followups"
+                  element={<CallingTeamCallbackRequests />}
+                />
                 <Route path="talwardata" element={<TalwarDataPage />} />
                 <Route path="mumbaidata" element={<MumbaiDataPage />} />
                 <Route

@@ -20,6 +20,7 @@ type JobsCount = {
 };
 
 const JOBS_COUNT_API = `${BASE_URL}/marketing-service/campgin/companies-jobs-count`;
+
 const AIInterviewLanding: React.FC = () => {
   const navigate = useNavigate();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
@@ -67,7 +68,20 @@ const AIInterviewLanding: React.FC = () => {
     !!sessionStorage.getItem("userId") ||
     !!sessionStorage.getItem("accessToken");
 
-  const goResume = () => navigate("/interview");
+  const goResume = () => {
+    const userId =
+      localStorage.getItem("userId")?.trim() ||
+      sessionStorage.getItem("userId")?.trim() ||
+      "";
+
+    if (userId) {
+      navigate("/resume-ai-interview");
+      return;
+    }
+
+    sessionStorage.setItem("redirectPath", "/resume-ai-interview");
+    navigate("/whatsapplogin");
+  };
 
   const goJobFit = () => {
     navigate(

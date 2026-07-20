@@ -14,9 +14,25 @@ import {
 } from "./servicesapi";
 import type { Campaign } from "./servicesapi";
 
+interface LeagueJourneyAccess {
+  campaignId: string;
+  campaignType: string;
+  addServiceType: "LEAGUEJOURNEYS";
+  openedAt: number;
+}
+
+const LEAGUE_JOURNEY_ACCESS_KEY = "leagueJourneyAccess";
+const LENDER_JOURNEY_ROUTE = "/main/lenderjourney";
+const LEAGUE_JOURNEYS_ROUTE = "/main/dashboard/leaguejourneys";
+const SERVICES_ROUTE = "/main/dashboard/myservices";
+
 const CampaignDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const routeState = (location.state || {}) as {
+    from?: string;
+    addServiceType?: string | null;
+  };
   const pathParts = location.pathname.split("/");
   const campaignId = pathParts[pathParts.indexOf("services") + 1];
 
@@ -55,7 +71,8 @@ const CampaignDetails: React.FC = () => {
   const mediaItems = campaign?.imageUrls ?? [];
   const isHiringCampaign = campaign?.addServiceType === "WEAREHIRING";
 
-  const isJourney = campaign?.addServiceType === "LEAGUEJOURNEYS";
+  const isJourney =
+    String(campaign?.addServiceType || "").toUpperCase() === "LEAGUEJOURNEYS";
 
   useEffect(() => {
     const loadCampaign = async () => {
@@ -348,6 +365,86 @@ const CampaignDetails: React.FC = () => {
     navigate("/main/profile");
   };
 
+  const handleOpenLenderJourney = () => {
+    if (!campaign?.campaignId || !campaign?.campaignType) {
+      message.error("Campaign information is unavailable.");
+      return;
+    }
+
+    if (!userId) {
+      message.warning("Please login to continue.");
+      sessionStorage.setItem("redirectPath", window.location.pathname);
+      navigate("/whatsappregister");
+      return;
+    }
+
+    if (!isJourney || !interested) {
+      message.warning(
+        "Please submit your interest before opening the lender journey.",
+      );
+      return;
+    }
+
+    const accessPayload: LeagueJourneyAccess = {
+      campaignId: campaign.campaignId,
+      campaignType: campaign.campaignType,
+      addServiceType: "LEAGUEJOURNEYS",
+      openedAt: Date.now(),
+    };
+
+    sessionStorage.setItem(
+      LEAGUE_JOURNEY_ACCESS_KEY,
+      JSON.stringify(accessPayload),
+    );
+
+    navigate(LENDER_JOURNEY_ROUTE, {
+      state: {
+        leagueJourneyAccess: accessPayload,
+        campaign,
+        from: location.pathname,
+        returnTo: LEAGUE_JOURNEYS_ROUTE,
+      },
+    });
+  };
+
+  const normalizeReturnRoute = (route?: string): string => {
+    const cleanRoute = String(route || "").trim();
+    const lowerRoute = cleanRoute.toLowerCase();
+
+    // Normalize old/incorrect routes that may still exist in browser history
+    // or navigation state from previously deployed versions.
+    if (
+      lowerRoute === "/leaguejourneys" ||
+      lowerRoute.startsWith("/main/dashboard/leaguejourneys") ||
+      lowerRoute.includes("tab=league_journeys")
+    ) {
+      return LEAGUE_JOURNEYS_ROUTE;
+    }
+
+    if (
+      lowerRoute === "/main/dashboard/services" ||
+      lowerRoute.startsWith("/main/dashboard/services?") ||
+      lowerRoute === "/main/dashboard/myservices" ||
+      lowerRoute.startsWith("/main/dashboard/myservices?")
+    ) {
+      return SERVICES_ROUTE;
+    }
+
+    return cleanRoute || SERVICES_ROUTE;
+  };
+
+  const handleBack = (): void => {
+    const stateServiceType = String(routeState.addServiceType || "").toUpperCase();
+
+    // League Journey details always return to the dedicated League Journeys page.
+    if (isJourney || stateServiceType === "LEAGUEJOURNEYS") {
+      navigate(LEAGUE_JOURNEYS_ROUTE);
+      return;
+    }
+
+    navigate(normalizeReturnRoute(routeState.from));
+  };
+
   const handleBuyNow = () => {
     if (!userId) {
       message.warning("Please login to buy now.");
@@ -384,7 +481,31 @@ const CampaignDetails: React.FC = () => {
         {!userId ? <Header1 /> : null}
       </div>
 
-      <main className="flex-1 w-full px-4 pb-6">
+      <main className="flex-1 w-full px-3 pb-6 sm:px-4">
+        <div className="mx-auto mb-4 w-full max-w-7xl sm:mb-5">
+          <button
+            type="button"
+            onClick={handleBack}
+            aria-label={isJourney ? "Back to League Journeys" : "Back to Services"}
+            className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-300 hover:bg-purple-50 hover:text-purple-700 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 active:translate-y-0 sm:min-h-11 sm:px-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5 sm:h-5 sm:w-5"
+              aria-hidden="true"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            <span>{isJourney ? "Back to League Journeys" : "Back to Services"}</span>
+          </button>
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -462,6 +583,31 @@ const CampaignDetails: React.FC = () => {
                       : "I'm Interested"
                     : "Already Participated"}
                 </button>
+
+                {isJourney && interested && (
+                  <button
+                    type="button"
+                    onClick={handleOpenLenderJourney}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 w-full sm:w-auto font-semibold"
+                    aria-label="Start Lender Journey"
+                  >
+                    Start Lender Journey
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                )}
 
                 <button
                   className="px-5 py-2.5 bg-gradient-to-r from-[#f9b91a] to-[#ff9f1a] text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 w-full sm:w-auto font-semibold"
@@ -628,6 +774,46 @@ const CampaignDetails: React.FC = () => {
                     )}
                   </div>
 
+                  {isJourney && interested && (
+                    <div className="mb-5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 sm:p-5">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </span>
+                            <h3 className="text-base sm:text-lg font-bold text-emerald-900">
+                              Start Your Lender Journey
+                            </h3>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-emerald-800">
+                            Your interest is confirmed. Continue to explore
+                            exclusive lender services and opportunities.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleOpenLenderJourney}
+                          className="shrink-0 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700 hover:shadow-lg"
+                        >
+                          Start Lender Journey
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <Article description={campaign.campaignDescription || ""} />
                 </div>
               </section>
@@ -793,10 +979,12 @@ const CampaignDetails: React.FC = () => {
                 <HiringEmployeeCard
                   onConfirm={handleEmployeeInterest}
                   disabled={isButtonDisabled || interested}
-                  title={isJourney ? "Start your journey" : "Join as Employee"}
+                  title={
+                    isJourney ? "Confirm your interest" : "Join as Employee"
+                  }
                   description={
                     isJourney
-                      ? "Take the first step toward your next milestone with ASKOXY.AI."
+                      ? "Submit your interest to unlock the complete OxyLoans lender journey."
                       : "Join our AI team and build the future! Explore exciting roles across tech, marketing, operations, and innovation."
                   }
                 />

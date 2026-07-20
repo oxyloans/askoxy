@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import BASE_URL from "../Config";
 
-
 interface ChatMessage {
   role: "USER" | "ASSISTANT";
   text: string;
@@ -21,24 +20,35 @@ interface AdminMessage {
 type Language = "EN" | "TE";
 
 const STAGES = [
-  { key: "FRESH", label: "Details", note: "Name · phone · amount" },
   {
-    key: "AWAITING_INCOME_PROOF",
-    label: "Income proof",
-    note: "Payslip / ITR / GST",
+    key: "BASIC_DETAILS",
+    label: "Details",
+    note: "Name · company · salary · bank",
   },
-  {
-    key: "AWAITING_BANK_STATEMENT",
-    label: "Bank statement",
-    note: "Account activity",
-  },
-  { key: "AWAITING_ID_PROOF", label: "Identity proof", note: "Aadhar · PAN" },
-  { key: "PROCESSED", label: "Assessment", note: "Risk decision" },
+  { key: "PAYSLIP", label: "Payslip", note: "Latest payslip" },
+  { key: "BANK_STATEMENT", label: "Bank statement", note: "Recent 3 months" },
+  { key: "PAN", label: "PAN Card", note: "Identity card" },
+  { key: "AADHAAR", label: "Aadhaar Card", note: "Identity proof" },
+  { key: "PRE_APPROVAL", label: "Assessment", note: "Eligibility decision" },
 ] as const;
 
 const WELCOME_TEXT: Record<Language, string> = {
-  EN: "Welcome to OxyLoans Conversation AI Assistant. No clicks, no screens, direct chat and loan Pre-Approval. I am here to guide you through the loan application process. To get started, please enter your mobile number or name.",
-  TE: "ఆక్సీలోన్స్ కన్వర్సేషన్ AI అసిస్టెంట్‌కి స్వాగతం. క్లిక్‌లు లేవు, స్క్రీన్‌లు లేవు, నేరుగా చాట్ మరియు లోన్ ముందస్తు ఆమోదం. లోన్ దరఖాస్తు ప్రక్రియలో మీకు మార్గనిర్దేశం చేయడానికి నేను ఇక్కడ ఉన్నాను. ప్రారంభించడానికి, దయచేసి మీ మొబైల్ నంబర్ లేదా పేరు నమోదు చేయండి.",
+  EN: `Welcome to OxyLoans Conversation AI. I am here to help you get a loan.
+
+Here is how the loan terms work:
+• I can offer a loan of 10 - 20% of your monthly salary.
+• Loans are disbursed from the 7th to the 28th of the month.
+• Repayment is due on the 30th or 1st of the month (for example, if you take a loan on the 28th, you must repay it on the 30th or 1st).
+
+At the end of our conversation, I will provide a pre-approval and submit your application to my lenders. If you agree, I am happy to help. Let's start by entering your mobile number.`,
+  TE: `ఆక్సీలోన్స్ కన్వర్సేషన్ AI‌కి స్వాగతం. మీకు లోన్ పొందడంలో సహాయం చేయడానికి నేను ఇక్కడ ఉన్నాను.
+
+లోన్ నిబంధనలు ఎలా పని చేస్తాయో ఇక్కడ ఉంది:
+• నేను మీ నెలవారీ జీతంలో 10 - 20% లోన్ అందించగలను.
+• లోన్‌లు నెలలో 7వ తేదీ నుండి 28వ తేదీ వరకు మంజూరు చేయబడతాయి.
+• తిరిగి చెల్లింపు నెలలో 30వ లేదా 1వ తేదీన చేయాలి (ఉదాహరణకు, మీరు 28వ తేదీన లోన్ తీసుకుంటే, మీరు 30వ లేదా 1వ తేదీన తిరిగి చెల్లించాలి).
+
+మా సంభాషణ చివరిలో, నేను ముందస్తు ఆమోదం అందించి, మీ దరఖాస్తును నా రుణదాతలకు సమర్పిస్తాను. మీరు అంగీకరిస్తే, నేను సహాయం చేయడానికి సంతోషిస్తాను. మీ మొబైల్ నంబర్‌ను నమోదు చేయడం ద్వారా ప్రారంభిద్దాం.`,
 };
 
 function stageIndex(stage: string): number {
@@ -145,11 +155,10 @@ function FilePreviewThumbnail({ file }: { file: File }) {
   );
 }
 
-export default function BorrowerChatPage() {
+export default function SalariedBorrowerChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [stage, setStage] = useState<string>("FRESH");
+  const [stage, setStage] = useState<string>("BASIC_DETAILS");
   const [language, setLanguage] = useState<Language>("EN");
-  // Hardcoded welcome message — no backend call on load, session created on first user message
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "ASSISTANT",
@@ -225,8 +234,6 @@ export default function BorrowerChatPage() {
     }
   };
 
-
-
   useEffect(() => {
     if (scrollRef.current)
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -266,9 +273,8 @@ export default function BorrowerChatPage() {
         setUploading(true);
         const formData = new FormData();
         filesToSend.forEach((file) => {
-          formData.append("files", file); // Param name matches backend 'files'
+          formData.append("files", file);
         });
-        // bfMessage is optional on the backend — only append it if the user actually typed something.
         if (text) {
           formData.append("bfMessage", text);
         }
@@ -279,10 +285,9 @@ export default function BorrowerChatPage() {
         );
       } else {
         setSending(true);
-        // If no sessionId yet (first ever message), omit bfSessionId — backend creates a new session.
         const chatUrl = sessionId
-          ? `${BASE_URL}/vibecode-service/borrower/loan-chat?bfSessionId=${encodeURIComponent(sessionId)}`
-          : `${BASE_URL}/vibecode-service/borrower/loan-chat`;
+          ? `${BASE_URL}/vibecode-service/borrower/loan-chat?bfSessionId=${encodeURIComponent(sessionId)}&chatType=SALARIED`
+          : `${BASE_URL}/vibecode-service/borrower/loan-chat?chatType=SALARIED`;
         data = await callApi<ChatResponseDTO>(chatUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -311,8 +316,6 @@ export default function BorrowerChatPage() {
           { role: "ASSISTANT", text: data.bfReply },
         ]);
       }
-
-
     } catch (err) {
       const errMsg =
         (err as Error).message ||
@@ -335,15 +338,15 @@ export default function BorrowerChatPage() {
   const handleFileClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const selectedFiles = e.target.files;
-  if (!selectedFiles || selectedFiles.length === 0) return;
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
 
-  const filesArray = Array.from(selectedFiles);
+    const filesArray = Array.from(selectedFiles); // snapshot NOW, while the FileList is still live
 
-  setPendingFiles((prev) => [...prev, ...filesArray]);
+    setPendingFiles((prev) => [...prev, ...filesArray]);
 
-  if (fileInputRef.current) fileInputRef.current.value = "";
-};
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const removePendingFile = (index: number) => {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
@@ -366,88 +369,101 @@ export default function BorrowerChatPage() {
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        .bf-serif { font-family: 'Fraunces', Georgia, serif; }
-        .bf-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-        .bf-label { font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.09em; text-transform: uppercase; }
+        .bf-serif { font-family: 'Fraunces', serif; }
+        .bf-label { font-family: 'Inter', sans-serif; letter-spacing: 0.05em; text-transform: uppercase; }
+        .bf-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
 
-      {/* Case-file tab rail */}
+      {/* Sidebar: hidden on mobile, 280px on desktop */}
       <div
-        className="hidden md:flex flex-col w-[236px] flex-none py-8 px-5"
+        className="hidden md:flex md:flex-col w-[280px] shrink-0 p-6 text-white justify-between"
         style={{ background: "#1b2a41" }}
       >
-        <div className="bf-serif text-white text-[19px] font-medium mb-0.5">
-          OxyLoans
-        </div>
-        <div
-          className="bf-label text-[9.5px] mb-8"
-          style={{ color: "#7d8aa3" }}
-        >
-          Application case file
-        </div>
+        <div className="flex flex-col gap-6 min-h-0">
+          <div className="flex flex-col">
+            <span className="bf-serif text-[24px] font-semibold text-[#e7d3ae]">
+              OxyLoans
+            </span>
+            <span
+              className="bf-label text-[10px] tracking-[0.2em] font-semibold mt-1"
+              style={{ color: "#a39a86" }}
+            >
+              Salaried Flow
+            </span>
+          </div>
 
-        <div className="flex flex-col gap-1.5">
-          {STAGES.map((s, i) => {
-            const done = i < currentStageIndex || isClosed;
-            const active = i === currentStageIndex && !isClosed;
+          {/* Progress strip */}
+          <div className="flex flex-col gap-2 overflow-y-auto">
+            {STAGES.map((s, i) => {
+              const done = i < currentStageIndex || isClosed;
+              const active = i === currentStageIndex && !isClosed;
 
-            return (
-              <div
-                key={s.key}
-                className="relative px-3 py-2.5 transition-all"
-                style={{
-                  background: active ? "#eef1f5" : "rgba(255,255,255,0.04)",
-                  borderRadius: "3px 10px 10px 3px",
-                  transform: active ? "translateX(6px)" : "none",
-                  borderLeft: `3px solid ${
-                    done ? "#a9824f" : active ? "#a9824f" : "#33415c"
-                  }`,
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Number */}
-                  <div
-                    className="bf-label text-[10px] font-semibold min-w-[24px]"
-                    style={{
-                      color: active ? "#a9824f" : done ? "#c9a06a" : "#5f6d88",
-                    }}
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </div>
-
-                  {/* Text */}
-                  <div className="flex-1">
+              return (
+                <div
+                  key={s.key}
+                  className="relative px-3 py-2.5 transition-all"
+                  style={{
+                    background: active ? "#eef1f5" : "rgba(255,255,255,0.04)",
+                    borderRadius: "3px 10px 10px 3px",
+                    transform: active ? "translateX(6px)" : "none",
+                    borderLeft: `3px solid ${
+                      done ? "#a9824f" : active ? "#a9824f" : "#33415c"
+                    }`,
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Number */}
                     <div
-                      className="flex items-center gap-2 bf-serif text-[14px] font-medium"
+                      className="bf-label text-[10px] font-semibold min-w-[24px]"
                       style={{
                         color: active
-                          ? "#1b2a41"
+                          ? "#a9824f"
                           : done
-                            ? "#e7d3ae"
-                            : "#8391aa",
+                            ? "#c9a06a"
+                            : "#5f6d88",
                       }}
                     >
-                      {done && (
-                        <span style={{ color: "#3f7a5c", fontSize: "10px" }}>
-                          ●
-                        </span>
-                      )}
-                      {s.label}
+                      {String(i + 1).padStart(2, "0")}
                     </div>
 
-                    <div
-                      className="text-[11px] mt-0.5"
-                      style={{
-                        color: active ? "#6b6455" : "#5f6d88",
-                      }}
-                    >
-                      {s.note}
+                    {/* Text */}
+                    <div className="flex-1">
+                      <div
+                        className="flex items-center gap-2 bf-serif text-[14px] font-medium"
+                        style={{
+                          color: active
+                            ? "#1b2a41"
+                            : done
+                              ? "#e7d3ae"
+                              : "#8391aa",
+                        }}
+                      >
+                        {done && (
+                          <span style={{ color: "#3f7a5c", fontSize: "10px" }}>
+                            ●
+                          </span>
+                        )}
+                        {s.label}
+                      </div>
+
+                      <div
+                        className="text-[11px] mt-0.5"
+                        style={{
+                          color: active ? "#6b6455" : "#5f6d88",
+                        }}
+                      >
+                        {s.note}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {sessionId && (
@@ -528,35 +544,33 @@ export default function BorrowerChatPage() {
           {STAGES.map((s, i) => {
             const done = i < currentStageIndex || isClosed;
             const active = i === currentStageIndex && !isClosed;
+
             return (
-              <div key={s.key} className="flex items-center">
+              <div
+                key={s.key}
+                className="flex items-center shrink-0 pr-4"
+                style={{ opacity: active ? 1 : done ? 0.7 : 0.4 }}
+              >
                 <div
-                  className={`flex flex-col items-center px-2 py-0.5 rounded ${
-                    active ? "bg-white/10" : ""
-                  }`}
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold mr-1.5"
+                  style={{
+                    background: done
+                      ? "#a9824f"
+                      : active
+                        ? "#e7d3ae"
+                        : "#33415c",
+                    color: done || active ? "#1b2a41" : "#8391aa",
+                  }}
                 >
-                  <span
-                    className={`text-[9px] font-bold ${
-                      done
-                        ? "text-[#c9a06a]"
-                        : active
-                          ? "text-white"
-                          : "text-[#5f6d88]"
-                    }`}
-                  >
-                    {done ? "✓" : String(i + 1)}
-                  </span>
-                  <span
-                    className={`text-[8.5px] whitespace-nowrap ${
-                      active
-                        ? "text-white"
-                        : done
-                          ? "text-[#c9a06a]"
-                          : "text-[#5f6d88]"
-                    }`}
-                  >
-                    {s.label}
-                  </span>
+                  {i + 1}
+                </div>
+                <div
+                  className="text-[12px] font-medium bf-serif"
+                  style={{
+                    color: active ? "#ffffff" : done ? "#e7d3ae" : "#8391aa",
+                  }}
+                >
+                  {s.label}
                 </div>
                 {i < STAGES.length - 1 && (
                   <span className="text-[#33415c] text-[10px] mx-0.5">›</span>
@@ -593,15 +607,14 @@ export default function BorrowerChatPage() {
                 className="bf-serif text-[20px] md:text-[22px] font-medium"
                 style={{ color: "#1b2a41" }}
               >
-                Let's open your application
+                Salaried Loan Application
               </div>
               <div
                 className="text-[13.5px] md:text-[14px] max-w-[420px] leading-relaxed"
                 style={{ color: "#6b7280" }}
               >
-                Share your details, then your payslip and bank statement, and
-                we'll assess your loan. If you've applied before, just give the
-                same phone number and we'll pick up where you left off.
+                Read and accept terms, enter basic details, then upload your
+                payslip, statement, and identity cards to verify.
               </div>
             </div>
           ) : (
@@ -660,7 +673,9 @@ export default function BorrowerChatPage() {
                   Assistant note
                 </div>
                 <div className="text-[14px]" style={{ color: "#8c8474" }}>
-                  {uploading ? "Reading your document…" : "Preparing a reply…"}
+                  {uploading
+                    ? "Verifying documents…"
+                    : "Processing your input…"}
                 </div>
               </div>
             </div>
@@ -672,7 +687,6 @@ export default function BorrowerChatPage() {
           style={{ background: "#ffffff", borderTop: "1px solid #e4e7eb" }}
         >
           <div className="w-full max-w-[700px] mx-auto">
-
             {pendingFiles.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-2">
                 {pendingFiles.map((file, index) => (
@@ -714,6 +728,7 @@ export default function BorrowerChatPage() {
                 ))}
               </div>
             )}
+
             <div
               className="flex items-end gap-2.5 px-3 py-2 rounded-xl transition-shadow"
               style={{
@@ -813,7 +828,7 @@ export default function BorrowerChatPage() {
                 disabled={
                   (!inputValue.trim() && pendingFiles.length === 0) ||
                   sending ||
-                  uploading
+                  uploading 
                 }
                 className="flex-none w-8 h-8 rounded flex items-center justify-center text-white transition-colors disabled:opacity-30"
                 style={{ background: "#1b2a41" }}
@@ -826,13 +841,16 @@ export default function BorrowerChatPage() {
                   stroke="currentColor"
                   strokeWidth="2"
                 >
-                  <path
-                    d="M22 2 11 13"
+                  <line
+                    x1="22"
+                    y1="2"
+                    x2="11"
+                    y2="13"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                  <path
-                    d="M22 2 15 22 11 13 2 9 22 2Z"
+                  <polygon
+                    points="22 2 15 22 11 13 2 9 22 2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />

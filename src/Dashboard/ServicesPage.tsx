@@ -8,7 +8,7 @@ import {
   GraduationCap,
   Building,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header1 from "../components/Header";
 import Footer from "../components/Footer";
 import Loader from "../components/Loader";
@@ -42,6 +42,7 @@ const ServicesPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const userId = localStorage.getItem("userId");
   const accessToken = localStorage.getItem("accessToken");
   console.log({ uploadurlwithId });
@@ -60,6 +61,17 @@ const ServicesPage: React.FC = () => {
       return resolveAskoxyUrl(`${uploadurlwithId}${separator}${clean}`);
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const requestedTab = params.get("tab");
+
+    if (requestedTab === "LEAGUE_JOURNEYS") {
+      setActiveTab("LEAGUE_JOURNEYS");
+    } else if (requestedTab === "WE_ARE_HIRING") {
+      setActiveTab("WE_ARE_HIRING");
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const loadCampaigns = async () => {
@@ -162,16 +174,28 @@ const ServicesPage: React.FC = () => {
       .slice(0, 30);
 
   const handleCampaignClick = (campaign: CampaignWithId) => {
-    if (
-      (campaign as any).campainInputType === "SERVICE" ||
-      (campaign as any).campainInputType === "PRODUCT"
-    ) {
-      navigate(
-        `/main/services/${campaign.campaignId.slice(-4)}/${slugify(
-          (campaign as any).campaignType ?? "service",
-        )}`,
-      );
-    }
+    const inputType = String(
+      (campaign as any).campainInputType || "",
+    ).toUpperCase();
+
+    if (inputType !== "SERVICE" && inputType !== "PRODUCT") return;
+
+    const detailPath = `/main/services/${campaign.campaignId.slice(
+      -4,
+    )}/${slugify(
+      (campaign as any).campaignType ?? "service",
+    )}`;
+
+    navigate(detailPath, {
+      state: {
+        campaignId: campaign.campaignId,
+        addServiceType: campaign.addServiceType,
+        from:
+          campaign.addServiceType === "LEAGUEJOURNEYS"
+            ? "/main/dashboard/leaguejourneys"
+            : "/main/dashboard/myservices",
+      },
+    });
   };
 
   const handleStudyAbroadClick = () => {

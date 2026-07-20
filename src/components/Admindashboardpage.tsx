@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import BASE_URL from "../Config";
 
 interface BorrowerChatSession {
@@ -11,6 +11,10 @@ interface BorrowerChatSession {
   bfRiskBucket?: string;
   bfCreatedAt?: string;
   bfUpdatedAt?: string;
+  bfChatType?: string;
+  bfCompanyName?: string;
+  bfMonthlySalary?: number;
+  bfSalaryCreditBank?: string;
 }
 
 interface BorrowerChatMessage {
@@ -85,19 +89,20 @@ export default function AdminDashboardPage() {
   const [documents, setDocuments] = useState<BorrowerLoanDocument[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [chatTypeFilter, setChatTypeFilter] = useState<"GENERIC" | "SALARIED">("GENERIC");
   const [search, setSearch] = useState("");
   // mobile: track whether the detail pane is shown (true) or list (false)
   const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     loadSessions();
-  }, []);
+  }, [chatTypeFilter]);
 
   // ── API: GET /admin/sessions ───────────────────────────────────────────────
-  const loadSessions = async () => {
+  const loadSessions = async (type = chatTypeFilter) => {
     setLoadingSessions(true);
     try {
-      const res = await fetch(`${BASE_URL}/vibecode-service/borrower/admin/sessions`);
+      const res = await fetch(`${BASE_URL}/vibecode-service/borrower/admin/sessions?chatType=${type}`);
       const data: BorrowerChatSession[] = await res.json();
       // Newest first
       data.sort(
@@ -188,7 +193,7 @@ export default function AdminDashboardPage() {
           ))}
         </div>
         <button
-          onClick={loadSessions}
+          onClick={() => loadSessions()}
           className="text-[12px] bg-[#c39a4b]/20 hover:bg-[#c39a4b]/40 text-[#c39a4b] px-2.5 md:px-3 py-1.5 rounded-lg transition-colors font-medium"
         >
           ↻ Refresh
@@ -217,6 +222,29 @@ export default function AdminDashboardPage() {
           showDetail ? "hidden md:flex" : "flex"
         } w-full md:w-[320px] md:min-w-[320px] flex-col bg-[#f0ede5] border-r border-[#e2ddd2]`}>
           <div className="px-4 pt-4 pb-2 shrink-0">
+            {/* Chat Type Filter Tabs */}
+            <div className="flex bg-[#e2ddd2] p-1 rounded-xl mb-3">
+              <button
+                onClick={() => setChatTypeFilter("GENERIC")}
+                className={`flex-1 text-[12px] font-semibold py-1.5 rounded-lg transition-all text-center ${
+                  chatTypeFilter === "GENERIC"
+                    ? "bg-white text-[#1c2b45] shadow-sm"
+                    : "text-slate-600 hover:text-slate-800"
+                }`}
+              >
+                💬 Generic
+              </button>
+              <button
+                onClick={() => setChatTypeFilter("SALARIED")}
+                className={`flex-1 text-[12px] font-semibold py-1.5 rounded-lg transition-all text-center ${
+                  chatTypeFilter === "SALARIED"
+                    ? "bg-[#1c2b45] text-white shadow-sm"
+                    : "text-slate-600 hover:text-slate-800"
+                }`}
+              >
+                💼 Salaried
+              </button>
+            </div>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -315,7 +343,7 @@ export default function AdminDashboardPage() {
                     <div className="text-[16px] font-bold text-[#1f2430]">
                       {selectedSession?.bfBorrowerName || "Unnamed borrower"}
                     </div>
-                    <div className="flex flex-wrap gap-4 mt-1 text-[12px] text-slate-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-1 text-[12px] text-slate-500">
                       {selectedSession?.bfPhoneNumber && (
                         <span>📞 {selectedSession.bfPhoneNumber}</span>
                       )}
@@ -324,6 +352,15 @@ export default function AdminDashboardPage() {
                       )}
                       {selectedSession?.bfEmploymentType && (
                         <span>💼 {selectedSession.bfEmploymentType.replaceAll("_", " ")}</span>
+                      )}
+                      {selectedSession?.bfCompanyName && (
+                        <span>🏢 {selectedSession.bfCompanyName}</span>
+                      )}
+                      {selectedSession?.bfMonthlySalary != null && (
+                        <span>💵 Salary: {formatAmount(selectedSession.bfMonthlySalary)}/mo</span>
+                      )}
+                      {selectedSession?.bfSalaryCreditBank && (
+                        <span>🏦 Bank: {selectedSession.bfSalaryCreditBank}</span>
                       )}
                     </div>
                     <div className="text-[10.5px] text-slate-400 font-mono mt-0.5">{selectedId}</div>
