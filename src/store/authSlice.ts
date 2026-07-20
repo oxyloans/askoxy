@@ -1,5 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { setRefreshToken, removeRefreshToken, getRefreshToken } from "../utils/cookieUtils";
+import {
+  setRefreshToken,
+  removeRefreshToken,
+  getRefreshToken,
+  removeCustomerAccessToken,
+} from "../utils/cookieUtils";
 
 interface AuthState {
   userId: string | null;
@@ -92,6 +97,7 @@ const authSlice = createSlice({
       localStorage.removeItem("mobileNumber");
       localStorage.removeItem("profileData");
 
+      removeCustomerAccessToken();
       removeRefreshToken();
     },
   },

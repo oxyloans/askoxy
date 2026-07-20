@@ -652,6 +652,9 @@ const WhatsappLogin: React.FC = () => {
         loginAttemptRef.current === currentAttempt
       ) {
         setCustomerAccessToken(response.data.accessToken);
+        // customerApi prefers the Redux token over the cookie. Replace any token
+        // left in the in-memory store before requesting the newly logged-in user.
+        store.dispatch(updateAccessToken(response.data.accessToken));
 
         if (response.data.refreshToken) {
           setRefreshToken(response.data.refreshToken);

@@ -158,6 +158,7 @@ const CartPage: React.FC = () => {
   const [handlingFee, setHandlingFee] = useState<number | null>(0);
   //states for delivery fee
   const [deliveryFee, setDeliveryFee] = useState<number | null>(0);
+  const lastDeliveryFeeRequestKeyRef = useRef<string>("");
   //states for small cart fee and serivce charges
   // const [smallCartFee, setSmallCartFee] = useState<number>(0);
   // const [serviceFee, setServiceFee] = useState<number>(0);
@@ -1230,15 +1231,6 @@ const CartPage: React.FC = () => {
   };
 
   const handleToProcess = async () => {
-    if (isCheckoutDisabled()) {
-      Modal.error({
-        title: "Stock Issues",
-        content:
-          "Unable to proceed with checkout. Please remove out-of-stock items or adjust quantities to match available stock.",
-      });
-      return;
-    }
-
     if (!cartData || cartData.length === 0) {
       message.error("Your cart is empty, Please Add At least one Item");
       return;
@@ -1251,6 +1243,15 @@ const CartPage: React.FC = () => {
 
     if (deliveryFee === null) {
       message.error("Delivery is not available for the selected address");
+      return;
+    }
+
+    if (hasStockIssues()) {
+      Modal.error({
+        title: "Stock Issues",
+        content:
+          "Unable to proceed with checkout. Please remove out-of-stock items or adjust quantities to match available stock.",
+      });
       return;
     }
 
@@ -1515,6 +1516,10 @@ const CartPage: React.FC = () => {
         selectedAddress?.longitude !== undefined &&
         !isNaN(cartTotal)
       ) {
+        const requestKey = `${selectedAddress.latitude}:${selectedAddress.longitude}:${cartTotal}`;
+        if (lastDeliveryFeeRequestKeyRef.current === requestKey) return;
+        lastDeliveryFeeRequestKeyRef.current = requestKey;
+
         const result = await calculateDeliveryFee(
           selectedAddress.latitude,
           selectedAddress.longitude,
@@ -1523,11 +1528,13 @@ const CartPage: React.FC = () => {
         setDeliveryFee(result.fee);
         setHandlingFee(result.handlingFee);
         console.log("Delivery fees calculated:", result);
+      } else {
+        lastDeliveryFeeRequestKeyRef.current = "";
       }
     };
 
     fetchDeliveryFee();
-  }, [selectedAddress, cartTotal]);
+  }, [selectedAddress?.latitude, selectedAddress?.longitude, cartTotal]);
 
   const handleAddressChange = async (selectedAddress: Address) => {
     const fullAddress = `${selectedAddress?.flatNo}, ${selectedAddress?.landMark}, ${selectedAddress?.address}, ${selectedAddress?.pincode}`;
@@ -1586,21 +1593,9 @@ const CartPage: React.FC = () => {
     return withinRadius;
   };
 
-  const isCheckoutDisabled = (): boolean => {
-    if (!selectedAddress) {
-      return true;
-    }
-    if (!cartData || cartData.length === 0) {
-      return true;
-    }
-    if (deliveryFee === null) {
-      return true;
-    }
-
+  const hasStockIssues = (): boolean => {
     const hasOutOfStockItems = cartData.some((item) => item.quantity === 0);
-    if (hasOutOfStockItems) {
-      return true;
-    }
+    if (hasOutOfStockItems) return true;
 
     const hasExceededStockItems = cartData.some((item) => {
       const quantity =
@@ -1609,11 +1604,25 @@ const CartPage: React.FC = () => {
           : regularCartItems[item.itemId] || 0;
       return quantity > item.quantity;
     });
-    if (hasExceededStockItems) {
-      return true;
-    }
+    return hasExceededStockItems;
+  };
 
-    return false;
+  const isCheckoutDisabled = (): boolean => {
+    return (
+      !selectedAddress ||
+      !cartData ||
+      cartData.length === 0 ||
+      deliveryFee === null ||
+      hasStockIssues()
+    );
+  };
+
+  const getCheckoutButtonLabel = (): string => {
+    if (!selectedAddress) return "Select an Address to Proceed";
+    if (!cartData || cartData.length === 0) return "Cart is Empty";
+    if (deliveryFee === null) return "Delivery Not Available";
+    if (hasStockIssues()) return "Cannot Checkout - Stock Issues";
+    return "Proceed to Checkout";
   };
 
   const removeOutOfStockItems = async () => {
@@ -2364,15 +2373,7 @@ const CartPage: React.FC = () => {
                     onClick={() => handleToProcess()}
                     disabled={isCheckoutDisabled() || deliveryFee === null}
                   >
-                    {isCheckoutDisabled()
-                      ? !selectedAddress
-                        ? "Select an Address to Proceed"
-                        : !cartData || cartData.length === 0
-                        ? "Cart is Empty"
-                        : "Cannot Checkout - Stock Issues"
-                      : deliveryFee === null
-                      ? "Delivery Not Available"
-                      : "Proceed to Checkout"}
+                    {getCheckoutButtonLabel()}
                   </button>
                 </div>
               </div>

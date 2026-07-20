@@ -125,7 +125,11 @@ export const calculateDeliveryFee = async (
     const result = await getFinalDeliveryFee(userLat, userLng, cartAmount);
     
     if (result.fee === null) {
-      message.error(result.note || "Delivery not available for this location");
+      message.error({
+        key: "delivery-availability-error",
+        content: result.note || "Delivery not available for this location",
+        duration: 4,
+      });
     }
 
     console.log(
@@ -135,7 +139,11 @@ export const calculateDeliveryFee = async (
     return result;
   } catch (error) {
     console.error("Error calculating delivery fee:", error);
-    message.error("Error calculating delivery fee");
+    message.error({
+      key: "delivery-availability-error",
+      content: "Error calculating delivery fee",
+      duration: 4,
+    });
     return {
       fee: null,
       distance: 0,

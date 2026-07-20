@@ -37,6 +37,22 @@ interface Props {
 
 const ENGLISH_TESTS = ["IELTS", "TOEFL", "PTE", "Not Yet Appeared"] as const;
 type EnglishTest = (typeof ENGLISH_TESTS)[number];
+type FormField =
+  | "fullName"
+  | "email"
+  | "mobile"
+  | "courseLevel"
+  | "preferredCourse"
+  | "preferredIntake"
+  | "academicScore"
+  | "englishTest"
+  | "englishScore";
+type ValidationErrors = Partial<Record<FormField, string>>;
+
+const NAME_PATTERN = /^[A-Za-z]+(?:[ ]+[A-Za-z]+)*$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
+const MOBILE_PATTERN = /^\+?[1-9]\d{9,14}$/;
+const COURSE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 .,&()'/-]*$/;
 
 const scoreLabel: Record<string, string> = {
   IELTS: "IELTS Overall Band Score",
@@ -58,9 +74,13 @@ const UniversityApplicationModal: React.FC<Props> = ({
   university,
   onClose,
 }) => {
-  const [submitted, setSubmitted] = useState(false);
+  const [applicationResult, setApplicationResult] = useState<
+    "submitted" | "alreadyApplied" | null
+  >(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [validationErrors, setValidationErrors] =
+    useState<ValidationErrors>({});
   const [courseLevel, setCourseLevel] = useState<"UG" | "PG" | "">("");
   const [form, setForm] = useState({
     fullName: "",
@@ -75,9 +95,10 @@ const UniversityApplicationModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setSubmitted(false);
+    setApplicationResult(null);
     setLoading(false);
     setErrorMsg("");
+    setValidationErrors({});
     setCourseLevel("");
     setForm({
       fullName:
@@ -102,13 +123,93 @@ const UniversityApplicationModal: React.FC<Props> = ({
 
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
+  const clearFieldError = (field: FormField) => {
+    setErrorMsg("");
+    setValidationErrors((previous) => {
+      if (!previous[field]) return previous;
+      const next = { ...previous };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const validateForm = (): ValidationErrors => {
+    const errors: ValidationErrors = {};
+    const fullName = form.fullName.trim();
+    const email = form.email.trim();
+    const mobile = form.mobile.replace(/[\s()-]/g, "");
+    const preferredCourse = form.preferredCourse.trim();
+    const academicScore = Number(form.academicScore);
+
+    if (!fullName) errors.fullName = "Full name is required.";
+    else if (fullName.length < 2 || fullName.length > 60)
+      errors.fullName = "Name must contain 2 to 60 letters.";
+    else if (!NAME_PATTERN.test(fullName))
+      errors.fullName = "Use letters and spaces only.";
+
+    if (!email) errors.email = "Email address is required.";
+    else if (!EMAIL_PATTERN.test(email))
+      errors.email = "Enter a valid email address.";
+
+    if (!mobile) errors.mobile = "Mobile number is required.";
+    else if (!MOBILE_PATTERN.test(mobile))
+      errors.mobile = "Enter 10 to 15 digits, optionally starting with +.";
+
+    if (!courseLevel) errors.courseLevel = "Select a course level.";
+
+    if (!preferredCourse)
+      errors.preferredCourse = "Preferred course is required.";
+    else if (preferredCourse.length < 2 || preferredCourse.length > 100)
+      errors.preferredCourse = "Course name must contain 2 to 100 characters.";
+    else if (!COURSE_PATTERN.test(preferredCourse))
+      errors.preferredCourse = "Enter a valid course name.";
+
+    if (!form.preferredIntake)
+      errors.preferredIntake = "Select a preferred intake.";
+
+    if (!form.academicScore)
+      errors.academicScore = "Academic score is required.";
+    else if (!Number.isFinite(academicScore) || academicScore <= 0 || academicScore > 100)
+      errors.academicScore = "Enter a score greater than 0 and up to 100.";
+
+    if (!form.englishTest)
+      errors.englishTest = "Select an English proficiency option.";
+    else if (form.englishTest !== "Not Yet Appeared") {
+      const score = Number(form.englishScore);
+      if (!form.englishScore) errors.englishScore = "English test score is required.";
+      else if (!Number.isFinite(score)) errors.englishScore = "Enter a valid numeric score.";
+      else if (form.englishTest === "IELTS" && (score < 0 || score > 9 || score * 2 % 1 !== 0))
+        errors.englishScore = "IELTS score must be 0–9 in 0.5 increments.";
+      else if (form.englishTest === "TOEFL" && (!Number.isInteger(score) || score < 0 || score > 120))
+        errors.englishScore = "TOEFL score must be a whole number from 0–120.";
+      else if (form.englishTest === "PTE" && (!Number.isInteger(score) || score < 10 || score > 90))
+        errors.englishScore = "PTE score must be a whole number from 10–90.";
+    }
+
+    return errors;
+  };
+
   const handleEnglishTestChange = (test: EnglishTest) => {
     setForm((p) => ({ ...p, englishTest: test, englishScore: "" }));
+    clearFieldError("englishTest");
+    clearFieldError("englishScore");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!university) return;
+
+    const errors = validateForm();
+    setValidationErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setErrorMsg("Please correct the highlighted fields before submitting.");
+      window.setTimeout(() => {
+        document
+          .querySelector<HTMLElement>('[aria-invalid="true"]')
+          ?.focus();
+      }, 0);
+      return;
+    }
 
     setLoading(true);
     setErrorMsg("");
@@ -116,11 +217,11 @@ const UniversityApplicationModal: React.FC<Props> = ({
     const academicScoreNumber = parseFloat(form.academicScore);
 
     const payload = {
-      fullName: form.fullName,
-      email: form.email,
-      mobileNumber: form.mobile,
+      fullName: form.fullName.trim(),
+      email: form.email.trim(),
+      mobileNumber: form.mobile.replace(/[\s()-]/g, ""),
       courseLevel: courseLevel,
-      preferredCourse: form.preferredCourse,
+      preferredCourse: form.preferredCourse.trim(),
       preferredIntake: form.preferredIntake,
       twelfthPercentage:
         courseLevel === "UG" && !Number.isNaN(academicScoreNumber)
@@ -145,14 +246,25 @@ const UniversityApplicationModal: React.FC<Props> = ({
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error(`Submission failed with status ${response.status}`);
+      const responseData = await response.json().catch(() => ({}));
+      const responseMessage = String(
+        responseData?.message || responseData?.error || ""
+      );
+      const alreadyApplied =
+        response.status === 409 || /already\s+(applied|submitted)/i.test(responseMessage);
+
+      if (alreadyApplied) {
+        setLoading(false);
+        setApplicationResult("alreadyApplied");
+        return;
       }
 
-      await response.json();
+      if (!response.ok) {
+        throw new Error(responseMessage || `Submission failed with status ${response.status}`);
+      }
 
       setLoading(false);
-      setSubmitted(true);
+      setApplicationResult("submitted");
     } catch (err) {
       setLoading(false);
       setErrorMsg(
@@ -162,7 +274,7 @@ const UniversityApplicationModal: React.FC<Props> = ({
   };
 
   const handleClose = () => {
-    setSubmitted(false);
+    setApplicationResult(null);
     setErrorMsg("");
     onClose();
   };
@@ -204,7 +316,7 @@ const UniversityApplicationModal: React.FC<Props> = ({
               <X className="w-4 h-4 text-gray-500" />
             </button>
 
-            {submitted ? (
+            {applicationResult ? (
               /* ── Success State ── */
               <div className="p-12 text-center">
                 <motion.div
@@ -216,18 +328,28 @@ const UniversityApplicationModal: React.FC<Props> = ({
                   <CheckCircle className="w-10 h-10 text-white" />
                 </motion.div>
                 <h2 className="text-2xl font-extrabold text-gray-900 mb-3">
-                  Application Submitted!
+                  {applicationResult === "alreadyApplied"
+                    ? "Already Applied"
+                    : "Application Submitted!"}
                 </h2>
                 <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto mb-8">
-                  Your application to{" "}
+                  {applicationResult === "alreadyApplied"
+                    ? "You have already submitted an application to "
+                    : "Your application to "}
                   <span className="font-semibold text-purple-700">
                     {university.name}
                   </span>{" "}
-                  has been received. Our admissions team will contact you within{" "}
-                  <span className="font-semibold text-purple-700">
-                    7 working days
-                  </span>
-                  .
+                  {applicationResult === "alreadyApplied" ? (
+                    "and it is currently being reviewed. You do not need to apply again."
+                  ) : (
+                    <>
+                      has been received. Our admissions team will contact you within{" "}
+                      <span className="font-semibold text-purple-700">
+                        7 working days
+                      </span>
+                      .
+                    </>
+                  )}
                 </p>
                 <button
                   onClick={handleClose}
@@ -287,6 +409,7 @@ const UniversityApplicationModal: React.FC<Props> = ({
                 {/* ── Form ── */}
                 <form
                   onSubmit={handleSubmit}
+                  noValidate
                   className="p-6 sm:p-8 space-y-7"
                 >
                   {/* Personal Information */}
@@ -296,10 +419,18 @@ const UniversityApplicationModal: React.FC<Props> = ({
                         type="text"
                         placeholder="Enter your full name"
                         value={form.fullName}
-                        onChange={(e) => set("fullName", e.target.value)}
+                        onChange={(e) => {
+                          set("fullName", e.target.value.replace(/[^A-Za-z ]/g, ""));
+                          clearFieldError("fullName");
+                        }}
+                        minLength={2}
+                        maxLength={60}
+                        autoComplete="name"
+                        aria-invalid={Boolean(validationErrors.fullName)}
                         required
                         className={inp}
                       />
+                      <FieldError message={validationErrors.fullName} />
                     </Field>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Field label="Email Address" required icon={<Mail className="w-3.5 h-3.5 text-gray-400" />}>
@@ -307,20 +438,39 @@ const UniversityApplicationModal: React.FC<Props> = ({
                           type="email"
                           placeholder="you@email.com"
                           value={form.email}
-                          onChange={(e) => set("email", e.target.value)}
+                          onChange={(e) => {
+                            set("email", e.target.value.trimStart());
+                            clearFieldError("email");
+                          }}
+                          maxLength={254}
+                          autoComplete="email"
+                          aria-invalid={Boolean(validationErrors.email)}
                           required
                           className={inp}
                         />
+                        <FieldError message={validationErrors.email} />
                       </Field>
                       <Field label="Mobile Number" required icon={<Phone className="w-3.5 h-3.5 text-gray-400" />}>
                         <input
                           type="tel"
                           placeholder="+91 XXXXX XXXXX"
                           value={form.mobile}
-                          onChange={(e) => set("mobile", e.target.value)}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const sanitized =
+                              (raw.startsWith("+") ? "+" : "") +
+                              raw.replace(/\D/g, "").slice(0, 15);
+                            set("mobile", sanitized);
+                            clearFieldError("mobile");
+                          }}
+                          inputMode="tel"
+                          maxLength={16}
+                          autoComplete="tel"
+                          aria-invalid={Boolean(validationErrors.mobile)}
                           required
                           className={inp}
                         />
+                        <FieldError message={validationErrors.mobile} />
                       </Field>
                     </div>
                   </Section>
@@ -333,7 +483,10 @@ const UniversityApplicationModal: React.FC<Props> = ({
                           <button
                             key={lvl}
                             type="button"
-                            onClick={() => setCourseLevel(lvl)}
+                            onClick={() => {
+                              setCourseLevel(lvl);
+                              clearFieldError("courseLevel");
+                            }}
                             className={`flex-1 py-3 rounded-2xl text-sm font-bold border-2 transition-all duration-200 ${
                               courseLevel === lvl
                                 ? "border-purple-600 bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-200"
@@ -344,21 +497,42 @@ const UniversityApplicationModal: React.FC<Props> = ({
                           </button>
                         ))}
                       </div>
+                      <FieldError message={validationErrors.courseLevel} />
                     </Field>
                     <Field label="Preferred Course" required icon={<BookOpen className="w-3.5 h-3.5 text-gray-400" />}>
                       <input
                         type="text"
-                        placeholder="e.g. MSc Data Science, MBA, BBA"
+                        placeholder={
+                          courseLevel === "UG"
+                            ? "e.g. BSc Computer Science, BBA, BTech"
+                            : courseLevel === "PG"
+                              ? "e.g. MSc Data Science, MBA, MTech"
+                              : "Select UG or PG first"
+                        }
                         value={form.preferredCourse}
-                        onChange={(e) => set("preferredCourse", e.target.value)}
+                        onChange={(e) => {
+                          set(
+                            "preferredCourse",
+                            e.target.value.replace(/[^A-Za-z0-9 .,&()'/-]/g, "")
+                          );
+                          clearFieldError("preferredCourse");
+                        }}
+                        minLength={2}
+                        maxLength={100}
+                        aria-invalid={Boolean(validationErrors.preferredCourse)}
                         required
                         className={inp}
                       />
+                      <FieldError message={validationErrors.preferredCourse} />
                     </Field>
                     <Field label="Preferred Intake" required icon={<Calendar className="w-3.5 h-3.5 text-gray-400" />}>
                       <select
                         value={form.preferredIntake}
-                        onChange={(e) => set("preferredIntake", e.target.value)}
+                        onChange={(e) => {
+                          set("preferredIntake", e.target.value);
+                          clearFieldError("preferredIntake");
+                        }}
+                        aria-invalid={Boolean(validationErrors.preferredIntake)}
                         required
                         className={inp}
                       >
@@ -367,6 +541,7 @@ const UniversityApplicationModal: React.FC<Props> = ({
                           <option key={i} value={i}>{i}</option>
                         ))}
                       </select>
+                      <FieldError message={validationErrors.preferredIntake} />
                     </Field>
                   </Section>
 
@@ -389,10 +564,19 @@ const UniversityApplicationModal: React.FC<Props> = ({
                             : "e.g. 78%"
                         }
                         value={form.academicScore}
-                        onChange={(e) => set("academicScore", e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^\d{0,3}(?:\.\d{0,2})?$/.test(value)) {
+                            set("academicScore", value);
+                            clearFieldError("academicScore");
+                          }
+                        }}
+                        inputMode="decimal"
+                        aria-invalid={Boolean(validationErrors.academicScore)}
                         required
                         className={inp}
                       />
+                      <FieldError message={validationErrors.academicScore} />
                     </Field>
                   </Section>
 
@@ -416,6 +600,7 @@ const UniversityApplicationModal: React.FC<Props> = ({
                         </button>
                       ))}
                     </div>
+                    <FieldError message={validationErrors.englishTest} />
 
                     {/* Conditional Score Field */}
                     <AnimatePresence>
@@ -437,10 +622,19 @@ const UniversityApplicationModal: React.FC<Props> = ({
                                 type="text"
                                 placeholder={scorePlaceholder[form.englishTest as string]}
                                 value={form.englishScore}
-                                onChange={(e) => set("englishScore", e.target.value)}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (/^\d{0,3}(?:\.\d{0,1})?$/.test(value)) {
+                                    set("englishScore", value);
+                                    clearFieldError("englishScore");
+                                  }
+                                }}
+                                inputMode="decimal"
+                                aria-invalid={Boolean(validationErrors.englishScore)}
                                 required
                                 className={`${inp} bg-white border-purple-200 focus:border-purple-500`}
                               />
+                              <FieldError message={validationErrors.englishScore} />
                             </Field>
                           </div>
                         </motion.div>
@@ -460,12 +654,7 @@ const UniversityApplicationModal: React.FC<Props> = ({
                   <div className="pt-1">
                     <button
                       type="submit"
-                      disabled={
-                        loading ||
-                        !courseLevel ||
-                        !form.englishTest ||
-                        (showScoreField ? !form.englishScore : false)
-                      }
+                      disabled={loading}
                       className="w-full py-4 bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 text-white font-extrabold rounded-2xl hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2.5 shadow-xl shadow-purple-200 hover:shadow-purple-300 hover:-translate-y-0.5 text-base tracking-wide"
                     >
                       {loading ? (
@@ -552,5 +741,13 @@ const Field: React.FC<{
     {children}
   </div>
 );
+
+const FieldError: React.FC<{ message?: string }> = ({ message }) =>
+  message ? (
+    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600" role="alert">
+      <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+      {message}
+    </p>
+  ) : null;
 
 export default UniversityApplicationModal;

@@ -21,6 +21,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 import BASE_URL from "../../Config";
+import { store } from "../../store";
+import {
+  updateAccessToken,
+  updateRefreshToken,
+} from "../../store/authSlice";
+import {
+  setCustomerAccessToken,
+  setRefreshToken,
+} from "../../utils/cookieUtils";
 
 const DEFAULT_COUNTRY: Country = "IN";
 const DEFAULT_COUNTRY_CODE = "+91";
@@ -314,6 +323,8 @@ if (primaryType === "AGENT") {
       accessTokenGoogle &&
       accessTokenGoogle !== "null"
     ) {
+      setCustomerAccessToken(accessTokenGoogle);
+      store.dispatch(updateAccessToken(accessTokenGoogle));
       localStorage.setItem("accessToken", accessTokenGoogle);
       localStorage.setItem(
         "primaryType",
@@ -724,6 +735,15 @@ if (primaryType === "AGENT") {
         // Only now mark as registering (shows spinner)
         setIsRegistering(true);
         setShowSuccessPopup(true);
+
+        // Replace every customer token source before any profile/API request.
+        // customerApi reads Redux first, then the customer access cookie.
+        setCustomerAccessToken(response.data.accessToken);
+        store.dispatch(updateAccessToken(response.data.accessToken));
+        if (response.data.refreshToken) {
+          setRefreshToken(response.data.refreshToken);
+          store.dispatch(updateRefreshToken(response.data.refreshToken));
+        }
 
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("accessToken", response.data.accessToken);

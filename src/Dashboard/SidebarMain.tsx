@@ -25,6 +25,8 @@ import { AiFillFileText } from "react-icons/ai";
 import { HiSparkles } from "react-icons/hi2";
 import { TiChevronRight, TiChevronLeft } from "react-icons/ti";
 import { BiSolidMessageSquare } from "react-icons/bi";
+import { store } from "../store";
+import { logout } from "../store/authSlice";
 interface SidebarProps {
   onCollapse: (collapsed: boolean) => void;
   onItemClick?: () => void;
@@ -102,6 +104,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     }).then((result) => {
       if (result.isConfirmed) {
         const entryPoint = localStorage.getItem("entryPoint") || "/";
+        // Clear Redux auth state and customer auth cookies as well as Web Storage.
+        // Otherwise customerApi can keep sending the previous user's token.
+        store.dispatch(logout());
         localStorage.clear();
         sessionStorage.clear();
         localStorage.setItem("entryPoint", entryPoint);

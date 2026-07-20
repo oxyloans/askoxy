@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import BASE_URL from "../../Config";
 import Logo from "../../assets/img/askoxylogonew.png";
-const API_BASE = `${BASE_URL}/marketing-service/campgin`;
+import BASE_URL from "../../Config";
+const API_BASE =
+ 
+  `${BASE_URL}/marketing-service/campgin`;
 
 type AtsReport = {
   overallATSScore: number;
@@ -21,30 +23,27 @@ type AtsReport = {
 };
 
 type ResumeStatusResponse = {
+  status: boolean;
   jobId: string;
-  status: string;
+  resumeStatus: string;
   originalFilename: string;
   message?: string;
   atsReport: AtsReport | null;
-  atsErrorMessage: string | null;
+  errorMessage: string | null;
   createdAt?: number;
   updatedAt?: number;
   resumeUrl?: string | null;
 };
 
-type ResumeRecord = ResumeStatusResponse & {
-  createdAt: number;
-  updatedAt: number;
-  resumeUrl: string | null;
-};
-
 type ParseResumeResponse = {
   jobId: string | null;
-  status: string;
+  status: boolean;
+  resumeStatus: string;
   message: string;
 };
 
 type StatusType = "idle" | "loading" | "success" | "error";
+type ProcessingStage = "uploading" | "analyzing";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -145,12 +144,15 @@ const ReportList = ({
 const ATSResumeChecker: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLElement>(null);
+  const pollingAbortRef = useRef<AbortController | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileNameText, setFileNameText] = useState("");
-  const userId = resolveUserId();
   const [isDragging, setIsDragging] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [processingStage, setProcessingStage] =
+    useState<ProcessingStage>("uploading");
+  const [statusCheckCount, setStatusCheckCount] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState<StatusType>("idle");
   const [reportData, setReportData] = useState<ResumeStatusResponse | null>(
@@ -159,48 +161,17 @@ const ATSResumeChecker: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [historyRecords, setHistoryRecords] = useState<ResumeRecord[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyError, setHistoryError] = useState("");
-  const [activeJobId, setActiveJobId] = useState<string | null>(null);
-
-  const fetchHistory = useCallback(async (activeUserId: string) => {
-    const trimmed = activeUserId.trim();
-    if (!trimmed || !isValidUserId(trimmed)) {
-      setHistoryRecords([]);
-      setHistoryError("");
-      return;
-    }
-
-    setHistoryLoading(true);
-    setHistoryError("");
-    try {
-      const response = await fetch(
-        `${API_BASE}/status?userId=${encodeURIComponent(trimmed)}`,
-        { headers: { accept: "*/*" } },
-      );
-      if (!response.ok)
-        throw new Error(`Unable to load history (${response.status})`);
-      const data: ResumeRecord[] = await response.json();
-      setHistoryRecords(Array.isArray(data) ? data : []);
-    } catch {
-      setHistoryError("Could not load resume history for this User ID.");
-      setHistoryRecords([]);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     clearStaleGuestIds();
-    const initialUserId = resolveUserId();
-    if (initialUserId) fetchHistory(initialUserId);
 
     const onScroll = () => setHeaderScrolled(window.scrollY > 12);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [fetchHistory]);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      pollingAbortRef.current?.abort();
+    };
+  }, []);
 
   const setStatus = (message: string, type: StatusType) => {
     setStatusMessage(message);
@@ -237,72 +208,61 @@ const ATSResumeChecker: React.FC = () => {
     new Promise((resolve) => setTimeout(resolve, ms));
 
   const getStatus = useCallback(
-    async (jobId: string): Promise<ResumeStatusResponse> => {
-      for (let attempt = 0; attempt < 30; attempt++) {
+    async (
+      jobId: string,
+      signal: AbortSignal,
+    ): Promise<ResumeStatusResponse> => {
+      let attempt = 0;
+      while (!signal.aborted) {
+        attempt += 1;
+        setStatusCheckCount(attempt);
         const response = await fetch(
           `${API_BASE}/status/${encodeURIComponent(jobId)}`,
           {
             headers: { accept: "*/*" },
+            signal,
           },
         );
         const data: ResumeStatusResponse = await response.json().catch(() => ({
           jobId,
-          status: "ERROR",
+          status: false,
+          resumeStatus: "ERROR",
           originalFilename: "",
           atsReport: null,
-          atsErrorMessage: null,
+          errorMessage: null,
         }));
 
         if (!response.ok) {
           throw new Error(
             data.message ||
-              data.atsErrorMessage ||
+              data.errorMessage ||
               "Unable to retrieve the ATS report.",
           );
         }
 
-        if (data.status === "COMPLETED") {
+        if (data.resumeStatus === "COMPLETED") {
           if (!data.atsReport) {
             throw new Error(
-              data.atsErrorMessage || "ATS report was not generated.",
+              data.errorMessage || "ATS report was not generated.",
             );
           }
           return data;
         }
 
-        if (["REJECTED", "FAILED", "ERROR"].includes(data.status)) {
+        if (["REJECTED", "FAILED", "ERROR"].includes(data.resumeStatus)) {
           throw new Error(
-            data.message || data.atsErrorMessage || "Resume analysis failed.",
+            data.message || data.errorMessage || "Resume analysis failed.",
           );
         }
 
-        setStatus(`Analyzing your resume… ${attempt + 1}/30`, "loading");
+        setStatus(`Analyzing your resume… Status check ${attempt}`, "loading");
         await wait(2000);
       }
 
-      throw new Error(
-        "Analysis is taking longer than expected. Please try again shortly.",
-      );
+      throw new DOMException("Resume analysis was cancelled.", "AbortError");
     },
     [],
   );
-
-  const viewHistoryReport = (record: ResumeRecord) => {
-    if (record.status !== "COMPLETED" || !record.atsReport) {
-      setStatus(
-        record.atsErrorMessage || "No ATS report available for this resume.",
-        "error",
-      );
-      return;
-    }
-    setReportData(record);
-    setActiveJobId(record.jobId);
-    setShowResults(true);
-    setStatus("Showing saved ATS report.", "success");
-    setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
 
   const handleCheck = async () => {
     if (!selectedFile) {
@@ -327,9 +287,13 @@ const ATSResumeChecker: React.FC = () => {
     }
 
     setIsChecking(true);
+    setProcessingStage("uploading");
+    setStatusCheckCount(0);
+    pollingAbortRef.current?.abort();
+    const pollingController = new AbortController();
+    pollingAbortRef.current = pollingController;
     setShowResults(false);
     setReportData(null);
-    setActiveJobId(null);
 
     try {
       const form = new FormData();
@@ -355,11 +319,17 @@ const ATSResumeChecker: React.FC = () => {
 
       const upload: ParseResumeResponse = await response.json().catch(() => ({
         jobId: null,
-        status: "FAILED",
+        status: false,
+        resumeStatus: "FAILED",
         message: "Invalid server response.",
       }));
 
-      if (upload.status === "REJECTED" || !upload.jobId) {
+      if (
+        !response.ok ||
+        upload.resumeStatus === "REJECTED" ||
+        upload.resumeStatus === "FAILED" ||
+        !upload.jobId
+      ) {
         throw new Error(
           upload.message ||
             "Resume upload was rejected. Please verify your ASKOXY.AI User ID is registered.",
@@ -367,23 +337,23 @@ const ATSResumeChecker: React.FC = () => {
       }
 
       setStatus(
-        upload.status === "COMPLETED"
+        upload.resumeStatus === "COMPLETED"
           ? "Preparing your ATS report…"
           : "Resume uploaded. Analysis is in progress…",
         "loading",
       );
+      setProcessingStage("analyzing");
 
-      const completed = await getStatus(upload.jobId);
+      const completed = await getStatus(upload.jobId, pollingController.signal);
       setReportData(completed);
-      setActiveJobId(completed.jobId);
       setShowResults(true);
       setStatus("Resume analyzed successfully.", "success");
-      fetchHistory(activeUserId);
 
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       const mixed =
         window.location.protocol === "https:" && API_BASE.startsWith("http:");
       setStatus(
@@ -395,6 +365,9 @@ const ATSResumeChecker: React.FC = () => {
         "error",
       );
     } finally {
+      if (pollingAbortRef.current === pollingController) {
+        pollingAbortRef.current = null;
+      }
       setIsChecking(false);
     }
   };
@@ -406,15 +379,6 @@ const ATSResumeChecker: React.FC = () => {
   );
   const sectionEntries = Object.entries(report?.sectionScores || {});
   const analysisEntries = Object.entries(report?.analysis || {});
-  const formatDate = (timestamp?: number) => {
-    if (!timestamp) return "—";
-    return new Date(timestamp).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
   return (
     <>
       <style>{`
@@ -997,7 +961,10 @@ const ATSResumeChecker: React.FC = () => {
 
                 <label
                   htmlFor="fileInput"
-                  className={`ats-dropzone ${isDragging ? "drag" : ""}`}
+                  aria-disabled={isChecking}
+                  className={`ats-dropzone ${isDragging ? "drag" : ""} ${
+                    isChecking ? "pointer-events-none opacity-60" : ""
+                  }`}
                   onDragEnter={(e) => {
                     e.preventDefault();
                     setIsDragging(true);
@@ -1027,6 +994,7 @@ const ATSResumeChecker: React.FC = () => {
                   id="fileInput"
                   type="file"
                   accept=".pdf,.doc,.docx"
+                  disabled={isChecking}
                   className="hidden"
                   onChange={(e) => setFile(e.target.files?.[0])}
                 />
@@ -1046,6 +1014,7 @@ const ATSResumeChecker: React.FC = () => {
                   <button
                     type="button"
                     onClick={removeFile}
+                    disabled={isChecking}
                     className="mt-1 text-sm font-bold text-[#b91c1c] underline underline-offset-2"
                   >
                     Remove file
@@ -1060,15 +1029,91 @@ const ATSResumeChecker: React.FC = () => {
                 >
                   {isChecking ? (
                     <>
-                      <span className="ats-spinner" /> Uploading Resume
+                      <span className="ats-spinner" />
+                      {processingStage === "uploading"
+                        ? "Uploading Securely…"
+                        : "Analyzing Resume…"}
                     </>
                   ) : (
                     "Check ATS Score"
                   )}
                 </button>
 
+                <AnimatePresence>
+                  {isChecking && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="mt-4 overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-5 shadow-sm"
+                      role="status"
+                      aria-live="polite"
+                      aria-busy="true"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="relative mt-0.5 h-12 w-12 shrink-0">
+                          <span className="absolute inset-0 animate-ping rounded-full bg-blue-200 opacity-50" />
+                          <span className="absolute inset-1 grid place-items-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-lg text-white shadow-md">
+                            {processingStage === "uploading" ? "↑" : "✦"}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="m-0 text-base font-extrabold text-slate-900">
+                            {processingStage === "uploading"
+                              ? "Uploading your resume securely"
+                              : "Creating your ATS report"}
+                          </h3>
+                          <p className="mb-0 mt-1 text-sm leading-5 text-slate-600">
+                            {processingStage === "uploading"
+                              ? "Please keep this page open while we prepare your resume for analysis."
+                              : "We’re reviewing structure, skills, readability, formatting and ATS compatibility. This may take a few moments."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className="mt-4 h-2 overflow-hidden rounded-full bg-blue-100"
+                        role="progressbar"
+                        aria-label="Resume analysis in progress"
+                      >
+                        <motion.div
+                          className="h-full w-2/5 rounded-full bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600"
+                          animate={{ x: ["-100%", "250%"] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] font-bold sm:text-xs">
+                        <span className="rounded-lg bg-emerald-100 px-2 py-2 text-emerald-700">
+                          ✓ Resume selected
+                        </span>
+                        <span
+                          className={`rounded-lg px-2 py-2 ${
+                            processingStage === "analyzing"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {processingStage === "analyzing" ? "✓ Uploaded" : "Uploading"}
+                        </span>
+                        <span className="rounded-lg bg-blue-100 px-2 py-2 text-blue-700">
+                          {processingStage === "analyzing"
+                            ? `Analyzing${statusCheckCount ? ` · ${statusCheckCount}` : ""}`
+                            : "Next: Analysis"}
+                        </span>
+                      </div>
+
+                      <p className="mb-0 mt-3 text-center text-xs font-medium text-slate-500">
+                        Do not refresh or close this page until your report is ready.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <AnimatePresence mode="wait">
-                  {statusType !== "idle" && statusMessage && (
+                  {statusType !== "idle" &&
+                    statusMessage &&
+                    !(isChecking && statusType === "loading") && (
                     <motion.div
                       key={`${statusType}-${statusMessage}`}
                       initial={{ opacity: 0, y: 8 }}
