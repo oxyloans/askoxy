@@ -1532,7 +1532,7 @@ const App: React.FC = () => {
 
               <Route path="/teststore" element={<TestStore />} />
               <Route
-                path="/teststore/assistant/:id/:agentId"
+                path="/:id/:agentId/:agentname/test"
                 element={<TestAgentDetails />}
               />
               <Route path="/email-campaign" element={<UploadPage />} />

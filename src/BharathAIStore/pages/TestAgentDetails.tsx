@@ -1,7 +1,7 @@
-import React from "react";
+import { AiFillAppstore } from "react-icons/ai";
+import type React from "react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios, { AxiosHeaders } from "axios";
-import { fetchEventSource } from "@microsoft/fetch-event-source";
 import {
   useParams,
   useNavigate,
@@ -10,9 +10,9 @@ import {
 } from "react-router-dom";
 import { GiElephantHead } from "react-icons/gi";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
-import { GiLion } from "react-icons/gi";
-import { Loader2, Mic, Plus } from "lucide-react";
 
+import { Loader2, ExternalLink, Mic, Plus } from "lucide-react";
+import { HiSparkles } from "react-icons/hi2";
 import {
   Send,
   Copy,
@@ -22,38 +22,36 @@ import {
   Share,
   RefreshCcw,
   LogOut,
+  MoreHorizontal,
   Star as StarIcon,
+  Mail,
 } from "lucide-react";
-import MarkdownRenderer from "./MarkdownRenderer";
+import MarkdownRenderer from "../../GenOxy/components/MarkdownRenderer";
 import { message, Modal } from "antd";
+import { CloseOutlined, WhatsAppOutlined } from "@ant-design/icons";
 import BASE_URL from "../../Config";
+import SubscriptionModal from "../components/SubscriptionModal";
+import { set } from "lodash";
+import { Button } from "antd";
+import { log } from "node:console";
 import { stopTokenRefresh } from "../../utils/tokenRefresh";
-
 /** ---------------- Types ---------------- */
-
-interface StreamCallback {
-  (chunk: string, threadId?: string, done?: boolean): void;
-}
 interface Assistant {
   id: string;
   name: string;
   description?: string | null;
   profileUrl?: string;
 }
+type FromStore = {
+  storeId?: string;
+  storeName?: string;
+  storeSlug?: string;
+};
+
 type APIRole = "user" | "assistant";
 type APIMessage = { role: APIRole; content: string };
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
-
-type SpeechRecognitionEvent = Event & {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-};
-
-type SpeechRecognitionErrorEvent = Event & {
-  error: string;
-  message?: string;
-};
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -89,36 +87,47 @@ const getAuthHeaders = () => {
   return { Authorization: value };
 };
 
-/** ---------------- constants ---------------- */
-
-const SIDEBAR_WIDTH = 240; // px (open)
-const SIDEBAR_WIDTH_COLLAPSED = 60; // px (collapsed)
+// ---------------- constants ----------------
+const DESKTOP_SIDEBAR_WIDTH_OPEN = 240; // px (open on desktop)
+const MOBILE_SIDEBAR_WIDTH_OPEN = 220; // px (open on mobile)
+const SIDEBAR_WIDTH_COLLAPSED = 60; // px (collapsed on desktop)
 const HEADER_HEIGHT = 56; // px (h-14)
 
 const SIDEBAR_STATE_KEY = "chat_sidebar_open";
 const RIGHT_SIDEBAR_WIDTH = 240; // px (open)
 const RIGHT_SIDEBAR_STATE_KEY = "chat_right_sidebar_open";
 
-const TestAgentDetails: React.FC = () => {
+const AssistantDetails: React.FC = () => {
   const { id, agentId } = useParams<{ id: string; agentId: string }>();
+  // console.log({id,agentId});
+  const currentURL = window.location.href;
+
   const navigate = useNavigate();
   const location = useLocation();
+  const shareIdFromUrl = useMemo(
+    () => new URLSearchParams(location.search).get("shareId"),
+    [location.search],
+  );
+  const isSharedChatView = Boolean(shareIdFromUrl);
 
   // user id (from storage)
   const [userId] = useState<string | null>(() =>
-    localStorage.getItem("userId")
+    localStorage.getItem("userId"),
   );
   const currentPath = `${location.pathname}${location.search || ""}`;
 
   useEffect(() => {
     if (!userId) {
-      // Set the current full path as redirectPath for return after auth
-      sessionStorage.setItem("redirectPath", currentPath);
-      sessionStorage.setItem("fromAISTore", "true"); // Flag for primaryType detection
-      window.location.href = "/whatsappregister?primaryType=AGENT"; // Hard redirect to preserve session
+      const fullPath = `${location.pathname}${location.search || ""}`;
+
+      sessionStorage.setItem("redirectPath", fullPath);
+      sessionStorage.setItem("fromAISTore", "true");
+      sessionStorage.setItem("primaryType", "AGENT");
+
+      window.location.href = "/whatsappregister?primaryType=AGENT";
       return;
     }
-  }, [userId, currentPath]);
+  }, [userId, location.pathname, location.search]);
   // assistant + chat state
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -131,31 +140,64 @@ const TestAgentDetails: React.FC = () => {
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const isStopped = useRef(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [messageFileIds, setMessageFileIds] = useState<
-    Record<number, string[]>
-  >({});
-  const isDarkMode = document.documentElement.classList.contains("dark");
   const [editingContent, setEditingContent] = useState("");
   const CHAT_KEY = (aid: string, hid: string) => `assistant_chat_${aid}_${hid}`;
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [showFileUploadModal, setShowFileUploadModal] = useState(false);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  // Add loading state for history
-  const [historyLoading, setHistoryLoading] = useState(true);
+  const [showAgentShareModal, setShowAgentShareModal] = useState(false);
+  const [agentShareText, setAgentShareText] = useState("");
+  const fromStoreFromNav = location.state as any as FromStore | undefined;
 
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
-    const saved = localStorage.getItem(RIGHT_SIDEBAR_STATE_KEY);
-    return saved ? JSON.parse(saved) : true;
+  const FROM_STORE_KEY = `fromStore_${id || ""}_${agentId || ""}`;
+
+  const [fromStore, setFromStore] = useState<FromStore | null>(() => {
+    if (fromStoreFromNav) return fromStoreFromNav;
+    try {
+      const raw = sessionStorage.getItem(FROM_STORE_KEY);
+      return raw ? (JSON.parse(raw) as FromStore) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const [isShowingFinalText, setIsShowingFinalText] = useState(false);
-  const [isToolRunning, setIsToolRunning] = useState(false);
-  const [toolStream, setToolStream] = useState<string>("");
-  const [streamType, setStreamType] = useState<
-    "text" | "code" | "file" | "other"
-  >("text");
+  useEffect(() => {
+    // Persist store context (helps when auth redirect happens)
+    if (fromStoreFromNav?.storeSlug || fromStoreFromNav?.storeName) {
+      sessionStorage.setItem(FROM_STORE_KEY, JSON.stringify(fromStoreFromNav));
+      setFromStore(fromStoreFromNav);
+    }
+  }, [FROM_STORE_KEY, fromStoreFromNav]);
+
+  const handleBack = () => {
+    if (fromStore?.storeSlug) {
+      navigate(`/ai-store/${fromStore.storeSlug}`, {
+        state: { storeId: fromStore.storeId },
+      });
+    } else {
+      navigate("/all-ai-stores");
+    }
+  };
+
+  // Track threadIds for each chat separately (since backend doesn't store them)
+  const [threadIdMap, setThreadIdMap] = useState<Record<string, string>>({});
+
+  // Add loading state for history
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [showNoChatModal, setShowNoChatModal] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [showMobileFiles, setShowMobileFiles] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
+  // useEffect(() => {
+  //   sessionStorage.removeItem("primaryType");
+  //   sessionStorage.removeItem("fromAISTore");
+  //   // sessionStorage.removeItem("redirectPath");
+  // }, []);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(() => {
+    // Right sidebar should open by default on every desktop page load.
+    // Old localStorage value can be "false" from previous mobile/close state,
+    // so do not use it as the initial value.
+    return true;
+  });
   const loadingMessages: string[] = [
     "Thinking longer for a better answer",
     "Analyzing details to improve accuracy",
@@ -168,16 +210,13 @@ const TestAgentDetails: React.FC = () => {
     "Double-checking your request for accuracy",
     "Fine-tuning the best possible answer",
   ];
-  const [fileIds, setFileIds] = useState<string[]>([]);
-  const [fileImages, setFileImages] = useState<Record<string, string>>({});
-  const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
 
   const promos = [
     {
       id: "p1",
       src: "https://i.ibb.co/9kg8gwyh/i1.png",
       alt: "Launch Your AI Agent",
-      href: "/main/bharat-expert",
+      href: "/main/agentcreate",
     },
     {
       id: "p4",
@@ -199,6 +238,7 @@ const TestAgentDetails: React.FC = () => {
     },
   ];
 
+  // helper: internal routes use navigate; external open new tab
   const openPromo = (href: string) => {
     if (!href) return;
     const isExternal = /^https?:\/\//i.test(href);
@@ -221,41 +261,74 @@ const TestAgentDetails: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [loading]);
 
+  const [threadSource, setThreadSource] = useState<"files" | "agent" | null>(
+    null,
+  );
+  // ⬇️ place with other useState hooks
+  const [remainingPrompts, setRemainingPrompts] = useState<number | null>(null);
+
+  // ⬇️ small helpers used by chat-with-file response parsing
+  const extractImageUrl = (
+    raw: any,
+  ): { isImage: boolean; url: string | null } => {
+    const s = String(raw ?? "");
+    const md = s.match(/!\[[^\]]*]\((https?:\/\/[^\s)]+)\)/i);
+    const direct = s.match(/https?:\/\/\S+\.(png|jpe?g|gif|webp)/i);
+    const url = md?.[1] || direct?.[0] || null;
+    return { isImage: !!url, url };
+  };
+
+  const cleanContent = (s: string): string => {
+    return (
+      String(s ?? "")
+        // remove leading/trailing ``` code fences
+        .replace(/^```(?:\w+)?\n?/, "")
+        .replace(/```$/, "")
+        .replace(/\((?:source|ref|reference|citation|cite|doc[^\)]*)\)/gi, "")
+
+        // remove <<...>> or <...>
+        .replace(/<<[^>]*>>/g, "")
+        .replace(/<[^>]*>/g, "")
+
+        // remove {citation}, {ref}, {doc}
+        .replace(/\{[^}]*citation[^}]*\}/gi, "")
+        .replace(/\{[^}]*ref[^}]*\}/gi, "")
+        .replace(/\{[^}]*doc[^}]*\}/gi, "")
+
+        // remove patterns like [ref], [doc], [file], [xyz-123]
+        .replace(/\[(?:ref|doc|file|src|source|attach)[^\]]*\]/gi, "")
+        // remove internal-style citations like:
+        .replace(/【[^】]*】/g, "")
+        // remove trailing [8:5†source] style markers
+        .replace(/\[\d+:\d+†source\]/g, "")
+
+        // 🔹 collapse only extra spaces / tabs, keep \n intact
+        .replace(/[ \t]{2,}/g, " ")
+
+        .trim()
+    );
+  };
+
+  // ⬇️ NEW: local lock so refresh won't allow re-rating again
   const RATING_LOCK_KEY = (u: string, a: string) => `agent_rating_${u}_${a}`;
 
   const [historyById, setHistoryById] = useState<Record<string, ChatMessage[]>>(
-    {}
+    {},
   );
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const shouldAutoScroll = useRef(true);
-
+  // Whenever messages change, scroll down
   useEffect(() => {
-    if (shouldAutoScroll.current) {
-      scrollToBottom();
-    }
+    scrollToBottom();
   }, [messages]);
-  useEffect(() => {
-    const chatContainer = messagesEndRef.current?.parentElement;
-    if (!chatContainer) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = chatContainer;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      shouldAutoScroll.current = isNearBottom;
-    };
-
-    chatContainer.addEventListener("scroll", handleScroll);
-    return () => chatContainer.removeEventListener("scroll", handleScroll);
-  }, []);
-
+  // prompts (starters)
   const [prompts, setPrompts] = useState<string[]>([]);
   const [isXs, setIsXs] = useState<boolean>(() =>
     typeof window !== "undefined"
       ? window.matchMedia("(max-width: 640px)").matches
-      : false
+      : false,
   );
 
   const visiblePrompts = useMemo(
@@ -264,11 +337,7 @@ const TestAgentDetails: React.FC = () => {
         .filter(Boolean)
         .map((s) => s.trim())
         .filter((s) => s.length > 0),
-    [prompts]
-  );
-  const shownPrompts = useMemo(
-    () => (isXs ? visiblePrompts.slice(0, 2) : visiblePrompts.slice(0, 4)),
-    [isXs, visiblePrompts]
+    [prompts],
   );
 
   // sidebar + history
@@ -293,6 +362,11 @@ const TestAgentDetails: React.FC = () => {
   // once true, we never allow re-rating
   const [hasRated, setHasRated] = useState<boolean>(false);
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] =
+    useState<boolean>(false);
+  const [subscriptionValid, setSubscriptionValid] = useState<boolean>(false);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
   /** ---------------- Helper: extract last user message ---------------- */
   function getLastUserMessage(prompt: string) {
@@ -313,64 +387,78 @@ const TestAgentDetails: React.FC = () => {
   }
 
   useEffect(() => {
+    // console.log("into the useEffect");
+
     const loadHistoryFromApi = async () => {
       setHistoryLoading(true);
       if (!id || !agentId || !userId) return;
       try {
         const historyData = await fetchUserHistory(userId, agentId);
-
-        if (!Array.isArray(historyData) || historyData.length === 0) {
+        const cleanedHistory = (historyData || []).filter(
+          (h: any) => h.threadId && h.threadId !== "null",
+        );
+        if (!Array.isArray(cleanedHistory) || cleanedHistory.length === 0) {
           setHistoryById({});
           setHistory([]);
           return;
         }
+        // FIXED: Auto-open sidebar if history exists after load
 
+        const tmpMap: Record<string, ChatMessage[]> = {};
+        const seen = new Set<string>();
         const rows: { id: string; title: string; createdAt: number }[] = [];
 
         for (let idx = 0; idx < historyData.length; idx++) {
           const h = historyData[idx];
 
-          // Skip if no threadId
-          const threadId = h?.threadId;
-          if (!threadId) continue;
+          // Use threadId as the unique identifier since that's what we have
+          const hid =
+            h?.threadId || h?.id || h?.historyId || `${Date.now()}_${idx}`;
 
-          // Extract title directly from prompt string
-          let title = "Untitled";
-          const promptStr = h?.prompt;
+          // Don't cache messages during initial load - let openHistoryChat handle fetching
+          tmpMap[hid] = [];
 
-          if (promptStr && typeof promptStr === "string") {
-            // Direct string prompt (not JSON)
-            title = promptStr.trim();
-          } else if (promptStr) {
-            // Try parsing as JSON (legacy format)
-            title = getLastUserMessage(promptStr);
+          // Generate title from prompt for display
+          let title = "New Chat";
+          if (typeof h?.prompt === "string") {
+            title = getLastUserMessage(h.prompt);
           }
+          title = generateChatTitle(title);
 
-          // Normalize and truncate title
-          title = normalizeTitle(title);
-          if (title.length > 60) {
-            title = title.substring(0, 60) + "...";
-          }
+          const created = safeDateMs(h?.createdAt) - idx; // tiny offset keeps stability
 
-          const created = Date.now() - idx;
+          // build a composite key to drop dupes from API
+          const key = makeHistoryKey(hid, title, created);
+          if (seen.has(key)) continue;
+          seen.add(key);
 
-          rows.push({
-            id: threadId,
-            title,
-            createdAt: created,
-          });
+          rows.push({ id: hid, title, createdAt: created });
         }
 
-        // Sort newest → oldest
+        // sort newest → oldest
         rows.sort((a, b) => b.createdAt - a.createdAt);
 
+        setHistoryById(tmpMap);
         setHistory(rows);
 
-        if (rows.length > 0 && !sidebarOpen) {
+        // After:
+        if (!isXs && rows.length > 0 && !sidebarOpen) {
           setTimeout(() => setSidebarOpen(true), 100);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to fetch history:", err);
+
+        if (err?.response?.status === 500) {
+          message.warning(
+            "Unable to load chat history. The service will retry automatically.",
+          );
+        } else if (
+          err?.response?.status === 401 ||
+          err?.response?.status === 403
+        ) {
+          message.warning("Session expired. Please refresh the page.");
+        }
+
         setHistoryById({});
         setHistory([]);
       } finally {
@@ -392,9 +480,11 @@ const TestAgentDetails: React.FC = () => {
       const isXsScreen =
         "matches" in e ? e.matches : (e as MediaQueryList).matches;
       setIsXs(isXsScreen);
-      if (isXsScreen) setSidebarOpen(false);
       if (isXsScreen) {
-        setRightSidebarOpen(false); // Auto-close right on mobile
+        setSidebarOpen(false);
+        setRightSidebarOpen(false); // hide on mobile
+      } else {
+        setRightSidebarOpen(true); // open by default on desktop
       }
     };
     onChange(mql);
@@ -435,24 +525,21 @@ const TestAgentDetails: React.FC = () => {
     return () => axios.interceptors.request.eject(id);
   }, []);
 
-  /** ---------------- sidebar persistence ---------------- */
-  const saveSidebarState = (open: boolean) => {
-    localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(open));
-  };
   /** ---------------- APIs ---------------- */
   const getConversationStarters = async (agentIdParam: string) => {
     const response = await axios.get(
       `${BASE_URL}/ai-service/agent/getConversation/${agentIdParam}`,
       {
         headers: { ...getAuthHeaders() },
-      }
+      },
     );
     return response.data;
   };
 
+  // Detect if numbers look like 0–4 or 1–5, then return a converter to UI 1–5
   const makeToUiConverter = (nums: number[]) => {
     const valid = nums.filter((n) => Number.isFinite(n));
-
+    // Heuristic: if any value >= 5, we assume the backend is already 1..5
     const looksLikeOneToFive = valid.some((n) => n >= 5);
     if (looksLikeOneToFive) {
       return (n: number) => Math.max(1, Math.min(5, n)); // already 1..5
@@ -481,7 +568,7 @@ const TestAgentDetails: React.FC = () => {
       return { avgUI: 0, count: 0 };
 
     const rawAvg = Number(
-      data.average ?? data.avg ?? data.feedbackRating ?? data.rating ?? NaN
+      data.average ?? data.avg ?? data.feedbackRating ?? data.rating ?? NaN,
     );
     if (!Number.isFinite(rawAvg)) return { avgUI: 0, count: rawCount };
 
@@ -505,7 +592,7 @@ const TestAgentDetails: React.FC = () => {
   const normalizeMine = (
     data: any,
     currentAgentId: string,
-    currentAgentName: string
+    currentAgentName: string,
   ): { present: boolean; ui?: number; comment?: string } => {
     const matches = (rec: any) => {
       const recAgentId = (rec?.agentId ?? "").toString().trim();
@@ -564,7 +651,7 @@ const TestAgentDetails: React.FC = () => {
   const fetchMyRating = async (
     userIdParam: string,
     agentIdParam: string,
-    agentNameParam: string
+    agentNameParam: string,
   ) => {
     const url = `${BASE_URL}/ai-service/agent/feedbackByUserId`;
     const { data } = await axios.get(url, {
@@ -697,8 +784,8 @@ const TestAgentDetails: React.FC = () => {
         roleRaw === "assistant"
           ? "assistant"
           : roleRaw === "system"
-          ? "system"
-          : "user";
+            ? "system"
+            : "user";
 
       let content = (contentMatch?.[1] || "").trim();
 
@@ -715,21 +802,33 @@ const TestAgentDetails: React.FC = () => {
 
   const fetchUserHistory = async (
     userIdParam: string,
-    agentIdParam: string
+    agentIdParam: string,
   ) => {
+    console.log("into the fetch user history", { userIdParam, agentIdParam });
+
     const { data } = await axios.get(
       `${BASE_URL}/ai-service/agent/getUserHistory/${userIdParam}/${agentIdParam}`,
-      { headers: { ...getAuthHeaders() } }
+      { headers: { ...getAuthHeaders() } },
     );
+    console.log("fetched user history", data);
+
     return data;
   };
 
-  const fetchThreadMessages = async (threadId: string) => {
-    const { data } = await axios.get(
-      `${BASE_URL}/ai-service/agent/getconversations/${threadId}/messages`,
-      { headers: { ...getAuthHeaders() } }
-    );
-    return data;
+  const fetchSubscriptionPlans = async () => {
+    try {
+      setLoadingPlans(true);
+      const { data } = await axios.get(
+        `${BASE_URL}/ai-service/agent/getAllPlans`,
+        { headers: { ...getAuthHeaders() } },
+      );
+      const activePlans = data.filter((plan: any) => plan.status === true);
+      setSubscriptionPlans(activePlans);
+    } catch (error) {
+      console.error("Failed to fetch subscription plans:", error);
+    } finally {
+      setLoadingPlans(false);
+    }
   };
 
   /** ---------------- Load assistant + starters + ratings ---------------- */
@@ -805,6 +904,8 @@ const TestAgentDetails: React.FC = () => {
       }
     };
 
+    validateDate();
+
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId, id, navigate]);
@@ -824,10 +925,9 @@ const TestAgentDetails: React.FC = () => {
   };
 
   // normalize a title so list/search is consistent
-  const normalizeTitle = (s: string) => {
-    const trimmed = (s || "").replace(/\s+/g, " ").trim();
-    return trimmed.length > 0 ? trimmed : "Untitled";
-  };
+  const normalizeTitle = (s: string) =>
+    (s || "Untitled").replace(/\s+/g, " ").trim() || "Untitled";
+
   const normalizeMessages = (raw: any): ChatMessage[] => {
     if (!raw) return [];
     let arr = raw;
@@ -848,8 +948,8 @@ const TestAgentDetails: React.FC = () => {
           m?.role === "assistant"
             ? "assistant"
             : m?.role === "system"
-            ? "system"
-            : "user";
+              ? "system"
+              : "user";
         const content = String(m?.content ?? m?.text ?? "").trim();
         return { role, content };
       })
@@ -865,436 +965,402 @@ const TestAgentDetails: React.FC = () => {
     return out;
   };
 
-  const refreshHistory = async () => {
-    if (!userId || !agentId) return;
+  const openHistoryChat = async (hid: string) => {
+    console.log("[openHistoryChat] Opening chat:", hid);
+  if (shareIdFromUrl) {
+    navigate(location.pathname, { replace: true });
+  }
+    if (!id) return;
 
-    setHistoryLoading(true);
-    try {
-      const historyData = await fetchUserHistory(userId, agentId);
+    setCurrentChatId(hid);
+    const cachedThreadId = threadIdMap[hid];
 
-      if (!Array.isArray(historyData) || historyData.length === 0) {
-        setHistoryById({});
-        setHistory([]);
-        return;
-      }
-
-      const rows: { id: string; title: string; createdAt: number }[] = [];
-
-      for (let idx = 0; idx < historyData.length; idx++) {
-        const h = historyData[idx];
-
-        // Skip if no threadId or if it's a temp ID
-        const threadId = h?.threadId;
-        if (!threadId || threadId.startsWith("temp_")) continue;
-
-        // Extract title directly from prompt string
-        let title = "Untitled";
-        const promptStr = h?.prompt;
-
-        if (promptStr && typeof promptStr === "string") {
-          title = promptStr.trim();
-        } else if (promptStr) {
-          title = getLastUserMessage(promptStr);
-        }
-
-        // Normalize and truncate title
-        title = normalizeTitle(title);
-        if (title.length > 60) {
-          title = title.substring(0, 60) + "...";
-        }
-
-        const created = Date.now() - idx;
-
-        rows.push({
-          id: threadId,
-          title,
-          createdAt: created,
-        });
-      }
-
-      // Sort newest → oldest
-      rows.sort((a, b) => b.createdAt - a.createdAt);
-
-      setHistory(rows);
-    } catch (err) {
-      console.error("Failed to fetch history:", err);
-      setHistoryById({});
-      setHistory([]);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
-
-  const openHistoryChat = async (historyThreadId: string) => {
-    if (!historyThreadId || historyThreadId.startsWith("temp_")) {
-      message.warning("This chat session hasn't been saved yet.");
-      return;
-    }
-
-    setCurrentChatId(historyThreadId);
-    setThreadId(historyThreadId); // Set the threadId for continuing conversation
-
-    // Check cache first
-    const cached = historyById[historyThreadId];
-    if (cached?.length) {
+    // Fast path: use cached messages
+    const cached = historyById[hid];
+    if (cached?.length > 0) {
+      console.log("[openHistoryChat] Using cached messages:", cached.length);
       setMessages(cached);
-      setTimeout(
-        () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
-        0
-      );
+      setThreadId(cachedThreadId || null);
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (isXs) setSidebarOpen(false);
+      });
+      return;
+    }
+
+    // Slow path: fetch from API
+    const finalUserId = userId || localStorage.getItem("userId");
+    if (!finalUserId || !agentId) {
+      console.error("[openHistoryChat] Missing credentials");
+      setMessages([]);
+      setThreadId(null);
       return;
     }
 
     try {
-      const data = await fetchThreadMessages(historyThreadId);
-
-      if (!data?.data || !Array.isArray(data.data)) {
+      const historyData = await fetchUserHistory(finalUserId, agentId);
+      if (!Array.isArray(historyData)) {
         setMessages([]);
         return;
       }
 
-      // Convert API format to ChatMessage format
-      const convertedMessages: ChatMessage[] = data.data
-        .reverse() // Reverse to show oldest first
-        .map((msg: any) => {
-          const role: ChatMessage["role"] =
-            msg.role === "assistant" ? "assistant" : "user";
-          const content = msg.content?.[0]?.text?.value || "";
-          return { role, content };
-        })
-        .filter((m: ChatMessage) => m.content.trim().length > 0);
+      const historyItem = historyData.find(
+        (h: any) => (h?.threadId || h?.id || h?.historyId) === hid,
+      );
 
-      // Cache the messages
-      setHistoryById((prev) => ({
-        ...prev,
-        [historyThreadId]: convertedMessages,
-      }));
+      if (!historyItem) {
+        console.warn("[openHistoryChat] History item not found:", hid);
+        setMessages([]);
+        return;
+      }
 
-      setMessages(convertedMessages);
-    } catch (err) {
-      console.error("Failed to fetch thread messages:", err);
+      // Extract threadId - prioritize cached, then various API fields
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem keys:",
+        Object.keys(historyItem),
+      );
+      console.log("[openHistoryChat] DEBUG - cachedThreadId:", cachedThreadId);
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem.threadId:",
+        historyItem?.threadId,
+      );
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem.thread_id:",
+        historyItem?.thread_id,
+      );
+      console.log(
+        "[openHistoryChat] DEBUG - historyItem.conversationId:",
+        historyItem?.conversationId,
+      );
+
+      const extractedThreadId =
+        cachedThreadId ||
+        historyItem?.threadId ||
+        historyItem?.thread_id ||
+        historyItem?.conversationId ||
+        historyItem?.data?.threadId;
+
+      console.log("[openHistoryChat] Final ThreadId:", extractedThreadId);
+      console.log("[openHistoryChat] ThreadId type:", typeof extractedThreadId);
+      console.log(
+        "[openHistoryChat] ThreadId valid check:",
+        !!(
+          extractedThreadId &&
+          String(extractedThreadId).trim() &&
+          String(extractedThreadId) !== "null"
+        ),
+      );
+
+      let messages: ChatMessage[] = [];
+
+      // Try to fetch from thread API if threadId exists
+      if (
+        extractedThreadId &&
+        String(extractedThreadId).trim() &&
+        String(extractedThreadId) !== "null"
+      ) {
+        console.log(
+          "[openHistoryChat] ✓ CALLING fetchThreadHistory with:",
+          extractedThreadId,
+        );
+        setThreadId(extractedThreadId);
+
+        try {
+          const threadMessages = await fetchThreadHistory(extractedThreadId);
+          console.log(
+            "[openHistoryChat] fetchThreadHistory returned:",
+            threadMessages,
+          );
+          if (Array.isArray(threadMessages) && threadMessages.length > 0) {
+            messages = extractQAFromHistory(threadMessages);
+            console.log(
+              "[openHistoryChat] Loaded from thread:",
+              messages.length,
+            );
+          }
+        } catch (err) {
+          console.error("[openHistoryChat] Thread fetch failed:", err);
+        }
+      } else {
+        console.log(
+          "[openHistoryChat] ✗ NOT calling fetchThreadHistory - no valid threadId",
+        );
+        setThreadId(null);
+      }
+
+      // Fallback to local messages if thread fetch failed
+      if (messages.length === 0) {
+        messages = normalizeMessages(
+          historyItem?.messages ??
+            historyItem?.messageHistory ??
+            historyItem?.history,
+        );
+        console.log("[openHistoryChat] Using local messages:", messages.length);
+      }
+
+      // Cache and display
+      setHistoryById((prev) => ({ ...prev, [hid]: messages }));
+      setMessages(messages);
+    } catch (err: any) {
+      console.error("[openHistoryChat] Error:", err);
+
+      if (err?.response?.status === 500) {
+        message.warning(
+          "Unable to load this chat. Please try selecting it again.",
+        );
+      } else if (err?.response?.status === 404) {
+        message.warning("This chat is no longer available.");
+      }
+
       setMessages([]);
+      setThreadId(null);
     }
 
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 0);
+      if (isXs) setSidebarOpen(false);
+    });
   };
 
   // Keep optional override if you want to support edit-resend
+  // const buildMessageHistory = (
+  //   msgs: ChatMessage[],
+  //   overrideContent?: string
+  // ): APIMessage[] => {
+  //   // start from chat messages, ignore system
+  //   const safe: APIMessage[] = (Array.isArray(msgs) ? msgs : [])
+  //     .filter((m) => m.role === "user" || m.role === "assistant")
+  //     .map((m) => ({
+  //       role: m.role === "assistant" ? "assistant" : ("user" as APIRole),
+  //       content: m.content,
+  //     }));
+
+  //   // For edit, override the last user content
+  //   if (overrideContent) {
+  //     const lastUserIdx = [...safe]
+  //       .reverse()
+  //       .findIndex((m) => m.role === "user");
+  //     if (lastUserIdx >= 0) {
+  //       const realIdx = safe.length - 1 - lastUserIdx;
+  //       safe[realIdx] = { ...safe[realIdx], content: overrideContent };
+  //     } else {
+  //       safe.push({ role: "user", content: overrideContent });
+  //     }
+  //   }
+
+  //   return safe;
+  // };
+
   const buildMessageHistory = (
     msgs: ChatMessage[],
-    overrideContent?: string
+    overrideContent?: string,
   ): APIMessage[] => {
-    // start from chat messages, ignore system
-    const safe: APIMessage[] = (Array.isArray(msgs) ? msgs : [])
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({
-        role: m.role === "assistant" ? "assistant" : ("user" as APIRole),
-        content: m.content,
-      }));
+    // We only want to send the LATEST user question to agentChat1.
+    // Conversation context will be handled by `threadId` on the backend.
 
-    // For edit, override the last user content
-    if (overrideContent) {
-      const lastUserIdx = [...safe]
+    let content = overrideContent?.trim();
+
+    // If no override given, pick the last user message from msgs
+    if (!content) {
+      const lastUser = [...(msgs || [])]
         .reverse()
-        .findIndex((m) => m.role === "user");
-      if (lastUserIdx >= 0) {
-        const realIdx = safe.length - 1 - lastUserIdx;
-        safe[realIdx] = { ...safe[realIdx], content: overrideContent };
-      } else {
-        safe.push({ role: "user", content: overrideContent });
-      }
+        .find((m) => m.role === "user");
+
+      content = lastUser?.content?.trim() || "";
     }
 
-    return safe;
+    // If still nothing, send empty history
+    if (!content) {
+      return [];
+    }
+
+    return [
+      {
+        role: "user" as APIRole,
+        content,
+      },
+    ];
   };
 
-  function parseStreamChunk(raw: string): {
-    type: string;
-    text: string;
-    fileId?: string;
-    isIntermediateText?: boolean;
-  } {
-    try {
-      const json = JSON.parse(raw);
-
-      // ⚙️ Tool started or running - capture actual input/code
-      if (json?.delta?.step_details?.tool_calls) {
-        const tool = json.delta.step_details.tool_calls[0];
-        if (!tool) return { type: "other", text: "" };
-
-        const input =
-          tool.code_interpreter?.input || tool.file_search?.input || "";
-
-        if (tool.type === "code_interpreter") {
-          const outputs = tool.code_interpreter?.outputs || [];
-          const imageOutput = outputs.find((o: any) => o.type === "image");
-
-          if (imageOutput?.image?.file_id) {
-            return {
-              type: "code",
-              text: input,
-              fileId: imageOutput.image.file_id,
-            };
-          }
-
-          return { type: "code", text: input };
-        }
-        if (tool.type === "file_search") {
-          return { type: "file", text: input };
-        }
-        return { type: "other", text: input };
-      }
-
-      const isToolRunning =
-        json?.delta?.step_details?.type === "tool_calls" ||
-        json?.type === "thread.run.in_progress";
-
-      // ✅ CHANGE: Check all possible text field locations
-      const textContent =
-        json?.delta?.output_text ||
-        json?.delta?.content?.[0]?.text?.value ||
-        json?.choices?.[0]?.delta?.content ||
-        json?.text ||
-        json?.content;
-
-      if (textContent) {
-        return {
-          type: "text",
-          text: textContent,
-          isIntermediateText: isToolRunning,
-        };
-      }
-
-      if (
-        json?.type === "response.completed" ||
-        json?.event === "response.completed" ||
-        json?.type === "thread.run.completed"
-      ) {
-        return { type: "done", text: "" };
-      }
-    } catch {
-      // ✅ CHANGE: Return raw text instead of empty if JSON parse fails
-      return { type: "text", text: raw };
-    }
-    return { type: "other", text: "" };
-  }
-
-  // Replace the fetchFileImage function
-  const fetchFileImage = async (fileId: string) => {
-    if (fileImages[fileId] || loadingFiles.has(fileId)) return;
-
-    // Fix: Convert Set to Array before spreading
-    setLoadingFiles((prev) => {
-      const arr = Array.from(prev);
-      return new Set([...arr, fileId]);
-    });
-
-    try {
-      // ✅ Use getAuthHeaders() for consistent auth handling
-      const headers = getAuthHeaders();
-
-      const response = await axios.get(
-        `${BASE_URL}/ai-service/agent/files/${fileId}`,
-        {
-          headers, // <-- use headers here
-          responseType: "blob",
-        }
-      );
-
-      const imageUrl = URL.createObjectURL(response.data);
-      setFileImages((prev) => ({ ...prev, [fileId]: imageUrl }));
-    } catch (error) {
-      console.error(`Failed to fetch file ${fileId}:`, error);
-    } finally {
-      // Fix: Convert to Array first before deletion
-      setLoadingFiles((prev) => {
-        const newSet = new Set(Array.from(prev));
-        newSet.delete(fileId);
-        return newSet;
-      });
-    }
-  };
-
-  const postAgentChatStream = (
+  // ✅ agentChat1: Pass threadId only for subsequent messages (not on first message)
+  const postAgentChat = async (
     agentIdParam: string,
     userIdParam: string | null,
     messageHistory: any[],
-    callback: StreamCallback
   ) => {
-    const userId = localStorage.getItem("userId");
-    const authHeaders = getAuthHeaders();
+    const headers = new AxiosHeaders();
+    headers.set("Accept", "application/json");
+    headers.set("Content-Type", "application/json");
+    const auth = getAuthHeaders();
+    if (auth.Authorization) headers.set("Authorization", auth.Authorization);
 
-    const streamHeaders: Record<string, string> = {
-      Accept: "text/event-stream",
+    const payload: any = {
+      agentId: agentIdParam,
+      userId: userIdParam,
+      messageHistory,
     };
 
-    if (authHeaders.Authorization) {
-      streamHeaders["Authorization"] = authHeaders.Authorization;
+    // Only include threadId if it exists (not on first message)
+    if (threadId) {
+      payload.threadId = threadId;
     }
 
-    const url = new URL(`${BASE_URL}/ai-service/agent/stream`);
-    url.searchParams.append("assistantId", id!);
-    url.searchParams.append("userId", userIdParam || "");
+    const { data } = await axios.post(
+      `${BASE_URL}/ai-service/agent/new-chat-openai`,
+      payload,
+      { headers },
+    );
+    return data;
+  };
 
-    if (threadId) url.searchParams.append("threadId", threadId);
+  // ✅ Fetch conversation history from thread
+const fetchThreadHistory = async (threadIdParam: string) => {
+  if (
+    !threadIdParam ||
+    threadIdParam.trim() === "" ||
+    String(threadIdParam).toLowerCase() === "null"
+  ) {
+    return null;
+  }
 
-    const lastMessage =
-      messageHistory.length > 0
-        ? messageHistory[messageHistory.length - 1].content
-        : "";
-    url.searchParams.append("question", lastMessage);
+  try {
+    const headers = new AxiosHeaders();
+    headers.set("Accept", "application/json");
+    headers.set("Content-Type", "application/json");
 
-    let buffer = "";
-    let bufferTimeout: NodeJS.Timeout | null = null;
-    let currentAssistantIndex: number | null = null; // ✅ ADD: Track current message index
+    const auth = getAuthHeaders();
+    if (auth.Authorization) {
+      headers.set("Authorization", auth.Authorization);
+    }
 
-    const ctrl = new AbortController();
+    // Detect whether this is an old Thread or new Conversation
+    const isConversation = threadIdParam.startsWith("conv_");
 
-    fetchEventSource(url.toString(), {
-      method: "GET",
-      headers: streamHeaders,
-      signal: ctrl.signal,
-      onmessage(event) {
-        try {
-          if (event.data.startsWith("THREAD_ID:")) {
-            const newThreadId = event.data.replace("THREAD_ID:", "").trim();
-            callback("", newThreadId);
-            return;
-          }
+    const url = isConversation
+      ? `${BASE_URL}/ai-service/agent/getConversationMessages/${threadIdParam}/messages`
+      : `${BASE_URL}/ai-service/agent/getconversations/${threadIdParam}/messages`;
 
-          if (event.data === "[DONE]") {
-            if (buffer) {
-              callback(buffer);
-              buffer = "";
-            }
-            setIsToolRunning(false);
-            setToolStream("");
-            setStreamType("text");
-            setIsShowingFinalText(false);
-            currentAssistantIndex = null; // ✅ Reset
-            callback("", undefined, true);
-            ctrl.abort();
-            return;
-          }
-
-          const { type, text, fileId, isIntermediateText } = parseStreamChunk(
-            event.data
-          );
-
-          if (type === "code" || type === "file" || type === "other") {
-            if (!isShowingFinalText) {
-              setIsToolRunning(true);
-              setStreamType(type);
-              if (text) {
-                setToolStream((prev) => prev + text);
-              }
-
-              if (fileId) {
-                // ✅ FIX: Use callback to get current message index
-                setMessages((prev) => {
-                  if (currentAssistantIndex === null) {
-                    currentAssistantIndex = prev.length; // Will be the next assistant message
-                  }
-
-                  setMessageFileIds((prevFiles) => {
-                    const existing = prevFiles[currentAssistantIndex!] || [];
-                    if (!existing.includes(fileId)) {
-                      return {
-                        ...prevFiles,
-                        [currentAssistantIndex!]: [...existing, fileId],
-                      };
-                    }
-                    return prevFiles;
-                  });
-
-                  return prev; // Don't modify messages here
-                });
-
-                fetchFileImage(fileId);
-              }
-            }
-            return;
-          }
-
-          if (type === "text" && text) {
-            if (isIntermediateText && isToolRunning) {
-              return;
-            }
-
-            if (isToolRunning) {
-              setIsToolRunning(false);
-              setToolStream("");
-              setIsShowingFinalText(true);
-            }
-
-            setStreamType("text");
-
-            // ✅ ADD: Filter out [object Object] strings
-            const cleanText = String(text).trim();
-            if (
-              cleanText === "[object Object]" ||
-              cleanText === "Object Object"
-            ) {
-              return; // Skip this chunk
-            }
-
-            buffer += text;
-
-            if (bufferTimeout) clearTimeout(bufferTimeout);
-
-            const shouldRenderNow =
-              buffer.endsWith(" ") ||
-              buffer.endsWith("\n") ||
-              buffer.endsWith(".") ||
-              buffer.endsWith("!") ||
-              buffer.endsWith("?") ||
-              buffer.endsWith(",") ||
-              buffer.length > 30;
-
-            if (shouldRenderNow) {
-              callback(buffer);
-              buffer = "";
-            } else {
-              bufferTimeout = setTimeout(() => {
-                if (buffer) {
-                  callback(buffer);
-                  buffer = "";
-                }
-              }, 30);
-            }
-          }
-        } catch (err) {
-          console.error("Stream parsing error:", err);
-        }
-      },
-      onerror(err) {
-        console.error("Error in stream connection", err);
-        if (buffer) {
-          callback(buffer);
-        }
-        setIsToolRunning(false);
-        setIsShowingFinalText(false);
-        currentAssistantIndex = null;
-        ctrl.abort();
-        callback("", undefined, true);
-      },
+    console.log("Fetching history:", {
+      id: threadIdParam,
+      type: isConversation ? "Conversation" : "Thread",
+      url,
     });
 
-    return { abort: () => ctrl.abort() };
+    const response = await axios.get(url, { headers });
+    const data = response.data;
+
+    if (
+      isConversation &&
+      data &&
+      data.object === "list" &&
+      Array.isArray(data.data)
+    ) {
+      const normalizedMessages = data.data.map((msg: any) => ({
+  id: msg.id,
+  object: "thread.message",
+  created_at: Date.now(),
+  role: msg.role,
+  status: msg.status,
+  content: (msg.content || []).map((item: any) => ({
+    type:
+      item.type === "input_text" || item.type === "output_text"
+        ? "text"
+        : item.type,
+    text: {
+      value: item.text || "",
+      annotations: item.annotations || [],
+    },
+  })),
+}));
+
+return normalizedMessages;
+    }
+
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      if (Array.isArray(data.messages)) {
+        return data.messages;
+      }
+
+      if (Array.isArray(data.data)) {
+        return data.data;
+      }
+
+      if (Array.isArray(data.history)) {
+        return data.history;
+      }
+    }
+
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    console.warn("Unexpected response format:", data);
+    return null;
+  } catch (error: any) {
+    console.error("Failed to fetch history");
+
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Response:", error.response.data);
+    } else if (error.request) {
+      console.error("No response received");
+    } else {
+      console.error(error.message);
+    }
+
+    return null;
+  }
+};
+  // ✅ Extract user questions and assistant answers from OpenAI format history
+  const extractQAFromHistory = (history: any[]): ChatMessage[] => {
+    if (!Array.isArray(history)) return [];
+    return history
+      .filter((msg: any) => msg?.role === "user" || msg?.role === "assistant")
+      .map((msg: any) => {
+        let content = "";
+
+        // Handle OpenAI thread message format
+        if (Array.isArray(msg.content)) {
+          // Extract text from content array
+          const textContent = msg.content.find((c: any) => c.type === "text");
+          content = textContent?.text?.value || "";
+        } else {
+          // Handle simple string content
+          content = String(msg.content || msg.text || "");
+        }
+
+        return {
+          role: msg.role as "user" | "assistant",
+          content: content.trim(),
+        };
+      })
+      .filter((msg) => msg.content.length > 0)
+      .reverse(); // Reverse to show chronological order (oldest first)
   };
+
   const sendMessage = useCallback(
-    (prompt?: string, skipAddUser = false, baseMessages?: ChatMessage[]) => {
+    async (
+      prompt?: string,
+      skipAddUser = false,
+      baseMessages?: ChatMessage[],
+    ) => {
+      // if (isSharedChatView && shareIdFromUrl) {
+      //   // ChatGPT-style behavior: the shared conversation stays visible,
+      //   // and the first follow-up becomes a new conversation for this user.
+      //   navigate(location.pathname, { replace: true });
+      // }
+
+      if (!userId) {
+        sessionStorage.setItem("redirectPath", currentPath);
+        sessionStorage.setItem("fromAISTore", "true");
+        window.location.href = "/whatsappregister?primaryType=AGENT";
+        return;
+      }
+
       const messageContent = prompt || input;
       if (!messageContent.trim() && !skipAddUser) return;
       if (loading || !id) return;
-
-      setIsShowingFinalText(false);
-      setIsToolRunning(false);
-      setToolStream("");
-
-      // Stop voice recording automatically
+      // ✅ Stop voice recording automatically when user clicks send
       if (isRecording) {
         try {
           recognitionRef.current?.stop();
@@ -1313,80 +1379,159 @@ const TestAgentDetails: React.FC = () => {
         if (!prompt) setInput("");
       }
 
-      if (!currentChatId) {
-        const tempId = `temp_${Date.now()}`;
-        const newTitle = generateChatTitle(messageContent);
-        setHistory((prev) => [
-          { id: tempId, title: newTitle, createdAt: Date.now() },
-          ...prev,
-        ]);
-        setCurrentChatId(tempId);
-        setSidebarOpen(true);
-      }
+      // Don't update title for existing chats - keep original title from first message
 
       isStopped.current = false;
       setLoading(true);
 
-      // Build message history for API
-      const historyMsgs = skipAddUser ? working : [...working, userMsg!];
-      const apiHistory = buildMessageHistory(historyMsgs);
+      const userMessages = messages.filter((m) => m.role === "user");
 
-      // ✅ FIX: Track the assistant message index that will be created
-      let assistantMessageIndex = historyMsgs.length; // This will be the index of new assistant message
-      let firstChunkReceived = false;
+      //  if(!subscriptionValid && userMessages.length >=5){
+      //   setMessages((prevMessages) => [
+      //       ...prevMessages,
+      //       { role: "assistant", content: "You've reached your message limit. Please upgrade your plan to continue chatting." },
+      //     ]);
+      //   setShowSubscriptionModal(true);
+      //   fetchSubscriptionPlans();
+      //   setLoading(false);
+      //   return;
+      // }
 
-      postAgentChatStream(
-        agentId!,
-        userId,
-        apiHistory,
-        (chunk, newThreadId, done) => {
+      // Stop voice if active before sending
+
+      try {
+        const historyMsgs = skipAddUser ? working : [...working, userMsg!];
+        const apiHistory = buildMessageHistory(historyMsgs);
+
+        const resp = await postAgentChat(agentId!, userId, apiHistory);
+
+        let answer = "";
+        let newThreadId: string | undefined;
+        if (typeof resp === "string") {
+          answer = resp;
+        } else if (resp && typeof resp === "object") {
+          answer =
+            resp.assistant_reply ??
+            resp.answer ??
+            resp.content ??
+            resp.text ??
+            "";
+          newThreadId = resp.thread_id ?? resp.threadId ?? resp.data?.threadId;
+        }
+
+        // Create new chat if this is the first message
+        if (!currentChatId) {
+          const newId = newThreadId || `${Date.now()}`; // Use threadId as ID if available
+          const newTitle = generateChatTitle(messageContent);
+          setHistory((prev) => [
+            { id: newId, title: newTitle, createdAt: Date.now() },
+            ...prev,
+          ]);
+          setCurrentChatId(newId);
+          if (!isXs) setSidebarOpen(true);
+
+          // Store threadId for new chat
           if (newThreadId) {
-            // ✅ FIX: Only update if it's a real threadId (not temp)
-            if (!newThreadId.startsWith("temp_")) {
-              setThreadId(newThreadId);
+            setThreadIdMap((prev) => ({
+              ...prev,
+              [newId]: newThreadId as string,
+            }));
+          }
+        } else if (newThreadId) {
+          // Update threadId for existing chat
+          setThreadIdMap((prev) => ({
+            ...prev,
+            [currentChatId]: newThreadId as string,
+          }));
+        }
 
-              // Update history with real threadId if we have a temp ID
-              setHistory((prev) =>
-                prev.map((h) =>
-                  h.id === currentChatId && h.id.startsWith("temp_")
-                    ? { ...h, id: newThreadId }
-                    : h
-                )
-              );
-
-              // Update currentChatId with real threadId
-              if (currentChatId?.startsWith("temp_")) {
-                setCurrentChatId(newThreadId);
+        // Refresh history to ensure new chats appear in sidebar
+        if (newThreadId && userId && agentId) {
+          setTimeout(async () => {
+            try {
+              const historyData = await fetchUserHistory(userId, agentId);
+              if (Array.isArray(historyData)) {
+                const rows = historyData
+                  .map((h: any, idx: number) => {
+                    const hid =
+                      h?.threadId ||
+                      h?.id ||
+                      h?.historyId ||
+                      `${Date.now()}_${idx}`;
+                    let title = "New Chat";
+                    if (typeof h?.prompt === "string") {
+                      title = getLastUserMessage(h.prompt);
+                    }
+                    title = generateChatTitle(title);
+                    return {
+                      id: hid,
+                      title,
+                      createdAt: safeDateMs(h?.createdAt) - idx,
+                    };
+                  })
+                  .sort((a, b) => b.createdAt - a.createdAt);
+                setHistory(rows);
               }
+            } catch (err) {
+              console.error("Failed to refresh history:", err);
             }
-          }
+          }, 1000); // Small delay to ensure backend has processed the message
+        }
 
-          if (done || isStopped.current) {
-            setLoading(false);
-            return;
-          }
+        // Update threadId state
+        if (newThreadId) {
+          console.log("[sendMessage] Setting threadId:", newThreadId);
+          setThreadId(newThreadId);
+        }
+        if (!isStopped.current) {
+          const updatedMessages = [
+            ...historyMsgs,
+            { role: "assistant" as const, content: answer },
+          ];
+          setMessages(updatedMessages);
 
-          if (chunk && chunk.trim()) {
-            setLoading(false);
-
-            setMessages((prev) => {
-              const last = prev[prev.length - 1];
-              if (!last || last.role !== "assistant") {
-                return [...prev, { role: "assistant", content: chunk }];
-              }
-
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                ...last,
-                content: last.content + chunk,
-              };
-              return updated;
-            });
+          // ✅ Save current messages to historyById for this chat
+          if (currentChatId) {
+            console.log(
+              "[sendMessage] Saving to historyById for chat:",
+              currentChatId,
+            );
+            setHistoryById((prev) => ({
+              ...prev,
+              [currentChatId]: updatedMessages,
+            }));
           }
         }
-      );
+        if (!isXs && !sidebarOpen && history.length > 0) {
+          setSidebarOpen(true);
+        }
+      } catch (e: any) {
+        console.error("Chat error:", e);
+        let errorMessage =
+          "I'm having trouble responding right now. Please try again in a moment.";
 
-      if (!sidebarOpen) setSidebarOpen(true);
+        if (e?.response?.status === 500) {
+          errorMessage =
+            "The AI service is temporarily unavailable. Please try again shortly.";
+        } else if (e?.response?.status === 429) {
+          errorMessage =
+            "Too many requests. Please wait a moment before trying again.";
+        } else if (e?.response?.status === 401 || e?.response?.status === 403) {
+          errorMessage =
+            "Authentication issue. Please refresh the page and try again.";
+        } else if (e?.message?.toLowerCase().includes("network")) {
+          errorMessage =
+            "Network connection issue. Please check your internet and try again.";
+        }
+
+        // Show error as assistant message in chat
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: `⚠️ ${errorMessage}` },
+        ]);
+      } finally {
+        setLoading(false);
+      }
     },
     [
       input,
@@ -1396,11 +1541,55 @@ const TestAgentDetails: React.FC = () => {
       agentId,
       userId,
       threadId,
-      currentChatId,
-      isRecording,
-      sidebarOpen,
-    ]
+      isSharedChatView,
+      shareIdFromUrl,
+      navigate,
+      location.pathname,
+      currentPath,
+    ],
   );
+
+  const validateDate = async () => {
+    try {
+      const resp = await axios.get(
+        `${BASE_URL}/ai-service/agent/planValidateDate?agentId=${agentId}&userId=${userId}`,
+      );
+      if (
+        resp?.data?.validateDate === 0 ||
+        resp?.data?.validateDate === "0" ||
+        resp?.data?.validateDate === "" ||
+        resp?.data?.validateDate === null ||
+        resp?.data?.validateDate === undefined
+      ) {
+        console.log("No subscription found");
+        setSubscriptionValid(false);
+      } else {
+        if (isExpired(resp?.data?.validateDate || "")) {
+          console.log("Expired");
+          setSubscriptionValid(false);
+        } else {
+          console.log("Valid");
+          setSubscriptionValid(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error validating date:", error);
+    }
+  };
+
+  function isExpired(dateStr: string) {
+    const [day, month, year] = dateStr.split("/").map(Number);
+
+    // Convert to valid JS date (YYYY, MM-1, DD)
+    const givenDate = new Date(year, month - 1, day);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // remove time
+    givenDate.setHours(0, 0, 0, 0);
+
+    return givenDate < today; // true means expired
+  }
+
   const handleStop = () => {
     isStopped.current = true;
     setLoading(false);
@@ -1411,10 +1600,9 @@ const TestAgentDetails: React.FC = () => {
     setEditingContent(messages[idx].content);
   };
 
-  const handleEditSave = (idx: number, newContent: string) => {
+  const handleEditSave = async (idx: number, newContent: string) => {
     if (!newContent.trim()) return;
 
-    // Update messages up to edited index
     const newMsgs = messages
       .map((m, i) => (i === idx ? { ...m, content: newContent } : m))
       .slice(0, idx + 1);
@@ -1425,42 +1613,80 @@ const TestAgentDetails: React.FC = () => {
     isStopped.current = false;
     setLoading(true);
 
-    // Create a temporary assistant message to append streamed chunks
-    let assistantIndex = newMsgs.length;
-    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+    try {
+      const apiHistory = buildMessageHistory(newMsgs, newContent);
+      const resp = await postAgentChat(agentId!, userId, apiHistory);
 
-    let streamedContent = "";
+      let answer = "";
+      let newThreadId: string | undefined;
 
-    // Build message history to send to API
-    const apiHistory = buildMessageHistory(newMsgs, newContent);
-
-    // Call streaming API
-    postAgentChatStream(
-      agentId!,
-      userId,
-      apiHistory,
-      (chunk, newThreadId, done) => {
-        if (newThreadId) setThreadId(newThreadId);
-
-        if (done || isStopped.current) {
-          setLoading(false);
-          return;
-        }
-
-        // Append chunk to streamed content
-        streamedContent += chunk;
-
-        // Update the assistant message in real-time
-        setMessages((prev) =>
-          prev.map((msg, idx2) =>
-            idx2 === assistantIndex ? { ...msg, content: streamedContent } : msg
-          )
-        );
+      if (typeof resp === "string") {
+        answer = resp;
+      } else if (resp && typeof resp === "object") {
+        // Handle new API response format with assistant_reply and thread_id
+        answer =
+          resp.assistant_reply ??
+          resp.answer ??
+          resp.content ??
+          resp.text ??
+          "";
+        // Extract threadId from response - try multiple possible field names
+        newThreadId =
+          resp.thread_id ??
+          resp.threadId ??
+          resp.thread_id ??
+          resp.data?.threadId ??
+          resp.data?.thread_id;
       }
-    );
+      if (newThreadId) setThreadId(newThreadId);
 
-    // Ensure sidebar opens after streaming starts
-    if (!sidebarOpen) setSidebarOpen(true);
+      if (!isStopped.current) {
+        const updatedMessages = [
+          ...newMsgs,
+          { role: "assistant" as const, content: answer },
+        ];
+        setMessages(updatedMessages);
+
+        // ✅ Save updated messages to historyById for this chat
+        if (currentChatId) {
+          setHistoryById((prev) => ({
+            ...prev,
+            [currentChatId]: updatedMessages,
+          }));
+        }
+      }
+      // FIXED: Auto-open left sidebar after successful prompt
+      // After:
+      if (!isXs && !sidebarOpen) {
+        setSidebarOpen(true);
+      }
+      if (!isXs && !sidebarOpen && history.length > 0) {
+        setSidebarOpen(true);
+      }
+    } catch (e: any) {
+      console.error("Edit save error:", e);
+      let errorMessage =
+        "I'm having trouble processing your edit. Please try again.";
+
+      if (e?.response?.status === 500) {
+        errorMessage =
+          "The AI service is temporarily unavailable. Please try again shortly.";
+      } else if (e?.response?.status === 429) {
+        errorMessage =
+          "Too many requests. Please wait a moment before trying again.";
+      } else if (e?.response?.status === 401 || e?.response?.status === 403) {
+        errorMessage =
+          "Authentication issue. Please refresh the page and try again.";
+      }
+
+      // Show error as assistant message in chat
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `⚠️ ${errorMessage}` },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRegenerate = async (idx: number) => {
@@ -1513,11 +1739,8 @@ const TestAgentDetails: React.FC = () => {
     );
   };
 
-  /** ---------------- Voice ---------------- */
-
   const keepListeningRef = useRef(false);
 
-  /** ---------------- Voice ---------------- */
   // const handleToggleVoice = () => {
   const handleToggleVoice = (): void => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1560,67 +1783,184 @@ const TestAgentDetails: React.FC = () => {
     }
   }, [loading]);
 
-  const isAllowedType = (type: string) =>
-    [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "text/csv",
-      "text/plain",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ].includes(type);
+  // Send a message over the SAME chat-with-files thread without re-uploading files
+  const chatWithFilesFollowup = async (userPrompt: string) => {
+    const url = `${BASE_URL}/student-service/user/chat-with-files`;
 
+    const formData = new FormData();
+    formData.append("prompt", userPrompt || "");
+    selectedFiles.forEach((f) => formData.append("files[]", f));
+    if (threadId) formData.append("threadId", threadId);
+
+    const headers = { ...getAuthHeaders() };
+    const { data } = await axios.post(url, formData, { headers });
+
+    const {
+      answer,
+      threadId: newThreadId,
+      remainingPrompts: updatedPrompts,
+    } = data ?? {};
+
+    if (newThreadId) setThreadId(newThreadId);
+    if (typeof updatedPrompts !== "undefined") {
+      setRemainingPrompts(updatedPrompts);
+      if (Number(updatedPrompts) === 0) {
+        // ⛔ stop continuity: surface an explicit error string to caller
+        message.error("File search limit reached. Please try again later.");
+        return "File search limit reached. Please try again later.";
+      }
+    }
+
+    setThreadSource("files");
+    return String(answer ?? "").trim();
+  };
+
+  // accept multiple files and filter dupes by name+size
   const handleFilePicker = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files || []);
     if (!picked.length) return;
-
-    // Store pending files and show modal
-    setPendingFiles(picked);
-    setShowFileUploadModal(true);
-
-    // Clear the input
+    setSelectedFiles((prev) => {
+      const key = (f: File) => `${f.name}_${f.size}`;
+      const map = new Map(prev.map((f) => [key(f), f]));
+      picked.forEach((f) => map.set(key(f), f));
+      return Array.from(map.values());
+    });
+    // optional: clear the input so picking same file again re-triggers change
     e.currentTarget.value = "";
   };
 
-  const uploadFilesToAgentKnowledge = async (files: File[]) => {
-    if (!id) {
-      message.error("Assistant ID not found");
-      return false;
+  const removeFileAt = (idx: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleFileUpload = async (
+    _file: File | null, // kept for signature compatibility; we now use `selectedFiles`
+    userPrompt: string,
+  ): Promise<string | null> => {
+    if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
+      return await Promise.resolve(null);
     }
 
     setLoading(true);
+
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: userPrompt,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    setInput("");
+
     try {
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append("file", file);
+      // ✅ branch: if there are files selected → multipart; else → JSON search
+      let answerData: any;
+
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach((f) => formData.append("files", f)); // keep "files"
+
+        formData.append("prompt", userPrompt || "");
+        if (threadId) formData.append("threadId", threadId);
+
+        // ⛔ no explicit headers; interceptor must NOT force Content-Type for FormData
+        answerData = (
+          await axios.post(
+            `${BASE_URL}/student-service/user/chat-with-files`,
+            formData,
+          )
+        ).data;
+      } else {
+        const jsonPayload: any = { prompt: userPrompt };
+        if (threadId) jsonPayload.threadId = threadId;
+
+        answerData = (
+          await axios.post(
+            `${BASE_URL}/student-service/user/chat-with-files`,
+            jsonPayload,
+          )
+        ).data;
+      }
+
+      const {
+        answer,
+        threadId: newThreadId,
+        remainingPrompts: updatedPrompts,
+      } = answerData ?? {};
+
+      // ✅ keep thread + source
+      if (newThreadId) {
+        setThreadId(newThreadId);
+        setThreadSource("files");
+      }
+
+      // ✅ persist remaining prompts
+      if (typeof updatedPrompts !== "undefined") {
+        setRemainingPrompts(updatedPrompts);
+        if (Number(updatedPrompts) === 0) {
+          // ⛔ hard stop: show user error and do NOT render normal assistant content
+          message.error(
+            "File search limit reached. Please try again tomorrow.",
+          );
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: "File search limit reached. Please try again tomorrow.",
+            },
+          ]);
+
+          // (optional) clear selected files to avoid accidental re-sends
+          setSelectedFiles([]);
+          return newThreadId || null;
+        }
+      }
+
+      // normal success → render content
+      const { isImage, url } = extractImageUrl(answer);
+      const content = isImage
+        ? url || String(answer).trim()
+        : cleanContent(String(answer));
+      setMessages((prev) => [...prev, { role: "assistant", content }]);
+
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
       });
 
-      await axios.post(
-        `${BASE_URL}/ai-service/agent/${id}/addfiles`,
-        formData,
-        {
-          headers: {
-            ...getAuthHeaders(),
-            // Don't set Content-Type - let browser set it with boundary
-          },
-        }
-      );
-
-      message.success(
-        `${files.length} file(s) uploaded to agent knowledge successfully!`
-      );
-      return true;
+      // clear after success
+      setSelectedFiles([]);
+      return newThreadId || null;
     } catch (error: any) {
-      console.error("Failed to upload files to agent:", error);
-      message.error(
-        error?.response?.data?.message ||
-          "Failed to upload files to agent knowledge"
-      );
-      return false;
+      console.error("File upload/search failed:", error);
+
+      let userMessage =
+        "I'm having trouble processing your file. Please try again.";
+      let assistantMessage =
+        "⚠️ File processing failed. Please try again in a moment.";
+
+      if (error?.response?.status === 500) {
+        userMessage =
+          "The file processing service is temporarily unavailable. Please try again shortly.";
+        assistantMessage =
+          "⚠️ File processing service is temporarily down. Please try again in a few minutes.";
+      } else if (error?.response?.status === 413) {
+        userMessage = "Your file is too large. Please try with a smaller file.";
+        assistantMessage = "⚠️ File too large. Please upload a smaller file.";
+      } else if (error?.response?.status === 429) {
+        userMessage =
+          "Too many file uploads. Please wait a moment before trying again.";
+        assistantMessage =
+          "⚠️ Upload limit reached. Please wait before uploading more files.";
+      }
+
+      message.error(userMessage);
+
+      const errorMessage: ChatMessage = {
+        role: "assistant",
+        content: assistantMessage,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -1634,37 +1974,71 @@ const TestAgentDetails: React.FC = () => {
       } catch {}
     };
   }, []);
-  const handleNewChat = async () => {
+
+  const handleNewChat = () => {
+    if (shareIdFromUrl) {
+      navigate(location.pathname, { replace: true });
+    }
+
+    // Clear current chat state
     setMessages([]);
     setInput("");
     setCurrentChatId(null);
     setThreadId(null);
-    setIsToolRunning(false);
-    setToolStream("");
-    setIsShowingFinalText(false);
-    setFileIds([]);
-    setFileImages({});
-    setMessageFileIds({});
-    setLoadingFiles(new Set());
+    setThreadSource(null);
+    setSelectedFiles([]);
 
-    // ✅ ADD: Refresh history from API
-    await refreshHistory();
+    console.log("[handleNewChat] Started new chat");
+    if (isXs) setSidebarOpen(false);
   };
 
-  useEffect(() => {
-    return () => {
-      // Clean up blob URLs to prevent memory leaks
-      Object.values(fileImages).forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [fileImages]);
-
   const generateChatTitle = (text: string) => {
-    if (!text) return `New Chat`;
-    return text.length > 40 ? text.slice(0, 40) + "…" : text;
+    if (!text || !text.trim()) return "New Chat";
+
+    // Clean the text
+    let title = text.trim();
+
+    // Capitalize first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+
+    // Truncate if too long but preserve the beginning
+    if (title.length > 60) {
+      title = title.slice(0, 57) + "...";
+    }
+
+    return title || "New Chat";
   };
   const handlePromptClick = async (prompt: string) => {
     if (!prompt.trim() || loading || !id) return;
 
+    // 👇 Stick to files thread if that's how the thread started
+    if (threadSource === "files") {
+      const userMessage: ChatMessage = { role: "user", content: prompt };
+      setMessages((prev) => [...prev, userMessage]);
+      setLoading(true);
+      try {
+        const answer = await chatWithFilesFollowup(prompt);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: cleanContent(answer) },
+        ]);
+      } catch {
+        console.error("File chat followup error");
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "⚠️ I'm having trouble processing your request. Please try again.",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Otherwise use your normal agent chat
     await sendMessage(prompt);
   };
 
@@ -1672,7 +2046,7 @@ const TestAgentDetails: React.FC = () => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
 
-      // Stop voice recording automatically when sending
+      // ✅ Stop voice recording automatically when sending
       if (isRecording) {
         try {
           recognitionRef.current?.stop();
@@ -1681,26 +2055,252 @@ const TestAgentDetails: React.FC = () => {
         }
         setIsRecording(false);
       }
+      if (selectedFiles.length > 0) {
+        await handleFileUpload(
+          null,
+          input || "please describe the file content properly",
+        );
+        setInput("");
+        setShowMobileFiles(false);
+        return;
+      }
 
-      // Just send the message normally - files are already in agent knowledge
       if (input.trim()) {
-        await sendMessage();
+        // 👇 NEW: stick to chat-with-files if the thread was created there
+        if (threadSource === "files") {
+          const userMessage: ChatMessage = { role: "user", content: input };
+          setMessages((prev) => [...prev, userMessage]);
+          setInput("");
+          setLoading(true);
+          try {
+            const answer = await chatWithFilesFollowup(userMessage.content);
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: cleanContent(answer) },
+            ]);
+          } catch (err: any) {
+            console.error("File followup error:", err);
+            let errorMessage =
+              "I'm having trouble processing your request. Please try again.";
+
+            if (err?.response?.status === 500) {
+              errorMessage =
+                "The service is temporarily unavailable. Please try again shortly.";
+            } else if (err?.response?.status === 429) {
+              errorMessage =
+                "Too many requests. Please wait a moment before trying again.";
+            }
+
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: `⚠️ ${errorMessage}` },
+            ]);
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          // fallback to your existing agentChat flow
+          await sendMessage();
+        }
       }
     }
   };
+  const [showShareQuestion, setShowShareQuestion] = useState(false);
+  const [shareTitle, setShareTitle] = useState("Share Chat History");
+  const [shareText, setShareText] = useState<string>("");
 
+  // Common share helper
   const shareContent = async (text: string) => {
-    if (!navigator.share) {
-      alert("Sharing is not supported on this browser.");
+    if (!text.trim()) {
+      return message.info("Nothing to share.");
+    }
+
+    // If Web Share API exists
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Shared from Bharat AI Store",
+          text,
+        });
+      } catch (error: any) {
+        if (error?.name !== "AbortError") {
+          message.error(error?.message || "Sharing failed.");
+        }
+      }
       return;
     }
+
+    // Fallback: copy to clipboard
     try {
-      await navigator.share({ title: "Shared from MyApp", text });
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
-        alert("Sharing failed: " + error.message);
-      }
+      await navigator.clipboard.writeText(cleanContent(text));
+      message.success("Content copied to clipboard!");
+    } catch {
+      message.error("Unable to copy to clipboard.");
     }
+  };
+
+  const loadSharedChatById = useCallback(
+    async (shareId: string) => {
+      if (!shareId) return;
+
+      setLoading(true);
+
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/ai-service/agent/share/${shareId}`,
+        );
+
+        const sharedMessages = normalizeMessages(res.data?.messages || []);
+
+        const sharedTitle = generateChatTitle(
+          res.data?.agentName
+            ? `Shared chat - ${res.data.agentName}`
+            : "Shared chat",
+        );
+
+        setMessages(sharedMessages);
+
+        const sharedHistoryId = `shared-${shareId}`;
+        const sharedThreadId =
+          res.data?.threadId ||
+          res.data?.thread_id ||
+          res.data?.shareId ||
+          shareId;
+
+        setCurrentChatId(sharedHistoryId);
+        setThreadId(sharedThreadId);
+        setThreadSource("agent");
+
+        setThreadIdMap((prev) => ({
+          ...prev,
+          [sharedHistoryId]: sharedThreadId,
+        }));
+        setSelectedFiles([]);
+        setInput("");
+        setEditingIndex(null);
+        setHistory((prev) => {
+          const withoutExistingShared = prev.filter(
+            (item) => item.id !== sharedHistoryId,
+          );
+          return [
+            { id: sharedHistoryId, title: sharedTitle, createdAt: Date.now() },
+            ...withoutExistingShared,
+          ];
+        });
+        setHistoryById((prev) => ({
+          ...prev,
+          [sharedHistoryId]: sharedMessages,
+        }));
+
+        if (res.data?.agentName) {
+          setAssistant((prev) =>
+            prev
+              ? { ...prev, name: res.data.agentName }
+              : {
+                  id: res.data.agentId || agentId || "",
+                  name: res.data.agentName || "Shared AI Agent",
+                  description: "Shared chat conversation",
+                },
+          );
+        }
+      } catch (error) {
+        console.error("Shared chat load failed:", error);
+        message.error("Shared chat not found or no longer available.");
+        setMessages([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [agentId],
+  );
+
+  useEffect(() => {
+    if (!shareIdFromUrl) return;
+    loadSharedChatById(shareIdFromUrl);
+  }, [shareIdFromUrl, loadSharedChatById]);
+
+  const handleChatShareClick = async () => {
+    const shareableMessages = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role as APIRole,
+        content: cleanContent(m.content),
+      }))
+      .filter((m) => m.content.trim().length > 0);
+
+    if (shareableMessages.length === 0) {
+      setShowNoChatModal(true);
+      return;
+    }
+
+    try {
+      const originalUrl = window.location.href.split("?")[0];
+
+      const payload = {
+        agentId: agentId || assistant?.id || "",
+        agentName: assistant?.name || "AI Agent",
+        assistantId: id || "",
+        userId,
+        threadId,
+        originalUrl,
+        messages: shareableMessages,
+      };
+
+      const res = await axios.post(
+        `${BASE_URL}/ai-service/agent/share`,
+        payload,
+        { headers: { ...getAuthHeaders() } },
+      );
+
+      const shareUrl =
+        res.data?.shareUrl || `${originalUrl}?shareId=${res.data?.shareId}`;
+
+      if (!shareUrl || shareUrl.includes("undefined")) {
+        throw new Error("Invalid share URL received from server.");
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      setShareText(shareUrl);
+      setShareTitle("Chat Share Link");
+      setShowShareQuestion(true);
+      message.success("Chat share link copied successfully.");
+    } catch (error: any) {
+      console.error("Chat share failed:", error);
+      message.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to create chat share link.",
+      );
+    }
+  };
+
+  // 🟡 Agent Share = Show modal -> Share on WhatsApp
+  const handleAgentShareClick = () => {
+    const url = window.location.href;
+
+    // Static message (same as your ASKOXY.AI share template)
+    const staticMessage = `
+🌟 Check out this amazing AI Agent on Bharat AI Store!
+
+🤖 Agent Name: ${assistant?.name || "AI Agent"}
+
+This AI Agent is created on ASKOXY.AI — a platform where anyone can build AI Agents, learn skills, and earn money!
+
+🔗 Access the AI Agent here:
+${url}`.trim();
+
+    setAgentShareText(staticMessage);
+    setShowAgentShareModal(true);
+  };
+
+  // Confirm / cancel from modal
+  const confirmShareNow = () => {
+    shareContent(shareText);
+    setShowShareQuestion(false);
+  };
+
+  const cancelShare = () => {
+    setShowShareQuestion(false);
   };
 
   const filteredHistory = useMemo(() => {
@@ -1710,7 +2310,7 @@ const TestAgentDetails: React.FC = () => {
   }, [history, historySearch]);
   const handleLogout = () => {
     try {
-       stopTokenRefresh();
+      stopTokenRefresh();
       localStorage.removeItem("userId");
       localStorage.removeItem("token");
       localStorage.clear();
@@ -1721,22 +2321,86 @@ const TestAgentDetails: React.FC = () => {
       navigate("/bharath-aistore", { replace: true });
     }
   };
+  // ----- Profile data from localStorage -----
+  interface ProfileData {
+    userFirstName?: string;
+    userLastName?: string;
+    customerEmail?: string;
+    alterMobileNumber?: string;
+    customerId?: string;
+    whatsappNumber?: string;
+  }
+
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+  // Load profileData from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("profileData");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setProfile(parsed);
+      }
+    } catch (e) {
+      console.error("Failed to parse profileData from localStorage", e);
+    }
+  }, []);
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const profileDisplayName = useMemo(() => {
+    if (!profile) return "Guest user";
+    const first = (profile.userFirstName || "").trim();
+    const last = (profile.userLastName || "").trim();
+    const name = `${first} ${last}`.trim();
+    return name || profile.customerEmail || "User";
+  }, [profile]);
+
+  const profileInitials = useMemo(() => {
+    const name = profileDisplayName;
+    const parts = name.split(" ").filter(Boolean);
+    if (parts.length === 0) return "U";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }, [profileDisplayName]);
 
   const isCollapsed = !isXs && !sidebarOpen;
 
-  const sidebarWidth = isXs
-    ? "100%"
+  const sidebarWidth: number = isXs
+    ? sidebarOpen
+      ? MOBILE_SIDEBAR_WIDTH_OPEN
+      : 0
     : sidebarOpen
-    ? SIDEBAR_WIDTH
-    : SIDEBAR_WIDTH_COLLAPSED;
-  const leftOffset = useMemo(() => {
-    if (isXs) return 0;
-    return sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_COLLAPSED;
-  }, [sidebarOpen, isXs]);
+      ? DESKTOP_SIDEBAR_WIDTH_OPEN
+      : SIDEBAR_WIDTH_COLLAPSED;
+
+  // compute left offset only for desktop
+  const leftOffset = !isXs ? (sidebarOpen ? 240 : 60) : 0;
+
   const contentWidth = isXs ? "100%" : `calc(100% - ${sidebarWidth}px)`;
   const overlayVisible = isXs && sidebarOpen;
   const effectiveLeftOffset = userId ? leftOffset : 0;
-  const effectiveContentWidth = userId ? contentWidth : "100%";
+  useEffect(() => {
+    if (isXs) {
+      document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    }
+    return () => {
+      if (isXs) document.body.style.overflow = "";
+    };
+  }, [isXs, sidebarOpen]);
 
   const rightSidebarWidth = !isXs ? RIGHT_SIDEBAR_WIDTH : 0;
   const rightOffset = useMemo(() => {
@@ -1748,400 +2412,865 @@ const TestAgentDetails: React.FC = () => {
 
   const effectiveContentWidth1 = useMemo(
     () => `calc(100vw - ${leftOffset}px - ${rightOffset}px)`,
-    [leftOffset, rightOffset]
+    [leftOffset, rightOffset],
   );
 
-  // Add effect to persist right sidebar state (mirror left)
+  // Keep right sidebar open by default on desktop.
+  // Do not let an old/mobile localStorage value keep it closed on reload.
   useEffect(() => {
-    localStorage.setItem(
-      RIGHT_SIDEBAR_STATE_KEY,
-      JSON.stringify(rightSidebarOpen)
-    );
-  }, [rightSidebarOpen]);
+    if (!isXs) {
+      setRightSidebarOpen(true);
+      localStorage.setItem(RIGHT_SIDEBAR_STATE_KEY, JSON.stringify(true));
+    }
+  }, [isXs, location.pathname]);
+
+  // Persist only desktop manual changes. Mobile auto-close should not become desktop default.
+  useEffect(() => {
+    if (!isXs) {
+      localStorage.setItem(
+        RIGHT_SIDEBAR_STATE_KEY,
+        JSON.stringify(rightSidebarOpen),
+      );
+    }
+  }, [rightSidebarOpen, isXs]);
 
   return (
     <>
-      {!userId &&
-        (() => {
-          try {
-            sessionStorage.setItem(
-              "returnTo",
-              `${location.pathname}${location.search || ""}`
-            );
-          } catch (e) {
-            console.warn("Could not save returnTo:", e);
-          }
-          return (
-            <Navigate
-              to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
-                currentPath
-              )}`}
-            />
-          );
-        })()}
-
-      <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">
-        {/* Header */}
-        <header
-          className="sticky top-0 z-30 flex items-center border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur h-14 px-2 sm:px-4"
-          style={{
-            left: effectiveLeftOffset,
-            right: effectiveRightOffset,
-            width: effectiveContentWidth1,
-          }}
-        >
-          {/* Left controls */}
-          <div className="flex items-center gap-2 min-w-0">
-            {/* Mobile: open/close drawer */}
-            <button
-              onClick={() => setSidebarOpen((v) => !v)}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 sm:hidden"
-              aria-label="Toggle sidebar"
-              title="Toggle sidebar"
-            >
-              <svg
-                className="w-6 h-6 text-black dark:text-white"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-
-            {/* Assistant name on desktop (kept short, full name inside HeaderInfo) */}
-            <div className="hidden sm:block truncate font-medium text-black dark:text-white">
-              {assistant?.name || "Assistant"}
-            </div>
-          </div>
-
-          {/* Mobile: centered assistant name */}
-          <div className="flex-1 text-center sm:hidden">
-            <div className="truncate font-medium text-black dark:text-white">
-              {assistant?.name || "Assistant"}
-            </div>
-          </div>
-
-          {/* Right: Share */}
-          <div className="ml-auto">
-            <button
-              onClick={() => {
-                if (messages.length > 0) {
-                  shareContent(messages[messages.length - 1].content);
-                } else {
-                  message.info("No message to share.");
-                }
-              }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              title="Share"
-            >
-              <Share className="w-5 h-5 text-purple-700 dark:text-white" />
-              <span className="hidden sm:inline">Share</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Sidebar */}
-        <aside
-          className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
-            isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
-          }`}
-          style={{ width: sidebarWidth }}
-          aria-label="Chat sidebar"
-        >
-          {/* ---------- TOP (HEADER + ACTION BUTTONS) ---------- */}
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
-              <GiElephantHead
-                onClick={() => navigate("/bharath-aistore")}
-                title="Bharat AI Store"
-                className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
-                  !isXs && isCollapsed ? "hidden" : ""
-                }`}
+      <div className="relative  flex min-h-screen bg-[#030617] text-white overflow-x-hidden max-w-[100vw] w-full">
+        {!userId &&
+          (() => {
+            try {
+              sessionStorage.setItem(
+                "returnTo",
+                `${location.pathname}${location.search || ""}`,
+              );
+            } catch (e) {
+              console.warn("Could not save returnTo:", e);
+            }
+            return (
+              <Navigate
+                to={`/whatsappregister?primaryType=AGENT&returnTo=${encodeURIComponent(
+                  currentPath,
+                )}`}
               />
-              <div className="flex items-center gap-1">
-                {/* Mobile close */}
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="sm:hidden inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                  aria-label="Close sidebar"
-                >
-                  <LuPanelRightClose className="h-7 w-7 text-gray-700 dark:text-gray-300" />
-                </button>
+            );
+          })()}
 
-                {/* Collapse toggle */}
-                <button
-                  onClick={() => setSidebarOpen((v) => !v)}
-                  className="hidden sm:inline-flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                  aria-label={
-                    isCollapsed ? "Expand sidebar" : "Collapse sidebar"
-                  }
-                  title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        <div className="w-full bg-white dark:bg-gray-800 text-purple-700 dark:text-white">
+          {/* Header */}
+          <header
+            className="fixed top-0  flex items-center border-b border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur h-14 px-2 sm:px-4 z-20"
+            style={{
+              left: effectiveLeftOffset,
+              right: effectiveRightOffset,
+              width: effectiveContentWidth1,
+            }}
+          >
+            {/* Left controls */}
+            <div className="flex items-center gap-2 min-w-0">
+              {/* Mobile: open/close drawer */}
+              <button
+                onClick={() => setSidebarOpen((v) => !v)}
+                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 sm:hidden"
+                aria-label="Toggle sidebar"
+                title="Toggle sidebar"
+              >
+                <svg
+                  className="w-6 h-6 text-black dark:text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
                 >
-                  {isCollapsed ? (
-                    <LuPanelRightClose className="w-7 h-7 text-black dark:text-white" />
-                  ) : (
-                    <LuPanelLeftClose className="w-7 h-7 text-black dark:text-white" />
-                  )}
-                </button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+
+              <div className="hidden sm:flex items-center min-w-0">
+                {fromStore?.storeName ? (
+                  <button
+                    onClick={handleBack}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-black transition whitespace-nowrap"
+                    title={`Back to ${fromStore.storeName}`}
+                  >
+                    ← Back to {fromStore.storeName}
+                  </button>
+                ) : (
+                  <div className="min-w-0 truncate text-base font-semibold text-black dark:text-white">
+                    {assistant?.name || "Assistant"}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* ---------- BUTTONS + SEARCH (TOP FIXED) ---------- */}
-            <div className="flex-shrink-0 p-2 space-y-1 border-b border-gray-100 dark:border-gray-700">
-              {/* New Chat */}
-              <button
-                onClick={handleNewChat}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="New Chat"
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="icon flex-shrink-0"
-                  aria-hidden="true"
-                >
-                  {" "}
-                  <path
-                    fill="currentColor"
-                    d="M3.2024399999999997 13.5996V10.400388C3.2024399999999997 9.29346 3.202092 8.41446 3.2598599999999998 7.70742C3.318396 6.991344000000001 3.440388 6.3807719999999994 3.7251 5.821872L3.9102479999999997 5.491404C4.371264 4.7397 5.032704 4.12794 5.822748 3.725388L6.034859999999999 3.625788C6.535991999999999 3.410796 7.081595999999999 3.310188 7.708296 3.258984C8.415263999999999 3.201228 9.293339999999999 3.201564 10.4001 3.201564H11.0001C11.440716 3.201564 11.797979999999999 3.559032 11.798148 3.9996119999999995C11.798148 4.440335999999999 11.440824 4.79766 11.0001 4.79766H10.4001C9.26712 4.79766 8.465256 4.798007999999999 7.838375999999999 4.8492239999999995C7.375332 4.887048 7.047324 4.950816 6.787212 5.043755999999999L6.546971999999999 5.146872C6.01974 5.415515999999999 5.578463999999999 5.824139999999999 5.270796 6.325788L5.147748 6.5460959999999995C4.996656 6.84264 4.9005719999999995 7.219956 4.8501 7.8374999999999995C4.798872 8.464476 4.7985359999999995 9.26712 4.7985359999999995 10.400388V13.5996C4.7985359999999995 14.73288 4.798872 15.53556 4.8501 16.16256C4.9005719999999995 16.77996 4.9966680000000006 17.15736 5.147748 17.453879999999998L5.270796 17.6742C5.578452 18.1758 6.019775999999999 18.584519999999998 6.546971999999999 18.85308L6.787212 18.95628C7.047312000000001 19.04916 7.375368 19.1118 7.838375999999999 19.1496C8.465268 19.200839999999996 9.267071999999999 19.202399999999997 10.4001 19.202399999999997H13.60044C14.73348 19.202399999999997 15.535319999999999 19.200839999999996 16.1622 19.1496C16.77948 19.0992 17.15712 19.00404 17.45364 18.85308L17.67504 18.72888C18.1764 18.42132 18.58548 17.980919999999998 18.85404 17.453879999999998L18.95712 17.213639999999998C19.05012 16.953599999999998 19.11264 16.625519999999998 19.15044 16.16256C19.20168 15.53556 19.20204 14.73288 19.20204 13.5996V12.9996C19.20216 12.559199999999999 19.55964 12.20172 20.00004 12.2016C20.440679999999997 12.2016 20.79792 12.55908 20.79816 12.9996V13.5996C20.79816 14.706599999999998 20.79972 15.585479999999999 20.74188 16.29252C20.69064 16.919159999999998 20.59008 17.46492 20.37504 17.96604L20.27544 18.17808C19.873079999999998 18.96792 19.260839999999998 19.628519999999998 18.50952 20.08944L18.17904 20.274599999999996C17.61996 20.559479999999997 17.00868 20.682479999999998 16.292279999999998 20.741039999999998C15.58536 20.798759999999998 14.7072 20.7984 13.60044 20.7984H10.4001C9.293352 20.7984 8.415252 20.798759999999998 7.708296 20.741039999999998C7.08162 20.689799999999998 6.5359799999999995 20.589239999999997 6.034859999999999 20.3742L5.822748 20.274599999999996C5.0327519999999994 19.87212 4.371252 19.26024 3.9102479999999997 18.50856L3.7251 18.17808C3.4403639999999998 17.61924 3.3184080000000002 17.00868 3.2598599999999998 16.29252C3.202092 15.585479999999999 3.2024399999999997 14.706599999999998 3.2024399999999997 13.5996ZM16.15752 3.7359359999999997C17.304119999999998 2.8008 18.99456 2.867628 20.063399999999998 3.9363239999999995L20.2638 4.15782C21.13692 5.228219999999999 21.137159999999998 6.7730760000000005 20.2638 7.843356L20.063399999999998 8.06484L14.007119999999999 14.122319999999998C13.364759999999999 14.76468 12.55488 15.20952 11.673924 15.408959999999999L11.293068 15.47928L9.112212 15.78984C8.863644 15.825239999999999 8.612411999999999 15.74244 8.434859999999999 15.56484C8.257344 15.387239999999998 8.174387999999999 15.13608 8.209859999999999 14.887559999999999L8.521584 12.70776L8.591892 12.3258C8.79144 11.444988 9.236304 10.634892 9.878616 9.992579999999998L15.934919999999998 3.9363239999999995L16.15752 3.7359359999999997Z"
-                  />{" "}
-                </svg>
-                {(!isCollapsed || isXs) && <span>New Chat</span>}
-              </button>
-              {/* Create Agent */}
-              <button
-                onClick={() => (window.location.href = "/main/bharat-expert")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="Create Agent"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="flex-shrink-0"
-                >
-                  <path
-                    d="M12 5V19M5 12H19"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                {(!isCollapsed || isXs) && <span>Create Agent</span>}
-              </button>
-              {/* Explore Agents */}
-              <button
-                onClick={() => (window.location.href = "/bharath-aistore")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="Explore Agents"
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="icon flex-shrink-0"
-                  aria-hidden="true"
-                >
-                  {" "}
-                  <path
-                    fill="currentColor"
-                    d="M7.94556 14.0277C7.9455 12.9376 7.06204 12.054 5.97192 12.054C4.88191 12.0542 3.99835 12.9376 3.99829 14.0277C3.99829 15.1177 4.88188 16.0012 5.97192 16.0013C7.06207 16.0013 7.94556 15.1178 7.94556 14.0277ZM16.0012 14.0277C16.0012 12.9376 15.1177 12.054 14.0276 12.054C12.9375 12.0541 12.054 12.9376 12.054 14.0277C12.054 15.1178 12.9375 16.0012 14.0276 16.0013C15.1177 16.0013 16.0012 15.1178 16.0012 14.0277ZM7.94556 5.97201C7.94544 4.88196 7.062 3.99837 5.97192 3.99837C4.88195 3.99849 3.99841 4.88203 3.99829 5.97201C3.99829 7.06208 4.88187 7.94552 5.97192 7.94564C7.06207 7.94564 7.94556 7.06216 7.94556 5.97201ZM16.0012 5.97201C16.0011 4.88196 15.1177 3.99837 14.0276 3.99837C12.9376 3.99843 12.0541 4.882 12.054 5.97201C12.054 7.06212 12.9375 7.94558 14.0276 7.94564C15.1177 7.94564 16.0012 7.06216 16.0012 5.97201ZM9.27563 14.0277C9.27563 15.8524 7.79661 17.3314 5.97192 17.3314C4.14734 17.3313 2.66821 15.8523 2.66821 14.0277C2.66827 12.2031 4.14737 10.7241 5.97192 10.724C7.79657 10.724 9.27558 12.203 9.27563 14.0277ZM17.3313 14.0277C17.3313 15.8524 15.8523 17.3314 14.0276 17.3314C12.203 17.3313 10.7239 15.8523 10.7239 14.0277C10.7239 12.2031 12.203 10.724 14.0276 10.724C15.8522 10.724 17.3312 12.203 17.3313 14.0277ZM9.27563 5.97201C9.27563 7.7967 7.79661 9.27572 5.97192 9.27572C4.14734 9.2756 2.66821 7.79662 2.66821 5.97201C2.66833 4.14749 4.14741 2.66841 5.97192 2.6683C7.79654 2.6683 9.27552 4.14742 9.27563 5.97201ZM17.3313 5.97201C17.3313 7.79669 15.8523 9.27572 14.0276 9.27572C12.203 9.27566 10.7239 7.79666 10.7239 5.97201C10.724 4.14746 12.203 2.66836 14.0276 2.6683C15.8522 2.6683 17.3312 4.14742 17.3313 5.97201Z"
-                  />{" "}
-                </svg>
-                {(!isCollapsed || isXs) && <span>Explore Agents</span>}
-              </button>
-              <button
-                onClick={() => (window.location.href = "/main/dashboard/home")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="ASKOXY.AI"
-              >
-                <GiLion className="h-5 w-5" />
-                {(!isCollapsed || isXs) && <span>ASKOXY.AI</span>}
-              </button>{" "}
-              <button
-                onClick={() => (window.location.href = "/bharath-aistore")}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  isCollapsed && !isXs ? "justify-center" : "justify-start"
-                }`}
-                title="Bharat AI Store"
-              >
-                <GiElephantHead className="h-5 w-5" />
-                {(!isCollapsed || isXs) && <span>Bharat AI Store</span>}
-                  
-              </button>
-              {/* Search */}
-              {isCollapsed && !isXs ? (
+            {/* Mobile: centered assistant name */}
+            <div className="flex-1 text-center sm:hidden">
+              {fromStore?.storeName ? (
                 <button
-                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  onClick={() => setSidebarOpen(true)}
-                  title="Search"
+                  onClick={handleBack}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-black transition whitespace-nowrap"
+                  title={`Back to ${fromStore.storeName}`}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  ← Back to {fromStore.storeName}
                 </button>
               ) : (
-                <div className="relative w-full">
-                  <input
-                    value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    placeholder="Search chats"
-                    className="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pr-10 pl-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <svg
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="truncate text-base font-semibold text-black dark:text-white">
+                  {assistant?.name || "Assistant"}
                 </div>
               )}
             </div>
 
-            <div className="px-2 pb-24 overflow-y-auto h-[calc(100vh-56px-48px-64px-56px)]">
-              {!isCollapsed || isXs ? (
-                <>
-                  <div className="p-3 space-y-3 text-xs text-gray-500">
-                    Chat History
-                  </div>
-
-                  {historyLoading ? (
-                    <div className="p-3 space-y-3">
-                      {[...Array(6)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
-                        />
-                      ))}
-                    </div>
-                  ) : filteredHistory.length === 0 ? (
-                    <div className="text-xs text-gray-500 px-2 py-8">
-                      No chats yet.
-                    </div>
-                  ) : (
-                    <ul className="space-y-1">
-                      {filteredHistory.map((h) => (
-                        <li key={h.id} className="group">
-                          <button
-                            className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${
-                              h.id === currentChatId
-                                ? "bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500"
-                                : ""
-                            }`}
-                            onClick={() => openHistoryChat(h.id)}
-                            title={h.title}
-                          >
-                            <div className="flex flex-col flex-1 min-w-0 pt-1">
-                              <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {h.title}
-                              </span>
-                            </div>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              ) : (
-                <ul className="space-y-2 mt-3">
-                  {filteredHistory.map((h) => (
-                    <li key={h.id} className="flex justify-center">
-                      <button
-                        className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${
-                          h.id === currentChatId
-                            ? "ring-2 ring-blue-500 ring-inset"
-                            : ""
-                        }`}
-                        title={h.title}
-                        onClick={() => openHistoryChat(h.id)}
-                      >
-                        {(h.title || "?").trim().charAt(0).toUpperCase()}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* ---------- FOOTER (FIXED LOGOUT BUTTON) ---------- */}
-            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2">
+            <div className="ml-auto flex gap-2">
+              {/* Chat Share – Q & A */}
               <button
-                onClick={handleLogout}
-                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition"
+                onClick={handleChatShareClick}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                title="Share last Q&A"
               >
-                <LogOut className="w-4 h-4" />
-                {(!isCollapsed || isXs) && (
-                  <span className="text-sm font-semibold">Log out</span>
-                )}
+                <Share className="w-5 h-5 text-purple-700 dark:text-white" />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+              <Modal
+                open={showAgentShareModal}
+                footer={null}
+                centered
+                onCancel={() => setShowAgentShareModal(false)}
+              >
+                <div className="text-center px-4 py-2">
+                  {/* Title */}
+                  <h3
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 600,
+                      marginBottom: "12px",
+                    }}
+                  >
+                    Share This AI Agent
+                  </h3>
+
+                  {/* Description */}
+                  <p
+                    style={{
+                      fontSize: "15px",
+                      lineHeight: "1.6",
+                      marginBottom: "20px",
+                      textAlign: "center",
+                    }}
+                  >
+                    Share this AI Agent with your friends on WhatsApp.
+                  </p>
+
+                  {/* Buttons */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                      gap: "12px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    {/* Close */}
+                    <Button
+                      onClick={() => setShowAgentShareModal(false)}
+                      style={{
+                        background: "#e0e0e0",
+                        border: "none",
+                        color: "#000",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Close
+                    </Button>
+
+                    {/* Email */}
+                    {/* <Button
+                      onClick={() => {
+                        const subject = encodeURIComponent(`Check out this AI Agent: ${assistant?.name || "AI Agent"}`);
+                        const body = encodeURIComponent(agentShareText);
+                        window.open(`mailto:?subject=${subject}&body=${body}`, "_self");
+                        setShowAgentShareModal(false);
+                      }}
+                      icon={<Mail className="w-4 h-4 inline-block mr-1" />}
+                      style={{
+                        background: "#EA4335", // Google/Email red
+                        borderColor: "#EA4335",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      Email
+                    </Button> */}
+
+                    {/* WhatsApp */}
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        const whatsappUrl =
+                          "https://api.whatsapp.com/send?text=" +
+                          encodeURIComponent(agentShareText);
+
+                        window.open(
+                          whatsappUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+
+                        setShowAgentShareModal(false);
+                      }}
+                      style={{
+                        background: "#25D366", // WhatsApp green
+                        borderColor: "#25D366",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        color: "#fff",
+                      }}
+                    >
+                      Share on WhatsApp
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+
+              <Modal
+                open={showNoChatModal}
+                onCancel={() => setShowNoChatModal(false)}
+                footer={null} // we will custom-design our own footer so no overlap
+                centered // centers modal vertically
+              >
+                <div className="text-center px-4 py-2">
+                  {/* Message Text */}
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      lineHeight: "1.6",
+                      marginBottom: "20px",
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    You have not started any chat conversation yet.
+                    <br />
+                    Please start the conversation and then try sharing the chat.
+                  </p>
+
+                  {/* Buttons Row */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "12px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    {/* Close Button */}
+                    <Button
+                      onClick={() => setShowNoChatModal(false)}
+                      style={{
+                        background: "#e0e0e0",
+                        border: "none",
+                        color: "#000",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Close
+                    </Button>
+
+                    {/* Start Chat Button */}
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        setShowNoChatModal(false);
+                        const input = document.getElementById("chat-input");
+                        if (input) input.focus();
+                      }}
+                      style={{
+                        background: "#008CBA", // your color
+                        borderColor: "#008CBA",
+                        padding: "6px 20px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Start Chat
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+
+              {/* Agent Share – only URL */}
+              <button
+                onClick={handleAgentShareClick}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                title="Share this AI Agent"
+              >
+                <ExternalLink className="w-5 h-5 text-purple-700 dark:text-white" />
+                <span className="hidden sm:inline">Agent Share</span>
               </button>
             </div>
-          </div>
-        </aside>
-        {/* FIXED: Right Sidebar Toggle Button */}
-        {!isXs && (
-          <button
-            onClick={() => setRightSidebarOpen((prev) => !prev)}
-            className="fixed top-1/2 -translate-y-1/2 z-40 w-6 h-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 animate-pulse rounded-full shadow-md"
-            style={{
-              right: `${rightSidebarOpen ? RIGHT_SIDEBAR_WIDTH : 0}px`,
+          </header>
+
+          <Modal
+            open={showShareQuestion}
+            onCancel={() => setShowShareQuestion(false)}
+            footer={null}
+            centered
+            width={520}
+            className="share-chat-modal"
+            closeIcon={<CloseOutlined style={{ color: "#fff" }} />}
+            styles={{
+              content: {
+                background: "#1f2937", // gray-800
+                borderRadius: "20px",
+                padding: "24px",
+              },
+              header: {
+                background: "#1f2937",
+              },
+              body: {
+                background: "#1f2937",
+              },
             }}
-            title={
-              rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
-            }
           >
-            <LuPanelRightClose
-              className="w-5 h-5 text-purple-600 dark:text-purple-400"
-              style={{
-                transform: rightSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
-              }}
-            />
-          </button>
-        )}
-        {userId && !isXs && rightSidebarOpen && (
+            <div>
+              <div className="text-center">
+                <h3
+                  style={{
+                    color: "#ffffff",
+                    fontSize: "20px",
+                    fontWeight: 600,
+                  }}
+                >
+                  {shareTitle || "Share Chat"}
+                </h3>
+
+                <p
+                  style={{
+                    color: "#d1d5db",
+                    marginTop: "12px",
+                    lineHeight: "24px",
+                    fontSize: "14px",
+                  }}
+                >
+                  Anyone with this link can view this shared chat and continue
+                  the conversation.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  marginTop: "24px",
+                  background: "#111827",
+                  border: "1px solid #374151",
+                  borderRadius: "14px",
+                  padding: "16px",
+                }}
+              >
+                <label
+                  style={{
+                    color: "#9ca3af",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    display: "block",
+                    marginBottom: "10px",
+                  }}
+                >
+                  SHARE LINK
+                </label>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <input
+                    value={shareText}
+                    readOnly
+                    onFocus={(e) => e.currentTarget.select()}
+                    style={{
+                      flex: 1,
+                      background: "#1f2937",
+                      color: "#fff",
+                      border: "1px solid #374151",
+                      borderRadius: "10px",
+                      padding: "12px 14px",
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(shareText);
+                        message.success("Share link copied.");
+                      } catch {
+                        message.error("Unable to copy share link.");
+                      }
+                    }}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 px-4 py-3 text-white "
+                  >
+                    <Copy size={16} />
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Button
+                  onClick={() => setShowShareQuestion(false)}
+                  className="
+    h-12 rounded-lg
+    bg-gray-200 text-gray-800 border-gray-300
+    hover:!bg-gray-300
+
+    dark:bg-gray-800
+    dark:text-white
+    dark:border-gray-700
+    dark:hover:!bg-gray-700
+  "
+                >
+                  Close
+                </Button>
+
+                <Button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(shareText);
+                      message.success("Share link copied.");
+                    } catch {
+                      message.error("Unable to copy share link.");
+                    }
+                  }}
+                  className="
+    h-12 rounded-lg
+    bg-gray-800 text-white border-none
+    hover:!bg-gray-700
+
+    dark:bg-gray-800
+    dark:text-white
+    dark:hover:!bg-gray-700
+  "
+                >
+                  Copy Link
+                </Button>
+                <Button
+                  icon={<WhatsAppOutlined />}
+                  onClick={() => {
+                    const whatsappUrl =
+                      "https://api.whatsapp.com/send?text=" +
+                      encodeURIComponent(shareText);
+
+                    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                  }}
+                  className="
+    h-12 rounded-lg
+    bg-gray-800 text-white border-none
+    hover:!bg-gray-700
+
+    dark:bg-gray-800
+    dark:text-white
+    dark:hover:!bg-gray-700
+  "
+                >
+                  WhatsApp
+                </Button>
+              </div>
+            </div>
+          </Modal>
+
+          {/* Sidebar */}
           <aside
-            className={`fixed right-0 top-0 h-full z-30 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-600 transition-all duration-300 overflow-y-auto`}
-            style={{
-              width: rightSidebarWidth,
-              right: 0,
-            }}
+            className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 transform transition-transform duration-200 ease-out ${
+              isXs && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
+            }`}
+            style={{ width: isXs ? 220 : sidebarOpen ? 240 : 60 }}
+            aria-label="Chat sidebar"
           >
-            {/* 💡 Inline glow animations for each color */}
-            <style>
-              {`
+            {/* ---------- TOP (HEADER + ACTION BUTTONS) ---------- */}
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
+                <GiElephantHead
+                  onClick={() => {
+                    // Check if we came from a specific store
+                    const state = location.state as any;
+                    if (state?.fromStore && state?.storeSlug) {
+                      navigate(`/all-ai-stores/${state.storeSlug}`);
+                    } else {
+                      navigate("/bharath-aistore");
+                    }
+                  }}
+                  title="Bharat AI Store"
+                  className={`h-7 w-7 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer ${
+                    !isXs && isCollapsed ? "hidden" : ""
+                  }`}
+                />
+                <div className="flex items-center gap-1">
+                  {/* Mobile close */}
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="sm:hidden inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    aria-label="Close sidebar"
+                  >
+                    <LuPanelRightClose className="h-7 w-7 text-gray-700 dark:text-gray-300" />
+                  </button>
+
+                  {/* Collapse toggle */}
+                  <button
+                    onClick={() => setSidebarOpen((v) => !v)}
+                    className="hidden sm:inline-flex p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    aria-label={
+                      isCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                    }
+                    title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  >
+                    {isCollapsed ? (
+                      <LuPanelRightClose className="w-7 h-7 text-black dark:text-white" />
+                    ) : (
+                      <LuPanelLeftClose className="w-7 h-7 text-black dark:text-white" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* ---------- BUTTONS + SEARCH (TOP FIXED) ---------- */}
+              <div className="flex-shrink-0 p-2 space-y-1 border-b border-gray-100 dark:border-gray-700">
+                {/* New Chat */}
+                <button
+                  onClick={handleNewChat}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="New Chat"
+                >
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="icon flex-shrink-0"
+                    aria-hidden="true"
+                  >
+                    {" "}
+                    <path
+                      fill="currentColor"
+                      d="M3.2024399999999997 13.5996V10.400388C3.2024399999999997 9.29346 3.202092 8.41446 3.2598599999999998 7.70742C3.318396 6.991344000000001 3.440388 6.3807719999999994 3.7251 5.821872L3.9102479999999997 5.491404C4.371264 4.7397 5.032704 4.12794 5.822748 3.725388L6.034859999999999 3.625788C6.535991999999999 3.410796 7.081595999999999 3.310188 7.708296 3.258984C8.415263999999999 3.201228 9.293339999999999 3.201564 10.4001 3.201564H11.0001C11.440716 3.201564 11.797979999999999 3.559032 11.798148 3.9996119999999995C11.798148 4.440335999999999 11.440824 4.79766 11.0001 4.79766H10.4001C9.26712 4.79766 8.465256 4.798007999999999 7.838375999999999 4.8492239999999995C7.375332 4.887048 7.047324 4.950816 6.787212 5.043755999999999L6.546971999999999 5.146872C6.01974 5.415515999999999 5.578463999999999 5.824139999999999 5.270796 6.325788L5.147748 6.5460959999999995C4.996656 6.84264 4.9005719999999995 7.219956 4.8501 7.8374999999999995C4.798872 8.464476 4.7985359999999995 9.26712 4.7985359999999995 10.400388V13.5996C4.7985359999999995 14.73288 4.798872 15.53556 4.8501 16.16256C4.9005719999999995 16.77996 4.9966680000000006 17.15736 5.147748 17.453879999999998L5.270796 17.6742C5.578452 18.1758 6.019775999999999 18.584519999999998 6.546971999999999 18.85308L6.787212 18.95628C7.047312000000001 19.04916 7.375368 19.1118 7.838375999999999 19.1496C8.465268 19.200839999999996 9.267071999999999 19.202399999999997 10.4001 19.202399999999997H13.60044C14.73348 19.202399999999997 15.535319999999999 19.200839999999996 16.1622 19.1496C16.77948 19.0992 17.15712 19.00404 17.45364 18.85308L17.67504 18.72888C18.1764 18.42132 18.58548 17.980919999999998 18.85404 17.453879999999998L18.95712 17.213639999999998C19.05012 16.953599999999998 19.11264 16.625519999999998 19.15044 16.16256C19.20168 15.53556 19.20204 14.73288 19.20204 13.5996V12.9996C19.20216 12.559199999999999 19.55964 12.20172 20.00004 12.2016C20.440679999999997 12.2016 20.79792 12.55908 20.79816 12.9996V13.5996C20.79816 14.706599999999998 20.79972 15.585479999999999 20.74188 16.29252C20.69064 16.919159999999998 20.59008 17.46492 20.37504 17.96604L20.27544 18.17808C19.873079999999998 18.96792 19.260839999999998 19.628519999999998 18.50952 20.08944L18.17904 20.274599999999996C17.61996 20.559479999999997 17.00868 20.682479999999998 16.292279999999998 20.741039999999998C15.58536 20.798759999999998 14.7072 20.7984 13.60044 20.7984H10.4001C9.293352 20.7984 8.415252 20.798759999999998 7.708296 20.741039999999998C7.08162 20.689799999999998 6.5359799999999995 20.589239999999997 6.034859999999999 20.3742L5.822748 20.274599999999996C5.0327519999999994 19.87212 4.371252 19.26024 3.9102479999999997 18.50856L3.7251 18.17808C3.4403639999999998 17.61924 3.3184080000000002 17.00868 3.2598599999999998 16.29252C3.202092 15.585479999999999 3.2024399999999997 14.706599999999998 3.2024399999999997 13.5996ZM16.15752 3.7359359999999997C17.304119999999998 2.8008 18.99456 2.867628 20.063399999999998 3.9363239999999995L20.2638 4.15782C21.13692 5.228219999999999 21.137159999999998 6.7730760000000005 20.2638 7.843356L20.063399999999998 8.06484L14.007119999999999 14.122319999999998C13.364759999999999 14.76468 12.55488 15.20952 11.673924 15.408959999999999L11.293068 15.47928L9.112212 15.78984C8.863644 15.825239999999999 8.612411999999999 15.74244 8.434859999999999 15.56484C8.257344 15.387239999999998 8.174387999999999 15.13608 8.209859999999999 14.887559999999999L8.521584 12.70776L8.591892 12.3258C8.79144 11.444988 9.236304 10.634892 9.878616 9.992579999999998L15.934919999999998 3.9363239999999995L16.15752 3.7359359999999997Z"
+                    />{" "}
+                  </svg>
+                  {(!isCollapsed || isXs) && <span>New Chat</span>}
+                </button>
+                {/* Create Agent */}
+                <button
+                  onClick={() => (window.location.href = "/main/agentcreate")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Create Agent"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="flex-shrink-0"
+                  >
+                    <path
+                      d="M12 5V19M5 12H19"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  {(!isCollapsed || isXs) && <span>Create Agent</span>}
+                </button>
+                {/* Explore Agents */}
+                <button
+                  onClick={() => (window.location.href = "/bharath-aistore")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Explore Agents"
+                >
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="icon flex-shrink-0"
+                    aria-hidden="true"
+                  >
+                    {" "}
+                    <path
+                      fill="currentColor"
+                      d="M7.94556 14.0277C7.9455 12.9376 7.06204 12.054 5.97192 12.054C4.88191 12.0542 3.99835 12.9376 3.99829 14.0277C3.99829 15.1177 4.88188 16.0012 5.97192 16.0013C7.06207 16.0013 7.94556 15.1178 7.94556 14.0277ZM16.0012 14.0277C16.0012 12.9376 15.1177 12.054 14.0276 12.054C12.9375 12.0541 12.054 12.9376 12.054 14.0277C12.054 15.1178 12.9375 16.0012 14.0276 16.0013C15.1177 16.0013 16.0012 15.1178 16.0012 14.0277ZM7.94556 5.97201C7.94544 4.88196 7.062 3.99837 5.97192 3.99837C4.88195 3.99849 3.99841 4.88203 3.99829 5.97201C3.99829 7.06208 4.88187 7.94552 5.97192 7.94564C7.06207 7.94564 7.94556 7.06216 7.94556 5.97201ZM16.0012 5.97201C16.0011 4.88196 15.1177 3.99837 14.0276 3.99837C12.9376 3.99843 12.0541 4.882 12.054 5.97201C12.054 7.06212 12.9375 7.94558 14.0276 7.94564C15.1177 7.94564 16.0012 7.06216 16.0012 5.97201ZM9.27563 14.0277C9.27563 15.8524 7.79661 17.3314 5.97192 17.3314C4.14734 17.3313 2.66821 15.8523 2.66821 14.0277C2.66827 12.2031 4.14737 10.7241 5.97192 10.724C7.79657 10.724 9.27558 12.203 9.27563 14.0277ZM17.3313 14.0277C17.3313 15.8524 15.8523 17.3314 14.0276 17.3314C12.203 17.3313 10.7239 15.8523 10.7239 14.0277C10.7239 12.2031 12.203 10.724 14.0276 10.724C15.8522 10.724 17.3312 12.203 17.3313 14.0277ZM9.27563 5.97201C9.27563 7.7967 7.79661 9.27572 5.97192 9.27572C4.14734 9.2756 2.66821 7.79662 2.66821 5.97201C2.66833 4.14749 4.14741 2.66841 5.97192 2.6683C7.79654 2.6683 9.27552 4.14742 9.27563 5.97201ZM17.3313 5.97201C17.3313 7.79669 15.8523 9.27572 14.0276 9.27572C12.203 9.27566 10.7239 7.79666 10.7239 5.97201C10.724 4.14746 12.203 2.66836 14.0276 2.6683C15.8522 2.6683 17.3312 4.14742 17.3313 5.97201Z"
+                    />{" "}
+                  </svg>
+                  {(!isCollapsed || isXs) && <span>Explore Agents</span>}
+                </button>
+                <button
+                  onClick={() => (window.location.href = "/all-ai-stores")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Explore AI Stores"
+                >
+                  <AiFillAppstore className="h-5 w-5" />
+                  {(!isCollapsed || isXs) && <span>Explore AI Stores</span>}
+                </button>{" "}
+                <button
+                  onClick={() => (window.location.href = "/usercreateaistore")}
+                  className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-md text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isCollapsed && !isXs ? "justify-center" : "justify-start"
+                  }`}
+                  title="Create AI Store"
+                >
+                  <HiSparkles className="h-5 w-5" />
+                  {(!isCollapsed || isXs) && <span>Create AI Store</span>}
+                    
+                </button>
+                {/* Search */}
+                {isCollapsed && !isXs ? (
+                  <button
+                    className="w-10 h-10 mx-auto flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    onClick={() => setSidebarOpen(true)}
+                    title="Search"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                ) : (
+                  <div className="relative w-full">
+                    <input
+                      value={historySearch}
+                      onChange={(e) => setHistorySearch(e.target.value)}
+                      placeholder="Search chats"
+                      className="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pr-10 pl-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <svg
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <path
+                        d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-2 pb-24 overflow-y-auto h-[calc(100vh-56px-48px-64px-56px)]">
+                {!isCollapsed || isXs ? (
+                  <>
+                    <div className="p-3 space-y-3 text-xs text-gray-500">
+                      Chat History
+                    </div>
+
+                    {historyLoading ? (
+                      <div className="p-3 space-y-3">
+                        {[...Array(6)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : filteredHistory.length === 0 ? (
+                      <div className="text-xs text-gray-500 px-2 py-8">
+                        No chats yet.
+                      </div>
+                    ) : (
+                      <ul className="space-y-1">
+                        {filteredHistory.map((h) => (
+                          <li key={h.id} className="group">
+                            <button
+                              className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-start gap-3 transition-colors ${
+                                h.id === currentChatId
+                                  ? "bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500"
+                                  : ""
+                              }`}
+                              onClick={() => openHistoryChat(h.id)}
+                              title={h.title}
+                            >
+                              <div className="flex flex-col flex-1 min-w-0 pt-1">
+                                <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {h.title}
+                                </span>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <ul className="space-y-2 mt-3">
+                    {filteredHistory.map((h) => (
+                      <li key={h.id} className="flex justify-center">
+                        <button
+                          className={`w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 transition ${
+                            h.id === currentChatId
+                              ? "ring-2 ring-blue-500 ring-inset"
+                              : ""
+                          }`}
+                          title={h.title}
+                          onClick={() => openHistoryChat(h.id)}
+                        >
+                          {(h.title || "?").trim().charAt(0).toUpperCase()}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* ---------- FOOTER (FIXED LOGOUT BUTTON) ---------- */}
+              {/* <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2">
+                <button
+                  onClick={handleLogout}
+                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {(!isCollapsed || isXs) && (
+                    <span className="text-sm font-semibold">Log out</span>
+                  )}
+                </button>
+              </div> */}
+              {/* ---------- FOOTER: PROFILE (LIKE CHATGPT) ---------- */}
+              {/* ---------- FOOTER: PROFILE DROPDOWN (LIKE CHATGPT) ---------- */}
+              {/* ---------- FOOTER: PROFILE DROPDOWN (LIKE CHATGPT) ---------- */}
+              <div
+                ref={profileMenuRef}
+                className="flex-shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur p-2 relative"
+              >
+                {/* Profile button at bottom of sidebar */}
+                <button
+                  onClick={() => setShowProfileMenu((v) => !v)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {/* Avatar circle with initials – ALWAYS visible (even when collapsed) */}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-xs font-semibold text-white">
+                    {profileInitials}
+                  </div>
+
+                  {/* Name + email – hidden when collapsed on desktop, visible on mobile */}
+                  {(!isCollapsed || isXs) && (
+                    <div className="flex flex-col min-w-0 text-left">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {profileDisplayName}
+                      </span>
+                      {profile?.customerEmail && (
+                        <span className="text-xs text-gray-500 truncate">
+                          {profile.customerEmail}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Three dots – ONLY show when sidebar is expanded or on mobile */}
+                  {(!isCollapsed || isXs) && (
+                    <div
+                      className="ml-auto p-2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-colors"
+                      aria-label="Open profile menu"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Small dropdown panel ABOVE the button, like ChatGPT */}
+                {showProfileMenu && (
+                  <div className="absolute bottom-14 left-2 right-2 rounded-2xl bg-white shadow-2xl border border-gray-200 dark:bg-gray-900 dark:border-gray-700 py-2">
+                    {/* Top: name + avatar */}
+                    <div className="flex items-center gap-3 px-3 pb-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-xs font-semibold text-white">
+                        {profileInitials}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                          {profileDisplayName}
+                        </span>
+                        {profile?.customerEmail && (
+                          <span className="text-xs text-gray-500 truncate">
+                            {profile.customerEmail}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+
+                    {/* Logout row */}
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 font-medium"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </aside>
+          {/* FIXED: Right Sidebar Toggle Button */}
+          {!isXs && (
+            <button
+              onClick={() => setRightSidebarOpen((prev) => !prev)}
+              className="fixed top-1/2 -translate-y-1/2 z-30 w-6 h-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 animate-pulse rounded-full shadow-md"
+              style={{
+                right: `${rightSidebarOpen ? RIGHT_SIDEBAR_WIDTH : 0}px`,
+              }}
+              title={
+                rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
+              }
+            >
+              <LuPanelRightClose
+                className="w-5 h-5 text-purple-600 dark:text-purple-400"
+                style={{
+                  transform: rightSidebarOpen
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+                }}
+              />
+            </button>
+          )}
+          {userId && !isXs && rightSidebarOpen && (
+            <aside
+              className={`fixed right-0 top-0 h-full z-30 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-600 transition-all duration-300 overflow-y-auto`}
+              style={{
+                width: rightSidebarWidth,
+                right: 0,
+              }}
+            >
+              {/* 💡 Inline glow animations for each color */}
+              <style>
+                {`
       @keyframes glowPurple {
         0%, 100% {
           box-shadow: 0 0 6px rgba(168, 85, 247, 0.3),
@@ -2210,389 +3339,399 @@ const TestAgentDetails: React.FC = () => {
         border-radius: 0.75rem;
       }
     `}
-            </style>
+              </style>
 
-            {/* Right sidebar content */}
-            <div className="p-4">
-              <div className="space-y-3">
-                {promos.map((p, index) => {
-                  // Assign different glow classes based on index
-                  const glowClasses = [
-                    "glow-purple",
-                    "glow-blue",
-                    "glow-green",
-                    "glow-orange",
-                  ];
-                  const glowClass = glowClasses[index % glowClasses.length]; // loops if >4
+              {/* Right sidebar content */}
+              <div className="p-4">
+                <div className="space-y-3">
+                  {promos.map((p, index) => {
+                    // Assign different glow classes based on index
+                    const glowClasses = [
+                      "glow-purple",
+                      "glow-blue",
+                      "glow-green",
+                      "glow-orange",
+                    ];
+                    const glowClass = glowClasses[index % glowClasses.length]; // loops if >4
 
-                  return (
-                    <div
-                      key={p.id}
-                      className={`bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden cursor-pointer shadow-sm transition ${glowClass}`}
-                      onClick={() => openPromo(p.href)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === "Enter" && openPromo(p.href)}
-                    >
-                      <img
-                        src={p.src}
-                        alt={p.alt}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        className="w-full h-32 object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            "data:image/svg+xml;charset=UTF-8," +
-                            encodeURIComponent(
-                              `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='200'>
+                    return (
+                      <div
+                        key={p.id}
+                        className={`bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden cursor-pointer shadow-sm transition ${glowClass}`}
+                        onClick={() => openPromo(p.href)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && openPromo(p.href)
+                        }
+                      >
+                        <img
+                          src={p.src}
+                          alt={p.alt}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-32 object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "data:image/svg+xml;charset=UTF-8," +
+                              encodeURIComponent(
+                                `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='200'>
                       <rect width='100%' height='100%' fill='#eee'/>
                       <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#999' font-family='Arial' font-size='16'>
                         Image unavailable
                       </text>
-                    </svg>`
-                            );
-                        }}
-                      />
-                      <div className="p-3">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">
-                          {p.alt}
-                        </h3>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </aside>
-        )}
-        {/* Overlay */}
-        <div
-          className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${
-            overlayVisible
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => {
-            setSidebarOpen(false);
-            setRightSidebarOpen(false);
-          }}
-          aria-hidden
-        />
-
-        {/* Main */}
-        <main
-          className={`flex flex-col bg-white dark:bg-gray-800 transition-all duration-200 min-h-[calc(100vh-var(--header))] ${
-            isXs ? "" : `ml-[${leftOffset}px] mr-[${rightOffset}px]`
-          }`}
-          style={{
-            marginLeft: effectiveLeftOffset,
-            marginRight: effectiveRightOffset,
-            width: effectiveContentWidth1,
-            ["--header" as any]: `${HEADER_HEIGHT}px`,
-          }}
-        >
-          {assistant && messages.length === 0 && (
-            <section
-              className="w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 mt-6"
-              aria-label="Assistant info"
-            >
-              <div className="rounded-lg bg-white dark:bg-gray-900 p-4 sm:p-5 flex flex-col items-center text-center">
-                {/* 1) Image */}
-                <div className="flex items-center justify-center">
-                  {assistant?.profileUrl ? (
-                    <img
-                      src={assistant.profileUrl}
-                      alt={assistant.name}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow">
-                      <GiElephantHead className="w-8 h-8 text-white" />
-                    </div>
-                  )}
-                </div>
-
-                {/* 2) Name */}
-                <h1 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
-                  {assistant.name}
-                </h1>
-
-                {/* 3) Description */}
-                {assistant.description ? (
-                  <p className="mt-1 text-sm sm:text-[15px] text-gray-700 dark:text-gray-300">
-                    {assistant.description}
-                  </p>
-                ) : null}
-
-                {/* 4) Ratings */}
-                <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm pb-8">
-                  <span className="text-gray-700 dark:text-gray-200">
-                    <strong>My rating:</strong>{" "}
-                    {hasRated && myRating != null && myRating > 0
-                      ? `${myRating.toFixed(1)}/5`
-                      : "—"}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-300">|</span>
-                  <span className="text-gray-700 dark:text-gray-200">
-                    <strong>Overall:</strong>{" "}
-                    {overallCount > 0 && overallAvg > 0
-                      ? `${overallAvg.toFixed(1)}/5 (${overallCount})`
-                      : "Not rated yet"}
-                  </span>
-
-                  {!alreadyRated && (
-                    <div className="flex justify-center">
-                      <button
-                        onClick={() => {
-                          if (alreadyRated) {
-                            message.info("You’ve already rated this agent.");
-                            return;
-                          }
-                          setShowRatingModal(true);
-                        }}
-                        disabled={loadingRatings}
-                        title="Rate & Comments"
-                        aria-label="Rate and add comments"
-                        className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md bg-purple-600 text-white font-medium text-sm shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors"
-                      >
-                        <StarIcon className="w-4 h-4 shrink-0" />
-                        <span>Rate</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* 5) Conversation starters — moved here to sit just under ratings */}
-                {visiblePrompts.length > 0 && (
-                  <div className="w-full mt-3">
-                    {(() => {
-                      const countToShow = isXs
-                        ? Math.min(2, visiblePrompts.length)
-                        : Math.min(4, visiblePrompts.length);
-                      const promptsToShow = visiblePrompts.slice(
-                        0,
-                        countToShow
-                      );
-                      const colClass =
-                        countToShow === 1
-                          ? "grid-cols-1 max-w-xs"
-                          : countToShow === 2
-                          ? "grid-cols-2 max-w-lg"
-                          : countToShow === 3
-                          ? "grid-cols-3 max-w-3xl"
-                          : "grid-cols-4 max-w-5xl";
-                      return (
-                        <div className={`grid gap-3 ${colClass} mx-auto`}>
-                          {promptsToShow.map((prompt, idx) => (
-                            <button
-                              key={`${prompt}-${idx}`}
-                              onClick={() => handlePromptClick(prompt)}
-                              className="p-4 rounded-lg shadow bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-indigo-800 transition text-gray-700 dark:text-white text-left text-sm touch-manipulation"
-                              style={{ WebkitTapHighlightColor: "transparent" }}
-                              title={prompt}
-                            >
-                              {prompt}
-                            </button>
-                          ))}
+                    </svg>`,
+                              );
+                          }}
+                        />
+                        <div className="p-3">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">
+                            {p.alt}
+                          </h3>
                         </div>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-          {/* Rating Modal */}
-          <Modal
-            title="Rate & Comments"
-            open={showRatingModal}
-            onCancel={() => setShowRatingModal(false)}
-            footer={
-              hasRated
-                ? []
-                : [
-                    <button
-                      key="submit"
-                      className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                      disabled={
-                        submittingRating || !(myRating && myRating >= 1)
-                      }
-                      onClick={submitMyRating}
-                    >
-                      {submittingRating ? "Submitting..." : "Submit"}
-                    </button>,
-                  ]
-            }
-          >
-            <div className="space-y-3">
-              {/* Mine (interactive) */}
-              <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Rate this Agent
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="mt-1 flex items-center gap-3">
-                  <StarRow
-                    value={myRating ?? 0} // stays 0 (NOT 5) until user picks
-                    onChange={hasRated ? undefined : (v) => setMyRating(v)}
-                    readOnly={hasRated || submittingRating}
-                    size={22}
-                  />
-                  {!hasRated && (
-                    <span className="text-xs text-gray-500">
-                      Select 1–5 stars
+              </div>
+            </aside>
+          )}
+          {/* Overlay */}
+          <div
+            className={`fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity ${
+              overlayVisible
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }`}
+            onClick={() => {
+              setSidebarOpen(false);
+              setRightSidebarOpen(false);
+            }}
+            aria-hidden
+          />
+
+          {/* Main */}
+          <main
+            className={`flex flex-col bg-white dark:bg-gray-800 transition-all duration-200 min-h-[calc(100vh-var(--header))] ${
+              isXs ? "" : `ml-[${leftOffset}px] mr-[${rightOffset}px]`
+            }`}
+            style={{
+              marginLeft: leftOffset, // desktop pushes content, mobile stays 0 (overlay pattern)
+              paddingTop: 56, // header height (h-14)
+              marginRight: effectiveRightOffset,
+              width: effectiveContentWidth1,
+              ["--header" as any]: `${HEADER_HEIGHT}px`,
+            }}
+          >
+            {assistant && messages.length === 0 && (
+              <section
+                className="w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 mt-6"
+                aria-label="Assistant info"
+              >
+                <div className="rounded-lg bg-white dark:bg-gray-900 p-4 sm:p-5 flex flex-col items-center text-center">
+                  {/* 1) Image */}
+                  <div className="flex items-center justify-center">
+                    {assistant?.profileUrl ? (
+                      <img
+                        src={assistant.profileUrl}
+                        alt={assistant.name}
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow">
+                        <GiElephantHead className="w-8 h-8 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2) Name */}
+                  <h1 className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
+                    {assistant.name}
+                  </h1>
+
+                  {/* 3) Description */}
+                  {assistant.description ? (
+                    <p className="mt-1 text-sm sm:text-[15px] text-gray-700 dark:text-gray-300">
+                      {assistant.description}
+                    </p>
+                  ) : null}
+
+                  {/* 4) Ratings */}
+                  <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm pb-8">
+                    <span className="text-gray-700 dark:text-gray-200">
+                      <strong>My rating:</strong>{" "}
+                      {hasRated && myRating != null && myRating > 0
+                        ? `${myRating.toFixed(1)}/5`
+                        : "—"}
                     </span>
+                    <span className="text-gray-600 dark:text-gray-300">|</span>
+                    <span className="text-gray-700 dark:text-gray-200">
+                      <strong>Overall:</strong>{" "}
+                      {overallCount > 0 && overallAvg > 0
+                        ? `${overallAvg.toFixed(1)}/5 (${overallCount})`
+                        : "Not rated yet"}
+                    </span>
+
+                    {!alreadyRated && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => {
+                            if (alreadyRated) {
+                              message.info("You’ve already rated this agent.");
+                              return;
+                            }
+                            setShowRatingModal(true);
+                          }}
+                          disabled={loadingRatings}
+                          title="Rate & Comments"
+                          aria-label="Rate and add comments"
+                          className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md bg-purple-600 text-white font-medium text-sm shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors"
+                        >
+                          <StarIcon className="w-4 h-4 shrink-0" />
+                          <span>Rate</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 5) Conversation starters — moved here to sit just under ratings */}
+                  {visiblePrompts.length > 0 && (
+                    <div className="w-full mt-3">
+                      {(() => {
+                        const countToShow = isXs
+                          ? Math.min(2, visiblePrompts.length)
+                          : Math.min(4, visiblePrompts.length);
+                        const promptsToShow = visiblePrompts.slice(
+                          0,
+                          countToShow,
+                        );
+                        const colClass =
+                          countToShow === 1
+                            ? "grid-cols-1 max-w-xs"
+                            : countToShow === 2
+                              ? "grid-cols-2 max-w-lg"
+                              : countToShow === 3
+                                ? "grid-cols-3 max-w-3xl"
+                                : "grid-cols-4 max-w-5xl";
+                        return (
+                          <div className={`grid gap-3 ${colClass} mx-auto`}>
+                            {promptsToShow.map((prompt, idx) => (
+                              <button
+                                key={`${prompt}-${idx}`}
+                                onClick={() => handlePromptClick(prompt)}
+                                className="p-4 rounded-lg shadow bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-indigo-800 transition text-gray-700 dark:text-white text-left text-sm touch-manipulation"
+                                style={{
+                                  WebkitTapHighlightColor: "transparent",
+                                }}
+                                title={prompt}
+                              >
+                                {prompt}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   )}
                 </div>
-              </div>
-
-              {/* Comment */}
-              <div>
-                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {hasRated ? "Comment" : "Comments (optional)"}
+              </section>
+            )}
+            {/* Rating Modal */}
+            <Modal
+              title="Rate & Comments"
+              open={showRatingModal}
+              onCancel={() => setShowRatingModal(false)}
+              footer={
+                hasRated
+                  ? []
+                  : [
+                      <button
+                        key="submit"
+                        className="px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                        disabled={
+                          submittingRating || !(myRating && myRating >= 1)
+                        }
+                        onClick={submitMyRating}
+                      >
+                        {submittingRating ? "Submitting..." : "Submit"}
+                      </button>,
+                    ]
+              }
+            >
+              <div className="space-y-3">
+                {/* Mine (interactive) */}
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Rate this Agent
+                  </div>
+                  <div className="mt-1 flex items-center gap-3">
+                    <StarRow
+                      value={myRating ?? 0} // stays 0 (NOT 5) until user picks
+                      onChange={hasRated ? undefined : (v) => setMyRating(v)}
+                      readOnly={hasRated || submittingRating}
+                      size={22}
+                    />
+                    {!hasRated && (
+                      <span className="text-xs text-gray-500">
+                        Select 1–5 stars
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <textarea
-                  className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm"
-                  placeholder="Write something…"
-                  value={myComment}
-                  onChange={(e) => setMyComment(e.target.value)}
-                  rows={3}
-                  readOnly={hasRated}
-                />
+
+                {/* Comment */}
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {hasRated ? "Comment" : "Comments (optional)"}
+                  </div>
+                  <textarea
+                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm"
+                    placeholder="Write something…"
+                    value={myComment}
+                    onChange={(e) => setMyComment(e.target.value)}
+                    rows={3}
+                    readOnly={hasRated}
+                  />
+                </div>
               </div>
-            </div>
-          </Modal>
+            </Modal>
 
-          {/* Content area */}
-          {isFetchingAssistant ? (
-            <div className="flex-1 grid place-items-center min-h-[calc(100vh-56px)]">
-              <Loader2 className="animate-spin w-8 h-8 text-purple-700 dark:text-white" />
-            </div>
-          ) : (
-            <>
-              {/* ======= Conversation ======= */}
-              <div className="flex-1 w-full">
-                <div className="mx-auto w-full max-w-4xl px-3 sm:px-2 lg:px-2 pt-2 sm:pt-4 pb-[7.5rem]">
-                  {messages.length === 0 ? (
-                    <div className="pt-1" />
-                  ) : (
-                    <>
-                      {messages.map((msg, idx) => {
-                        // Check if this is the last user message and tools are running
-                        const isLastUserMessage =
-                          msg.role === "user" &&
-                          idx === messages.length - 1 &&
-                          isToolRunning;
+            {/* Subscription Modal */}
+            <SubscriptionModal
+              open={showSubscriptionModal}
+              onCancel={() => setShowSubscriptionModal(false)}
+              subscriptionPlans={subscriptionPlans}
+              // loadingPlans={loadingPlans}
+              agentId={agentId || ""}
+              userId={userId || ""}
+            />
 
-                        // Check if this is the user message before an assistant message being streamed
-                        const isUserBeforeStreaming =
-                          msg.role === "user" &&
-                          idx === messages.length - 2 &&
-                          messages[idx + 1]?.role === "assistant" &&
-                          isToolRunning;
-
-                        return (
-                          <React.Fragment key={idx}>
-                            {msg.role === "user" ? (
-                              <div
-                                className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${
-                                  editingIndex === idx ? "w-full" : ""
-                                }`}
-                              >
-                                {editingIndex === idx ? (
-                                  <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
-                                    <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-2xl p-4 shadow-md">
-                                      <div className="flex items-start gap-3">
-                                        <div className="flex-1 min-w-0">
-                                          <textarea
-                                            className="w-full text-[13px] sm:text-sm resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 overflow-auto p-1 max-h-[32dvh]"
-                                            style={{ minHeight: "20px" }}
-                                            value={editingContent}
-                                            onChange={(e) =>
-                                              setEditingContent(e.target.value)
-                                            }
-                                            onInput={(e) => {
-                                              const target =
-                                                e.target as HTMLTextAreaElement;
-                                              target.style.height = "auto";
-                                              target.style.height =
-                                                target.scrollHeight + "px";
-                                            }}
-                                            placeholder="Edit your message..."
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <button
-                                          onClick={() => {
-                                            setEditingIndex(null);
-                                            setEditingContent("");
-                                          }}
-                                          className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        >
-                                          Cancel
-                                        </button>
-                                        <button
-                                          onClick={() =>
-                                            handleEditSave(idx, editingContent)
+            {/* Content area */}
+            {isFetchingAssistant ? (
+              <div className="flex-1 grid place-items-center min-h-[calc(100vh-56px)]">
+                <Loader2 className="animate-spin w-8 h-8 text-purple-700 dark:text-white" />
+              </div>
+            ) : (
+              <>
+                {/* ======= Conversation ======= */}
+                {/* {isSharedChatView && (
+                  <div className="mx-auto w-full max-w-4xl px-3 sm:px-2 lg:px-2 pt-3">
+                    <div className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-900 shadow-sm">
+                      <strong>Shared Chat:</strong> You are viewing a shared conversation.
+                      You can continue below — your next message will start a new chat in your account.
+                    </div>
+                  </div>
+                )} */}
+                <div className="flex-1 w-full">
+                  <div className="mx-auto w-full max-w-4xl px-3 sm:px-2 lg:px-2 pt-2 sm:pt-4 pb-[7.5rem]">
+                    {messages.length === 0 ? (
+                      <div className="pt-1" />
+                    ) : (
+                      <>
+                        {messages.map((msg, idx) =>
+                          msg.role === "user" ? (
+                            <div
+                              key={idx}
+                              className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${
+                                editingIndex === idx ? "w-full" : ""
+                              }`}
+                            >
+                              {editingIndex === idx ? (
+                                <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
+                                  <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-2xl p-4 shadow-md">
+                                    <div className="flex items-start gap-3">
+                                      <div className="flex-1 min-w-0">
+                                        <textarea
+                                          className="w-full text-[13px] sm:text-sm resize-none bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 overflow-auto p-1 max-h-[32dvh]"
+                                          style={{ minHeight: "20px" }}
+                                          value={editingContent}
+                                          onChange={(e) =>
+                                            setEditingContent(e.target.value)
                                           }
-                                          disabled={!editingContent.trim()}
-                                          className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                          Save
-                                        </button>
+                                          onInput={(e) => {
+                                            const target =
+                                              e.target as HTMLTextAreaElement;
+                                            target.style.height = "auto";
+                                            target.style.height =
+                                              target.scrollHeight + "px";
+                                          }}
+                                          placeholder="Edit your message..."
+                                        />
                                       </div>
                                     </div>
+                                    <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                      <button
+                                        onClick={() => {
+                                          setEditingIndex(null);
+                                          setEditingContent("");
+                                        }}
+                                        className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          handleEditSave(idx, editingContent)
+                                        }
+                                        disabled={!editingContent.trim()}
+                                        className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                      >
+                                        Save
+                                      </button>
+                                    </div>
                                   </div>
-                                ) : (
-                                  <>
-                                    <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative group">
-                                      <MarkdownRenderer
-                                        key={idx + msg.content.length}
-                                        content={msg.content}
-                                      />
-                                      <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                        <button
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(
-                                              msg.content
-                                            );
-                                            message.success(
-                                              "Copied to clipboard"
-                                            );
-                                          }}
-                                          className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                          title="Copy"
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white relative group">
+                                    <MarkdownRenderer
+                                      content={cleanContent(msg.content)}
+                                    />
+
+                                    <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            msg.content,
+                                          );
+                                          message.success(
+                                            "Copied to clipboard",
+                                          );
+                                        }}
+                                        className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                        title="Copy"
+                                      >
+                                        <svg
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="w-4 h-4"
+                                          aria-hidden="true"
                                         >
-                                          <svg
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="w-4 h-4"
-                                            aria-hidden="true"
-                                          >
-                                            <rect
-                                              x="9"
-                                              y="9"
-                                              width="13"
-                                              height="13"
-                                              rx="2"
-                                              ry="2"
-                                              stroke="currentColor"
-                                              strokeWidth="2"
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                            />
-                                            <path
-                                              d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                                              stroke="currentColor"
-                                              strokeWidth="2"
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                            />
-                                          </svg>
-                                        </button>
+                                          <rect
+                                            x="9"
+                                            y="9"
+                                            width="13"
+                                            height="13"
+                                            rx="2"
+                                            ry="2"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                          <path
+                                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                        </svg>
+                                      </button>
+                                      {!isSharedChatView && (
                                         <button
                                           onClick={() => handleEdit(idx)}
                                           className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
@@ -2623,115 +3762,107 @@ const TestAgentDetails: React.FC = () => {
                                             />
                                           </svg>
                                         </button>
-                                      </div>
-                                    </div>
-                                    <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white mt-2">
-                                      <svg
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="w-5 h-5"
-                                        aria-hidden="true"
-                                      >
-                                        <path
-                                          d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                        <circle
-                                          cx="12"
-                                          cy="7"
-                                          r="4"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          fill="none"
-                                        />
-                                      </svg>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="flex mb-3 sm:mb-4 justify-start gap-2">
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-400 to-cyan-400 text-white mt-1">
-                                  <GiElephantHead className="w-5 h-5" />
-                                </div>
-                                <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-                                  <div className="items-start gap-2 flex-1">
-                                    <MarkdownRenderer
-                                      content={msg.content}
-                                      isStreaming={
-                                        loading && idx === messages.length - 1
-                                      }
-                                    />
-                                  </div>
-                                  <div className="flex justify-end gap-2 mt-2">
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(
-                                          msg.content
-                                        );
-                                        message.success("Copied to clipboard");
-                                      }}
-                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                      title="Copy"
-                                    >
-                                      <Copy className="w-4 h-4" />
-                                    </button>
-
-                                    <button
-                                      onClick={async () => {
-                                        if (navigator.share) {
-                                          try {
-                                            await navigator.share({
-                                              title:
-                                                assistant?.name || "Assistant",
-                                              text: msg.content,
-                                            });
-                                          } catch (err) {
-                                            console.error(
-                                              "Share cancelled or failed:",
-                                              err
-                                            );
-                                          }
-                                        } else {
-                                          navigator.clipboard.writeText(
-                                            msg.content
-                                          );
-                                          message.info(
-                                            "Copied text to share manually"
-                                          );
-                                        }
-                                      }}
-                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                      title="Share"
-                                    >
-                                      <Share2 className="w-4 h-4" />
-                                    </button>
-
-                                    <button
-                                      onClick={() =>
-                                        handleReadAloud(msg.content, idx)
-                                      }
-                                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
-                                      title={
-                                        speakingIdx === idx
-                                          ? "Stop Reading"
-                                          : "Read Aloud"
-                                      }
-                                    >
-                                      {speakingIdx === idx ? (
-                                        <Square className="w-4 h-4" />
-                                      ) : (
-                                        <Volume2 className="w-4 h-4" />
                                       )}
-                                    </button>
+                                    </div>
+                                  </div>
+                                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white mt-2">
+                                    <svg
+                                      width="20"
+                                      height="20"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-5 h-5"
+                                      aria-hidden="true"
+                                    >
+                                      <path
+                                        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                      <circle
+                                        cx="12"
+                                        cy="7"
+                                        r="4"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        fill="none"
+                                      />
+                                    </svg>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div
+                              key={idx}
+                              className="flex mb-3 sm:mb-4 justify-start gap-2"
+                            >
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-400 to-cyan-400 text-white mt-1">
+                                <GiElephantHead className="w-5 h-5" />
+                              </div>
+                              <div className="max-w-[85%] w-full group rounded-2xl p-3 shadow-md bg-white text-purple-700 dark:bg-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
+                                <div className="items-start gap-2 flex-1">
+                                  <MarkdownRenderer
+                                    content={cleanContent(msg.content)}
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2 mt-2">
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(
+                                        cleanContent(msg.content),
+                                      );
+                                      message.success("Copied to clipboard");
+                                    }}
+                                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                    title="Copy"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
 
-                                    {idx === messages.length - 1 && (
+                                  {/* <button
+                                    onClick={() => {
+                                      const text = `🤖 ${assistant?.name || "AI Agent"} — Shared Snippet
+
+${msg.content}
+
+🔗 Bharat AI Store`;
+                                      setShareText(text);
+                                      setShareTitle("Share Message");
+                                      setShowShareQuestion(true);
+                                    }}
+                                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                    title="Share"
+                                  >
+                                    <Share2 className="w-4 h-4" />
+                                  </button> */}
+
+                                  <button
+                                    onClick={() =>
+                                      handleReadAloud(
+                                        cleanContent(msg.content),
+                                        idx,
+                                      )
+                                    }
+                                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
+                                    title={
+                                      speakingIdx === idx
+                                        ? "Stop Reading"
+                                        : "Read Aloud"
+                                    }
+                                  >
+                                    {speakingIdx === idx ? (
+                                      <Square className="w-4 h-4" />
+                                    ) : (
+                                      <Volume2 className="w-4 h-4" />
+                                    )}
+                                  </button>
+
+                                  {!isSharedChatView &&
+                                    idx === messages.length - 1 && (
                                       <button
                                         onClick={() => handleRegenerate(idx)}
                                         className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-700 dark:text-white"
@@ -2740,483 +3871,314 @@ const TestAgentDetails: React.FC = () => {
                                         <RefreshCcw className="w-4 h-4" />
                                       </button>
                                     )}
-                                  </div>
                                 </div>
                               </div>
-                            )}
-
-                            {(isLastUserMessage || isUserBeforeStreaming) &&
-                              isToolRunning &&
-                              !isShowingFinalText && (
-                                <div className="flex justify-start mb-3 sm:mb-4">
-                                  <div className="flex-shrink-0 w-8 h-8"></div>
-                                  <div
-                                    className={`max-w-[85%] rounded-2xl p-3 shadow-md transition-all duration-300 ${
-                                      streamType === "code"
-                                        ? "bg-gray-900 text-green-300 font-mono"
-                                        : streamType === "file"
-                                        ? "bg-blue-900 text-blue-200"
-                                        : "bg-gray-800 text-gray-200"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <div className="flex items-center gap-1">
-                                        <span className="w-1 h-4 bg-current rounded-full animate-pulse-wave"></span>
-                                        <span className="w-1 h-6 bg-current rounded-full animate-pulse-wave animation-delay-150"></span>
-                                        <span className="w-1 h-8 bg-current rounded-full animate-pulse-wave animation-delay-300"></span>
-                                      </div>
-                                      <span className="text-xs font-semibold uppercase">
-                                        {streamType === "code"
-                                          ? "💻 Executing Code"
-                                          : streamType === "file"
-                                          ? "🔍 Searching Files"
-                                          : "🧠 Processing"}
-                                      </span>
-                                    </div>
-                                    <pre className="whitespace-pre-wrap text-sm overflow-auto max-h-64 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
-                                      {toolStream}
-                                    </pre>
-                                  </div>
-                                </div>
-                              )}
-                            {/* ✅ CHANGED: Show files only for messages that generated them */}
-                            {msg.role === "assistant" &&
-                              messageFileIds[idx] &&
-                              messageFileIds[idx].length > 0 && (
-                                <div className="flex justify-start mb-3 sm:mb-4">
-                                  <div className="flex-shrink-0 w-8 h-8"></div>
-                                  <div className="max-w-[85%] rounded-2xl p-3 shadow-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600">
-                                    <div className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-2">
-                                      📊 Generated Visualizations
-                                    </div>
-                                    <div className="space-y-3">
-                                      {messageFileIds[idx].map((fileId) => (
-                                        <div
-                                          key={fileId}
-                                          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
-                                        >
-                                          {loadingFiles.has(fileId) ? (
-                                            <div className="flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-800">
-                                              <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
-                                              <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                                                Loading chart...
-                                              </span>
-                                            </div>
-                                          ) : fileImages[fileId] ? (
-                                            <img
-                                              src={fileImages[fileId]}
-                                              alt={`Generated visualization ${fileId}`}
-                                              className="w-full h-auto"
-                                              onError={(e) => {
-                                                console.error(
-                                                  "Image load error:",
-                                                  fileId
-                                                );
-                                                e.currentTarget.src =
-                                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCI+PHRleHQgeD0iNTAiIHk9IjUwIj5FcnJvciBsb2FkaW5nIGltYWdlPC90ZXh0Pjwvc3ZnPg==";
-                                              }}
-                                            />
-                                          ) : (
-                                            <div className="p-4 text-sm text-gray-500 dark:text-gray-400">
-                                              Failed to load visualization
-                                            </div>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                          </React.Fragment>
-                        );
-                      })}
-
-                      {loading && !isToolRunning && (
-                        <div className="flex justify-start mb-3 sm:mb-4">
-                          <div className="flex items-center gap-3 px-4 py-3 dark:bg-gray-800">
-                            <div className="flex items-center gap-1">
-                              <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave"></span>
-                              <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-150"></span>
-                              <span className="w-1 h-8 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-300"></span>
-                              <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-450"></span>
-                              <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-600"></span>
                             </div>
-                            <span
-                              className="text-sm text-gray-600 dark:text-gray-300 font-bold ml-2 transition-opacity duration-300"
-                              aria-live="polite"
-                            >
-                              {loadingMessages[loadingMessageIndex]}
-                            </span>
+                          ),
+                        )}
+                        {loading && (
+                          <div className="flex justify-start mb-3 sm:mb-4">
+                            <div className="flex items-center gap-3 px-4 py-3  dark:bg-gray-800 ">
+                              {/* Option 2: Pulse wave */}
+                              <div className="flex items-center gap-1">
+                                <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave"></span>
+                                <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-150"></span>
+                                <span className="w-1 h-8 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-300"></span>
+                                <span className="w-1 h-6 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-450"></span>
+                                <span className="w-1 h-4 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full animate-pulse-wave animation-delay-600"></span>
+                              </div>
+
+                              {/* Thinking text */}
+                              <span
+                                className="text-sm text-gray-600 dark:text-gray-300 font-bold ml-2 transition-opacity duration-300"
+                                aria-live="polite"
+                              >
+                                {loadingMessages[loadingMessageIndex]}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      <style>
-                        {`
-/* Typing dots animation */
-@keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
-  30% { transform: translateY(-10px); opacity: 1; }
-}
-.animate-typing {
-  animation: typing 1.4s infinite ease-in-out;
-}
+                        <style>
+                          {`
+    /* Typing dots animation */
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
+      30% { transform: translateY(-10px); opacity: 1; }
+    }
+    .animate-typing {
+      animation: typing 1.4s infinite ease-in-out;
+    }
 
-/* Pulse wave animation */
-@keyframes pulse-wave {
-  0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
-  50% { transform: scaleY(1); opacity: 1; }
-}
-.animate-pulse-wave {
-  animation: pulse-wave 1.2s infinite ease-in-out;
-}
+    /* Pulse wave animation */
+    @keyframes pulse-wave {
+      0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+    .animate-pulse-wave {
+      animation: pulse-wave 1.2s infinite ease-in-out;
+    }
 
-/* Morphing animation */
-@keyframes morph {
-  0%, 100% { transform: scale(1); border-radius: 50%; }
-  50% { transform: scale(1.5); border-radius: 30%; }
-}
-.animate-morph {
-  animation: morph 1s infinite ease-in-out;
-}
+    /* Morphing animation */
+    @keyframes morph {
+      0%, 100% { transform: scale(1); border-radius: 50%; }
+      50% { transform: scale(1.5); border-radius: 30%; }
+    }
+    .animate-morph {
+      animation: morph 1s infinite ease-in-out;
+    }
 
-/* Spinner dots */
-@keyframes spin-dots {
-  0% { opacity: 1; transform: scale(1); }
-  50%, 100% { opacity: 0.3; transform: scale(0.5); }
-}
-.animate-spin-dots {
-  animation: spin-dots 1.2s infinite ease-in-out;
-}
+    /* Spinner dots */
+    @keyframes spin-dots {
+      0% { opacity: 1; transform: scale(1); }
+      50%, 100% { opacity: 0.3; transform: scale(0.5); }
+    }
+    .animate-spin-dots {
+      animation: spin-dots 1.2s infinite ease-in-out;
+    }
 
-/* Glowing pulse */
-@keyframes glow-pulse {
-  0%, 100% { 
-    transform: scale(1); 
-    opacity: 1;
-    box-shadow: 0 0 0 0 currentColor;
-  }
-  50% { 
-    transform: scale(1.2); 
-    opacity: 0.8;
-    box-shadow: 0 0 10px 3px currentColor;
-  }
-}
-.animate-glow-pulse {
-  animation: glow-pulse 1.5s infinite ease-in-out;
-}
+    /* Glowing pulse */
+    @keyframes glow-pulse {
+      0%, 100% { 
+        transform: scale(1); 
+        opacity: 1;
+        box-shadow: 0 0 0 0 currentColor;
+      }
+      50% { 
+        transform: scale(1.2); 
+        opacity: 0.8;
+        box-shadow: 0 0 10px 3px currentColor;
+      }
+    }
+    .animate-glow-pulse {
+      animation: glow-pulse 1.5s infinite ease-in-out;
+    }
 
-/* Delay classes */
-.animation-delay-150 { animation-delay: 0.15s; }
-.animation-delay-200 { animation-delay: 0.2s; }
-.animation-delay-300 { animation-delay: 0.3s; }
-.animation-delay-400 { animation-delay: 0.4s; }
-.animation-delay-450 { animation-delay: 0.45s; }
-.animation-delay-600 { animation-delay: 0.6s; }
-`}
-                      </style>
-                    </>
-                  )}
-                  <div ref={messagesEndRef} />
+    /* Delay classes */
+    .animation-delay-150 { animation-delay: 0.15s; }
+    .animation-delay-200 { animation-delay: 0.2s; }
+    .animation-delay-300 { animation-delay: 0.3s; }
+    .animation-delay-400 { animation-delay: 0.4s; }
+    .animation-delay-450 { animation-delay: 0.45s; }
+    .animation-delay-600 { animation-delay: 0.6s; }
+  `}
+                        </style>
+                      </>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
                 </div>
-              </div>
 
-              {/* Composer */}
-              <div
-                className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent px-3 sm:px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
-                style={{
-                  left: effectiveLeftOffset,
-                  right: effectiveRightOffset,
-                  width: effectiveContentWidth1,
-                  zIndex: 29,
-                }}
-              >
-                {/* ===== CHAT BAR (mobile-first, responsive grid) ===== */}
-                <div className="w-full max-w-4xl mx-auto rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500">
-                  {/* Grid: [ + ] [ textarea ] [ mic/send ] on all sizes; spacing adapts */}
-                  <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3">
-                    {/* LEFT: + file picker */}
-                    <label className="inline-flex items-center justify-center cursor-pointer">
-                      <input
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={handleFilePicker}
-                        accept=".pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp"
-                      />
-                      <span
-                        className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
-                        title="Add files"
-                        aria-label="Add files"
-                      >
-                        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </span>
-                    </label>
-
-                    {/* CENTER: Textarea (grows, no overlap) */}
-                    <div className="min-w-0">
-                      <textarea
-                        ref={(el) => {
-                          if (!el) return;
-                          // Auto-resize height dynamically
-                          el.style.height = "auto";
-                          el.style.height = `${Math.min(
-                            el.scrollHeight,
-                            128
-                          )}px`; // 128px = max-h-32
-                        }}
-                        onInput={(e) => {
-                          const el = e.currentTarget;
-                          el.style.height = "auto";
-                          el.style.height = `${Math.min(
-                            el.scrollHeight,
-                            128
-                          )}px`;
-                          if (!loading) setInput(el.value);
-                        }}
-                        rows={1}
-                        className="w-full bg-transparent text-[16px] focus:outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-32 overflow-y-auto p-1 resize-none"
-                        placeholder={
-                          loading
-                            ? "AI is responding... you can type your next question"
-                            : "Ask anything..."
-                        }
-                        value={input}
-                        onChange={(e) => !loading && setInput(e.target.value)}
-                        style={{ minHeight: "20px" }}
-                        onKeyDown={handleKeyDown}
-                        disabled={loading}
-                        inputMode="text"
-                      />
-                    </div>
-
-                    {/* RIGHT: Mic + Send / Stop */}
-                    <div className="flex items-center gap-2">
-                      {/* Updated Voice Button: Round mic normally, square red stop when recording with pulse animation */}
-                      {isRecording ? (
-                        <button
-                          onClick={handleToggleVoice}
-                          className="w-10 h-10 flex items-center justify-center bg-red-500 text-white border-0 shadow-md animate-pulse"
-                          style={{ borderRadius: 0 }} // Square (not rounded)
-                          title="Stop Voice"
-                          aria-label="Stop Voice"
-                        >
-                          <div className="flex items-center gap-1">
-                            <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave"></span>
-                            <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-150"></span>
-                            <span className="w-1 h-4 bg-white rounded-full animate-pulse-wave animation-delay-300"></span>
-                            <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-450"></span>
-                            <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave animation-delay-600"></span>
+                {/* Composer */}
+                <div
+                  className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-800 dark:via-gray-800/95 dark:to-transparent px-3 sm:px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
+                  style={{
+                    left: effectiveLeftOffset,
+                    right: effectiveRightOffset,
+                    width: effectiveContentWidth1,
+                    zIndex: 29,
+                  }}
+                >
+                  {/* MOBILE: Always visible files panel (simple layout with close button) */}
+                  {selectedFiles.length > 0 && (
+                    <div className="sm:hidden w-full max-w-4xl mx-auto mb-2">
+                      <div className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl p-2 shadow-sm">
+                        {selectedFiles.map((f, i) => (
+                          <div
+                            key={`file_${f.name}_${i}`}
+                            className="flex items-center justify-between px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-600 mb-1 last:mb-0"
+                          >
+                            <span className="text-xs truncate flex-1 mr-2 text-gray-800 dark:text-gray-100">
+                              {f.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeFileAt(i)}
+                              className="text-red-500 hover:text-red-700 text-lg leading-none"
+                              title="Remove file"
+                              aria-label={`Remove ${f.name}`}
+                            >
+                              ×
+                            </button>
                           </div>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleToggleVoice}
-                          className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600`}
-                          aria-label="Voice input"
-                          title="Voice input"
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* ===== DESKTOP: Chips row above bar ===== */}
+                  {selectedFiles.length > 0 && (
+                    <div className="hidden sm:block w-full max-w-4xl mx-auto mb-2">
+                      <div className="flex flex-wrap gap-2 p-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow">
+                        {selectedFiles.map((f, i) => (
+                          <div
+                            key={`${f.name}_${f.size}_${i}`}
+                            className="flex items-center gap-2 px-2 py-1 rounded-full border text-sm bg-gray-50 dark:bg-gray-600"
+                          >
+                            <span
+                              className="truncate max-w-[220px]"
+                              title={f.name}
+                            >
+                              {f.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeFileAt(i)}
+                              className="rounded-full px-2 py-0.5 hover:bg-red-100 dark:hover:bg-red-800"
+                              title="Remove file"
+                              aria-label={`Remove ${f.name}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* ===== CHAT BAR (mobile-first, responsive grid) ===== */}
+                  <div className="w-full max-w-4xl mx-auto rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md focus-within:ring-2 focus-within:ring-indigo-500">
+                    {/* Grid: [ + ] [ textarea ] [ mic/send ] on all sizes; spacing adapts */}
+                    <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3">
+                      {/* LEFT: + file picker */}
+                      <label className="inline-flex items-center justify-center cursor-pointer">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={handleFilePicker}
+                          accept=".pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp"
+                        />
+                        <span
+                          className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                          title="Add files"
+                          aria-label="Add files"
                         >
-                          <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                      )}
+                          <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </span>
+                      </label>
 
-                      {loading ? (
-                        <button
-                          onClick={handleStop}
-                          className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-red-700 dark:text-white hover:bg-gray-800 hover:text-white transition"
-                          title="Stop"
-                          aria-label="Stop"
-                        >
-                          <Square className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={async () => {
-                            if (isRecording) {
-                              try {
-                                recognitionRef.current?.stop();
-                              } catch (err) {
-                                console.warn(
-                                  "Failed to stop voice recognition:",
-                                  err
-                                );
-                              }
-                              setIsRecording(false);
-                            }
-
-                            // Just send message - files go to knowledge base separately
-                            if (input.trim()) {
-                              await sendMessage();
-                            }
+                      {/* CENTER: Textarea (grows, no overlap) */}
+                      <div className="min-w-0">
+                        <textarea
+                          ref={(el) => {
+                            if (!el) return;
+                            // Auto-resize height dynamically
+                            el.style.height = "auto";
+                            el.style.height = `${Math.min(
+                              el.scrollHeight,
+                              128,
+                            )}px`; // 128px = max-h-32
                           }}
-                          disabled={input.trim().length === 0 || loading}
-                          className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-700 dark:text-white hover:bg-gray-800 hover:text-white disabled:opacity-50 transition"
-                          title="Send"
-                          aria-label="Send"
-                        >
-                          <Send className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                      )}
+                          onInput={(e) => {
+                            const el = e.currentTarget;
+                            el.style.height = "auto";
+                            el.style.height = `${Math.min(
+                              el.scrollHeight,
+                              128,
+                            )}px`;
+                            if (!loading) setInput(el.value);
+                          }}
+                          rows={1}
+                          className="w-full bg-transparent text-[16px] focus:outline-none px-2 py-1 text-sm sm:text-base placeholder-gray-400 dark:placeholder-white text-gray-800 dark:text-white max-h-32 overflow-y-auto p-1 resize-none"
+                          placeholder={
+                            loading ? "AI is responding..." : "Ask anything..."
+                          }
+                          value={input}
+                          onChange={(e) => !loading && setInput(e.target.value)}
+                          style={{ minHeight: "20px" }}
+                          onKeyDown={handleKeyDown}
+                          disabled={loading}
+                          inputMode="text"
+                        />
+                      </div>
+
+                      {/* RIGHT: Mic + Send / Stop */}
+                      <div className="flex items-center gap-2">
+                        {/* Updated Voice Button: Round mic normally, square red stop when recording with pulse animation */}
+                        {isRecording ? (
+                          <button
+                            onClick={handleToggleVoice}
+                            className="w-10 h-10 flex items-center justify-center bg-red-500 text-white border-0 shadow-md animate-pulse"
+                            style={{ borderRadius: 0 }} // Square (not rounded)
+                            title="Stop Voice"
+                            aria-label="Stop Voice"
+                          >
+                            <div className="flex items-center gap-1">
+                              <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave"></span>
+                              <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-150"></span>
+                              <span className="w-1 h-4 bg-white rounded-full animate-pulse-wave animation-delay-300"></span>
+                              <span className="w-1 h-3 bg-white rounded-full animate-pulse-wave animation-delay-450"></span>
+                              <span className="w-1 h-2 bg-white rounded-full animate-pulse-wave animation-delay-600"></span>
+                            </div>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleToggleVoice}
+                            className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600`}
+                            aria-label="Voice input"
+                            title="Voice input"
+                          >
+                            <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </button>
+                        )}
+
+                        {loading ? (
+                          <button
+                            onClick={handleStop}
+                            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-red-700 dark:text-white hover:bg-gray-800 hover:text-white transition"
+                            title="Stop"
+                            aria-label="Stop"
+                          >
+                            <Square className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              if (isRecording) {
+                                try {
+                                  recognitionRef.current?.stop();
+                                } catch (err) {
+                                  console.warn(
+                                    "Failed to stop voice recognition:",
+                                    err,
+                                  );
+                                }
+                                setIsRecording(false);
+                              }
+                              if (selectedFiles.length) {
+                                await handleFileUpload(
+                                  null,
+                                  input ||
+                                    "please describe the file content properly",
+                                );
+                                setInput("");
+                                setShowMobileFiles(false);
+                              } else {
+                                if (!input.trim()) return;
+                                await sendMessage();
+                              }
+                            }}
+                            disabled={
+                              (input.trim().length === 0 &&
+                                selectedFiles.length === 0) ||
+                              loading
+                            }
+                            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-700 dark:text-white hover:bg-gray-800 hover:text-white disabled:opacity-50 transition"
+                            title="Send"
+                            aria-label="Send"
+                          >
+                            <Send className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
-        </main>
-        <Modal
-          title={null}
-          open={showFileUploadModal}
-          onCancel={() => {
-            setShowFileUploadModal(false);
-          }}
-          closable={true}
-          width={500}
-          styles={{
-            content: {
-              backgroundColor: document.documentElement.classList.contains(
-                "dark"
-              )
-                ? "#1f2937"
-                : "#ffffff",
-              padding: 0,
-              borderRadius: "12px",
-              overflow: "hidden",
-            },
-            body: {
-              padding: 0,
-            },
-            mask: {
-              backdropFilter: "blur(8px)",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-            },
-          }}
-          footer={null}
-          closeIcon={
-            <span className="text-gray-400 hover:text-gray-200 transition-colors text-2xl">
-              ×
-            </span>
-          }
-        >
-          <div className="bg-white dark:bg-gray-800">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                Upload Files to Agent Knowledge
-              </h3>
-            </div>
-
-            {/* Body */}
-            <div className="px-6 py-5 space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                The files you uploaded will be directly stored in the agent's
-                knowledge base. Whenever you ask questions, the agent will use
-                these files as a data source.
-              </p>
-
-              {/* Files List */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Ready to Upload
-                  </span>
-                  <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/20 px-2.5 py-1 rounded-full">
-                    {pendingFiles.length}{" "}
-                    {pendingFiles.length === 1 ? "File" : "Files"}
-                  </span>
-                </div>
-
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {pendingFiles.map((file, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500 transition-colors"
-                    >
-                      {/* File Icon */}
-                      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-
-                      {/* File Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center gap-3">
-                <button
-                  className="px-5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-colors"
-                  onClick={() => {
-                    setShowFileUploadModal(false);
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading}
-                  onClick={async () => {
-                    const success = await uploadFilesToAgentKnowledge(
-                      pendingFiles
-                    );
-                    if (success) {
-                      setShowFileUploadModal(false);
-                    }
-                  }}
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      Uploading...
-                    </span>
-                  ) : (
-                    "Yes, Upload"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </Modal>
+              </>
+            )}
+          </main>
+        </div>
       </div>
     </>
   );
 };
-export default TestAgentDetails;
+export default AssistantDetails;
