@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Facebook,
   Instagram,
@@ -85,6 +86,14 @@ const AwardPage = () => {
               <strong>AI-Z Marketplace</strong> and advanced financial,
               education, and business solutions.
             </p>
+
+            <Link
+              to="/awards-rewards"
+              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-3 text-sm font-extrabold text-white no-underline shadow-lg shadow-amber-600/20 transition-all duration-300 hover:-translate-y-0.5 hover:from-amber-700 hover:to-orange-700 hover:shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
+              aria-label="View all ASKOXY.AI awards and highlights"
+            >
+              View All Awards &amp; Highlights
+            </Link>
 
             {/* Social Icons */}
             {/* <div className="flex gap-4">

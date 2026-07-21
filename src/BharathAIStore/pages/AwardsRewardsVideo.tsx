@@ -63,12 +63,22 @@ const SafeImage: React.FC<SafeImageProps> = ({
 };
 
 const AwardsRewardsVideo: React.FC = () => {
+  const [activeShort, setActiveShort] = useState<string | null>(null);
   const videos = [
     { src: "https://www.youtube.com/embed/zyMV0Qj0lPU" },
     {
       src: "https://drive.google.com/file/d/1vFxflNUzjZpuQjBnG3wX1tS_dhwTkTcL/preview",
     },
     { src: "https://www.youtube.com/embed/gp4F5Z1ZdUg" },
+  ];
+
+  const shortVideos = [
+    { id: "8gkNQi7ctTo" },
+    { id: "RFB-2j6i78c" },
+    { id: "PMGw8WhgD7A" },
+    { id: "0JXSmy8at_8" },
+    { id: "0pwepM5MbE8" },
+    { id: "429Cq97jxOQ" },
   ];
 
   const awards = [
@@ -90,7 +100,7 @@ const AwardsRewardsVideo: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Header */}
         <header className="mb-10 text-center">
@@ -105,21 +115,73 @@ const AwardsRewardsVideo: React.FC = () => {
 
         {/* 🎥 Videos Section */}
         <section className="mb-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {videos.map((video, idx) => (
               <article
                 key={idx}
-                className="group overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-md hover:shadow-2xl transition-shadow w-full max-w-[500px]"
+                className="w-full min-w-0"
               >
-                <div className="relative aspect-video w-full">
+                <div
+                  className="relative w-full overflow-hidden rounded-lg bg-black"
+                  style={{ aspectRatio: "16 / 9.5" }}
+                >
                   <iframe
                     src={`${video.src}?rel=0&modestbranding=1`}
                     title={`Featured Video ${idx + 1}`}
-                    className="w-full h-full rounded-2xl"
-                    frameBorder={0}
+                    className="absolute inset-0 block h-full w-full border-0"
+                    width="560"
+                    height="332"
+                    loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    referrerPolicy="strict-origin-when-cross-origin"
                     allowFullScreen
                   />
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-8 lg:grid-cols-3 lg:gap-8">
+            {shortVideos.map((video, idx) => (
+              <article key={video.id} className="w-full min-w-0">
+                <div
+                  className="relative w-full overflow-hidden rounded-lg bg-black"
+                  style={{ aspectRatio: "16 / 9.5" }}
+                >
+                  {activeShort === video.id ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                      title={`Video Highlight ${idx + 1}`}
+                      className="absolute inset-0 block h-full w-full border-0"
+                      width="560"
+                      height="332"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setActiveShort(video.id)}
+                      className="group absolute inset-0 h-full w-full cursor-pointer border-0 bg-black p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-red-500/70"
+                      aria-label={`Play video highlight ${idx + 1}`}
+                    >
+                      <img
+                        src={`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`}
+                        alt={`Video highlight ${idx + 1} thumbnail`}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(event) => {
+                          if (!event.currentTarget.src.includes("hqdefault")) {
+                            event.currentTarget.src = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`;
+                          }
+                        }}
+                        className="h-full w-full object-contain"
+                      />
+                      <span className="absolute inset-0 bg-black/10 transition group-hover:bg-black/20" aria-hidden="true" />
+                      <span className="absolute left-1/2 top-1/2 grid h-14 w-20 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-2xl bg-red-600 text-2xl text-white shadow-lg transition group-hover:scale-105" aria-hidden="true">▶</span>
+                    </button>
+                  )}
                 </div>
               </article>
             ))}
@@ -133,13 +195,13 @@ const AwardsRewardsVideo: React.FC = () => {
           </h2>
 
           {/* 🖼️ 3-column grid for awards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {awards.map((award, idx) => (
               <article
                 key={idx}
-                className="group overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-md hover:shadow-xl transition-all duration-300"
+                className="group overflow-hidden rounded-xl"
               >
-                <div className="relative w-full h-80 flex items-center justify-center bg-white">
+                <div className="relative flex h-72 w-full items-center justify-center sm:h-80">
                   <SafeImage
                     src={award.image}
                     alt={`Award ${idx + 1}`}

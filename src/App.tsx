@@ -12,6 +12,8 @@ import SalariedBorrowerChatPage from "./components/SalariedBorrowerChatPage";
 import LenderHomePage from "./components/LenderHomepage";
 import CallingTeamCallbackRequests from "./AskoxyAdmin/CallingTeamCallbackRequests";
 import ATSResumeChecker from "./components/JPL/FreeATSResumeChecker";
+import ResumeAnalysisReport from "./components/JPL/ResumeAnalysisReport";
+import AwardsRewardsVideo from "./BharathAIStore/pages/AwardsRewardsVideo";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -439,9 +441,8 @@ const BananaImageGenerate = lazy(
 const InsuranceAgentsPage = lazy(
   () => import("./BharathAIStore/pages/InsuranceAgentsPage"),
 );
-const AwardsRewardsVideo = lazy(
-  () => import("./BharathAIStore/pages/AwardsRewardsVideo"),
-);
+
+
 const CartCaCsService = lazy(() => import("./components/CartCaCsService"));
 const ServiceCAList = lazy(() => import("./components/ServiceCAList"));
 const ServiceDashboard = lazy(() => import("./components/ServiceDashboard"));
@@ -1561,6 +1562,7 @@ const App: React.FC = () => {
               <Route path="/walkin-journey" element={<WalkInJourneyPage />} />
               <Route path="/lenderjourney" element={<LenderHomePage />} />
               <Route path="/resume-ai-interview" element={<ATSResumeChecker />} />
+              <Route path="/resume-ai-interview/report/:jobId" element={<ResumeAnalysisReport />} />
               <Route
                 path="/DRAcertification"
                 element={<DRACertificationLanding />}
