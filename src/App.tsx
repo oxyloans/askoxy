@@ -14,6 +14,7 @@ import CallingTeamCallbackRequests from "./AskoxyAdmin/CallingTeamCallbackReques
 import ATSResumeChecker from "./components/JPL/FreeATSResumeChecker";
 import ResumeAnalysisReport from "./components/JPL/ResumeAnalysisReport";
 import AwardsRewardsVideo from "./BharathAIStore/pages/AwardsRewardsVideo";
+import SovereignAIPage from "./components/SovereignAIPage";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -1237,12 +1238,14 @@ const App: React.FC = () => {
                 element={<Navigate to="/visavoice/welcome" replace />}
               />
               <Route path="/visavoice/:screen" element={<VisaVoice />} />
+              <Route path="/sovereign-ai" element={<SovereignAIPage />} />
 
               {/* Other Landing / Service pages */}
               <Route
                 path="/goldandsilveranddiamonds"
                 element={<GoldAndSilverAndDiamond />}
               />
+
               <Route
                 path="/loansinvestments"
                 element={<LoansInvestmentsLandingPage />}

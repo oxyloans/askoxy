@@ -283,13 +283,13 @@ const Whiteboardtheme: React.FC = () => {
                 <div className="relative flex h-[158px] w-[132px] flex-col items-center sm:h-[170px]">
                   <button
                     type="button"
-                    onClick={() => navigate("/radhai")}
-                    className="absolute left-0 top-0 flex h-[132px] w-[132px] cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 active:scale-95"
-                    aria-label="Speak with radhAI"
+                    onClick={() => navigate("/sovereign-ai")}
+                    className="absolute left-1/2 top-0 flex h-[290px] w-[290px] -translate-x-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-all duration-300 hover:scale-105 active:scale-95"
+                    aria-label="Speak with Sovereign AI"
                   >
                     <img
                       src={speak1}
-                      alt="Speak with radhAI"
+                      alt="Speak with Sovereign AI"
                       className="h-full w-full object-contain"
                     />
                   </button>
@@ -315,16 +315,16 @@ const Whiteboardtheme: React.FC = () => {
               <div className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-[130px] md:block lg:h-[145px] xl:h-[155px]">
                 <button
                   type="button"
-                  onClick={() => navigate("/radhai")}
+                  onClick={() => navigate("/sovereign-ai")}
                   className="pointer-events-auto absolute top-0 -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105"
                   style={{ left: "16.666%" }}
-                  aria-label="Speak with radhAI"
+                  aria-label="Speak with Sovereign AI"
                 >
                   <img
                     src={speak1}
-                    alt="Speak with radhAI"
-                    className="h-auto object-contain"
-                    style={{ width: "clamp(110px, 10vw, 160px)" }}
+                    alt="Speak with Sovereign AI"
+                    className="h-auto object-contain transition-transform duration-300 hover:scale-105"
+                    style={{ width: "clamp(160px, 14vw, 230px)" }}
                   />
                 </button>
 
