@@ -28,10 +28,10 @@ import {
 } from "./authValidation";
 
 const submitBtnClass =
-  "h-9 rounded-lg border-0 bg-indigo-600 text-sm font-semibold text-white shadow-sm hover:!bg-indigo-700 focus:!bg-indigo-700";
+  "!h-10 rounded-lg border-0 bg-indigo-600 text-sm font-semibold text-white shadow-sm hover:!bg-indigo-700 focus:!bg-indigo-700";
 
 const compactInputClass =
-  "!h-9 !rounded-lg !text-sm [&_.ant-input]:!text-sm";
+  "!h-10 !rounded-lg !px-3 !text-sm shadow-sm [&_.ant-input]:!text-sm";
 
 const EmployeeRegister: React.FC = () => {
   const [form] = Form.useForm();

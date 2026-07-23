@@ -173,7 +173,7 @@ const AIInterviewLanding: React.FC = () => {
             <div className="order-2 flex min-w-0 flex-col items-center justify-start sm:order-1">
               <button
                 type="button"
-                onClick={() => navigate("/radhai")}
+                onClick={() => navigate("/sovereign-ai")}
                 className="flex h-[82px] w-[82px] -translate-x-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95 sm:h-[112px] sm:w-[112px] sm:-translate-x-7 lg:h-[140px] lg:w-[140px] lg:-translate-x-10"
                 aria-label="Speak with radhAI"
               >

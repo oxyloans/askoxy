@@ -1,14 +1,17 @@
 import React, { useEffect, useState, ReactNode } from "react";
-import { Layout, Menu, Button, Avatar, Grid, Drawer } from "antd";
 import {
-  MenuUnfoldOutlined,
-  UploadOutlined,
-  UnorderedListOutlined,
-  TeamOutlined,
-  CreditCardOutlined,
-  LogoutOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
+  CalendarDays,
+  CreditCard,
+  FileText,
+  Images,
+  ListChecks,
+  LogOut,
+  Menu as MenuIcon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Upload,
+  X,
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import { setIntendedRoute } from "../utils/taskTokenManager";
@@ -17,12 +20,8 @@ import {
   removeBusinessCardAccessToken,
   removeBusinessCardRefreshToken,
 } from "../utils/cookieUtils";
-import { BC_BTN_GHOST, PAGE_BOTTOM_PADDING } from "./businessCardUi";
 import BusinessCardThemeProvider from "./BusinessCardThemeProvider";
 import { COLOR_PRIMARY } from "./businessCardTheme";
-
-const { Header, Sider, Content } = Layout;
-const { useBreakpoint } = Grid;
 
 interface BusinessCardLayoutProps {
   children: ReactNode;
@@ -30,45 +29,54 @@ interface BusinessCardLayoutProps {
 
 const NAV_ITEMS = [
   {
-    path: "/business-card/ceo-details",
-    label: "User Details",
-    shortLabel: "User",
-    icon: UserOutlined,
-    key: "ceo-details",
+    path: "/business-card/my-profile",
+    label: "Personal Details",
+    shortLabel: "Details",
+    icon: FileText,
+    key: "my-profile",
+  },
+  {
+    path: "/business-card/event-images",
+    label: "Event Details Upload",
+    shortLabel: "Upload",
+    icon: Images,
+    key: "event-images",
+  },
+  {
+    path: "/business-card/event-list",
+    label: "Event List",
+    shortLabel: "Events",
+    icon: CalendarDays,
+    key: "event-list",
   },
   {
     path: "/business-card/process",
     label: "Process Card",
     shortLabel: "Upload",
-    icon: UploadOutlined,
+    icon: Upload,
     key: "process",
   },
   {
     path: "/business-card/upload-details",
     label: "Upload Details",
     shortLabel: "Cards",
-    icon: UnorderedListOutlined,
+    icon: ListChecks,
     key: "upload-details",
   },
-  {
-    path: "/business-card/ceo-details-list",
-    label: "User Details List",
-    shortLabel: "Users",
-    icon: TeamOutlined,
-    key: "ceo-details-list",
-  },
+
+  
 ];
 
 const BusinessCardLayout: React.FC<BusinessCardLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const location = useLocation();
-  const screens = useBreakpoint();
-  const isMobile = !screens.lg;
 
   useEffect(() => {
     setUserName(sessionStorage.getItem("Name") || "");
+    setUserEmail(sessionStorage.getItem("Email") || "");
   }, []);
 
   useEffect(() => {
@@ -83,8 +91,9 @@ const BusinessCardLayout: React.FC<BusinessCardLayoutProps> = ({ children }) => 
     setDrawerOpen(false);
   }, [location.pathname]);
 
-  const selectedKey =
-    NAV_ITEMS.find((item) => item.path === location.pathname)?.key || "ceo-details";
+  const selectedKey = location.pathname === "/business-card/personal-details-document"
+    ? "my-profile"
+    : NAV_ITEMS.find((item) => item.path === location.pathname)?.key || "ceo-details";
 
   const handleSignOut = () => {
     Swal.fire({
@@ -107,6 +116,7 @@ const BusinessCardLayout: React.FC<BusinessCardLayoutProps> = ({ children }) => 
 
       sessionStorage.removeItem("userId");
       sessionStorage.removeItem("Name");
+      sessionStorage.removeItem("Email");
       sessionStorage.removeItem("primaryType");
       removeBusinessCardAccessToken();
       removeBusinessCardRefreshToken();
@@ -124,24 +134,17 @@ const BusinessCardLayout: React.FC<BusinessCardLayoutProps> = ({ children }) => 
         .toUpperCase()
     : "U";
 
-  const menuItems = NAV_ITEMS.map((item) => ({
-    key: item.key,
-    icon: React.createElement(item.icon, { className: "text-[13px]" }),
-    label: (
-      <Link to={item.path} className="text-[13px] text-slate-700">
-        {item.label}
-      </Link>
-    ),
-  }));
-
   const brandBlock = (compact?: boolean) => (
-    <div className="flex items-center gap-2.5">
+    <div className={`flex w-full items-center gap-2.5 ${compact ? "justify-center" : "justify-start text-left"}`}>
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-50">
-        <CreditCardOutlined className="text-base text-cyan-600" />
+        <CreditCard className="h-4 w-4 text-cyan-600" />
       </div>
       {!compact && (
         <div className="min-w-0">
-          <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">AskOxy</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em]">
+            <span className="text-cyan-600">ASKOXY</span>
+            <span className="text-slate-500">.AI</span>
+          </p>
           <p className="truncate text-[13px] font-semibold text-slate-800">Business Card</p>
         </div>
       )}
@@ -150,125 +153,174 @@ const BusinessCardLayout: React.FC<BusinessCardLayoutProps> = ({ children }) => 
 
   const sidebarUserBlock = () => (
     <div className="flex min-w-0 items-center gap-2.5">
-      <Avatar size={32} className="!bg-cyan-600 !text-xs !font-semibold shrink-0">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-xs font-semibold text-white">
         {initials}
-      </Avatar>
+      </div>
       <div className="min-w-0">
         <p className="truncate text-[13px] font-medium text-slate-800">{userName || "Employee"}</p>
-        <p className="text-[11px] text-slate-400">Employee portal</p>
+        <p className="truncate text-[11px] text-slate-400">{userEmail || "Email not available"}</p>
       </div>
     </div>
   );
 
-  const sideMenu = (
+  const sideMenu = (compact = false) => (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-100 px-3 py-3">{brandBlock(collapsed && !isMobile)}</div>
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        items={menuItems}
-        className="flex-1 !border-e-0 !px-1 !py-2 [&_.ant-menu-item]:!mx-1 [&_.ant-menu-item]:!rounded-md [&_.ant-menu-item]:!px-3 [&_.ant-menu-item-selected]:!font-semibold"
-      />
+      <div className="flex min-h-16 items-center border-b border-slate-100 px-3 py-3">{brandBlock(compact)}</div>
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3" aria-label="Business Card navigation">
+        {NAV_ITEMS.map((item) => {
+          const active = selectedKey === item.key;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.key}
+              to={item.path}
+              title={compact ? item.label : undefined}
+              className={[
+                "flex h-10 items-center rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/30",
+                compact ? "justify-center px-2" : "gap-3 px-3",
+                active
+                  ? "bg-cyan-50 text-cyan-700"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+              ].join(" ")}
+            >
+              <Icon className="h-[18px] w-[18px] shrink-0" />
+              {!compact && <span className="truncate">{item.label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
       <div className="border-t border-slate-100 px-3 py-3">
-        {(!collapsed || isMobile) && sidebarUserBlock()}
+        {!compact && sidebarUserBlock()}
+        <button
+          type="button"
+          onClick={handleSignOut}
+          title={compact ? "Logout" : undefined}
+          className={[
+            "mt-3 flex h-9 w-full items-center rounded-lg border border-red-100 bg-red-50/70 text-sm font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20",
+            compact ? "justify-center px-2" : "gap-2.5 px-3",
+          ].join(" ")}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!compact && <span>Logout</span>}
+        </button>
       </div>
     </div>
   );
 
   return (
     <BusinessCardThemeProvider>
-      <Layout className="min-h-screen bg-slate-100">
-        {!isMobile && (
-          <Sider
-            collapsible
-            collapsed={collapsed}
-            onCollapse={setCollapsed}
-            width={240}
-            collapsedWidth={64}
-            theme="light"
-            className="!sticky !top-0 !h-screen !overflow-auto !border-r !border-slate-200 !bg-white"
-          >
-            {sideMenu}
-          </Sider>
-        )}
+      <div className="flex min-h-screen bg-slate-100">
+        <aside
+          className={[
+            "sticky top-0 hidden h-screen shrink-0 border-r border-slate-200 bg-white transition-[width] duration-200 lg:block",
+            collapsed ? "w-16" : "w-60",
+          ].join(" ")}
+        >
+          {sideMenu(collapsed)}
+        </aside>
 
-        <Layout className="min-h-screen bg-slate-100">
-          <Header className="sticky top-0 z-30 !flex !h-12 !items-center !border-b !border-slate-200 !bg-white/95 !px-3 !py-0 !leading-none backdrop-blur-sm sm:!h-14 sm:!px-5">
-            {isMobile && (
-              <Button
-                type="text"
-                size="small"
-                icon={<MenuUnfoldOutlined className="text-slate-600" />}
-                onClick={() => setDrawerOpen(true)}
-                aria-label="Open menu"
-                className="!mr-1 !flex !h-8 !w-8 !items-center !justify-center"
-              />
-            )}
-            {!isMobile && (
-              <p className="text-xs font-medium text-slate-500 sm:text-[13px]">Business Card Portal</p>
-            )}
+        <div className="min-w-0 flex-1">
+          <header className="sticky top-0 z-30 flex h-16 items-center border-b border-slate-200 bg-white/95 px-3 backdrop-blur-sm sm:px-5 lg:px-6">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={drawerOpen}
+              className="mr-2 flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 lg:hidden"
+            >
+              {collapsed ? (
+                <PanelLeftOpen className="h-5 w-5" />
+              ) : (
+                <PanelLeftClose className="h-5 w-5" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCollapsed((value) => !value)}
+              aria-label={collapsed ? "Open sidebar" : "Close sidebar"}
+              aria-expanded={!collapsed}
+              className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 lg:flex"
+            >
+              <MenuIcon className="h-5 w-5" />
+            </button>
+
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
-              <div className="hidden items-center gap-2 sm:flex">
-                <Avatar size={28} className="!bg-cyan-600 !text-[10px] !font-semibold">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-600 text-[11px] font-semibold text-white">
                   {initials}
-                </Avatar>
-                <span className="max-w-[140px] truncate text-[13px] font-medium text-slate-700 md:max-w-[180px]">
+                </div>
+                <span className="max-w-[88px] truncate text-xs font-medium text-slate-700 sm:max-w-[140px] sm:text-sm md:max-w-[180px]">
                   {userName || "Employee"}
                 </span>
               </div>
-              <Button
-                type="default"
-                size="small"
-                icon={<LogoutOutlined />}
-                onClick={handleSignOut}
-                className={BC_BTN_GHOST}
-              >
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
             </div>
-          </Header>
+          </header>
 
-          <Content className="px-3 py-3 sm:px-5 sm:py-4 lg:px-6" style={PAGE_BOTTOM_PADDING}>
-            <div className="mx-auto w-full max-w-6xl">{children}</div>
-          </Content>
-        </Layout>
+          <main className="px-3 py-3 pb-24 sm:px-5 sm:py-4 sm:pb-24 lg:px-6 lg:pb-6">
+            <div className="mx-auto w-full max-w-7xl">{children}</div>
+          </main>
+        </div>
 
-        {isMobile && (
-          <>
-            <Drawer
-              title={<span className="text-sm font-semibold">Business Card</span>}
-              placement="left"
-              onClose={() => setDrawerOpen(false)}
-              open={drawerOpen}
-              width={256}
-              className="[&_.ant-drawer-body]:!p-0 [&_.ant-drawer-header]:!py-3"
+        <div
+          className={[
+            "fixed inset-0 z-50 lg:hidden",
+            drawerOpen ? "pointer-events-auto" : "pointer-events-none",
+          ].join(" ")}
+          aria-hidden={!drawerOpen}
+        >
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            onClick={() => setDrawerOpen(false)}
+            className={[
+              "absolute inset-0 bg-slate-950/40 backdrop-blur-[1px] transition-opacity duration-200",
+              drawerOpen ? "opacity-100" : "opacity-0",
+            ].join(" ")}
+          />
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Business Card navigation"
+            className={[
+              "absolute inset-y-0 left-0 w-[min(82vw,280px)] bg-white shadow-2xl transition-transform duration-200 ease-out",
+              drawerOpen ? "translate-x-0" : "-translate-x-full",
+            ].join(" ")}
+          >
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close menu"
+              className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
             >
-              {sideMenu}
-            </Drawer>
-            <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_8px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-4">
-                {NAV_ITEMS.map((item) => {
-                  const active = selectedKey === item.key;
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.key}
-                      to={item.path}
-                      className={[
-                        "flex flex-col items-center gap-0.5 px-1 py-2 text-center transition-colors",
-                        active ? "text-cyan-600" : "text-slate-400 hover:text-slate-600",
-                      ].join(" ")}
-                    >
-                      <Icon className="text-base" />
-                      <span className="text-[10px] font-medium leading-none">{item.shortLabel}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </nav>
-          </>
-        )}
-      </Layout>
+              <X className="h-5 w-5" />
+            </button>
+            {sideMenu(false)}
+          </aside>
+        </div>
+
+        <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_12px_rgba(15,23,42,0.08)] backdrop-blur-sm lg:hidden" aria-label="Quick navigation">
+          <div className="grid grid-cols-6">
+            {NAV_ITEMS.map((item) => {
+              const active = selectedKey === item.key;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.key}
+                  to={item.path}
+                  aria-current={active ? "page" : undefined}
+                  className={[
+                    "flex min-w-0 flex-col items-center gap-1 px-0.5 py-2 text-center transition-colors",
+                    active ? "bg-cyan-50 text-cyan-700" : "text-slate-400 hover:text-slate-600",
+                  ].join(" ")}
+                >
+                  <Icon className="h-[18px] w-[18px]" />
+                  <span className="w-full truncate text-[9px] font-medium leading-none sm:text-[10px]">{item.shortLabel}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
     </BusinessCardThemeProvider>
   );
 };

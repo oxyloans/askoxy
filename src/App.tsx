@@ -15,6 +15,9 @@ import ATSResumeChecker from "./components/JPL/FreeATSResumeChecker";
 import ResumeAnalysisReport from "./components/JPL/ResumeAnalysisReport";
 import AwardsRewardsVideo from "./BharathAIStore/pages/AwardsRewardsVideo";
 import SovereignAIPage from "./components/SovereignAIPage";
+import PersonalDetailsPage from "./BusinessCard/PersonalDetailsPage";
+import EventImagesUploadPage from "./BusinessCard/EventImagesUploadPage";
+import UserEventDetailsListPage from "./BusinessCard/UserEventDetailsListPage";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -1257,14 +1260,8 @@ const App: React.FC = () => {
               />
               <Route path="/nyayagpt" element={<Nyayagpt />} />
               <Route path="/gstonrice" element={<GSTRiceFAQ />} />
-              <Route
-                path="/business-card/login"
-                element={<BusinessCardLogin />}
-              />
-              <Route
-                path="/business-card/register"
-                element={<BusinessCardRegister />}
-              />
+              <Route path="/business-card/login" element={<BusinessCardLogin />} />
+              <Route path="/business-card/register" element={<BusinessCardRegister />} />
               <Route
                 path="/business-card/ceo-details"
                 element={
@@ -1294,6 +1291,38 @@ const App: React.FC = () => {
                 element={
                   <BusinessCardProtectedRoute>
                     <CeoDetailsListPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              <Route
+                path="/business-card/personal-details-document"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <PersonalDetailsPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              <Route
+                path="/business-card/my-profile"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <PersonalDetailsPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              <Route
+                path="/business-card/event-images"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <EventImagesUploadPage />
+                  </BusinessCardProtectedRoute>
+                }
+              />
+              <Route
+                path="/business-card/event-list"
+                element={
+                  <BusinessCardProtectedRoute>
+                    <UserEventDetailsListPage />
                   </BusinessCardProtectedRoute>
                 }
               />

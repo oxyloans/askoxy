@@ -16,7 +16,7 @@ import {
   Flame,
   Share2,
 } from "lucide-react";
-import BASE_URL from "../../Config";
+import BASE_URL, { uploadurlwithId } from "../../Config";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
@@ -323,7 +323,8 @@ const AssistantCard: React.FC<{
   })();
 
   const fallbackSVG = makeInitialsSVG(assistant.name || "AI");
-  const chosenThumb = (assistant.imageUrl || "").trim() || fallbackSVG;
+  const chosenThumb =
+    (`${uploadurlwithId} ${assistant.imageUrl}` || "").trim() || fallbackSVG;
   const [imgSrc, setImgSrc] = useState<string>(chosenThumb);
 
   const onCardKeyDown = (e: React.KeyboardEvent) => {

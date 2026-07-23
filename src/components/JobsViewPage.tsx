@@ -794,15 +794,15 @@ const JobViewPage: React.FC = () => {
           <div className="w-32 h-20 rounded-xl flex items-center justify-center overflow-hidden border border-gray-200 bg-white p-2">
             <img
               src={
-              `${uploadurlwithId}${job.companyLogo}`||
-                "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png"
+                `${uploadurlwithId}${job.companyLogo}` ||
+                "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3"
               }
               className="w-40 h-20 object-contain transition-transform duration-300"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.onerror = null;
                 target.src =
-                  "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png";
+                  "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
               }}
             />
           </div>

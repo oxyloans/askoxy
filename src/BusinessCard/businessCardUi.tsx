@@ -3,6 +3,7 @@ import { Alert, Button, Descriptions, Empty, Form, Grid, Spin, Tag, Upload } fro
 import type { ButtonProps, UploadProps } from "antd";
 import { LoadingOutlined, InboxOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import askOxyLogo from "../assets/img/askoxylogonew.png";
+import businessProfessional from "../assets/img/businesscardimage.png";
 import BusinessCardThemeProvider from "./BusinessCardThemeProvider";
 import { COLOR_PRIMARY, outlineSuccessButtonStyle, successButtonStyle } from "./businessCardTheme";
 import "./businessCardAuth.css";
@@ -249,7 +250,8 @@ export const DetailGrid: React.FC<DetailGridProps> = ({ items }) => (
     column={{ xs: 1, sm: 2 }}
     size="small"
     bordered
-    className="!rounded-md [&_.ant-descriptions-item-label]:!w-[38%] [&_.ant-descriptions-item-label]:!bg-slate-50 [&_.ant-descriptions-item-label]:!px-3 [&_.ant-descriptions-item-label]:!py-2 [&_.ant-descriptions-item-label]:!text-[11px] [&_.ant-descriptions-item-label]:!font-medium [&_.ant-descriptions-item-label]:!text-slate-500 sm:[&_.ant-descriptions-item-label]:!text-xs [&_.ant-descriptions-item-content]:!px-3 [&_.ant-descriptions-item-content]:!py-2 [&_.ant-descriptions-item-content]:!text-xs [&_.ant-descriptions-item-content]:!text-slate-800 sm:[&_.ant-descriptions-item-content]:!text-[13px]"
+    layout="vertical"
+    className="!rounded-md [&_.ant-descriptions-item-label]:!bg-slate-50 [&_.ant-descriptions-item-label]:!px-3 [&_.ant-descriptions-item-label]:!py-2 [&_.ant-descriptions-item-label]:!text-[11px] [&_.ant-descriptions-item-label]:!font-medium [&_.ant-descriptions-item-label]:!text-slate-500 sm:[&_.ant-descriptions-item-label]:!text-xs [&_.ant-descriptions-item-content]:!px-3 [&_.ant-descriptions-item-content]:!py-2 [&_.ant-descriptions-item-content]:!text-xs [&_.ant-descriptions-item-content]:!text-slate-800 [&_.ant-descriptions-item-content]:!break-words sm:[&_.ant-descriptions-item-content]:!text-[13px]"
   >
     {items.map((item) => (
       <Descriptions.Item key={item.label} label={item.label} span={item.fullWidth ? 2 : 1}>
@@ -366,47 +368,55 @@ export const AuthShell: React.FC<AuthShellProps> = ({
 
   return (
     <BusinessCardThemeProvider>
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-3 sm:p-5">
-        <div className="w-full max-w-[720px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5">
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-4 py-3 text-white md:hidden">
-            <img src={askOxyLogo} alt="AskOxy" className="mb-1.5 h-6 w-auto brightness-0 invert" />
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 px-3 py-5 sm:px-5 sm:py-7">
+        <div className="w-full max-w-[400px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 sm:max-w-[430px] md:h-[520px] md:max-w-[780px]">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-5 py-4 text-white md:hidden sm:px-6 sm:py-5">
+            <img src={askOxyLogo} alt="AskOxy" className="mb-2 h-7 w-auto brightness-0 invert" />
             <span className="inline-block rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest">
               {content.badge}
             </span>
-            <h2 className="mt-1.5 text-sm font-semibold leading-snug">{content.headline}</h2>
+            <h2 className="mt-2 text-base font-semibold leading-snug sm:text-lg">{content.headline}</h2>
           </div>
 
-          <div className="flex min-h-0 flex-col md:flex-row">
-            <aside className="relative hidden w-[42%] shrink-0 flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-5 py-5 text-white md:flex">
-              <div>
-                <img src={askOxyLogo} alt="AskOxy" className="h-7 w-auto brightness-0 invert" />
-                <span className="mt-2 inline-block rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest">
+          <div className="flex flex-col md:h-full md:min-h-0 md:flex-row">
+            <aside className="relative hidden w-1/2 shrink-0 overflow-hidden bg-slate-900 px-6 py-6 text-white md:flex md:h-full md:flex-col lg:px-7 lg:py-7">
+              <img
+                src={businessProfessional}
+                alt="Business professional managing digital connections"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
+              <div className="absolute inset-0 z-[1] bg-gradient-to-b from-slate-950/75 via-cyan-950/50 to-slate-950/85" />
+              <div className="relative z-10 flex h-full flex-col">
+                <img src={askOxyLogo} alt="AskOxy" className="h-8 w-auto self-start brightness-0 invert" />
+                <span className="mt-4 self-start rounded-full border border-cyan-200/30 bg-cyan-300/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-100 backdrop-blur-sm">
                   {content.badge}
                 </span>
-                <h2 className="mt-2 text-base font-semibold leading-snug">{content.headline}</h2>
-                <p className="mt-2 max-w-[240px] text-xs leading-relaxed text-white/80">
+                <h2 className="mt-4 max-w-sm text-2xl font-bold leading-[1.2] tracking-tight text-white">{content.headline}</h2>
+                <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-slate-200">
                   {content.description}
                 </p>
-                <ul className="mt-4 hidden flex-col gap-1.5 lg:flex">
-                  {content.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-1.5 text-xs text-white/90">
-                      <CheckCircleOutlined className="mt-0.5 shrink-0 text-cyan-300 text-[11px]" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-auto rounded-xl border border-white/15 bg-slate-950/35 p-3.5 shadow-lg backdrop-blur-md">
+                  <p className="mb-2.5 text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-200">Everything you need</p>
+                  <ul className="space-y-2.5">
+                    {content.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2.5 text-xs font-medium leading-relaxed text-white/95">
+                        <CheckCircleOutlined className="mt-0.5 shrink-0 text-sm text-emerald-300" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <p className="mt-4 text-[10px] text-white/45">Trusted · Secure · Professional</p>
             </aside>
 
-            <section className="flex flex-1 flex-col justify-center px-4 py-5 sm:px-6 sm:py-6">
-              <div className="mb-3">
-                <h1 className="text-base font-semibold text-slate-900 sm:text-lg">Welcome to AskOxy</h1>
-                <p className="bc-auth-form-prompt mt-0.5 text-xs text-slate-500 sm:text-[13px]">
+            <section className="flex flex-1 flex-col justify-center px-5 py-5 sm:px-6 sm:py-6 md:h-full md:w-1/2 md:overflow-y-auto md:px-7 lg:px-8">
+              <div className="mb-3 sm:mb-4">
+                <h1 className="text-lg font-semibold text-slate-900 sm:text-xl">Welcome to AskOxy</h1>
+                <p className="bc-auth-form-prompt mt-1 text-xs text-slate-500 sm:text-sm">
                   {authPrompt}
                 </p>
               </div>
-              <h2 className="mb-3 text-[13px] font-semibold text-slate-700">{formTitle}</h2>
+              <h2 className="mb-3 text-sm font-semibold text-slate-700 sm:text-base">{formTitle}</h2>
               <div className="bc-auth-form">{children}</div>
             </section>
           </div>

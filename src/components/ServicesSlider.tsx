@@ -69,6 +69,28 @@ const ServicesSlider: React.FC = () => {
   const getCampaignTitle = (campaign: Campaign) =>
     campaign.campaignTitle || campaign.campaignType || "blog";
 
+  const getTimestamp = (value: number | string | undefined) => {
+    if (value == null || value === "") return 0;
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return numeric < 10_000_000_000 ? numeric * 1000 : numeric;
+    }
+    const parsed =
+      typeof value === "number" ? value : Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const formatPublishedDate = (value: number | string | undefined) => {
+    const timestamp = getTimestamp(value);
+    return timestamp
+      ? new Date(timestamp).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : "";
+  };
+
   const slugify = (text: string) =>
     (text || "")
       .toLowerCase()
@@ -229,23 +251,35 @@ const ServicesSlider: React.FC = () => {
     },
   ];
 
-  const blogCampaigns = campaigns.filter(
-    (campaign) =>
-      campaign.campaignStatus !== false && campaign.campainInputType === "BLOG",
-  );
+  const blogCampaigns = campaigns
+    .filter(
+      (campaign) =>
+        campaign.campaignStatus !== false &&
+        campaign.campainInputType === "BLOG",
+    )
+    .sort(
+      (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt),
+    );
 
-  const nonBlogCampaigns = campaigns.filter(
-    (campaign) =>
-      campaign.campaignStatus !== false && campaign.campainInputType !== "BLOG",
-  );
+  const nonBlogCampaigns = campaigns
+    .filter(
+      (campaign) =>
+        campaign.campaignStatus !== false &&
+        campaign.campainInputType !== "BLOG",
+    )
+    .sort(
+      (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt),
+    );
 
   const displayedBlogs = showAllBlogs
     ? blogCampaigns
     : blogCampaigns.slice(0, 4);
   const displayedJobs = Array.isArray(jobs)
     ? showAllJobs
-      ? jobs
-      : jobs.slice(0, 5)
+      ? [...jobs].sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt))
+      : [...jobs]
+          .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt))
+          .slice(0, 5)
     : [];
 
   const allServices = showAllServices
@@ -480,7 +514,7 @@ const ServicesSlider: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group flex flex-col items-center p-4 transition-all duration-300 cursor-pointer"
+                className="group flex cursor-pointer flex-col overflow-hidden   p-4  transition-all duration-300 hover:-translate-y-1"
                 onClick={() => handleServiceClick(service)}
               >
                 <div className="w-full h-36 flex items-center justify-center mb-3 overflow-hidden">
@@ -494,6 +528,11 @@ const ServicesSlider: React.FC = () => {
                 <h3 className="text-center text-sm sm:text-base font-medium text-gray-800 transition-colors duration-300 line-clamp-2">
                   {service.title}
                 </h3>
+                {"campaign" in service && service.campaign?.createdAt && (
+                  <span className="mt-2 text-[11px] font-medium text-slate-400">
+                    {formatPublishedDate(service.campaign.createdAt)}
+                  </span>
+                )}
               </motion.div>
             ))}
           </motion.div>
@@ -587,6 +626,8 @@ const ServicesSlider: React.FC = () => {
               {displayedBlogs.map((campaign, index) => {
                 const mediaUrl = getCampaignFirstImage(campaign);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
+                const title = getCampaignTitle(campaign);
+                const publishedDate = formatPublishedDate(campaign.createdAt);
 
                 return (
                   <motion.div
@@ -595,15 +636,15 @@ const ServicesSlider: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                    className="group overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col"
+                    className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,140,186,0.14)]"
                     onClick={() => handleCampaignClick(campaign)}
                   >
-                    <div className="relative aspect-video overflow-hidden bg-gray-50">
+                    <div className="relative flex h-[200px] items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
                       {mediaUrl ? (
                         isVideo ? (
                           <video
                             src={mediaUrl}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
                             autoPlay
                             muted
                             loop
@@ -612,31 +653,51 @@ const ServicesSlider: React.FC = () => {
                         ) : (
                           <img
                             src={mediaUrl}
-                            alt={getCampaignTitle(campaign)}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            alt={title}
+                            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
                             loading="lazy"
                           />
                         )
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-sm text-gray-400">
-                          No media
+                        <div className="flex h-full w-full items-center justify-center p-5 text-center text-2xl font-extrabold uppercase tracking-wider text-white">
+                          {title
+                            .split(/\s+/)
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .map((word) => word[0])
+                            .join("") || "B"}
                         </div>
                       )}
 
                       <div className="absolute top-2 left-2">
-                        <span className="px-2 py-1 text-xs font-medium bg-white/90 text-gray-800 rounded-full">
+                        <span className="rounded-full bg-gradient-to-br from-[#008cba] to-[#1ab394] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                           Blog
                         </span>
                       </div>
                     </div>
 
-                    <div className="p-3 flex-grow flex flex-col">
-                      <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-purple-600 transition-colors mb-2 line-clamp-2">
-                        {getCampaignTitle(campaign)}
+                    <div className="flex flex-grow flex-col p-4">
+                      {publishedDate && (
+                        <span className="mb-1.5 text-[11px] font-medium text-slate-400">
+                          {publishedDate}
+                        </span>
+                      )}
+                      <h3 className="mb-2 line-clamp-2 text-sm font-bold leading-snug text-slate-900 transition-colors group-hover:text-[#008cba]">
+                        {title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 group-hover:text-gray-900 transition-colors">
+                      <p className="mb-4 line-clamp-3 flex-grow text-xs leading-relaxed text-gray-500">
                         {campaign.campaignDescription}
                       </p>
+                      <button
+                        type="button"
+                        className="h-10 w-full rounded-lg bg-[#008cba] px-4 text-sm font-semibold text-white transition hover:bg-blue-700"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleCampaignClick(campaign);
+                        }}
+                      >
+                        Read More
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -683,8 +744,8 @@ const ServicesSlider: React.FC = () => {
             </motion.div>
           </div>
 
-          {jobs.length > 3 && (
-            <motion.button
+          <motion.button
+              type="button"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -693,10 +754,9 @@ const ServicesSlider: React.FC = () => {
               className="bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] text-white font-medium px-6 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
               onClick={() => handleJobNavigate(null)}
             >
-              View All
+              View All Jobs
               <span className="ml-2 inline-block text-sm">→</span>
             </motion.button>
-          )}
         </div>
 
         {jobsLoading ? (
@@ -752,6 +812,7 @@ const ServicesSlider: React.FC = () => {
               const companyLogo = job.companyLogo
                 ? `${uploadurlwithId}${job.companyLogo}`
                 : "https://tse2.mm.bing.net/th/id/OIP.e0ttGuRF9TT2BAsn2KmuwgAAAA?r=0&w=165&h=83&rs=1&pid=ImgDetMain&o=7&rm=3";
+              const postedDate = formatPublishedDate(job.createdAt);
 
               return (
                 <motion.div
@@ -760,14 +821,14 @@ const ServicesSlider: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  className="group overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col"
+                  className="group m-2 flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
                   onClick={() => handleJobNavigate(job.id)}
                 >
-                  <div className="pt-4 pb-3 px-3 flex justify-center">
-                    <div className="w-20 h-16 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 p-2 bg-white">
+                  <div className="flex justify-center pb-4 pt-6">
+                    <div className="flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white p-2">
                       <img
                         src={companyLogo}
-                        className="max-w-full max-h-full object-contain"
+                        className="h-20 w-40 object-contain transition-transform duration-300"
                         alt={job.companyName || "Company Logo"}
                         loading="lazy"
                         onError={(e) => {
@@ -778,42 +839,47 @@ const ServicesSlider: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="px-3 pb-2">
+                  <div className="flex items-center justify-center px-4 pb-3">
                     <div
-                      className={`${bgColor} min-h-[44px] w-full rounded-lg flex items-center justify-center px-2 py-2`}
+                      className={`${bgColor} flex items-center justify-center rounded-xl px-4 py-2`}
                     >
-                      <span className="block w-full text-xs sm:text-sm font-medium text-gray-700 text-center leading-tight break-words line-clamp-2">
+                      <span className="line-clamp-2 text-center text-base font-semibold text-gray-700">
                         {job.companyName || "Company"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="px-3 pb-2 min-h-[56px] flex items-start justify-center">
-                    <h3 className="w-full text-sm sm:text-base font-semibold text-gray-800 text-center leading-tight break-words line-clamp-2">
+                  <div className="px-4 pb-1">
+                    <h3 className="line-clamp-2 text-center text-lg font-bold text-gray-800">
                       {job.jobTitle || "Job Title"}
                     </h3>
                   </div>
 
-                  <div className="px-3 pb-2">
-                    <div className="min-h-[40px] bg-gray-50 py-2 px-2 rounded-lg flex items-center justify-center">
-                      <div className="w-full text-xs font-medium text-gray-700 text-center leading-tight break-words line-clamp-2">
+                  <div className="px-2 pb-2">
+                    <div className="rounded-lg bg-gray-50 px-3 py-2 text-center">
+                      <div className="line-clamp-2 text-sm font-bold text-gray-700">
                         💼 {job.jobDesignation || "Not specified"}
                       </div>
                     </div>
                   </div>
 
-                  <div className="px-3 pb-3 space-y-1 text-center">
-                    <div className="text-xs text-gray-600 leading-tight break-words line-clamp-1">
+                  <div className="space-y-1 px-4 pb-3 text-center">
+                    <div className="truncate whitespace-nowrap text-sm text-gray-600">
                       📍 {job.jobLocations || "Not specified"}
                     </div>
-                    <div className="text-xs text-gray-600 leading-tight break-words line-clamp-1">
+                    <div className="truncate whitespace-nowrap text-sm text-gray-600">
                       ⏰ {job.experience || "Not specified"}
                     </div>
+                    {postedDate && (
+                      <div className="text-xs font-medium text-slate-400">
+                        Posted {postedDate}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="px-3 pb-4 mt-auto flex justify-center">
-                    <div className="bg-blue-100 text-blue-600 py-2 px-4 rounded-full font-medium text-xs whitespace-nowrap">
-                      View Job
+                  <div className="mt-auto flex justify-center px-4 pb-5">
+                    <div className="rounded-full bg-indigo-100 px-8 py-2.5 text-sm font-bold text-indigo-600 shadow-md">
+                      View Job Details
                     </div>
                   </div>
                 </motion.div>

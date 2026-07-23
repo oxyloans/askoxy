@@ -274,24 +274,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaTools size={16} />,
         },
         {
-          to: "/main/dashboard/leaguejourneys",
-          label: "League Journeys",
-          icon: <HiSparkles size={16} />,
-        },
-        {
-          to: "/main/dashboard/myblogs",
-          label: "My Blogs",
-          icon: <AiFillFileText size={16} />,
-        },
-        {
           to: "/main/viewjobdetails/default/ALL",
-          label: "All Jobs",
+          label: "Job Opportunities",
           icon: <FaBriefcase size={16} />,
         },
         {
           to: "/main/appliedjobs",
-          label: "My Job Applications",
+          label: "My Applications",
           icon: <FaRegCheckCircle size={16} />,
+        },
+        {
+          to: "/main/dashboard/myblogs",
+          label: "My Articles",
+          icon: <AiFillFileText size={16} />,
+        },
+        {
+          to: "/main/dashboard/leaguejourneys",
+          label: "League Journey",
+          icon: <HiSparkles size={16} />,
         },
       ],
     },
@@ -315,12 +315,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
       ],
     },
-    {
-      type: "item",
-      to: "/interview",
-      icon: <AiFillFileText size={18} />,
-      label: "Interview",
-    },
+    // {
+    //   type: "item",
+    //   to: "/interview",
+    //   icon: <AiFillFileText size={18} />,
+    //   label: "Interview",
+    // },
   ];
 
   const isActive = (to: string) => {

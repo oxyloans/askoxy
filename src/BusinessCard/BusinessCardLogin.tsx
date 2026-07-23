@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import { Form, Input, Result } from "antd";
 import { MailOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
+import { ArrowLeft } from "lucide-react";
 import BASE_URL from "../Config";
 import { getIntendedRoute, clearIntendedRoute } from "../utils/taskTokenManager";
 import {
@@ -27,6 +28,8 @@ interface LoginResponse {
   refreshToke?: string;
   id?: string;
   name?: string;
+  email?: string;
+  userEmail?: string;
   primaryType?: string;
   errorMessage?: string;
 }
@@ -68,15 +71,21 @@ const BusinessCardLogin: React.FC = () => {
       );
 
       if (response.data.status === "Login Successful" && response.data.token) {
-        const { token, refreshToke, id, name, primaryType } = response.data;
+        const { token, refreshToke, id, name, email: responseEmail, userEmail, primaryType } = response.data;
 
         setBusinessCardAccessToken(token);
         if (refreshToke) setBusinessCardRefreshToken(refreshToke);
         if (id) sessionStorage.setItem("userId", id);
-        if (name) sessionStorage.setItem("Name", name);
         if (primaryType) sessionStorage.setItem("primaryType", primaryType);
 
         if (primaryType === "BUSINESSCARD") {
+          const email = (responseEmail || userEmail || values.email).trim().toLowerCase();
+          const fallbackName = email
+            .split("@")[0]
+            .replace(/[._-]+/g, " ")
+            .replace(/\b\w/g, (letter) => letter.toUpperCase());
+          sessionStorage.setItem("Name", name?.trim() || fallbackName || "User");
+          sessionStorage.setItem("Email", email);
           showAuthSuccess("Login successful! Redirecting...", 1500);
 
           setTimeout(() => {
@@ -149,7 +158,13 @@ const BusinessCardLogin: React.FC = () => {
       formTitle="Login"
       authPrompt={
         <>
-          Need an account? <Link to="/business-card/register">Sign Up</Link>
+          Need an account?{" "}
+          <Link
+            to="/business-card/register"
+            className="ml-1 inline-flex items-center text-xs font-semibold !text-sky-600 transition-colors hover:!text-sky-800 sm:text-sm"
+          >
+            Sign Up
+          </Link>
         </>
       }
     >
@@ -181,6 +196,7 @@ const BusinessCardLogin: React.FC = () => {
           onFinish={handleLogin}
           requiredMark
           autoComplete="off"
+          className="[&_.ant-form-item]:!mb-3 [&_.ant-form-item-label]:!pb-1.5 [&_.ant-form-item-label>label]:!text-sm [&_.ant-form-item-label>label]:!font-semibold [&_.ant-form-item-label>label]:!text-slate-700 sm:[&_.ant-form-item]:!mb-4"
         >
           <Form.Item
             name="email"
@@ -191,6 +207,7 @@ const BusinessCardLogin: React.FC = () => {
             ]}
           >
             <Input
+              className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm transition-shadow focus-within:!shadow-[0_0_0_3px_rgba(8,145,178,0.12)]"
               prefix={<MailOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
               placeholder="name@company.com"
               autoComplete="email"
@@ -203,18 +220,28 @@ const BusinessCardLogin: React.FC = () => {
             rules={[{ required: true, message: "Please enter your password." }]}
           >
             <Input.Password
+              className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm transition-shadow focus-within:!shadow-[0_0_0_3px_rgba(8,145,178,0.12)]"
               prefix={<LockOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
               placeholder="Enter your password"
               autoComplete="current-password"
             />
           </Form.Item>
-          <Form.Item style={{ marginBottom: 0, marginTop: 4 }}>
-            <PrimaryButton htmlType="submit" loading={loading} block size="middle">
+          <Form.Item className="!mb-0 !mt-2">
+            <PrimaryButton htmlType="submit" loading={loading} block size="large" className="!h-10 !rounded-lg !border-sky-600 !bg-sky-600 !text-sm !font-semibold !text-white shadow-sm transition-colors hover:!border-sky-700 hover:!bg-sky-700 focus:!border-sky-700 focus:!bg-sky-700">
               Login
             </PrimaryButton>
           </Form.Item>
         </Form>
       )}
+      <div className="mt-4 border-t border-slate-100 pt-3 text-center">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 transition-colors hover:!text-sky-700 sm:text-sm"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to Choice
+        </Link>
+      </div>
     </AuthShell>
   );
 };

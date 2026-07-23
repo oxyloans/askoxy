@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Form, Input, Space, Steps } from "antd";
+import { Form, Input, Steps } from "antd";
+import { ArrowLeft } from "lucide-react";
 import {
   MailOutlined,
   LockOutlined,
@@ -131,7 +132,13 @@ const BusinessCardRegister: React.FC = () => {
       formTitle={step === 0 ? "Register" : "Verify & complete"}
       authPrompt={
         <>
-          Already have an account? <Link to="/business-card/login">Sign In</Link>
+          Already have an account?{" "}
+          <Link
+            to="/business-card/login"
+            className="ml-1 inline-flex items-center text-xs font-semibold !text-sky-600 transition-colors hover:!text-sky-800 sm:text-sm"
+          >
+            Sign In
+          </Link>
         </>
       }
     >
@@ -139,6 +146,7 @@ const BusinessCardRegister: React.FC = () => {
         current={step}
         size="small"
         responsive
+        className="!mb-4 sm:!mb-5 [&_.ant-steps-item-title]:!text-xs [&_.ant-steps-item-title]:!font-medium"
         items={[
           { title: "Email" },
           { title: "Verify" },
@@ -152,6 +160,7 @@ const BusinessCardRegister: React.FC = () => {
           onFinish={handleEmailSubmit}
           requiredMark
           autoComplete="off"
+          className="[&_.ant-form-item]:!mb-3 [&_.ant-form-item-label]:!pb-1.5 [&_.ant-form-item-label>label]:!text-sm [&_.ant-form-item-label>label]:!font-semibold [&_.ant-form-item-label>label]:!text-slate-700 sm:[&_.ant-form-item]:!mb-4"
         >
           <Form.Item
             name="email"
@@ -162,13 +171,14 @@ const BusinessCardRegister: React.FC = () => {
             ]}
           >
             <Input
+              className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm transition-shadow focus-within:!shadow-[0_0_0_3px_rgba(8,145,178,0.12)]"
               prefix={<MailOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
               placeholder="name@company.com"
               autoComplete="email"
               allowClear
             />
           </Form.Item>
-          <PrimaryButton htmlType="submit" loading={loading} block size="middle">
+          <PrimaryButton htmlType="submit" loading={loading} block size="large" className="!h-10 !rounded-lg !border-sky-600 !bg-sky-600 !text-sm !font-semibold !text-white shadow-sm transition-colors hover:!border-sky-700 hover:!bg-sky-700 focus:!border-sky-700 focus:!bg-sky-700">
             Send verification code
           </PrimaryButton>
         </Form>
@@ -180,9 +190,10 @@ const BusinessCardRegister: React.FC = () => {
           onFinish={handleSubmitOtp}
           requiredMark
           autoComplete="off"
+          className="[&_.ant-form-item]:!mb-3 [&_.ant-form-item-label]:!pb-1 [&_.ant-form-item-label>label]:!text-xs [&_.ant-form-item-label>label]:!font-semibold [&_.ant-form-item-label>label]:!text-slate-700"
         >
           <Form.Item label="Email">
-            <Input value={email} disabled prefix={<MailOutlined style={{ color: "rgba(0,0,0,0.35)" }} />} />
+            <Input className="!h-10 !rounded-lg !px-3 !text-sm" value={email} disabled prefix={<MailOutlined style={{ color: "rgba(0,0,0,0.35)" }} />} />
           </Form.Item>
           <Form.Item
             name="emailOtp"
@@ -190,6 +201,7 @@ const BusinessCardRegister: React.FC = () => {
             rules={[{ required: true, message: "Please enter the OTP from your email." }]}
           >
             <Input
+              className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm"
               prefix={<SafetyOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
               placeholder="Enter OTP from email"
               maxLength={8}
@@ -202,6 +214,7 @@ const BusinessCardRegister: React.FC = () => {
             rules={[{ required: true, message: "Please enter your full name." }]}
           >
             <Input
+              className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm"
               prefix={<UserOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
               placeholder="Your full name"
               allowClear
@@ -221,26 +234,37 @@ const BusinessCardRegister: React.FC = () => {
             extra="Use 8+ characters with upper, lower, number, and symbol."
           >
             <Input.Password
+              className="!h-10 !rounded-lg !px-3 !text-sm shadow-sm"
               prefix={<LockOutlined style={{ color: "rgba(0,0,0,0.35)" }} />}
               placeholder="Create a strong password"
               autoComplete="new-password"
             />
           </Form.Item>
-          <Space direction="vertical" style={{ width: "100%" }} size="small">
+          <div className="flex w-full flex-col gap-2 pt-1">
             <OutlineSuccessButton
               block
-              size="middle"
+              size="large"
+              className="!h-10 !rounded-lg !border-slate-300 !bg-white !text-sm !font-semibold !text-slate-700 shadow-sm transition-colors hover:!border-slate-400 hover:!bg-slate-50 hover:!text-slate-900"
               icon={<ArrowLeftOutlined />}
               onClick={() => setStep(0)}
             >
               Change email
             </OutlineSuccessButton>
-            <SuccessButton htmlType="submit" loading={loading} block size="middle">
+            <SuccessButton htmlType="submit" loading={loading} block size="large" className="!h-10 !rounded-lg !border-sky-600 !bg-sky-600 !text-sm !font-semibold !text-white shadow-sm transition-colors hover:!border-sky-700 hover:!bg-sky-700">
               Complete registration
             </SuccessButton>
-          </Space>
+          </div>
         </Form>
       )}
+      <div className="mt-4 border-t border-slate-100 pt-3 text-center">
+        <Link
+          to="/business-card/login"
+          className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 transition-colors hover:!text-sky-700 sm:text-sm"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to Login
+        </Link>
+      </div>
     </AuthShell>
   );
 };

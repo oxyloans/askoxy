@@ -6,10 +6,6 @@ const resolveAiAgentBase = (): string => {
   if (fromEnv) {
     return fromEnv;
   }
-  // if (process.env.NODE_ENV === "development") {
-  //   const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-  //   return `http://${host}:9040/api/ai-service/agent`;
-  // }
   return `${BASE_URL}/ai-service/agent`;
 };
 
@@ -381,6 +377,51 @@ export const processBusinessCard = async (
     : "Upload processed successfully.";
 };
 
+/** Separate helper for Process Card page — sends userId (does not change processBusinessCard). */
+export interface ProcessBusinessCardUploadParams {
+  userId: string;
+  file?: File;
+  photo?: File;
+  mobileNumber?: string;
+}
+
+export const processBusinessCardUpload = async (
+  params: ProcessBusinessCardUploadParams
+): Promise<string> => {
+  const userId = params.userId?.trim() || getLoggedInUserId() || "";
+  if (!userId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+
+  const formData = new FormData();
+  formData.append("userId", userId);
+  // Backend currently requires messageId; keep same value so existing API still works.
+  formData.append("messageId", userId);
+
+  if (params.file) {
+    formData.append("file", params.file);
+  }
+  if (params.photo) {
+    formData.append("photo", params.photo);
+  }
+  if (params.mobileNumber?.trim()) {
+    formData.append("mobileNumber", params.mobileNumber.trim());
+  }
+
+  const response = await businessCardApi.post<string>(
+    `${AI_AGENT_BASE}/process-business-card`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300000,
+    }
+  );
+
+  return typeof response.data === "string"
+    ? response.data
+    : "Upload processed successfully.";
+};
+
 export const fetchCeoDataUploadDetails = async (
   userId?: string
 ): Promise<BusinessUploadDataGroup[]> => {
@@ -419,3 +460,245 @@ export const fetchCeoDetailsByUserId = async (
   );
   return response.data;
 };
+
+export interface PersonalDetailsWithDocumentResponse {
+  userId?: string;
+  documentId?: string;
+  documentName?: string;
+  documentPath?: string;
+  message?: string;
+}
+
+export interface SavePersonalDetailsWithDocumentParams {
+  file: File;
+  userId: string;
+}
+
+const postMultipart = async <T>(url: string, formData: FormData): Promise<T> => {
+  const response = await businessCardApi.post<T>(url, formData, {
+    timeout: 300000,
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+export const savePersonalDetailsWithDocument = async (
+  params: SavePersonalDetailsWithDocumentParams
+): Promise<PersonalDetailsWithDocumentResponse> => {
+  const userId = params.userId?.trim();
+  if (!userId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+  if (!params.file) {
+    throw new Error("Please select a file to upload.");
+  }
+
+  const formData = new FormData();
+  formData.append("file", params.file);
+  formData.append("userId", userId);
+
+  return postMultipart<PersonalDetailsWithDocumentResponse>(
+    `${AI_AGENT_BASE}/savePersonalDetailsWithDocument`,
+    formData
+  );
+};
+
+export interface PersonalDetailsProfileResponse {
+  userName?: string | null;
+  mobileNumber?: string | null;
+  email?: string | null;
+  companyName?: string | null;
+  linkedin?: string | null;
+  location?: string | null;
+  userId?: string | null;
+  id?: string | null;
+  document?: string | null;
+  designation?: string | null;
+}
+
+export const fetchPersonalDetailsByUserId = async (
+  userId?: string
+): Promise<PersonalDetailsProfileResponse> => {
+  const resolvedUserId = userId?.trim() || getLoggedInUserId();
+  if (!resolvedUserId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+
+  const response = await businessCardApi.get<PersonalDetailsProfileResponse>(
+    `${AI_AGENT_BASE}/getPersonalDetailsBasedOnUserId`,
+    {
+      params: { userId: resolvedUserId },
+      timeout: 120000,
+    }
+  );
+
+  return response.data;
+};
+
+export interface UpdatePersonalDetailsRequest {
+  companyName?: string;
+  designation?: string;
+  email?: string;
+  linkedin?: string;
+  location?: string;
+  mobileNumber?: string;
+  userId: string;
+  userName?: string;
+}
+
+/** Builds the PATCH body for /updatePersonalDestails (updates by userId). */
+export const buildUpdatePersonalDetailsPayload = (
+  payload: UpdatePersonalDetailsRequest
+): UpdatePersonalDetailsRequest => {
+  const userId = payload.userId?.trim() || getLoggedInUserId() || "";
+  if (!userId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+
+  return {
+    companyName: payload.companyName?.trim() ?? "",
+    designation: payload.designation?.trim() ?? "",
+    email: payload.email?.trim() ?? "",
+    linkedin: payload.linkedin?.trim() ?? "",
+    location: payload.location?.trim() ?? "",
+    mobileNumber: payload.mobileNumber?.trim() ?? "",
+    userId,
+    userName: payload.userName?.trim() ?? "",
+  };
+};
+
+export const updatePersonalDetails = async (
+  payload: UpdatePersonalDetailsRequest
+): Promise<PersonalDetailsProfileResponse> => {
+  const body = buildUpdatePersonalDetailsPayload(payload);
+
+  const response = await businessCardApi.patch<PersonalDetailsProfileResponse>(
+    `${AI_AGENT_BASE}/updatePersonalDestails`,
+    body,
+    { timeout: 120000 }
+  );
+
+  return response.data;
+};
+
+export interface EventImageUploadResponse {
+  id?: string;
+  userId?: string;
+  imageUrl?: string;
+  fileName?: string;
+  uploadedAt?: string;
+  message?: string;
+  eventType?: string | null;
+}
+
+export interface UploadEventImagesParams {
+  file: File;
+  userId: string;
+  eventType?: string;
+}
+
+export const uploadEventImages = async (
+  params: UploadEventImagesParams
+): Promise<EventImageUploadResponse> => {
+  const userId = params.userId?.trim() || getLoggedInUserId() || "";
+  if (!userId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+  if (!params.file) {
+    throw new Error("Please select an image to upload.");
+  }
+
+  const formData = new FormData();
+  formData.append("file", params.file);
+  formData.append("userId", userId);
+  if (params.eventType?.trim()) {
+    formData.append("eventType", params.eventType.trim().toUpperCase());
+  }
+
+  return postMultipart<EventImageUploadResponse>(
+    `${AI_AGENT_BASE}/uploadEventImages`,
+    formData
+  );
+};
+
+export interface UserEventDetailsResponse {
+  id?: string;
+  content?: string | null;
+  companyName?: string | null;
+  userId?: string | null;
+  eventName?: string | null;
+  userName?: string | null;
+  ceoId?: string | null;
+  ceoName?: string | null;
+  designation?: string | null;
+  mobileNumber?: string | null;
+  email?: string | null;
+  linkedin?: string | null;
+  location?: string | null;
+  active?: boolean;
+  eventType?: string | null;
+  emailSubjectName?: string | null;
+}
+
+export interface UserEventDetailsSaveRequest {
+  content?: string;
+  emailSubjectName?: string;
+  eventName?: string;
+  eventType?: string;
+  id?: string;
+  active?: boolean;
+}
+
+export const fetchUserEventDetailsByUserId = async (
+  userId?: string
+): Promise<UserEventDetailsResponse[]> => {
+  const resolvedUserId = userId?.trim() || getLoggedInUserId();
+  if (!resolvedUserId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+
+  const response = await businessCardApi.get<UserEventDetailsResponse[]>(
+    `${AI_AGENT_BASE}/getUserEventDeatailsOnId`,
+    {
+      params: { userId: resolvedUserId },
+      timeout: 120000,
+    }
+  );
+
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+/** PATCH /ceoDetails — create (no id) or update (with id from getUserEventDeatailsOnId). */
+export const saveUserEventDetails = async (
+  payload: UserEventDetailsSaveRequest
+): Promise<UserEventDetailsResponse> => {
+  const userId = getLoggedInUserId();
+  if (!userId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+
+  const body: UserEventDetailsSaveRequest & { userId: string } = {
+    content: payload.content?.trim() || "",
+    emailSubjectName: payload.emailSubjectName?.trim() || "",
+    eventName: payload.eventName?.trim() || "",
+    eventType: payload.eventType?.trim() || "",
+    userId,
+  };
+
+  if (payload.id?.trim()) {
+    body.id = payload.id.trim();
+  }
+
+  if (typeof payload.active === "boolean") {
+    body.active = payload.active;
+  }
+
+  const response = await businessCardApi.patch<UserEventDetailsResponse>(
+    `${AI_AGENT_BASE}/ceoDetails`,
+    body,
+    { timeout: 120000 }
+  );
+
+  return response.data;
+};
+
