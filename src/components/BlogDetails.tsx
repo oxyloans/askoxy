@@ -93,7 +93,9 @@ const BlogDetails: React.FC = () => {
     "";
 
   const accessToken = localStorage.getItem("accessToken");
-  const BLOGS_DASHBOARD_PATH = "/main/blogs";
+  const BLOGS_DASHBOARD_PATH = location.pathname.startsWith("/main/blog/")
+    ? location.pathname
+    : `/main${location.pathname}`;
   const LOGIN_ROUTE = "/whatsappregister";
   const [pageReady, setPageReady] = useState(false);
 
@@ -939,17 +941,18 @@ const handleWriteToUsSubmitButton = async () => {
         key={campaignId}
         className="overflow-hidden rounded-[24px] border border-[#e7eaf3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]"
       >
-        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[linear-gradient(90deg,#f6f7ff_0%,#fcfcff_100%)] border-b border-[#edf0f7]">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-4 bg-[linear-gradient(90deg,#f6f7ff_0%,#fcfcff_100%)] border-b border-[#edf0f7]">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
             <button
               type="button"
               onClick={handleGoBack}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="flex h-8 w-8 shrink-0 items-center justify-center text-slate-600 transition-colors duration-200 hover:text-slate-900 sm:h-10 sm:w-10"
               title="Go back"
+              aria-label="Go back"
             >
               <ArrowLeftOutlined className="text-sm" />
             </button>
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef2f9] text-[#6b7280]">
+            <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef2f9] text-[#6b7280] sm:flex">
               <UserOutlined />
             </div>
             <div className="min-w-0">
@@ -963,11 +966,11 @@ const handleWriteToUsSubmitButton = async () => {
             {getCampaignTitle(campaign)}
           </h1>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
             <button
               type="button"
               onClick={() => handleSubscribe(campaignId)}
-              className={`inline-flex items-center justify-center rounded-full px-4 sm:px-5 py-2.5 text-[12px] sm:text-[13px] font-semibold text-white transition-all ${
+              className={`inline-flex min-h-8 items-center justify-center whitespace-nowrap rounded-full px-2.5 py-1.5 text-[10px] font-semibold text-white transition-all sm:min-h-10 sm:px-5 sm:py-2.5 sm:text-[13px] ${
                 isSubscribed[campaignId]
                   ? "bg-gradient-to-r from-emerald-500 to-emerald-600"
                   : "bg-gradient-to-r from-[#3b82f6] to-[#4f46e5]"
@@ -985,7 +988,7 @@ const handleWriteToUsSubmitButton = async () => {
             <button
               type="button"
               onClick={() => handleWriteToUs(campaign)}
-              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#f59e0b] to-[#fb923c] px-4 sm:px-5 py-2.5 text-[12px] sm:text-[13px] font-semibold text-white"
+              className="inline-flex min-h-8 items-center justify-center whitespace-nowrap rounded-full bg-gradient-to-r from-[#f59e0b] to-[#fb923c] px-2.5 py-1.5 text-[10px] font-semibold text-white sm:min-h-10 sm:px-5 sm:py-2.5 sm:text-[13px]"
             >
               Write To Us
             </button>
@@ -993,7 +996,7 @@ const handleWriteToUsSubmitButton = async () => {
         </div>
 
         <div className="block lg:hidden px-4 sm:px-6 pt-4">
-          <h1 className="text-[21px] sm:text-[25px] font-extrabold leading-tight text-[#111827] text-center">
+          <h1 className="text-[17px] sm:text-[25px] font-extrabold leading-snug sm:leading-tight text-[#111827] text-center">
             {getCampaignTitle(campaign)}
           </h1>
         </div>
@@ -1517,10 +1520,12 @@ const handleWriteToUsSubmitButton = async () => {
           `}
         </style>
 
-        <div className="px-3 sm:px-5 lg:px-8 py-2 sm:py-4"  style={{
-    padding: isLoggedInUser ? "16px" : "98px",
-   
-  }}>
+        <div
+          className="px-3 py-2 sm:px-5 sm:py-4 lg:px-8"
+          style={{
+            paddingTop: isLoggedInUser ? undefined : "98px",
+          }}
+        >
           <div className="mx-auto max-w-[1550px] ">
             <div className="creatorRewardsBar mb-5 w-full  px-4 py-4 sm:px-6 sm:py-5">
               <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

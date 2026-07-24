@@ -749,7 +749,7 @@ const BlogsPage: React.FC = () => {
               >
                 {tab === "MY" && <UserOutlined />}
                 {tab === "ALL" && <FileTextOutlined />}
-                {tab === "GAMES" && <TrophyOutlined />}
+                {/* {tab === "GAMES" && <TrophyOutlined />} */}
                 <span>
                   {tab === "MY"
                     ? "My Blogs"

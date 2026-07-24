@@ -927,7 +927,7 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
               onMouseDown={() => setActiveButton("profile")}
               onMouseUp={() => setActiveButton(null)}
               onMouseLeave={() => setActiveButton(null)}
-              className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition sm:w-auto sm:px-3 sm:py-2 ${
+              className={`flex h-10 w-auto flex-shrink-0 items-center justify-center rounded-full px-1.5 transition sm:px-3 sm:py-2 ${
                 location.pathname === "/main/profile"
                   ? "bg-white text-purple-700"
                   : "text-white hover:bg-white/10"
@@ -936,9 +936,11 @@ const HeaderMain: React.FC<HeaderProps> = ({ IsMobile5 }) => {
               title="Profile"
             >
               <FaUserCircle size={24} />
-              {/* <span className="hidden text-sm font-medium sm:inline">
-                Profile
-              </span> */}
+              {/* {customerId && (
+                <span className="ml-1 whitespace-nowrap text-[10px] font-semibold sm:text-sm">
+                  ID: {customerId.slice(-4)}
+                </span>
+              )} */}
             </button>
 
             <button

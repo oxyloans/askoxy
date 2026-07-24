@@ -701,6 +701,7 @@ const App: React.FC = () => {
       "/techmahindra/jobs",
       "/allcompanies/jobs",
       "/broadridge/jobs",
+      "blog/:id/:type",
       "/credera/jobs",
       "/jpl","/fpl","/oxygold",
       "/viewjobdetails/default/ALL",
