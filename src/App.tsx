@@ -511,6 +511,7 @@ const TaxInvoice = lazy(() => import("./components/TaxInvoice"));
 const AccentureServices = lazy(
   () => import("./components/CampaignStatsAccenture"),
 );
+const CommunityPage = lazy(() => import("./components/community/CommunityPage"));
 
 // Simple centered loader component
 const LoadingSpinner = React.memo(() => {
@@ -842,6 +843,10 @@ const App: React.FC = () => {
               <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
               <Route path="/oxybfsai" element={<Billing />} />
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
+              <Route
+                  path="/oxycommunity"
+                  element={<CommunityPage />}
+                />
 
               {/* OXY BFSAI Engine — full layout with fixed header */}
               <Route element={<FinvibeLayout />}>
@@ -1592,7 +1597,7 @@ const App: React.FC = () => {
                 element={<ConversationsPage />}
               />
               <Route path="/may2Interview" element={<HiringLandingPage />} />
-              <Route path="/walkin-journey" element={<WalkInJourneyPage />} />
+              {/* <Route path="/walkin-journey" element={<WalkInJourneyPage />} /> */}
               <Route path="/lenderjourney" element={<LenderHomePage />} />
               <Route path="/resume-ai-interview" element={<ATSResumeChecker />} />
               <Route path="/resume-ai-interview/report/:jobId" element={<ResumeAnalysisReport />} />

@@ -28,7 +28,7 @@ import { SiX } from "react-icons/si";
 import RADHAI from "../../assets/img/radhai.png";
 import TALKTOCEOLOGO from "../../assets/img/talktoceo.png";
 import ASKOXYLOGO from "../../assets/img/askoxylogonew.png";
-import ASKOXYLOGO1 from "../../assets/img/walkinwhite.png";
+import ASKOXYLOGO1 from "../../assets/img/askoxylogoblack.png";
 
 const GOOGLE_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSd7BMOmvNIfXgpnefXGoGeqJuLp1hege82srbNmQ9E3e-Lkjg/viewform";
@@ -414,7 +414,7 @@ const RadhAIPage: React.FC = () => {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-10">
           <div className="flex items-center gap-3">
             <img
-              onClick={handleSignIn}
+              onClick={()=>navigate("/")}
               src={ASKOXYLOGO1}
               alt="Walk-in Interview"
               className="hidden h-10 w-auto cursor-pointer object-contain sm:block sm:h-14 lg:h-16"
@@ -543,7 +543,7 @@ const RadhAIPage: React.FC = () => {
                 Clone of Radhakrishna Thatavarti
               </p>
             </div>
-            <div
+            {/* <div
               onClick={handleSignIn}
               className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl  bg-lime-300/10 px-3 py-2.5 transition hover:bg-lime-300/20"
             >
@@ -557,7 +557,7 @@ const RadhAIPage: React.FC = () => {
                 <Briefcase size={11} />
                 Visit Our Jobs
               </button>
-            </div>
+            </div> */}
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-2 sm:hidden">

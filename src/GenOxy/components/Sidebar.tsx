@@ -8,6 +8,14 @@ interface AssistantPublic {
   description?: string;
 }
 
+interface UserHistoryItem {
+  prompt: string;
+  userId: string;
+  agentId: string;
+  createdAt: string;
+  threadId: string;
+}
+
 interface SidebarProps {
   chatHistory: Message[][];
   loadChat: (chat: Message[]) => void;
@@ -18,6 +26,8 @@ interface SidebarProps {
   assistants?: AssistantPublic[];
   activeAssistantSlug?: string | null;
   onPickAssistant?: (assistant: AssistantPublic) => void;
+  serverHistory?: Record<string, UserHistoryItem[]>;
+  onContinueHistory?: (item: UserHistoryItem, label: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -30,6 +40,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   assistants = [],
   activeAssistantSlug = null,
   onPickAssistant,
+    serverHistory = {},
+  onContinueHistory,
 }) => {
   const handleMobileClick = (callback: () => void) => {
     callback();
@@ -37,9 +49,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       toggleSidebar();
     }
   };
-const navigate = useNavigate();
+  const navigate = useNavigate();
   return (
-    <div className="flex flex-col h-full justify-between bg-white dark:bg-gray-800 shadow-sm">
+    <div className="flex flex-col h-full min-h-0 justify-between bg-white dark:bg-gray-800 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between px-2 py-1 border-b border-gray-200  dark:border-gray-700">
         <div className="hidden sm:flex rounded-lg  items-center justify-center transition-shadow duration-200">
@@ -125,29 +137,44 @@ const navigate = useNavigate();
         </h2>
       </div>
 
-      {/* Chat History List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {chatHistory.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 px-2">
-            No chat history yet.
-          </p>
-        ) : (
-          chatHistory.map((chat, index) => (
-            <button
-              key={index}
-              onClick={() => handleMobileClick(() => loadChat(chat))}
-              className="w-full text-left p-3 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 text-sm text-gray-900 dark:text-white flex items-center gap-3 border border-gray-200 dark:border-gray-700"
-            >
-              <User className="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-              <span className="truncate">
-                {chat[0]?.content?.length > 50
-                  ? `${chat[0].content.substring(0, 50)}...`
-                  : chat[0]?.content || `Chat ${index + 1}`}
-              </span>
-            </button>
-          ))
-        )}
+     <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+  {Object.keys(serverHistory).length === 0 ? (
+    <p className="text-sm text-gray-500 dark:text-gray-400 px-2">
+      No chat history yet.
+    </p>
+  ) : (
+    Object.entries(serverHistory).map(([agentName, items]) => (
+      <div key={agentName}>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300 px-2 mb-1">
+          {agentName}
+        </h3>
+        <div className="space-y-2">
+          {items.map((item, idx) => {
+            const preview = item.prompt
+              .replace(/^\[\{role=user, content=/, "")
+              .replace(/\}\]$/, "");
+            return (
+              <button
+                key={`${agentName}-${idx}`}
+                onClick={() =>
+                  handleMobileClick(() =>
+                    onContinueHistory?.(item, agentName),
+                  )
+                }
+                className="w-full text-left p-3 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 text-sm text-gray-900 dark:text-white flex items-center gap-3 border border-gray-200 dark:border-gray-700"
+              >
+                <User className="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                <span className="truncate">
+                  {preview.length > 50 ? `${preview.slice(0, 50)}...` : preview}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+    ))
+  )}
+</div>
 
       {chatHistory.length > 0 && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">

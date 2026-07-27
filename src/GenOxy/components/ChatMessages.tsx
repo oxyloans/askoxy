@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Bot, User } from "lucide-react";
+import { Bot, User, Paperclip } from "lucide-react";
 import { Message } from "../types/types";
 import MessageActions from "./MessageActions";
 import MarkdownRenderer from "./MarkdownRenderer";
@@ -87,21 +87,36 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               <div key={msg.id || idx} className="animate-fade-in-up">
                 {msg.role === "user" ? (
                   <div className="flex justify-end">
-                    <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] relative group">
-                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md break-words whitespace-pre-wrap">
-                        {cleaned}
+                    <div className="flex flex-col items-end gap-1.5 max-w-[85%]">
+                      <div className="flex items-start gap-2 sm:gap-3 relative group">
+                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md break-words whitespace-pre-wrap">
+                          {cleaned}
+                        </div>
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <User className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="absolute -bottom-8 right-10 hidden group-hover:flex z-10 space-x-2">
+                          <MessageActions
+                            message={msg}
+                            index={idx}
+                            onEdit={() => onEditMessage(msg.id!, cleaned)}
+                            showOnly={["edit", "copy"]}
+                          />
+                        </div>
                       </div>
-                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <User className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="absolute -bottom-8 right-10 hidden group-hover:flex z-10 space-x-2">
-                        <MessageActions
-                          message={msg}
-                          index={idx}
-                          onEdit={() => onEditMessage(msg.id!, cleaned)}
-                          showOnly={["edit", "copy"]}
-                        />
-                      </div>
+                      {msg.fileNames && msg.fileNames.length > 0 && (
+                        <div className="flex flex-col items-end gap-1 pr-10">
+                          {msg.fileNames.map((name, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300"
+                            >
+                              <Paperclip className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate">{name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (

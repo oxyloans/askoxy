@@ -15,7 +15,8 @@ import {
   FaUsers,
   FaUser,
   FaRegCheckCircle,
-  FaCog
+  FaCog,
+  FaComments
 } from "react-icons/fa";
 import { IoLayers, IoLogOut } from "react-icons/io5";
 import { FaCreditCard, FaRobot, FaBriefcase } from "react-icons/fa6";
@@ -274,24 +275,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaTools size={16} />,
         },
         {
+          to: "/main/dashboard/leaguejourneys",
+          label: "League Journeys",
+          icon: <HiSparkles size={16} />,
+        },
+        {
+          to: "/main/dashboard/myblogs",
+          label: "My Blogs",
+          icon: <AiFillFileText size={16} />,
+        },
+        {
           to: "/main/viewjobdetails/default/ALL",
-          label: "Job Opportunities",
+          label: "All Jobs",
           icon: <FaBriefcase size={16} />,
         },
         {
           to: "/main/appliedjobs",
-          label: "My Applications",
+          label: "My Job Applications",
           icon: <FaRegCheckCircle size={16} />,
-        },
-        {
-          to: "/main/dashboard/myblogs",
-          label: "My Articles",
-          icon: <AiFillFileText size={16} />,
-        },
-        {
-          to: "/main/dashboard/leaguejourneys",
-          label: "League Journey",
-          icon: <HiSparkles size={16} />,
         },
       ],
     },
@@ -315,12 +316,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
       ],
     },
-    // {
-    //   type: "item",
-    //   to: "/interview",
-    //   icon: <AiFillFileText size={18} />,
-    //   label: "Interview",
-    // },
+    {
+      type: "item",
+      to: "/oxycommunity",
+      icon: <FaComments size={18} />,
+      label: "Community",
+    },
+    {
+      type: "item",
+      to: "/interview",
+      icon: <AiFillFileText size={18} />,
+      label: "Interview",
+    },
   ];
 
   const isActive = (to: string) => {

@@ -12,7 +12,7 @@ const GOOGLE_SHEET_URL =
 
 const ACCESS_KEY = "leagueJourneyAccess";
 const SOURCE_ROUTE_KEY = "lenderJourneySourceRoute";
-const LIST_ROUTE = "/main/dashboard/services?tab=LEAGUE_JOURNEYS";
+const LIST_ROUTE = "/main/dashboard/myservices?tab=LEAGUE_JOURNEYS";
 const ACCESS_VALIDITY_MS = 12 * 60 * 60 * 1000;
 
 interface LeagueJourneyAccess {

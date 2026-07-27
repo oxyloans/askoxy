@@ -29,7 +29,7 @@ const DashboardMain: React.FC = () => {
     }
 
     if (pathTab === "services") {
-      navigate("/main/dashboard/services");
+      navigate("/main/dashboard/myservices");
     } else if (pathTab === "blogs") {
       navigate("/main/dashboard/blogs");
     }

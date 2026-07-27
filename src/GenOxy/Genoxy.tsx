@@ -1,7 +1,7 @@
-// /src/Genoxy.tsx
 import React, { useRef, useState, useEffect, KeyboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { message as antdMessage, message } from "antd";
+import axios from "axios";
 
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
@@ -9,13 +9,168 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import ChatMessages from "./components/ChatMessages";
 import InputBar from "./components/InputBar";
 
-import { useMessages } from "./hooks/useMessages";
+import { useMessages, cleanContent } from "./hooks/useMessages";
 import { useDarkMode } from "./hooks/useDarkMode";
 
 import BASE_URL from "../Config";
 import { Message } from "./types/types";
 
 import "./styles/OpenAi.css";
+
+interface UserHistoryItem {
+  prompt: string;
+  userId: string;
+  agentId: string;
+  createdAt: string;
+  threadId: string;
+}
+const KLM_ROLE_ASSISTANT_ID = "78656373-412b-4e9b-9df8-1c74a90c9a58";
+const LIFE_ASSISTANT_ID = "eb295c27-5d06-4459-8905-828efe880c34";
+const GENERAL_ASSISTANT_ID = "70320cac-042a-4ecb-b484-b5bc87aa5661";
+const OXYGPT_AGENT_ID = "d122c46c-ba1b-4e69-ae2a-07c44a1da99d";
+
+const AGENT_ID_TO_LABEL: Record<string, { name: string; slug: string }> = {
+  [OXYGPT_AGENT_ID]: { name: "OXYGPT", slug: "oxygpt" },
+  "fbc56f94-4215-4edc-acfe-79864dbb4711": {
+    name: "TiE AI LLM",
+    slug: "tie-llm",
+  },
+  "1e8e0623-1aaa-4cbd-a196-e5b161aa4cba": {
+    name: "KLM Fashions AI LLM",
+    slug: "klm-fashions LLM",
+  },
+  [KLM_ROLE_ASSISTANT_ID]: {
+    name: "KLM Fashions AI LLM",
+    slug: "klm-fashions LLM",
+  },
+  [LIFE_ASSISTANT_ID]: { name: "Insurance AI LLM", slug: "insurance-llm" },
+  [GENERAL_ASSISTANT_ID]: { name: "Insurance AI LLM", slug: "insurance-llm" },
+};
+
+// Parses the odd "[{role=user, content=...}]" string returned by the API
+function parseStoredPrompt(raw: string): string {
+  const match = raw.match(/content=(.*)\}\]\s*$/);
+  return match ? match[1].trim() : raw;
+}
+
+async function fetchUserHistory(userIdParam: string, agentIdParam: string) {
+  const { data } = await axios.get(
+    `${BASE_URL}/ai-service/agent/getUserHistory/${userIdParam}/${agentIdParam}`,
+  );
+  return data as UserHistoryItem[];
+}
+
+async function fetchConversationMessages(conversationId: string) {
+  const { data } = await axios.get(
+    `${BASE_URL}/ai-service/agent/getConversationMessages/${conversationId}/messages`,
+  );
+  return data as {
+    data: Array<{
+      id: string;
+      role: "user" | "assistant";
+      created_at: number;
+      content: Array<{ type: string; text?: { value: string } }>;
+    }>;
+  };
+}
+
+async function fetchFileName(fileId: string): Promise<string | null> {
+  try {
+    const { data } = await axios.get(
+      `${BASE_URL}/ai-service/agent/get-file-name-openai/${fileId}`,
+    );
+    return data?.filename ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function mapConversationToMessages(raw: any[]): Promise<Message[]> {
+  const filtered = raw
+    .filter((m) => m.type === "message")
+    .slice()
+    .reverse();
+
+  const fileIdsNeeded = new Set<string>();
+  filtered.forEach((m) => {
+    (m.content ?? []).forEach((c: any) => {
+      if (c?.type === "input_file" && c?.file_id) {
+        fileIdsNeeded.add(c.file_id);
+      }
+    });
+  });
+
+  const fileIdToName: Record<string, string> = {};
+  if (fileIdsNeeded.size > 0) {
+    const ids = Array.from(fileIdsNeeded);
+    const results = await Promise.allSettled(
+      ids.map((id) => fetchFileName(id)),
+    );
+    results.forEach((res, i) => {
+      if (res.status === "fulfilled" && res.value) {
+        fileIdToName[ids[i]] = res.value;
+      }
+    });
+  }
+
+  const messages = filtered.map((m, idx) => {
+    const textBlock = m.content?.find(
+      (c: any) =>
+        c.type === "output_text" ||
+        c.type === "input_text" ||
+        c.type === "text",
+    );
+
+    const rawText =
+      typeof textBlock?.text === "string"
+        ? textBlock.text
+        : (textBlock?.text?.value ?? "");
+
+    const annotations: any[] = Array.isArray(textBlock?.annotations)
+      ? textBlock.annotations
+      : [];
+    const citationNames = annotations
+      .filter((a: any) => a?.type === "file_citation" && a?.filename)
+      .map((a: any) => a.filename as string);
+
+    const inputFileNames = (m.content ?? [])
+      .filter((c: any) => c?.type === "input_file" && c?.file_id)
+      .map((c: any) => fileIdToName[c.file_id])
+      .filter((n: any): n is string => Boolean(n));
+
+    const fileNames = Array.from(
+      new Set([...citationNames, ...inputFileNames]),
+    );
+
+    return {
+      id: m.id ?? `hist_${idx}`,
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: cleanContent(rawText),
+      timestamp: new Date().toISOString(),
+      fileNames: fileNames.length > 0 ? fileNames : undefined,
+    } as Message;
+  });
+
+  // File citations arrive attached to the assistant's answer, but we want
+  // them shown against the user question that prompted that answer instead.
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (msg.role === "assistant" && msg.fileNames?.length) {
+      const prevUser = messages
+        .slice(0, i)
+        .reverse()
+        .find((m) => m.role === "user");
+      if (prevUser) {
+        prevUser.fileNames = Array.from(
+          new Set([...(prevUser.fileNames ?? []), ...msg.fileNames]),
+        );
+      }
+      msg.fileNames = undefined;
+    }
+  }
+
+  return messages;
+}
 
 type AssistantPublic = {
   name: string;
@@ -37,24 +192,18 @@ const KLM_DISCLAIMER =
   "Disclaimer :- This content is auto-processed to provide helpful insights, but roles, timelines, or designations may sometimes be mismatched or outdated. Please treat it as guidance, not absolute truth.";
 
 const ASSISTANTS: AssistantOption[] = [
-  { id: "asst_r72ouwQLn406qEjw9ftYjc85", name: "TiE AI LLM", slug: "tie-llm" },
   {
-    id: "", // keep empty; actual ID for Insurance is chosen per type
-    name: "Insurance AI LLM",
-    slug: "insurance-llm",
+    id: "fbc56f94-4215-4edc-acfe-79864dbb4711",
+    name: "TiE AI LLM",
+    slug: "tie-llm",
   },
+  { id: "", name: "Insurance AI LLM", slug: "insurance-llm" },
   {
-    id: "asst_XYsY8abeIoMWvsD394DW2N5A",
+    id: "1e8e0623-1aaa-4cbd-a196-e5b161aa4cba",
     name: "KLM Fashions AI LLM",
     slug: "klm-fashions LLM",
   },
 ];
-
-const KLM_ROLE_ASSISTANT_ID = "asst_6Yq2RvPL50n7n7qF9Vnp5uof";
-
-// ====== Insurance: per-type Assistant IDs (UPDATED) ======
-const LIFE_ASSISTANT_ID = "asst_G2jtvsfDcWulax5QDcyWhFX1";
-const GENERAL_ASSISTANT_ID = "asst_bRxg1cfAfcQ05O3UGUjcAwwC";
 
 type InsuranceType = "Life Insurance" | "General Insurance";
 const INSURANCE_TYPE_TO_ID: Record<InsuranceType, string> = {
@@ -80,10 +229,7 @@ function disclaimerForAssistant(name?: string | null) {
   return null; // Insurance: no disclaimer text by default
 }
 
-const ASK_ENDPOINT = `${(BASE_URL || "").replace(
-  /\/$/,
-  ""
-)}/student-service/user/askquestion`;
+const NEW_CHAT_ENDPOINT = `${(BASE_URL || "").replace(/\/$/, "")}/ai-service/agent/new-chat-openai`;
 
 /** TiE starter prompts — reduced to 4 for cleaner mobile UX */
 const TIE_PROMPTS: string[] = [
@@ -387,10 +533,6 @@ const GENERAL_CATEGORIES: {
   },
 ];
 
-/* ================================
- * Component
- * ================================ */
-
 const GenOxy: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<Message[][]>([]);
@@ -399,10 +541,16 @@ const GenOxy: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [activeAssistant, setActiveAssistant] =
     useState<AssistantOption | null>(null);
-
+  const [serverHistory, setServerHistory] = useState<
+    Record<string, UserHistoryItem[]>
+  >({});
+  const [historyAgentOverrideId, setHistoryAgentOverrideId] = useState<
+    string | null
+  >(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [remainingPrompts, setRemainingPrompts] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [fileIds, setFileIds] = useState<string[]>([]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -414,7 +562,7 @@ const GenOxy: React.FC = () => {
   // Insurance: landing + current type + effective assistant ID
   const [insuranceLanding, setInsuranceLanding] = useState<boolean>(true);
   const [insuranceType, setInsuranceType] = useState<InsuranceType | null>(
-    null
+    null,
   );
   const [insuranceAssistantId, setInsuranceAssistantId] = useState<string>("");
   const [generalCategory, setGeneralCategory] =
@@ -431,18 +579,52 @@ const GenOxy: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isChatRoute = location.pathname === "/genoxy/chat";
-  // Cache chat per assistant so history navigation restores the right state
+
   const chatCache = useRef<Record<string, Message[]>>({});
 
-  // Always-read latest messages without adding it as a dependency everywhere
   const messagesRef = useRef<Message[]>([]);
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
 
-  /**
-   * Sync assistant and messages from URL on any navigation (Back/Forward included).
-   */
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) return;
+
+    const agentIds = Array.from(new Set(Object.keys(AGENT_ID_TO_LABEL)));
+
+    (async () => {
+      const results = await Promise.allSettled(
+        agentIds.map((agentId) => fetchUserHistory(userId, agentId)),
+      );
+
+      const grouped: Record<string, UserHistoryItem[]> = {};
+      results.forEach((res, idx) => {
+        if (res.status === "fulfilled" && Array.isArray(res.value)) {
+          const label = AGENT_ID_TO_LABEL[agentIds[idx]].name;
+          grouped[label] = [...(grouped[label] ?? []), ...res.value];
+        }
+      });
+
+      Object.values(grouped).forEach((list) =>
+        list.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+      );
+
+      setServerHistory(grouped);
+    })();
+  }, []);
+
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      navigate("/whatsapplogin", { replace: true });
+      sessionStorage.setItem("redirectPath", "/genoxy");
+    }
+  }, []);
+
   useEffect(() => {
     const qs = new URLSearchParams(location.search);
     const slug = qs.get("a");
@@ -458,7 +640,8 @@ const GenOxy: React.FC = () => {
       setActiveAssistant(nextAssistant ?? null);
       setKlmRole(null);
       setKlmMode(null);
-
+      setThreadId(null);
+      setFileIds([]);
       // reset insurance stage
       setInsuranceLanding(true);
       setInsuranceType(null);
@@ -467,7 +650,7 @@ const GenOxy: React.FC = () => {
 
       // restore messages for the new assistant (or empty if none)
       const restored = nextAssistant?.slug
-        ? chatCache.current[nextAssistant.slug] ?? []
+        ? (chatCache.current[nextAssistant.slug] ?? [])
         : [];
       setMessages(restored);
     }
@@ -494,6 +677,8 @@ const GenOxy: React.FC = () => {
     setLoading,
     threadId,
     setThreadId,
+    fileIds, // ADD THIS
+    setFileIds,
     messagesEndRef,
     abortControllerRef,
     remainingPrompts,
@@ -506,7 +691,7 @@ const GenOxy: React.FC = () => {
   function resetChatForNewAssistant(nextAssistantSlug?: string | null) {
     // archive current session in visible history
     setChatHistory((prev) =>
-      messagesRef.current.length ? [...prev, [...messagesRef.current]] : prev
+      messagesRef.current.length ? [...prev, [...messagesRef.current]] : prev,
     );
 
     // save current messages per assistant slug if we have one
@@ -520,9 +705,11 @@ const GenOxy: React.FC = () => {
     setEditingMessageId(null);
     setSelectedFile(null);
     setThreadId(null);
+    setFileIds([]);
     setRemainingPrompts(null);
     setKlmRole(null);
     setKlmMode(null);
+    setHistoryAgentOverrideId(null);
 
     // Insurance
     setInsuranceLanding(true);
@@ -540,42 +727,37 @@ const GenOxy: React.FC = () => {
   }
 
   async function askAssistant(
-    assistantId: string | null | undefined,
-    userMessage: { role: "user"; content: string }
+    agentId: string | null | undefined,
+    userMessage: { role: "user"; content: string },
   ) {
-    if (!assistantId) {
+    if (!agentId) {
       antdMessage.error("Pick an assistant first.");
       return;
     }
 
-    // 🔹 Build instruction if KLM + role selected
-    let instruction = "";
-    if (activeAssistant?.name.toLowerCase().includes("klm") && klmRole) {
-      instruction = `Your helpful assistant. Your role is ${klmRole}. Answer based on this role only.`;
-    }
-
-    const url =
-      `${ASK_ENDPOINT}` +
-      `?assistantId=${encodeURIComponent(assistantId)}` +
-      `&instruction=${encodeURIComponent(instruction)}`;
+    const userId = localStorage.getItem("userId") || "";
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
     setLoading(true);
     try {
-      const historyForServer = [
-        ...messagesRef.current.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        { role: userMessage.role, content: userMessage.content },
-      ];
+      const body: any = {
+        agentId,
+        userId,
+        messageHistory: [
+          { role: userMessage.role, content: userMessage.content },
+        ], // only latest message
+      };
 
-      const res = await fetch(url, {
+      if (threadId) {
+        body.threadId = threadId; // only send after first response
+      }
+
+      const res = await fetch(NEW_CHAT_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "*/*" },
-        body: JSON.stringify(historyForServer),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
 
@@ -583,28 +765,21 @@ const GenOxy: React.FC = () => {
       if (!res.ok)
         throw new Error(`HTTP ${res.status} – ${text || "Request failed"}`);
 
-      let serverMsgs: { role: "user" | "assistant"; content: string }[] | null =
-        null;
+      const parsed = JSON.parse(text);
+      // { thread_id, response_id, assistant_reply }
 
-      try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
-          serverMsgs = parsed.map((m: any) => ({
-            role: m.role === "assistant" ? "assistant" : "user",
-            content: String(m.content ?? ""),
-          }));
-        }
-      } catch {}
-      const toAppend = serverMsgs ?? [{ role: "assistant", content: text }];
+      if (parsed.thread_id) {
+        setThreadId(parsed.thread_id);
+      }
 
       setMessages((prev) => [
         ...prev,
-        ...toAppend.map((m, i) => ({
-          id: `m_${Date.now()}_${i}`,
-          role: m.role,
-          content: m.content,
+        {
+          id: `m_${Date.now()}`,
+          role: "assistant",
+          content: parsed.assistant_reply ?? "",
           timestamp: new Date().toISOString(),
-        })),
+        },
       ]);
     } catch (e: any) {
       antdMessage.error(e?.message || "Request failed");
@@ -613,7 +788,69 @@ const GenOxy: React.FC = () => {
       abortControllerRef.current = null;
     }
   }
+  const continueFromHistory = async (item: UserHistoryItem, label: string) => {
+    const assistantInfo = ASSISTANTS.find((a) => a.name === label);
 
+    if (assistantInfo) {
+      setActiveAssistant(assistantInfo);
+      navigate(assistantUrl(assistantInfo.slug));
+    } else if (label === "OXYGPT") {
+      // Plain OxyGPT has no entry in ASSISTANTS — clear any active assistant
+      setActiveAssistant(null);
+      setKlmRole(null);
+      setKlmMode(null);
+      setInsuranceLanding(true);
+      setInsuranceType(null);
+      setInsuranceAssistantId("");
+      setGeneralCategory(null);
+      navigate("/genoxy/chat");
+    }
+
+    if (label === "Insurance AI LLM") {
+      if (item.agentId === LIFE_ASSISTANT_ID) {
+        setInsuranceType("Life Insurance");
+        setInsuranceAssistantId(LIFE_ASSISTANT_ID);
+      } else {
+        setInsuranceType("General Insurance");
+        setInsuranceAssistantId(GENERAL_ASSISTANT_ID);
+      }
+      setInsuranceLanding(false);
+    }
+
+    setHistoryAgentOverrideId(item.agentId); // ensures next send uses the SAME agentId
+    setThreadId(item.threadId); // ensures next send continues the SAME thread
+
+    setIsSidebarOpen(false);
+
+    const fallback: Message[] = [
+      {
+        id: `m_${Date.now()}`,
+        role: "user",
+        content: parseStoredPrompt(item.prompt),
+        timestamp: item.createdAt,
+      },
+    ];
+
+    try {
+      setLoading(true);
+      const res = await fetchConversationMessages(item.threadId);
+      const fullMessages = await mapConversationToMessages(
+        Array.isArray(res?.data) ? res.data : [],
+      );
+      setMessages(fullMessages.length ? fullMessages : fallback);
+    } catch (err) {
+      console.error("Failed to load conversation history:", err);
+      setMessages(fallback);
+    } finally {
+      setLoading(false);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  };
   const handlePickAssistant = (assistant: AssistantPublic) => {
     const full = ASSISTANTS.find((a) => a.slug === assistant.slug);
     if (full) setActiveAssistant(full);
@@ -644,7 +881,9 @@ const GenOxy: React.FC = () => {
         return;
       }
       const effectiveId =
-        insuranceAssistantId || INSURANCE_TYPE_TO_ID[insuranceType];
+        historyAgentOverrideId ||
+        insuranceAssistantId ||
+        INSURANCE_TYPE_TO_ID[insuranceType];
       if (!effectiveId || effectiveId.includes("replace_me")) {
         antdMessage.error("Assistant ID not set for selected insurance type.");
         return;
@@ -670,7 +909,8 @@ const GenOxy: React.FC = () => {
     // KLM / others
     const isKlm = activeAssistant.name.toLowerCase().includes("klm");
     const effectiveAssistantId =
-      isKlm && klmRole ? KLM_ROLE_ASSISTANT_ID : activeAssistant.id;
+      historyAgentOverrideId ??
+      (isKlm && klmRole ? KLM_ROLE_ASSISTANT_ID : activeAssistant.id);
 
     setMessages((prev) => [
       ...prev,
@@ -701,16 +941,9 @@ const GenOxy: React.FC = () => {
         return;
       }
 
-      // ✅ Continue file thread if active and prompts remain
-      if (threadId && remainingPrompts && Number(remainingPrompts) > 0) {
-        await handleFileUpload(null, trimmedInput);
-        setSelectedFiles([]);
-
-        setInput("");
-        return;
-      }
-
-      // ✅ Handle file upload (fresh)
+      // ✅ Handle file upload (fresh) — new files always take priority over
+      // continuing a prior file thread, otherwise a newly attached file
+      // would be silently dropped
       if (selectedFiles.length > 0) {
         if (!trimmedInput) {
           antdMessage.error("Please add a short instruction for the files.");
@@ -719,6 +952,15 @@ const GenOxy: React.FC = () => {
           setInput("");
           setSelectedFiles([]);
         }
+        return;
+      }
+
+      // ✅ Continue file thread if active and prompts remain
+      if (threadId && remainingPrompts && Number(remainingPrompts) > 0) {
+        await handleFileUpload(null, trimmedInput);
+        setSelectedFiles([]);
+
+        setInput("");
         return;
       }
 
@@ -753,8 +995,9 @@ const GenOxy: React.FC = () => {
     // ✅ clear file/thread context
     setSelectedFiles([]);
     setThreadId(null);
+    setFileIds([]);
     setRemainingPrompts(null);
-
+    setHistoryAgentOverrideId(null);
     setMessages([]);
     setIsSidebarOpen(false);
     setEditingMessageId(null);
@@ -806,10 +1049,10 @@ const GenOxy: React.FC = () => {
           await handleFileUpload(selectedFiles, input);
         }
       : editingMessageId
-      ? () => handleEdit(editingMessageId, input)
-      : activeAssistant
-      ? handleAssistantSend
-      : handleSend;
+        ? () => handleEdit(editingMessageId, input)
+        : activeAssistant
+          ? handleAssistantSend
+          : handleSend;
 
   /* TiE Starter Panel */
   const showTieStarter =
@@ -1282,7 +1525,6 @@ const GenOxy: React.FC = () => {
                     <li>
                       <a
                         href="https://drive.google.com/file/d/1MNmIyvoJYfTarkGw99LwvzGVvIfDz6Bc/preview"
-                      
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 no-underline cursor-pointer"
@@ -1664,7 +1906,7 @@ const GenOxy: React.FC = () => {
       ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       top-14 bottom-0 h-[calc(100vh-3.5rem)]
       w-64 sm:w-64 md:w-68 lg:w-72
-      sm:relative sm:translate-x-0 sm:flex sm:flex-col sm:top-0 sm:bottom-auto sm:h-auto`}
+      sm:relative sm:translate-x-0 sm:flex sm:flex-col sm:top-0 sm:bottom-auto sm:h-screen`}
           style={{ paddingBottom: "var(--inputbar-height, 80px)" }}
         >
           <Sidebar
@@ -1676,6 +1918,8 @@ const GenOxy: React.FC = () => {
             assistants={ASSISTANTS}
             activeAssistantSlug={activeAssistant?.slug ?? null}
             onPickAssistant={handlePickAssistant}
+            serverHistory={serverHistory}
+            onContinueHistory={continueFromHistory}
           />
         </div>
       )}

@@ -422,8 +422,8 @@ const CampaignDetails: React.FC = () => {
     }
 
     if (
-      lowerRoute === "/main/dashboard/services" ||
-      lowerRoute.startsWith("/main/dashboard/services?") ||
+      lowerRoute === "/main/dashboard/myservices" ||
+      lowerRoute.startsWith("/main/dashboard/myservices?") ||
       lowerRoute === "/main/dashboard/myservices" ||
       lowerRoute.startsWith("/main/dashboard/myservices?")
     ) {

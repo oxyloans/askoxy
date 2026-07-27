@@ -12,7 +12,7 @@ import web5 from "../assets/img/web5.png";
 
 import arrow0 from "../assets/img/arrow0.png";
 import arrow1 from "../assets/img/arrow1.png";
-import speak1 from "../assets/img/speak1.png";
+import speak0 from "../assets/img/speak0.png";
 import line1 from "../assets/img/line1.png";
 import line2 from "../assets/img/line2.png";
 import line3 from "../assets/img/line3.png";
@@ -270,7 +270,7 @@ const Whiteboardtheme: React.FC = () => {
                   <span className="font-bold text-[#5543C8]">AI</span> Platform
                 </span>
 
-                <span className="mt-2 block font-normal text-[#5E5E5E] ">
+                <span className="mt-2 block font-normal text-[#5E5E5E]">
                   <span className="font-bold text-[#D71D8E]">Multiple</span>{" "}
                   Premier{" "}
                   <span className="font-bold text-[#1F9D38]">Leagues</span>
@@ -280,57 +280,63 @@ const Whiteboardtheme: React.FC = () => {
 
             <div className="relative">
               <div className="relative z-20 mb-2 grid grid-cols-2 items-start px-3 sm:mb-4 sm:px-6 md:hidden">
-                <div className="relative flex h-[170px] min-w-0 flex-col items-center">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/sovereign-ai")}
-                    className="absolute inset-x-0 top-0 flex h-[140px] w-full cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-all duration-300 hover:scale-105 active:scale-95 sm:h-[142px]"
-                    aria-label="Speak with Sovereign AI"
-                  >
-                    <img
-                      src={speak1}
-                      alt="Speak with Sovereign AI"
-                      className="h-auto max-h-full w-[105%] max-w-none object-contain sm:w-full"
-                    />
-                  </button>
+                <div className="relative flex h-[158px] w-[132px] flex-col items-center sm:h-[174px] sm:w-[148px]">
+                  <div className="flex h-[132px] w-[132px] items-center justify-center pt-1 sm:h-[148px] sm:w-[148px]">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/sovereign-ai")}
+                      className="flex h-[132px] w-[132px] cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95 sm:h-[148px] sm:w-[148px]"
+                      aria-label="Speak with Sovereign AI"
+                    >
+                      <img
+                        src={speak0}
+                        alt="Speak with Sovereign AI"
+                        className="h-full w-full object-contain"
+                      />
+                    </button>
+                  </div>
                   <img
                     src={arrow0}
                     alt=""
-                    className="absolute bottom-0 left-1/2 z-10 h-[50px] w-[50px] -translate-x-1/2 object-contain sm:h-[54px] sm:w-[54px]"
+                    className="absolute bottom-0 left-1/2 h-[44px] w-[44px] -translate-x-1/2 object-contain sm:h-[48px] sm:w-[48px]"
                   />
                 </div>
 
-                <div className="relative ml-auto flex h-[170px] w-[132px] flex-col items-center">
-                  <div className="flex h-[140px] w-[132px] items-center justify-center sm:h-[142px] pt-4 sm:pt-4">
+                <div className="relative ml-auto flex h-[158px] w-[132px] flex-col items-center sm:h-[170px]">
+                  <div className="flex h-[132px] w-[132px] items-center justify-center pt-4 sm:pt-3">
                     {jobsCountCard()}
                   </div>
                   <img
                     src={arrow1}
                     alt=""
-                    className="absolute bottom-0 left-1/2 z-10 h-[50px] w-[50px] -translate-x-1/2 object-contain sm:h-[54px] sm:w-[54px]"
+                    className="absolute bottom-1 left-1/2 h-[48px] w-[48px] -translate-x-1/2 object-contain sm:h-[54px] sm:w-[54px]"
                   />
                 </div>
               </div>
 
               <div className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-[130px] md:block lg:h-[145px] xl:h-[155px]">
-                <button
-                  type="button"
-                  onClick={() => navigate("/sovereign-ai")}
-                  className="pointer-events-auto absolute top-0 -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105"
-                  style={{ left: "14.666%" }}
-                  aria-label="Speak with Sovereign AI"
+                <div
+                  className="pointer-events-auto absolute top-0 -translate-x-1/2"
+                  style={{ left: "16.666%" }}
                 >
-                  <img
-                    src={speak1}
-                    alt="Speak with Sovereign AI"
-                    className="h-auto object-contain transition-transform duration-300 hover:scale-105"
-                    style={{ width: "clamp(160px, 14vw, 230px)" }}
-                  />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/sovereign-ai")}
+                    className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
+                    style={{ width: "clamp(140px, 12vw, 196px)", height: "clamp(120px, 10.4vw, 164px)" }}
+                    aria-label="Speak with Sovereign AI"
+                  >
+                    <img
+                      src={speak0}
+                      alt="Speak with Sovereign AI"
+                      className="h-full w-full object-contain"
+                    />
+                  </button>
+                </div>
 
                 <div
                   className="pointer-events-auto absolute top-0 -translate-x-1/2"
-                  style={{ left: "84.333%" }}
+                  style={{ left: "83.333%" }}
                 >
                   {jobsCountCard(true)}
                 </div>
@@ -342,7 +348,7 @@ const Whiteboardtheme: React.FC = () => {
                   style={{
                     left: "22%",
                     top: "62%",
-                    width: "clamp(65px, 6vw, 100px)",
+                    width: "clamp(60px, 5.2vw, 88px)",
                   }}
                 />
                 <img
@@ -357,7 +363,7 @@ const Whiteboardtheme: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-3 items-stretch gap-x-2 gap-y-7 pt-1 sm:gap-x-5 sm:gap-y-8 sm:pt-2 md:grid-cols-6 md:gap-x-3 md:gap-y-6 md:pt-[70px] lg:items-end lg:gap-x-3 lg:pt-[74px] xl:gap-x-4 xl:pt-[83px]">
+              <div className="grid grid-cols-3 items-stretch gap-x-2 gap-y-7 pt-1 sm:gap-x-5 sm:gap-y-8 sm:pt-2 md:grid-cols-6 md:gap-x-3 md:gap-y-6 md:pt-[92px] lg:items-end lg:gap-x-3 lg:pt-[104px] xl:gap-x-4 xl:pt-[116px]">
                 {cards.map((card, index) => {
                   const isActive = activeIndex === index;
 

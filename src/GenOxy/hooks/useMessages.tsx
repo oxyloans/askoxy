@@ -18,18 +18,24 @@ interface UseMessagesProps {
   setRemainingPrompts: React.Dispatch<React.SetStateAction<string | null>>;
   threadId: string | null;
   setThreadId: React.Dispatch<React.SetStateAction<string | null>>;
+  fileIds: string[];
+  setFileIds: React.Dispatch<React.SetStateAction<string[]>>;
   questionCount: number;
   setQuestionCount: React.Dispatch<React.SetStateAction<number>>;
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const cleanContent = (content: string): string => {
+export const cleanContent = (content: string): string => {
   return content
     .replace(/\?\d+:\d+\?source\?/g, "")
     .replace(/(\w+)\?s/g, "$1")
     .replace(/\?.*?\?/g, "")
     .trim();
 };
+
+const NEW_CHAT_ENDPOINT = `${BASE_URL}/ai-service/agent/new-chat-openai`;
+const UPLOAD_FILES_ENDPOINT = `${BASE_URL}/ai-service/agent/upload-files-to-openai`;
+const OXYGPT_AGENT_ID = "d122c46c-ba1b-4e69-ae2a-07c44a1da99d";
 
 // --- NEW: robust image/url extraction ---
 const extractImageUrl = (raw: string): { isImage: boolean; url?: string } => {
@@ -94,6 +100,8 @@ export const useMessages = ({
   messagesEndRef,
   abortControllerRef,
   remainingPrompts,
+  fileIds, // ADD THIS
+  setFileIds,
   setThreadId,
   setRemainingPrompts,
   threadId,
@@ -131,15 +139,28 @@ export const useMessages = ({
       try {
         const controller = new AbortController();
         abortControllerRef.current = controller;
-        const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+        // NEW
+        const userId = localStorage.getItem("userId") || "";
+
+        const body: any = {
+          agentId: OXYGPT_AGENT_ID,
+          userId,
+          messageHistory: [{ role: "user", content: textToSend }], // only latest message
+        };
+        if (threadId) body.threadId = threadId;
+
+        const response = await fetch(NEW_CHAT_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedMessages),
+          body: JSON.stringify(body),
           signal: controller.signal,
         });
 
         const data = await response.text();
         if (!response.ok) throw new Error(`Error: ${data}`);
+
+        const parsed = JSON.parse(data);
+        if (parsed.thread_id) setThreadId(parsed.thread_id);
 
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({
@@ -148,11 +169,11 @@ export const useMessages = ({
           });
         }, 100);
 
-        const { isImage, url } = extractImageUrl(data);
+        const replyText = parsed.assistant_reply ?? "";
+        const { isImage, url } = extractImageUrl(replyText);
         const assistantReply: Message = {
           role: "assistant",
-          // IMPORTANT: do NOT clean/strip when it's an image url (fixes "Failed to load image")
-          content: isImage ? url || data.trim() : cleanContent(data),
+          content: isImage ? url || replyText.trim() : cleanContent(replyText),
           isImage,
         };
 
@@ -194,7 +215,7 @@ export const useMessages = ({
       questionCount,
       setQuestionCount,
       setShowModal, // Updated: Dependency for showing modal
-    ]
+    ],
   );
 
   const handleEdit = useCallback(
@@ -207,7 +228,7 @@ export const useMessages = ({
       }
 
       const updatedMessages = messages.map((msg) =>
-        msg.id === messageId ? { ...msg, content: newContent } : msg
+        msg.id === messageId ? { ...msg, content: newContent } : msg,
       );
       setMessages(updatedMessages);
       setInput("");
@@ -216,21 +237,35 @@ export const useMessages = ({
       try {
         const controller = new AbortController();
         abortControllerRef.current = controller;
-        const response = await fetch(`${BASE_URL}/student-service/user/chat1`, {
+        // NEW
+        const userId = localStorage.getItem("userId") || "";
+
+        const body: any = {
+          agentId: OXYGPT_AGENT_ID,
+          userId,
+          messageHistory: [{ role: "user", content: newContent }], // only latest message
+        };
+        if (threadId) body.threadId = threadId;
+
+        const response = await fetch(NEW_CHAT_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedMessages),
+          body: JSON.stringify(body),
           signal: controller.signal,
         });
 
         const data = await response.text();
         if (!response.ok) throw new Error(`Error: ${data}`);
 
-        const { isImage, url } = extractImageUrl(data);
+        const parsed = JSON.parse(data);
+        if (parsed.thread_id) setThreadId(parsed.thread_id);
+
+        const replyText = parsed.assistant_reply ?? "";
+        const { isImage, url } = extractImageUrl(replyText);
         const assistantReply: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: isImage ? url || data.trim() : cleanContent(data),
+          content: isImage ? url || replyText.trim() : cleanContent(replyText),
           isImage,
         };
 
@@ -266,88 +301,102 @@ export const useMessages = ({
       questionCount,
       setQuestionCount,
       setShowModal,
-    ]
+    ],
   );
 
-const handleFileUpload = async (  
-  files: File[] | null,
-  userPrompt: string
-): Promise<string | null> => {
-  if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
-    return await Promise.resolve(null);
-  }
+  const handleFileUpload = async (
+    files: File[] | null,
+    userPrompt: string,
+  ): Promise<string | null> => {
+    if (Number(remainingPrompts) === 0 && remainingPrompts != null) {
+      return await Promise.resolve(null);
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  const userMessage: Message = {
-    id: Date.now().toString(),
-    role: "user",
-    content: userPrompt,
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: userPrompt,
+      fileNames: files && files.length > 0 ? files.map((f) => f.name) : undefined,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+
+    try {
+      let effectiveFileIds = fileIds;
+
+      // Step 1: Upload files whenever new files are attached to this message
+      // (continuation sends pass files=null, so this only fires on fresh uploads)
+      if (files && files.length > 0) {
+        const uploadForm = new FormData();
+        files.forEach((file) => uploadForm.append("files", file));
+
+        const uploadRes = await axios.post(UPLOAD_FILES_ENDPOINT, uploadForm, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        effectiveFileIds = uploadRes.data?.fileIds ?? [];
+        setFileIds(effectiveFileIds);
+      }
+
+      // Step 2: Send chat message with fileIds attached
+      const userId = localStorage.getItem("userId") || "";
+      const body: any = {
+        agentId: OXYGPT_AGENT_ID, // or activeAssistant id, if applicable
+        userId,
+        fileIds: effectiveFileIds,
+        messageHistory: [{ role: "user", content: userPrompt }],
+      };
+      if (threadId) body.threadId = threadId;
+
+      const response = await fetch(NEW_CHAT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.text();
+      if (!response.ok) throw new Error(`Error: ${data}`);
+
+      const parsed = JSON.parse(data);
+      if (parsed.thread_id) setThreadId(parsed.thread_id);
+      setRemainingPrompts(parsed.remainingPrompts ?? null);
+
+      const replyText = parsed.assistant_reply ?? "";
+      const { isImage, url } = extractImageUrl(replyText);
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: isImage ? url || replyText.trim() : cleanContent(replyText),
+        isImage,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      if (location.pathname === "/genoxy") {
+        navigate("/genoxy/chat");
+      }
+
+      return parsed.thread_id ?? null;
+    } catch (error) {
+      console.error("File upload failed:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "assistant",
+        content: "Sorry, the file upload failed. Please try again.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
-  setMessages((prev) => [...prev, userMessage]);
-  setInput("");
-
-  try {
-    const formData = new FormData();
-
-    // append multiple
-    if (files && threadId === null) {
-      files.forEach((file) => formData.append("files", file));
-    }
-
-    formData.append("prompt", userPrompt);
-    if (threadId) formData.append("threadId", threadId);
-
-    const response = await axios.post(
-      `${BASE_URL}/student-service/user/chat-with-files`,
-      formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    );
-
-    const {
-      answer,
-      threadId: newThreadId,
-      remainingPrompts: updatedPrompts,
-    } = response.data;
-
-    setThreadId(newThreadId);
-    setRemainingPrompts(updatedPrompts);
-
-    const { isImage, url } = extractImageUrl(answer);
-
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "assistant",
-      content: isImage ? url || String(answer).trim() : cleanContent(String(answer)),
-      isImage,
-    };
-
-    setMessages((prev) => [...prev, assistantMessage]);
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-
-    if (location.pathname === "/genoxy") {
-      navigate("/genoxy/chat");
-    }
-
-    return newThreadId;
-  } catch (error) {
-    console.error("File upload failed:", error);
-    const errorMessage: Message = {
-      id: (Date.now() + 2).toString(),
-      role: "assistant",
-      content: "Sorry, the file upload failed. Please try again.",
-    };
-    setMessages((prev) => [...prev, errorMessage]);
-    return null;
-  } finally {
-    setLoading(false);
-  }
-};
-
-
   return { handleSend, handleEdit, handleFileUpload };
 };
 
@@ -371,7 +420,7 @@ class VoiceSessionService {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ instructions }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -392,10 +441,7 @@ class VoiceSessionService {
     }
 
     if (this.dataChannel.readyState !== "open") {
-      console.error(
-        "Data channel not open:",
-        this.dataChannel.readyState
-      );
+      console.error("Data channel not open:", this.dataChannel.readyState);
       return;
     }
 
@@ -412,13 +458,13 @@ class VoiceSessionService {
             },
           ],
         },
-      })
+      }),
     );
 
     this.dataChannel.send(
       JSON.stringify({
         type: "response.create",
-      })
+      }),
     );
   }
 
@@ -437,7 +483,7 @@ class VoiceSessionService {
       const EPHEMERAL_KEY = await this.getEphemeralToken(
         selectedInstructions,
         assistantId,
-        voicemode
+        voicemode,
       );
 
       console.log("EPHEMERAL KEY:", EPHEMERAL_KEY);
@@ -478,11 +524,7 @@ class VoiceSessionService {
 
       this.dataChannel = dc;
 
-      this.setupDataChannelHandlers(
-        dc,
-        onMessage,
-        onAssistantSpeaking
-      );
+      this.setupDataChannelHandlers(dc, onMessage, onAssistantSpeaking);
 
       const offer = await pc.createOffer();
 
@@ -490,17 +532,14 @@ class VoiceSessionService {
 
       console.log("Creating SDP request...");
 
-      const sdpRes = await fetch(
-        "https://api.openai.com/v1/realtime/calls",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${EPHEMERAL_KEY}`,
-            "Content-Type": "application/sdp",
-          },
-          body: offer.sdp,
-        }
-      );
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${EPHEMERAL_KEY}`,
+          "Content-Type": "application/sdp",
+        },
+        body: offer.sdp,
+      });
 
       if (!sdpRes.ok) {
         const errorText = await sdpRes.text();
@@ -550,7 +589,7 @@ class VoiceSessionService {
             modalities: ["audio", "text"],
             voice: "shimmer",
           },
-        })
+        }),
       );
     };
 
@@ -639,4 +678,3 @@ class VoiceSessionService {
 }
 
 export const voiceSessionService = new VoiceSessionService();
-

@@ -12,6 +12,7 @@ import {
   Descriptions,
   List,
   Space,
+  Pagination,
 } from "antd";
 import BASE_URL from "../Config";
 import {
@@ -402,18 +403,18 @@ const AppliedJobs: React.FC = () => {
 
   // ✅ Mobile Card UI (best UX)
   const MobileCards = () => (
-    <div className="grid gap-3">
+    <div className="grid min-w-0 gap-3">
       {jobs.map((job) => (
         <div
           key={job.id}
-          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-4"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-base font-semibold text-slate-900 truncate">
+          <div className="flex min-w-0 items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="break-words text-[15px] font-semibold leading-snug text-slate-900 sm:text-base">
                 {getAppliedJobDisplayData(job).jobTitle || "N/A"}
               </div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-1 break-words text-xs text-slate-500">
                 {getAppliedJobDisplayData(job).companyName || "N/A"}
               </div>
               <div className="mt-1 text-xs text-slate-500">
@@ -422,20 +423,22 @@ const AppliedJobs: React.FC = () => {
               </div>
             </div>
 
-            <div>
+            <div className="shrink-0">
               {job.jobStatus ? (
-                <Tag color="green">Active</Tag>
+                <Tag color="green" className="!m-0">Active</Tag>
               ) : (
-                <Tag color="red">Inactive</Tag>
+                <Tag color="red" className="!m-0">Inactive</Tag>
               )}
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <Button
               size="small"
+              block
               icon={<FileTextOutlined />}
               onClick={() => openCoverLetter(job.coverLetter)}
+              className="!h-9 !whitespace-normal !text-xs"
             >
               Cover Letter
             </Button>
@@ -443,7 +446,9 @@ const AppliedJobs: React.FC = () => {
             {job.resumeUrl ? (
               <Button
                 size="small"
+                block
                 type="primary"
+                className="!h-9 !whitespace-normal !text-xs"
                 onClick={() => {
                   const link = document.createElement("a");
                   link.href = job.resumeUrl!;
@@ -454,10 +459,10 @@ const AppliedJobs: React.FC = () => {
                   document.body.removeChild(link);
                 }}
               >
-                Download Resume
+                Resume
               </Button>
             ) : (
-              <Button size="small" disabled>
+              <Button size="small" block disabled className="!h-9 !text-xs">
                 Resume N/A
               </Button>
             )}
@@ -465,19 +470,21 @@ const AppliedJobs: React.FC = () => {
             {job.atsScoreViewerId && (
               <Button
                 size="small"
+                block
                 icon={<TrophyOutlined />}
                 onClick={() => openExamResult(job.atsScoreViewerId)}
+                className="col-span-2 !h-9 !text-xs"
                 style={{
                   borderRadius: 8,
                   borderColor: "#0089c4",
                   color: "#0089c4",
                 }}
               >
-                Exam Result
+                View Exam Result
               </Button>
             )}
 
-            <Button
+            {/* <Button
               size="small"
               loading={updateLoading === job.id}
               onClick={() => handleStatusToggle(job.id, job.jobStatus)}
@@ -489,11 +496,11 @@ const AppliedJobs: React.FC = () => {
               }}
             >
               {job.jobStatus ? "Deactivate" : "Activate"}
-            </Button>
+            </Button> */}
           </div>
 
-          <div className="mt-2 text-xs text-slate-600">
-            <span className="font-medium">Notice:</span>{" "}
+          <div className="mt-3 break-words text-xs text-slate-600">
+            <span className="font-medium">Notice period:</span>{" "}
             {job.noticePeriod || "N/A"}
           </div>
         </div>
@@ -502,12 +509,12 @@ const AppliedJobs: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen p-3 sm:p-6 md:p-8 bg-gradient-to-br from-slate-50 via-white to-violet-50">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-violet-50 p-2 sm:p-6 md:p-8">
+      <div className="mx-auto min-w-0 max-w-7xl">
         {/* Header */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Title level={3} className="!m-0">
+            <Title level={3} className="!m-0 !text-2xl sm:!text-3xl">
               My Job Applications
             </Title>
             <Text type="secondary">
@@ -518,6 +525,7 @@ const AppliedJobs: React.FC = () => {
           <Button
             icon={<PlusOutlined />}
             href="/main/viewjobdetails/default/ALL"
+            block={isMobile}
             style={{
               borderRadius: 10,
               backgroundColor: "#0089c4",
@@ -539,9 +547,27 @@ const AppliedJobs: React.FC = () => {
             <Empty description="No jobs found." />
           </div>
         ) : (
-          <div className="rounded-2xl bg-white p-2 sm:p-4 shadow-sm">
+          <div className="min-w-0 rounded-xl bg-white p-2 shadow-sm sm:rounded-2xl sm:p-4">
             {isMobile ? (
-              <MobileCards />
+              <>
+                <MobileCards />
+                {totalElements > 0 && (
+                  <div className="mt-4 flex justify-center overflow-x-auto pb-1">
+                    <Pagination
+                      current={page + 1}
+                      pageSize={pageSize}
+                      total={totalElements}
+                      showSizeChanger={false}
+                      size="small"
+                      responsive
+                      onChange={(newPage) => {
+                        setPage(newPage - 1);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    />
+                  </div>
+                )}
+              </>
             ) : (
               <Table
                 columns={columns as any}
@@ -572,6 +598,8 @@ const AppliedJobs: React.FC = () => {
         title="Cover Letter"
         open={openCover}
         onCancel={() => setOpenCover(false)}
+        width={isMobile ? "calc(100vw - 24px)" : 520}
+        centered
         footer={[
           <Button key="close" onClick={() => setOpenCover(false)}>
             Close
@@ -588,7 +616,8 @@ const AppliedJobs: React.FC = () => {
         title="Exam Result"
         open={openExam}
         onCancel={() => setOpenExam(false)}
-        width={720}
+        width={isMobile ? "calc(100vw - 24px)" : 720}
+        centered
         footer={[
           <Button key="close" onClick={() => setOpenExam(false)}>
             Close
@@ -630,7 +659,12 @@ const AppliedJobs: React.FC = () => {
           </div>
         ) : (
           <div>
-            <Descriptions bordered size="small" column={2} className="mb-4">
+            <Descriptions
+              bordered
+              size="small"
+              column={isMobile ? 1 : 2}
+              className="mb-4"
+            >
               <Descriptions.Item label="Score">
                 {examData.examAttempt.score} /{" "}
                 {examData.examAttempt.totalQuestions}
@@ -661,22 +695,26 @@ const AppliedJobs: React.FC = () => {
                   return (
                     <List.Item>
                       <div className="w-full">
-                        <div className="flex items-start justify-between gap-2">
-                          <Text strong>
+                        <div className="flex min-w-0 items-start justify-between gap-2">
+                          <Text strong className="min-w-0 break-words">
                             {idx + 1}. {q.question}
                           </Text>
                           {isCorrect ? (
-                            <Tag color="green">Correct</Tag>
+                            <Tag color="green" className="!m-0 shrink-0">
+                              Correct
+                            </Tag>
                           ) : (
-                            <Tag color="red">Incorrect</Tag>
+                            <Tag color="red" className="!m-0 shrink-0">
+                              Incorrect
+                            </Tag>
                           )}
                         </div>
-                        <div className="mt-1 text-sm text-slate-600">
+                        <div className="mt-1 break-words text-sm text-slate-600">
                           {q.options?.map((opt) => (
                             <div key={opt}>{opt}</div>
                           ))}
                         </div>
-                        <div className="mt-1 text-xs">
+                        <div className="mt-1 break-words text-xs">
                           <Text type="secondary">
                             Your answer: {q.userAnswer || "N/A"} • Correct
                             answer: {(q.openAiAnswer || []).join(", ")}

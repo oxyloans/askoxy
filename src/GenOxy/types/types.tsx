@@ -4,6 +4,7 @@ export interface Message {
   content: string;
   isImage?: boolean;
   timestamp?: string | number;
+  fileNames?: string[];
 }
 
 export interface ChatMessage {
