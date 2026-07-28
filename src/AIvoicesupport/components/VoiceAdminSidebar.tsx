@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   RiDashboardLine,
   RiPhoneLine,
@@ -8,6 +8,7 @@ import {
   RiSettings4Line,
   RiRobot2Line,
   RiAddCircleLine,
+  RiLogoutBoxRLine,
 } from "react-icons/ri";
 
 export const NAV_ITEMS = [
@@ -25,10 +26,24 @@ interface VoiceAdminSidebarProps {
   activeKey: VoiceAdminNavKey;
 }
 
+/** Clears only the localStorage keys set during voice admin login. */
+export const voiceAdminLogout = () => {
+  localStorage.removeItem("voice_admin_uniquId");
+  localStorage.removeItem("voice_admin_primaryType");
+  localStorage.removeItem("voice_admin_userName");
+};
+
 /** Desktop-width fixed sidebar nav for every /voiceadmin/* page. */
 export const VoiceAdminSidebar: React.FC<VoiceAdminSidebarProps> = ({
   activeKey,
 }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    voiceAdminLogout();
+    navigate("/voiceadmin");
+  };
+
   return (
     <div className="w-60 shrink-0 bg-gradient-to-b from-[#0f172a] via-[#111827] to-[#0b1220] hidden md:flex md:flex-col border-r border-black/20 shadow-[2px_0_12px_rgba(0,0,0,0.25)]">
       <div className="flex items-center gap-3 px-5 pt-6 pb-5 border-b border-white/10">
@@ -44,7 +59,7 @@ export const VoiceAdminSidebar: React.FC<VoiceAdminSidebarProps> = ({
           </p>
         </div>
       </div>
-      <nav className="flex flex-col gap-1 p-3">
+      <nav className="flex flex-col gap-1 p-3 flex-1">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = activeKey === item.key;
@@ -72,6 +87,18 @@ export const VoiceAdminSidebar: React.FC<VoiceAdminSidebarProps> = ({
           );
         })}
       </nav>
+      <div className="p-3 border-t border-white/10">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium text-slate-300 border-l-2 border-transparent hover:text-white hover:bg-white/[0.05] transition-colors duration-150"
+        >
+          <span className="p-1.5 rounded-md bg-white/5 text-slate-300">
+            <RiLogoutBoxRLine className="text-base" />
+          </span>
+          Logout
+        </button>
+      </div>
     </div>
   );
 };
