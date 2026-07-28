@@ -479,7 +479,7 @@ const SovereignAIPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() =>
-                  navigate("/main/services/be89/build-the-future-of-regulated-")
+                  navigate("/main/services/187a/build-the-future-of-regulated-")
                 }
                 aria-label="I am interested in building regulated Sovereign AI"
                 className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-[9px] font-black uppercase tracking-[0.035em] text-white shadow-[0_10px_28px_rgba(168,85,247,.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(168,85,247,.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:min-h-11 sm:gap-2 sm:px-5 sm:text-xs"
@@ -543,7 +543,7 @@ const SovereignAIPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    navigate("/main/services/be89/build-the-future-of-regulated-")
+                    navigate("/main/services/187a/build-the-future-of-regulated-")
                   }
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-7 py-4 text-sm font-black uppercase tracking-[0.04em] text-white shadow-[0_14px_36px_rgba(168,85,247,.32)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(168,85,247,.42)] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:w-auto sm:text-base"
                 >
@@ -1019,7 +1019,7 @@ sm:p-6"
                 <button
                   type="button"
                   onClick={() =>
-                    navigate("/main/services/be89/build-the-future-of-regulated-")
+                    navigate("/main/services/187a/build-the-future-of-regulated-")
                   }
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-black uppercase tracking-[0.04em] text-violet-800 transition hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
                 >

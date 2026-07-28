@@ -1,7 +1,7 @@
 import axios from 'axios';
 import BASE_URL from '../../Config';
 
-const api = axios.create({ baseURL: `http://localhost:9876/api/vibecode-service` });
+const api = axios.create({ baseURL: `${BASE_URL}/vibecode-service` });
 
 const ENGINE_BASE = `${BASE_URL}/vibecode-service`;
 
@@ -43,11 +43,6 @@ export interface GenerationStepHistory {
 }
 
 export const engineApi = {
-  /**
-   * Stage 1: Start the generation pipeline with form data.
-   * POST /api/vibecode-service/engine-start
-   * Accepts multipart/form-data (fields + optional swagger specFile).
-   */
   startGeneration: (formData: FormData) =>
     api.post<{ sessionId: string; status: string }>('/engine-start', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
