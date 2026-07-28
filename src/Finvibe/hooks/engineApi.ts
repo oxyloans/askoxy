@@ -1,9 +1,8 @@
 import axios from 'axios';
 import BASE_URL from '../../Config';
 
-const api = axios.create({ baseURL: `${BASE_URL}/vibecode-service` });
+const api = axios.create({ baseURL: `http://localhost:9876/api/vibecode-service` });
 
-// ─── Base URL used for direct fetch/download calls ───────────────────────────
 const ENGINE_BASE = `${BASE_URL}/vibecode-service`;
 
 api.interceptors.request.use(
@@ -14,7 +13,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error normalization
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -55,17 +53,16 @@ export const engineApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
-  /**
-   * Stage 2: Submit dynamic configuration answers.
-   * POST /api/vibecode-service/stage2/{sessionId}
-   */
+
+  getUseCaseSuggestions: () =>
+    api.get<{ useCaseId: string; name: string; domain: string; moduleName: string }[]>(
+      '/usecase-suggestions',
+    ),
+
+
   submitStage2: (sessionId: string, answers: Record<string, unknown>) =>
     api.post<{ sessionId: string; status: string }>(`/stage2/${sessionId}`, { answers }),
 
-  /**
-   * Fetch current session state (for recovery / snapshot).
-   * GET /api/vibecode-service/session/{sessionId}
-   */
   getSession: (sessionId: string) =>
     api.get<{
       sessionId: string;
@@ -76,47 +73,38 @@ export const engineApi = {
       dynamicRequirements?: any;
     }>(`/session/${sessionId}`),
 
-  /**
-   * Fetch all historical generation sessions.
-   * GET /api/vibecode-service/sessions
-   */
+
   getSessions: () =>
     api.get<GenerationSession[]>('/sessions'),
 
-  /**
-   * Fetch audit/step logs of a session.
-   * GET /api/vibecode-service/session/{sessionId}/history
-   */
+
   getSessionHistory: (sessionId: string) =>
     api.get<GenerationStepHistory[]>(`/session/${sessionId}/history`),
 
-  /**
-   * Stop/Pause a running generation pipeline.
-   * POST /api/vibecode-service/session/{sessionId}/stop
-   */
   stopSession: (sessionId: string) =>
     api.post<{ sessionId: string; status: string }>(`/session/${sessionId}/stop`),
 
-  /**
-   * Resume a paused generation pipeline.
-   * POST /api/vibecode-service/session/{sessionId}/resume
-   */
   resumeSession: (sessionId: string) =>
     api.post<{ sessionId: string; status: string; currentStep: number }>(`/session/${sessionId}/resume`),
 
-  /**
-   * Delete a session and its ZIP bytes from database.
-   * DELETE /api/vibecode-service/session/{sessionId}
-   */
+
   deleteSession: (sessionId: string) =>
     api.delete<{ sessionId: string; message: string }>(`/session/${sessionId}`),
 
-  /**
-   * Get the direct download URL for the generated ZIP package.
-   * GET /api/vibecode-service/download/{sessionId}
-   */
   getDownloadUrl: (sessionId: string): string =>
     `${ENGINE_BASE}/download/${sessionId}`,
+
+  deploySession: (sessionId: string) =>
+    api.post<{ sessionId: string; status: string }>(`/session/${sessionId}/deploy`),
+
+
+  getDeployStatus: (sessionId: string) =>
+    api.get<{
+      sessionId: string;
+      deployStatus: string;
+      deployUrl: string;
+      deployLogs: string;
+    }>(`/session/${sessionId}/deploy-status`),
 };
 
 export default engineApi;

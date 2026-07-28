@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import WalkInInterviewStepsModal from "../WalkInInterviewStepsModal";
 import arrow0 from "../../assets/img/arrow0.png";
 import arrow1 from "../../assets/img/arrow1.png";
-import speak1 from "../../assets/img/speak1.png";
+import speak1 from "../../assets/img/speak0.png";
 import speak2 from "../../assets/img/walkin.png";
 import {
   ArrowRight,

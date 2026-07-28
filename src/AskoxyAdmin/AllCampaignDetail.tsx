@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { adminApi as axios, customerApi } from "../utils/axiosInstances";
+import { adminApi as axios } from "../utils/axiosInstances";
 import { uploadurlwithId } from "../Config";
 import { AxiosError } from "axios";
-import Sidebar from "./Sider";
 import {
   message,
   Modal,
   Button,
   Input,
-  Upload,
   Table,
-  Tag,
   Spin,
   Tabs,
   Image,
@@ -40,7 +37,8 @@ interface Campaign {
   createdAt: string;
   updatedAt: string;
   campaignPostsUrls: PostUrl[];
-  addServiceType?: string; // 👈 NEW
+  addServiceType?: string;
+  journeyName?: string;
 }
 
 interface PostUrl {
@@ -77,7 +75,8 @@ const AllCampaignsDetails: React.FC = () => {
     socialMediaCaption: "",
     createdAt: "",
     updatedAt: "",
-    addServiceType: "", // 👈 NEW
+    addServiceType: "",
+    journeyName: "",
   });
 
   // Put this near other helpers
@@ -198,10 +197,8 @@ const AllCampaignsDetails: React.FC = () => {
               askOxyCampaignDto: [
                 {
                   // IMPORTANT: null when not hiring, "WEAREHIRING" only for hiring
-                  addServiceType:
-                    campaign.addServiceType === "WEAREHIRING"
-                      ? "WEAREHIRING"
-                      : null,
+                  addServiceType: resolveAddServiceType(campaign),
+                  journeyName: campaign.journeyName || null,
                   campaignDescription: campaign.campaignDescription,
                   campaignId: campaign.campaignId,
                   campaignStatus: !campaign.campaignStatus, // toggle
@@ -253,7 +250,8 @@ const AllCampaignsDetails: React.FC = () => {
       socialMediaCaption: campaign.socialMediaCaption,
       createdAt: "",
       updatedAt: "",
-      addServiceType: campaign.addServiceType, // 👈 NEW
+      addServiceType: campaign.addServiceType,
+      journeyName: campaign.journeyName || "",
     });
     setIsUpdateModalVisible(true);
   };
@@ -486,6 +484,7 @@ const AllCampaignsDetails: React.FC = () => {
         {
           // NEW: set addServiceType only for WEAREHIRING, else null
           addServiceType: resolveAddServiceType(currentCampaign, activeTab),
+          journeyName: formData.journeyName?.trim() || null,
           campaignDescription: formData.campaignDescription,
           campaignId: formData.campaignId,
           campaignType: formData.campaignType,
@@ -532,6 +531,8 @@ const AllCampaignsDetails: React.FC = () => {
           socialMediaCaption: "",
           createdAt: "",
           updatedAt: "",
+          addServiceType: "",
+          journeyName: "",
         });
         setIsUpdateModalVisible(false);
       } else {
@@ -655,6 +656,18 @@ const AllCampaignsDetails: React.FC = () => {
       ),
     },
     {
+      title: <div className="text-center">Journey Name</div>,
+      dataIndex: "journeyName",
+      key: "journeyName",
+      render: (text: string | undefined, record: Campaign) => (
+        <div className="max-w-xs break-words">
+          {record.addServiceType === "LEAGUEJOURNEYS"
+            ? text || "Not provided"
+            : "-"}
+        </div>
+      ),
+    },
+    {
       title: <div className="text-center">Description</div>,
       dataIndex: "campaignDescription",
       key: "campaignDescription",
@@ -672,7 +685,11 @@ const AllCampaignsDetails: React.FC = () => {
       key: "noAuthCampaignUrl",
       render: (_: any, record: Campaign) => {
         const isBlog = record.campainInputType === "BLOG";
-        const slugifiedCampaignType = slugify(record.campaignType);
+        const slugSource =
+          record.addServiceType === "LEAGUEJOURNEYS" && record.journeyName
+            ? record.journeyName
+            : record.campaignType;
+        const slugifiedCampaignType = slugify(slugSource);
         const campaignUrl = isBlog
           ? `${baseUrl}/blog/${record.campaignId.slice(
               -4
@@ -709,7 +726,11 @@ const AllCampaignsDetails: React.FC = () => {
       key: "authCampaignUrl",
       render: (_: any, record: Campaign) => {
         const isBlog = record.campainInputType === "BLOG";
-        const slugifiedCampaignType = slugify(record.campaignType);
+        const slugSource =
+          record.addServiceType === "LEAGUEJOURNEYS" && record.journeyName
+            ? record.journeyName
+            : record.campaignType;
+        const slugifiedCampaignType = slugify(slugSource);
         const campaignUrl = isBlog
           ? `${baseUrl}/main/blog/${record.campaignId.slice(
               -4
@@ -776,7 +797,7 @@ const AllCampaignsDetails: React.FC = () => {
       title: <div className="text-center">Actions</div>,
       key: "actions",
       render: (_: any, campaign: Campaign) => (
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex min-w-[110px] flex-col items-stretch gap-2">
           <Button
             className={
               campaign.campaignStatus
@@ -831,7 +852,8 @@ const AllCampaignsDetails: React.FC = () => {
         c.campaignDescription?.toLowerCase().includes(query) ||
         c.campaignTypeAddBy?.toLowerCase().includes(query) ||
         c.campaignId?.toLowerCase().includes(query) ||
-        c.campainInputType?.toLowerCase().includes(query)
+        c.campainInputType?.toLowerCase().includes(query) ||
+        c.journeyName?.toLowerCase().includes(query)
     );
   };
 
@@ -840,36 +862,70 @@ const AllCampaignsDetails: React.FC = () => {
     type: string,
     isBlog: boolean = false
   ) => (
-    <div className="overflow-x-auto">
+    <div className="overflow-hidden rounded-2xl border border-slate-200">
       <Table
         columns={getColumns(type, isBlog)}
         dataSource={data}
         rowKey={(record) => record.campaignId}
-        pagination={{ pageSize: 50 }}
-        className="border border-gray-300 table-auto"
-        scroll={{ x: window.innerWidth < 768 ? 1200 : undefined }}
+        pagination={{
+          pageSize: 20,
+          showSizeChanger: true,
+          pageSizeOptions: [10, 20, 50, 100],
+          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+          responsive: true,
+        }}
+        className="campaign-table"
+        size={window.innerWidth < 768 ? "small" : "middle"}
+        scroll={{ x: 1450 }}
       />
     </div>
   );
 
   return (
-    <div className="flex flex-col md:flex-row">
-      <div className="flex-3 pt-0 px-4 sm:px-6 lg:px-8 mx-auto w-full max-w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <h1 className="text-xl md:text-3xl font-bold text-gray-800">
-            All Campaign Details
-          </h1>
-          <Search
+    <div className="min-h-screen bg-slate-50 px-3 py-4 sm:px-6 sm:py-7 lg:px-8">
+      <div className="mx-auto w-full max-w-[1600px]">
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-blue-700 p-5 text-white shadow-xl sm:p-8">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-blue-100">
+                CAMPAIGN MANAGEMENT
+              </span>
+              <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-4xl">
+                All Campaign Details
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
+                Search, review, update, activate, publish, and manage all services, products, blogs, hiring posts, and league journeys.
+              </p>
+            </div>
+            <Search
             placeholder="Search campaigns..."
             allowClear
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onSearch={(value) => setSearchQuery(value)}
-            style={{ maxWidth: 400 }}
-            className="w-full sm:w-auto"
+            style={{ maxWidth: 460 }}
+            size="large"
+            className="w-full rounded-xl bg-white xl:w-[460px]"
           />
-        </div>
+          </div>
+        </section>
 
+        <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+          {[
+            { label: "Hiring", value: weAreHiringCampaigns.length },
+            { label: "Services", value: serviceCampaigns.length },
+            { label: "Products", value: productCampaigns.length },
+            { label: "Blogs", value: blogCampaigns.length },
+            { label: "Journeys", value: leagueJourneysCampaigns.length },
+          ].map((item) => (
+            <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{item.value}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
         {loading ? (
           <div className="flex justify-center items-center">
             <Spin tip="Loading Campaigns..." size="large" />
@@ -877,7 +933,9 @@ const AllCampaignsDetails: React.FC = () => {
         ) : (
           <Tabs
             type="card"
+            size="large"
             activeKey={activeTab}
+            className="campaign-tabs"
             onChange={(key) => {
               setActiveTab(key);
               localStorage.setItem("allCampaigns_activeTab", key);
@@ -921,12 +979,16 @@ const AllCampaignsDetails: React.FC = () => {
             </TabPane>
           </Tabs>
         )}
+        </section>
       </div>
       <Modal
         title={`Update ${currentCampaign?.campainInputType || "Campaign"}`}
-        visible={isUpdateModalVisible}
+        open={isUpdateModalVisible}
         onCancel={handleModalCancel}
-        width={800}
+        width={920}
+        centered
+        destroyOnClose
+        styles={{ body: { maxHeight: "78vh", overflowY: "auto", padding: 20 } }}
         footer={[
           <Button key="cancel" onClick={handleModalCancel}>
             Cancel
@@ -938,10 +1000,30 @@ const AllCampaignsDetails: React.FC = () => {
       >
         {currentCampaign && (
           <div>
-            <h2 className="mb-4 text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-2 rounded-lg shadow-lg">
+            <h2 className="mb-5 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-lg font-bold text-white shadow-sm">
               {formData.campaignType}
             </h2>
 
+            {currentCampaign.addServiceType === "LEAGUEJOURNEYS" && (
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Journey Name</label>
+              <Input
+                value={formData.journeyName}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    journeyName: e.target.value,
+                  })
+                }
+                placeholder="Update journey name"
+                className="mb-4"
+                maxLength={255}
+                size="large"
+              />
+              </div>
+            )}
+
+            <label className="mb-2 block text-sm font-semibold text-slate-700">Description</label>
             <Input.TextArea
               rows={4}
               value={formData.campaignDescription}
@@ -1117,9 +1199,12 @@ const AllCampaignsDetails: React.FC = () => {
 
       <Modal
         title="Publish Blog"
-        visible={isPublishModalVisible}
+        open={isPublishModalVisible}
         onCancel={handlePublishModalCancel}
-        width={900}
+        width={960}
+        centered
+        destroyOnClose
+        styles={{ body: { maxHeight: "78vh", overflowY: "auto", padding: 20 } }}
         footer={[
           <Button key="cancel" onClick={handlePublishModalCancel}>
             Cancel
@@ -1314,6 +1399,21 @@ const AllCampaignsDetails: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      <style>{`
+        .campaign-tabs .ant-tabs-nav { margin-bottom: 18px; }
+        .campaign-tabs .ant-tabs-nav-wrap { overflow-x: auto; }
+        .campaign-tabs .ant-tabs-tab { border-radius: 12px 12px 0 0 !important; padding: 10px 16px !important; }
+        .campaign-table .ant-table { border-radius: 16px; }
+        .campaign-table .ant-table-thead > tr > th { background: #f8fafc; color: #334155; font-weight: 700; white-space: nowrap; }
+        .campaign-table .ant-table-tbody > tr:hover > td { background: #eff6ff !important; }
+        .campaign-table .ant-pagination { padding: 0 12px 12px; }
+        @media (max-width: 640px) {
+          .campaign-tabs .ant-tabs-tab { padding: 8px 12px !important; font-size: 12px; }
+          .campaign-table .ant-table-cell { padding: 10px 8px !important; font-size: 12px; }
+          .campaign-table .ant-pagination { justify-content: center; }
+        }
+      `}</style>
     </div>
   );
 };

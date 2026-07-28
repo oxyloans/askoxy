@@ -513,6 +513,17 @@ const AccentureServices = lazy(
 );
 const CommunityPage = lazy(() => import("./components/community/CommunityPage"));
 
+const VoiceAdminDashboard = lazy(() => import("./AIvoicesupport/Dashboard"));
+const VoiceAdminInbound = lazy(() => import("./AIvoicesupport/InboundCalls"));
+const VoiceAdminOutbound = lazy(() => import("./AIvoicesupport/OutboundCalls"));
+const VoiceAdminHistory = lazy(() => import("./AIvoicesupport/CallHistory"));
+const VoiceAdminInstructions = lazy(
+  () => import("./AIvoicesupport/AgentInstructions"),
+);
+const MakeACall = lazy(() => import("./AIvoicesupport/components/makeacall"));
+const VoiceAdminLogin = lazy(() => import("./AIvoicesupport/Login"));
+
+
 // Simple centered loader component
 const LoadingSpinner = React.memo(() => {
   React.useEffect(() => {
@@ -1710,7 +1721,7 @@ const App: React.FC = () => {
                 {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
-                           <Route path="dashboard/leaguejourneys" element={<LeagueJourneysPage />} />
+                <Route path="dashboard/leaguejourneys" element={<LeagueJourneysPage />} />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
                 <Route path="jobdetails/:id" element={<JobDetails />} />
@@ -1845,6 +1856,29 @@ const App: React.FC = () => {
                   element={<CreateFromImageText />}
                 />
               </Route>
+
+              <Route path="/voiceadmin" element={<VoiceAdminLogin />} />
+              <Route
+                path="/voiceadmin/dashboard"
+                element={<VoiceAdminDashboard />}
+              />
+              <Route
+                path="/voiceadmin/inbound"
+                element={<VoiceAdminInbound />}
+              />
+              <Route
+                path="/voiceadmin/outbound"
+                element={<VoiceAdminOutbound />}
+              />
+              <Route
+                path="/voiceadmin/history"
+                element={<VoiceAdminHistory />}
+              />
+              <Route
+                path="/voiceadmin/instructions"
+                element={<VoiceAdminInstructions />}
+              />
+              <Route path="/voiceadmin/makeacall" element={<MakeACall />} />
 
               {/* ===================================================== */}
               {/* ✅ ADMIN ROUTES */}

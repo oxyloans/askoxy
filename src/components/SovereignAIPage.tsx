@@ -49,33 +49,6 @@ const LINKS = {
 /*                                  Content                                    */
 /* -------------------------------------------------------------------------- */
 
-const navigation = [
-  {
-    label: "Why It Matters",
-    href: "#why-sovereign-ai",
-  },
-  {
-    label: "AI Solutions",
-    href: "#live-products",
-  },
-  {
-    label: "Leadership",
-    href: "#leadership",
-  },
-  {
-    label: "Capabilities",
-    href: "#use-cases",
-  },
-  {
-    label: "Why OXY",
-    href: "#our-advantage",
-  },
-  {
-    label: "Future Vision",
-    href: "#roadmap",
-  },
-];
-
 const challenges = [
   {
     icon: FileCheck2,
@@ -272,50 +245,17 @@ const roadmap = [
 const leadership = [
   {
     name: "Radhakrishna Thatavarti",
-    role: "Chief Executive Officer & Co-Founder",
+    role: "Chief Executive Officer & AI Co-Founder",
     photo: Radha,
     bio: 'Radhakrishna ("Radha") brings over 25 years of experience across banking, financial services and large-scale technology delivery, including leadership roles at Citibank and Emirates NBD. A Columbia Business School alumnus, he has built a compliance-first, regulator-aligned approach to AI. His work across AI, blockchain, lending systems and citizen-scale platforms led to OxyLoans, ASKOXY.AI, the R2C framework and the Insurance AI LLM.',
     linkedin: LINKS.radhaLinkedIn,
   },
   {
     name: "Ramadevi Thatavarti",
-    role: "Chief Technology Officer & Co-Founder",
+    role: "Chief Technology Officer & AI Co-Founder",
     photo: Rama,
     bio: "Ramadevi brings more than 20 years of experience in banking and financial technology, leading platform development, integrations, compliance and governance for Indian and global institutions. For the last eight years, she has led OxyLoans with a strong focus on RBI adherence, audits and operational controls. She champions responsible, regulator-first AI systems that support SHG women, citizens and the wider digital economy.",
     linkedin: LINKS.ramaLinkedIn,
-  },
-];
-
-const fiveLayerFramework = [
-  {
-    number: "05",
-    icon: Users,
-    title: "AI-Native Community",
-    description: "Continuous improvement through collaboration",
-  },
-  {
-    number: "04",
-    icon: Globe2,
-    title: "Multi-Country Vision",
-    description: "India, UAE and Saudi Arabia roadmap",
-  },
-  {
-    number: "03",
-    icon: Sparkles,
-    title: "Live Products",
-    description: "Working platforms and demonstrations",
-  },
-  {
-    number: "02",
-    icon: Database,
-    title: "Regulatory Data",
-    description: "9,000+ processed regulatory documents",
-  },
-  {
-    number: "01",
-    icon: ShieldCheck,
-    title: "Regulated Experience",
-    description: "Direct experience through OXYLOANS",
   },
 ];
 
@@ -397,7 +337,7 @@ const LeadershipCard: React.FC<{ person: LeadershipPerson; index: number }> = ({
     <div className="pointer-events-none absolute left-8 right-8 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" />
 
     <div className="relative flex h-full flex-col">
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex flex-col items-center gap-4 text-center xs:flex-row xs:text-left">
         <div className="relative shrink-0">
           <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-fuchsia-400/55 via-violet-400/30 to-cyan-300/35 blur-sm" />
           <img
@@ -409,8 +349,8 @@ const LeadershipCard: React.FC<{ person: LeadershipPerson; index: number }> = ({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-lg font-black tracking-tight text-white sm:text-xl">
+          <div className="flex flex-wrap items-center justify-center gap-2 xs:justify-start">
+            <h3 className="break-words text-lg font-black tracking-tight text-white sm:text-xl">
               {person.name}
             </h3>
             <a
@@ -425,7 +365,7 @@ const LeadershipCard: React.FC<{ person: LeadershipPerson; index: number }> = ({
             </a>
           </div>
 
-          <p className="mt-1 text-[10px] font-extrabold uppercase leading-5 tracking-[0.1em] text-fuchsia-300 sm:text-xs">
+          <p className="mt-1 text-[10px] font-extrabold uppercase leading-5 tracking-[0.08em] text-fuchsia-300 sm:text-xs">
             {person.role}
           </p>
         </div>
@@ -452,7 +392,8 @@ const SovereignAIPage: React.FC = () => {
           overflow-x: hidden;
         }
         body { overflow-x: hidden; }
-        * { min-width: 0; }
+        img, svg { display: block; }
+        button, a { -webkit-tap-highlight-color: transparent; }
         .purple-grid {
           background-image:
             linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
@@ -503,12 +444,12 @@ const SovereignAIPage: React.FC = () => {
 
       <div className="relative z-10">
         <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#070817]/95 backdrop-blur-2xl">
-          <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <div className="mx-auto flex min-h-[68px] max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:min-h-[76px] sm:gap-4 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="group flex h-11 w-[88px] shrink-0 items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:h-12 sm:w-[102px]"
+                className="group flex h-10 w-[76px] shrink-0 items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:h-12 sm:w-[102px]"
                 aria-label="Go to ASKOXY.AI home"
               >
                 <img
@@ -518,10 +459,10 @@ const SovereignAIPage: React.FC = () => {
                 />
               </button>
 
-              <span className="h-8 w-px shrink-0 bg-white/15" />
+              <span className="hidden h-8 w-px shrink-0 bg-white/15 xs:block" />
 
               <div
-                className="relative min-w-0 overflow-hidden rounded-2xl border border-fuchsia-300/30 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-400/10 px-3 py-2 shadow-[0_10px_34px_rgba(168,85,247,.18)] sm:px-4"
+                className="relative hidden min-w-0 overflow-hidden rounded-2xl border border-fuchsia-300/30 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-400/10 px-3 py-2 shadow-[0_10px_34px_rgba(168,85,247,.18)] xs:block sm:px-4"
                 aria-label="OXY BFSI Sovereign AI"
               >
                 <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
@@ -534,81 +475,60 @@ const SovereignAIPage: React.FC = () => {
               </div>
             </div>
 
-            <a
-              href={LINKS.oxyBfsi}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-2.5 text-[10px] font-black text-white shadow-[0_10px_28px_rgba(168,85,247,.24)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(168,85,247,.32)] sm:px-5 sm:text-xs"
-            >
-              <span className="hidden sm:inline">Explore OXY BFSI AI</span>
-              <span className="sm:hidden">Explore</span>
-              <ArrowRight className="h-4 w-4" />
-            </a>
+            <div className="flex shrink-0 items-center">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/main/services/be89/build-the-future-of-regulated-")
+                }
+                aria-label="I am interested in building regulated Sovereign AI"
+                className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-[9px] font-black uppercase tracking-[0.035em] text-white shadow-[0_10px_28px_rgba(168,85,247,.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(168,85,247,.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:min-h-11 sm:gap-2 sm:px-5 sm:text-xs"
+              >
+                <span>I AM INTERESTED</span>
+                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </button>
+
+            </div>
           </div>
         </header>
 
         <section
           id="home"
-          className="relative overflow-hidden pb-10 pt-[88px] sm:pb-12 sm:pt-[96px] lg:pb-14 lg:pt-[104px]"
+          className="relative overflow-hidden pb-12 pt-[88px] sm:pb-16 sm:pt-[104px] lg:pb-20 lg:pt-[116px]"
         >
           <div className="purple-grid absolute inset-0 opacity-65" />
           <div className="noise-mask absolute inset-0 opacity-25" />
           <div className="absolute left-[14%] top-16 h-[420px] w-[420px] rounded-full bg-violet-700/18 blur-[140px]" />
           <div className="absolute right-[2%] top-28 h-[460px] w-[460px] rounded-full bg-fuchsia-700/14 blur-[150px]" />
 
-          <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-4 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8 lg:px-8 xl:gap-10">
+          <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-4 sm:px-6 md:gap-10 lg:grid-cols-[0.94fr_1.06fr] lg:gap-12 lg:px-8">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={stagger}
-              className="order-1 text-left"
+              className="order-1 text-center lg:text-left"
             >
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-fuchsia-300 sm:text-xs"
+                className="mx-auto inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-fuchsia-400/15 bg-fuchsia-400/[0.06] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-fuchsia-300 sm:text-xs lg:mx-0"
               >
                 <Landmark className="h-4 w-4" />
                 Built for India&apos;s regulated BFSI ecosystem
               </motion.div>
               <motion.h1
                 variants={fadeUp}
-                className="
-    mt-4
-    pt-3
-    pb-2
-    max-w-[580px]
-    text-[2rem]
-    font-black
-    leading-[1.3]
-    tracking-[-0.015em]
-    text-white
-    overflow-visible
-    sm:text-[2.45rem]
-    md:text-[2.8rem]
-    lg:text-[3.05rem]
-    xl:text-[3.25rem]
-  "
+                className="mx-auto mt-5 max-w-[650px] text-[2.15rem] font-black leading-[1.08] tracking-[-0.04em] text-white sm:text-[2.8rem] md:text-[3.3rem] lg:mx-0 lg:text-[3.5rem] xl:text-[4rem]"
               >
-                <span className="block">India&apos;s First</span>
+                <span className="block">India&apos;s First Sovereign AI</span>
 
-                <span className="block mt-2 bg-gradient-to-r from-fuchsia-300 via-violet-300 to-cyan-300 bg-clip-text text-transparent">
-                  Sovereign AI
+                <span className="mt-2 block bg-gradient-to-r from-fuchsia-300 via-violet-300 to-cyan-300 bg-clip-text text-transparent">
+                  Powered by the People
                 </span>
-
-                <span className="block mt-2">for Regulated Entities</span>
               </motion.h1>
 
               <motion.p
                 variants={fadeUp}
-                className="
-    mt-5
-    max-w-[560px]
-    text-[15px]
-    leading-7
-    text-slate-300
-    sm:text-[17px]
-    sm:leading-8
-  "
+                className="mx-auto mt-5 max-w-[600px] text-sm leading-7 text-slate-300 sm:text-base sm:leading-8 lg:mx-0 lg:text-[17px]"
               >
                 OXY BFSI brings source-backed regulatory intelligence,
                 compliance-ready AI workflows and secure data control into one
@@ -616,12 +536,25 @@ const SovereignAIPage: React.FC = () => {
                 insurers.
               </motion.p>
 
-              <motion.div variants={fadeUp} className="mt-6">
+              <motion.div
+                variants={fadeUp}
+                className="mx-auto mt-7 flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center lg:mx-0 lg:justify-start"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate("/main/services/be89/build-the-future-of-regulated-")
+                  }
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-7 py-4 text-sm font-black uppercase tracking-[0.04em] text-white shadow-[0_14px_36px_rgba(168,85,247,.32)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(168,85,247,.42)] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:w-auto sm:text-base"
+                >
+                  I AM INTERESTED <ArrowRight className="h-5 w-5" />
+                </button>
+
                 <a
                   href={LINKS.oxyBfsi}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-7 py-4 text-sm font-black shadow-[0_14px_36px_rgba(168,85,247,.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(168,85,247,.34)] sm:w-auto sm:text-base"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-fuchsia-300/35 bg-white/[0.06] px-7 py-4 text-sm font-black text-white shadow-[0_14px_36px_rgba(7,7,24,.24)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-fuchsia-300/60 hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:w-auto sm:text-base"
                 >
                   Explore OXY BFSI AI <ArrowRight className="h-5 w-5" />
                 </a>
@@ -632,17 +565,17 @@ const SovereignAIPage: React.FC = () => {
               initial={{ opacity: 0, x: 34, scale: 0.98 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.15 }}
-              className="order-2 relative flex items-center justify-center"
+              className="order-2 relative mx-auto flex w-full max-w-[720px] items-center justify-center lg:mx-0"
             >
               <div className="absolute -inset-5 rounded-full bg-gradient-to-br from-violet-500/16 via-fuchsia-500/12 to-cyan-400/10 blur-3xl" />
-              <div className="relative w-full overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_55%_42%,rgba(99,102,241,.20),transparent_34%),linear-gradient(145deg,#090a20,#050611_62%,#0c0e25)] shadow-[0_22px_70px_rgba(7,7,24,.34)]">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_55%_42%,rgba(99,102,241,.20),transparent_34%),linear-gradient(145deg,#090a20,#050611_62%,#0c0e25)] shadow-[0_22px_70px_rgba(7,7,24,.34)]">
                 <div className="absolute inset-0 purple-grid opacity-30" />
                 <div className="absolute left-[6%] top-[10%] h-40 w-40 rounded-full bg-fuchsia-500/16 blur-[80px] sm:h-64 sm:w-64" />
                 <div className="absolute bottom-[4%] right-[2%] h-44 w-44 rounded-full bg-cyan-400/12 blur-[90px] sm:h-72 sm:w-72" />
                 <motion.img
                   src={AIhands}
                   alt="Human and AI hands connecting"
-                  className="screen-art relative z-10 block h-auto w-full object-contain"
+                  className="screen-art relative z-10 h-full w-full object-contain p-2 sm:p-4"
                   initial={{ opacity: 0, scale: 1.02 }}
                   animate={{ opacity: 0.96, scale: 1 }}
                   transition={{ duration: 1, delay: 0.3 }}
@@ -717,7 +650,7 @@ sm:p-6"
 
         <section
           id="why-sovereign-ai"
-          className="relative scroll-mt-[88px] py-20 sm:py-28"
+          className="relative scroll-mt-[88px] py-16 sm:py-24 lg:py-28"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
@@ -763,7 +696,7 @@ sm:p-6"
 
         <section
           id="live-products"
-          className="relative scroll-mt-[88px] py-20 sm:py-28"
+          className="relative scroll-mt-[88px] py-16 sm:py-24 lg:py-28"
         >
           <div className="absolute inset-x-0 top-1/2 h-[480px] -translate-y-1/2 bg-violet-700/10 blur-[150px]" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -822,19 +755,19 @@ sm:p-6"
           </div>
         </section>
 
-        <section id="leadership" className="scroll-mt-[88px] py-20 sm:py-28">
+        <section id="leadership" className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Leadership"
               title={
                 <>
-                  Leadership grounded in{" "}
+                  AI Co-Founders grounded in{" "}
                   <span className="text-fuchsia-400">
                     regulated finance and technology.
                   </span>
                 </>
               }
-              description="Decades of experience across banking, compliance and citizen-scale technology guide how Sovereign AI is built."
+              description="Our AI Co-Founders bring decades of experience across banking, compliance and citizen-scale technology to guide how Sovereign AI is built."
             />
             <div className="mt-8 grid gap-4 sm:mt-10 lg:grid-cols-2">
               {leadership.map((person, index) => (
@@ -848,7 +781,7 @@ sm:p-6"
           </div>
         </section>
 
-        <section id="use-cases" className="scroll-mt-[88px] py-20 sm:py-28">
+        <section id="use-cases" className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Core Capabilities"
@@ -899,7 +832,7 @@ sm:p-6"
 
         <section
           id="our-advantage"
-          className="relative scroll-mt-[88px] py-20 sm:py-28"
+          className="relative scroll-mt-[88px] py-16 sm:py-24 lg:py-28"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-fuchsia-950/10 to-transparent" />
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -947,7 +880,7 @@ sm:p-6"
           </div>
         </section>
 
-        <section className="py-20 sm:py-28">
+        <section className="py-16 sm:py-24 lg:py-28">
           <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:px-8">
             <div>
               <SectionHeading
@@ -1016,7 +949,7 @@ sm:p-6"
           </div>
         </section>
 
-        <section id="roadmap" className="scroll-mt-[88px] py-20 sm:py-28">
+        <section id="roadmap" className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Future Vision"
@@ -1076,20 +1009,32 @@ sm:p-6"
                 Sovereign AI
               </p>
               <h2 className="mx-auto mt-3 max-w-3xl text-2xl font-black leading-tight tracking-[-0.035em] sm:text-4xl">
-                Explore trusted AI solutions for regulated BFSI teams.
+                Build India&apos;s first Sovereign AI, powered by the people.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-violet-100/85 sm:text-base">
                 Discover practical regulatory intelligence, compliance and AI
                 use cases on ASKOXY.AI.
               </p>
-              <a
-                href={LINKS.oxyBfsi}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-black text-violet-800 transition hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-              >
-                Explore OXY BFSI AI <ArrowRight className="h-4 w-4" />
-              </a>
+              <div className="mx-auto mt-7 flex max-w-md flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate("/main/services/be89/build-the-future-of-regulated-")
+                  }
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-black uppercase tracking-[0.04em] text-violet-800 transition hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
+                >
+                  I AM INTERESTED <ArrowRight className="h-4 w-4" />
+                </button>
+
+                <a
+                  href={LINKS.oxyBfsi}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/45 bg-white/10 px-7 py-3.5 text-sm font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
+                >
+                  Explore OXY BFSI AI <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -1110,7 +1055,7 @@ sm:p-6"
           <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
             <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:gap-16">
               <div>
-                <div className="inline-flex min-w-0 items-center gap-3">
+                <div className="flex min-w-0 flex-col items-start gap-3 xs:flex-row xs:items-center">
                   <button
                     type="button"
                     onClick={() => navigate("/")}
@@ -1125,7 +1070,7 @@ sm:p-6"
                   </button>
 
                   <div
-                    className="relative min-w-0 overflow-hidden rounded-2xl border border-fuchsia-300/25 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-400/10 px-4 py-3 shadow-[0_12px_34px_rgba(168,85,247,.16)]"
+                    className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-fuchsia-300/25 xs:w-auto bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-400/10 px-4 py-3 shadow-[0_12px_34px_rgba(168,85,247,.16)]"
                     aria-label="OXY BFSI Sovereign AI"
                   >
                     <span className="block truncate text-base font-black tracking-tight text-white sm:text-xl">

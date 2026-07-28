@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useEngineStore } from '../hooks/engineStore'
+import { engineApi } from '../hooks/engineApi'
 
 interface FileNode {
   name: string;
@@ -144,6 +145,76 @@ export default function PackageSummary() {
   const [expandedStep, setExpandedStep] = useState<number | null>(0)
   const [downloading, setDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
+
+  const [deploying, setDeploying] = useState(false)
+  const [deployStatus, setDeployStatus] = useState<string>('NOT_STARTED')
+  const [deployUrl, setDeployUrl] = useState<string | null>(null)
+  const [deployLogs, setDeployLogs] = useState<string>('')
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const startPolling = (id: string) => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await engineApi.getDeployStatus(id)
+        const { deployStatus: status, deployUrl: url, deployLogs: logs } = res.data
+        setDeployStatus(status)
+        setDeployLogs(logs || '')
+        if (status === 'READY') {
+          setDeployUrl(url)
+          setDeploying(false)
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+        } else if (status === 'FAILED') {
+          setDeploying(false)
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+        }
+      } catch (err) {
+        console.error("Error polling deployment status:", err)
+      }
+    }, 2000)
+  }
+
+  // Deploy only ever starts from the user clicking the button below. This effect just
+  // re-syncs the panel with whatever the backend already knows (e.g. the user navigated
+  // away mid-deploy and came back) — it never triggers a new deploy on its own.
+  useEffect(() => {
+    if (!sessionId) return
+    let cancelled = false
+    engineApi.getDeployStatus(sessionId).then((res) => {
+      if (cancelled) return
+      const { deployStatus: status, deployUrl: url, deployLogs: logs } = res.data
+      if (!status || status === 'NOT_STARTED') return
+      setDeployStatus(status)
+      setDeployLogs(logs || '')
+      if (status === 'READY') {
+        setDeployUrl(url)
+      } else if (status !== 'FAILED') {
+        setDeploying(true)
+        startPolling(sessionId)
+      }
+    }).catch(() => {})
+
+    return () => {
+      cancelled = true
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])
+
+  const handleDeploy = async () => {
+    if (!sessionId) return
+    setDeploying(true)
+    setDeployStatus('BUILDING')
+    setDeployLogs('Initializing sandbox environment...\n')
+    try {
+      await engineApi.deploySession(sessionId)
+      startPolling(sessionId)
+    } catch (err) {
+      setDeployStatus('FAILED')
+      setDeploying(false)
+      setDeployLogs(prev => prev + 'Error triggering deployment: ' + (err instanceof Error ? err.message : String(err)) + '\n')
+    }
+  }
 
 
   const handleDownload = async () => {
@@ -331,6 +402,73 @@ export default function PackageSummary() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Sandbox Deployment Card */}
+      <div className="bg-white/[0.03] border border-[#00D4FF]/10 rounded-2xl overflow-hidden p-6 flex flex-col gap-4">
+        <div>
+          <h3 className="text-sm font-semibold text-[#F0F4FF] flex items-center gap-2">
+            <span>🚀 Live Sandbox Deployment</span>
+          </h3>
+          <p className="text-[11.5px] text-[#8B9CC8] mt-1">
+            Builds, self-heals, and deploys the frontend to a live Vercel URL once you click below.
+          </p>
+        </div>
+
+        {(deployStatus === 'NOT_STARTED' || deployStatus === 'FAILED') && (
+          <button
+            type="button"
+            onClick={handleDeploy}
+            className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-lg font-sans text-xs font-semibold cursor-pointer border-none transition-all duration-200 bg-gradient-to-r from-[#00D4FF] to-[#0072FF] text-white shadow-[0_4px_16px_rgba(0,212,255,0.2)] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(0,212,255,0.4)] active:translate-y-0 w-full mb-3"
+          >
+            {deployStatus === 'FAILED' ? 'Retry Sandbox Deployment' : 'Deploy Sandbox Live URL'}
+          </button>
+        )}
+
+        {deployStatus !== 'NOT_STARTED' && (
+          <div className="flex flex-col gap-3">
+            {/* Status indicator */}
+            <div className="flex items-center gap-2">
+              <div className={`w-2.5 h-2.5 rounded-full ${
+                deployStatus === 'READY' ? 'bg-[#00E676]' :
+                deployStatus === 'FAILED' ? 'bg-[#FF1744]' : 'bg-[#00D4FF] animate-pulse'
+              }`} />
+              <span className="text-xs font-semibold text-[#F0F4FF] capitalize">
+                Status: {deployStatus.toLowerCase()}
+              </span>
+            </div>
+
+            {/* Logs terminal */}
+            <div className="bg-[#050811] rounded-lg border border-[#00D4FF]/10 p-3 max-h-[220px] overflow-y-auto font-mono text-[11px] text-[#A6B2D4] leading-relaxed whitespace-pre-wrap">
+              {deployLogs || 'Initializing build process...'}
+            </div>
+
+            {/* Deploy success URL */}
+            {deployStatus === 'READY' && deployUrl && (
+              <div className="p-3 bg-[#00E676]/10 border border-[#00E676]/30 rounded-xl flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-[#00E676] font-bold">✓ Sandbox Deploy Successful</div>
+                  <a
+                    href={deployUrl || undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-semibold text-[#F0F4FF] underline truncate block mt-0.5"
+                  >
+                    {deployUrl}
+                  </a>
+                </div>
+                <a
+                  href={deployUrl || undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-1.5 bg-[#00E676] text-black rounded text-[11px] font-bold border-none cursor-pointer hover:bg-[#00C864] transition-all decoration-none flex items-center shrink-0"
+                >
+                  Open Live API ↗
+                </a>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Run another button */}

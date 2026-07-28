@@ -447,7 +447,15 @@ function UseCasesSection() {
   ];
 
   const handleUseCaseClick = (uc: UseCase) => {
-    navigate("/generate", { state: { selectedUseCase: uc.id } });
+    // Stage1 now takes a free-text use case description (grounded against the real
+    // use-case corpus server-side), so hand off the description as a prefill instead
+    // of a catalog ID.
+    navigate("/generate", {
+      state: {
+        useCaseDescription: uc.description,
+        regulatoryFramework: uc.framework,
+      },
+    });
   };
 
   return (

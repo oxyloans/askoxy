@@ -50,17 +50,101 @@ const FW_COLOR: Record<string, string> = {
   SAMA: "#00875A",
 };
 
+// Status shown in the header CTA slot while a generation is in progress
+// elsewhere, instead of a redundant "Start Generation" button that would
+// silently discard that progress if clicked.
+const ACTIVE_STATUS_META: Record<
+  string,
+  { label: string; shortLabel: string; color: string; pulse: boolean }
+> = {
+  running: {
+    label: "Generating…",
+    shortLabel: "Live",
+    color: "#00D4FF",
+    pulse: true,
+  },
+  awaiting_input: {
+    label: "Action Required",
+    shortLabel: "Action",
+    color: "#FFB700",
+    pulse: true,
+  },
+  idle: {
+    label: "Paused",
+    shortLabel: "Paused",
+    color: "#FFB700",
+    pulse: false,
+  },
+};
+
 export default function AppHeader() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { reset, setStage1Data, setSessionId, setStage2Questions } =
-    useEngineStore();
+  const {
+    reset,
+    setStage1Data,
+    setSessionId,
+    setStage2Questions,
+    runStatus,
+    sessionId: activeSessionId,
+  } = useEngineStore();
+
+  // A session is "active" once it has an id and hasn't finished/errored out —
+  // covers running, awaiting Stage 2 input, and paused states.
+  const isSessionActive =
+    !!activeSessionId && runStatus !== "completed" && runStatus !== "failed";
+  const statusMeta = ACTIVE_STATUS_META[runStatus] ?? ACTIVE_STATUS_META.idle;
+
+  const goToActiveSession = () => {
+    if (!activeSessionId) return;
+    navigate(
+      runStatus === "awaiting_input"
+        ? `/stage2/${activeSessionId}`
+        : `/generating/${activeSessionId}`,
+    );
+  };
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [fwOpen, setFwOpen] = useState(false);
   const [sessions, setSessions] = useState<GenerationSession[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deployStates, setDeployStates] = useState<Record<string, {
+    status: string;
+    url?: string | null;
+    logs?: string;
+  }>>({});
   const fwRef = useRef<HTMLDivElement>(null);
+
+  const handleDeploy = async (sessionId: string) => {
+    setDeployStates(prev => ({
+      ...prev,
+      [sessionId]: { status: 'BUILDING', logs: 'Initializing sandbox environment...\n' }
+    }));
+    try {
+      await engineApi.deploySession(sessionId);
+      
+      const interval = setInterval(async () => {
+        try {
+          const res = await engineApi.getDeployStatus(sessionId);
+          const { deployStatus: status, deployUrl: url, deployLogs: logs } = res.data;
+          setDeployStates(prev => ({
+            ...prev,
+            [sessionId]: { status, url, logs }
+          }));
+          if (status === 'READY' || status === 'FAILED') {
+            clearInterval(interval);
+          }
+        } catch (err) {
+          console.error("Error polling deployment status:", err);
+        }
+      }, 2000);
+    } catch (err) {
+      setDeployStates(prev => ({
+        ...prev,
+        [sessionId]: { status: 'FAILED', logs: 'Error: ' + (err instanceof Error ? err.message : String(err)) }
+      }));
+    }
+  };
 
   useEffect(() => {
     document.body.style.overflow = historyOpen ? "hidden" : "";
@@ -90,6 +174,24 @@ export default function AppHeader() {
             new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
         );
         setSessions(sorted);
+
+        // Pre-fetch deployment status for all completed historical sessions
+        const completed = sorted.filter(s => s.status === 'COMPLETED');
+        completed.forEach(async (session) => {
+          try {
+            const statusRes = await engineApi.getDeployStatus(session.sessionId);
+            setDeployStates(prev => ({
+              ...prev,
+              [session.sessionId]: {
+                status: statusRes.data.deployStatus || 'NOT_STARTED',
+                url: statusRes.data.deployUrl || null,
+                logs: statusRes.data.deployLogs || ''
+              }
+            }));
+          } catch (err) {
+            console.error("Error loading deploy status for " + session.sessionId, err);
+          }
+        });
       })
       .catch(() => setSessions([]))
       .finally(() => setLoading(false));
@@ -97,6 +199,12 @@ export default function AppHeader() {
 
   const closeHistory = () => setHistoryOpen(false);
   const handleNewGeneration = () => {
+    if (isSessionActive) {
+      const proceed = window.confirm(
+        "A generation is still in progress. Starting a new one won't lose your data (it's saved), but you'll leave the current live view. Continue?",
+      );
+      if (!proceed) return;
+    }
     reset();
     navigate("/generate");
   };
@@ -327,23 +435,48 @@ export default function AppHeader() {
                 )}
               </div>
 
-              {/* Generate button */}
-              <button
-                onClick={handleNewGeneration}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer border-none bg-gradient-to-r from-[#00D4FF] to-[#0099BB] text-black shadow-[0_4px_16px_rgba(0,212,255,0.25)]"
-              >
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+              {/* Generate button / active-session status */}
+              {isSessionActive ? (
+                <button
+                  type="button"
+                  onClick={goToActiveSession}
+                  aria-label={`Generation ${statusMeta.label}, tap to view`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer"
+                  style={{
+                    color: statusMeta.color,
+                    background: `${statusMeta.color}15`,
+                    border: `1px solid ${statusMeta.color}40`,
+                  }}
                 >
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                </svg>
-                Generate
-              </button>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{
+                      background: statusMeta.color,
+                      animation: statusMeta.pulse
+                        ? "finvibe-pulse 1.5s infinite"
+                        : "none",
+                    }}
+                  />
+                  {statusMeta.shortLabel}
+                </button>
+              ) : (
+                <button
+                  onClick={handleNewGeneration}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer border-none bg-gradient-to-r from-[#00D4FF] to-[#0099BB] text-black shadow-[0_4px_16px_rgba(0,212,255,0.25)]"
+                >
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                  Generate
+                </button>
+              )}
             </div>
           </div>
 
@@ -585,22 +718,48 @@ export default function AppHeader() {
                 )}
               </div>
               <div className="hidden lg:block w-[1px] h-5 bg-[#00D4FF]/15" />
-              <button
-                onClick={handleNewGeneration}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[13px] font-bold cursor-pointer border-none transition-all duration-200 bg-gradient-to-r from-[#00D4FF] to-[#0099BB] text-black shadow-[0_4px_16px_rgba(0,212,255,0.25)] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(0,212,255,0.45)] active:translate-y-0 whitespace-nowrap"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+              {isSessionActive ? (
+                <button
+                  type="button"
+                  onClick={goToActiveSession}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-bold cursor-pointer transition-all duration-200 whitespace-nowrap hover:-translate-y-px"
+                  style={{
+                    color: statusMeta.color,
+                    background: `${statusMeta.color}15`,
+                    border: `1px solid ${statusMeta.color}40`,
+                  }}
+                  title="A generation is already in progress — click to view it"
                 >
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                </svg>
-                Start Generation
-              </button>
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{
+                      background: statusMeta.color,
+                      boxShadow: `0 0 6px ${statusMeta.color}`,
+                      animation: statusMeta.pulse
+                        ? "finvibe-pulse 1.5s infinite"
+                        : "none",
+                    }}
+                  />
+                  {statusMeta.label}
+                </button>
+              ) : (
+                <button
+                  onClick={handleNewGeneration}
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[13px] font-bold cursor-pointer border-none transition-all duration-200 bg-gradient-to-r from-[#00D4FF] to-[#0099BB] text-black shadow-[0_4px_16px_rgba(0,212,255,0.25)] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(0,212,255,0.45)] active:translate-y-0 whitespace-nowrap"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                  Start Generation
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -860,25 +1019,79 @@ export default function AppHeader() {
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {isCompleted && (
-                          <a
-                            href={engineApi.getDownloadUrl(session.sessionId)}
-                            download
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold no-underline"
-                            style={{ background: "#00E676", color: "#000" }}
-                          >
-                            <svg
-                              width="11"
-                              height="11"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                            >
-                              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                            </svg>
-                            Download
-                          </a>
+                          <div className="flex flex-col gap-1.5 w-full mt-0.5">
+                            <div className="flex items-center gap-1.5 w-full">
+                              <a
+                                href={engineApi.getDownloadUrl(session.sessionId)}
+                                download
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold no-underline flex-1 bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+                              >
+                                <svg
+                                  width="11"
+                                  height="11"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                >
+                                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                                </svg>
+                                Download
+                              </a>
+
+                              {(!deployStates[session.sessionId] || 
+                                deployStates[session.sessionId].status === 'NOT_STARTED' || 
+                                deployStates[session.sessionId].status === 'FAILED') && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeploy(session.sessionId)}
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold cursor-pointer border-none flex-1 text-black bg-[#00D4FF] hover:bg-[#00B4D8] transition-colors"
+                                >
+                                  {deployStates[session.sessionId]?.status === 'FAILED' ? 'Retry Deploy' : 'Deploy'}
+                                </button>
+                              )}
+
+                              {deployStates[session.sessionId] && 
+                               deployStates[session.sessionId].status !== 'NOT_STARTED' && 
+                               deployStates[session.sessionId].status !== 'FAILED' && (
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold flex-1 text-white opacity-90 border-none cursor-default"
+                                  style={{
+                                    background: deployStates[session.sessionId].status === 'READY' ? "#00E676" : "rgba(0,212,255,0.15)"
+                                  }}
+                                >
+                                  {deployStates[session.sessionId].status === 'READY' ? "✓ Deployed" : "⚡ Deploying"}
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Show deployment logs terminal in Drawer */}
+                            {deployStates[session.sessionId] && deployStates[session.sessionId].status !== 'NOT_STARTED' && (
+                              <div className="bg-[#050811] rounded-lg border border-[#00D4FF]/10 p-2.5 max-h-[140px] overflow-y-auto font-mono text-[9.5px] text-[#A6B2D4] leading-relaxed whitespace-pre-wrap mt-1">
+                                {deployStates[session.sessionId].logs || 'Preparing build sandbox...'}
+                              </div>
+                            )}
+
+                            {/* Show deployment link if ready */}
+                            {deployStates[session.sessionId] && deployStates[session.sessionId].status === 'READY' && deployStates[session.sessionId].url && (
+                              <div className="flex items-center justify-between p-2 rounded bg-[#00E676]/10 border border-[#00E676]/20">
+                                <span className="text-[10px] text-[#00E676] font-semibold truncate max-w-[180px]">
+                                  {deployStates[session.sessionId].url}
+                                </span>
+                                <a
+                                  href={deployStates[session.sessionId].url || undefined}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[10px] font-bold text-[#00E676] no-underline hover:underline"
+                                >
+                                  Open Sandbox ↗
+                                </a>
+                              </div>
+                            )}
+                          </div>
                         )}
                         {(isAwaiting || isPaused || isFailed || isRunning) && (
                           <button

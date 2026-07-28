@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import UseCaseSelector from "./UseCaseSelector";
 import FileUploadZone from "./FileUploadZone";
 import {
   PROVIDER_MODELS,
@@ -8,19 +7,18 @@ import {
   FRONTEND_STACKS,
   DATABASE_TYPES,
 } from "../hooks/providerModels";
-import { USE_CASE_REGISTRY } from "../hooks/useCaseRegistry";
 import { engineApi } from "../hooks/engineApi";
 import { useEngineStore } from "../hooks/engineStore";
-import type { UseCase } from "../type/useCases";
 
-const FRAMEWORK_BADGE_CLASSES: Record<string, string> = {
-  CBUAE: "text-[#1E6FD9] bg-[#1E6FD9]/10 border border-[#1E6FD9]/20",
-  RBI: "text-[#E85D00] bg-[#E85D00]/10 border border-[#E85D00]/20",
-  SAMA: "text-[#00875A] bg-[#00875A]/10 border border-[#00875A]/20",
-};
+interface UseCaseSuggestion {
+  useCaseId: string;
+  name: string;
+  domain: string;
+  moduleName: string;
+}
 
 interface FormState {
-  selectedUseCase: string;
+  useCaseDescription: string;
   regulatoryFramework: string;
   bankName: string;
   backendStack: string;
@@ -29,11 +27,11 @@ interface FormState {
   aiProvider: string;
   aiModelId: string;
   existingServices: string[];
-  frameworkOverride: boolean;
 }
 
 interface FormErrors {
-  selectedUseCase?: string;
+  useCaseDescription?: string;
+  regulatoryFramework?: string;
   bankName?: string;
   backendStack?: string;
   frontendStack?: string;
@@ -68,18 +66,19 @@ function FormSection({
 // ─── Summary Panel ────────────────────────────────────────────────────────────
 function SummaryPanel({
   form,
-  selectedUC,
   isReady,
 }: {
   form: FormState;
-  selectedUC: UseCase | undefined;
   isReady: boolean;
 }) {
   const checks = [
     {
       label: "Use Case",
-      value: selectedUC?.name,
-      done: !!form.selectedUseCase,
+      value:
+        form.useCaseDescription.length > 60
+          ? form.useCaseDescription.slice(0, 60) + "…"
+          : form.useCaseDescription,
+      done: !!form.useCaseDescription.trim(),
     },
     {
       label: "Framework",
@@ -116,17 +115,15 @@ function SummaryPanel({
         Configuration Summary
       </h4>
 
-      {selectedUC && (
+      {form.useCaseDescription.trim() && (
         <div className="p-3 px-3.5 rounded-xl bg-[#00D4FF]/5 border border-[#00D4FF]/20 mb-4">
-          <div className="text-[11px] text-[#4A5580] mb-1">Selected</div>
-          <div className="text-[14px] font-semibold text-[#F0F4FF]">
-            {selectedUC.name}
+          <div className="text-[11px] text-[#4A5580] mb-1">Use Case</div>
+          <div className="text-[13px] font-medium text-[#F0F4FF] line-clamp-3">
+            {form.useCaseDescription}
           </div>
-          {selectedUC.framework && (
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-semibold tracking-wider uppercase mt-1.5 ${FRAMEWORK_BADGE_CLASSES[selectedUC.framework]}`}
-            >
-              {selectedUC.framework}
+          {form.regulatoryFramework && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-semibold tracking-wider uppercase mt-1.5 text-[#00D4FF] bg-[#00D4FF]/10 border border-[#00D4FF]/20">
+              {form.regulatoryFramework}
             </span>
           )}
         </div>
@@ -226,9 +223,11 @@ export default function Stage1Page() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [apiFile, setApiFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [suggestions, setSuggestions] = useState<UseCaseSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [form, setForm] = useState<FormState>({
-    selectedUseCase: "",
+    useCaseDescription: "",
     regulatoryFramework: "",
     bankName: "",
     backendStack: "JAVA_SPRING",
@@ -237,30 +236,42 @@ export default function Stage1Page() {
     aiProvider: "CLAUDE",
     aiModelId: PROVIDER_MODELS.CLAUDE.defaultModel,
     existingServices: [],
-    frameworkOverride: false,
   });
 
-  // Pre-select use case from navigation state
+  // Pre-fill from navigation state (e.g. clicking an example card on the home page)
   useEffect(() => {
-    const state = location.state as { selectedUseCase?: string } | null;
-    if (state?.selectedUseCase) {
-      const uc = USE_CASE_REGISTRY.find((u) => u.id === state.selectedUseCase);
-      if (uc) {
-        setForm((prev) => ({
-          ...prev,
-          selectedUseCase: uc.id,
-          regulatoryFramework: uc.framework,
-        }));
-      }
+    const state = location.state as {
+      useCaseDescription?: string;
+      regulatoryFramework?: string;
+    } | null;
+    if (state?.useCaseDescription) {
+      setForm((prev) => ({
+        ...prev,
+        useCaseDescription: state.useCaseDescription ?? prev.useCaseDescription,
+        regulatoryFramework:
+          state.regulatoryFramework ?? prev.regulatoryFramework,
+      }));
     }
   }, [location.state]);
 
-  const selectedUC = USE_CASE_REGISTRY.find(
-    (uc) => uc.id === form.selectedUseCase,
-  );
+  // Real 51-use-case corpus, offered as autocomplete suggestions -- not a hard picklist.
+  useEffect(() => {
+    engineApi
+      .getUseCaseSuggestions()
+      .then(({ data }) => setSuggestions(data))
+      .catch(() => setSuggestions([]));
+  }, []);
+
+  const filteredSuggestions = suggestions
+    .filter((s) =>
+      form.useCaseDescription.trim().length > 1
+        ? s.name.toLowerCase().includes(form.useCaseDescription.toLowerCase())
+        : true,
+    )
+    .slice(0, 8);
 
   const isReady = !!(
-    form.selectedUseCase &&
+    form.useCaseDescription.trim() &&
     form.regulatoryFramework &&
     form.bankName.trim() &&
     form.backendStack &&
@@ -270,15 +281,13 @@ export default function Stage1Page() {
     form.aiModelId
   );
 
-  const handleUseCaseChange = (id: string, uc: UseCase) => {
+  const handleSuggestionPick = (s: UseCaseSuggestion) => {
     setForm((prev) => ({
       ...prev,
-      selectedUseCase: id,
-      regulatoryFramework: prev.frameworkOverride
-        ? prev.regulatoryFramework
-        : uc.framework,
+      useCaseDescription: `${s.name} (${s.moduleName})`,
     }));
-    setErrors((prev) => ({ ...prev, selectedUseCase: undefined }));
+    setErrors((prev) => ({ ...prev, useCaseDescription: undefined }));
+    setShowSuggestions(false);
   };
 
   const handleProviderChange = (provider: string) => {
@@ -301,8 +310,11 @@ export default function Stage1Page() {
 
   const validate = (): boolean => {
     const errs: FormErrors = {};
-    if (!form.selectedUseCase)
-      errs.selectedUseCase = "Please select a use case";
+    if (!form.useCaseDescription.trim() || form.useCaseDescription.trim().length < 15)
+      errs.useCaseDescription =
+        "Please describe the use case in at least 15 characters";
+    if (!form.regulatoryFramework)
+      errs.regulatoryFramework = "Please select a country / regulatory framework";
     if (!form.bankName.trim()) errs.bankName = "Bank name is required";
     if (!form.backendStack) errs.backendStack = "Backend stack is required";
     if (!form.frontendStack) errs.frontendStack = "Frontend stack is required";
@@ -321,7 +333,7 @@ export default function Stage1Page() {
 
     try {
       const formData = new FormData();
-      formData.append("selectedUseCase", form.selectedUseCase);
+      formData.append("useCaseDescription", form.useCaseDescription.trim());
       formData.append("regulatoryFramework", form.regulatoryFramework);
       formData.append("bankName", form.bankName.trim());
       formData.append("backendStack", form.backendStack);
@@ -340,7 +352,9 @@ export default function Stage1Page() {
 
       setSessionId(sessionId);
       setStage1Data({
-        selectedUseCase: form.selectedUseCase,
+        // Store field name kept as `selectedUseCase` for compatibility with Stage2Page/
+        // GenerationPage/AppHeader, but it now holds the free-text description.
+        selectedUseCase: form.useCaseDescription.trim(),
         regulatoryFramework: form.regulatoryFramework,
         bankName: form.bankName.trim(),
         backendStack: form.backendStack,
@@ -420,12 +434,67 @@ export default function Stage1Page() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
             {/* ── Left: Form ── */}
             <div className="flex flex-col gap-5">
-              <FormSection number={1} title="Select Use Case">
-                <UseCaseSelector
-                  value={form.selectedUseCase}
-                  onChange={handleUseCaseChange}
-                  error={errors.selectedUseCase}
-                />
+              <FormSection number={1} title="Describe Your Use Case">
+                <div className="relative flex flex-col gap-2">
+                  <label
+                    className="text-xs font-semibold text-[#8B9CC8] tracking-wider uppercase"
+                    htmlFor="useCaseDescription"
+                  >
+                    What do you want to build?{" "}
+                    <span className="text-[#FF1744] ml-0.5">*</span>
+                  </label>
+                  <textarea
+                    id="useCaseDescription"
+                    rows={3}
+                    className={`bg-white/5 border rounded-lg text-[#F0F4FF] font-sans text-[15px] px-4 py-3 transition-all duration-200 outline-none w-full resize-y focus:border-[#00D4FF] focus:ring-4 focus:ring-[#00D4FF]/15 ${errors.useCaseDescription ? "border-[#FF1744]" : "border-[#00D4FF]/10"}`}
+                    value={form.useCaseDescription}
+                    onChange={(e) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        useCaseDescription: e.target.value,
+                      }));
+                      setErrors((prev) => ({
+                        ...prev,
+                        useCaseDescription: undefined,
+                      }));
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 150)
+                    }
+                    placeholder="e.g. Determine customer loan eligibility using income, liabilities, and credit bureau information"
+                  />
+                  {errors.useCaseDescription && (
+                    <span className="text-[13px] text-[#FF6B6B]">
+                      ⚠ {errors.useCaseDescription}
+                    </span>
+                  )}
+
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <div className="absolute top-full mt-1 left-0 right-0 z-10 bg-[#0F1525] border border-[#00D4FF]/20 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      <div className="px-3 py-2 text-[10px] font-semibold text-[#4A5580] tracking-wider uppercase border-b border-[#00D4FF]/10">
+                        Real use-case examples
+                      </div>
+                      {filteredSuggestions.map((s) => (
+                        <button
+                          type="button"
+                          key={s.useCaseId}
+                          className="w-full text-left px-3 py-2.5 hover:bg-[#00D4FF]/8 transition-colors border-b border-[#00D4FF]/5 last:border-0"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleSuggestionPick(s)}
+                        >
+                          <div className="text-[13px] text-[#F0F4FF] font-medium">
+                            {s.name}
+                          </div>
+                          <div className="text-[11px] text-[#4A5580] mt-0.5">
+                            {s.domain} · {s.moduleName}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </FormSection>
 
               {/* 2. Regulatory Framework */}
@@ -464,12 +533,16 @@ export default function Stage1Page() {
                       <button
                         key={fw.key}
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
                           setForm((prev) => ({
                             ...prev,
                             regulatoryFramework: fw.key,
-                          }))
-                        }
+                          }));
+                          setErrors((prev) => ({
+                            ...prev,
+                            regulatoryFramework: undefined,
+                          }));
+                        }}
                         className="relative flex items-center gap-3 py-3 px-4 rounded-xl border cursor-pointer transition-all duration-200 select-none w-full"
                         style={{
                           borderColor: isSelected
@@ -516,9 +589,13 @@ export default function Stage1Page() {
                     );
                   })}
                 </div>
-                {!form.regulatoryFramework && (
+                {errors.regulatoryFramework ? (
+                  <span className="text-[13px] text-[#FF6B6B] mt-2 block">
+                    ⚠ {errors.regulatoryFramework}
+                  </span>
+                ) : (
                   <p className="text-[14px] text-slate-400 mt-2">
-                    Auto-populated from use case, or select manually
+                    Select the country whose regulations this application must comply with
                   </p>
                 )}
               </FormSection>
@@ -964,11 +1041,7 @@ export default function Stage1Page() {
             </div>
 
             {/* ── Right: Summary Panel ── */}
-            <SummaryPanel
-              form={form}
-              selectedUC={selectedUC}
-              isReady={isReady}
-            />
+            <SummaryPanel form={form} isReady={isReady} />
           </div>
         </form>
       </div>

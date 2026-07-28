@@ -17,9 +17,41 @@ import type { Campaign } from "./servicesapi";
 interface LeagueJourneyAccess {
   campaignId: string;
   campaignType: string;
+  journeyName?: string;
   addServiceType: "LEAGUEJOURNEYS";
   openedAt: number;
 }
+
+type JourneyAwareCampaign = Campaign & {
+  journeyName?: string | null;
+  journey_name?: string | null;
+  leagueJourneyName?: string | null;
+  journey?: {
+    journeyName?: string | null;
+    name?: string | null;
+  } | null;
+  leagueJourney?: {
+    journeyName?: string | null;
+    name?: string | null;
+  } | null;
+};
+
+type CampaignDetailsRouteState = {
+  from?: string;
+  addServiceType?: string | null;
+  journeyName?: string | null;
+  campaign?: JourneyAwareCampaign | null;
+};
+
+const getNonEmptyString = (value: unknown): string =>
+  typeof value === "string" ? value.trim() : "";
+
+const normalizeJourneyText = (value: unknown): string =>
+  getNonEmptyString(value)
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
 
 const LEAGUE_JOURNEY_ACCESS_KEY = "leagueJourneyAccess";
 const LENDER_JOURNEY_ROUTE = "/main/lenderjourney";
@@ -29,10 +61,7 @@ const SERVICES_ROUTE = "/main/dashboard/myservices";
 const CampaignDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const routeState = (location.state || {}) as {
-    from?: string;
-    addServiceType?: string | null;
-  };
+  const routeState = (location.state || {}) as CampaignDetailsRouteState;
   const pathParts = location.pathname.split("/");
   const campaignId = pathParts[pathParts.indexOf("services") + 1];
 
@@ -73,6 +102,97 @@ const CampaignDetails: React.FC = () => {
 
   const isJourney =
     String(campaign?.addServiceType || "").toUpperCase() === "LEAGUEJOURNEYS";
+
+  const journeyCampaign = campaign as JourneyAwareCampaign | null;
+  const routeCampaign = routeState.campaign || null;
+
+  // Resolve journeyName from every location used by the current and older API
+  // responses. The first non-empty value is used.
+  const journeyNameCandidates: unknown[] = [
+    journeyCampaign?.journeyName,
+    journeyCampaign?.journey_name,
+    journeyCampaign?.leagueJourneyName,
+    journeyCampaign?.journey?.journeyName,
+    journeyCampaign?.journey?.name,
+    journeyCampaign?.leagueJourney?.journeyName,
+    journeyCampaign?.leagueJourney?.name,
+    routeState.journeyName,
+    routeCampaign?.journeyName,
+    routeCampaign?.journey_name,
+    routeCampaign?.leagueJourneyName,
+    routeCampaign?.journey?.journeyName,
+    routeCampaign?.journey?.name,
+    routeCampaign?.leagueJourney?.journeyName,
+    routeCampaign?.leagueJourney?.name,
+  ];
+
+  const journeyName =
+    journeyNameCandidates.map(getNonEmptyString).find(Boolean) || "";
+
+  const normalizedJourneyName = normalizeJourneyText(journeyName);
+  const normalizedCampaignType = normalizeJourneyText(campaign?.campaignType);
+
+  // campaignType is used only as a fallback because some older API responses
+  // did not include journeyName in the details payload.
+  const journeyIdentity = `${normalizedJourneyName} ${normalizedCampaignType}`
+    .replace(/\s+/g, " ")
+    .trim();
+  const compactJourneyIdentity = journeyIdentity.replace(/\s+/g, "");
+
+  const isSovereignAIJourney =
+    isJourney && compactJourneyIdentity.includes("SOVEREIGNAI");
+
+  const isLenderJourney =
+    isJourney &&
+    !isSovereignAIJourney &&
+    /\b(LENDER|LENDING)\b/.test(journeyIdentity);
+
+  const displayJourneyName = isLenderJourney
+    ? "Lender"
+    : isSovereignAIJourney
+      ? "Sovereign AI"
+      : journeyName;
+
+  const interestButtonText = interested
+    ? "Already Participated"
+    : campaign?.campaignType?.toLowerCase().includes("rotary")
+      ? "Join as Rotarian Member"
+      : isSovereignAIJourney
+        ? "I'm Interested in Sovereign AI"
+        : "I'm Interested";
+
+  const journeyModalTitle = isSovereignAIJourney
+    ? "Confirm Your Interest in Sovereign AI"
+    : isLenderJourney
+      ? "Confirm Your Lender Interest"
+      : "Confirm Your Interest";
+
+  const journeyModalDescription = isSovereignAIJourney
+    ? "Submit your interest to connect with the Sovereign AI journey and receive further updates."
+    : isLenderJourney
+      ? "Submit your interest to unlock the complete OxyLoans lender journey."
+      : "Submit your interest to continue with this journey.";
+
+  const journeyInterestButtonText = isSovereignAIJourney
+    ? "I'm Interested in Sovereign AI"
+    : "I'm Interested";
+
+  useEffect(() => {
+    // Always open a newly selected service from the top of the page.
+    // React Router can preserve the previous scroll position, which may make
+    // the next service appear near the footer on desktop or mobile.
+    const scrollPageToTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    setCurrentIdx(0);
+    scrollPageToTop();
+    const frameId = window.requestAnimationFrame(scrollPageToTop);
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [location.pathname, campaignId]);
 
   useEffect(() => {
     const loadCampaign = async () => {
@@ -333,7 +453,13 @@ const CampaignDetails: React.FC = () => {
     }
 
     const roleParam = isJourney ? "LEAGUEJOURNEYS" : "EMPLOYEE";
-    const roleLabel = isJourney ? "Journey" : "Employee";
+    const roleLabel = isSovereignAIJourney
+      ? "Sovereign AI Journey"
+      : isLenderJourney
+        ? "Lender Journey"
+        : isJourney
+          ? "Journey"
+          : "Employee";
 
     Modal.confirm({
       title: "Confirm Participation",
@@ -378,7 +504,7 @@ const CampaignDetails: React.FC = () => {
       return;
     }
 
-    if (!isJourney || !interested) {
+    if (!isLenderJourney || !interested) {
       message.warning(
         "Please submit your interest before opening the lender journey.",
       );
@@ -388,6 +514,7 @@ const CampaignDetails: React.FC = () => {
     const accessPayload: LeagueJourneyAccess = {
       campaignId: campaign.campaignId,
       campaignType: campaign.campaignType,
+      journeyName: displayJourneyName || "Lender",
       addServiceType: "LEAGUEJOURNEYS",
       openedAt: Date.now(),
     };
@@ -574,17 +701,13 @@ const CampaignDetails: React.FC = () => {
                 <button
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                   onClick={handleSubmitClick}
-                  aria-label="Join as Rotarian Member"
+                  aria-label={interestButtonText}
                   disabled={isButtonDisabled || interested}
                 >
-                  {!interested
-                    ? campaign?.campaignType?.toLowerCase().includes("rotary")
-                      ? "Join as Rotarian Member"
-                      : "I'm Interested"
-                    : "Already Participated"}
+                  {interestButtonText}
                 </button>
 
-                {isJourney && interested && (
+                {isLenderJourney && interested && (
                   <button
                     type="button"
                     onClick={handleOpenLenderJourney}
@@ -774,7 +897,7 @@ const CampaignDetails: React.FC = () => {
                     )}
                   </div>
 
-                  {isJourney && interested && (
+                  {isLenderJourney && interested && (
                     <div className="mb-5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 sm:p-5">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -979,13 +1102,14 @@ const CampaignDetails: React.FC = () => {
                 <HiringEmployeeCard
                   onConfirm={handleEmployeeInterest}
                   disabled={isButtonDisabled || interested}
-                  title={
-                    isJourney ? "Confirm your interest" : "Join as Employee"
-                  }
+                  title={isJourney ? journeyModalTitle : "Join as Employee"}
                   description={
                     isJourney
-                      ? "Submit your interest to unlock the complete OxyLoans lender journey."
+                      ? journeyModalDescription
                       : "Join our AI team and build the future! Explore exciting roles across tech, marketing, operations, and innovation."
+                  }
+                  buttonText={
+                    isJourney ? journeyInterestButtonText : "I'm Interested"
                   }
                 />
               </div>
@@ -1126,7 +1250,8 @@ const HiringEmployeeCard: React.FC<{
   disabled?: boolean;
   title?: string;
   description?: string;
-}> = ({ onConfirm, disabled, title, description }) => (
+  buttonText?: string;
+}> = ({ onConfirm, disabled, title, description, buttonText }) => (
   <div className="w-full max-w-3xl mx-auto text-center">
     <div className="rounded-2xl bg-white p-5 sm:p-6">
       <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
@@ -1141,9 +1266,9 @@ const HiringEmployeeCard: React.FC<{
           className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700 disabled:opacity-50"
           onClick={onConfirm}
           disabled={disabled}
-          aria-label="I'm Interested (Employee)"
+          aria-label={buttonText || "I'm Interested"}
         >
-          I'm Interested
+          {buttonText || "I'm Interested"}
         </button>
       </div>
     </div>
