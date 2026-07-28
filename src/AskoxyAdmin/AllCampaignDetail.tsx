@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { adminApi as axios } from "../utils/axiosInstances";
+import { adminApi as axios, customerApi } from "../utils/axiosInstances";
 import { uploadurlwithId } from "../Config";
 import { AxiosError } from "axios";
+import Sidebar from "./Sider";
 import {
   message,
   Modal,
   Button,
   Input,
+  Upload,
   Table,
+  Tag,
   Spin,
   Tabs,
   Image,
@@ -797,7 +800,7 @@ const AllCampaignsDetails: React.FC = () => {
       title: <div className="text-center">Actions</div>,
       key: "actions",
       render: (_: any, campaign: Campaign) => (
-        <div className="flex min-w-[110px] flex-col items-stretch gap-2">
+        <div className="flex flex-col items-center gap-2">
           <Button
             className={
               campaign.campaignStatus
@@ -857,138 +860,120 @@ const AllCampaignsDetails: React.FC = () => {
     );
   };
 
-  const renderTable = (
-    data: Campaign[],
-    type: string,
-    isBlog: boolean = false
-  ) => (
-    <div className="overflow-hidden rounded-2xl border border-slate-200">
-      <Table
-        columns={getColumns(type, isBlog)}
-        dataSource={data}
-        rowKey={(record) => record.campaignId}
-        pagination={{
-          pageSize: 20,
-          showSizeChanger: true,
-          pageSizeOptions: [10, 20, 50, 100],
-          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-          responsive: true,
-        }}
-        className="campaign-table"
-        size={window.innerWidth < 768 ? "small" : "middle"}
-        scroll={{ x: 1450 }}
-      />
+  const formatDate = (value?: string) => {
+    if (!value) return "-";
+    const date = new Date(Number(value));
+    return Number.isNaN(date.getTime()) ? "-" : date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const getCampaignUrl = (record: Campaign, withAuth: boolean) => {
+    const isBlog = record.campainInputType === "BLOG";
+    const slugSource = record.addServiceType === "LEAGUEJOURNEYS" && record.journeyName ? record.journeyName : record.campaignType;
+    const slug = slugify(slugSource || "campaign");
+    if (isBlog) return withAuth ? `${baseUrl}/main/blog/${record.campaignId.slice(-4)}/${slug}` : `${baseUrl}/blog/${record.campaignId.slice(-4)}/${slug}`;
+    return withAuth ? `${authUrl}${record.campaignId.slice(-4)}/${slug}` : `${noAuthUrl}${record.campaignId.slice(-4)}/${slug}`;
+  };
+
+  const renderMobileCards = (data: Campaign[], isBlog = false) => (
+    <div className="space-y-3 md:hidden">
+      {data.length === 0 ? (
+        <div className="rounded-md border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">No records found.</div>
+      ) : data.map((campaign) => (
+        <div key={campaign.campaignId} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0">{renderMedia(campaign.imageUrls)}</div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  {campaign.addServiceType === "LEAGUEJOURNEYS" && campaign.journeyName && <p className="text-xs font-medium text-blue-600">{campaign.journeyName}</p>}
+                  <h3 className="break-words text-sm font-semibold text-gray-900">{campaign.campaignType}</h3>
+                </div>
+                <Tag color={campaign.campaignStatus ? "green" : "red"}>{campaign.campaignStatus ? "Active" : "Inactive"}</Tag>
+              </div>
+              <p className="mt-2 line-clamp-3 whitespace-pre-line text-xs leading-5 text-gray-600">{campaign.campaignDescription}</p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
+            <div><span className="block text-gray-400">Added by</span><span className="font-medium text-gray-700">{campaign.campaignTypeAddBy || "-"}</span></div>
+            <div><span className="block text-gray-400">Created</span><span className="font-medium text-gray-700">{formatDate(campaign.createdAt)}</span></div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="small" onClick={() => handleUpdate(campaign)}>Edit</Button>
+            <Button size="small" danger={!campaign.campaignStatus} onClick={() => handleStatus(campaign)}>{campaign.campaignStatus ? "Deactivate" : "Activate"}</Button>
+            <Button size="small" onClick={() => handleCopy(getCampaignUrl(campaign, false))}>Copy URL</Button>
+            {isBlog && <Button size="small" type="primary" onClick={() => handlePublish(campaign)}>Publish</Button>}
+          </div>
+        </div>
+      ))}
     </div>
   );
 
+  const renderTable = (data: Campaign[], type: string, isBlog: boolean = false) => (
+    <>
+      {renderMobileCards(data, isBlog)}
+      <div className="hidden md:block">
+        <Table
+          columns={getColumns(type, isBlog)}
+          dataSource={data}
+          rowKey={(record) => record.campaignId}
+          pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: [10, 20, 50], showTotal: (total) => `${total} records` }}
+          size="middle"
+          className="campaign-responsive-table"
+          scroll={{ x: 1300 }}
+        />
+      </div>
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 px-3 py-4 sm:px-6 sm:py-7 lg:px-8">
-      <div className="mx-auto w-full max-w-[1600px]">
-        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-blue-700 p-5 text-white shadow-xl sm:p-8">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+    <div className="min-h-screen bg-gray-100 p-3 sm:p-5 lg:p-6">
+      <div className="mx-auto max-w-[1500px]">
+        <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-blue-100">
-                CAMPAIGN MANAGEMENT
-              </span>
-              <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-4xl">
-                All Campaign Details
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
-                Search, review, update, activate, publish, and manage all services, products, blogs, hiring posts, and league journeys.
-              </p>
+              <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">Campaigns</h1>
+              <p className="mt-1 text-sm text-gray-500">View and manage all campaign records.</p>
             </div>
             <Search
-            placeholder="Search campaigns..."
-            allowClear
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onSearch={(value) => setSearchQuery(value)}
-            style={{ maxWidth: 460 }}
-            size="large"
-            className="w-full rounded-xl bg-white xl:w-[460px]"
-          />
+              placeholder="Search campaigns"
+              allowClear
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={setSearchQuery}
+              className="w-full sm:max-w-sm"
+            />
           </div>
-        </section>
+        </div>
 
-        <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-          {[
-            { label: "Hiring", value: weAreHiringCampaigns.length },
-            { label: "Services", value: serviceCampaigns.length },
-            { label: "Products", value: productCampaigns.length },
-            { label: "Blogs", value: blogCampaigns.length },
-            { label: "Journeys", value: leagueJourneysCampaigns.length },
-          ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{item.value}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
         {loading ? (
-          <div className="flex justify-center items-center">
-            <Spin tip="Loading Campaigns..." size="large" />
-          </div>
+          <div className="flex min-h-64 items-center justify-center rounded-lg border border-gray-200 bg-white"><Spin tip="Loading..." size="large" /></div>
         ) : (
-          <Tabs
-            type="card"
-            size="large"
-            activeKey={activeTab}
-            className="campaign-tabs"
-            onChange={(key) => {
-              setActiveTab(key);
-              localStorage.setItem("allCampaigns_activeTab", key);
-              // Also store a per-tab scroll if you want (optional)
-              localStorage.setItem(
-                "allCampaigns_scrollY",
-                String(window.scrollY)
-              );
-            }}
-          >
-            <TabPane
-              tab={`We are Hiring (${weAreHiringCampaigns.length})`}
-              key="wearehiring"
-            >
-              {renderTable(filterBySearch(weAreHiringCampaigns), "We are Hiring")}
-            </TabPane>
-
-            <TabPane
-              tab={`Services (${serviceCampaigns.length})`}
-              key="service"
-            >
-              {renderTable(filterBySearch(serviceCampaigns), "Service")}
-            </TabPane>
-
-            <TabPane
-              tab={`Products (${productCampaigns.length})`}
-              key="product"
-            >
-              {renderTable(filterBySearch(productCampaigns), "Product")}
-            </TabPane>
-
-            <TabPane tab={`Blogs (${blogCampaigns.length})`} key="blog">
-              {renderTable(filterBySearch(blogCampaigns), "Blog", true)}
-            </TabPane>
-
-            <TabPane
-              tab={`League Journeys (${leagueJourneysCampaigns.length})`}
-              key="leaguejourneys"
-            >
-              {renderTable(filterBySearch(leagueJourneysCampaigns), "League Journeys")}
-            </TabPane>
-          </Tabs>
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <Tabs
+              activeKey={activeTab}
+              onChange={(key) => {
+                setActiveTab(key);
+                localStorage.setItem("allCampaigns_activeTab", key);
+                localStorage.setItem("allCampaigns_scrollY", String(window.scrollY));
+              }}
+              items={[
+                { key: "wearehiring", label: `Hiring (${weAreHiringCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(weAreHiringCampaigns), "Hiring")}</div> },
+                { key: "service", label: `Services (${serviceCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(serviceCampaigns), "Service")}</div> },
+                { key: "product", label: `Products (${productCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(productCampaigns), "Product")}</div> },
+                { key: "blog", label: `Blogs (${blogCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(blogCampaigns), "Blog", true)}</div> },
+                { key: "leaguejourneys", label: `Journeys (${leagueJourneysCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(leagueJourneysCampaigns), "Journey")}</div> },
+              ]}
+            />
+          </div>
         )}
-        </section>
       </div>
       <Modal
         title={`Update ${currentCampaign?.campainInputType || "Campaign"}`}
-        open={isUpdateModalVisible}
+        visible={isUpdateModalVisible}
         onCancel={handleModalCancel}
-        width={920}
-        centered
-        destroyOnClose
-        styles={{ body: { maxHeight: "78vh", overflowY: "auto", padding: 20 } }}
+        width={720}
         footer={[
           <Button key="cancel" onClick={handleModalCancel}>
             Cancel
@@ -1000,13 +985,11 @@ const AllCampaignsDetails: React.FC = () => {
       >
         {currentCampaign && (
           <div>
-            <h2 className="mb-5 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-lg font-bold text-white shadow-sm">
+            <h2 className="mb-4 border-b border-gray-200 pb-3 text-base font-semibold text-gray-900">
               {formData.campaignType}
             </h2>
 
             {currentCampaign.addServiceType === "LEAGUEJOURNEYS" && (
-              <div className="mb-4">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Journey Name</label>
               <Input
                 value={formData.journeyName}
                 onChange={(e) =>
@@ -1018,12 +1001,9 @@ const AllCampaignsDetails: React.FC = () => {
                 placeholder="Update journey name"
                 className="mb-4"
                 maxLength={255}
-                size="large"
               />
-              </div>
             )}
 
-            <label className="mb-2 block text-sm font-semibold text-slate-700">Description</label>
             <Input.TextArea
               rows={4}
               value={formData.campaignDescription}
@@ -1097,7 +1077,7 @@ const AllCampaignsDetails: React.FC = () => {
                 (media, index) =>
                   media.status && (
                     <div key={index} className="relative group">
-                      <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
+                      <div className="relative rounded-md overflow-hidden border border-gray-200">
                         <div className="aspect-[4/3]">
                           {isVideoUrl(getImageSrc(media.imageUrl)) ? (
                             <video
@@ -1114,10 +1094,10 @@ const AllCampaignsDetails: React.FC = () => {
                             />
                           )}
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 " />
                         <button
                           onClick={() => handleDeleteImagestatus(media.imageId)}
-                          className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
+                          className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 "
                           type="button"
                         >
                           <svg
@@ -1144,7 +1124,7 @@ const AllCampaignsDetails: React.FC = () => {
 
               {fileList.map((media, index) => (
                 <div key={index} className="relative group">
-                  <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
+                  <div className="relative rounded-md overflow-hidden border border-gray-200">
                     <div className="aspect-[4/3]">
                       {isVideoUrl(media.imageUrl) ? (
                         <video
@@ -1161,10 +1141,10 @@ const AllCampaignsDetails: React.FC = () => {
                         />
                       )}
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 " />
                     <button
                       onClick={() => handleDeleteImage(media.imageId)}
-                      className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
+                      className="absolute top-2 right-2 bg-white/90 hover:bg-red-500 w-9 h-9 rounded-full flex items-center justify-center text-red-500 hover:text-white backdrop-blur-sm transition-all duration-300 "
                       type="button"
                     >
                       <svg
@@ -1199,12 +1179,9 @@ const AllCampaignsDetails: React.FC = () => {
 
       <Modal
         title="Publish Blog"
-        open={isPublishModalVisible}
+        visible={isPublishModalVisible}
         onCancel={handlePublishModalCancel}
-        width={960}
-        centered
-        destroyOnClose
-        styles={{ body: { maxHeight: "78vh", overflowY: "auto", padding: 20 } }}
+        width={760}
         footer={[
           <Button key="cancel" onClick={handlePublishModalCancel}>
             Cancel
@@ -1213,7 +1190,7 @@ const AllCampaignsDetails: React.FC = () => {
       >
         {currentBlogCampaign && (
           <div>
-            <h2 className="mb-4 text-lg font-bold w-fit text-white bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-2 rounded-lg shadow-lg">
+            <h2 className="mb-4 border-b border-gray-200 pb-3 text-base font-semibold text-gray-900">
               {currentBlogCampaign.campaignType}
             </h2>
 
@@ -1399,19 +1376,18 @@ const AllCampaignsDetails: React.FC = () => {
           </div>
         )}
       </Modal>
-
       <style>{`
-        .campaign-tabs .ant-tabs-nav { margin-bottom: 18px; }
-        .campaign-tabs .ant-tabs-nav-wrap { overflow-x: auto; }
-        .campaign-tabs .ant-tabs-tab { border-radius: 12px 12px 0 0 !important; padding: 10px 16px !important; }
-        .campaign-table .ant-table { border-radius: 16px; }
-        .campaign-table .ant-table-thead > tr > th { background: #f8fafc; color: #334155; font-weight: 700; white-space: nowrap; }
-        .campaign-table .ant-table-tbody > tr:hover > td { background: #eff6ff !important; }
-        .campaign-table .ant-pagination { padding: 0 12px 12px; }
-        @media (max-width: 640px) {
-          .campaign-tabs .ant-tabs-tab { padding: 8px 12px !important; font-size: 12px; }
-          .campaign-table .ant-table-cell { padding: 10px 8px !important; font-size: 12px; }
-          .campaign-table .ant-pagination { justify-content: center; }
+        .campaign-responsive-table .ant-table-thead > tr > th { background: #f8fafc; color: #374151; font-weight: 600; white-space: nowrap; }
+        .campaign-responsive-table .ant-table-tbody > tr > td { vertical-align: top; }
+        .ant-tabs-nav { margin: 0 !important; padding: 0 12px; }
+        .ant-tabs-content-holder { border-top: 1px solid #e5e7eb; }
+        @media (max-width: 767px) {
+          .ant-tabs-nav { overflow-x: auto; padding: 0 8px; }
+          .ant-tabs-nav-wrap { overflow: visible !important; }
+          .ant-tabs-tab { margin: 0 16px 0 0 !important; padding: 12px 2px !important; font-size: 13px; }
+          .ant-modal { top: 8px; width: calc(100vw - 16px) !important; max-width: calc(100vw - 16px); margin: 0 auto; padding-bottom: 8px; }
+          .ant-modal-body { max-height: calc(100vh - 145px); overflow-y: auto; padding: 16px; }
+          .ant-modal-footer { padding: 10px 16px; }
         }
       `}</style>
     </div>

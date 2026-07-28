@@ -104,8 +104,8 @@ const QUICK_QUESTIONS = [
   { label: "Who's involved?", emoji: "👥" },
   { label: "OxyGroup relevance", emoji: "🧩" },
   { label: "Risks & challenges", emoji: "⚠️" },
+  { label: "Stakeholders & opportunities", emoji: "🎯" },
   { label: "Related news", emoji: "🌍" },
-  { label: "Latest updates", emoji: "🌍" },
 ];
 
 function sourceLabel(url: string) {

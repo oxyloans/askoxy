@@ -609,6 +609,7 @@ const CampaignDetails: React.FC = () => {
       </div>
 
       <main className="flex-1 w-full px-3 pb-6 sm:px-4">
+        {userId && (
         <div className="mx-auto mb-4 w-full max-w-7xl sm:mb-5">
           <button
             type="button"
@@ -632,6 +633,7 @@ const CampaignDetails: React.FC = () => {
             <span>{isJourney ? "Back to League Journeys" : "Back to Services"}</span>
           </button>
         </div>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">

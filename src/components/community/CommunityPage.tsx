@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Lightbulb,
   Plus,
+  Pencil,
   Reply,
   Search,
   Sparkles,
@@ -53,6 +54,8 @@ import {
   reactToComment,
   reactToQuery,
   replyToComment,
+  updateComment,
+  updateQuery,
 } from "./communityApi";
 import {
   COMMUNITY_CATEGORIES,
@@ -240,6 +243,7 @@ export default function CommunityPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
   const [queryModalOpen, setQueryModalOpen] = useState(false);
+  const [editingQuery, setEditingQuery] = useState<CommunityQuery | null>(null);
   const [queryForm, setQueryForm] = useState<CreateQueryPayload>(emptyQuery);
   const [savingQuery, setSavingQuery] = useState(false);
   const [formError, setFormError] = useState("");
@@ -387,7 +391,25 @@ export default function CommunityPage() {
   const openCreateModal = () => {
     if (!requireRegistration()) return;
     setFormError("");
+    setEditingQuery(null);
     setQueryForm(emptyQuery);
+    setQueryModalOpen(true);
+  };
+
+  const openEditModal = (query: CommunityQuery) => {
+    if (!requireRegistration()) return;
+    setFormError("");
+    setEditingQuery(query);
+    setQueryForm({
+      category: query.category,
+      question: query.question,
+      description: query.description,
+      otherCategoryName:
+        query.otherCategoryName ||
+        query.customCategory ||
+        query.categoryName ||
+        "",
+    });
     setQueryModalOpen(true);
   };
 
@@ -443,11 +465,22 @@ export default function CommunityPage() {
         otherCategoryName:
           queryForm.category === "OTHER" ? otherCategoryName : undefined,
       };
-      await createQuery(payload);
-      showToast("Question posted successfully");
+      const savedQuery = editingQuery
+        ? await updateQuery(editingQuery.id, {
+            ...payload,
+            version: editingQuery.version,
+          })
+        : await createQuery(payload);
+      showToast(
+        editingQuery
+          ? "Question updated successfully"
+          : "Question posted successfully",
+      );
 
       setQueryModalOpen(false);
+      setEditingQuery(null);
       setQueryForm(emptyQuery);
+      if (editingQuery) setSelectedQuery(savedQuery);
       await loadQueries();
     } catch (err) {
       if (!handleUnauthorized(err)) setFormError(getErrorMessage(err));
@@ -821,6 +854,15 @@ export default function CommunityPage() {
                         {isOwner(selectedQuery.user?.id, currentUserId) && (
                           <div className="col-span-2 flex gap-2 sm:ml-auto">
                             <button
+                              type="button"
+                              onClick={() => openEditModal(selectedQuery)}
+                              className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-3 text-xs font-bold text-[#5b2d90] transition hover:bg-purple-100 sm:text-sm"
+                            >
+                              <Pencil size={15} />
+                              Edit
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => removeQuery(selectedQuery)}
                               className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-bold text-red-600 transition hover:bg-red-100 sm:text-sm"
                             >
@@ -1197,7 +1239,11 @@ export default function CommunityPage() {
           setQueryForm={setQueryForm}
           formError={formError}
           savingQuery={savingQuery}
-          onClose={() => setQueryModalOpen(false)}
+          isEditing={Boolean(editingQuery)}
+          onClose={() => {
+            setQueryModalOpen(false);
+            setEditingQuery(null);
+          }}
           onSubmit={saveQuery}
         />
       )}
@@ -1371,6 +1417,8 @@ function CommentItem({
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(comment.comment);
 
   const replies = (comment.replies || []).filter(Boolean) as CommunityComment[];
 
@@ -1455,6 +1503,35 @@ function CommentItem({
     }
   };
 
+  const saveEdit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!requireRegistration()) return;
+
+    const cleanComment = editText.trim();
+    if (cleanComment.length < 2) {
+      showToast("Answer must contain at least 2 characters");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updated = await updateComment(
+        comment.id,
+        cleanComment,
+        comment.version,
+      );
+      setComments((current) =>
+        replaceInTree(current, comment.id, () => updated),
+      );
+      setEditing(false);
+      showToast("Answer updated");
+    } catch (err) {
+      if (!handleUnauthorized(err)) setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div
       className={depth > 0 ? "border-l border-purple-100 pl-2 sm:pl-3" : ""}
@@ -1480,22 +1557,70 @@ function CommentItem({
             </div>
 
             {isOwner(comment.user?.id, currentUserId) && (
-              <button
-                type="button"
-                onClick={remove}
-                className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
-              >
-                <Trash2 size={13} />
-                Delete
-              </button>
+              <div className="flex shrink-0 items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditText(comment.comment);
+                    setEditing(true);
+                    setReplyOpen(false);
+                  }}
+                  className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#5b2d90] transition hover:bg-purple-50"
+                >
+                  <Pencil size={13} />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={remove}
+                  className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                >
+                  <Trash2 size={13} />
+                  Delete
+                </button>
+              </div>
             )}
           </div>
 
-          <p className="mt-1.5 whitespace-pre-line break-words text-[13px] leading-5 text-slate-600 sm:text-sm">
-            {comment.comment}
-          </p>
+          {editing ? (
+            <form onSubmit={saveEdit} className="mt-2">
+              <textarea
+                value={editText}
+                onChange={(event) => setEditText(event.target.value)}
+                rows={3}
+                minLength={2}
+                maxLength={2000}
+                required
+                autoFocus
+                className="w-full resize-y rounded-lg border border-purple-200 bg-white p-2.5 text-sm leading-5 outline-none focus:border-[#5b2d90]"
+              />
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(false);
+                    setEditText(comment.comment);
+                  }}
+                  className={`${secondaryButton} min-h-9 px-3 text-xs`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || !editText.trim()}
+                  className={`${primaryButton} min-h-9 px-3 text-xs`}
+                >
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className="mt-1.5 whitespace-pre-line break-words text-[13px] leading-5 text-slate-600 sm:text-sm">
+              {comment.comment}
+            </p>
+          )}
 
-          <div className="mt-2 flex flex-wrap gap-1">
+          {!editing && <div className="mt-2 flex flex-wrap gap-1">
             <button
               type="button"
               onClick={react}
@@ -1534,7 +1659,7 @@ function CommentItem({
               <Reply size={14} />
               Reply
             </button>
-          </div>
+          </div>}
 
           {replyOpen && (
             <form onSubmit={submitReply} className="mt-2">
@@ -1597,6 +1722,7 @@ function QueryModal({
   setQueryForm,
   formError,
   savingQuery,
+  isEditing,
   onClose,
   onSubmit,
 }: {
@@ -1604,6 +1730,7 @@ function QueryModal({
   setQueryForm: React.Dispatch<React.SetStateAction<CreateQueryPayload>>;
   formError: string;
   savingQuery: boolean;
+  isEditing: boolean;
   onClose: () => void;
   onSubmit: (event: FormEvent) => void;
 }) {
@@ -1624,7 +1751,7 @@ function QueryModal({
               ASKOXY.AI Community
             </span>
             <h2 className="mt-2 text-2xl font-black tracking-[-0.02em] text-slate-950">
-              Ask the community
+              {isEditing ? "Edit your question" : "Ask the community"}
             </h2>
           </div>
           <button
@@ -1734,8 +1861,12 @@ function QueryModal({
           </button>
           <button type="submit" disabled={savingQuery} className={primaryButton}>
             {savingQuery
-              ? "Posting..."
-              : "Post Question"}
+              ? isEditing
+                ? "Saving..."
+                : "Posting..."
+              : isEditing
+                ? "Save Changes"
+                : "Post Question"}
           </button>
         </div>
       </form>

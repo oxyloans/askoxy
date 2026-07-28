@@ -28,6 +28,8 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircleQuestion,
+  Target,
+  UserCog,
 } from "lucide-react";
 import BASE_URL from "../../Config";
 import PaperclipAssistant from "./PaperclipAssistant"; // NEW — Ask Article popup
@@ -38,6 +40,14 @@ const ADD_TO_CLONE_API = `${BASE_URL}/ai-automation/add-to-clone`;
 const IMAGE_API = `${BASE_URL}/ai-automation/image`;
 const BLOG_FORMAT_API = `${BASE_URL}/ai-automation/blog/format`;
 const BLOG_PUBLISH_API = `${BASE_URL}/ai-automation/blog/publish`;
+
+// NEW — social media format/publish endpoints
+const SOCIAL_FORMAT_API = `${BASE_URL}/ai-automation/social/format`;
+const SOCIAL_APPROVE_API = `${BASE_URL}/ai-automation/social/approve`;
+
+// NEW — Opportunity Radar / Stakeholder Perspectives + stakeholder blog endpoints
+const PAPERCLIP_BASE_API = `${BASE_URL}/ai-automation/paperclip`;
+const STAKEHOLDER_BLOG_PUBLISH_API = `${BASE_URL}/ai-automation/blog/publish-by-stakeholder`;
 
 type EntityType = "PAPERCLIP";
 
@@ -66,6 +76,44 @@ type Report = {
   downloadUrl?: string | null;
 };
 
+type Classification = {
+  domain?: string | null;
+  subDomain?: string | null;
+  category?: string | null;
+  topic?: string | null;
+  industry?: string | null;
+  articleType?: string | null;
+  businessFunction?: string | null;
+  tags?: string[] | null;
+  confidence?: number | null;
+};
+
+// NEW — Opportunity Radar types (mirrors PaperclipAnalysisResult.Opportunity / OpportunityAssessment)
+type Opportunity = {
+  stars?: number | null;
+  reason?: string | null;
+  opportunities?: string[] | null;
+};
+
+type OpportunityAssessment = {
+  revenue?: Opportunity | null;
+  partnership?: Opportunity | null;
+  sales?: Opportunity | null;
+  startup?: Opportunity | null;
+  ai?: Opportunity | null;
+  investment?: Opportunity | null;
+  compliance?: Opportunity | null;
+  career?: Opportunity | null;
+  overallScore?: number | null;
+};
+
+// NEW — Stakeholder Perspective type (mirrors PaperclipAnalysisResult.StakeholderPerspective)
+type StakeholderPerspective = {
+  stakeholder?: string | null;
+  headline?: string | null;
+  angle?: string | null;
+};
+
 type PaperclipData = {
   paperclipId?: string | null;
   fileName?: string | null;
@@ -74,6 +122,7 @@ type PaperclipData = {
   imageUrls?: string[] | null;
   uploadedAt?: string | null;
 analysis?: {
+    classification?: Classification | null;
     summary?: {
       shortSummary?: string | null;
       detailedSummary?: string | null;
@@ -89,6 +138,9 @@ analysis?: {
       actionItems?: string[] | null;
       priority?: string | null;
     }[] | null;
+    // NEW
+    opportunityAssessment?: OpportunityAssessment | null;
+    stakeholderPerspectives?: StakeholderPerspective[] | null;
   } | null;
 };
 
@@ -104,9 +156,38 @@ type BlogPayload = {
   videoFileUrl?: string | null;
   status?: string;
   blogPostId?: string | null;
+  // NEW
+  blogUrl?: string | null;
+  stakeholder?: string | null;
 };
 
-type Tab = "summary" | "paperclip" | "people" | "companies" | "reports" | "blog";
+// NEW — one platform's formatted social post
+type PlatformContent = {
+  platform: string;
+  text?: string;
+  hashtags?: string;
+  title?: string;
+  subject?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  paperclipUrl?: string;
+  charCount?: number;
+  limit?: string;
+};
+
+type Tab = "summary" | "paperclip" | "people" | "companies" | "reports" | "blog" | "opportunity" | "stakeholders";
+
+// NEW — display order/labels for the 8 Opportunity Radar categories
+const OPPORTUNITY_CATEGORIES: { key: keyof OpportunityAssessment; label: string }[] = [
+  { key: "revenue", label: "Revenue" },
+  { key: "partnership", label: "Partnership" },
+  { key: "sales", label: "Sales" },
+  { key: "startup", label: "Startup" },
+  { key: "ai", label: "AI" },
+  { key: "investment", label: "Investment" },
+  { key: "compliance", label: "Compliance" },
+  { key: "career", label: "Career" },
+];
 
 const toast = (icon: "success" | "error" | "warning" | "info", title: string) =>
   Swal.fire({
@@ -157,6 +238,32 @@ const formatDate = (date?: string | null) => {
 const isImageFile = (value?: string | null) =>
   /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(safeText(value));
 
+// Domain/type is meaningful only when the AI actually classified it —
+// "General" is the default fallback set server-side when classification
+// failed or was omitted, so treat it the same as "not present".
+const getDomainLabel = (item: PaperclipData): string => {
+  const domain = safeText(item.analysis?.classification?.domain);
+  if (!domain || domain.toLowerCase() === "general") return "";
+  return domain;
+};
+
+const getSubDomainLabel = (item: PaperclipData): string => {
+  const subDomain = safeText(item.analysis?.classification?.subDomain);
+  if (!subDomain || subDomain.toLowerCase() === "general") return "";
+  return subDomain;
+};
+
+// NEW — render a 5-star row for an Opportunity Radar category
+const renderStars = (stars?: number | null) => {
+  const filled = Math.max(0, Math.min(5, stars || 0));
+  return (
+    <span className="text-amber-500 text-sm leading-none tracking-tight">
+      {"★".repeat(filled)}
+      <span className="text-gray-300">{"★".repeat(5 - filled)}</span>
+    </span>
+  );
+};
+
 // ─── Sorting helper: latest uploaded first ─────────────────────────────────
 const sortByLatest = (list: PaperclipData[]): PaperclipData[] =>
   [...list].sort((a, b) => {
@@ -205,6 +312,7 @@ const buildCloneContent = (item: PaperclipData) => {
       fileName: item.fileName,
       fileUrl: item.s3FileUrl,
       uploadedAt: item.uploadedAt,
+      classification: item.analysis?.classification || null,
       shortSummary: summary?.shortSummary,
       detailedSummary: summary?.detailedSummary,
       keyPoints: summary?.keyPoints || [],
@@ -345,6 +453,11 @@ const PaperclipListCard = React.memo(function PaperclipListCard({
   const peopleCount = item.analysis?.people?.length || 0;
   const companyCount = item.analysis?.companies?.length || 0;
   const reportCount = item.analysis?.reports?.length || 0;
+  const domainLabel = getDomainLabel(item);
+  const subDomainLabel = getSubDomainLabel(item);
+  // NEW — Opportunity Radar overall score, shown as a quick badge when present
+  const overallScore = item.analysis?.opportunityAssessment?.overallScore;
+  const stakeholderCount = item.analysis?.stakeholderPerspectives?.length || 0;
 
   return (
     <button
@@ -375,13 +488,24 @@ const PaperclipListCard = React.memo(function PaperclipListCard({
         )}
       </div>
 
+      {/* NEW — classification badge: "Finance (Banking)" */}
+      {domainLabel && (
+        <div className="mt-2">
+          <span className="inline-flex items-center gap-1 rounded-full border border-fuchsia-200 bg-fuchsia-50 px-2 py-0.5 text-[9px] font-black text-fuchsia-700">
+            <Bookmark size={8} />
+            {domainLabel}
+            {subDomainLabel ? ` (${subDomainLabel})` : ""}
+          </span>
+        </div>
+      )}
+
       {shortSum && (
         <p className="mt-2 line-clamp-2 border-t border-gray-100 pt-2 text-[11px] leading-[1.5] text-gray-600">
           {shortSum}
         </p>
       )}
 
-      {(peopleCount > 0 || companyCount > 0 || reportCount > 0) && (
+      {(peopleCount > 0 || companyCount > 0 || reportCount > 0 || (overallScore ?? 0) > 0 || stakeholderCount > 0) && (
         <div className="mt-2 flex flex-wrap gap-1">
           {peopleCount > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[9px] font-bold text-cyan-700">
@@ -396,6 +520,18 @@ const PaperclipListCard = React.memo(function PaperclipListCard({
           {reportCount > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-bold text-sky-700">
               <Bookmark size={8} /> {reportCount} {reportCount === 1 ? "report" : "reports"}
+            </span>
+          )}
+          {/* NEW — Opportunity Radar quick score badge */}
+          {(overallScore ?? 0) > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-700">
+              <Target size={8} /> {overallScore}/100
+            </span>
+          )}
+          {/* NEW — Stakeholder Perspectives quick count badge */}
+          {stakeholderCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[9px] font-bold text-indigo-700">
+              <UserCog size={8} /> {stakeholderCount} view{stakeholderCount === 1 ? "" : "s"}
             </span>
           )}
         </div>
@@ -474,6 +610,182 @@ function PaginationControls({
   );
 }
 
+// NEW — renders a platform's post text, styling "Radha's Thoughts:" as a side
+// heading and turning a trailing "Read more: <url>" line into a labeled,
+// clickable ASKOXY.AI BLOG URL link instead of plain text.
+function renderPlatformText(text?: string) {
+  const value = safeText(text);
+  if (!value) return <span className="text-gray-400">No text</span>;
+
+  const lines = value.split("\n");
+
+  return (
+    <>
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+
+        if (!trimmed) return <div key={idx} className="h-2" />;
+
+        // "Radha's Thoughts:" side heading — dark, distinct color, left accent bar
+        if (/^radha'?s\s+thoughts:?/i.test(trimmed)) {
+          return (
+            <p
+              key={idx}
+              className="mt-3 mb-1.5 border-l-4 border-indigo-500 pl-2 text-[11px] font-black uppercase tracking-wide text-indigo-900"
+            >
+              {trimmed.replace(/:?$/, "")}
+            </p>
+          );
+        }
+
+        // "Read more: <url>" — relabeled, clickable, distinct color
+        const readMoreMatch = trimmed.match(/^read\s*more:?\s*(https?:\/\/\S+)/i);
+        if (readMoreMatch) {
+          const url = readMoreMatch[1];
+          return (
+            <p key={idx} className="mt-2 flex flex-wrap items-baseline gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wide text-emerald-700">
+                ASKOXY.AI BLOG URL :
+              </span>
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="break-all text-sm font-semibold text-blue-600 underline decoration-blue-300 underline-offset-2 transition hover:text-blue-800"
+              >
+                {url}
+              </a>
+            </p>
+          );
+        }
+
+        return (
+          <p key={idx} className="text-sm leading-6 text-gray-800">
+            {line}
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
+// NEW — Social media preview/approve/publish modal (per-platform publish)
+function SocialPreviewModal({
+  open,
+  formatting,
+  preview,
+  publishingPlatform,
+  publishResults,
+  onClose,
+  onPublishPlatform,
+}: {
+  open: boolean;
+  formatting: boolean;
+  preview: Record<string, PlatformContent> | null;
+  publishingPlatform: string | null;
+  publishResults: Record<string, string> | null;
+  onClose: () => void;
+  onPublishPlatform: (platformKey: string) => void;
+}) {
+  if (!open) return null;
+  const platforms = preview ? Object.entries(preview) : [];
+
+  const PLATFORM_COLORS: Record<string, string> = {
+    LINKEDIN: "border-blue-200 bg-blue-50 text-blue-700",
+    FACEBOOK: "border-indigo-200 bg-indigo-50 text-indigo-700",
+    INSTAGRAM: "border-pink-200 bg-pink-50 text-pink-700",
+    TWITTER: "border-sky-200 bg-sky-50 text-sky-700",
+    WHATSAPP: "border-green-200 bg-green-50 text-green-700",
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 px-3 py-4 backdrop-blur-sm">
+      <div className="flex max-h-[92vh] w-full max-w-[1400px] flex-col overflow-hidden rounded-3xl border-2 border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b-2 border-slate-200 p-4">
+          <p className="flex items-center gap-2 text-sm font-black text-cyan-700">
+            <Send size={16} /> Social Media Preview
+          </p>
+          <button
+            onClick={onClose}
+            title="Close"
+            className="rounded-xl border border-gray-200 bg-gray-50 p-2 transition hover:bg-gray-100"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          {formatting ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="mb-3 animate-spin text-cyan-500" size={28} />
+              <p className="text-sm font-bold text-gray-600">Formatting for each platform...</p>
+              <p className="mt-1 text-xs text-gray-400">LinkedIn · Facebook · Instagram</p>
+            </div>
+          ) : platforms.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Send size={28} className="mb-3 text-gray-300" />
+              <p className="text-sm text-gray-400">No preview available.</p>
+            </div>
+          ) : (
+            // NEW — side-by-side platform cards instead of a stacked list
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {platforms.map(([key, pc]) => {
+                const platformResult = publishResults?.[key];
+                const isPublishingThis = publishingPlatform === key;
+                return (
+                  <div
+                    key={key}
+                    className="flex h-[70vh] flex-col overflow-hidden rounded-2xl border-2 border-gray-200"
+                  >
+                    <div
+                      className={`flex shrink-0 items-center justify-between border-b-2 px-3 py-2 ${
+                        PLATFORM_COLORS[pc.platform] || "border-gray-200 bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      <span className="text-xs font-black uppercase tracking-wide">{pc.platform}</span>
+                      <span className="text-[11px] font-bold">
+                        {pc.charCount ?? 0} chars {pc.limit ? `(${pc.limit})` : ""}
+                      </span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4">
+                      {renderPlatformText(pc.text)}
+                      {pc.hashtags && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-violet-600">
+                          <Hash size={12} />
+                          <span>{pc.hashtags}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* NEW — individual per-platform publish */}
+                    <div className="shrink-0 border-t-2 border-gray-100 p-3">
+                      {platformResult ? (
+                        <div className="flex items-center justify-center gap-2 rounded-xl border-2 border-lime-300 bg-lime-50 py-2 text-xs font-black text-lime-700">
+                          <CheckCircle size={13} />
+                          Published{platformResult && platformResult !== "true" ? ` — ${platformResult}` : ""}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => onPublishPlatform(key)}
+                          disabled={isPublishingThis}
+                          className="flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-xs font-black text-white shadow-md transition hover:brightness-110 disabled:opacity-50"
+                        >
+                          {isPublishingThis ? <Loader2 className="animate-spin" size={13} /> : <Send size={13} />}
+                          {isPublishingThis ? "Publishing..." : `Publish to ${pc.platform}`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PaperClippingPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [paperclips, setPaperclips] = useState<PaperclipData[]>([]);
@@ -506,9 +818,24 @@ export default function PaperClippingPage() {
   const [showAssistant, setShowAssistant] = useState(false);
   const [assistantTarget, setAssistantTarget] = useState<PaperclipData | null>(null);
 
+  // ─── NEW — Social media post state ──────────────────────────────────────────
+  const [socialFormatting, setSocialFormatting] = useState(false);
+  const [socialPublishingPlatform, setSocialPublishingPlatform] = useState<string | null>(null);
+  const [socialPreview, setSocialPreview] = useState<Record<string, PlatformContent> | null>(null);
+  const [socialPublishResults, setSocialPublishResults] = useState<Record<string, string> | null>(null);
+  const [showSocialModal, setShowSocialModal] = useState(false);
+
+  // ─── NEW — Stakeholder blog state (per-stakeholder blog publish) ───────────
+  const [stakeholderBlogs, setStakeholderBlogs] = useState<BlogPayload[]>([]);
+  const [stakeholderBlogsLoading, setStakeholderBlogsLoading] = useState(false);
+  const [publishingStakeholderBlogs, setPublishingStakeholderBlogs] = useState(false);
+
   // ─── Pagination state for the All Paper Clips grid ─────────────────────────
   const [currentPage, setCurrentPage] = useState(1);
   const PAPERCLIPS_PER_PAGE = 8;
+
+  // ─── NEW — Domain filter for the All Paper Clips grid ──────────────────────
+  const [domainFilter, setDomainFilter] = useState("");
 
   useEffect(() => {
     const saved = sessionStorage.getItem("paperclipState");
@@ -534,17 +861,61 @@ export default function PaperClippingPage() {
 
   const entityId = safeText(selected?.paperclipId);
   const summary = selected?.analysis?.summary;
+  const classification = selected?.analysis?.classification;
   const people = selected?.analysis?.people || [];
   const companies = selected?.analysis?.companies || [];
   const reports = selected?.analysis?.reports || [];
+  // NEW — Opportunity Radar / Stakeholder Perspectives derived values
+  const opportunityAssessment = selected?.analysis?.opportunityAssessment || null;
+  const stakeholderPerspectives = selected?.analysis?.stakeholderPerspectives || [];
+
+  // ─── NEW — fetch previously published stakeholder blogs whenever the
+  // Stakeholders tab is opened for a paperclip that has perspectives ──────────
+  useEffect(() => {
+    if (activeTab !== "stakeholders" || !entityId || stakeholderPerspectives.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setStakeholderBlogsLoading(true);
+        const token = sessionStorage.getItem("accessToken") || "";
+        const res = await fetch(`${PAPERCLIP_BASE_API}/${encodeURIComponent(entityId)}/stakeholder-blogs`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!cancelled) setStakeholderBlogs(Array.isArray(data?.data) ? data.data : []);
+      } catch {
+        if (!cancelled) setStakeholderBlogs([]);
+      } finally {
+        if (!cancelled) setStakeholderBlogsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activeTab, entityId, stakeholderPerspectives.length]);
+
+  // ─── NEW — distinct domains present in the loaded list, for the filter dropdown ──
+  const availableDomains = useMemo(() => {
+    const set = new Set<string>();
+    paperclips.forEach((item) => {
+      const d = getDomainLabel(item);
+      if (d) set.add(d);
+    });
+    return Array.from(set).sort();
+  }, [paperclips]);
 
   const filteredPaperclips = useMemo(() => {
     const q = searchTerm.toLowerCase().trim();
-    if (!q) return paperclips;
     return paperclips.filter((item) => {
+      if (domainFilter && getDomainLabel(item) !== domainFilter) return false;
+      if (!q) return true;
       const searchable = [
         item.fileName,
         item.paperclipId,
+        item.analysis?.classification?.domain,
+        item.analysis?.classification?.subDomain,
+        item.analysis?.classification?.category,
+        item.analysis?.classification?.topic,
+        ...(item.analysis?.classification?.tags || []),
         item.analysis?.summary?.shortSummary,
         item.analysis?.summary?.detailedSummary,
         ...(item.analysis?.people || []).map((p) => `${p.name} ${p.company} ${p.designation}`),
@@ -555,7 +926,7 @@ export default function PaperClippingPage() {
         .toLowerCase();
       return searchable.includes(q);
     });
-  }, [paperclips, searchTerm]);
+  }, [paperclips, searchTerm, domainFilter]);
 
   // ─── Derived pagination values ─────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil(filteredPaperclips.length / PAPERCLIPS_PER_PAGE));
@@ -565,10 +936,10 @@ export default function PaperClippingPage() {
     return filteredPaperclips.slice(start, start + PAPERCLIPS_PER_PAGE);
   }, [filteredPaperclips, currentPage]);
 
-  // Reset to first page whenever the search term changes
+  // Reset to first page whenever the search term or domain filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, domainFilter]);
 
   // Keep currentPage in range if the list shrinks (e.g. after refresh/search)
   useEffect(() => {
@@ -578,6 +949,8 @@ export default function PaperClippingPage() {
   const TABS: { id: Tab; label: string; count?: number }[] = [
     { id: "paperclip", label: "Paperclip" },
     { id: "summary", label: "Summary" },
+    { id: "opportunity", label: "Opportunity Radar" },
+    { id: "stakeholders", label: "Stakeholders", count: stakeholderPerspectives.length },
     { id: "people", label: "People", count: people.length },
     { id: "companies", label: "Companies", count: companies.length },
     { id: "reports", label: "Reports", count: reports.length },
@@ -592,6 +965,16 @@ export default function PaperClippingPage() {
     summary: {
       active: "border-2 border-violet-400 bg-violet-100 text-violet-800",
       inactive: "border border-gray-200 bg-white text-gray-600 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700",
+    },
+    // NEW
+    opportunity: {
+      active: "border-2 border-amber-400 bg-amber-100 text-amber-800",
+      inactive: "border border-gray-200 bg-white text-gray-600 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700",
+    },
+    // NEW
+    stakeholders: {
+      active: "border-2 border-indigo-400 bg-indigo-100 text-indigo-800",
+      inactive: "border border-gray-200 bg-white text-gray-600 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700",
     },
     people: {
       active: "border-2 border-emerald-400 bg-emerald-100 text-emerald-800",
@@ -657,9 +1040,11 @@ export default function PaperClippingPage() {
       setPublishedBlog(null);
       setImageUrl("");
       setSearchTerm("");
+      setDomainFilter("");
       setActiveTab("summary");
       setActiveView("upload");
       setCurrentPage(1);
+      setStakeholderBlogs([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
       toast("success", "Refreshed successfully");
     } finally {
@@ -759,6 +1144,10 @@ export default function PaperClippingPage() {
     setBlogPreview(null);
     setPublishedBlog(null);
     setImageUrl("");
+    // NEW — reset social + stakeholder blog state on a new paperclip selection
+    setSocialPreview(null);
+    setSocialPublishResults(null);
+    setStakeholderBlogs([]);
   };
 
   const handleAddToClone = async () => {
@@ -936,6 +1325,108 @@ export default function PaperClippingPage() {
       });
     } finally {
       setPublishLoading(false);
+    }
+  };
+
+  // ─── NEW — Social media format + per-platform publish handlers ─────────────
+  const SOCIAL_PLATFORMS = ["LINKEDIN", "FACEBOOK", "INSTAGRAM"];
+
+  const handleFormatSocial = async () => {
+    if (!selected || !entityId) return toast("warning", "Please select a paper clip");
+    try {
+      setSocialFormatting(true);
+      setShowSocialModal(true);
+      setSocialPreview(null);
+      setSocialPublishResults(null);
+      const data = await fetchJson(SOCIAL_FORMAT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityId,
+          entityType: "PAPERCLIP",
+          platforms: SOCIAL_PLATFORMS,
+        }),
+      });
+      setSocialPreview(data?.data?.formattedContent || {});
+      toast("success", "Social formats ready");
+    } catch (error: any) {
+      toast("error", error?.message || "Social format failed");
+    } finally {
+      setSocialFormatting(false);
+    }
+  };
+
+  // Publishes a single platform's post. Backend receives which platform to
+  // approve so each card can be published independently of the others.
+  const handlePublishSocialPlatform = async (platformKey: string) => {
+    if (!entityId) return;
+    const platformLabel = socialPreview?.[platformKey]?.platform || platformKey;
+    const result = await Swal.fire({
+      title: `Publish to ${platformLabel}`,
+      text: `Do you want to publish this post to ${platformLabel} now?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Publish",
+      cancelButtonText: "No",
+      confirmButtonColor: "#22c55e",
+      cancelButtonColor: "#64748b",
+      background: "#080C18",
+      color: "#166534",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      setSocialPublishingPlatform(platformKey);
+      const data = await fetchJson(SOCIAL_APPROVE_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityType: "PAPERCLIP", entityId, approved: true, platform: platformKey }),
+      });
+      const resultForPlatform =
+        data?.data?.[platformKey] || data?.data?.result || "Published";
+      setSocialPublishResults((prev) => ({ ...(prev || {}), [platformKey]: resultForPlatform }));
+      toast("success", `Published to ${platformLabel}`);
+    } catch (error: any) {
+      toast("error", error?.message || `Publish failed for ${platformLabel}`);
+    } finally {
+      setSocialPublishingPlatform(null);
+    }
+  };
+
+  // ─── NEW — Publish a separate blog post per stakeholder perspective ────────
+  const handlePublishStakeholderBlogs = async () => {
+    if (!entityId) return toast("warning", "Please select a paper clip");
+    if (stakeholderPerspectives.length === 0) return toast("warning", "No stakeholder perspectives available");
+    const result = await Swal.fire({
+      title: "Publish Stakeholder Blogs",
+      text: `This will generate and publish ${stakeholderPerspectives.length} separate blog post(s), one for each stakeholder perspective. Continue?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Publish All",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#22c55e",
+      cancelButtonColor: "#64748b",
+      background: "#080C18",
+      color: "#166534",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      setPublishingStakeholderBlogs(true);
+      const data = await fetchJson(STAKEHOLDER_BLOG_PUBLISH_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityId, entityType: "PAPERCLIP" }),
+      });
+      const published: BlogPayload[] = Array.isArray(data?.data) ? data.data : [];
+      setStakeholderBlogs(published);
+      const successCount = published.filter((b) => safeText(b.status).toUpperCase() === "PUBLISHED").length;
+      toast(
+        successCount > 0 ? "success" : "warning",
+        `Published ${successCount} of ${published.length} stakeholder blog${published.length !== 1 ? "s" : ""}`
+      );
+    } catch (error: any) {
+      toast("error", error?.message || "Stakeholder blog publish failed");
+    } finally {
+      setPublishingStakeholderBlogs(false);
     }
   };
 
@@ -1139,10 +1630,10 @@ export default function PaperClippingPage() {
                   </div>
                 )}
 
-                {/* ── Search bar ── */}
+                {/* ── Search bar + domain filter ── */}
                 {paperclips.length > 0 && activeView === "allclips" && (
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="relative flex-1">
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <div className="relative flex-1 min-w-[220px]">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
                       <input
                         ref={searchInputRef}
@@ -1162,6 +1653,22 @@ export default function PaperClippingPage() {
                         </button>
                       )}
                     </div>
+
+                    {/* NEW — Type/domain filter dropdown */}
+                    {availableDomains.length > 0 && (
+                      <select
+                        value={domainFilter}
+                        onChange={(e) => setDomainFilter(e.target.value)}
+                        aria-label="Filter by type"
+                        className="h-11 shrink-0 rounded-2xl border border-gray-200 bg-white px-3 text-xs font-bold text-gray-700 shadow-sm outline-none transition focus:border-fuchsia-300 focus:ring-2 focus:ring-fuchsia-100"
+                      >
+                        <option value="">All Types</option>
+                        {availableDomains.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    )}
+
                     <span className="shrink-0 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">
                       {filteredPaperclips.length} Clip{filteredPaperclips.length !== 1 ? "s" : ""}
                     </span>
@@ -1220,6 +1727,13 @@ export default function PaperClippingPage() {
                     <span className="rounded-full border border-violet-200 bg-violet-100 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-violet-700 uppercase">
                       Analyzed
                     </span>
+                    {getDomainLabel(selected) && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-fuchsia-200 bg-fuchsia-100 px-2.5 py-0.5 text-[10px] font-black text-fuchsia-700">
+                        <Bookmark size={9} />
+                        {getDomainLabel(selected)}
+                        {getSubDomainLabel(selected) ? ` (${getSubDomainLabel(selected)})` : ""}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1 text-[10px] text-gray-500">
                       <CalendarDays size={9} /> {formatDate(selected.uploadedAt)}
                     </span>
@@ -1239,6 +1753,8 @@ export default function PaperClippingPage() {
                   <ActionChip label="Blog with Paperclip" loading={formatLoading} onClick={() => handleFormatBlog(false)} color="violet" icon={<Eye size={11} />} />
                   <ActionChip label="Blog with Image" loading={formatImageLoading} onClick={() => handleFormatBlog(true)} color="lime" icon={<Newspaper size={11} />} />
                   <ActionChip label="Publish" loading={publishLoading} disabled={!blogPreview} onClick={handlePublishBlog} color="green" icon={<Send size={11} />} />
+                  {/* NEW — Post to Social */}
+                  <ActionChip label="Post to Social" loading={socialFormatting} onClick={handleFormatSocial} color="cyan" icon={<Send size={11} />} />
                 </div>
               </div>
 
@@ -1281,6 +1797,33 @@ export default function PaperClippingPage() {
                       {safeText(summary?.shortSummary) || "No short summary available."}
                     </p>
                   </div>
+
+                  {/* NEW — Classification card (domain / subDomain / category / topic / tags) */}
+                  {classification && getDomainLabel(selected) && (
+                    <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4 sm:p-5">
+                      <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-fuchsia-700">
+                        <Bookmark size={11} /> Classification
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {classification.domain}
+                        {getSubDomainLabel(selected) ? ` → ${classification.subDomain}` : ""}
+                        {classification.category && classification.category.toLowerCase() !== "general" ? ` → ${classification.category}` : ""}
+                      </p>
+                      {classification.topic && classification.topic.toLowerCase() !== "general" && (
+                        <p className="mt-1 text-xs text-gray-600">Topic: {classification.topic}</p>
+                      )}
+                      {(classification.tags || []).length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {(classification.tags || []).map((tag, i) => (
+                            <span key={i} className="rounded-full border border-fuchsia-200 bg-white px-2 py-0.5 text-[10px] font-bold text-fuchsia-700">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {summary?.detailedSummary && (
                     <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
                       <p className="mb-3 text-[11px] font-black uppercase tracking-widest text-amber-600">Detailed Analysis</p>
@@ -1336,19 +1879,20 @@ export default function PaperClippingPage() {
                     </div>
                   )}
 
-                {(selected?.analysis?.serviceRecommendations?.length ?? 0) > 0 && (
+                  {/* ── OxyGroup Recommendations (text sizes increased) ── */}
+                  {(selected?.analysis?.serviceRecommendations?.length ?? 0) > 0 && (
                     <div className="rounded-2xl border border-fuchsia-200 bg-white p-4 sm:p-5">
-                      <p className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-fuchsia-700">
-                        <Sparkles size={11} /> OxyGroup Recommendations
+                      <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-fuchsia-700">
+                        <Sparkles size={13} /> OxyGroup Recommendations
                       </p>
                       <div className="space-y-3">
                         {selected!.analysis!.serviceRecommendations!.map((rec, i) => (
-                          <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                          <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-sm font-black text-gray-900">{rec.service}</p>
+                              <p className="text-base font-black text-gray-900">{rec.service}</p>
                               {rec.priority && (
                                 <span
-                                  className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
                                     rec.priority === "High"
                                       ? "bg-rose-100 text-rose-700"
                                       : rec.priority === "Medium"
@@ -1361,16 +1905,16 @@ export default function PaperClippingPage() {
                               )}
                             </div>
                             {rec.businessImpact && (
-                              <p className="mt-1 text-xs text-gray-600">{rec.businessImpact}</p>
+                              <p className="mt-1.5 text-sm leading-6 text-gray-600">{rec.businessImpact}</p>
                             )}
                             {(rec.actionItems || []).length > 0 && (
-                              <div className="mt-2 space-y-1">
+                              <div className="mt-3 space-y-2">
                                 {rec.actionItems!.map((item, j) => (
-                                  <div key={j} className="flex gap-2">
-                                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-fuchsia-50 text-[8px] font-black text-fuchsia-700">
+                                  <div key={j} className="flex gap-2.5">
+                                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-fuchsia-50 text-[10px] font-black text-fuchsia-700">
                                       {j + 1}
                                     </span>
-                                    <p className="text-xs leading-5 text-gray-700">{item}</p>
+                                    <p className="text-sm leading-6 text-gray-700">{item}</p>
                                   </div>
                                 ))}
                               </div>
@@ -1385,6 +1929,117 @@ export default function PaperClippingPage() {
                       <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-600">Generated Image</p>
                       <img src={imageUrl} alt="Generated" className="w-full max-w-md rounded-xl border border-gray-200 object-cover" />
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── NEW — Opportunity Radar tab ── */}
+              {activeTab === "opportunity" && (
+                <div className="max-w-4xl">
+                  {!opportunityAssessment ? (
+                    <EmptyTab icon={<Target size={24} />} text="No opportunity assessment available for this clipping." />
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Overall Opportunity Score</p>
+                        <p className="mt-1 text-3xl font-black text-amber-800">
+                          {opportunityAssessment.overallScore ?? 0}
+                          <span className="text-base font-bold text-amber-600">/100</span>
+                        </p>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {OPPORTUNITY_CATEGORIES.map(({ key, label }) => {
+                          const o = opportunityAssessment[key] as Opportunity | null | undefined;
+                          if (!o) return null;
+                          return (
+                            <div key={key} className="rounded-2xl border border-gray-200 bg-white p-4">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-black text-gray-900">{label}</p>
+                                {renderStars(o.stars)}
+                              </div>
+                              {o.reason && (
+                                <p className="mt-1.5 text-xs leading-5 text-gray-600">{o.reason}</p>
+                              )}
+                              {(o.opportunities || []).length > 0 && (
+                                <ul className="mt-2.5 space-y-1.5 border-t border-gray-100 pt-2.5">
+                                  {(o.opportunities || []).map((op, i) => (
+                                    <li key={i} className="flex gap-1.5 text-xs leading-5 text-gray-700">
+                                      <span className="mt-0.5 text-amber-500">•</span>
+                                      <span>{op}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── NEW — Stakeholder Perspectives tab (with per-stakeholder blog publish) ── */}
+              {activeTab === "stakeholders" && (
+                <div className="max-w-4xl">
+                  {stakeholderPerspectives.length === 0 ? (
+                    <EmptyTab icon={<UserCog size={24} />} text="No stakeholder perspectives available for this clipping." />
+                  ) : (
+                    <>
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-700">
+                          {stakeholderPerspectives.length} Stakeholder Perspective{stakeholderPerspectives.length !== 1 ? "s" : ""}
+                        </p>
+                        <ActionChip
+                          label="Publish Stakeholder Blogs"
+                          loading={publishingStakeholderBlogs}
+                          onClick={handlePublishStakeholderBlogs}
+                          color="violet"
+                          icon={<Send size={11} />}
+                        />
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {stakeholderPerspectives.map((sp, i) => {
+                          const published = stakeholderBlogs.find(
+                            (b) => safeText(b.stakeholder).toLowerCase() === safeText(sp.stakeholder).toLowerCase()
+                          );
+                          const isPublished = published && safeText(published.status).toUpperCase() === "PUBLISHED";
+                          return (
+                            <div key={i} className="rounded-2xl border border-indigo-200 bg-white p-4">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[9px] font-black text-indigo-700">
+                                <UserCog size={9} />
+                                {sp.stakeholder}
+                              </span>
+                              <p className="mt-2 text-sm font-bold leading-6 text-gray-900">{sp.headline}</p>
+                              {sp.angle && <p className="mt-1 text-xs leading-5 text-gray-600">{sp.angle}</p>}
+
+                              {published ? (
+                                isPublished && isValidUrl(published.blogUrl) ? (
+                                  <a
+                                    href={safeText(published.blogUrl)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-100"
+                                  >
+                                    <ExternalLink size={11} /> View Published Blog
+                                  </a>
+                                ) : (
+                                  <span className="mt-3 inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                                    {safeText(published.status) || "DRAFT"}
+                                  </span>
+                                )
+                              ) : (
+                                stakeholderBlogsLoading && (
+                                  <span className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-gray-400">
+                                    <Loader2 className="animate-spin" size={11} /> Checking status...
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -1598,28 +2253,29 @@ export default function PaperClippingPage() {
       </div>
 
       {/* ── NEW — Ask Article assistant popup ── */}
-   {showAssistant && assistantTarget && (
-  <PaperclipAssistant
-    paperclipId={safeText(assistantTarget.paperclipId)}
-    articleTitle={safeText(assistantTarget.fileName)}
-    articleContext={{
-      fileName: assistantTarget.fileName,
-      shortSummary: assistantTarget.analysis?.summary?.shortSummary,
-      detailedSummary: assistantTarget.analysis?.summary?.detailedSummary,
-      keyPoints: assistantTarget.analysis?.summary?.keyPoints,
-      actionItems: assistantTarget.analysis?.summary?.actionItems,
-      people: assistantTarget.analysis?.people,
-      companies: assistantTarget.analysis?.companies,
-      reports: assistantTarget.analysis?.reports,
-      imageUrls: assistantTarget.imageUrls?.length
-        ? assistantTarget.imageUrls
-        : assistantTarget.imageUrl
-        ? [assistantTarget.imageUrl]
-        : [],
-    }}
-    onClose={() => setShowAssistant(false)}
-  />
-)}
+      {showAssistant && assistantTarget && (
+        <PaperclipAssistant
+          paperclipId={safeText(assistantTarget.paperclipId)}
+          articleTitle={safeText(assistantTarget.fileName)}
+          articleContext={{
+            fileName: assistantTarget.fileName,
+            classification: assistantTarget.analysis?.classification,
+            shortSummary: assistantTarget.analysis?.summary?.shortSummary,
+            detailedSummary: assistantTarget.analysis?.summary?.detailedSummary,
+            keyPoints: assistantTarget.analysis?.summary?.keyPoints,
+            actionItems: assistantTarget.analysis?.summary?.actionItems,
+            people: assistantTarget.analysis?.people,
+            companies: assistantTarget.analysis?.companies,
+            reports: assistantTarget.analysis?.reports,
+            imageUrls: assistantTarget.imageUrls?.length
+              ? assistantTarget.imageUrls
+              : assistantTarget.imageUrl
+              ? [assistantTarget.imageUrl]
+              : [],
+          }}
+          onClose={() => setShowAssistant(false)}
+        />
+      )}
 
       {/* ── Full-screen image preview ── */}
       {previewImage && (
@@ -1638,6 +2294,17 @@ export default function PaperClippingPage() {
           />
         </div>
       )}
+
+      {/* ── NEW — Social media preview/publish modal (per-platform publish) ── */}
+      <SocialPreviewModal
+        open={showSocialModal}
+        formatting={socialFormatting}
+        preview={socialPreview}
+        publishingPlatform={socialPublishingPlatform}
+        publishResults={socialPublishResults}
+        onClose={() => setShowSocialModal(false)}
+        onPublishPlatform={handlePublishSocialPlatform}
+      />
     </div>
   );
 }
