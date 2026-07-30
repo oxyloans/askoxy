@@ -173,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       items: [
         {
           to: "/main/profile",
-          label: "Profile",
+          label: "Personal Profile",
           icon: <FaUser size={16} />,
         },
         {
@@ -184,12 +184,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {
           to: "/main/freelanceappliedlist",
-          label: "Freelancer Applied List",
+          label: "Freelance Applications",
           icon: <FaRegCheckCircle size={16} />,
         },
         {
           to: "/main/wallet",
-          label: "Wallet",
+          label: "Digital Wallet",
           icon: <FaWallet size={16} />,
         },
         {
@@ -262,16 +262,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
 
-    // My Content & Jobs
+    // Content & Careers
     {
       type: "dropdown",
       key: "my_content_jobs",
       icon: <IoLayers size={18} />,
-      label: "My Content & Jobs",
+      label: "Content & Careers",
       items: [
         {
           to: "/main/dashboard/myservices",
-          label: "My Services",
+          label: "Service Management",
           icon: <FaTools size={16} />,
         },
         {
@@ -281,17 +281,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           to: "/main/dashboard/myblogs",
-          label: "My Blogs",
+          label: "Blog Management",
           icon: <AiFillFileText size={16} />,
         },
         {
           to: "/main/viewjobdetails/default/ALL",
-          label: "All Jobs",
+          label: "Explore Jobs",
           icon: <FaBriefcase size={16} />,
         },
         {
           to: "/main/appliedjobs",
-          label: "My Job Applications",
+          label: "Job Applications",
           icon: <FaRegCheckCircle size={16} />,
         },
       ],

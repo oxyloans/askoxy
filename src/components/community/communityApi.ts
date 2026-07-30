@@ -1,21 +1,17 @@
 import axios, { AxiosError } from "axios";
 import BASE_URL from "../../Config";
 
-export type CommunityCategory =
-  | "AI"
-  | "LOANS_AND_INVESTMENTS"
-  | "JOBS"
-  | "STUDY_ABROAD"
-  | "GOLD"
-  | "FRACTIONAL_OWNERSHIP"
-  | "NINETY_DAY_JOB_PLAN"
-  | "GCC_MATE"
-  | "FREELANCE_MARKETPLACE"
-  | "NYAYA_GPT"
-  | "CA_AND_CS"
-  | "BLOCKCHAIN_AND_CRYPTO"
-  | "GLMS"
-  | "OTHER";
+// Categories are managed by the backend and can change without a frontend release.
+export type CommunityCategory = string;
+
+export interface CommunityCategoryItem {
+  id: number;
+  categoryName: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
 
 export type CommunitySort =
   | "LATEST"
@@ -55,11 +51,12 @@ export interface CommunityQuery {
   id: number;
   question: string;
   description: string;
-  category: CommunityCategory;
-  /** Returned when category is OTHER. Keep the field matching your backend DTO. */
+  categoryId: number;
+  categoryName: string;
+  /** Optional legacy/custom-category fields returned by some backend versions. */
+  category?: CommunityCategory | null;
   otherCategoryName?: string | null;
   customCategory?: string | null;
-  categoryName?: string | null;
   createdAt: string;
   updatedAt: string;
   totalComments: number;
@@ -87,13 +84,10 @@ const requireData = <T>(response: ApiResponse<T>, fallbackMessage: string): T =>
 };
 
 export interface CreateQueryPayload {
-  category: CommunityCategory;
+  categoryId: number;
   question: string;
   description: string;
-  /**
-   * Required only when category is OTHER.
-   * Rename this property if your backend DTO uses customCategory/categoryName.
-   */
+  /** Required only when the selected backend category is OTHER. */
   otherCategoryName?: string;
 }
 
@@ -102,7 +96,7 @@ export interface UpdateQueryPayload extends CreateQueryPayload {
 }
 
 export interface QueryListParams {
-  category?: CommunityCategory | "";
+  categoryId?: number | "";
   keyword?: string;
   pageNumber?: number;
   pageSize?: number;
@@ -184,17 +178,28 @@ export const getErrorMessage = (error: unknown): string => {
   );
 };
 
+export const getCommunityCategories = async () => {
+  const response = await api.get<ApiResponse<CommunityCategoryItem[]>>(
+    "/api/user-service/community/categories"
+  );
+
+  return requireData(
+    response.data,
+    "Community categories were not returned by the server."
+  ).filter((category) => category.active);
+};
+
 export const getQueries = async (params: QueryListParams) => {
   const response = await api.get<
     ApiResponse<SpringPage<CommunityQuery> | CommunityQuery[]>
   >("/api/user-service/community/queries", {
     params: {
-      category: params.category || undefined,
+      categoryId:
+        params.categoryId === "" ? undefined : params.categoryId,
       keyword: params.keyword?.trim() || undefined,
-      pageNumber: params.pageNumber ?? 0,
-      pageSize: params.pageSize ?? 9,
+      page: params.pageNumber ?? 0,
+      size: params.pageSize ?? 9,
       sortBy: params.sortBy ?? "LATEST",
-      paged: true,
     },
   });
 
@@ -238,10 +243,7 @@ export const getQueryById = async (id: number) => {
 export const createQuery = async (payload: CreateQueryPayload) => {
   const request = {
     ...payload,
-    otherCategoryName:
-      payload.category === "OTHER"
-        ? payload.otherCategoryName?.trim()
-        : undefined,
+    otherCategoryName: payload.otherCategoryName?.trim() || undefined,
   };
 
   const response = await api.post<ApiResponse<CommunityQuery>>(
@@ -257,10 +259,7 @@ export const updateQuery = async (
 ) => {
   const request = {
     ...payload,
-    otherCategoryName:
-      payload.category === "OTHER"
-        ? payload.otherCategoryName?.trim()
-        : undefined,
+    otherCategoryName: payload.otherCategoryName?.trim() || undefined,
   };
 
   const response = await api.put<ApiResponse<CommunityQuery>>(

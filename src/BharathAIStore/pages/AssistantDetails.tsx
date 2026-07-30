@@ -1515,10 +1515,10 @@ const AssistantDetails: React.FC = () => {
         let errorMessage =
           "I'm having trouble responding right now. Please try again in a moment.";
 
-        if (e?.response?.status === 500) {
-          errorMessage =
-            "The AI service is temporarily unavailable. Please try again shortly.";
-        } else if (e?.response?.status === 429) {
+          if (e?.response?.status === 500) {
+            errorMessage =
+              "We're experiencing a temporary server issue. Please try again in a few minutes.";
+          } else if (e?.response?.status === 429) {
           errorMessage =
             "Too many requests. Please wait a moment before trying again.";
         } else if (e?.response?.status === 401 || e?.response?.status === 403) {

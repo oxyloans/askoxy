@@ -38,7 +38,7 @@ import {
 import communityImage from "../../assets/img/community.png";
 import askoxyLogo from "../../assets/img/askoxylogonew.png";
 import {
-  CommunityCategory,
+  CommunityCategoryItem,
   CommunityComment,
   CommunityQuery,
   CommunitySort,
@@ -48,6 +48,7 @@ import {
   deleteComment,
   deleteQuery,
   getComments,
+  getCommunityCategories,
   getErrorMessage,
   getQueries,
   getQueryById,
@@ -58,14 +59,16 @@ import {
   updateQuery,
 } from "./communityApi";
 import {
-  COMMUNITY_CATEGORIES,
-  COMMUNITY_FILTER_CATEGORIES,
   getCategoryLabel,
   getQueryCategoryLabel,
 } from "./communityCategories";
 
-const emptyQuery: CreateQueryPayload = {
-  category: "LOANS_AND_INVESTMENTS",
+type QueryFormValues = Omit<CreateQueryPayload, "categoryId"> & {
+  categoryId: number | "";
+};
+
+const emptyQuery: QueryFormValues = {
+  categoryId: "",
   question: "",
   description: "",
   otherCategoryName: "",
@@ -230,9 +233,12 @@ export default function CommunityPage() {
   const savedProfileName = getSavedProfileName();
 
   const [queries, setQueries] = useState<CommunityQuery[]>([]);
+  const [communityCategories, setCommunityCategories] = useState<CommunityCategoryItem[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState("");
   const [selectedQuery, setSelectedQuery] = useState<CommunityQuery | null>(null);
   const [comments, setComments] = useState<CommunityComment[]>([]);
-  const [category, setCategory] = useState<CommunityCategory | "">("");
+  const [categoryId, setCategoryId] = useState<number | "">("");
   const [sortBy, setSortBy] = useState<CommunitySort>("LATEST");
   const [searchText, setSearchText] = useState("");
   const [keyword, setKeyword] = useState("");
@@ -244,7 +250,7 @@ export default function CommunityPage() {
   const [error, setError] = useState("");
   const [queryModalOpen, setQueryModalOpen] = useState(false);
   const [editingQuery, setEditingQuery] = useState<CommunityQuery | null>(null);
-  const [queryForm, setQueryForm] = useState<CreateQueryPayload>(emptyQuery);
+  const [queryForm, setQueryForm] = useState<QueryFormValues>(emptyQuery);
   const [savingQuery, setSavingQuery] = useState(false);
   const [formError, setFormError] = useState("");
   const [newComment, setNewComment] = useState("");
@@ -256,6 +262,29 @@ export default function CommunityPage() {
     setToastMessage(message);
     window.setTimeout(() => setToastMessage(""), 2200);
   }, []);
+
+  const loadCommunityCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    setCategoriesError("");
+
+    try {
+      const result = await getCommunityCategories();
+      setCommunityCategories(result);
+      setQueryForm((current) => ({
+        ...current,
+        categoryId: current.categoryId || result[0]?.id || "",
+      }));
+    } catch (err) {
+      setCategoriesError(getErrorMessage(err));
+      setCommunityCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCommunityCategories();
+  }, [loadCommunityCategories]);
 
   const redirectToRegistration = useCallback(() => {
     const returnUrl = `${window.location.pathname}${window.location.search}`;
@@ -297,7 +326,7 @@ export default function CommunityPage() {
 
     try {
       const result = await getQueries({
-        category,
+        categoryId,
         keyword,
         pageNumber,
         pageSize: 9,
@@ -312,7 +341,7 @@ export default function CommunityPage() {
     } finally {
       setLoading(false);
     }
-  }, [category, handleUnauthorized, keyword, pageNumber, sortBy]);
+  }, [categoryId, handleUnauthorized, keyword, pageNumber, sortBy]);
 
   useEffect(() => {
     loadQueries();
@@ -392,7 +421,10 @@ export default function CommunityPage() {
     if (!requireRegistration()) return;
     setFormError("");
     setEditingQuery(null);
-    setQueryForm(emptyQuery);
+    setQueryForm({
+      ...emptyQuery,
+      categoryId: communityCategories[0]?.id || "",
+    });
     setQueryModalOpen(true);
   };
 
@@ -400,15 +432,19 @@ export default function CommunityPage() {
     if (!requireRegistration()) return;
     setFormError("");
     setEditingQuery(query);
+    const matchedCategory = communityCategories.find(
+      (item) =>
+        item.id === query.categoryId ||
+        item.categoryName === query.categoryName ||
+        item.categoryName === query.category,
+    );
+
     setQueryForm({
-      category: query.category,
+      categoryId: query.categoryId || matchedCategory?.id || "",
       question: query.question,
       description: query.description,
       otherCategoryName:
-        query.otherCategoryName ||
-        query.customCategory ||
-        query.categoryName ||
-        "",
+        query.otherCategoryName || query.customCategory || "",
     });
     setQueryModalOpen(true);
   };
@@ -424,6 +460,11 @@ export default function CommunityPage() {
     const question = queryForm.question.trim();
     const description = queryForm.description.trim();
     const otherCategoryName = queryForm.otherCategoryName?.trim();
+
+    if (!queryForm.categoryId) {
+      setFormError("Please select a topic.");
+      return;
+    }
 
     if (!question || !description) {
       setFormError("Please enter both the question and description.");
@@ -445,12 +486,17 @@ export default function CommunityPage() {
       return;
     }
 
-    if (queryForm.category === "OTHER" && !otherCategoryName) {
+    const selectedFormCategory = communityCategories.find(
+      (item) => item.id === queryForm.categoryId,
+    );
+    const isOtherCategory = selectedFormCategory?.categoryName === "OTHER";
+
+    if (isOtherCategory && !otherCategoryName) {
       setFormError("Please enter your category name.");
       return;
     }
 
-    if (queryForm.category === "OTHER" && (otherCategoryName?.length || 0) < 3) {
+    if (isOtherCategory && (otherCategoryName?.length || 0) < 3) {
       setFormError("Category name must contain at least 3 characters.");
       return;
     }
@@ -458,12 +504,11 @@ export default function CommunityPage() {
     setSavingQuery(true);
 
     try {
-      const payload = {
-        ...queryForm,
+      const payload: CreateQueryPayload = {
+        categoryId: Number(queryForm.categoryId),
         question,
         description,
-        otherCategoryName:
-          queryForm.category === "OTHER" ? otherCategoryName : undefined,
+        otherCategoryName: isOtherCategory ? otherCategoryName : undefined,
       };
       const savedQuery = editingQuery
         ? await updateQuery(editingQuery.id, {
@@ -597,11 +642,20 @@ export default function CommunityPage() {
     );
   };
 
+  const selectedCategoryName = useMemo(
+    () =>
+      communityCategories.find((item) => item.id === categoryId)?.categoryName ||
+      "",
+    [categoryId, communityCategories],
+  );
+
   const listTitle = useMemo(() => {
     if (keyword) return `Results for “${keyword}”`;
-    if (category) return `${getCategoryLabel(category)} Questions`;
+    if (selectedCategoryName) {
+      return `${getCategoryLabel(selectedCategoryName)} Questions`;
+    }
     return "Latest Community Questions";
-  }, [category, keyword]);
+  }, [keyword, selectedCategoryName]);
 
   const myQueries = useMemo(
     () =>
@@ -619,7 +673,8 @@ export default function CommunityPage() {
       .filter(
         (item) =>
           item.id !== selectedQuery.id &&
-          item.category === selectedQuery.category,
+          (item.categoryId === selectedQuery.categoryId ||
+            item.categoryName === selectedQuery.categoryName),
       )
       .slice(0, 8);
   }, [queries, selectedQuery]);
@@ -1027,17 +1082,23 @@ export default function CommunityPage() {
                     className="pointer-events-none absolute left-3 text-[#5b2d90]"
                   />
                   <select
-                    value={category}
+                    value={categoryId}
+                    disabled={categoriesLoading}
                     onChange={(event) => {
-                      setCategory(event.target.value as CommunityCategory | "");
+                      setCategoryId(
+                        event.target.value ? Number(event.target.value) : "",
+                      );
                       setPageNumber(0);
                     }}
                     aria-label="Filter by category"
                     className="h-full w-full appearance-none rounded-xl bg-transparent py-2 pl-10 pr-9 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-purple-100"
                   >
-                    {COMMUNITY_FILTER_CATEGORIES.map((item) => (
-                      <option key={item.label} value={item.value}>
-                        {item.label}
+                    <option value="">
+                      {categoriesLoading ? "Loading Topics..." : "All Topics"}
+                    </option>
+                    {communityCategories.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {getCategoryLabel(item.categoryName)}
                       </option>
                     ))}
                   </select>
@@ -1236,6 +1297,10 @@ export default function CommunityPage() {
       {queryModalOpen && (
         <QueryModal
           queryForm={queryForm}
+          communityCategories={communityCategories}
+          categoriesLoading={categoriesLoading}
+          categoriesError={categoriesError}
+          onRetryCategories={loadCommunityCategories}
           setQueryForm={setQueryForm}
           formError={formError}
           savingQuery={savingQuery}
@@ -1719,6 +1784,10 @@ function CommentItem({
 
 function QueryModal({
   queryForm,
+  communityCategories,
+  categoriesLoading,
+  categoriesError,
+  onRetryCategories,
   setQueryForm,
   formError,
   savingQuery,
@@ -1726,8 +1795,12 @@ function QueryModal({
   onClose,
   onSubmit,
 }: {
-  queryForm: CreateQueryPayload;
-  setQueryForm: React.Dispatch<React.SetStateAction<CreateQueryPayload>>;
+  queryForm: QueryFormValues;
+  communityCategories: CommunityCategoryItem[];
+  categoriesLoading: boolean;
+  categoriesError: string;
+  onRetryCategories: () => void;
+  setQueryForm: React.Dispatch<React.SetStateAction<QueryFormValues>>;
   formError: string;
   savingQuery: boolean;
   isEditing: boolean;
@@ -1767,26 +1840,53 @@ function QueryModal({
         <label className="mt-6 block text-sm font-bold text-slate-800">
           Topic
           <select
-            value={queryForm.category}
-            onChange={(event) =>
+            value={queryForm.categoryId}
+            onChange={(event) => {
+              const nextCategoryId = event.target.value
+                ? Number(event.target.value)
+                : "";
+              const nextCategory = communityCategories.find(
+                (item) => item.id === nextCategoryId,
+              );
+
               setQueryForm((current) => ({
                 ...current,
-                category: event.target.value as CommunityCategory,
+                categoryId: nextCategoryId,
                 otherCategoryName:
-                  event.target.value === "OTHER" ? current.otherCategoryName : "",
-              }))
-            }
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-[#5b2d90]"
+                  nextCategory?.categoryName === "OTHER"
+                    ? current.otherCategoryName
+                    : "",
+              }));
+            }}
+            disabled={categoriesLoading || communityCategories.length === 0}
+            required
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-[#5b2d90] disabled:cursor-not-allowed disabled:bg-slate-100"
           >
-            {COMMUNITY_CATEGORIES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
+            <option value="" disabled>
+              {categoriesLoading ? "Loading topics..." : "Select a topic"}
+            </option>
+            {communityCategories.map((item) => (
+              <option key={item.id} value={item.id}>
+                {getCategoryLabel(item.categoryName)}
               </option>
             ))}
           </select>
+          {categoriesError && (
+            <span className="mt-2 flex items-center justify-between gap-3 text-xs font-medium text-red-600">
+              <span>Unable to load topics.</span>
+              <button
+                type="button"
+                onClick={onRetryCategories}
+                className="font-bold text-[#5b2d90]"
+              >
+                Retry
+              </button>
+            </span>
+          )}
         </label>
 
-        {queryForm.category === "OTHER" && (
+        {communityCategories.find((item) => item.id === queryForm.categoryId)
+          ?.categoryName === "OTHER" && (
           <label className="mt-5 block text-sm font-bold text-slate-800">
             Category name
             <input

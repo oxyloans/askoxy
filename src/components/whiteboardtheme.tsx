@@ -281,7 +281,7 @@ const Whiteboardtheme: React.FC = () => {
             <div className="relative">
               <div className="relative z-20 mb-2 grid grid-cols-2 items-start px-3 sm:mb-4 sm:px-6 md:hidden">
                 <div className="relative flex h-[158px] w-[132px] flex-col items-center sm:h-[174px] sm:w-[148px]">
-                  <div className="flex h-[132px] w-[132px] items-center justify-center pt-1 sm:h-[148px] sm:w-[148px]">
+                  <div className="flex h-[132px] w-[132px] items-center justify-center pt-1 sm:h-[148px] sm:w-[148px] ">
                     <button
                       type="button"
                       onClick={() => navigate("/sovereign-ai")}
@@ -291,7 +291,7 @@ const Whiteboardtheme: React.FC = () => {
                       <img
                         src={speak0}
                         alt="Speak with Sovereign AI"
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-contain -translate-x-6"
                       />
                     </button>
                   </div>
@@ -302,14 +302,17 @@ const Whiteboardtheme: React.FC = () => {
                   />
                 </div>
 
-                <div className="relative ml-auto flex h-[158px] w-[132px] flex-col items-center sm:h-[170px]">
-                  <div className="flex h-[132px] w-[132px] items-center justify-center pt-4 sm:pt-3">
+                <div className="relative ml-auto flex h-[158px] w-[132px] flex-col items-center sm:h-[170px] ">
+                  <div
+                    className="flex h-[132px] w-[132px] items-center justify-center pt-4 sm:pt-3  translate-x-1/4"
+                    
+                  >
                     {jobsCountCard()}
                   </div>
                   <img
                     src={arrow1}
                     alt=""
-                    className="absolute bottom-1 left-1/2 h-[48px] w-[48px] -translate-x-1/2 object-contain sm:h-[54px] sm:w-[54px]"
+                    className="absolute bottom-0 left-1/2 h-[44px] w-[44px] -translate-x-1/2 object-contain sm:h-[48px] sm:w-[48px]"
                   />
                 </div>
               </div>
@@ -317,13 +320,16 @@ const Whiteboardtheme: React.FC = () => {
               <div className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-[130px] md:block lg:h-[145px] xl:h-[155px]">
                 <div
                   className="pointer-events-auto absolute top-0 -translate-x-1/2"
-                  style={{ left: "16.666%" }}
+                  style={{ left: "14.444%" }}
                 >
                   <button
                     type="button"
                     onClick={() => navigate("/sovereign-ai")}
                     className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
-                    style={{ width: "clamp(140px, 12vw, 196px)", height: "clamp(120px, 10.4vw, 164px)" }}
+                    style={{
+                      width: "clamp(140px, 12vw, 196px)",
+                      height: "clamp(120px, 10.4vw, 164px)",
+                    }}
                     aria-label="Speak with Sovereign AI"
                   >
                     <img
@@ -336,7 +342,7 @@ const Whiteboardtheme: React.FC = () => {
 
                 <div
                   className="pointer-events-auto absolute top-0 -translate-x-1/2"
-                  style={{ left: "83.333%" }}
+                  style={{ left: "84.222%" }}
                 >
                   {jobsCountCard(true)}
                 </div>

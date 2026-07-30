@@ -1,48 +1,39 @@
-import type { CommunityCategory, CommunityQuery } from "./communityApi";
+import type { CommunityQuery } from "./communityApi";
 
-export const COMMUNITY_CATEGORIES: Array<{
-  value: CommunityCategory;
-  label: string;
-}> = [
-  { value: "LOANS_AND_INVESTMENTS", label: "Loans & Investments" },
-  { value: "JOBS", label: "Jobs" },
-  { value: "STUDY_ABROAD", label: "Study Abroad" },
-  { value: "GOLD", label: "Gold" },
-  { value: "FRACTIONAL_OWNERSHIP", label: "Fractional Ownership" },
-  { value: "NINETY_DAY_JOB_PLAN", label: "90 Days Job Plan" },
-  { value: "GCC_MATE", label: "GCC Mate" },
-  { value: "FREELANCE_MARKETPLACE", label: "Freelance Marketplace" },
-  { value: "NYAYA_GPT", label: "Nyaya GPT" },
-  { value: "CA_AND_CS", label: "CA & CS" },
-  { value: "BLOCKCHAIN_AND_CRYPTO", label: "Blockchain & Crypto" },
-  { value: "GLMS", label: "GLMS" },
-  { value: "OTHER", label: "Others" },
-];
+const getCategoryText = (category: unknown): string => {
+  if (typeof category === "string") return category.trim();
+  if (typeof category === "number") return String(category);
 
-export const COMMUNITY_FILTER_CATEGORIES: Array<{
-  value: CommunityCategory | "";
-  label: string;
-}> = [{ value: "", label: "All Topics" }, ...COMMUNITY_CATEGORIES];
+  if (category && typeof category === "object") {
+    const value = category as Record<string, unknown>;
 
-export const getCategoryLabel = (
-  category: CommunityCategory | string,
-  customCategoryName?: string | null
-) => {
-  if (category === "OTHER" && customCategoryName?.trim()) {
-    return customCategoryName.trim();
+    for (const key of ["categoryName", "name", "label", "title"]) {
+      const text = value[key];
+      if (typeof text === "string" && text.trim()) return text.trim();
+    }
   }
 
-  return (
-    COMMUNITY_CATEGORIES.find((item) => item.value === category)?.label ||
-    category
-      .replaceAll("_", " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (letter) => letter.toUpperCase())
-  );
+  return "";
 };
 
-export const getQueryCategoryLabel = (query: CommunityQuery) =>
-  getCategoryLabel(
-    query.category,
-    query.otherCategoryName || query.customCategory || query.categoryName
-  );
+export const getCategoryLabel = (category: unknown) => {
+  const value = getCategoryText(category);
+
+  if (!value.includes("_")) return value;
+
+  return value
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+export const getQueryCategoryLabel = (query: CommunityQuery) => {
+  const runtimeQuery = query as unknown as Record<string, unknown>;
+  const category =
+    getCategoryText(runtimeQuery.otherCategoryName) ||
+    getCategoryText(runtimeQuery.customCategory) ||
+    getCategoryText(runtimeQuery.categoryName) ||
+    getCategoryText(runtimeQuery.category);
+
+  return getCategoryLabel(category || "Community");
+};
