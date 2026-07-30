@@ -58,7 +58,7 @@ const MyRotaryServices: React.FC = () => {
     "https://chat.whatsapp.com/FRIPgqC1cYaGwQ5VbSXBPL?mode=gi_t";
 
   const WHATSAPP_GROUP_PLATFORM =
-    "https://chat.whatsapp.com/DiwjVdXb7p60ywRlgrSFDp?mode=gi_t";
+    "https://chat.whatsapp.com/HIcwp8FIE5v35hEKNsHCnu?s=sh&p=a&ilr=0";
 
   const EXPLORE_AI_AGENT_LINK = "/rotarydistrict3150AiAgent";
 

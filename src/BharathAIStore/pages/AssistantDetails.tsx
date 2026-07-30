@@ -51,7 +51,11 @@ type FromStore = {
 type APIRole = "user" | "assistant";
 type APIMessage = { role: APIRole; content: string };
 
-type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
+type ChatMessage = {
+  role: "user" | "assistant" | "system";
+  content: string;
+  fileNames?: string[];
+};
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -185,6 +189,7 @@ const AssistantDetails: React.FC = () => {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [showNoChatModal, setShowNoChatModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileIds, setFileIds] = useState<string[]>([]);
   const [showMobileFiles, setShowMobileFiles] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState<number>(0);
   // useEffect(() => {
@@ -975,12 +980,21 @@ const AssistantDetails: React.FC = () => {
     setCurrentChatId(hid);
     const cachedThreadId = threadIdMap[hid];
 
+    // Reset file-thread state — it's per-conversation and must not leak
+    // between chats when switching in the sidebar
+    setFileIds([]);
+
     // Fast path: use cached messages
     const cached = historyById[hid];
     if (cached?.length > 0) {
       console.log("[openHistoryChat] Using cached messages:", cached.length);
       setMessages(cached);
       setThreadId(cachedThreadId || null);
+      setThreadSource(
+        cached.some((m) => m.fileNames && m.fileNames.length > 0)
+          ? "files"
+          : "agent",
+      );
       requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         if (isXs) setSidebarOpen(false);
@@ -1072,7 +1086,7 @@ const AssistantDetails: React.FC = () => {
             threadMessages,
           );
           if (Array.isArray(threadMessages) && threadMessages.length > 0) {
-            messages = extractQAFromHistory(threadMessages);
+            messages = await extractQAFromHistory(threadMessages);
             console.log(
               "[openHistoryChat] Loaded from thread:",
               messages.length,
@@ -1101,6 +1115,11 @@ const AssistantDetails: React.FC = () => {
       // Cache and display
       setHistoryById((prev) => ({ ...prev, [hid]: messages }));
       setMessages(messages);
+      setThreadSource(
+        messages.some((m) => m.fileNames && m.fileNames.length > 0)
+          ? "files"
+          : "agent",
+      );
     } catch (err: any) {
       console.error("[openHistoryChat] Error:", err);
 
@@ -1206,7 +1225,7 @@ const AssistantDetails: React.FC = () => {
     }
 
     const { data } = await axios.post(
-      `${BASE_URL}/ai-service/agent/agentChat1`,
+      `${BASE_URL}/ai-service/agent/new-chat-openai`,
       payload,
       { headers },
     );
@@ -1214,133 +1233,216 @@ const AssistantDetails: React.FC = () => {
   };
 
   // ✅ Fetch conversation history from thread
-  const fetchThreadHistory = async (threadIdParam: string) => {
-    // console.log("[fetchThreadHistory] ▶ STARTING with threadId:", threadIdParam);
+const fetchThreadHistory = async (threadIdParam: string) => {
+  if (
+    !threadIdParam ||
+    threadIdParam.trim() === "" ||
+    String(threadIdParam).toLowerCase() === "null"
+  ) {
+    return null;
+  }
 
-    // Validate threadId
-    if (
-      !threadIdParam ||
-      threadIdParam.trim() === "" ||
-      String(threadIdParam).toLowerCase() === "null"
-    ) {
-      // console.error("[fetchThreadHistory] ✗ Invalid/null threadId provided:", threadIdParam);
-      return null;
+  try {
+    const headers = new AxiosHeaders();
+    headers.set("Accept", "application/json");
+    headers.set("Content-Type", "application/json");
+
+    const auth = getAuthHeaders();
+    if (auth.Authorization) {
+      headers.set("Authorization", auth.Authorization);
     }
 
+    // Detect whether this is an old Thread or new Conversation
+    const isConversation = threadIdParam.startsWith("conv_");
+
+    const url = isConversation
+      ? `${BASE_URL}/ai-service/agent/getConversationMessages/${threadIdParam}/messages`
+      : `${BASE_URL}/ai-service/agent/getconversations/${threadIdParam}/messages`;
+
+    console.log("Fetching history:", {
+      id: threadIdParam,
+      type: isConversation ? "Conversation" : "Thread",
+      url,
+    });
+
+    const response = await axios.get(url, { headers });
+    const data = response.data;
+
+    if (
+      isConversation &&
+      data &&
+      data.object === "list" &&
+      Array.isArray(data.data)
+    ) {
+      const normalizedMessages = data.data.map((msg: any) => ({
+  id: msg.id,
+  object: "thread.message",
+  created_at: Date.now(),
+  role: msg.role,
+  status: msg.status,
+  content: (msg.content || []).map((item: any) => {
+    // input_file blocks only carry a file_id (no text) — keep it as-is so
+    // downstream code can resolve the filename via get-file-name-openai
+    if (item.type === "input_file") {
+      return {
+        type: "input_file",
+        file_id: item.file_id,
+        detail: item.detail,
+      };
+    }
+    return {
+      type:
+        item.type === "input_text" || item.type === "output_text"
+          ? "text"
+          : item.type,
+      text: {
+        value: item.text || "",
+        annotations: item.annotations || [],
+      },
+    };
+  }),
+}));
+
+return normalizedMessages;
+    }
+
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      if (Array.isArray(data.messages)) {
+        return data.messages;
+      }
+
+      if (Array.isArray(data.data)) {
+        return data.data;
+      }
+
+      if (Array.isArray(data.history)) {
+        return data.history;
+      }
+    }
+
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    console.warn("Unexpected response format:", data);
+    return null;
+  } catch (error: any) {
+    console.error("Failed to fetch history");
+
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Response:", error.response.data);
+    } else if (error.request) {
+      console.error("No response received");
+    } else {
+      console.error(error.message);
+    }
+
+    return null;
+  }
+};
+  // ✅ Extract user questions and assistant answers from OpenAI format history
+  const fetchFileNameForAgent = async (fileId: string): Promise<string | null> => {
     try {
-      const headers = new AxiosHeaders();
-      headers.set("Accept", "application/json");
-      headers.set("Content-Type", "application/json");
-      const auth = getAuthHeaders();
-      if (auth.Authorization) {
-        console.log("[fetchThreadHistory] ✓ Authorization header set");
-        headers.set("Authorization", auth.Authorization);
-      } else {
-        console.warn(
-          "[fetchThreadHistory] ⚠ No authorization header available",
-        );
-      }
-
-      const url = `${BASE_URL}/ai-service/agent/getconversations/${threadIdParam}/messages`;
-      console.log("[fetchThreadHistory] 🌐 GET:", url);
-      console.log("[fetchThreadHistory] Headers set:", {
-        Accept: "application/json",
-        ContentType: "application/json",
-        hasAuth: !!auth.Authorization,
-      });
-
-      const response = await axios.get(url, { headers });
-      console.log("[fetchThreadHistory] ✓ Response status:", response.status);
-      console.log(
-        "[fetchThreadHistory] Response data type:",
-        typeof response.data,
+      const { data } = await axios.get(
+        `${BASE_URL}/ai-service/agent/get-file-name-openai/${fileId}`,
+        { headers: { ...getAuthHeaders() } },
       );
-      console.log("[fetchThreadHistory] Response data:", response.data);
-
-      const data = response.data;
-
-      // Handle different response shapes
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        if (Array.isArray(data.messages)) {
-          console.log(
-            "[fetchThreadHistory] ✓ Found data.messages array:",
-            data.messages.length,
-            "items",
-          );
-          return data.messages;
-        }
-        if (Array.isArray(data.data)) {
-          console.log(
-            "[fetchThreadHistory] ✓ Found data.data array:",
-            data.data.length,
-            "items",
-          );
-          return data.data;
-        }
-        if (Array.isArray(data.history)) {
-          console.log(
-            "[fetchThreadHistory] ✓ Found data.history array:",
-            data.history.length,
-            "items",
-          );
-          return data.history;
-        }
-      }
-
-      // If response is already an array
-      if (Array.isArray(data)) {
-        console.log(
-          "[fetchThreadHistory] ✓ Response is array:",
-          data.length,
-          "items",
-        );
-        return data;
-      }
-
-      console.warn(
-        "[fetchThreadHistory] ⚠ Unexpected response shape. Object keys:",
-        Object.keys(data || {}),
-      );
-      return null;
-    } catch (error: any) {
-      console.error("[fetchThreadHistory] ✗ API call failed");
-      if (error.response) {
-        console.error("[fetchThreadHistory] Status:", error.response.status);
-        console.error("[fetchThreadHistory] Data:", error.response.data);
-      } else if (error.request) {
-        console.error("[fetchThreadHistory] No response received");
-      } else {
-        console.error("[fetchThreadHistory] Error message:", error.message);
-      }
+      return data?.filename ?? null;
+    } catch {
       return null;
     }
   };
 
-  // ✅ Extract user questions and assistant answers from OpenAI format history
-  const extractQAFromHistory = (history: any[]): ChatMessage[] => {
+  const extractQAFromHistory = async (history: any[]): Promise<ChatMessage[]> => {
     if (!Array.isArray(history)) return [];
-    return history
-      .filter((msg: any) => msg?.role === "user" || msg?.role === "assistant")
+
+    const filtered = history.filter(
+      (msg: any) => msg?.role === "user" || msg?.role === "assistant",
+    );
+
+    // input_file blocks (user uploads) only carry a file_id, no filename —
+    // resolve those via the get-file-name endpoint
+    const fileIdsNeeded = new Set<string>();
+    filtered.forEach((msg: any) => {
+      (Array.isArray(msg.content) ? msg.content : []).forEach((c: any) => {
+        if (c?.type === "input_file" && c?.file_id) {
+          fileIdsNeeded.add(c.file_id);
+        }
+      });
+    });
+
+    const fileIdToName: Record<string, string> = {};
+    if (fileIdsNeeded.size > 0) {
+      const ids = Array.from(fileIdsNeeded);
+      const results = await Promise.allSettled(
+        ids.map((fid) => fetchFileNameForAgent(fid)),
+      );
+      results.forEach((res, i) => {
+        if (res.status === "fulfilled" && res.value) {
+          fileIdToName[ids[i]] = res.value;
+        }
+      });
+    }
+
+    const messages = filtered
       .map((msg: any) => {
         let content = "";
+        let citationNames: string[] = [];
 
         // Handle OpenAI thread message format
         if (Array.isArray(msg.content)) {
           // Extract text from content array
           const textContent = msg.content.find((c: any) => c.type === "text");
           content = textContent?.text?.value || "";
+          const annotations = Array.isArray(textContent?.text?.annotations)
+            ? textContent.text.annotations
+            : [];
+          citationNames = annotations
+            .filter((a: any) => a?.type === "file_citation" && a?.filename)
+            .map((a: any) => a.filename as string);
         } else {
           // Handle simple string content
           content = String(msg.content || msg.text || "");
         }
 
+        const inputFileNames = (Array.isArray(msg.content) ? msg.content : [])
+          .filter((c: any) => c?.type === "input_file" && c?.file_id)
+          .map((c: any) => fileIdToName[c.file_id])
+          .filter((n: any): n is string => Boolean(n));
+
+        const fileNames = Array.from(
+          new Set([...citationNames, ...inputFileNames]),
+        );
+
         return {
           role: msg.role as "user" | "assistant",
           content: content.trim(),
+          fileNames: fileNames.length > 0 ? fileNames : undefined,
         };
       })
       .filter((msg) => msg.content.length > 0)
       .reverse(); // Reverse to show chronological order (oldest first)
+
+    // File citations arrive attached to the assistant's answer, but we want
+    // them shown against the user question that prompted that answer instead.
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i];
+      if (m.role === "assistant" && m.fileNames?.length) {
+        const prevUser = messages
+          .slice(0, i)
+          .reverse()
+          .find((x) => x.role === "user");
+        if (prevUser) {
+          prevUser.fileNames = Array.from(
+            new Set([...(prevUser.fileNames ?? []), ...m.fileNames]),
+          );
+        }
+        m.fileNames = undefined;
+      }
+    }
+
+    return messages;
   };
 
   const sendMessage = useCallback(
@@ -1788,38 +1890,6 @@ const AssistantDetails: React.FC = () => {
     }
   }, [loading]);
 
-  // Send a message over the SAME chat-with-files thread without re-uploading files
-  const chatWithFilesFollowup = async (userPrompt: string) => {
-    const url = `${BASE_URL}/student-service/user/chat-with-files`;
-
-    const formData = new FormData();
-    formData.append("prompt", userPrompt || "");
-    selectedFiles.forEach((f) => formData.append("files[]", f));
-    if (threadId) formData.append("threadId", threadId);
-
-    const headers = { ...getAuthHeaders() };
-    const { data } = await axios.post(url, formData, { headers });
-
-    const {
-      answer,
-      threadId: newThreadId,
-      remainingPrompts: updatedPrompts,
-    } = data ?? {};
-
-    if (newThreadId) setThreadId(newThreadId);
-    if (typeof updatedPrompts !== "undefined") {
-      setRemainingPrompts(updatedPrompts);
-      if (Number(updatedPrompts) === 0) {
-        // ⛔ stop continuity: surface an explicit error string to caller
-        message.error("File search limit reached. Please try again later.");
-        return "File search limit reached. Please try again later.";
-      }
-    }
-
-    setThreadSource("files");
-    return String(answer ?? "").trim();
-  };
-
   // accept multiple files and filter dupes by name+size
   const handleFilePicker = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files || []);
@@ -1846,51 +1916,56 @@ const AssistantDetails: React.FC = () => {
       return await Promise.resolve(null);
     }
 
+    if (!agentId) return null;
+
     setLoading(true);
 
+    const filesToSend = selectedFiles;
     const userMessage: ChatMessage = {
       role: "user",
       content: userPrompt,
+      fileNames:
+        filesToSend.length > 0 ? filesToSend.map((f) => f.name) : undefined,
     };
     setMessages((prev) => [...prev, userMessage]);
 
     setInput("");
 
     try {
-      // ✅ branch: if there are files selected → multipart; else → JSON search
-      let answerData: any;
+      let effectiveFileIds = fileIds;
 
-      if (selectedFiles.length > 0) {
+      // Upload whenever new files are attached to this message; continuation
+      // sends pass no new files and just resend the previously stored fileIds
+      if (filesToSend.length > 0) {
         const formData = new FormData();
-        selectedFiles.forEach((f) => formData.append("files", f)); // keep "files"
+        filesToSend.forEach((f) => formData.append("files", f));
 
-        formData.append("prompt", userPrompt || "");
-        if (threadId) formData.append("threadId", threadId);
-
-        // ⛔ no explicit headers; interceptor must NOT force Content-Type for FormData
-        answerData = (
-          await axios.post(
-            `${BASE_URL}/student-service/user/chat-with-files`,
-            formData,
-          )
-        ).data;
-      } else {
-        const jsonPayload: any = { prompt: userPrompt };
-        if (threadId) jsonPayload.threadId = threadId;
-
-        answerData = (
-          await axios.post(
-            `${BASE_URL}/student-service/user/chat-with-files`,
-            jsonPayload,
-          )
-        ).data;
+        const uploadRes = await axios.post(
+          `${BASE_URL}/ai-service/agent/upload-files-to-openai`,
+          formData,
+          { headers: { ...getAuthHeaders() } },
+        );
+        effectiveFileIds = uploadRes.data?.fileIds ?? [];
+        setFileIds(effectiveFileIds);
       }
 
-      const {
-        answer,
-        threadId: newThreadId,
-        remainingPrompts: updatedPrompts,
-      } = answerData ?? {};
+      const payload: any = {
+        agentId,
+        userId,
+        fileIds: effectiveFileIds,
+        messageHistory: [{ role: "user", content: userPrompt }],
+      };
+      if (threadId) payload.threadId = threadId;
+
+      const { data: answerData } = await axios.post(
+        `${BASE_URL}/ai-service/agent/new-chat-openai`,
+        payload,
+        { headers: { ...getAuthHeaders() } },
+      );
+
+      const answer = answerData?.assistant_reply ?? "";
+      const newThreadId = answerData?.thread_id ?? answerData?.threadId;
+      const updatedPrompts = answerData?.remainingPrompts;
 
       // ✅ keep thread + source
       if (newThreadId) {
@@ -1992,6 +2067,7 @@ const AssistantDetails: React.FC = () => {
     setThreadId(null);
     setThreadSource(null);
     setSelectedFiles([]);
+    setFileIds([]);
 
     console.log("[handleNewChat] Started new chat");
     if (isXs) setSidebarOpen(false);
@@ -2018,28 +2094,7 @@ const AssistantDetails: React.FC = () => {
 
     // 👇 Stick to files thread if that's how the thread started
     if (threadSource === "files") {
-      const userMessage: ChatMessage = { role: "user", content: prompt };
-      setMessages((prev) => [...prev, userMessage]);
-      setLoading(true);
-      try {
-        const answer = await chatWithFilesFollowup(prompt);
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: cleanContent(answer) },
-        ]);
-      } catch {
-        console.error("File chat followup error");
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              "⚠️ I'm having trouble processing your request. Please try again.",
-          },
-        ]);
-      } finally {
-        setLoading(false);
-      }
+      await handleFileUpload(null, prompt);
       return;
     }
 
@@ -2071,38 +2126,11 @@ const AssistantDetails: React.FC = () => {
       }
 
       if (input.trim()) {
-        // 👇 NEW: stick to chat-with-files if the thread was created there
+        // 👇 stick to the file-based thread if it started that way
         if (threadSource === "files") {
-          const userMessage: ChatMessage = { role: "user", content: input };
-          setMessages((prev) => [...prev, userMessage]);
+          const prompt = input;
           setInput("");
-          setLoading(true);
-          try {
-            const answer = await chatWithFilesFollowup(userMessage.content);
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: cleanContent(answer) },
-            ]);
-          } catch (err: any) {
-            console.error("File followup error:", err);
-            let errorMessage =
-              "I'm having trouble processing your request. Please try again.";
-
-            if (err?.response?.status === 500) {
-              errorMessage =
-                "The service is temporarily unavailable. Please try again shortly.";
-            } else if (err?.response?.status === 429) {
-              errorMessage =
-                "Too many requests. Please wait a moment before trying again.";
-            }
-
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: `⚠️ ${errorMessage}` },
-            ]);
-          } finally {
-            setLoading(false);
-          }
+          await handleFileUpload(null, prompt);
         } else {
           // fallback to your existing agentChat flow
           await sendMessage();
@@ -3637,10 +3665,11 @@ ${url}`.trim();
                           msg.role === "user" ? (
                             <div
                               key={idx}
-                              className={`flex mb-3 sm:mb-4 justify-end group relative gap-2 ${
+                              className={`flex flex-col items-end mb-3 sm:mb-4 gap-1 ${
                                 editingIndex === idx ? "w-full" : ""
                               }`}
                             >
+                            <div className="flex justify-end group relative gap-2 w-full">
                               {editingIndex === idx ? (
                                 <div className="text-base my-auto mx-auto pt-12 [--thread-content-margin:--spacing(4)] thread-sm:[--thread-content-margin:--spacing(6)] thread-lg:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) w-full max-w-3xl">
                                   <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-2xl p-4 shadow-md">
@@ -3798,6 +3827,23 @@ ${url}`.trim();
                                     </svg>
                                   </div>
                                 </>
+                              )}
+                            </div>
+                            {editingIndex !== idx &&
+                              msg.fileNames &&
+                              msg.fileNames.length > 0 && (
+                                <div className="flex flex-col items-end gap-1 pr-10 max-w-[85%] sm:max-w-[80%]">
+                                  {msg.fileNames.map((name, i) => (
+                                    <div
+                                      key={i}
+                                      className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300"
+                                    >
+                                      <span className="truncate">
+                                        📎 {name}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
                               )}
                             </div>
                           ) : (

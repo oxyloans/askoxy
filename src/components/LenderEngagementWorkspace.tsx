@@ -108,7 +108,7 @@ interface CallbackRequestItem {
 const CALLBACK_API = `${BASE_URL}/marketing-service/campgin/request-call-back`;
 const USER_CALLBACK_API = `${CALLBACK_API}/user`;
 const LENDER_REGISTRATION_URL =
-  "https://www.user.oxyloans.com/register?ref=LR1060615";
+  "https://www.user.oxyloans.com/register?ref=LR60615";
 const CALLBACK_DRAFT_KEY = "oxyloansCallbackProfile";
 const PROFILE_API = `${BASE_URL}/user-service/customerProfileDetails`;
 
