@@ -517,6 +517,9 @@ const VoiceAdminDashboard = lazy(() => import("./AIvoicesupport/Dashboard"));
 const VoiceAdminInbound = lazy(() => import("./AIvoicesupport/InboundCalls"));
 const VoiceAdminOutbound = lazy(() => import("./AIvoicesupport/OutboundCalls"));
 const VoiceAdminHistory = lazy(() => import("./AIvoicesupport/CallHistory"));
+const VoiceAdminScheduled = lazy(
+  () => import("./AIvoicesupport/ScheduledCalls"),
+);
 const VoiceAdminInstructions = lazy(
   () => import("./AIvoicesupport/AgentInstructions"),
 );
@@ -1869,6 +1872,10 @@ const App: React.FC = () => {
               <Route
                 path="/voiceadmin/outbound"
                 element={<VoiceAdminOutbound />}
+              />
+              <Route
+                path="/voiceadmin/scheduled"
+                element={<VoiceAdminScheduled />}
               />
               <Route
                 path="/voiceadmin/history"

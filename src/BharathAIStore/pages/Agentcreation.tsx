@@ -470,7 +470,7 @@ const Agentcreation: React.FC = () => {
         const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
 
         const res = await axios.post(
-          `${BASE_URL}/ai-service/agent/getGoalsByRole`,
+          `${BASE_URL}/ai-service/new-agent/getGoalsByRole`,
           {},
           {
             params: { role: effectiveRole },
@@ -648,7 +648,7 @@ const Agentcreation: React.FC = () => {
         const authHeaderObj = (getAuthHeader() || {}) as Record<string, string>;
 
         const res = await axios.post(
-          `${BASE_URL}/ai-service/agent/getPurposeByRoleAndGoals`,
+          `${BASE_URL}/ai-service/new-agent/getPurposeByRoleAndGoals`,
           {},
           {
             params: { role: effectiveRole, goal: effectiveGoal },
@@ -1890,7 +1890,7 @@ const Agentcreation: React.FC = () => {
       setUserModeLoading(true);
       try {
         const res = await axios.post(
-          `${BASE_URL}/ai-service/agent/getUserModeDetails`,
+          `${BASE_URL}/ai-service/new-agent/getUserModeDetails`,
           {},
           {
             params: { role, goal, purpose },
@@ -2017,7 +2017,7 @@ const Agentcreation: React.FC = () => {
       return;
     }
 
-    const baseUrl = `${BASE_URL}/ai-service/agent/getAgentName`;
+    const baseUrl = `${BASE_URL}/ai-service/new-agent/getAgentName`;
     const qs = (o: Record<string, string>) => new URLSearchParams(o).toString();
 
     // 🔹 Always send trimmed Creator Name
@@ -2218,7 +2218,7 @@ const Agentcreation: React.FC = () => {
       return;
     }
 
-    const baseUrl = `${BASE_URL}/ai-service/agent/getAgentDescription`;
+    const baseUrl = `${BASE_URL}/ai-service/new-agent/getAgentDescription`;
     const qs = new URLSearchParams({
       role: roleResolved,
       goal: goalResolved,
@@ -2300,7 +2300,7 @@ const Agentcreation: React.FC = () => {
       message.error("You're not signed in. Please log in and try again.");
       return;
     }
-    const baseUrl = `${BASE_URL}/ai-service/agent/generateAgentInstructions`;
+    const baseUrl = `${BASE_URL}/ai-service/new-agent/generateAgentInstructions`;
     const descClean = cleanForTransport(description);
 
     const ctrl = new AbortController();
@@ -2366,7 +2366,7 @@ const Agentcreation: React.FC = () => {
       return;
     }
     const descClean = cleanForTransport(baseDesc);
-    const urlBase = `${BASE_URL}/ai-service/agent/classifyStartConversation`;
+    const urlBase = `${BASE_URL}/ai-service/new-agent/classifyStartConversation`;
 
     setStartersLoading(true);
     const ctrl = new AbortController();

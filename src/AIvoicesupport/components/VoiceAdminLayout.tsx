@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
 import {
@@ -23,6 +23,17 @@ const VoiceAdminLayout: React.FC<VoiceAdminLayoutProps> = ({
   children,
 }) => {
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem("voice_admin_sidebar_collapsed") === "true",
+  );
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("voice_admin_sidebar_collapsed", String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     const primaryType = localStorage.getItem("voice_admin_primaryType");
@@ -42,7 +53,11 @@ const VoiceAdminLayout: React.FC<VoiceAdminLayoutProps> = ({
     <div className="h-screen flex bg-[#f4f5f7] overflow-hidden">
       {/* Fixed Sidebar */}
       <div className="hidden md:flex h-full shrink-0">
-        <VoiceAdminSidebar activeKey={activeKey} />
+        <VoiceAdminSidebar
+          activeKey={activeKey}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapsed}
+        />
       </div>
 
       {/* Main Content */}

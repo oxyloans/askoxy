@@ -76,6 +76,7 @@ const SCENARIO_COLORS: Record<OutboundScenario, string> = {
   KYC_PENDING: "text-amber-500",
   LEAD_FOLLOWUP: "text-emerald-500",
   ORDER_STATUS_UPDATE: "text-cyan-500",
+  BIRTHDAY_WISH: "text-pink-500",
 };
 
 const SCENARIO_FIELD_SUGGESTIONS: Record<OutboundScenario, string[]> = {
@@ -84,6 +85,7 @@ const SCENARIO_FIELD_SUGGESTIONS: Record<OutboundScenario, string[]> = {
   KYC_PENDING: ["Document Type", "Pending Since"],
   LEAD_FOLLOWUP: ["Lead Source", "Area of Interest"],
   ORDER_STATUS_UPDATE: ["Order ID", "Expected Delivery Date"],
+  BIRTHDAY_WISH: ["Customer Name", "Date of Birth"],
 };
 
 interface CustomField {

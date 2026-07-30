@@ -10,6 +10,7 @@ import type {
   OutboundScenario,
   OutboundCallRequest,
   OutboundCallResponse,
+  ScheduledCallsResponse,
 } from "./types";
 import BASE_URL from "../Config";
 
@@ -133,6 +134,18 @@ export const updateOutboundGreeting = async (
   const { data } = await client.post<AgentInstruction>(
     `/admin/agent-instructions/${platform}/outbound/greeting/${scenario}`,
     { content },
+  );
+  return data;
+};
+
+/** Upcoming/pending scheduled calls within a date range (format: DD-MM-YYYY). */
+export const getScheduledCalls = async (
+  startDate: string,
+  endDate: string,
+): Promise<ScheduledCallsResponse> => {
+  const { data } = await client.get<ScheduledCallsResponse>(
+    "/calls/scheduled",
+    { params: { startDate, endDate } },
   );
   return data;
 };

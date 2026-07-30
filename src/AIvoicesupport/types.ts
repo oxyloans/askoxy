@@ -102,6 +102,7 @@ export const OUTBOUND_SCENARIOS = [
   "KYC_PENDING",
   "LEAD_FOLLOWUP",
   "ORDER_STATUS_UPDATE",
+  "BIRTHDAY_WISH",
 ] as const;
  
 export type OutboundScenario = (typeof OUTBOUND_SCENARIOS)[number];
@@ -112,6 +113,7 @@ export const OUTBOUND_SCENARIO_LABELS: Record<OutboundScenario, string> = {
   KYC_PENDING: "KYC Pending",
   LEAD_FOLLOWUP: "Lead Follow-up",
   ORDER_STATUS_UPDATE: "Order Status Update",
+  BIRTHDAY_WISH: "Birthday Wish",
 };
 
 
@@ -150,6 +152,10 @@ export const SCENARIO_PAYLOAD_FIELDS: Record<OutboundScenario, PayloadFieldConfi
     { key: "orderStatus", label: "Order Status", type: "text", placeholder: "Shipped" },
     { key: "expectedDeliveryDate", label: "Expected Delivery", type: "date" },
   ],
+  BIRTHDAY_WISH: [
+    { key: "customerName", label: "Customer Name", type: "text", placeholder: "Ravi Kumar" },
+    { key: "dateOfBirth", label: "Date of Birth", type: "date" },
+  ],
 };
  
 export interface OutboundCallRequest {
@@ -164,4 +170,59 @@ export interface OutboundCallResponse {
   message?: string;
   callId?: string;
   [key: string]: unknown;
+}
+
+export type ScheduledCallStatus =
+  | "INITIATED"
+  | "ANSWERED"
+  | "NO_ANSWER"
+  | "FAILED"
+  | "BUSY"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "SCHEDULED"
+  | string;
+
+export interface ScheduledCallAttempt {
+  attemptNumber: number;
+  callSid: string;
+  status: ScheduledCallStatus;
+  scheduledAt: string;
+  dialedAt: string | null;
+  answeredAt: string | null;
+  endedAt: string | null;
+  ringDurationSeconds: number | null;
+  talkDurationSeconds: number | null;
+}
+
+export interface ScheduledCallRecording {
+  id: number;
+  callerNumber: string;
+  platform: string | null;
+  callDirection: CallDirection;
+  callScenario: string | null;
+  callSummary: string;
+  callPurpose: string;
+  revenueGenerated: boolean;
+  revenueDetails: string;
+  timestamp: string;
+  recordingUrl: string;
+  transcript: TranscriptMessage[];
+}
+
+export interface ScheduledCallItem {
+  phoneNumber: string;
+  scenario: OutboundScenario | string;
+  followUpReason: string | null;
+  finalStatus: ScheduledCallStatus;
+  nextRetryAt: string | null;
+  attempts: ScheduledCallAttempt[];
+  callRecording: ScheduledCallRecording | null;
+}
+
+export interface ScheduledCallsResponse {
+  startDate: string;
+  endDate: string;
+  totalCalls: number;
+  calls: ScheduledCallItem[];
 }
