@@ -403,7 +403,7 @@ const FreeAiBookLandingPage = lazy(() => import("./FREEAIBOOK/LandingPage"));
 
 const ChatInterface = lazy(() => import("./components/ChatInterfaceAi"));
 const WalletEligibilitySlabs = lazy(
-  () => import("./PartnerWeb/CartAmountBasedOrder"),
+  () => import("./PartnerWeb/DistanceConfig"),
 );
 const CreateFromImageText = lazy(
   () => import("./PartnerWeb/CreateFromImageText"),

@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
-import { customerApi } from "../utils/axiosInstance";
 import { message } from "antd";
 import axios from "axios";
 
-const API_BASE_URL = "https://interviews-zadn.onrender.com/api/delivery"
+const API_BASE_URL = "https://deliverydistance.onrender.com/api/delivery"
 
 interface DeliveryFeeProps {
   userLat?: number;

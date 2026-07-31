@@ -4,10 +4,10 @@ type GlobalConfigResponse = {
   config?: Record<string, string | number>;
 };
 
-const DELIVERY_API_BASE = (process.env.REACT_APP_DELIVERY_API_BASE || "").trim().replace(/\/$/, "");
+const DELIVERY_API_BASE = "https://deliverydistance.onrender.com";
 const CONFIG_ENDPOINT = `${DELIVERY_API_BASE}/api/delivery/config`;
 
-export default function CartAmountBasedOrder() {
+export default function DistanceConfig() {
   const [distance, setDistance] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

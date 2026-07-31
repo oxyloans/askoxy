@@ -279,7 +279,7 @@ const Content1: React.FC = () => {
   `}
       </style>
 
-      <button
+      {/* <button
         onClick={toggleAiChat}
         className="fixed bottom-6 right-6 z-40 bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-300 animate-glow"
         title={isAiChatOpen ? "Close ASKOXY.AI" : "Open ASKOXY.AI"}
@@ -324,7 +324,7 @@ const Content1: React.FC = () => {
             <line x1="18" y1="12" x2="20" y2="12" strokeLinecap="round" />
           </svg>
         )}
-      </button>
+      </button> */}
 
       <div
         className={`transition-all duration-300
