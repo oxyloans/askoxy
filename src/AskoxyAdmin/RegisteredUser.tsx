@@ -18,10 +18,8 @@ import {
   Spin,
   Modal,
   message,
-  List,
-  Divider,
-  Tabs,
   Tooltip,
+  Tabs,
   SelectProps,
 } from "antd";
 import {
@@ -90,6 +88,17 @@ interface ApiResponse {
   number: number;
   size: number;
 }
+
+interface InterestedUser {
+  userId: string | null;
+  mobileNumber: string | null;
+  askOxyOfers: string | null;
+}
+
+const normalizePhone = (value: string | null | undefined): string => {
+  const digits = String(value || "").replace(/\D/g, "");
+  return digits.length > 10 ? digits.slice(-10) : digits;
+};
 
 interface OrderHistory {
   createdDate: string | null;
@@ -172,6 +181,12 @@ const timeOptions = [
 
 const RegisteredUser: React.FC = () => {
   const [userData, setUserData] = useState<UserData[]>([]);
+  const [interestedOffersByUserId, setInterestedOffersByUserId] = useState<
+    Record<string, string>
+  >({});
+  const [interestedOffersByMobile, setInterestedOffersByMobile] = useState<
+    Record<string, string>
+  >({});
   const [loading, setLoading] = useState<boolean>(true);
   const [searchText, setSearchText] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
@@ -422,6 +437,7 @@ const RegisteredUser: React.FC = () => {
     const storedUniqueId = localStorage.getItem("admin_uniquId");
     setStoredUniqueId(storedUniqueId);
     fetchCounts();
+    fetchInterestedUsers();
   }, []);
 
   useEffect(() => {
@@ -460,6 +476,37 @@ const RegisteredUser: React.FC = () => {
       console.error("Failed to fetch data:", error);
     }
   };
+
+  const fetchInterestedUsers = async () => {
+    try {
+      const response = await adminApi.get<InterestedUser[]>(
+        `${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`
+      );
+      const offersByUserId: Record<string, string> = {};
+      const offersByMobile: Record<string, string> = {};
+
+      response.data.forEach(({ userId, mobileNumber, askOxyOfers }) => {
+        if (userId && askOxyOfers && !offersByUserId[userId]) {
+          offersByUserId[userId] = askOxyOfers;
+        }
+
+        const normalizedMobile = normalizePhone(mobileNumber);
+        if (
+          normalizedMobile &&
+          askOxyOfers &&
+          !offersByMobile[normalizedMobile]
+        ) {
+          offersByMobile[normalizedMobile] = askOxyOfers;
+        }
+      });
+
+      setInterestedOffersByUserId(offersByUserId);
+      setInterestedOffersByMobile(offersByMobile);
+    } catch (error) {
+      console.error("Error fetching interested users:", error);
+    }
+  };
+
   const fetchHelpDeskUsers = async () => {
     try {
       const response = await axios.get(
@@ -505,9 +552,9 @@ const RegisteredUser: React.FC = () => {
       ),
     },
     {
-      title: <div className="text-center">User Details</div>,
+      title: <div className="text-left">User Details</div>,
       key: "userDetails",
-      width: 150,
+
       // align: "center" as const,
       render: (_: string, record: UserData) => {
         const mobile = record.mobileNumber;
@@ -582,26 +629,46 @@ const RegisteredUser: React.FC = () => {
       title: "Registered From",
       dataIndex: "userType",
       key: "userType",
-      width: 80,
-      render: (_: string, record: UserData) => (
-        <>
-          <Tag className="mb-1" color="green">
-            {record.userType}
-          </Tag>
-          {record.registerFrom && (
-            <Tag color="geekblue">{record.registerFrom}</Tag>
-          )}
-        </>
-      ),
+      // align: "center" as const,
+      render: (_: string, record: UserData) => {
+        const matchedOffer =
+          interestedOffersByUserId[record.id] ||
+          interestedOffersByMobile[normalizePhone(record.mobileNumber)] ||
+          interestedOffersByMobile[normalizePhone(record.whatsappNumber)];
+        const registeredFrom = matchedOffer || record.registerFrom;
+
+        return (
+          <Space direction="vertical" size={4} style={{ maxWidth: 180 }}>
+            <Tag color="green">{record.userType}</Tag>
+            {registeredFrom && (
+              <Tooltip title={registeredFrom} placement="topLeft">
+                <Tag
+                  color={matchedOffer ? "purple" : "geekblue"}
+                  style={{
+                    display: "block",
+                    maxWidth: 180,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    cursor: "help",
+                  }}
+                >
+                  {registeredFrom}
+                </Tag>
+              </Tooltip>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: "Registration Date",
       key: "createdAt",
-      width: 90,
+
       align: "center" as const,
       render: (record: UserData) => {
         const helpDeskName = getHelpDeskName(
-          record.helpdeskuserId || record.assignedTo
+          record.helpdeskuserId || record.assignedTo,
         );
         return (
           <div className="flex flex-col items-center justify-center text-center">
@@ -627,10 +694,10 @@ const RegisteredUser: React.FC = () => {
       title: "Address",
       dataIndex: "address",
       key: "address",
-      width: 150,
+
       align: "center" as const,
       render: (text: string, record: UserData) => {
-        if (!record) return "N/A";
+        if (!record) return "";
 
         const fullAddress = `${record.flatNo || ""} ${record.landMark || ""} ${
           record.address || ""
@@ -654,7 +721,7 @@ const RegisteredUser: React.FC = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 120,
+      align: "center" as const,
       render: (_text: any, record: UserData) => (
         <div className="flex flex-col gap-2 w-fit">
           <Button
@@ -1387,7 +1454,7 @@ const RegisteredUser: React.FC = () => {
           pagination={pagination}
           onChange={handleTableChange}
           loading={loading}
-          scroll={{ x: "max-content" }}
+          scroll={{ x: "true" }}
           size="small"
           rowClassName={(_, index) =>
             index % 2 === 0 ? "table-row-light" : "table-row-dark"

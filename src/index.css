@@ -11,9 +11,7 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-100%); }
@@ -27,4 +25,103 @@ code {
  @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+ }
+
+
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities;
+
+ html {
+   scroll-behavior: smooth;
+   box-sizing: border-box;
+ }
+
+ *,
+ *::before,
+ *::after {
+   box-sizing: inherit;
+ }
+
+ body {
+   @apply bg-paper text-ink font-body antialiased;
+ }
+
+ img {
+   max-width: 100%;
+   height: auto;
+   display: block;
+ }
+
+ ::selection {
+   background: #D4AF37;
+   color: #1A1625;
+ }
+
+ @media (prefers-reduced-motion: reduce) {
+
+   *,
+   *::before,
+   *::after {
+     animation-duration: 0.01ms !important;
+     animation-iteration-count: 1 !important;
+     transition-duration: 0.01ms !important;
+   }
+ }
+
+ .focus-ring {
+   @apply outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
+ }
+
+ @keyframes ticker-scroll {
+   0% {
+     transform: translate3d(0, 0, 0);
+   }
+
+   100% {
+     transform: translate3d(-50%, 0, 0);
+   }
+ }
+
+ .animate-ticker {
+   animation: ticker-scroll 90s linear infinite;
+   will-change: transform;
+ }
+
+ .animate-ticker:hover {
+   animation-play-state: paused;
+ }
+
+ @media (prefers-reduced-motion: reduce) {
+   .animate-ticker {
+     animation: none;
+   }
+ }
+
+ /* transient highlight for scroll targets */
+ .scroll-highlight {
+   animation: highlightFade 1.5s ease-in-out;
+ }
+
+ @keyframes highlightFade {
+   0% {
+     box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.12);
+   }
+
+   50% {
+     box-shadow: 0 0 0 10px rgba(212, 175, 55, 0.06);
+   }
+
+   100% {
+     box-shadow: none;
+   }
+ }
+
+ /* stronger article colors for modern look */
+ .text-plum-dark {
+   color: #2D1B4E;
+ }
+
+ .bg-plum-dark {
+   background-color: #2D1B4E;
  }

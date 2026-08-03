@@ -14,40 +14,36 @@ const Header: React.FC = () => {
   useEffect(() => {
     sessionStorage.removeItem("primaryType");
     sessionStorage.removeItem("fromAISTore");
-    sessionStorage.removeItem("redirectPath");
   }, []);
+
+  const getPostAuthPath = () => {
+    const { pathname, search, hash } = window.location;
+    const currentPath = `${pathname}${search}${hash}`;
+
+    if (pathname === "/myblogs") {
+      return "/main/dashboard/myblogs";
+    }
+
+    if (pathname.startsWith("/services/")) {
+      return `/main${currentPath}`;
+    }
+
+    return pathname === "/" ? "/main/dashboard/home" : currentPath;
+  };
 
   const handleSignIn1 = () => {
     const userId = localStorage.getItem("userId");
     const accessToken = localStorage.getItem("accessToken");
+    const redirectPath = getPostAuthPath();
+
+    // Preserve the page that opened the authentication flow. Both the login
+    // and registration pages use this value after authentication succeeds.
+    sessionStorage.setItem("redirectPath", redirectPath);
 
     if (userId && accessToken) {
-      // Set current path in sessionStorage first
-      const currentPath = window.location.pathname;
-      sessionStorage.setItem("currentPath", currentPath);
-      
-      // Get current path from sessionStorage and check
-      const storedCurrentPath = sessionStorage.getItem("currentPath");
-      let redirectPath;
-      
-      if (storedCurrentPath === "/myblogs") {
-        redirectPath = "/main/dashboard/myblogs";
-      } else {
-        redirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
-      }
-      
-      toast.success("Welcome back! Redirecting to dashboard...");
+      toast.success("Welcome back!");
       navigate(redirectPath);
       return;
-    }
-
-    // User is not logged in - set redirect path based on current location
-    const currentPath = window.location.pathname;
-    if (currentPath === "/myblogs") {
-      sessionStorage.setItem("redirectPath", "/main/dashboard/myblogs");
-    } else {
-      const existingRedirectPath = sessionStorage.getItem("redirectPath") || "/main/dashboard/home";
-      sessionStorage.setItem("redirectPath", existingRedirectPath);
     }
 
     navigate("/whatsapplogin");

@@ -53,8 +53,7 @@ import { message } from "antd";
 import { MdWork } from "react-icons/md";
 import { ApartmentOutlined } from "@ant-design/icons";
 import { stopTokenRefresh } from "./RefreshToken";
-import { useSessionManager } from "./useSessionManage";
-import SessionModal from "./SessionModal";
+
 import {
   removeAdminAccessToken,
   removeAdminRefreshToken,
@@ -106,12 +105,6 @@ const Sidebar: React.FC = () => {
     navigate("/admin");
   }, [navigate]);
 
-  const {
-    showSessionModal,
-    refreshing,
-    handleContinueSession,
-    handleSessionLogout,
-  } = useSessionManager(handleLogout);
 
   useEffect(() => {
     const tokenString = getAdminAccessToken();
@@ -549,17 +542,6 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      {showSessionModal && (
-        <div style={{ zIndex: 9999, position: "fixed" }}>
-          <SessionModal
-            visible={showSessionModal}
-            loading={refreshing}
-            onContinue={handleContinueSession}
-            onLogout={handleSessionLogout}
-          />
-        </div>
-      )}
-
       <div>
         {isMobileOpen && isMobile && (
           <div

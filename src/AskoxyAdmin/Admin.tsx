@@ -101,7 +101,7 @@ const normalizeOffer = (value: string | undefined | null): string => {
 /** ================= Component ================== */
 const Admin: React.FC = () => {
   const screens = useBreakpoint();
-  // Consider < lg as mobile (covers small tablets)
+  // Consider    lg as mobile (covers small tablets)
   const isMobile = !screens.lg;
 
   const [rawOffers, setRawOffers] = useState<OfferDetails[]>([]);
@@ -194,7 +194,9 @@ const Admin: React.FC = () => {
   const serviceOptions = useMemo(() => {
     const all = Array.from(
       new Set([...knownOfferTypes, ...dynamicLabels]),
-    ).filter(Boolean);
+    )
+      .filter(Boolean)
+      .sort((a, b) => b.localeCompare(a));
     return all.map((s) => ({ label: s, value: s }));
   }, [dynamicLabels]);
 
@@ -282,8 +284,8 @@ const Admin: React.FC = () => {
     {
       title: "S.No",
       key: "index",
-      align: "center",
-      width: 80,
+      align: "left",
+
       render: (_: any, __: any, index: number) =>
         index + 1 + (currentPage - 1) * pageSize,
     },
@@ -291,24 +293,38 @@ const Admin: React.FC = () => {
       title: "Mobile Number",
       dataIndex: "mobileNumber",
       key: "mobileNumber",
-      align: "center",
-      width: 190,
+      align: "left",
+
       render: (v: string | null) => v || "N/A",
     },
     {
       title: "Interested In",
       dataIndex: "askOxyOfers",
       key: "askOxyOfers",
-      align: "center",
-      width: 230,
-      render: (v: string) => <Tag color={tagColor(v)}>{v || "N/A"}</Tag>,
+      align: "left",
+
+      render: (v: string) => (
+        <Tag
+          color={tagColor(v)}
+          style={{
+            maxWidth: "100%",
+            height: "auto",
+            lineHeight: "20px",
+            padding: "3px 8px",
+            whiteSpace: "normal",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {v || "N/A"}
+        </Tag>
+      ),
     },
     {
       title: "Created At",
       dataIndex: "_createdAtMs",
       key: "_createdAtMs",
-      align: "center",
-      width: 220,
+      align: "left",
+
       render: (_: any, row: OfferDetails) =>
         fmt(row._createdAtMs || row.createdAt),
       sorter: (a, b) => (a._createdAtMs || 0) - (b._createdAtMs || 0),
@@ -371,9 +387,77 @@ const Admin: React.FC = () => {
 
   /** ---------- UI ---------- */
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
+      <div className="border-b border-gray-200 bg-white">
+        <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4 md:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">
+                Interested Users
+              </h1>
+              <p className="mt-0.5 text-sm text-gray-500">
+                View and filter customer interests
+              </p>
+              <p
+                className="mt-2 text-sm font-medium text-gray-700"
+                aria-live="polite"
+              >
+                Total:{" "}
+                <span className="font-semibold text-blue-600">
+                  {filteredRows.length}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto lg:justify-end">
+              <div className="w-full sm:w-80">
+                <Search
+                  allowClear
+                  placeholder="Search by service or mobile"
+                  value={searchText}
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full"
+                  size={isMobile ? "large" : "middle"}
+                  prefix={
+                    <SearchOutlined
+                      style={{ fontSize: isMobile ? 16 : 14, color: "#8c8c8c" }}
+                    />
+                  }
+                  style={{ fontSize: isMobile ? "16px" : "14px" }}
+                />
+              </div>
+
+              <div className="w-full sm:w-64">
+                <Select
+                  allowClear
+                  showSearch
+                  placeholder="All services"
+                  options={serviceOptions}
+                  value={serviceFilter[0]}
+                  onChange={(value?: string) => {
+                    setServiceFilter(value ? [value] : []);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full"
+                  size={isMobile ? "large" : "middle"}
+                  dropdownMatchSelectWidth
+                  filterOption={(input, option) =>
+                    String(option?.label || "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Top Controls (never sticky) */}
-      <div className="bg-white border-b">
+      <div className="hidden">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3">
           {/* Title + Actions */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
@@ -546,7 +630,7 @@ const Admin: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3">
+      <div className="hidden">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <StatCard title="Total" value={filteredRows.length} />
           <StatCard
@@ -594,7 +678,7 @@ const Admin: React.FC = () => {
 
       {/* Content */}
       <div
-        className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 pb-6"
+        className="max-w-7xl mx-auto px-3 pt-4 sm:px-4 md:px-6 pb-6"
         // Reserve space for bottom dock on iOS/Android
         style={{
           paddingBottom: isMobile
@@ -603,11 +687,11 @@ const Admin: React.FC = () => {
         }}
       >
         {loading ? (
-          <div className="bg-white border rounded-xl p-4">
+          <div className="border border-gray-200 bg-white p-4">
             <Skeleton active paragraph={{ rows: 6 }} />
           </div>
         ) : error ? (
-          <div className="bg-white border rounded-xl p-6 text-center">
+          <div className="border border-gray-200 bg-white p-6 text-center">
             <p className="text-red-600">{error}</p>
             <Button
               className="mt-3"
@@ -618,12 +702,12 @@ const Admin: React.FC = () => {
             </Button>
           </div>
         ) : !filteredRows.length ? (
-          <div className="bg-white border rounded-xl p-8 text-center">
+          <div className="border border-gray-200 bg-white p-8 text-center">
             <Empty description="No data found" />
           </div>
         ) : isMobile ? (
           /* --------- MOBILE CARD LIST --------- */
-          <div className="bg-white border rounded-xl shadow-sm overflow-hidden relative">
+          <div className="relative overflow-hidden border border-gray-200 bg-white">
             {/* Top pager (simple, non-sticky) */}
             <div className="px-3 py-2 border-b bg-gray-50 text-sm text-gray-600 flex justify-between items-center">
               <span>
@@ -686,11 +770,9 @@ const Admin: React.FC = () => {
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                       <Tag
                         color={tagColor(o.askOxyOfers)}
-                        className="text-[11px] px-2 py-0.5 rounded-md w-fit"
+                        className="w-fit max-w-full whitespace-normal break-words px-2 py-0.5 text-[11px] leading-5"
                       >
-                        {(o.askOxyOfers || "N/A").length > 22
-                          ? `${(o.askOxyOfers || "N/A").substring(0, 22)}…`
-                          : o.askOxyOfers || "N/A"}
+                        {o.askOxyOfers || "N/A"}
                       </Tag>
                       <div className="text-[11px] text-gray-500">
                         {fmt(o._createdAtMs || o.createdAt)}
@@ -703,7 +785,7 @@ const Admin: React.FC = () => {
           </div>
         ) : (
           /* --------- DESKTOP / LARGE TABLE --------- */
-          <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-hidden border border-gray-200 bg-white">
             <Table
               dataSource={filteredRows.map((o, i) => ({
                 ...o,
@@ -722,7 +804,7 @@ const Admin: React.FC = () => {
                   `${range[0]}-${range[1]} of ${total} items`,
                 size: "small",
               }}
-              scroll={{ x: 720, y: 520, scrollToFirstRowOnChange: true }}
+              scroll={{ x: true,  scrollToFirstRowOnChange: true }}
               size="small"
             />
           </div>

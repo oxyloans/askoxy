@@ -7,6 +7,11 @@ import {
   setEmployeeAccessToken,
   setEmployeeRefreshToken,
   getBusinessCardRefreshToken,
+  getAdminRefreshToken,
+  setAdminAccessToken,
+  setAdminRefreshToken,
+  removeAdminAccessToken,
+  removeAdminRefreshToken,
   removeEmployeeAccessToken,
   removeEmployeeRefreshToken,
   getFreelanceRefreshToken,
@@ -25,6 +30,7 @@ let pendingRefresh: Promise<boolean> | null = null;
 let pendingEmployeeRefresh: Promise<boolean> | null = null;
 let pendingFreelanceRefresh: Promise<boolean> | null = null;
 let pendingBusinessCardRefresh: Promise<boolean> | null = null;
+let pendingAdminRefresh: Promise<boolean> | null = null;
 export const refreshAccessToken = async (): Promise<boolean> => {
   // Return the in-flight promise to prevent concurrent refresh calls
   if (pendingRefresh) return pendingRefresh;
@@ -157,6 +163,45 @@ export const refreshBusinessCardAccessToken = async (): Promise<boolean> => {
   })();
 
   return pendingBusinessCardRefresh;
+};
+
+export const refreshAdminAccessToken = async (): Promise<boolean> => {
+  if (pendingAdminRefresh) return pendingAdminRefresh;
+
+  const refreshToken = getAdminRefreshToken();
+  if (!refreshToken) return false;
+
+  pendingAdminRefresh = (async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user-service/refresh-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AskOxy Admin refresh failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.mobileNumber) {
+        setAdminAccessToken(data.mobileNumber);
+      }
+      if (data.mobileOtpSession) {
+        setAdminRefreshToken(data.mobileOtpSession);
+      }
+
+      return true;
+    } catch {
+      removeAdminAccessToken();
+      removeAdminRefreshToken();
+      return false;
+    } finally {
+      pendingAdminRefresh = null;
+    }
+  })();
+
+  return pendingAdminRefresh;
 };
 export const refreshFreelanceAccessToken = async (): Promise<boolean> => {
   if (pendingFreelanceRefresh) return pendingFreelanceRefresh;

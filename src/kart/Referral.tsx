@@ -163,7 +163,7 @@ const ReferralPage: React.FC = () => {
         `${BASE_URL}/reference-service/getreferencedetails/${customerId}`
       );
 
-      setRefereeDetails(response.data);
+      setRefereeDetails(response.data.reverse()); // Reverse to show the latest first 
 
       const total = response.data.length;
       const active = response.data.filter(

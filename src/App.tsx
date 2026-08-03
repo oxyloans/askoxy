@@ -18,6 +18,14 @@ import SovereignAIPage from "./components/SovereignAIPage";
 import PersonalDetailsPage from "./BusinessCard/PersonalDetailsPage";
 import EventImagesUploadPage from "./BusinessCard/EventImagesUploadPage";
 import UserEventDetailsListPage from "./BusinessCard/UserEventDetailsListPage";
+import ArticlePage from "./OxyNews/pages/ArticlePage";
+import ExplorePage from "./OxyNews/pages/ExplorePage";
+import ResourcePage from "./OxyNews/pages/ResourcePage";
+import ExternalArticlePage from "./OxyNews/pages/ExternalArticlePage";
+import RadhaiNewsPage from "./OxyNews/pages/RadhaiNewsPage";
+import OxyNewsHomePage from "./OxyNews/pages/OxyNewsHomePage";
+import OxyLayout from "./OxyNews/components/OxyLayout";
+
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -820,9 +828,7 @@ const App: React.FC = () => {
               !isRestrictedRoute() && <FloatingCallButton />}
             {localStorage.getItem("userId") &&
               !isRestrictedRoute() && <FloatingGiftOffersButton />} */}
-            {isLoggedIn && isRootRoute && (
-              <FloatingCallButton hideOnMobile />
-            )}
+            {isLoggedIn && isRootRoute && <FloatingCallButton hideOnMobile />}
 
             {isLoggedIn && isDashboardHomeRoute && (
               <>
@@ -841,9 +847,15 @@ const App: React.FC = () => {
               <Route path="/Oxygpt" element={<OxyGPT />} />
               <Route path="/oxygpt/claude" element={<OxyStreamClaude />} />
               <Route path="/loan-application" element={<BorrowerChatPage />} />
-              <Route path="/salaried-br-loan-application" element={<SalariedBorrowerChatPage />} />
-              <Route path="/application-status" element={<AdminDashboardPage />} />
-              
+              <Route
+                path="/salaried-br-loan-application"
+                element={<SalariedBorrowerChatPage />}
+              />
+              <Route
+                path="/application-status"
+                element={<AdminDashboardPage />}
+              />
+
               <Route path="/oxygpt/share/:sessionId" element={<OxyGPT />} />
               <Route path="/finvibe" element={<Finvibe3DLanding />} />
               <Route path="/use-case-engine" element={<UseCaseEngineDemo />} />
@@ -857,11 +869,21 @@ const App: React.FC = () => {
               <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
               <Route path="/oxybfsai" element={<Billing />} />
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
-              <Route
-                  path="/oxycommunity"
-                  element={<CommunityPage />}
+              <Route path="/oxycommunity" element={<CommunityPage />} />
+              <Route element={<OxyLayout/>}>
+                <Route path="/oxynews" element={<OxyNewsHomePage />} />
+                <Route path="/article/:id" element={<ArticlePage />} />
+                <Route path="/explore" element={<ExplorePage />} />
+                <Route
+                  path="/resources/:categoryId/:resourceId"
+                  element={<ResourcePage />}
                 />
-
+                <Route
+                  path="/news/:sourceName/:id"
+                  element={<ExternalArticlePage />}
+                />
+                <Route path="/radhai-news" element={<RadhaiNewsPage />} />
+              </Route>
               {/* OXY BFSAI Engine — full layout with fixed header */}
               <Route element={<FinvibeLayout />}>
                 <Route path="/oxybfsai-engine" element={<FinvibeHomePage />} />
@@ -1280,8 +1302,14 @@ const App: React.FC = () => {
               />
               <Route path="/nyayagpt" element={<Nyayagpt />} />
               <Route path="/gstonrice" element={<GSTRiceFAQ />} />
-              <Route path="/business-card/login" element={<BusinessCardLogin />} />
-              <Route path="/business-card/register" element={<BusinessCardRegister />} />
+              <Route
+                path="/business-card/login"
+                element={<BusinessCardLogin />}
+              />
+              <Route
+                path="/business-card/register"
+                element={<BusinessCardRegister />}
+              />
               <Route
                 path="/business-card/ceo-details"
                 element={
@@ -1613,8 +1641,14 @@ const App: React.FC = () => {
               <Route path="/may2Interview" element={<HiringLandingPage />} />
               {/* <Route path="/walkin-journey" element={<WalkInJourneyPage />} /> */}
               <Route path="/lenderjourney" element={<LenderHomePage />} />
-              <Route path="/resume-ai-interview" element={<ATSResumeChecker />} />
-              <Route path="/resume-ai-interview/report/:jobId" element={<ResumeAnalysisReport />} />
+              <Route
+                path="/resume-ai-interview"
+                element={<ATSResumeChecker />}
+              />
+              <Route
+                path="/resume-ai-interview/report/:jobId"
+                element={<ResumeAnalysisReport />}
+              />
               <Route
                 path="/DRAcertification"
                 element={<DRACertificationLanding />}
@@ -1656,7 +1690,6 @@ const App: React.FC = () => {
                   path="/main/dashboard/informationaboutcountries-gpt"
                   element={<InformationAboutCountries />}
                 />
-                
                 <Route
                   path="/main/dashboard/loans-gpt"
                   element={<LoansGpt />}
@@ -1724,7 +1757,10 @@ const App: React.FC = () => {
                 {/* Internal */}
                 <Route path="dashboard/:tab" element={<DashboardMain />} />
                 <Route path="dashboard/myservices" element={<ServicesPage />} />
-                <Route path="dashboard/leaguejourneys" element={<LeagueJourneysPage />} />
+                <Route
+                  path="dashboard/leaguejourneys"
+                  element={<LeagueJourneysPage />}
+                />
                 <Route path="dashboard/myblogs" element={<BlogsPage />} />
                 <Route path="jobdetails" element={<JobDetails />} />
                 <Route path="jobdetails/:id" element={<JobDetails />} />
@@ -1904,7 +1940,10 @@ const App: React.FC = () => {
                 <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
                 <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
                 <Route path="addleaguejourney" element={<AddLeagueJourney />} />
-                <Route path="leaguejourneyusers" element={<LeagueJourneysAdmin />} />
+                <Route
+                  path="leaguejourneyusers"
+                  element={<LeagueJourneysAdmin />}
+                />
                 <Route path="advocates" element={<AdvocatesDataPage />} />
                 <Route
                   path="lender-calling-followups"

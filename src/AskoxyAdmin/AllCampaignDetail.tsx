@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { adminApi as axios, customerApi } from "../utils/axiosInstances";
+import { adminApi as axios } from "../utils/axiosInstances";
 import { uploadurlwithId } from "../Config";
 import { AxiosError } from "axios";
-import Sidebar from "./Sider";
 import {
   message,
   Modal,
   Button,
   Input,
-  Upload,
   Table,
   Tag,
   Spin,
   Tabs,
   Image,
+  Select,
 } from "antd";
 
 import BASE_URL from "../Config";
 const { Search } = Input;
 
-
-const { TabPane } = Tabs;
 
 interface Image {
   imageId: string;
@@ -28,12 +25,20 @@ interface Image {
   status: boolean;
 }
 
+interface Journey {
+  createdAt: string;
+  id: string;
+  journeyName: string;
+  status: boolean;
+  updatedAt: string;
+}
+
 interface Campaign {
   imageUrls: Image[];
   campaignType: string;
   campaignDescription: string;
   campaignTypeAddBy: string;
-  campaignStatus: string;
+  campaignStatus: boolean;
   campaignId: string;
   campainInputType: string;
   socialMediaCaption: string;
@@ -41,7 +46,9 @@ interface Campaign {
   updatedAt: string;
   campaignPostsUrls: PostUrl[];
   addServiceType?: string;
-  journeyName?: string;
+  journeyId?: string | null;
+  journeyObject?: Journey | null;
+  journeyName?: string; // backward-compatible fallback for older responses
 }
 
 interface PostUrl {
@@ -51,6 +58,51 @@ interface PostUrl {
   postUrl: string;
   platformPostId: string;
 }
+
+const getArrayFromResponse = <T,>(data: unknown): T[] => {
+  if (Array.isArray(data)) return data as T[];
+
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>;
+    const candidates = [
+      record.data,
+      record.content,
+      record.result,
+      record.campaigns,
+      record.journeys,
+      record.journeyNames,
+      record.journeyNameList,
+    ];
+    const match = candidates.find(Array.isArray);
+    if (match) return match as T[];
+  }
+
+  return [];
+};
+
+const getDateTime = (value?: string) => {
+  if (!value) return 0;
+  const numericValue = Number(value);
+  const date = Number.isNaN(numericValue)
+    ? new Date(value)
+    : new Date(numericValue);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+};
+
+const normalizeCampaign = (campaign: Campaign): Campaign => ({
+  ...campaign,
+  imageUrls: Array.isArray(campaign.imageUrls) ? campaign.imageUrls : [],
+  campaignPostsUrls: Array.isArray(campaign.campaignPostsUrls)
+    ? campaign.campaignPostsUrls
+    : [],
+  journeyId: campaign.journeyId || campaign.journeyObject?.id || null,
+});
+
+const getJourneyName = (campaign?: Campaign | null) =>
+  campaign?.journeyObject?.journeyName || campaign?.journeyName || "";
+
+const getJourneyId = (campaign?: Campaign | null) =>
+  campaign?.journeyId || campaign?.journeyObject?.id || "";
 
 const AllCampaignsDetails: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -71,7 +123,7 @@ const AllCampaignsDetails: React.FC = () => {
     campaignDescription: "",
     imageUrls: [],
     campaignTypeAddBy: "",
-    campaignStatus: "",
+    campaignStatus: false,
     campaignId: "",
     campainInputType: "",
     campaignPostsUrls: [],
@@ -79,6 +131,8 @@ const AllCampaignsDetails: React.FC = () => {
     createdAt: "",
     updatedAt: "",
     addServiceType: "",
+    journeyId: null,
+    journeyObject: null,
     journeyName: "",
   });
 
@@ -101,6 +155,10 @@ const AllCampaignsDetails: React.FC = () => {
 
   
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [journeys, setJourneys] = useState<Journey[]>([]);
+  const [selectedJourneyId, setSelectedJourneyId] = useState<string>("ALL");
+  const [journeyCampaigns, setJourneyCampaigns] = useState<Campaign[]>([]);
+  const [journeyCampaignLoading, setJourneyCampaignLoading] = useState(false);
 
   // 2) Save scroll position before refresh/route change and restore on mount
   useEffect(() => {
@@ -134,6 +192,7 @@ const AllCampaignsDetails: React.FC = () => {
 
   useEffect(() => {
     fetchCampaigns();
+    fetchJourneys();
   }, []);
 
   useEffect(() => {
@@ -158,23 +217,14 @@ const AllCampaignsDetails: React.FC = () => {
     try {
       const response = await axios.get(
         BASE_URL + "/marketing-service/campgin/getAllCampaignDetails",
-        {
-          headers: {
-            accept: "application/json",
-          },
-        }
+        { headers: { accept: "application/json" } }
       );
-      const filteredCampaigns = response.data.filter(
-        (campaign: Campaign) => campaign.campaignStatus !== null
-      );
-      
-      // Sort by most recent date first
-      const sortedCampaigns = filteredCampaigns.sort((a: Campaign, b: Campaign) => {
-        const dateA = Number(a.createdAt) || 0;
-        const dateB = Number(b.createdAt) || 0;
-        return dateB - dateA; // Most recent first
-      });
-      
+
+      const sortedCampaigns = getArrayFromResponse<Campaign>(response.data)
+        .map(normalizeCampaign)
+        .filter((campaign) => campaign.campaignStatus !== null)
+        .sort((a, b) => getDateTime(b.createdAt) - getDateTime(a.createdAt));
+
       setCampaigns(sortedCampaigns);
     } catch (error) {
       console.error("Error fetching campaigns:", error);
@@ -182,6 +232,65 @@ const AllCampaignsDetails: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchJourneys = async () => {
+    try {
+      const response = await axios.get(
+        BASE_URL + "/marketing-service/campgin/get-all-journey-names",
+        { headers: { accept: "*/*" } }
+      );
+
+      const journeyList = getArrayFromResponse<Journey>(response.data)
+        .filter((journey) => journey?.id && journey?.journeyName)
+        .sort((a, b) => a.journeyName.localeCompare(b.journeyName));
+
+      setJourneys(journeyList);
+    } catch (error) {
+      console.error("Error fetching journey names:", error);
+      message.error("Failed to load journey names.");
+    }
+  };
+
+  const fetchCampaignsByJourneyId = async (journeyId: string) => {
+    setJourneyCampaignLoading(true);
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/marketing-service/campgin/getAllCampaignsByJourneyId/${encodeURIComponent(
+          journeyId
+        )}`,
+        { headers: { accept: "*/*" } }
+      );
+
+      const data = getArrayFromResponse<Campaign>(response.data)
+        .map(normalizeCampaign)
+        .filter((campaign) => campaign.campaignStatus !== null)
+        .sort((a, b) => getDateTime(b.createdAt) - getDateTime(a.createdAt));
+
+      setJourneyCampaigns(data);
+    } catch (error) {
+      console.error("Error fetching campaigns by journey:", error);
+      setJourneyCampaigns([]);
+      message.error("Failed to load campaigns for the selected journey.");
+    } finally {
+      setJourneyCampaignLoading(false);
+    }
+  };
+
+  const refreshCampaignData = async () => {
+    await fetchCampaigns();
+    if (selectedJourneyId !== "ALL") {
+      await fetchCampaignsByJourneyId(selectedJourneyId);
+    }
+  };
+
+  const handleJourneyFilterChange = (journeyId: string) => {
+    setSelectedJourneyId(journeyId);
+    if (journeyId === "ALL") {
+      setJourneyCampaigns([]);
+      return;
+    }
+    fetchCampaignsByJourneyId(journeyId);
   };
 
   const handleStatus = (campaign: Campaign) => {
@@ -201,7 +310,7 @@ const AllCampaignsDetails: React.FC = () => {
                 {
                   // IMPORTANT: null when not hiring, "WEAREHIRING" only for hiring
                   addServiceType: resolveAddServiceType(campaign),
-                  journeyName: campaign.journeyName || null,
+                  journeyId: getJourneyId(campaign) || null,
                   campaignDescription: campaign.campaignDescription,
                   campaignId: campaign.campaignId,
                   campaignStatus: !campaign.campaignStatus, // toggle
@@ -233,7 +342,7 @@ const AllCampaignsDetails: React.FC = () => {
           message.error("Error while updating campaign status.");
           console.error(error);
         }
-        fetchCampaigns();
+        refreshCampaignData();
       },
     });
   };
@@ -254,7 +363,9 @@ const AllCampaignsDetails: React.FC = () => {
       createdAt: "",
       updatedAt: "",
       addServiceType: campaign.addServiceType,
-      journeyName: campaign.journeyName || "",
+      journeyId: getJourneyId(campaign) || null,
+      journeyObject: campaign.journeyObject || null,
+      journeyName: getJourneyName(campaign),
     });
     setIsUpdateModalVisible(true);
   };
@@ -264,8 +375,6 @@ const AllCampaignsDetails: React.FC = () => {
   ) => {
     const files = event.target.files;
     if (!files) return;
-
-    const accessToken = localStorage.getItem("accessToken");
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -478,16 +587,26 @@ const AllCampaignsDetails: React.FC = () => {
   };
 
   const handleUpdateSubmit = async () => {
+    if (
+      currentCampaign?.addServiceType === "LEAGUEJOURNEYS" &&
+      !formData.journeyId
+    ) {
+      message.warning("Please select a journey.");
+      return;
+    }
+
     setIsSubmitting(true);
     setImageErrorMessage("");
-    setFileList([]);
 
     const requestPayload = {
       askOxyCampaignDto: [
         {
           // NEW: set addServiceType only for WEAREHIRING, else null
           addServiceType: resolveAddServiceType(currentCampaign, activeTab),
-          journeyName: formData.journeyName?.trim() || null,
+          journeyId:
+            currentCampaign?.addServiceType === "LEAGUEJOURNEYS"
+              ? formData.journeyId || null
+              : null,
           campaignDescription: formData.campaignDescription,
           campaignId: formData.campaignId,
           campaignType: formData.campaignType,
@@ -527,7 +646,7 @@ const AllCampaignsDetails: React.FC = () => {
           campaignDescription: "",
           imageUrls: [],
           campaignTypeAddBy: "",
-          campaignStatus: "",
+          campaignStatus: false,
           campaignId: "",
           campainInputType: "",
           campaignPostsUrls: [],
@@ -535,8 +654,11 @@ const AllCampaignsDetails: React.FC = () => {
           createdAt: "",
           updatedAt: "",
           addServiceType: "",
+          journeyId: null,
+          journeyObject: null,
           journeyName: "",
         });
+        setFileList([]);
         setIsUpdateModalVisible(false);
       } else {
         setImageErrorMessage("Failed to update campaign. Please try again.");
@@ -547,7 +669,7 @@ const AllCampaignsDetails: React.FC = () => {
       setIsUploading(false);
       setIsSubmitting(false);
     }
-    fetchCampaigns();
+    refreshCampaignData();
   };
 
   const handleModalCancel = () => {
@@ -662,11 +784,22 @@ const AllCampaignsDetails: React.FC = () => {
       title: <div className="text-center">Journey Name</div>,
       dataIndex: "journeyName",
       key: "journeyName",
-      render: (text: string | undefined, record: Campaign) => (
+      render: (_text: string | undefined, record: Campaign) => (
         <div className="max-w-xs break-words">
-          {record.addServiceType === "LEAGUEJOURNEYS"
-            ? text || "Not provided"
-            : "-"}
+          {record.addServiceType === "LEAGUEJOURNEYS" ? (
+            <>
+              <div className="font-medium text-gray-800">
+                {getJourneyName(record) || "Not assigned"}
+              </div>
+              {record.journeyObject && (
+                <Tag color={record.journeyObject.status ? "green" : "red"}>
+                  {record.journeyObject.status ? "Active" : "Inactive"}
+                </Tag>
+              )}
+            </>
+          ) : (
+            "-"
+          )}
         </div>
       ),
     },
@@ -689,8 +822,8 @@ const AllCampaignsDetails: React.FC = () => {
       render: (_: any, record: Campaign) => {
         const isBlog = record.campainInputType === "BLOG";
         const slugSource =
-          record.addServiceType === "LEAGUEJOURNEYS" && record.journeyName
-            ? record.journeyName
+          record.addServiceType === "LEAGUEJOURNEYS" && getJourneyName(record)
+            ? getJourneyName(record)
             : record.campaignType;
         const slugifiedCampaignType = slugify(slugSource);
         const campaignUrl = isBlog
@@ -730,8 +863,8 @@ const AllCampaignsDetails: React.FC = () => {
       render: (_: any, record: Campaign) => {
         const isBlog = record.campainInputType === "BLOG";
         const slugSource =
-          record.addServiceType === "LEAGUEJOURNEYS" && record.journeyName
-            ? record.journeyName
+          record.addServiceType === "LEAGUEJOURNEYS" && getJourneyName(record)
+            ? getJourneyName(record)
             : record.campaignType;
         const slugifiedCampaignType = slugify(slugSource);
         const campaignUrl = isBlog
@@ -834,6 +967,8 @@ const AllCampaignsDetails: React.FC = () => {
   const leagueJourneysCampaigns = campaigns.filter(
     (c) => c.addServiceType === "LEAGUEJOURNEYS"
   );
+  const displayedJourneyCampaigns =
+    selectedJourneyId === "ALL" ? leagueJourneysCampaigns : journeyCampaigns;
   const specialTypes = new Set(["WEAREHIRING", "LEAGUEJOURNEYS"]);
   const serviceCampaigns = campaigns.filter(
     (c) => c.campainInputType === "SERVICE" && !specialTypes.has(c.addServiceType || "")
@@ -856,7 +991,8 @@ const AllCampaignsDetails: React.FC = () => {
         c.campaignTypeAddBy?.toLowerCase().includes(query) ||
         c.campaignId?.toLowerCase().includes(query) ||
         c.campainInputType?.toLowerCase().includes(query) ||
-        c.journeyName?.toLowerCase().includes(query)
+        getJourneyName(c).toLowerCase().includes(query) ||
+        getJourneyId(c).toLowerCase().includes(query)
     );
   };
 
@@ -868,7 +1004,10 @@ const AllCampaignsDetails: React.FC = () => {
 
   const getCampaignUrl = (record: Campaign, withAuth: boolean) => {
     const isBlog = record.campainInputType === "BLOG";
-    const slugSource = record.addServiceType === "LEAGUEJOURNEYS" && record.journeyName ? record.journeyName : record.campaignType;
+    const slugSource =
+      record.addServiceType === "LEAGUEJOURNEYS" && getJourneyName(record)
+        ? getJourneyName(record)
+        : record.campaignType;
     const slug = slugify(slugSource || "campaign");
     if (isBlog) return withAuth ? `${baseUrl}/main/blog/${record.campaignId.slice(-4)}/${slug}` : `${baseUrl}/blog/${record.campaignId.slice(-4)}/${slug}`;
     return withAuth ? `${authUrl}${record.campaignId.slice(-4)}/${slug}` : `${noAuthUrl}${record.campaignId.slice(-4)}/${slug}`;
@@ -885,7 +1024,11 @@ const AllCampaignsDetails: React.FC = () => {
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  {campaign.addServiceType === "LEAGUEJOURNEYS" && campaign.journeyName && <p className="text-xs font-medium text-blue-600">{campaign.journeyName}</p>}
+                  {campaign.addServiceType === "LEAGUEJOURNEYS" && getJourneyName(campaign) && (
+                    <p className="text-xs font-medium text-blue-600">
+                      {getJourneyName(campaign)}
+                    </p>
+                  )}
                   <h3 className="break-words text-sm font-semibold text-gray-900">{campaign.campaignType}</h3>
                 </div>
                 <Tag color={campaign.campaignStatus ? "green" : "red"}>{campaign.campaignStatus ? "Active" : "Inactive"}</Tag>
@@ -963,7 +1106,44 @@ const AllCampaignsDetails: React.FC = () => {
                 { key: "service", label: `Services (${serviceCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(serviceCampaigns), "Service")}</div> },
                 { key: "product", label: `Products (${productCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(productCampaigns), "Product")}</div> },
                 { key: "blog", label: `Blogs (${blogCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(blogCampaigns), "Blog", true)}</div> },
-                { key: "leaguejourneys", label: `Journeys (${leagueJourneysCampaigns.length})`, children: <div className="p-3 sm:p-4">{renderTable(filterBySearch(leagueJourneysCampaigns), "Journey")}</div> },
+                {
+                  key: "leaguejourneys",
+                  label: `Journeys (${leagueJourneysCampaigns.length})`,
+                  children: (
+                    <div className="p-3 sm:p-4">
+                      <div className="mb-4 flex flex-col gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">Filter by Journey</p>
+                          <p className="text-xs text-gray-500">Uses getAllCampaignsByJourneyId when a journey is selected.</p>
+                        </div>
+                        <Select
+                          showSearch
+                          value={selectedJourneyId}
+                          onChange={handleJourneyFilterChange}
+                          optionFilterProp="label"
+                          className="w-full sm:w-80"
+                          options={[
+                            { value: "ALL", label: "All Journeys" },
+                            ...journeys.map((journey) => ({
+                              value: journey.id,
+                              label: `${journey.journeyName}${journey.status ? "" : " (Inactive)"}`,
+                            })),
+                          ]}
+                        />
+                      </div>
+                      {journeyCampaignLoading ? (
+                        <div className="flex min-h-48 items-center justify-center">
+                          <Spin tip="Loading journey campaigns..." />
+                        </div>
+                      ) : (
+                        renderTable(
+                          filterBySearch(displayedJourneyCampaigns),
+                          "Journey"
+                        )
+                      )}
+                    </div>
+                  ),
+                },
               ]}
             />
           </div>
@@ -990,18 +1170,37 @@ const AllCampaignsDetails: React.FC = () => {
             </h2>
 
             {currentCampaign.addServiceType === "LEAGUEJOURNEYS" && (
-              <Input
-                value={formData.journeyName}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    journeyName: e.target.value,
-                  })
-                }
-                placeholder="Update journey name"
-                className="mb-4"
-                maxLength={255}
-              />
+              <div className="mb-4">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Journey <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  showSearch
+                  value={formData.journeyId || undefined}
+                  placeholder="Select journey"
+                  optionFilterProp="label"
+                  className="w-full"
+                  options={journeys.map((journey) => ({
+                    value: journey.id,
+                    label: `${journey.journeyName}${
+                      journey.status ? "" : " (Inactive)"
+                    }`,
+                    disabled:
+                      !journey.status && journey.id !== formData.journeyId,
+                  }))}
+                  onChange={(journeyId) => {
+                    const journey = journeys.find(
+                      (item) => item.id === journeyId
+                    );
+                    setFormData({
+                      ...formData,
+                      journeyId,
+                      journeyObject: journey || null,
+                      journeyName: journey?.journeyName || "",
+                    });
+                  }}
+                />
+              </div>
             )}
 
             <Input.TextArea

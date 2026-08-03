@@ -604,7 +604,7 @@ const CampaignDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <div className={`px-4 ${!userId ? "pt-8 pb-4" : ""}`}>
+      <div className={`px-4 ${!userId ? "pt-20 pb-4" : ""}`}>
         {!userId ? <Header1 /> : null}
       </div>
 

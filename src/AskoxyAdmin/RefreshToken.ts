@@ -1,46 +1,10 @@
-import BASE_URL from "../Config";
 import {
   getAdminRefreshToken,
-  setAdminAccessToken,
-  setAdminRefreshToken,
-  removeAdminAccessToken,
-  removeAdminRefreshToken,
 } from "../utils/cookieUtils";
+import { refreshAdminAccessToken } from "../utils/tokenRefresh";
 
 let refreshTokenInterval: NodeJS.Timeout | null = null;
-let isRefreshing = false;
-
-
-export const refreshAccessToken = async (): Promise<boolean> => {
-  if (isRefreshing) return false;
-
-  const refreshToken = getAdminRefreshToken();
-  if (!refreshToken) return false;
-
-  isRefreshing = true;
-
-  try {
-    const response = await fetch(`${BASE_URL}/user-service/refresh-token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!response.ok) throw new Error(`Token refresh failed: ${response.status}`);
-
-    const data = await response.json();
-
-    if (data.mobileOtpSession) setAdminAccessToken(data.mobileOtpSession);
-    if (data.mobileNumber) setAdminRefreshToken(data.mobileNumber);
-
-    isRefreshing = false;
-    return true;
-  } catch (error) {
-    isRefreshing = false;
-    // Don't remove tokens here - let session manager handle it
-    return false;
-  }
-};
+export const refreshAccessToken = refreshAdminAccessToken;
 
 export const startTokenRefresh = () => {
   stopTokenRefresh();

@@ -475,10 +475,11 @@ const ServicesSlider: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#b91c1c] to-[#c2410c] leading-tight">
-                Our <span className="text-amber-400">Journeys</span>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] leading-tight">
+                Our <span className="text-[#A855F7]">Journeys</span>
               </h2>
-              <div className="w-24 h-1.5 bg-gradient-to-r from-amber-400 via-red-500 to-orange-500 mt-2 mx-auto sm:mx-0 rounded-full"></div>
+
+              <div className="w-24 h-1.5 bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] mt-2 mx-auto sm:mx-0 rounded-full"></div>
             </motion.div>
           </div>
 
@@ -489,7 +490,7 @@ const ServicesSlider: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-r from-[#b91c1c] to-[#c2410c] text-white font-medium px-6 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
+              className="bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium px-6 py-2.5 rounded-full shadow-md hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 text-sm sm:text-base"
               onClick={() => setShowAllLeagueJourneys(!showAllLeagueJourneys)}
             >
               {showAllLeagueJourneys ? "Show Less" : "View All"}
@@ -564,19 +565,19 @@ const ServicesSlider: React.FC = () => {
                             playsInline
                           />
                         ) : (
-                          // <img
-                          //   src={mediaUrl}
-                          //   alt={title}
-                          //   className="w-full h-full object-contain bg-gray-100 transition-transform duration-300 group-hover:scale-105"
-                          //   loading="lazy"
-                          // />
-
                           <img
                             src={mediaUrl}
                             alt={title}
-                            className="w-full h-full object-fill transition-transform duration-300 group-hover:scale-105"
+                            className="w-full h-full object-contain bg-gray-100 transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
                           />
+
+                          // <img
+                          //   src={mediaUrl}
+                          //   alt={title}
+                          //   className="w-full h-full object-fill transition-transform duration-300 group-hover:scale-105"
+                          //   loading="lazy"
+                          // />
                         )
                       ) : (
                         <div className="flex h-full w-full items-center justify-center p-5 text-center text-2xl font-extrabold uppercase tracking-wider text-white">
@@ -590,7 +591,7 @@ const ServicesSlider: React.FC = () => {
                       )}
 
                       <div className="absolute top-2 left-2">
-                        <span className="rounded-full bg-gradient-to-br from-[#b91c1c] to-[#c2410c] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                        <span className="rounded-full bg-gradient-to-br from-[#7C3AED] to-[#4C1D95] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                           Journey
                         </span>
                       </div>
@@ -610,7 +611,7 @@ const ServicesSlider: React.FC = () => {
                       </p>
                       <button
                         type="button"
-                        className="h-10 w-full rounded-lg bg-gradient-to-r from-[#b91c1c] to-[#c2410c] px-4 text-sm font-semibold text-white transition hover:from-red-700 hover:to-orange-700"
+                        className="h-10 w-full rounded-lg bg-gradient-to-br from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-4 text-sm font-semibold text-white transition hover:from-[#4C1D95] hover:to-[#A855F7]"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleCampaignClick(campaign);
@@ -631,7 +632,7 @@ const ServicesSlider: React.FC = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="px-5 py-2 rounded-full bg-white text-[#b91c1c] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-sm hover:shadow-md border border-gray-200 text-sm"
+                    className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/30 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
                     onClick={() => setShowAllLeagueJourneys(true)}
                   >
                     View more journeys
@@ -727,11 +728,11 @@ const ServicesSlider: React.FC = () => {
                 <h3 className="text-center text-sm sm:text-base font-medium text-gray-800 transition-colors duration-300 line-clamp-2">
                   {service.title}
                 </h3>
-                {"campaign" in service && service.campaign?.createdAt && (
+                {/* {"campaign" in service && service.campaign?.createdAt && (
                   <span className="mt-2 text-[11px] font-medium text-slate-400">
                     {formatPublishedDate(service.campaign.createdAt)}
                   </span>
-                )}
+                )} */}
               </motion.div>
             ))}
           </motion.div>
@@ -741,14 +742,14 @@ const ServicesSlider: React.FC = () => {
           allServices.length < services.length + nonBlogCampaigns.length && (
             <div className="mt-6 text-center">
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-5 py-2 rounded-full bg-white text-[#3c1973] font-medium hover:bg-gray-50 transition-colors duration-300 shadow-sm hover:shadow-md border border-gray-200 text-sm"
-                onClick={() => setShowAllServices(true)}
-              >
-                View all services
-                <span className="ml-2">→</span>
-              </motion.button>
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/30 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
+  onClick={() => setShowAllServices(true)}
+>
+  View all services
+  <span className="ml-2">→</span>
+</motion.button>
             </div>
           )}
       </div>
@@ -895,7 +896,7 @@ const ServicesSlider: React.FC = () => {
                       </p>
                       <button
                         type="button"
-                        className="h-10 w-full rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-violet-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                        className="h-10 w-full rounded-xl bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] hover:shadow-lg hover:shadow-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleCampaignClick(campaign);

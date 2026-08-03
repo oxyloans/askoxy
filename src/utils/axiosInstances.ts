@@ -28,6 +28,7 @@ import {
   refreshEmployeeAccessToken,
   refreshFreelanceAccessToken,
   refreshBusinessCardAccessToken,
+  refreshAdminAccessToken,
 } from "./tokenRefresh";
 import {
   getCustomerAccessToken,
@@ -95,7 +96,13 @@ interface InstanceOptions {
    * "refresh" → attempt token refresh then retry (customer flow).
    * "redirect" → clear storage and send user to login page.
    */
-  on401: "refresh" | "employee-refresh" | "freelance-refresh" | "redirect" | "business-card-refresh";
+  on401:
+    | "refresh"
+    | "employee-refresh"
+    | "freelance-refresh"
+    | "redirect"
+    | "business-card-refresh"
+    | "askoxy-admin-refresh";
   /** Login page path used when on401 === "redirect" */
   loginRoute?: string;
   /** Clears this module's tokens before redirecting on 401 */
@@ -186,6 +193,17 @@ if (on401 === "business-card-refresh") {
     return instance(original);
   }
 }
+      if (on401 === "askoxy-admin-refresh") {
+        const refreshed = await refreshAdminAccessToken();
+
+        if (refreshed) {
+          const newToken = getToken();
+          if (newToken && original.headers) {
+            original.headers.Authorization = `Bearer ${newToken}`;
+          }
+          return instance(original);
+        }
+      }
       // Redirect flow (or refresh failed): clear the module's tokens then send to login
       if (clearTokens) clearTokens();
       if (loginRoute) {
@@ -240,12 +258,27 @@ sharedApi.interceptors.request.use(
 
 sharedApi.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     const original = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
+      if (window.location.pathname.startsWith("/admin")) {
+        const refreshed = await refreshAdminAccessToken();
+        if (refreshed) {
+          const newToken = getAdminAccessToken();
+          if (newToken && original.headers) {
+            original.headers.Authorization = `Bearer ${newToken}`;
+          }
+          return sharedApi(original);
+        }
+        removeAdminAccessToken();
+        removeAdminRefreshToken();
+      } else if (window.location.pathname.startsWith("/home")) {
+        removePartnerAccessToken();
+        removePartnerRefreshToken();
+      }
       const currentPath = window.location.pathname + window.location.search;
       sessionStorage.setItem("redirectPath", currentPath);
       window.location.href = resolvePortalLoginRoute();
@@ -266,7 +299,7 @@ export const customerApi = createInstance({
 /** Admin portal — redirects to /admin on 401 */
 export const adminApi = createInstance({
   getToken: adminToken,
-  on401: "redirect",
+  on401: "askoxy-admin-refresh",
   loginRoute: LOGIN_ROUTES.admin,
   clearTokens: () => {
     removeAdminAccessToken();
