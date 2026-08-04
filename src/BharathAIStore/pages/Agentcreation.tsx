@@ -2522,7 +2522,7 @@ const Agentcreation: React.FC = () => {
     setLoading(true);
     try {
       const res = await axios.patch(
-        `${BASE_URL}/ai-service/agent/newAgentPublish`,
+        `${BASE_URL}/ai-service/new-agent/newAgentPublish`,
         body,
         {
           headers: { ...((auth || {}) as Record<string, string>) },

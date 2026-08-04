@@ -22,13 +22,11 @@ import {
 
 const { Title, Text } = Typography;
 
-// Only this primaryType is allowed into the Voice Admin panel.
-// Change this string if your backend uses a different value.
 const VALID_PRIMARY_TYPE = "HELPDESKSUPERADMIN";
 
 interface LoginResponse {
   status: string;
-  token: string;
+  accessToken: string;
   refreshToke: string;
   id: string;
   errorMessage?: string;
@@ -45,15 +43,19 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     const handleAutoLoginforAdmin = () => {
-      const id = localStorage.getItem("admin_uniquId");
-      const primaryType = localStorage.getItem("admin_primaryType");
-      const acToken = getAdminAccessToken();
-      const refreshToken = getAdminRefreshToken();
+      const id = localStorage.getItem("voice_admin_uniquId");
+      const primaryType = localStorage.getItem("voice_admin_primaryType");
+      const accessToken = getAdminAccessToken();
+      const refreshToke = getAdminRefreshToken();
 
-      if (id && primaryType === VALID_PRIMARY_TYPE && acToken && refreshToken) {
+      if (
+        id &&
+        primaryType === VALID_PRIMARY_TYPE &&
+        accessToken &&
+        refreshToke
+      ) {
         navigate("/voiceadmin/dashboard");
       }
-      // otherwise, stay on the login page as is
     };
     handleAutoLoginforAdmin();
   }, []);
@@ -90,15 +92,16 @@ const Login: React.FC = () => {
       );
 
       if (response.data.status === "Login Successful") {
-        const { token, id, primaryType, name } = response.data;
+        const { accessToken, id, primaryType, name } = response.data;
 
         if (primaryType === VALID_PRIMARY_TYPE) {
-          setAdminAccessToken(token);
+          setAdminAccessToken(accessToken);
           if (response.data.refreshToke)
             setAdminRefreshToken(response.data.refreshToke);
           localStorage.setItem("voice_admin_uniquId", id);
           localStorage.setItem("voice_admin_primaryType", primaryType);
           localStorage.setItem("voice_admin_userName", name);
+          localStorage.setItem("voice_admin_accessToken", accessToken);
 
           message.success({
             content: "Login successful! Redirecting to dashboard...",
