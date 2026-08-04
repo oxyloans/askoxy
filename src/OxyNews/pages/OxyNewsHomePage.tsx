@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "../lib/api";
-import type { CategoryCount, NewsFeedItem } from "../types";
+import type { NewsFeedItem } from "../types";
 import ArticleCard, { isDisplayableArticle } from "../components/ArticleCard";
-import CategoryTabs from "../components/CategoryTabs";
 import NewsBackground3D from "../components/NewsBackground3D";
 
 const ROTATE_MS = 8000;
@@ -32,9 +31,6 @@ function floatAnimation(index: number) {
 
 export default function OxyNewsHomePage() {
   const [items, setItems] = useState<NewsFeedItem[]>([]);
-  const [categories, setCategories] = useState<CategoryCount[]>([]);
-  const [domain, setDomain] = useState<string | null>(null);
-  const [sort, setSort] = useState<"latest" | "trending">("latest");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -46,24 +42,20 @@ export default function OxyNewsHomePage() {
   const rotateTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    api.getCategories().then(setCategories).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     setPage(0);
     setItems([]);
     setFeaturedIndex(0);
     setLoading(true);
     setError(null);
     api
-      .getFeed({ domain: domain ?? undefined, sort, page: 0, size: 12 })
+      .getFeed({ sort: "latest", page: 0, size: 12 })
       .then((res) => {
         setItems(res.content);
         setHasMore(!res.last);
       })
       .catch(() => setError("Couldn't reach the feed. Check the backend is running."))
       .finally(() => setLoading(false));
-  }, [domain, sort]);
+  }, []);
 
   // Auto-rotate the featured card every 3s.
   useEffect(() => {
@@ -82,7 +74,7 @@ export default function OxyNewsHomePage() {
   function loadMore() {
     const next = page + 1;
     api
-      .getFeed({ domain: domain ?? undefined, sort, page: next, size: 12 })
+      .getFeed({ sort: "latest", page: next, size: 12 })
       .then((res) => {
         setItems((prev) => [...prev, ...res.content]);
         setHasMore(!res.last);
@@ -99,7 +91,6 @@ export default function OxyNewsHomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const domainNames = Array.from(new Set(categories.map((c) => c.domain))).filter(Boolean);
   const visibleItems = items.filter(isDisplayableArticle);
   const safeFeaturedIndex = visibleItems.length ? featuredIndex % visibleItems.length : 0;
   const featured = visibleItems[safeFeaturedIndex];
@@ -110,33 +101,6 @@ export default function OxyNewsHomePage() {
       <NewsBackground3D />
 
       <div className="relative z-10">
-        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-ink/10 bg-white/90 p-2 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-          {domainNames.length > 1 && (
-            <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <CategoryTabs categories={domainNames} active={domain} onChange={setDomain} />
-            </div>
-          )}
-          <div
-            className="grid shrink-0 grid-cols-2 rounded-lg bg-ink/5 p-1 text-sm"
-            aria-label="Sort articles"
-          >
-            {(["latest", "trending"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSort(s)}
-                aria-pressed={sort === s}
-                className={`focus-ring min-h-9 rounded-md px-4 capitalize transition-colors ${
-                  sort === s
-                    ? "bg-plum text-gold shadow-sm"
-                    : "text-ink-soft hover:bg-white"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {error && (
           <div className="bg-white border border-ink/10 rounded-lg p-8 text-center">

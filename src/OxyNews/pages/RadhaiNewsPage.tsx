@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import type { NewsFeedItem } from "../types";
 import ArticleCard, { isDisplayableArticle } from "../components/ArticleCard";
 
 export default function RadhaiNewsPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<NewsFeedItem[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -36,7 +38,16 @@ export default function RadhaiNewsPage() {
 
   return (
     <div>
-      <h2 className="font-display text-2xl font-semibold text-plum-dark mb-4">RadhAI News</h2>
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => navigate("/oxynews")}
+          className="inline-flex items-center gap-1.5 rounded-full border border-plum/20 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-plum shadow-sm hover:bg-plum hover:text-paper transition-colors focus-ring"
+        >
+          ← Back
+        </button>
+        <h2 className="font-display text-2xl font-semibold text-plum-dark">RadhAI News</h2>
+      </div>
 
       {loading && <div className="text-sm font-mono text-ink-faint">Loading articles…</div>}
       {error && <div className="text-sm font-mono text-ink-faint">{error}</div>}

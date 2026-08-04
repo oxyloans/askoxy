@@ -1,4 +1,4 @@
-﻿// src/pages/ResourcePage.tsx
+// src/pages/ResourcePage.tsx
 import { Link, useParams } from "react-router-dom";
 import { findResource } from "../data/resourceLinks";
 import ExternalNewsList from "../components/ExternalNewsList";
@@ -20,7 +20,7 @@ export default function ResourcePage() {
       <div className="max-w-2xl mx-auto text-center py-24">
         <p className="font-display text-xl text-plum mb-2">Resource not found</p>
         <Link to="/oxynews" className="text-royal underline text-sm">
-          Back to the feed
+          Back to home
         </Link>
       </div>
     );
@@ -29,10 +29,10 @@ export default function ResourcePage() {
   return (
     <div className="max-w-2xl mx-auto">
       <Link
-        to="oxynews"
+        to="/oxynews"
         className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"
       >
-        ← Back to the feed
+        ← Back to home
       </Link>
 
       <div className="mt-4 pb-3 border-b-2 border-ink flex items-end justify-between gap-3 flex-wrap">
@@ -55,7 +55,7 @@ export default function ResourcePage() {
           rel="noreferrer"
           className="focus-ring shrink-0 inline-flex items-center justify-center gap-1.5 bg-gold text-plum font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-gold-soft transition-colors"
         >
-          Visit official site ↗
+          Visit official site ?
         </a>
       </div>
 

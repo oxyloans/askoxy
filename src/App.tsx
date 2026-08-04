@@ -25,6 +25,10 @@ import ExternalArticlePage from "./OxyNews/pages/ExternalArticlePage";
 import RadhaiNewsPage from "./OxyNews/pages/RadhaiNewsPage";
 import OxyNewsHomePage from "./OxyNews/pages/OxyNewsHomePage";
 import OxyLayout from "./OxyNews/components/OxyLayout";
+import CompanyEmployeeLogin from "./Employee/CompanyEmployeeLogin";
+import EmployeeJobDashboard from "./Employee/EmployeeJobDashboard";
+import AddCompanyEmployee from "./AskoxyAdmin/AddCompanyEmployee";
+import EmployeesList from "./AskoxyAdmin/EmployeesList";
 
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -1284,7 +1288,19 @@ const App: React.FC = () => {
               />
               <Route path="/visavoice/:screen" element={<VisaVoice />} />
               <Route path="/sovereign-ai" element={<SovereignAIPage />} />
-
+              <Route
+                path="/companyemployeelogin"
+                element={<CompanyEmployeeLogin />}
+              />
+              <Route
+                path="/employeedashboard"
+                element={<EmployeeJobDashboard />}
+              />
+              <Route
+                  path="addcompanyemployee"
+                  element={<AddCompanyEmployee />}
+                />
+                <Route path="employeeslist" element={<EmployeesList />} />
               {/* Other Landing / Service pages */}
               <Route
                 path="/goldandsilveranddiamonds"

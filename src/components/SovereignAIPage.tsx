@@ -444,51 +444,61 @@ const SovereignAIPage: React.FC = () => {
 
       <div className="relative z-10">
         <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#070817]/95 backdrop-blur-2xl">
-          <div className="mx-auto flex min-h-[68px] max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:min-h-[76px] sm:gap-4 sm:px-6 lg:px-8">
-            <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+          <div className="mx-auto flex h-16 sm:h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            {/* Left */}
+            <div className="flex items-center gap-3 sm:gap-5">
+              {/* Hide ASKOXY Logo on Mobile */}
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="group flex h-10 w-[76px] shrink-0 items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:h-12 sm:w-[102px]"
+                className="hidden sm:flex group items-center justify-center h-12 w-[130px] lg:h-14 lg:w-[150px] rounded-lg"
                 aria-label="Go to ASKOXY.AI home"
               >
                 <img
                   src={Logo}
                   alt="ASKOXY.AI"
-                  className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]"
+                  className="h-full w-full object-contain transition-all duration-300 group-hover:scale-105"
                 />
               </button>
 
-              <span className="hidden h-8 w-px shrink-0 bg-white/15 xs:block" />
-
-              <div
-                className="relative hidden min-w-0 overflow-hidden rounded-2xl border border-fuchsia-300/30 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-400/10 px-3 py-2 shadow-[0_10px_34px_rgba(168,85,247,.18)] xs:block sm:px-4"
-                aria-label="OXY BFSI Sovereign AI"
-              >
-                <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-                <span className="relative block whitespace-nowrap text-[11px] font-black uppercase tracking-[0.16em] text-white sm:text-sm">
-                  Sovereign AI
-                </span>
-                <span className="relative mt-1 block whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.18em] text-fuchsia-200 sm:text-[10px]">
-                  OXY BFSI
-                </span>
+              {/* Sovereign Logo */}
+              <div className="group flex h-12 w-[132px] shrink-0 items-center justify-center sm:h-14 sm:w-[170px] lg:h-16 lg:w-[190px]">
+                <img
+                  src="https://i.ibb.co/MkPjc2vy/sovereign-ai.png"
+                  alt="SOVEREIGN.AI"
+                  width="190"
+                  height="64"
+                  className="block h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                />
               </div>
+
+              {/* Divider */}
+              {/* <div className="hidden sm:block h-8 w-px bg-white/20" /> */}
+
+              {/* Title - Desktop Only
+              <div className="hidden md:block rounded-2xl border border-fuchsia-400/20 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-cyan-400/10 px-4 py-2">
+                <p className="text-white font-black uppercase tracking-[0.18em] text-sm">
+                  Sovereign AI
+                </p>
+                <p className="text-fuchsia-200 text-[10px] font-semibold uppercase tracking-[0.25em]">
+                  OXY BFSI
+                </p>
+              </div> */}
             </div>
 
-            <div className="flex shrink-0 items-center">
-              <button
-                type="button"
-                onClick={() =>
-                  navigate("/main/services/187a/build-the-future-of-regulated-")
-                }
-                aria-label="I am interested in building regulated Sovereign AI"
-                className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-[9px] font-black uppercase tracking-[0.035em] text-white shadow-[0_10px_28px_rgba(168,85,247,.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(168,85,247,.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:min-h-11 sm:gap-2 sm:px-5 sm:text-xs"
-              >
-                <span>I AM INTERESTED</span>
-                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </button>
+            {/* Right */}
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/main/services/187a/build-the-future-of-regulated-")
+              }
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] px-4 py-2.5 sm:px-6 sm:py-3 text-[10px] sm:text-sm font-bold uppercase tracking-wide text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-purple-500/30"
+            >
+              <span className="hidden xs:inline">I AM INTERESTED</span>
+              <span className="xs:hidden">Interested</span>
 
-            </div>
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         </header>
 
@@ -515,13 +525,27 @@ const SovereignAIPage: React.FC = () => {
                 <Landmark className="h-4 w-4" />
                 Built for India&apos;s regulated BFSI ecosystem
               </motion.div>
+              {/* <motion.div
+                variants={fadeUp}
+                className="mx-auto mt-5 flex h-16 w-[210px] items-center justify-center sm:h-20 sm:w-[260px] lg:mx-0"
+              >
+                <img
+                  src="https://i.ibb.co/MkPjc2vy/sovereign-ai.png"
+                  alt="SOVEREIGN.AI"
+                  width="260"
+                  height="80"
+                  className="block h-full w-full object-contain"
+                />
+              </motion.div> */}
               <motion.h1
                 variants={fadeUp}
-                className="mx-auto mt-5 max-w-[650px] text-[2.15rem] font-black leading-[1.08] tracking-[-0.04em] text-white sm:text-[2.8rem] md:text-[3.3rem] lg:mx-0 lg:text-[3.5rem] xl:text-[4rem]"
+                className="mx-auto mt-4 max-w-[650px] text-[1.75rem] font-black leading-[1.08] tracking-[-0.04em] text-white min-[380px]:text-[2rem] sm:text-[2.8rem] md:text-[3.3rem] lg:mx-0 lg:text-[3.5rem] xl:text-[4rem]"
               >
-                <span className="block">India&apos;s First Sovereign AI</span>
-
-                <span className="mt-2 block bg-gradient-to-r from-fuchsia-300 via-violet-300 to-cyan-300 bg-clip-text text-transparent">
+                <span className="block whitespace-nowrap">
+                  India&apos;s First
+                </span>
+                <span className="block whitespace-nowrap">Sovereign AI</span>
+                <span className="mt-2 block whitespace-nowrap bg-gradient-to-r from-fuchsia-300 via-violet-300 to-cyan-300 bg-clip-text text-[0.78em] leading-[1.15] text-transparent sm:text-[0.82em]">
                   Powered by the People
                 </span>
               </motion.h1>
@@ -543,7 +567,9 @@ const SovereignAIPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    navigate("/main/services/187a/build-the-future-of-regulated-")
+                    navigate(
+                      "/main/services/187a/build-the-future-of-regulated-",
+                    )
                   }
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-7 py-4 text-sm font-black uppercase tracking-[0.04em] text-white shadow-[0_14px_36px_rgba(168,85,247,.32)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(168,85,247,.42)] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 sm:w-auto sm:text-base"
                 >
@@ -755,7 +781,10 @@ sm:p-6"
           </div>
         </section>
 
-        <section id="leadership" className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28">
+        <section
+          id="leadership"
+          className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28"
+        >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Leadership"
@@ -781,7 +810,10 @@ sm:p-6"
           </div>
         </section>
 
-        <section id="use-cases" className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28">
+        <section
+          id="use-cases"
+          className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28"
+        >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Core Capabilities"
@@ -949,7 +981,10 @@ sm:p-6"
           </div>
         </section>
 
-        <section id="roadmap" className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28">
+        <section
+          id="roadmap"
+          className="scroll-mt-[88px] py-16 sm:py-24 lg:py-28"
+        >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Future Vision"
@@ -1019,7 +1054,9 @@ sm:p-6"
                 <button
                   type="button"
                   onClick={() =>
-                    navigate("/main/services/187a/build-the-future-of-regulated-")
+                    navigate(
+                      "/main/services/187a/build-the-future-of-regulated-",
+                    )
                   }
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-black uppercase tracking-[0.04em] text-violet-800 transition hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
                 >

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { adminApi as axios } from "../utils/axiosInstances";
 import {
   Table,
@@ -11,8 +12,15 @@ import {
   Empty,
   Space,
   Grid,
+  Card,
+  Statistic,
 } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import {
+  DatabaseOutlined,
+  SearchOutlined,
+  TeamOutlined,
+  UserSwitchOutlined,
+} from "@ant-design/icons";
 import {
   DownloadOutlined,
   FilterOutlined,
@@ -100,6 +108,7 @@ const normalizeOffer = (value: string | undefined | null): string => {
 
 /** ================= Component ================== */
 const Admin: React.FC = () => {
+  const navigate = useNavigate();
   const screens = useBreakpoint();
   // Consider    lg as mobile (covers small tablets)
   const isMobile = !screens.lg;
@@ -108,6 +117,8 @@ const Admin: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [myCbsCount, setMyCbsCount] = useState(0);
+  const [advocatesCount, setAdvocatesCount] = useState(0);
 
   // UI state
   const [searchText, setSearchText] = useState<string>("");
@@ -140,6 +151,8 @@ const Admin: React.FC = () => {
           `${BASE_URL}/marketing-service/campgin/getAllInterestedUsres`,
         ),
         axios.get(`${BASE_URL}/marketing-service/campgin/AllusersAddress`),
+        axios.get(`${BASE_URL}/ai-service/agent/myCbsCount`),
+        axios.get(`${BASE_URL}/user-service/AdvocateCount`),
       ]);
 
       const offers: OfferDetails[] = [];
@@ -167,6 +180,13 @@ const Admin: React.FC = () => {
         }
       }
       setUsers(usersCollector);
+
+      if (res[4].status === "fulfilled") {
+        setMyCbsCount(Number(res[4].value.data?.myCbsCount));
+      }
+      if (res[5].status === "fulfilled") {
+        setAdvocatesCount(Number(res[5].value.data?.advocateCount) || 0);
+      }
     } catch (e: any) {
       console.error(e);
       setError("Failed to load data.");
@@ -455,6 +475,38 @@ const Admin: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <section
+        aria-label="Admin statistics"
+        className="mx-auto grid max-w-7xl grid-cols-1 items-stretch gap-3 px-3 pt-4 sm:grid-cols-3 sm:px-4 md:gap-4 md:px-6"
+      >
+        <DashboardStatCard
+          title="Interested Users"
+          value={mergedRows.length}
+          loading={loading}
+          tone="blue"
+          icon={<TeamOutlined />}
+          actionLabel="Current dashboard total"
+        />
+        <DashboardStatCard
+          title="My CBS"
+          value={myCbsCount}
+          loading={loading}
+          tone="emerald"
+          icon={<DatabaseOutlined />}
+          actionLabel="View CBS data"
+          onClick={() => navigate("/admin/cbsdata")}
+        />
+        <DashboardStatCard
+          title="Advocates"
+          value={advocatesCount}
+          loading={loading}
+          tone="violet"
+          icon={<UserSwitchOutlined />}
+          actionLabel="View advocates"
+          onClick={() => navigate("/admin/advocates")}
+        />
+      </section>
 
       {/* Top Controls (never sticky) */}
       <div className="hidden">
@@ -828,6 +880,91 @@ const StatCard: React.FC<{ title: string; value: number }> = ({
         {value}
       </div>
     </div>
+  );
+};
+
+type DashboardStatTone = "blue" | "emerald" | "violet";
+
+const dashboardStatColors: Record<
+  DashboardStatTone,
+  { background: string; title: string; value: string; ring: string }
+> = {
+  blue: {
+    background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+    title: "#1e40af",
+    value: "#1d4ed8",
+    ring: "focus-visible:ring-blue-500",
+  },
+  emerald: {
+    background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
+    title: "#065f46",
+    value: "#047857",
+    ring: "focus-visible:ring-emerald-500",
+  },
+  violet: {
+    background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
+    title: "#5b21b6",
+    value: "#6d28d9",
+    ring: "focus-visible:ring-violet-500",
+  },
+};
+
+const DashboardStatCard: React.FC<{
+  title: string;
+  value: number;
+  loading: boolean;
+  tone: DashboardStatTone;
+  icon: React.ReactNode;
+  actionLabel?: string;
+  onClick?: () => void;
+}> = ({ title, value, loading, tone, icon, actionLabel, onClick }) => {
+  const colors = dashboardStatColors[tone];
+  const card = (
+    <Card
+      hoverable={Boolean(onClick)}
+      bordered={false}
+      className="h-full overflow-hidden shadow-sm"
+      styles={{
+        body: {
+          background: colors.background,
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          justifyContent: "center",
+          minHeight: 144,
+          padding: 18,
+        },
+      }}
+    >
+      <Statistic
+        title={<span style={{ color: colors.title, fontWeight: 600 }}>{title}</span>}
+        value={value}
+        loading={loading}
+        prefix={<span style={{ color: colors.value, marginRight: 8 }}>{icon}</span>}
+        valueStyle={{ color: colors.value, fontWeight: 800 }}
+      />
+      {actionLabel && (
+        <span
+          className="mt-2 block text-xs font-semibold"
+          style={{ color: colors.title }}
+        >
+          {actionLabel}{onClick ? " →" : ""}
+        </span>
+      )}
+    </Card>
+  );
+
+  if (!onClick) return card;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-full w-full rounded-lg text-left outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 ${colors.ring}`}
+      aria-label={`${actionLabel}: ${value.toLocaleString()}`}
+    >
+      {card}
+    </button>
   );
 };
 

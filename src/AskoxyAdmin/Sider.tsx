@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
   FaTachometerAlt,
@@ -11,6 +11,7 @@ import {
   FaUserCircle,
   FaClipboardList,
   FaBriefcase,
+  FaBuilding,
   FaHeadset,
   FaUsers,
   FaComments,
@@ -32,6 +33,7 @@ import {
   FaUserTie,
   FaLaptopCode,
   FaGraduationCap,
+  FaUserPlus,
 } from "react-icons/fa";
 import { RiFileUserLine } from "react-icons/ri";
 import {
@@ -52,8 +54,9 @@ import {
 import { message } from "antd";
 import { MdWork } from "react-icons/md";
 import { ApartmentOutlined } from "@ant-design/icons";
-import { stopTokenRefresh } from "./RefreshToken";
-
+import { startTokenRefresh, stopTokenRefresh } from "./RefreshToken";
+import { useSessionManager } from "./useSessionManage";
+import SessionModal from "./SessionModal";
 import {
   removeAdminAccessToken,
   removeAdminRefreshToken,
@@ -105,6 +108,12 @@ const Sidebar: React.FC = () => {
     navigate("/admin");
   }, [navigate]);
 
+  const {
+    showSessionModal,
+    refreshing,
+    handleContinueSession,
+    handleSessionLogout,
+  } = useSessionManager(handleLogout);
 
   useEffect(() => {
     const tokenString = getAdminAccessToken();
@@ -121,6 +130,8 @@ const Sidebar: React.FC = () => {
         primaryType !== "HELPDESKADMIN")
     ) {
       navigate("/admin", { replace: true });
+      startTokenRefresh();
+      return () => stopTokenRefresh();
     }
   }, [navigate]);
 
@@ -131,7 +142,7 @@ const Sidebar: React.FC = () => {
   const title =
     primaryType === "HELPDESKSUPERADMIN" ? "Interested Users" : "Dashboard";
 
-  const sidebarCategories: SidebarCategory[] = [
+  const sidebarCategories = useMemo<SidebarCategory[]>(() => [
     {
       title: "Helpdesk Dashboard",
       icon: <FaHeadset className="text-green-400" />,
@@ -270,6 +281,25 @@ const Sidebar: React.FC = () => {
           icon: <FaUsers className="text-blue-500" />,
           link: "/admin/referredData",
           roles: ["HELPDESKADMIN"],
+        },
+      ],
+    },
+    {
+      title: "Company Related",
+      icon: <FaBuilding className="text-cyan-400" />,
+      roles: ["HELPDESKSUPERADMIN"],
+      items: [
+        {
+          title: "Add Company Employee",
+          icon: <FaUserPlus className="text-cyan-400" />,
+          link: "/admin/addcompanyemployee",
+          roles: ["HELPDESKSUPERADMIN"],
+        },
+        {
+          title: "Employees List",
+          icon: <FaUsers className="text-emerald-400" />,
+          link: "/admin/employeeslist",
+          roles: ["HELPDESKSUPERADMIN"],
         },
       ],
     },
@@ -430,7 +460,7 @@ const Sidebar: React.FC = () => {
         },
       ],
     },
-  ];
+  ], [title]);
 
   const standaloneItems: SidebarItem[] = [
     {
@@ -480,22 +510,22 @@ const Sidebar: React.FC = () => {
       )
     );
 
-    if (activeCategory && !expandedCategories.includes(activeCategory.title)) {
-      setExpandedCategories((prev) => [...prev, activeCategory.title]);
-    }
-  }, [location.pathname, userRole, expandedCategories, sidebarCategories]);
+    if (!activeCategory) return;
+
+    setExpandedCategories((prev) =>
+      prev.includes(activeCategory.title)
+        ? prev
+        : [...prev, activeCategory.title]
+    );
+  }, [location.pathname, userRole, sidebarCategories]);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth <= 768;
-
-      if (isMobile && !mobile) {
-        setCollapsed(false);
-      }
+      const mobile = window.innerWidth < 768;
 
       setIsMobile(mobile);
 
-      if (mobile !== isMobile) {
+      if (!mobile) {
         setIsMobileOpen(false);
       }
     };
@@ -503,7 +533,7 @@ const Sidebar: React.FC = () => {
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [isMobile]);
+  }, []);
 
   const toggleCollapse = () => {
     setCollapsed((prev) => !prev);
@@ -520,10 +550,22 @@ const Sidebar: React.FC = () => {
     setExpandedCategories((prev) => {
       if (prev.includes(categoryTitle)) {
         return prev.filter((cat) => cat !== categoryTitle);
-      } else {
-        return [...prev, categoryTitle];
       }
+
+      return [...prev, categoryTitle];
     });
+  };
+
+  const handleCategoryClick = (categoryTitle: string) => {
+    if (collapsed && !isMobile) {
+      setCollapsed(false);
+      setExpandedCategories((prev) =>
+        prev.includes(categoryTitle) ? prev : [...prev, categoryTitle]
+      );
+      return;
+    }
+
+    toggleCategory(categoryTitle);
   };
 
   if (!userRole) {
@@ -542,16 +584,27 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
+      {showSessionModal && (
+        <div style={{ zIndex: 9999, position: "fixed" }}>
+          <SessionModal
+            visible={showSessionModal}
+            loading={refreshing}
+            onContinue={handleContinueSession}
+            onLogout={handleSessionLogout}
+          />
+        </div>
+      )}
+
       <div>
         {isMobileOpen && isMobile && (
           <div
-            className="fixed inset-0 z-20 bg-black bg-opacity-50 transition-opacity duration-300"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] transition-opacity duration-300"
             onClick={() => setIsMobileOpen(false)}
           />
         )}
 
         <aside
-          className={`fixed inset-y-0 left-0 z-30 transform bg-gray-800 transition-all duration-300 ease-in-out
+          className={`fixed inset-y-0 left-0 z-50 h-dvh transform overflow-hidden bg-gray-800 transition-all duration-300 ease-in-out
             ${
               isMobile
                 ? isMobileOpen
@@ -571,7 +624,18 @@ const Sidebar: React.FC = () => {
             boxShadow: "2px 0 15px rgba(0,0,0,0.15)",
           }}
         >
-          <div className="flex h-16 flex-col items-center justify-center border-b border-gray-700 bg-gray-900">
+          <div className="relative flex h-16 flex-col items-center justify-center border-b border-gray-700 bg-gray-900">
+            {isMobile && isMobileOpen && (
+              <button
+                type="button"
+                onClick={() => setIsMobileOpen(false)}
+                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl border border-gray-700 bg-gray-800 text-white transition hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30"
+                aria-label="Close sidebar"
+              >
+                <FaTimes className="h-4 w-4" />
+              </button>
+            )}
+
             <div className="text-center font-bold">
               <span className="text-xl text-gray-50">
                 {collapsed && !isMobileOpen ? "OXY" : "ASKOXY.AI"}
@@ -602,9 +666,8 @@ const Sidebar: React.FC = () => {
 
           <nav className="mt-2 px-2">
             <ul
-              className="max-h-[calc(100vh-100px)] space-y-1 overflow-x-hidden overflow-y-auto pr-1
-              sm:max-h-[calc(100vh-120px)]
-              md:max-h-[calc(100vh-140px)]"
+              className="max-h-[calc(100dvh-150px)] space-y-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 pb-24
+              sm:max-h-[calc(100dvh-150px)]"
             >
               {visibleCategories.map((category, categoryIndex) => {
                 const categoryItems = category.items.filter((item) =>
@@ -625,7 +688,7 @@ const Sidebar: React.FC = () => {
                             ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
                             : "text-white hover:bg-white hover:text-gray-800 hover:shadow-md"
                         }`}
-                      onClick={() => !collapsed && toggleCategory(category.title)}
+                      onClick={() => handleCategoryClick(category.title)}
                     >
                       <span
                         className={`z-10 text-lg transition-all duration-300 ${
@@ -814,7 +877,7 @@ const Sidebar: React.FC = () => {
         </aside>
 
         <header
-          className="fixed right-0 top-0 z-20 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-3 shadow-lg sm:px-6"
+          className="fixed right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-3 shadow-lg sm:px-6"
           style={{
             width: isMobile
               ? "100%"
@@ -829,6 +892,7 @@ const Sidebar: React.FC = () => {
         >
           <div className="flex items-center">
             <button
+              type="button"
               onClick={isMobile ? toggleMobileMenu : toggleCollapse}
               className="rounded-xl p-3 text-gray-600 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md hover:scale-105"
               aria-label={isMobile ? "Toggle mobile menu" : "Toggle sidebar"}

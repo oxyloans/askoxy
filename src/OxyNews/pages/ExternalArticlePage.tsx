@@ -1,5 +1,5 @@
 // src/pages/ExternalArticlePage.tsx
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import type { ExternalNewsArticle } from "../types";
@@ -213,9 +213,9 @@ export default function ExternalArticlePage() {
     return (
       <div className="text-center py-24">
         <p className="font-display text-xl text-plum mb-2">{error || "Article not found"}</p>
-        <Link to="/oxynews" className="text-royal underline text-sm">
-          Back to the feed
-        </Link>
+        <button onClick={() => navigate(-1)} className="text-royal underline text-sm">
+          Back
+        </button>
       </div>
     );
   }
@@ -224,12 +224,13 @@ export default function ExternalArticlePage() {
     <div className="relative mx-auto w-full max-w-screen-2xl px-4 lg:px-8 py-10">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            to="/oxynews"
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
             className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"
           >
-            ← Back to the feed
-          </Link>
+            ← Back
+          </button>
 
           <div className="flex flex-wrap gap-2">
             {(() => {
@@ -331,12 +332,13 @@ export default function ExternalArticlePage() {
 
       <div className="mt-12 max-w-6xl mx-auto border-t border-ink/10 pt-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-          <Link
-            to="/oxynews"
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
             className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"
           >
-            ← Back to the feed
-          </Link>
+            ← Back
+          </button>
 
           <div className="flex flex-wrap gap-2">
             {(() => {

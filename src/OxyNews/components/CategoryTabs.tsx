@@ -12,12 +12,12 @@ export default function CategoryTabs({ categories, active, onChange }: Props) {
   );
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none items-center min-w-0">
+    <div className="w-full flex flex-wrap justify-center gap-2 overflow-x-auto lg:overflow-x-visible pb-1 -mx-1 px-1 scrollbar-none items-center min-w-0">
       <div className="flex items-center gap-2 whitespace-nowrap">
-        <Link to="/oxynews" className="focus-ring shrink-0 px-3 sm:px-4 py-1.5 rounded-full text-sm font-medium transition-colors bg-white text-ink-soft hover:bg-royal/10 border border-ink/10 whitespace-nowrap">
+        <Link to="/oxynews" className="focus-ring inline-flex justify-center shrink-0 px-3 sm:px-4 py-1.5 rounded-full text-sm font-medium transition-colors bg-white text-ink-soft hover:bg-royal/10 border border-ink/10 whitespace-nowrap text-center">
           Home
         </Link>
-        <Link to="/radhai-news" className="focus-ring shrink-0 px-3 sm:px-4 py-1.5 rounded-full text-sm font-medium transition-colors bg-white text-ink-soft hover:bg-royal/10 border border-ink/10 whitespace-nowrap">
+        <Link to="/radhai-news" className="focus-ring inline-flex justify-center shrink-0 px-3 sm:px-4 py-1.5 rounded-full text-sm font-medium transition-colors bg-white text-ink-soft hover:bg-royal/10 border border-ink/10 whitespace-nowrap text-center">
           RadhAI News
         </Link>
       </div>
@@ -25,10 +25,10 @@ export default function CategoryTabs({ categories, active, onChange }: Props) {
         <div key={c} className="flex items-center gap-2">
           <button
             onClick={() => onChange(c)}
-            className={`focus-ring shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`focus-ring inline-flex justify-center shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors text-center ${
               active === c
-                ? "bg-royal text-white"
-                : "bg-white text-ink-soft hover:bg-royal/10 border border-ink/10"
+                ? "bg-white text-plum border border-royal/20 shadow-sm"
+                : "bg-white text-ink-soft border border-ink/10"
             }`}
           >
             {c}
@@ -38,10 +38,10 @@ export default function CategoryTabs({ categories, active, onChange }: Props) {
             <>
               <button
                 onClick={() => onChange("jobs")}
-                className={`focus-ring shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`focus-ring inline-flex justify-center shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors text-center ${
                   active === "jobs"
-                    ? "bg-royal text-white"
-                    : "bg-white text-ink-soft hover:bg-royal/10 border border-ink/10"
+                    ? "bg-white text-plum border border-royal/20 shadow-sm"
+                    : "bg-white text-ink-soft border border-ink/10"
                 }`}
               >
                 Jobs
@@ -49,10 +49,10 @@ export default function CategoryTabs({ categories, active, onChange }: Props) {
 
               <button
                 onClick={() => onChange("investment")}
-                className={`focus-ring shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`focus-ring inline-flex justify-center shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors text-center ${
                   active === "investment"
-                    ? "bg-royal text-white"
-                    : "bg-white text-ink-soft hover:bg-royal/10 border border-ink/10"
+                    ? "bg-white text-plum border border-royal/20 shadow-sm"
+                    : "bg-white text-ink-soft border border-ink/10"
                 }`}
               >
                 Investment

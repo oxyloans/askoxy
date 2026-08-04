@@ -28,6 +28,7 @@ import {
   Send,
   SlidersHorizontal,
   Share2,
+  ThumbsDown,
   ThumbsUp,
   Trash2,
   UserCircle,
@@ -41,6 +42,7 @@ import {
   CommunityCategoryItem,
   CommunityComment,
   CommunityQuery,
+  ReactionType,
   CommunitySort,
   CreateQueryPayload,
   addComment,
@@ -548,11 +550,11 @@ export default function CommunityPage() {
     }
   };
 
-  const queryReaction = async (query: CommunityQuery) => {
+  const queryReaction = async (query: CommunityQuery, type: ReactionType) => {
     if (!requireRegistration()) return;
 
     try {
-      const reactions = await reactToQuery(query.id, "LIKE");
+      const reactions = await reactToQuery(query.id, type);
       setQueries((current) =>
         current.map((item) =>
           item.id === query.id ? { ...item, reactions } : item,
@@ -751,10 +753,10 @@ export default function CommunityPage() {
 
             <div className="relative mx-auto grid w-[calc(100%-24px)] max-w-7xl items-center gap-6 py-8 sm:w-[calc(100%-40px)] sm:py-12 lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
               <div className="animate-[fadeIn_.55s_ease-out]">
-                <span className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[#5b2d90] sm:text-xs">
+                {/* <span className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[#5b2d90] sm:text-xs">
                   <Rocket size={15} />
                   We are launching something meaningful
-                </span>
+                </span> */}
 
                 <h1 className="mt-4 max-w-3xl text-[32px] font-black leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-[45px] lg:text-[54px]">
                   OXY community.
@@ -859,15 +861,37 @@ export default function CommunityPage() {
 
                       <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                         <button
-                          onClick={() => queryReaction(selectedQuery)}
+                          type="button"
+                          onClick={() => queryReaction(selectedQuery, "LIKE")}
+                          aria-pressed={Boolean(selectedQuery.reactions?.likedByCurrentUser)}
                           className={`${actionButton} ${
                             selectedQuery.reactions?.likedByCurrentUser
-                              ? "border-purple-300 bg-purple-50 text-[#5b2d90]"
-                              : ""
+                              ? "border-blue-300 bg-blue-50 text-blue-700 shadow-sm"
+                              : "hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                           }`}
                         >
-                          <ThumbsUp size={16} />
+                          <ThumbsUp
+                            size={16}
+                            fill={selectedQuery.reactions?.likedByCurrentUser ? "currentColor" : "none"}
+                          />
                           Like {selectedQuery.reactions?.totalLikes || 0}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => queryReaction(selectedQuery, "DISLIKE")}
+                          aria-pressed={Boolean(selectedQuery.reactions?.dislikedByCurrentUser)}
+                          className={`${actionButton} ${
+                            selectedQuery.reactions?.dislikedByCurrentUser
+                              ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
+                              : "hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                          }`}
+                        >
+                          <ThumbsDown
+                            size={16}
+                            fill={selectedQuery.reactions?.dislikedByCurrentUser ? "currentColor" : "none"}
+                          />
+                          Dislike {selectedQuery.reactions?.totalDislikes || 0}
                         </button>
 
                         <button
@@ -1230,7 +1254,8 @@ export default function CommunityPage() {
                     key={query.id}
                     query={query}
                     onOpen={() => openDetail(query)}
-                    onLike={() => queryReaction(query)}
+                    onLike={() => queryReaction(query, "LIKE")}
+                    onDislike={() => queryReaction(query, "DISLIKE")}
                     onShare={(event) => shareQuery(event, query)}
                     onForward={(event) => forwardQuery(event, query)}
                     onCopy={(event) => copyQueryContent(event, query)}
@@ -1327,6 +1352,7 @@ function QueryCard({
   query,
   onOpen,
   onLike,
+  onDislike,
   onShare,
   onForward,
   onCopy,
@@ -1334,6 +1360,7 @@ function QueryCard({
   query: CommunityQuery;
   onOpen: () => void;
   onLike: () => void;
+  onDislike: () => void;
   onShare: (event: MouseEvent<HTMLButtonElement>) => void;
   onForward: (event: MouseEvent<HTMLButtonElement>) => void;
   onCopy: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -1379,10 +1406,14 @@ function QueryCard({
             <ThumbsUp size={14} />
             {query.reactions?.totalLikes || 0}
           </span>
+          <span className="inline-flex items-center gap-1.5">
+            <ThumbsDown size={14} />
+            {query.reactions?.totalDislikes || 0}
+          </span>
         </div>
       </button>
 
-      <div className="grid grid-cols-4 gap-1 border-t border-slate-100 bg-slate-50/70 p-2">
+      <div className="grid grid-cols-2 gap-1.5 border-t border-slate-100 bg-slate-50/70 p-2 sm:grid-cols-5">
         <button
           type="button"
           onClick={(event) => {
@@ -1391,12 +1422,35 @@ function QueryCard({
           }}
           className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold transition sm:text-xs ${
             query.reactions?.likedByCurrentUser
-              ? "bg-purple-100 text-[#5b2d90]"
-              : "text-slate-600 hover:bg-white hover:text-[#5b2d90]"
+              ? "bg-blue-100 text-blue-700 shadow-sm"
+              : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+          }`}
+          aria-pressed={Boolean(query.reactions?.likedByCurrentUser)}
+        >
+          <ThumbsUp
+            size={15}
+            fill={query.reactions?.likedByCurrentUser ? "currentColor" : "none"}
+          />
+          Like
+        </button>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDislike();
+          }}
+          aria-pressed={Boolean(query.reactions?.dislikedByCurrentUser)}
+          className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold transition sm:text-xs ${
+            query.reactions?.dislikedByCurrentUser
+              ? "bg-rose-100 text-rose-700 shadow-sm"
+              : "text-slate-600 hover:bg-rose-50 hover:text-rose-700"
           }`}
         >
-          <ThumbsUp size={15} />
-          Like
+          <ThumbsDown
+            size={15}
+            fill={query.reactions?.dislikedByCurrentUser ? "currentColor" : "none"}
+          />
+          Dislike
         </button>
         <button
           type="button"
@@ -1417,7 +1471,7 @@ function QueryCard({
         <button
           type="button"
           onClick={onCopy}
-          className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold text-slate-600 transition hover:bg-white hover:text-[#5b2d90] sm:text-xs"
+          className="col-span-2 inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold text-slate-600 transition hover:bg-white hover:text-[#5b2d90] sm:col-span-1 sm:text-xs"
         >
           <Copy size={15} />
           Copy
@@ -1519,11 +1573,11 @@ function CommentItem({
         ),
       }));
 
-  const react = async () => {
+  const react = async (type: ReactionType) => {
     if (!requireRegistration()) return;
 
     try {
-      const reactions = await reactToComment(comment.id, "LIKE");
+      const reactions = await reactToComment(comment.id, type);
       setComments((current) =>
         replaceInTree(current, comment.id, (item) => ({ ...item, reactions })),
       );
@@ -1685,18 +1739,38 @@ function CommentItem({
             </p>
           )}
 
-          {!editing && <div className="mt-2 flex flex-wrap gap-1">
+          {!editing && <div className="mt-2 flex flex-wrap gap-1.5">
             <button
               type="button"
-              onClick={react}
-              className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition ${
+              onClick={() => react("LIKE")}
+              aria-pressed={Boolean(comment.reactions?.likedByCurrentUser)}
+              className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
                 comment.reactions?.likedByCurrentUser
-                  ? "bg-purple-50 text-[#5b2d90]"
-                  : "text-slate-500 hover:bg-slate-50"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
               }`}
             >
-              <ThumbsUp size={14} />
+              <ThumbsUp
+                size={14}
+                fill={comment.reactions?.likedByCurrentUser ? "currentColor" : "none"}
+              />
               Like {comment.reactions?.totalLikes || 0}
+            </button>
+            <button
+              type="button"
+              onClick={() => react("DISLIKE")}
+              aria-pressed={Boolean(comment.reactions?.dislikedByCurrentUser)}
+              className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
+                comment.reactions?.dislikedByCurrentUser
+                  ? "bg-rose-100 text-rose-700"
+                  : "text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+              }`}
+            >
+              <ThumbsDown
+                size={14}
+                fill={comment.reactions?.dislikedByCurrentUser ? "currentColor" : "none"}
+              />
+              Dislike {comment.reactions?.totalDislikes || 0}
             </button>
             <button
               type="button"

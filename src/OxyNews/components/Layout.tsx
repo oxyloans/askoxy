@@ -3,7 +3,6 @@ import { Link, NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
 import Logo from "../../assets/img/askoxylogonew.png";
 import NewsTicker from "./NewsTicker";
 import ResourceNavBar from "./ResourceNavBar";
-import ArticleChatWidget from "./ArticleChatWidget";
 
 const primaryLinks = [
   { to: "/oxynews", label: "Home", end: true },
@@ -15,7 +14,6 @@ export default function OxyLayout() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
   const articleMatch = useMatch("/article/:id");
-  const [chatOpen, setChatOpen] = useState(false);
 
   function onSearch(event: React.FormEvent) {
     event.preventDefault();
@@ -30,6 +28,17 @@ export default function OxyLayout() {
         <header className="border-b border-gold/25 bg-plum text-paper shadow-md">
           <div className="mx-auto max-w-7xl px-3 py-3 sm:px-6">
             <div className="grid items-center gap-3 lg:grid-cols-[auto_minmax(0,1fr)_minmax(280px,360px)]">
+              {/* Mobile back button — shown opposite the logo on article pages */}
+              {articleMatch?.params.id && (
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="lg:hidden focus-ring inline-flex items-center gap-1.5 rounded-full border border-paper/25 px-3 py-2 text-sm font-semibold text-paper hover:bg-white/10 transition order-last ml-auto"
+                >
+                  <span aria-hidden="true">←</span> Back
+                </button>
+              )}
+
               <Link
                 to="/oxynews"
                 aria-label="OxyNews home"
@@ -49,7 +58,7 @@ export default function OxyLayout() {
 
               <nav
                 aria-label="OxyNews primary navigation"
-                className="flex min-w-0 items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center"
+                className="hidden lg:flex min-w-0 items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center"
               >
                 {articleMatch?.params.id && (
                   <button
@@ -79,18 +88,7 @@ export default function OxyLayout() {
                   </NavLink>
                 ))}
 
-                {articleMatch?.params.id && (
-                  <button
-                    type="button"
-                    onClick={() => setChatOpen((open) => !open)}
-                    aria-expanded={chatOpen}
-                    className="focus-ring inline-flex min-h-10 shrink-0 items-center rounded-full bg-gold px-4 text-sm font-semibold text-plum transition-colors hover:bg-gold-soft"
-                  >
-                    Ask article
-                  </button>
-                )}
               </nav>
-
               <form
                 onSubmit={onSearch}
                 role="search"
@@ -128,27 +126,14 @@ export default function OxyLayout() {
       </div>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6">
-        {articleMatch?.params.id && chatOpen ? (
-          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr,380px]">
-            <div className="lg:col-start-1"><Outlet /></div>
-            <div className="order-first lg:order-none lg:col-start-2 lg:sticky lg:top-24">
-              <ArticleChatWidget
-                paperclipId={articleMatch.params.id}
-                open={chatOpen}
-                onClose={() => setChatOpen(false)}
-              />
-            </div>
-          </div>
-        ) : (
-          <Outlet />
-        )}
+        <Outlet />
       </main>
 
       <footer className="mt-10 border-t border-ink/10 py-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>OxyNews by AskOxy.AI</span>
           <Link to="/oxynews" className="font-semibold text-royal hover:underline">
-            Back to latest news
+            Back to home
           </Link>
         </div>
       </footer>

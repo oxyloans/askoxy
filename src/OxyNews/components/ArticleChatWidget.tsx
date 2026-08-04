@@ -53,11 +53,8 @@ export default function ArticleChatWidget({
   }
 
   return (
-    // Bounded height instead of h-full — previously this stretched to match the
-    // article's full length inside the grid row, leaving a huge empty area below
-    // a short message list. Now it's a normal-sized sidebar panel that scrolls
-    // internally and stays pinned via the parent's `lg:sticky top-24`.
-    <aside className="bg-plum rounded-lg shadow-lift overflow-hidden flex flex-col h-[70vh] lg:h-[calc(100vh-7rem)]">
+    <aside className="bg-plum flex flex-col h-[70vh] lg:h-[calc(100vh-7rem)] rounded-t-2xl lg:rounded-lg shadow-lift overflow-hidden">
+      {/* Header */}
       <div className="px-4 sm:px-5 py-4 border-b border-paper/10 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gold text-plum font-semibold text-sm shrink-0">
@@ -77,6 +74,7 @@ export default function ArticleChatWidget({
         </button>
       </div>
 
+      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3 min-h-0">
         {messages.length === 0 && (
           <div className="h-full flex flex-col justify-center gap-4">
@@ -116,6 +114,7 @@ export default function ArticleChatWidget({
         )}
       </div>
 
+      {/* Input */}
       <form onSubmit={onSubmit} className="p-3 border-t border-paper/10 flex gap-2 shrink-0">
         <input
           value={input}

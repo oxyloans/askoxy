@@ -72,10 +72,10 @@ export default function ResourceNavBar() {
       onMouseLeave={() => setOpenId(null)}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto py-2 justify-start lg:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             to="/oxynews"
-            className="focus-ring flex min-h-10 shrink-0 items-center rounded-full bg-white/10 px-4 text-sm font-semibold tracking-wide text-paper/90 transition-colors hover:bg-white/20"
+            className="focus-ring flex min-h-10 shrink-0 items-center rounded-full bg-white px-4 text-sm font-semibold tracking-wide text-plum-dark transition-colors hover:bg-white/90 lg:border lg:border-ink/10"
           >
             Home
           </Link>
@@ -93,8 +93,8 @@ export default function ResourceNavBar() {
                 aria-haspopup="menu"
                 className={`focus-ring flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 transition-colors ${
                   isOpen
-                    ? "bg-gold text-plum-dark"
-                    : "bg-white/10 text-paper/90 hover:bg-white/20"
+                    ? "bg-white text-plum-dark border border-ink/10 shadow-sm"
+                    : "bg-white text-ink-soft border border-ink/10 hover:bg-white/90"
                 }`}
               >
                 <span className="font-semibold text-sm tracking-wide">{cat.label}</span>
@@ -104,7 +104,7 @@ export default function ResourceNavBar() {
           })}
           <Link
             to="/radhai-news"
-            className="focus-ring flex min-h-10 shrink-0 items-center rounded-full bg-white/10 px-4 text-sm font-semibold tracking-wide text-paper/90 transition-colors hover:bg-white/20"
+            className="focus-ring flex min-h-10 shrink-0 items-center rounded-full bg-white px-4 text-sm font-semibold tracking-wide text-plum-dark transition-colors hover:bg-white/90 border border-ink/10"
           >
             RadhAI News
           </Link>

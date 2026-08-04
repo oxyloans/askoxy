@@ -11,8 +11,12 @@ export const startTokenRefresh = () => {
 
   if (!getAdminRefreshToken()) return;
 
+  // Refresh once when the authenticated admin shell mounts, then keep the
+  // short-lived (15 minute) access token alive while the portal is open.
+  void refreshAccessToken();
+
   refreshTokenInterval = setInterval(() => {
-    refreshAccessToken();
+    void refreshAccessToken();
   }, 5 * 60 * 1000);
 };
 

@@ -1,4 +1,3 @@
-// ArticlePage.tsx
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -6,6 +5,7 @@ import { api } from "../lib/api";
 import type { NewsFeedItem, Opportunity, PaperclipDetail } from "../types";
 import ArticleCard, { isDisplayableArticle } from "../components/ArticleCard";
 import OpportunityMeter from "../components/OpportunityMeter";
+import { useChatContext } from "../components/ChatContext";
 
 const OPPORTUNITY_LABELS: Record<string, string> = {
   revenue: "Revenue",
@@ -76,26 +76,15 @@ export default function ArticlePage() {
   const [feedItems, setFeedItems] = useState<NewsFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quickNavTop, setQuickNavTop] = useState(96);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const { openChat } = useChatContext();
 
   useEffect(() => {
-    const updateQuickNavPosition = () => {
-      const header = document.querySelector("div.sticky.top-0");
-      if (header) {
-        setQuickNavTop(header.getBoundingClientRect().height);
-      }
-    };
-
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 300);
     };
-
-    updateQuickNavPosition();
-    window.addEventListener("resize", updateQuickNavPosition);
     window.addEventListener("scroll", handleScroll);
     return () => {
-      window.removeEventListener("resize", updateQuickNavPosition);
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
@@ -160,7 +149,6 @@ export default function ArticlePage() {
   const c = a?.classification;
   const s = a?.summary;
   const oa = a?.opportunityAssessment;
-  const imageUrl = item.imageUrl;
 
   const hasPeople = (a?.people?.length ?? 0) > 0;
   const hasCompanies = (a?.companies?.length ?? 0) > 0;
@@ -218,14 +206,14 @@ export default function ArticlePage() {
               </button>
             )}
           </div>
-          <div className="hidden lg:block" style={{ height: 80 }} />
+          <div className="hidden lg:block" style={{ height: 32 }} />
         </>
       )}
 
-      <article className="min-w-0">
+      <article className="min-w-0 w-full">
         <div className="flex items-center justify-between">
           <Link
-            to="/"
+            to="/oxynews"
             className="text-xs font-mono uppercase tracking-widest text-royal hover:underline"
           >
             ← Back to the feed
@@ -285,22 +273,34 @@ export default function ArticlePage() {
           </span>
         </div>
 
-        <h1 className="font-display text-3xl sm:text-5xl font-semibold text-plum-dark mt-4 leading-[1.05]">
-          {a?.articleName || item.fileName || "Untitled article"}
-        </h1>
+        <div className="flex items-start justify-between gap-3 mt-4">
+          <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-semibold text-plum-dark leading-[1.05]">
+            {a?.articleName || item.fileName || "Untitled article"}
+          </h1>
+          <button
+            type="button"
+            onClick={openChat}
+            className="focus-ring shrink-0 inline-flex items-center gap-1.5 rounded-full bg-gold text-plum font-semibold text-xs px-3 py-2 shadow hover:bg-gold-soft transition-colors mt-1"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Ask article
+          </button>
+        </div>
 
         {c?.topic && c.topic !== "General" && (
           <p className="text-sm text-ink-faint mt-2 font-mono uppercase tracking-wide">{c.topic}</p>
         )}
 
-        {/* Same quick-nav buttons, shown as a horizontal scroller below lg where the sidebar is hidden */}
+        {/* Same quick-nav buttons, shown as a grid on mobile with two buttons per row */}
         {showQuickNav && (
-          <div className="lg:hidden mt-4 -mx-4 px-4 flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+          <div className="lg:hidden mt-4 -mx-4 px-4 grid grid-cols-2 gap-2">
             {hasPeopleOrCompanies && (
               <button
                 type="button"
                 onClick={() => scrollToSection("people-companies")}
-                className="shrink-0 bg-royal/90 text-paper px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
+                className="bg-royal/90 text-paper px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
               >
                 People &amp; Companies
               </button>
@@ -309,7 +309,7 @@ export default function ArticlePage() {
               <button
                 type="button"
                 onClick={() => scrollToSection("services")}
-                className="shrink-0 bg-gold text-plum px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
+                className="bg-gold text-plum px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
               >
                 OxyGroup recommendations
               </button>
@@ -318,7 +318,7 @@ export default function ArticlePage() {
               <button
                 type="button"
                 onClick={() => scrollToSection("stakeholders")}
-                className="shrink-0 bg-royal/80 text-paper px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
+                className="bg-royal/80 text-paper px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
               >
                 Stakeholder perspectives
               </button>
@@ -327,7 +327,7 @@ export default function ArticlePage() {
               <button
                 type="button"
                 onClick={() => scrollToSection("related-articles")}
-                className="shrink-0 bg-ink/95 text-paper px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
+                className="bg-ink/95 text-paper px-3 py-2 rounded shadow font-mono text-xs uppercase tracking-wide"
               >
                 Related articles
               </button>
@@ -369,7 +369,7 @@ export default function ArticlePage() {
         )}
 
         {s?.shortSummary && (
-          <p className="mt-6 text-lg leading-relaxed text-ink-soft font-body first-letter:font-display first-letter:text-6xl first-letter:font-semibold first-letter:text-plum-dark first-letter:float-left first-letter:mr-2 first-letter:leading-[0.85]">
+          <p className="mt-6 text-lg lg:text-xl leading-relaxed text-ink-soft font-body first-letter:font-display first-letter:text-6xl first-letter:font-semibold first-letter:text-plum-dark first-letter:float-left first-letter:mr-2 first-letter:leading-[0.85]">
             {s.shortSummary}
           </p>
         )}
@@ -379,7 +379,7 @@ export default function ArticlePage() {
             <h2 className="font-display font-semibold text-plum text-sm uppercase tracking-widest border-b border-ink/20 pb-2 mb-3">
               Executive Analysis
             </h2>
-            <p className="text-sm text-ink-soft leading-relaxed whitespace-pre-line sm:columns-2 sm:gap-8">
+            <p className="text-sm text-ink-soft leading-relaxed whitespace-pre-line lg:columns-3 lg:gap-10 sm:columns-2 sm:gap-8">
               {s.detailedSummary}
             </p>
           </section>
@@ -390,9 +390,9 @@ export default function ArticlePage() {
             <h2 className="font-display font-semibold text-plum text-sm uppercase tracking-widest border-b border-ink/20 pb-2 mb-3">
               Key points
             </h2>
-            <ul className="space-y-2 border-l-2 border-gold pl-4">
+            <ul className="space-y-2 border-l-2 border-gold pl-4 lg:columns-2 lg:gap-8">
               {s.keyPoints.map((k, i) => (
-                <li key={i} className="text-sm text-ink-soft leading-relaxed">
+                <li key={i} className="text-sm text-ink-soft leading-relaxed break-inside-avoid">
                   {k}
                 </li>
               ))}
@@ -405,7 +405,7 @@ export default function ArticlePage() {
             <h2 className="font-display font-semibold text-plum text-sm uppercase tracking-widest mb-3">
               Recommended next steps
             </h2>
-            <ul className="space-y-2">
+            <ul className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-2 lg:space-y-0">
               {s.actionItems.map((k, i) => (
                 <li key={i} className="text-sm text-ink-soft leading-relaxed flex gap-2">
                   <span className="font-mono text-gold-dim shrink-0">{String(i + 1).padStart(2, "0")}</span>
@@ -431,7 +431,7 @@ export default function ArticlePage() {
                   <p className="text-sm text-ink-soft mt-1 leading-relaxed">{p.angle}</p>
 
                   {p.relevantOpportunities && p.relevantOpportunities.length > 0 && (
-                    <div className="grid gap-2 mt-3 sm:grid-cols-2">
+                    <div className="grid gap-2 mt-3 sm:grid-cols-2 lg:grid-cols-3">
                       {p.relevantOpportunities.map((key) => {
                         const o = opportunityByKey?.[key];
                         if (!o) return null;
@@ -471,9 +471,9 @@ export default function ArticlePage() {
             <h2 className="font-display text-xl font-semibold text-plum-dark mb-4 border-b-2 border-ink pb-2">
               OxyGroup service fit
             </h2>
-            <div className="bg-white rounded-lg shadow-card p-4 divide-y divide-ink/10">
+            <div className="bg-white rounded-lg shadow-card p-4 grid lg:grid-cols-2 lg:gap-x-6 divide-y divide-ink/10 lg:divide-y-0">
               {a.serviceRecommendations.map((rec, i) => (
-                <div key={i} className={i === 0 ? "pb-4" : "py-4"}>
+                <div key={i} className={`lg:border-b lg:border-ink/10 lg:pb-4 ${i === 0 ? "pb-4" : "py-4"}`}>
                   <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
                     <h3 className="font-display font-semibold text-plum">{rec.service}</h3>
                     <span className="text-[11px] font-mono uppercase text-ink-faint">
@@ -509,9 +509,9 @@ export default function ArticlePage() {
                   <h3 className="text-xs font-mono uppercase tracking-widest text-ink-faint mb-3">
                     People
                   </h3>
-                  <div className="divide-y divide-ink/10">
+                  <div className="divide-y divide-ink/10 lg:columns-2 lg:gap-8 lg:divide-y-0">
                     {a!.people!.map((p, i) => (
-                      <div key={i} className="flex items-start justify-between gap-3 py-3 first:pt-0">
+                      <div key={i} className="flex flex-col gap-2 py-3 first:pt-0 sm:flex-row sm:items-start sm:justify-between break-inside-avoid lg:border-b lg:border-ink/10 lg:pb-3">
                         <div className="flex items-start gap-2 min-w-0">
                           <span className="mt-0.5 text-royal shrink-0">
                             <PersonIcon />
@@ -529,7 +529,7 @@ export default function ArticlePage() {
                             href={p.linkedin}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-xs text-royal hover:underline shrink-0"
+                            className="text-xs text-royal hover:underline mt-1 sm:mt-0 shrink-0"
                           >
                             LinkedIn ↗
                           </a>
@@ -545,21 +545,21 @@ export default function ArticlePage() {
                   <h3 className="text-xs font-mono uppercase tracking-widest text-ink-faint mb-3">
                     Companies
                   </h3>
-                  <div className="divide-y divide-ink/10">
+                  <div className="divide-y divide-ink/10 lg:columns-2 lg:gap-8 lg:divide-y-0">
                     {a!.companies!.map((c2, i) => (
-                      <div key={i} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+                      <div key={i} className="flex flex-col gap-2 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between break-inside-avoid lg:border-b lg:border-ink/10 lg:pb-3">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-royal shrink-0">
                             <CompanyIcon />
                           </span>
-                          <div className="text-sm font-medium text-ink-soft truncate">{c2.name}</div>
+                          <div className="min-w-0 text-sm font-medium text-ink-soft truncate">{c2.name}</div>
                         </div>
                         {c2.website && (
                           <a
                             href={c2.website}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-xs text-royal hover:underline shrink-0 truncate max-w-[40%]"
+                            className="text-xs text-royal hover:underline mt-1 sm:mt-0 shrink-0 break-all"
                           >
                             {c2.website.replace(/^https?:\/\//, "")} ↗
                           </a>
@@ -578,7 +578,7 @@ export default function ArticlePage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-xl font-semibold text-plum-dark">Related articles</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {related.map((rel) => (
                 <motion.div
                   key={rel.paperclipId}
@@ -629,14 +629,27 @@ export default function ArticlePage() {
           </div>
         </div>
       </article>
+
       {showBackToTop && (
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-royal text-paper px-4 py-3 shadow-2xl shadow-royal/20 transition hover:bg-royal/90 focus-ring"
-        >
-          ↑ Back to top
-        </button>
+        <div className="fixed bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end gap-3">
+          <button
+            type="button"
+            onClick={openChat}
+            aria-label="Ask about this article"
+            className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gold text-plum shadow-2xl shadow-gold/30 transition hover:bg-yellow-300 focus-ring"
+          >
+            <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="inline-flex items-center gap-1.5 rounded-full bg-royal text-paper px-4 py-3 shadow-2xl shadow-royal/20 transition hover:bg-royal/90 focus-ring"
+          >
+            ↑ Top
+          </button>
+        </div>
       )}
     </div>
   );

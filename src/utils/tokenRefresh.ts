@@ -184,11 +184,22 @@ export const refreshAdminAccessToken = async (): Promise<boolean> => {
       }
 
       const data = await response.json();
-      if (data.mobileNumber) {
-        setAdminAccessToken(data.mobileNumber);
+
+      // This endpoint currently returns the new access/refresh JWTs under
+      // mobileNumber/mobileOtpSession. Keep the conventional field names as
+      // fallbacks so the admin flow also survives a backend response migration.
+      const newAccessToken = data.accessToken || data.mobileNumber;
+      const newRefreshToken = data.refreshToken || data.mobileOtpSession;
+
+      // A 200 response without a replacement access token is not a successful
+      // refresh: retrying with the expired token would only produce another 401.
+      if (!newAccessToken || typeof newAccessToken !== "string") {
+        throw new Error("AskOxy Admin refresh returned no access token");
       }
-      if (data.mobileOtpSession) {
-        setAdminRefreshToken(data.mobileOtpSession);
+
+      setAdminAccessToken(newAccessToken);
+      if (newRefreshToken && typeof newRefreshToken === "string") {
+        setAdminRefreshToken(newRefreshToken);
       }
 
       return true;
