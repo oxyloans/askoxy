@@ -96,7 +96,7 @@ async function getAssistants(
     params.after = after;
   }
 
-  const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
+  const res = await apiClient.get("/ai-service/new-agent/getAllAssistants", {
     params,
     headers: {
       "Content-Type": "application/json",

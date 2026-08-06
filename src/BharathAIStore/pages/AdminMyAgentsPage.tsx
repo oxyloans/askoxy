@@ -468,7 +468,7 @@ const INS_NAME_TO_IMAGE: Record<InsCanonical, string> = {
 
 type InsView = Assistant & { displayName: InsCanonical; imageUrl: string };
 async function getAllAssistants(after?: string) {
-  const res = await apiClient.get("/ai-service/agent/getAllAssistants", {
+  const res = await apiClient.get("/ai-service/new-agent/getAllAssistants", {
     headers: getOptionalAuthHeaders(),
     params: {
       limit: 100, // ✅ always include limit

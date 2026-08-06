@@ -415,7 +415,7 @@ const handleSaveStoreClick = async (): Promise<void> => {
 
     setLoading(true);
     try {
-      const url: string = `${BASE_URL}/ai-service/agent/getAllAssistants?limit=${PAGE_SIZE}${
+      const url: string = `${BASE_URL}/ai-service/new-agent/getAllAssistants?limit=${PAGE_SIZE}${
         page > 1 && lastId ? `&after=${lastId}` : ""
       }`;
 

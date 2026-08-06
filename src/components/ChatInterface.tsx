@@ -29,7 +29,7 @@ const ChatInterface2: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const API_BASE = `${BASE_URL}/ai-service/agent`;
+  const API_BASE = `${BASE_URL}/ai-service/new-agent`;
   const EXCHANGE_API = `${BASE_URL}/ai-service/agent/exchangedata`;
 
   // Fetch assistants

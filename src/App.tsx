@@ -1296,11 +1296,7 @@ const App: React.FC = () => {
                 path="/employeedashboard"
                 element={<EmployeeJobDashboard />}
               />
-              <Route
-                  path="addcompanyemployee"
-                  element={<AddCompanyEmployee />}
-                />
-                <Route path="employeeslist" element={<EmployeesList />} />
+             
               {/* Other Landing / Service pages */}
               <Route
                 path="/goldandsilveranddiamonds"
@@ -1953,6 +1949,11 @@ const App: React.FC = () => {
                   element={<AllCampaignsDetails />}
                 />
                 <Route path="campaignsadd" element={<CampaignsAdd />} />
+                 <Route
+                  path="addcompanyemployee"
+                  element={<AddCompanyEmployee />}
+                />
+                <Route path="employeeslist" element={<EmployeesList />} />
                 <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
                 <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
                 <Route path="addleaguejourney" element={<AddLeagueJourney />} />

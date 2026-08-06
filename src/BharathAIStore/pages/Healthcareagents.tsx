@@ -87,7 +87,7 @@ async function getAssistants(_limit = 50, after?: string): Promise<AssistantsRes
   const config: any = { headers: getOptionalAuthHeaders() };
   if (after) config.params = { after };
 
-  const response = await apiClient.get("/ai-service/agent/getAllAssistants", config);
+  const response = await apiClient.get("/ai-service/new-agent/getAllAssistants", config);
 
   // Normalize fields so the rest of the page can rely on consistent keys
   const normalized = (response.data?.data ?? []).map((a: any) => ({
