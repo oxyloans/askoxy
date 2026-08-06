@@ -161,7 +161,7 @@ const FreeAiBook: React.FC = () => {
               className="flex h-full items-center justify-center"
             >
               <img
-                src={aiImage}
+                src={"https://i.ibb.co/BVDswt7X/book-independence.png"}
                 alt="AI Book"
                 onClick={openAmazon}
                 className={imageClass}
@@ -301,7 +301,11 @@ const FreeAiBook: React.FC = () => {
                     {/* Play button overlay */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 shadow-lg">
-                        <svg viewBox="0 0 24 24" fill="white" className="h-8 w-8 translate-x-0.5">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="white"
+                          className="h-8 w-8 translate-x-0.5"
+                        >
                           <path d="M8 5v14l11-7z" />
                         </svg>
                       </div>

@@ -55,7 +55,7 @@ export default function ResourcePage() {
           rel="noreferrer"
           className="focus-ring shrink-0 inline-flex items-center justify-center gap-1.5 bg-gold text-plum font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-gold-soft transition-colors"
         >
-          Visit official site ?
+          Visit official site ↗
         </a>
       </div>
 

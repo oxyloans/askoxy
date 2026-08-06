@@ -27,6 +27,25 @@ export interface CommunityUser {
   badge?: "ADMIN_VERIFIED" | "EMPLOYEE_VERIFIED" | string | null;
 }
 
+export interface CommunityOnlineUser {
+  userId: string;
+  name: string;
+  badge?: "ADMIN_VERIFIED" | "EMPLOYEE_VERIFIED" | string | null;
+}
+
+type OnlineUsersPayload =
+  | CommunityOnlineUser[]
+  | ApiResponse<CommunityOnlineUser[]>
+  | { onlineUsers?: CommunityOnlineUser[]; data?: CommunityOnlineUser[] };
+
+type OnlineUserCountPayload =
+  | number
+  | {
+      count?: number;
+      onlineUsers?: number;
+      data?: number | { count?: number; onlineUsers?: number };
+    };
+
 export interface Reactions {
   likedByCurrentUser: boolean;
   dislikedByCurrentUser: boolean;
@@ -75,7 +94,35 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
-const requireData = <T>(response: ApiResponse<T>, fallbackMessage: string): T => {
+type CommunityQueryApiShape = CommunityQuery & {
+  totalLikes?: number;
+  totalDislikes?: number;
+  likedByCurrentUser?: boolean;
+  dislikedByCurrentUser?: boolean;
+};
+
+const normalizeQueryReactions = (
+  query: CommunityQueryApiShape,
+): CommunityQuery => ({
+  ...query,
+  reactions: {
+    likedByCurrentUser:
+      query.reactions?.likedByCurrentUser ?? query.likedByCurrentUser ?? false,
+    dislikedByCurrentUser:
+      query.reactions?.dislikedByCurrentUser ??
+      query.dislikedByCurrentUser ??
+      false,
+    totalLikes: Number(query.reactions?.totalLikes ?? query.totalLikes ?? 0),
+    totalDislikes: Number(
+      query.reactions?.totalDislikes ?? query.totalDislikes ?? 0,
+    ),
+  },
+});
+
+const requireData = <T>(
+  response: ApiResponse<T>,
+  fallbackMessage: string,
+): T => {
   if (response.data === undefined || response.data === null) {
     throw new Error(response.message || fallbackMessage);
   }
@@ -126,7 +173,6 @@ const api = axios.create({
   withCredentials: false,
   timeout: 30000,
 });
-
 api.interceptors.request.use((config) => {
   const token =
     localStorage.getItem("token") ||
@@ -152,7 +198,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export const getErrorMessage = (error: unknown): string => {
@@ -180,13 +226,81 @@ export const getErrorMessage = (error: unknown): string => {
 
 export const getCommunityCategories = async () => {
   const response = await api.get<ApiResponse<CommunityCategoryItem[]>>(
-    "/api/user-service/community/categories"
+    "/api/user-service/community/categories",
   );
 
   return requireData(
     response.data,
-    "Community categories were not returned by the server."
+    "Community categories were not returned by the server.",
   ).filter((category) => category.active);
+};
+
+export const normalizeCommunityOnlineUsers = (
+  payload: unknown,
+): CommunityOnlineUser[] => {
+  let source: unknown = payload;
+
+  if (!Array.isArray(source) && source && typeof source === "object") {
+    const root = source as Record<string, unknown>;
+    source = Array.isArray(root.data)
+      ? root.data
+      : Array.isArray(root.onlineUsers)
+        ? root.onlineUsers
+        : source;
+  }
+
+  if (!Array.isArray(source)) return [];
+
+  return source
+    .filter((item): item is Record<string, unknown> =>
+      Boolean(item && typeof item === "object"),
+    )
+    .map((item) => ({
+      userId: String(item.userId ?? item.id ?? ""),
+      name: String(item.name ?? "Community User"),
+      badge:
+        item.badge === null || item.badge === undefined
+          ? null
+          : String(item.badge),
+    }))
+    .filter((user) => Boolean(user.userId));
+};
+
+export const getCommunityOnlineUsers = async () => {
+  const response = await api.get<OnlineUsersPayload>(
+    "/api/user-service/community/online-users",
+  );
+
+  return normalizeCommunityOnlineUsers(response.data);
+};
+
+export const getCommunityOnlineUserCount = async (): Promise<number> => {
+  const response = await api.get<OnlineUserCountPayload>(
+    "/api/user-service/community/online-users/count",
+  );
+  const payload = response.data;
+
+  if (typeof payload === "number") return Math.max(0, payload);
+
+  const nested = payload?.data;
+  const count =
+    payload?.count ??
+    payload?.onlineUsers ??
+    (typeof nested === "number"
+      ? nested
+      : (nested?.count ?? nested?.onlineUsers ?? 0));
+
+  return Number.isFinite(Number(count)) ? Math.max(0, Number(count)) : 0;
+};
+
+export const getCommunityWebSocketUrl = (accessToken?: string | null) => {
+  const endpoint = "wss://meta.oxyloans.com/api/user-service/ws/community";
+  const token = accessToken?.replace(/^Bearer\s+/i, "").trim();
+
+  // Native browser WebSocket connections cannot attach a custom HTTP
+  // Authorization header. Use the backend-supported token query parameter
+  // for the upgrade request and also send Authorization in the STOMP CONNECT frame.
+  return token ? `${endpoint}?token=${encodeURIComponent(token)}` : endpoint;
 };
 
 export const getQueries = async (params: QueryListParams) => {
@@ -194,8 +308,7 @@ export const getQueries = async (params: QueryListParams) => {
     ApiResponse<SpringPage<CommunityQuery> | CommunityQuery[]>
   >("/api/user-service/community/queries", {
     params: {
-      categoryId:
-        params.categoryId === "" ? undefined : params.categoryId,
+      categoryId: params.categoryId === "" ? undefined : params.categoryId,
       keyword: params.keyword?.trim() || undefined,
       page: params.pageNumber ?? 0,
       size: params.pageSize ?? 9,
@@ -216,14 +329,16 @@ export const getQueries = async (params: QueryListParams) => {
 
   if (Array.isArray(root)) {
     return {
-      queries: root,
+      queries: root.map((query) => normalizeQueryReactions(query)),
       totalElements: root.length,
       totalPages: 1,
       currentPage: 0,
     };
   }
 
-  const queries = root.content || root.data || [];
+  const queries = (root.content || root.data || []).map((query) =>
+    normalizeQueryReactions(query),
+  );
 
   return {
     queries,
@@ -235,9 +350,14 @@ export const getQueries = async (params: QueryListParams) => {
 
 export const getQueryById = async (id: number) => {
   const response = await api.get<ApiResponse<CommunityQuery>>(
-    `/api/user-service/community/queries/${id}`
+    `/api/user-service/community/queries/${id}`,
   );
-  return requireData(response.data, "Query details were not returned by the server.");
+  return normalizeQueryReactions(
+    requireData(
+      response.data,
+      "Query details were not returned by the server.",
+    ),
+  );
 };
 
 export const createQuery = async (payload: CreateQueryPayload) => {
@@ -248,15 +368,17 @@ export const createQuery = async (payload: CreateQueryPayload) => {
 
   const response = await api.post<ApiResponse<CommunityQuery>>(
     "/api/user-service/community/queries",
-    request
+    request,
   );
-  return requireData(response.data, "The created query was not returned by the server.");
+  return normalizeQueryReactions(
+    requireData(
+      response.data,
+      "The created query was not returned by the server.",
+    ),
+  );
 };
 
-export const updateQuery = async (
-  id: number,
-  payload: UpdateQueryPayload
-) => {
+export const updateQuery = async (id: number, payload: UpdateQueryPayload) => {
   const request = {
     ...payload,
     otherCategoryName: payload.otherCategoryName?.trim() || undefined,
@@ -264,9 +386,14 @@ export const updateQuery = async (
 
   const response = await api.put<ApiResponse<CommunityQuery>>(
     `/api/user-service/community/queries/${id}`,
-    request
+    request,
   );
-  return requireData(response.data, "The updated query was not returned by the server.");
+  return normalizeQueryReactions(
+    requireData(
+      response.data,
+      "The updated query was not returned by the server.",
+    ),
+  );
 };
 
 export const deleteQuery = async (id: number) => {
@@ -276,20 +403,20 @@ export const deleteQuery = async (id: number) => {
   return response.data;
 };
 
-export const reactToQuery = async (
-  id: number,
-  type: ReactionType
-) => {
+export const reactToQuery = async (id: number, type: ReactionType) => {
   const response = await api.post<ApiResponse<Reactions>>(
     `/api/user-service/community/queries/${id}/reactions`,
-    { type }
+    { type },
   );
-  return requireData(response.data, "Reaction details were not returned by the server.");
+  return requireData(
+    response.data,
+    "Reaction details were not returned by the server.",
+  );
 };
 
 export const getComments = async (queryId: number) => {
   const response = await api.get<ApiResponse<CommunityComment[]>>(
-    `/api/user-service/api/community/queries/${queryId}/comments`
+    `/api/user-service/api/community/queries/${queryId}/comments`,
   );
   return response.data.data || [];
 };
@@ -297,48 +424,54 @@ export const getComments = async (queryId: number) => {
 export const addComment = async (queryId: number, comment: string) => {
   const response = await api.post<ApiResponse<CommunityComment>>(
     `/api/user-service/api/community/queries/${queryId}/comments`,
-    { comment }
+    { comment },
   );
-  return requireData(response.data, "The created comment was not returned by the server.");
+  return requireData(
+    response.data,
+    "The created comment was not returned by the server.",
+  );
 };
 
-export const replyToComment = async (
-  commentId: number,
-  comment: string
-) => {
+export const replyToComment = async (commentId: number, comment: string) => {
   const response = await api.post<ApiResponse<CommunityComment>>(
     `/api/user-service/api/community/comments/${commentId}/reply`,
-    { comment }
+    { comment },
   );
-  return requireData(response.data, "The created reply was not returned by the server.");
+  return requireData(
+    response.data,
+    "The created reply was not returned by the server.",
+  );
 };
 
 export const updateComment = async (
   id: number,
   comment: string,
-  version: number
+  version: number,
 ) => {
   const response = await api.put<ApiResponse<CommunityComment>>(
     `/api/user-service/api/community/comments/${id}`,
-    { comment, version }
+    { comment, version },
   );
-  return requireData(response.data, "The updated comment was not returned by the server.");
+  return requireData(
+    response.data,
+    "The updated comment was not returned by the server.",
+  );
 };
 
 export const deleteComment = async (id: number) => {
   const response = await api.delete<ApiResponse<null>>(
-    `/api/user-service/api/community/comments/${id}`
+    `/api/user-service/api/community/comments/${id}`,
   );
   return response.data;
 };
 
-export const reactToComment = async (
-  id: number,
-  type: ReactionType
-) => {
+export const reactToComment = async (id: number, type: ReactionType) => {
   const response = await api.post<ApiResponse<Reactions>>(
     `/api/user-service/api/community/comments/${id}/reactions`,
-    { type }
+    { type },
   );
-  return requireData(response.data, "Reaction details were not returned by the server.");
+  return requireData(
+    response.data,
+    "Reaction details were not returned by the server.",
+  );
 };

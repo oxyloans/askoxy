@@ -4,6 +4,8 @@ import { api } from "../lib/api";
 import type { NewsFeedItem } from "../types";
 import ArticleCard, { isDisplayableArticle } from "../components/ArticleCard";
 import NewsBackground3D from "../components/NewsBackground3D";
+import PlatformAdsBanner from "../components/PlatformAdsBanner";
+import { PLATFORMS } from "../components/ResourceNavBar";
 
 const ROTATE_MS = 8000;
 
@@ -40,6 +42,7 @@ export default function OxyNewsHomePage() {
   // Which item (by index into `items`) is currently the big/featured card.
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const rotateTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const articlesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setPage(0);
@@ -84,11 +87,11 @@ export default function OxyNewsHomePage() {
   }
 
   useEffect(() => {
-    const handleScroll = () => setShowBackToTop(window.scrollY > 300);
-    window.addEventListener("scroll", handleScroll);
-    // initialize
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    const el = articlesRef.current;
+    if (!el) return;
+    const handleScroll = () => setShowBackToTop(el.scrollTop > 300);
+    el.addEventListener("scroll", handleScroll);
+    return () => el.removeEventListener("scroll", handleScroll);
   }, []);
 
   const visibleItems = items.filter(isDisplayableArticle);
@@ -100,7 +103,16 @@ export default function OxyNewsHomePage() {
     <>
       <NewsBackground3D />
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col" style={{ height: "calc(100dvh - 160px)" }}>
+
+        {/* Ads banner — fixed above scroll area, never moves */}
+        <div className="px-3 sm:px-4 lg:pr-[272px] lg:pl-6 pt-3 shrink-0">
+          <PlatformAdsBanner />
+        </div>
+
+        <div className="flex flex-1 min-h-0">
+          <div ref={articlesRef} className="flex-1 min-w-0 overflow-y-auto px-3 sm:px-4 lg:pr-[272px] lg:pl-6 pb-4
+                       [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
         {error && (
           <div className="bg-white border border-ink/10 rounded-lg p-8 text-center">
@@ -233,7 +245,7 @@ export default function OxyNewsHomePage() {
             {/* Back to top button */}
             {showBackToTop && (
               <button
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                onClick={() => articlesRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
                 className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gold text-xl text-plum shadow-lg transition-transform hover:scale-105 focus-ring sm:bottom-6 sm:right-6"
                 aria-label="Back to top"
               >
@@ -242,7 +254,45 @@ export default function OxyNewsHomePage() {
             )}
           </>
         )}
-      </div>
-    </>
+        </div>
+        </div>
+
+        {/* Platform cards sidebar - fixed to right edge */}
+        <aside className="hidden lg:flex flex-col w-64 xl:w-72 shrink-0 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ position: "fixed", top: "160px", right: 0, height: "calc(100dvh - 160px)" }}>
+          <div className="bg-white rounded-xl border border-ink/10 shadow-card p-3 flex flex-col gap-3">
+            <h2 className="font-display text-sm font-semibold text-plum-dark uppercase tracking-widest border-b border-ink/10 pb-2">Our Platforms</h2>
+            {PLATFORMS.map((p) => (
+              <div key={p.name} className="rounded-lg border border-ink/10 overflow-hidden">
+                <div className="aspect-[16/9] overflow-hidden bg-plum-light">
+                  <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                </div>
+                <div className="px-3 py-2 flex flex-col gap-2 bg-white">
+                  {p.name === "ASKOXY.AI" ? (
+                    <img src="https://www.askoxy.ai/static/media/askoxylogonew.c34f3429a1c63f5f261b.png" alt="ASKOXY.AI" className="h-6 object-contain" />
+                  ) : p.name === "OXYGOLD.AI" ? (
+                    <img src="https://www.oxygold.ai/assets/oxygoldlogo-BhcbXH-W.png" alt="OXYGOLD.AI" className="h-6 object-contain" />
+                  ) : p.name === "OXYBRICKS" ? (
+                    <img src="https://www.oxybricks.world/c257039a9f6a9a4cc609cff03093e6f8.png" alt="OXYBRICKS" className="h-6 object-contain brightness-0" />
+                  ) : p.name === "OXYLOANS" ? (
+                    <img src="https://oxyloans.com/wp-content/themes/oxyloan/oxyloan/_ui/images/logo.png" alt="OXYLOANS" className="h-6 object-contain brightness-0" />
+                  ) : (
+                    <span className="font-display font-semibold text-plum text-sm leading-snug">{p.name}</span>
+                  )}
+                  <p className="text-xs text-ink-faint">{p.description}</p>
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1 rounded-full bg-royal text-white text-[11px] font-semibold px-3 py-1.5 hover:bg-plum transition-colors w-full"
+                  >
+                    Visit ↗
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+        </div>
+      </>
   );
 }

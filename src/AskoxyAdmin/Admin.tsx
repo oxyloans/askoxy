@@ -14,6 +14,8 @@ import {
   Grid,
   Card,
   Statistic,
+  Spin,
+  message,
 } from "antd";
 import {
   DatabaseOutlined,
@@ -29,6 +31,7 @@ import {
 import dayjs from "dayjs";
 import BASE_URL from "../Config";
 import "antd/dist/reset.css";
+import HelpDeskCommentsModal from "./HelpDeskCommentsModal";
 
 const { Search } = Input;
 const { useBreakpoint } = Grid;
@@ -42,6 +45,16 @@ interface OfferDetails {
   registrationDate?: string | null;
   createdAt: string | number | null;
   _createdAtMs?: number;
+}
+interface AdminComment {
+  adminComments: string;
+  commentsCreatedDate: string;
+  commentsUpdateBy: string;
+  adminUserId: string;
+  customerBehaviour: string | null;
+  isActive: boolean | null;
+  customerExpectedOrderDate: string | null;
+  callingType?: string | null;
 }
 interface User {
   deliveryType: string | null;
@@ -85,7 +98,7 @@ const toMs = (val: string | number | null | undefined): number => {
 };
 const fmt = (val: string | number | null | undefined): string => {
   const ms = toMs(val ?? null);
-  return ms ? dayjs(ms).format("MMM DD, YYYY HH:mm") : "No date";
+  return ms ? dayjs(ms).format("MMM DD, YYYY") : "No date";
 };
 const tagColor = (offer: string | undefined) => {
   const v = (offer || "").toUpperCase();
@@ -130,6 +143,56 @@ const Admin: React.FC = () => {
   // Mobile list ref + FAB visibility
   const listRef = useRef<HTMLDivElement | null>(null);
   const [showFab, setShowFab] = useState(false);
+  const [commentsModalVisible, setCommentsModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<OfferDetails | null>(null);
+  const [commentsMap, setCommentsMap] = useState<Record<string, AdminComment | null | "loading" | "error">>({});
+  const updatedBy = localStorage.getItem("admin_userName")?.toUpperCase();
+  const storedUniqueId = localStorage.getItem("admin_uniquId");
+
+  const showCommentsModal = (record: OfferDetails) => {
+    if (!record.userId) return message.warning("User ID is unavailable.");
+    setSelectedRecord(record);
+    setCommentsModalVisible(true);
+  };
+
+  const loadComment = async (userId: string) => {
+    setCommentsMap((prev) => ({ ...prev, [userId]: "loading" }));
+    try {
+      const res = await axios.post<AdminComment[]>(
+        `${BASE_URL}/user-service/fetchAdminComments`,
+        { userId },
+      );
+      setCommentsMap((prev) => ({ ...prev, [userId]: Array.isArray(res.data) && res.data.length ? res.data[0] : null }));
+    } catch {
+      setCommentsMap((prev) => ({ ...prev, [userId]: "error" }));
+    }
+  };
+
+  const handleQuickActiveChange = async (userId: string, value: "true" | "false") => {
+    const commentsUpdateBy = localStorage.getItem("admin_primaryType") === "HELPDESKSUPERADMIN" ? "ADMIN" : updatedBy || "ADMIN";
+    try {
+      await axios.patch(`${BASE_URL}/user-service/adminUpdateComments`, {
+        adminComments: "Updated user active status via AskOxy users page",
+        adminUserId: storedUniqueId,
+        commentsUpdateBy,
+        userId,
+        isActive: value === "true",
+        customerBehaviour: "UNDERSTANDING",
+      });
+      message.success("User active status updated");
+      await loadComment(userId);
+    } catch {
+      message.error("Failed to update status");
+    }
+  };
+
+  const formatWhen = (raw?: string) => raw?.match(/\d{2}:\d{2}/)?.[0] || "";
+  const commentColors = ["magenta", "red", "volcano", "orange", "gold", "lime", "green", "cyan", "blue", "geekblue", "purple"];
+  const getColorForName = (name: string) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return commentColors[Math.abs(hash) % commentColors.length];
+  };
 
   // debounce search
   useEffect(() => {
@@ -259,6 +322,14 @@ const Admin: React.FC = () => {
     });
   }, [mergedRows, serviceFilter, debouncedTerm]);
 
+  useEffect(() => {
+    filteredRows
+      .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+      .forEach((row) => {
+        if (row.userId && commentsMap[row.userId] === undefined) loadComment(row.userId);
+      });
+  }, [filteredRows, currentPage]);
+
   /** ---------- CSV export (filtered view) ---------- */
   const toCSV = (rows: OfferDetails[]) => {
     if (!rows.length) return "";
@@ -322,17 +393,19 @@ const Admin: React.FC = () => {
       dataIndex: "askOxyOfers",
       key: "askOxyOfers",
       align: "left",
+      
 
       render: (v: string) => (
         <Tag
           color={tagColor(v)}
           style={{
-            maxWidth: "100%",
+            maxWidth: 250,
             height: "auto",
             lineHeight: "20px",
             padding: "3px 8px",
             whiteSpace: "normal",
             overflowWrap: "anywhere",
+            wordBreak: "break-word",
           }}
         >
           {v || "N/A"}
@@ -355,6 +428,45 @@ const Admin: React.FC = () => {
         onClick: () =>
           setSortOrder((prev) => (prev === "descend" ? "ascend" : "descend")),
       }),
+    },
+    {
+      title: "Action",
+      key: "actions",
+    
+      render: (_: unknown, record: OfferDetails) => (
+        <Button size="small" disabled={!record.userId} onClick={() => showCommentsModal(record)}>Comments</Button>
+      ),
+    },
+    {
+      title: "Updated comments",
+      key: "updatedComments",
+      width: 400, 
+      render: (_: unknown, record: OfferDetails) => {
+        if (!record.userId) return <Tag>—</Tag>;
+        const info = commentsMap[record.userId];
+        if (info === "loading" || info === undefined) return <Spin size="small" />;
+        if (info === "error" || info === null) return <span className="text-gray-500 text-sm"><Tag>—</Tag> No recent comments</span>;
+        const needsDecision = info.isActive === null || info.isActive === undefined;
+        const name = info.commentsUpdateBy || "—";
+        const callingType = (info.callingType ?? "").trim();
+        return (
+          <div className="flex flex-col gap-1 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              {needsDecision ? (
+                <Select style={{ width: 160 }} value="true" options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} onChange={(value: string) => handleQuickActiveChange(record.userId!, value as "true" | "false")} />
+              ) : <Tag color={info.isActive ? "green" : "red"}>{info.isActive ? "ACTIVE" : "INACTIVE"}</Tag>}
+              <Button type="link" size="small" className="p-0" onClick={() => showCommentsModal(record)}>Change</Button>
+              <span className="max-w-[360px] truncate" title={info.adminComments || ""}>{info.adminComments || "—"}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <Tag color={getColorForName(name.toUpperCase())}><strong>{name}</strong></Tag>
+              <span>at {formatWhen(info.commentsCreatedDate) || "—"}</span>
+              {info.customerBehaviour && <span>• {info.customerBehaviour}</span>}
+              {callingType && <span>• CallingType: {callingType}</span>}
+            </div>
+          </div>
+        );
+      },
     },
   ];
 
@@ -830,6 +942,9 @@ const Admin: React.FC = () => {
                         {fmt(o._createdAtMs || o.createdAt)}
                       </div>
                     </div>
+                    <Button className="mt-2" size="small" disabled={!o.userId} onClick={() => showCommentsModal(o)}>
+                      Comments
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -862,6 +977,16 @@ const Admin: React.FC = () => {
           </div>
         )}
       </div>
+      <HelpDeskCommentsModal
+        open={commentsModalVisible}
+        onClose={() => { setCommentsModalVisible(false); if (selectedRecord?.userId) loadComment(selectedRecord.userId); }}
+        userId={selectedRecord?.userId || undefined}
+        updatedBy={updatedBy}
+        storedUniqueId={storedUniqueId}
+        record={selectedRecord}
+        BASE_URL={BASE_URL}
+        initialIsActive={selectedRecord?.userId ? (commentsMap[selectedRecord.userId] as AdminComment | null)?.isActive : null}
+      />
     </div>
   );
 };

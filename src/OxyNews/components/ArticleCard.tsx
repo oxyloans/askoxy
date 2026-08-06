@@ -71,7 +71,7 @@ export default function ArticleCard({
       >
         <div
           className={`relative bg-plum-light overflow-hidden ${
-            featured ? "aspect-[16/9]" : "aspect-[16/10]"
+            featured ? "aspect-[16/7]" : "aspect-[16/9]"
           }`}
         >
           {item.imageUrl ? (
@@ -86,31 +86,31 @@ export default function ArticleCard({
             </div>
           )}
           {item.domain && item.domain !== "General" && (
-            <span className="absolute top-3 left-3 bg-plum/90 text-gold text-[11px] font-mono uppercase tracking-wide px-2 py-1 rounded">
+            <span className="absolute top-2 left-2 bg-plum/90 text-gold text-[10px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded">
               {item.domain}
             </span>
           )}
         </div>
 
-        <div className="p-3">
+        <div className="p-2">
           <h3
             className={`font-display font-semibold text-plum leading-snug group-hover:text-royal transition-colors ${
-              featured ? "text-xl sm:text-2xl" : "text-sm sm:text-base"
+              featured ? "text-base sm:text-lg" : "text-xs sm:text-sm"
             }`}
           >
             {displayTitle(item)}
           </h3>
           {featured && item.shortSummary && (
-            <p className="mt-2 text-sm text-ink-soft leading-relaxed line-clamp-3">
+            <p className="mt-1 text-xs text-ink-soft leading-relaxed line-clamp-2">
               {item.shortSummary}
             </p>
           )}
-          <div className="mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <OpportunityMeter score={item.overallScore} size={26} strokeWidth={3} />
-              <span className="text-sm font-semibold text-plum">Opportunities assessment</span>
+          <div className="mt-1.5 flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1.5">
+              <OpportunityMeter score={item.overallScore} size={20} strokeWidth={3} />
+              <span className="text-[10px] font-semibold text-plum hidden sm:inline">Opportunities</span>
             </div>
-            <span className="text-xs text-ink-faint font-mono">{timeAgo(item.createdAt)}</span>
+            <span className="text-[10px] text-ink-faint font-mono">{timeAgo(item.createdAt)}</span>
           </div>
         </div>
       </Link>

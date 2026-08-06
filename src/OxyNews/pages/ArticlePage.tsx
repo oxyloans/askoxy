@@ -50,11 +50,9 @@ function CompanyIcon() {
 function scrollToSection(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
-  const header = document.querySelector("div.sticky.top-0");
-  const headerHeight = header ? header.getBoundingClientRect().height : 0;
   const quickNav = document.querySelector(".article-quick-nav");
-  const quickNavHeight = quickNav ? quickNav.getBoundingClientRect().height : 0;
-  const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - quickNavHeight - 16;
+  const quickNavHeight = quickNav ? (quickNav as HTMLElement).offsetHeight : 0;
+  const top = el.getBoundingClientRect().top + window.scrollY - 160 - quickNavHeight - 16;
   window.scrollTo({ top, behavior: "smooth" });
   el.classList.add("scroll-highlight");
   setTimeout(() => el.classList.remove("scroll-highlight"), 1600);
@@ -167,7 +165,7 @@ export default function ArticlePage() {
       {showQuickNav && (
         <>
           <div
-            className="article-quick-nav hidden lg:flex sticky top-[96px] inset-x-0 z-30 mx-auto w-full max-w-6xl items-center justify-between gap-3 rounded-full bg-plum/95 px-4 py-3 shadow-xl ring-1 ring-white/10 backdrop-blur-md"
+            className="article-quick-nav hidden lg:flex sticky top-[160px] inset-x-0 z-20 mx-auto w-full max-w-6xl items-center justify-between gap-3 rounded-full bg-plum/95 px-4 py-3 shadow-xl ring-1 ring-white/10 backdrop-blur-md"
           >
             {hasPeopleOrCompanies && (
               <button

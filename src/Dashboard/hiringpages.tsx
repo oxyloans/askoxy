@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Building2, CheckCircle2, Clock3, MapPin, Search } from "lucide-react";
 import { message } from "antd";
-import BASE_URL from "../Config";
+import BASE_URL, { uploadurlwithId } from "../Config";
 
 interface Job {
   id: string;
@@ -44,6 +44,27 @@ const COMPANY_NAME = "ASKOXY_AI";
 const FALLBACK_LOGO =
   "https://oxybricksv1.s3.ap-south-1.amazonaws.com/null/45880e62-acaf-4645-a83e-d1c8498e923e/aadhar_partnerlogo.png";
 const LOGIN_URL = "/whatsapplogin";
+
+const normalizeJobsResponse = (payload: unknown): Job[] => {
+  if (Array.isArray(payload)) return payload as Job[];
+  if (!payload || typeof payload !== "object") return [];
+
+  const response = payload as Record<string, unknown>;
+  const candidates = [
+    response.data,
+    response.content,
+    response.jobs,
+    response.result,
+  ];
+
+  return (candidates.find(Array.isArray) as Job[] | undefined) || [];
+};
+
+const getCompanyLogoUrl = (logo?: string | null) => {
+  if (!logo) return FALLBACK_LOGO;
+  if (/^https?:\/\//i.test(logo)) return logo;
+  return `${uploadurlwithId}${logo}`;
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -88,11 +109,12 @@ const HiringPages: React.FC = () => {
         throw new Error(`Jobs API failed with status ${response.status}`);
       }
 
-      const data = await response.json();
-      const jobsArray: Job[] = Array.isArray(data) ? data : [];
-      const activeJobs = jobsArray.filter((job) => job.jobStatus === true);
+      const data: unknown = await response.json();
+      const jobsArray = normalizeJobsResponse(data);
 
-      setJobs(activeJobs);
+      // This endpoint already returns the jobs intended for this company page.
+      // Do not discard valid records when older/backend data sends jobStatus=false.
+      setJobs(jobsArray);
     } catch (error) {
       console.error("Error fetching ASKOXY jobs:", error);
       message.error("Unable to load jobs. Please try again.");
@@ -165,7 +187,7 @@ const HiringPages: React.FC = () => {
         <div className="flex justify-center pb-4 pt-6">
           <div className="flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white p-2">
             <img
-              src={job.companyLogo || FALLBACK_LOGO}
+              src={getCompanyLogoUrl(job.companyLogo)}
               alt={job.companyName || "Company logo"}
               className="h-20 w-40 object-contain transition-transform duration-300"
               onError={(e) => {
@@ -280,7 +302,7 @@ const HiringPages: React.FC = () => {
             <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <span className="text-sm font-semibold">
-                {filteredJobs.length} Active Jobs
+                {filteredJobs.length} Available Jobs
               </span>
             </div>
           </div>

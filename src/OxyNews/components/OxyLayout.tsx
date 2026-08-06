@@ -29,7 +29,7 @@ export default function OxyLayout() {
   return (
     <ChatContext.Provider value={{ chatOpen, openChat: () => setChatOpen(true), closeChat: () => setChatOpen(false) }}>
     <div className="flex min-h-screen flex-col">
-      <div className="sticky top-0 z-30">
+      <div className="fixed top-0 left-0 right-0 z-30 w-full">
         <header className="border-b border-gold/25 bg-plum text-paper shadow-md">
           <div className="mx-auto max-w-7xl px-3 py-2 sm:px-6 sm:py-3">
 
@@ -189,7 +189,7 @@ export default function OxyLayout() {
         <ResourceNavBar />
       </div>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6">
+      <main className="mx-auto w-full max-w-6xl px-3 py-4 sm:px-6 sm:py-6 mt-[160px]">
         {articleMatch?.params.id && chatOpen ? (
           <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr,380px]">
             <div className="lg:col-start-1"><Outlet /></div>

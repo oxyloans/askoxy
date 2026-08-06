@@ -4,9 +4,11 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Client, IMessage } from "@stomp/stompjs";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -15,7 +17,6 @@ import {
   Clock3,
   Copy,
   Eye,
-  Forward,
   LogIn,
   ListFilter,
   MessageCircle,
@@ -23,6 +24,7 @@ import {
   Plus,
   Pencil,
   Reply,
+  RefreshCw,
   Search,
   Sparkles,
   Send,
@@ -32,6 +34,9 @@ import {
   ThumbsUp,
   Trash2,
   UserCircle,
+  Users,
+  Wifi,
+  WifiOff,
   Rocket,
   X,
 } from "lucide-react";
@@ -41,6 +46,7 @@ import askoxyLogo from "../../assets/img/askoxylogonew.png";
 import {
   CommunityCategoryItem,
   CommunityComment,
+  CommunityOnlineUser,
   CommunityQuery,
   ReactionType,
   CommunitySort,
@@ -51,19 +57,20 @@ import {
   deleteQuery,
   getComments,
   getCommunityCategories,
+  getCommunityOnlineUserCount,
+  getCommunityOnlineUsers,
+  getCommunityWebSocketUrl,
   getErrorMessage,
   getQueries,
   getQueryById,
+  normalizeCommunityOnlineUsers,
   reactToComment,
   reactToQuery,
   replyToComment,
   updateComment,
   updateQuery,
 } from "./communityApi";
-import {
-  getCategoryLabel,
-  getQueryCategoryLabel,
-} from "./communityCategories";
+import { getCategoryLabel, getQueryCategoryLabel } from "./communityCategories";
 
 type QueryFormValues = Omit<CreateQueryPayload, "categoryId"> & {
   categoryId: number | "";
@@ -114,10 +121,52 @@ const getCurrentUserId = () =>
 const isOwner = (ownerId: unknown, currentUserId?: string) =>
   Boolean(
     currentUserId &&
-      ownerId !== undefined &&
-      ownerId !== null &&
-      String(ownerId) === String(currentUserId),
+    ownerId !== undefined &&
+    ownerId !== null &&
+    String(ownerId) === String(currentUserId),
   );
+
+type SavedQueryReaction = ReactionType | null;
+
+const getReactionStorageKey = (userId: string) =>
+  `community_query_reactions_${userId}`;
+
+const readSavedQueryReactions = (userId?: string) => {
+  if (!userId) return {} as Record<string, ReactionType>;
+  try {
+    return JSON.parse(localStorage.getItem(getReactionStorageKey(userId)) || "{}") as Record<string, ReactionType>;
+  } catch {
+    return {} as Record<string, ReactionType>;
+  }
+};
+
+const saveQueryReaction = (
+  userId: string | undefined,
+  queryId: number,
+  reaction: SavedQueryReaction,
+) => {
+  if (!userId) return;
+  const saved = readSavedQueryReactions(userId);
+  if (reaction) saved[String(queryId)] = reaction;
+  else delete saved[String(queryId)];
+  localStorage.setItem(getReactionStorageKey(userId), JSON.stringify(saved));
+};
+
+const applySavedQueryReaction = (
+  query: CommunityQuery,
+  userId?: string,
+): CommunityQuery => {
+  const saved = userId ? readSavedQueryReactions(userId)[String(query.id)] : null;
+  if (!saved) return query;
+  return {
+    ...query,
+    reactions: {
+      ...query.reactions,
+      likedByCurrentUser: saved === "LIKE",
+      dislikedByCurrentUser: saved === "DISLIKE",
+    },
+  };
+};
 
 const initials = (name?: string) =>
   (name || "U")
@@ -128,12 +177,25 @@ const initials = (name?: string) =>
     .join("")
     .toUpperCase();
 
+const normalizeBadge = (badge?: string | null) =>
+  badge?.trim().toUpperCase() || "NONE";
+
 const isVerified = (badge?: string | null) =>
-  badge === "ADMIN_VERIFIED" || badge === "EMPLOYEE_VERIFIED";
+  ["ADMIN", "ADMIN_VERIFIED", "EMPLOYEE", "EMPLOYEE_VERIFIED"].includes(
+    normalizeBadge(badge),
+  );
 
 const badgeLabel = (badge?: string | null, profileName?: string) => {
-  if (badge === "ADMIN_VERIFIED") return "Admin";
-  if (badge === "EMPLOYEE_VERIFIED") return "Employee";
+  const normalizedBadge = normalizeBadge(badge);
+  if (normalizedBadge === "ADMIN" || normalizedBadge === "ADMIN_VERIFIED") {
+    return "Admin";
+  }
+  if (
+    normalizedBadge === "EMPLOYEE" ||
+    normalizedBadge === "EMPLOYEE_VERIFIED"
+  ) {
+    return "Employee";
+  }
   return profileName?.trim() || "Community User";
 };
 
@@ -235,10 +297,14 @@ export default function CommunityPage() {
   const savedProfileName = getSavedProfileName();
 
   const [queries, setQueries] = useState<CommunityQuery[]>([]);
-  const [communityCategories, setCommunityCategories] = useState<CommunityCategoryItem[]>([]);
+  const [communityCategories, setCommunityCategories] = useState<
+    CommunityCategoryItem[]
+  >([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState("");
-  const [selectedQuery, setSelectedQuery] = useState<CommunityQuery | null>(null);
+  const [selectedQuery, setSelectedQuery] = useState<CommunityQuery | null>(
+    null,
+  );
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [categoryId, setCategoryId] = useState<number | "">("");
   const [sortBy, setSortBy] = useState<CommunitySort>("LATEST");
@@ -259,6 +325,13 @@ export default function CommunityPage() {
   const [postingComment, setPostingComment] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [showMyQueriesOnly, setShowMyQueriesOnly] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<CommunityOnlineUser[]>([]);
+  const [onlineUsersCount, setOnlineUsersCount] = useState(0);
+  const [presenceLoading, setPresenceLoading] = useState(false);
+  const [presenceConnected, setPresenceConnected] = useState(false);
+  const [presenceError, setPresenceError] = useState("");
+  const [presenceUpdatedAt, setPresenceUpdatedAt] = useState<Date | null>(null);
+  const presenceRequestInFlight = useRef(false);
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -312,7 +385,8 @@ export default function CommunityPage() {
 
   const handleUnauthorized = useCallback(
     (err: unknown) => {
-      const status = (err as { response?: { status?: number } })?.response?.status;
+      const status = (err as { response?: { status?: number } })?.response
+        ?.status;
       if (status === 401 || status === 403) {
         redirectToRegistration();
         return true;
@@ -321,6 +395,212 @@ export default function CommunityPage() {
     },
     [redirectToRegistration],
   );
+
+  const loadPresenceSnapshot = useCallback(async (silent = false) => {
+    if (!accessToken) {
+      setOnlineUsers([]);
+      setOnlineUsersCount(0);
+      setPresenceLoading(false);
+      return;
+    }
+
+    if (presenceRequestInFlight.current) return;
+    presenceRequestInFlight.current = true;
+
+    if (!silent) setPresenceLoading(true);
+
+    const [usersResult, countResult] = await Promise.allSettled([
+      getCommunityOnlineUsers(),
+      getCommunityOnlineUserCount(),
+    ]);
+
+    const snapshotUsers =
+      usersResult.status === "fulfilled" ? usersResult.value : null;
+    const snapshotCount =
+      countResult.status === "fulfilled" ? countResult.value : null;
+
+    if (snapshotUsers) setOnlineUsers(snapshotUsers);
+
+    if (snapshotUsers || snapshotCount !== null) {
+      setOnlineUsersCount(
+        Math.max(snapshotCount ?? 0, snapshotUsers?.length ?? 0),
+      );
+      setPresenceUpdatedAt(new Date());
+      setPresenceError("");
+    }
+
+    if (
+      usersResult.status === "rejected" &&
+      countResult.status === "rejected"
+    ) {
+      const firstError = usersResult.reason || countResult.reason;
+      if (!handleUnauthorized(firstError)) {
+        setPresenceError(getErrorMessage(firstError));
+      }
+    }
+
+    setPresenceLoading(false);
+    presenceRequestInFlight.current = false;
+  }, [accessToken, handleUnauthorized]);
+
+  useEffect(() => {
+    if (!isRegistered || !accessToken) {
+      setOnlineUsers([]);
+      setOnlineUsersCount(0);
+      setPresenceConnected(false);
+      setPresenceError("");
+      return;
+    }
+
+    void loadPresenceSnapshot();
+  }, [accessToken, isRegistered, loadPresenceSnapshot]);
+
+  useEffect(() => {
+    if (!isRegistered || !accessToken) return;
+
+    const refreshPresence = () => {
+      if (document.visibilityState === "visible") {
+        void loadPresenceSnapshot(true);
+      }
+    };
+    const intervalId = window.setInterval(refreshPresence, 5000);
+    document.addEventListener("visibilitychange", refreshPresence);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshPresence);
+    };
+  }, [accessToken, isRegistered, loadPresenceSnapshot]);
+
+  useEffect(() => {
+    if (!isRegistered || !accessToken) return;
+
+    let disposed = false;
+    let heartbeatTimer: number | undefined;
+    const token = accessToken?.replace(/^Bearer\s+/i, "").trim();
+    const authorization = accessToken?.startsWith("Bearer ")
+      ? accessToken
+      : `Bearer ${accessToken}`;
+
+    const stopHeartbeat = () => {
+      if (heartbeatTimer !== undefined) {
+        window.clearInterval(heartbeatTimer);
+        heartbeatTimer = undefined;
+      }
+    };
+
+    const client = new Client({
+      brokerURL: getCommunityWebSocketUrl(accessToken),
+      connectHeaders: {
+        Authorization: authorization,
+        token,
+      },
+      reconnectDelay: 5000,
+      connectionTimeout: 10000,
+      heartbeatIncoming: 5000,
+      heartbeatOutgoing: 5000,
+      debug: (message) => {
+        console.debug("[community ws]", message);
+      },
+    });
+
+    const sendHeartbeat = () => {
+      if (!client.connected) return;
+
+      client.publish({
+        destination: "/app/community/heartbeat",
+        body: "{}",
+      });
+    };
+
+    client.onConnect = () => {
+      if (disposed) return;
+
+      setPresenceConnected(true);
+      setPresenceError("");
+      stopHeartbeat();
+
+      client.subscribe("/topic/community/presence", (message: IMessage) => {
+        try {
+          const users = normalizeCommunityOnlineUsers(JSON.parse(message.body));
+          setOnlineUsers(users);
+          setOnlineUsersCount(users.length);
+          setPresenceUpdatedAt(new Date());
+          setPresenceError("");
+          setPresenceLoading(false);
+        } catch {
+          setPresenceError(
+            "The live presence update was not in the expected format.",
+          );
+        }
+      });
+
+      sendHeartbeat();
+      heartbeatTimer = window.setInterval(sendHeartbeat, 5000);
+    };
+
+    client.onStompError = (frame) => {
+      if (disposed) return;
+      try {
+        console.debug("[community ws] STOMP error frame:", frame);
+      } catch {}
+      setPresenceConnected(false);
+      setPresenceError(
+        (frame && (frame.headers?.message || frame.body)) ||
+          "Community presence connection failed.",
+      );
+      stopHeartbeat();
+    };
+
+    client.onWebSocketError = (event) => {
+      if (disposed) return;
+      try {
+        console.debug("[community ws] WebSocket error:", event);
+      } catch {}
+      setPresenceConnected(false);
+      setPresenceError(
+        "Unable to connect to live community presence. Retrying...",
+      );
+      stopHeartbeat();
+    };
+
+    client.onWebSocketClose = (event) => {
+      if (disposed) return;
+      try {
+        console.debug("[community ws] WebSocket close:", event);
+      } catch {}
+      setPresenceConnected(false);
+      stopHeartbeat();
+    };
+
+    try {
+      const wsUrl = getCommunityWebSocketUrl(accessToken);
+      const maskedToken = token
+        ? `${token.slice(0, 8)}...${token.slice(-6)}`
+        : null;
+      console.debug("[community ws] connecting", {
+        wsUrl,
+        maskedToken,
+        hasAccessToken: Boolean(accessToken),
+      });
+    } catch {}
+
+    client.activate();
+
+    const disconnectPresence = () => {
+      stopHeartbeat();
+      void client.deactivate();
+    };
+
+    window.addEventListener("pagehide", disconnectPresence);
+
+    return () => {
+      disposed = true;
+      window.removeEventListener("pagehide", disconnectPresence);
+      stopHeartbeat();
+      void client.deactivate();
+    };
+  }, [accessToken, isRegistered]);
 
   const loadQueries = useCallback(async () => {
     setLoading(true);
@@ -335,7 +615,11 @@ export default function CommunityPage() {
         sortBy,
       });
 
-      setQueries(result.queries);
+      setQueries(
+        result.queries.map((query) =>
+          applySavedQueryReaction(query, currentUserId),
+        ),
+      );
       setTotalPages(Math.max(result.totalPages, 1));
       setTotalElements(result.totalElements);
     } catch (err) {
@@ -343,7 +627,7 @@ export default function CommunityPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryId, handleUnauthorized, keyword, pageNumber, sortBy]);
+  }, [categoryId, currentUserId, handleUnauthorized, keyword, pageNumber, sortBy]);
 
   useEffect(() => {
     loadQueries();
@@ -363,7 +647,7 @@ export default function CommunityPage() {
           getComments(query.id),
         ]);
 
-        setSelectedQuery(detail);
+        setSelectedQuery(applySavedQueryReaction(detail, currentUserId));
         setComments(nestedComments.filter(Boolean) as CommunityComment[]);
       } catch (err) {
         if (!handleUnauthorized(err)) setError(getErrorMessage(err));
@@ -371,7 +655,7 @@ export default function CommunityPage() {
         setDetailLoading(false);
       }
     },
-    [handleUnauthorized, setSearchParams],
+    [currentUserId, handleUnauthorized, setSearchParams],
   );
 
   useEffect(() => {
@@ -391,7 +675,7 @@ export default function CommunityPage() {
         ]);
 
         if (!active) return;
-        setSelectedQuery(detail);
+        setSelectedQuery(applySavedQueryReaction(detail, currentUserId));
         setComments(nestedComments.filter(Boolean) as CommunityComment[]);
       } catch (err) {
         if (!active) return;
@@ -405,7 +689,7 @@ export default function CommunityPage() {
     return () => {
       active = false;
     };
-  }, [handleUnauthorized, searchParams, selectedQuery?.id]);
+  }, [currentUserId, handleUnauthorized, searchParams, selectedQuery?.id]);
 
   const closeDetail = () => {
     setSelectedQuery(null);
@@ -445,13 +729,10 @@ export default function CommunityPage() {
       categoryId: query.categoryId || matchedCategory?.id || "",
       question: query.question,
       description: query.description,
-      otherCategoryName:
-        query.otherCategoryName || query.customCategory || "",
+      otherCategoryName: query.otherCategoryName || query.customCategory || "",
     });
     setQueryModalOpen(true);
   };
-
-
 
   const saveQuery = async (event: FormEvent) => {
     event.preventDefault();
@@ -479,7 +760,9 @@ export default function CommunityPage() {
     }
 
     if (description.length < 25) {
-      setFormError("Description must contain at least 25 characters so members can understand your query.");
+      setFormError(
+        "Description must contain at least 25 characters so members can understand your query.",
+      );
       return;
     }
 
@@ -538,7 +821,12 @@ export default function CommunityPage() {
 
   const removeQuery = async (query: CommunityQuery) => {
     if (!requireRegistration()) return;
-    if (!window.confirm("Delete this question? It will be removed from the community.")) return;
+    if (
+      !window.confirm(
+        "Delete this question? It will be removed from the community.",
+      )
+    )
+      return;
 
     try {
       await deleteQuery(query.id);
@@ -555,6 +843,15 @@ export default function CommunityPage() {
 
     try {
       const reactions = await reactToQuery(query.id, type);
+      saveQueryReaction(
+        currentUserId,
+        query.id,
+        reactions.likedByCurrentUser
+          ? "LIKE"
+          : reactions.dislikedByCurrentUser
+            ? "DISLIKE"
+            : null,
+      );
       setQueries((current) =>
         current.map((item) =>
           item.id === query.id ? { ...item, reactions } : item,
@@ -600,45 +897,25 @@ export default function CommunityPage() {
     query: CommunityQuery,
   ) => {
     event.stopPropagation();
+    const content = `${query.question}\n\n${query.description}\n\n${getQueryShareUrl(query.id)}`;
 
-    const content = `${query.question}\n\n${query.description}`;
     try {
       await navigator.clipboard.writeText(content);
-      showToast("Question content copied");
+      showToast("Question and link copied");
     } catch {
-      showToast("Unable to copy the content");
+      showToast("Unable to copy this question");
     }
   };
 
-  const shareQuery = async (
+  const shareQuery = (
     event: MouseEvent<HTMLButtonElement>,
     query: CommunityQuery,
   ) => {
     event.stopPropagation();
     const url = getQueryShareUrl(query.id);
-
-    try {
-      if (navigator.share) {
-        await navigator.share({ url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        showToast("Query link copied");
-      }
-    } catch (err) {
-      if ((err as DOMException)?.name !== "AbortError") {
-        showToast("Unable to share this query");
-      }
-    }
-  };
-
-  const forwardQuery = (
-    event: MouseEvent<HTMLButtonElement>,
-    query: CommunityQuery,
-  ) => {
-    event.stopPropagation();
-    const url = getQueryShareUrl(query.id);
+    const text = `${query.question}\n\nRead and join the discussion on AskOxy Community:\n${url}`;
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(url)}`,
+      `https://wa.me/?text=${encodeURIComponent(text)}`,
       "_blank",
       "noopener,noreferrer",
     );
@@ -646,8 +923,8 @@ export default function CommunityPage() {
 
   const selectedCategoryName = useMemo(
     () =>
-      communityCategories.find((item) => item.id === categoryId)?.categoryName ||
-      "",
+      communityCategories.find((item) => item.id === categoryId)
+        ?.categoryName || "",
     [categoryId, communityCategories],
   );
 
@@ -720,6 +997,25 @@ export default function CommunityPage() {
               </button>
             )}
             {isRegistered && (
+              <div
+                className="hidden min-h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-black text-emerald-700 md:inline-flex"
+                title={
+                  presenceConnected
+                    ? "Live community presence connected"
+                    : "Community presence reconnecting"
+                }
+              >
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    presenceConnected
+                      ? "animate-pulse bg-emerald-500"
+                      : "bg-amber-400"
+                  }`}
+                />
+                {onlineUsersCount} online
+              </div>
+            )}
+            {isRegistered && (
               <div className="hidden min-h-10 max-w-[210px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 sm:flex">
                 <UserCircle size={18} className="shrink-0 text-[#5b2d90]" />
                 <span className="truncate text-sm font-bold text-slate-700">
@@ -747,8 +1043,8 @@ export default function CommunityPage() {
 
       {!selectedQuery && (
         <>
-          <section className="relative overflow-hidden border-b border-slate-200 bg-white">
-            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 animate-pulse rounded-full bg-purple-100/80 blur-3xl" />
+          <section className="relative overflow-hidden ">
+            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 animate-pulse rounded-full   bg-purple-50/80 blur-4xl" />
             <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-amber-100/70 blur-3xl" />
 
             <div className="relative mx-auto grid w-[calc(100%-24px)] max-w-7xl items-center gap-6 py-8 sm:w-[calc(100%-40px)] sm:py-12 lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
@@ -760,26 +1056,35 @@ export default function CommunityPage() {
 
                 <h1 className="mt-4 max-w-3xl text-[32px] font-black leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-[45px] lg:text-[54px]">
                   OXY community.
-                  <span className="block bg-gradient-to-r from-[#5b2d90] to-[#9b66c8] bg-clip-text text-transparent">Knowledge for everyone.</span>
+                  <span className="block bg-gradient-to-r from-[#5b2d90] to-[#9b66c8] bg-clip-text text-transparent">
+                    Knowledge for everyone.
+                  </span>
                 </h1>
 
                 <p className="mt-4 max-w-2xl text-[14px] leading-6 text-slate-600 sm:text-base sm:leading-7">
-                  Learn more about ASKOXY services, ask practical questions, share real experiences and receive useful guidance from users, employees and verified members.
+                  Learn more about ASKOXY services, ask practical questions,
+                  share real experiences and receive useful guidance from users,
+                  employees and verified members.
                 </p>
 
                 <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
-                  <button onClick={openCreateModal} className={`${primaryButton} px-6 shadow-[0_10px_24px_rgba(91,45,144,0.24)] hover:-translate-y-0.5`}>
+                  <button
+                    onClick={openCreateModal}
+                    className={`${primaryButton} px-6 shadow-[0_10px_24px_rgba(91,45,144,0.24)] hover:-translate-y-0.5`}
+                  >
                     <Lightbulb size={18} />
                     Ask Your First Question
                   </button>
                   {!isRegistered && (
-                    <button onClick={redirectToRegistration} className={`${secondaryButton} px-6 hover:-translate-y-0.5`}>
+                    <button
+                      onClick={redirectToRegistration}
+                      className={`${secondaryButton} px-6 hover:-translate-y-0.5`}
+                    >
                       <LogIn size={18} />
                       Join with WhatsApp
                     </button>
                   )}
                 </div>
-
               </div>
 
               <div className="relative mx-auto w-full max-w-xl animate-[float_4s_ease-in-out_infinite]">
@@ -799,6 +1104,18 @@ export default function CommunityPage() {
       )}
 
       <div className="mx-auto w-[calc(100%-24px)] max-w-7xl py-4 sm:w-[calc(100%-40px)] sm:py-6">
+        {isRegistered && (
+          <OnlineUsersPanel
+            users={onlineUsers}
+            count={onlineUsersCount}
+            connected={presenceConnected}
+            loading={presenceLoading}
+            error={presenceError}
+            onRetry={loadPresenceSnapshot}
+            updatedAt={presenceUpdatedAt}
+          />
+        )}
+
         {selectedQuery ? (
           <section>
             <div className="mb-5 flex flex-wrap items-center gap-2 sm:gap-3">
@@ -851,7 +1168,8 @@ export default function CommunityPage() {
                         </span>
                         <span className="inline-flex items-center gap-1.5">
                           <MessageCircle size={16} />
-                          {selectedQuery.totalComments || comments.length} answers
+                          {selectedQuery.totalComments || comments.length}{" "}
+                          answers
                         </span>
                         <span className="inline-flex items-center gap-1.5">
                           <Clock3 size={16} />
@@ -863,7 +1181,9 @@ export default function CommunityPage() {
                         <button
                           type="button"
                           onClick={() => queryReaction(selectedQuery, "LIKE")}
-                          aria-pressed={Boolean(selectedQuery.reactions?.likedByCurrentUser)}
+                          aria-pressed={Boolean(
+                            selectedQuery.reactions?.likedByCurrentUser,
+                          )}
                           className={`${actionButton} ${
                             selectedQuery.reactions?.likedByCurrentUser
                               ? "border-blue-300 bg-blue-50 text-blue-700 shadow-sm"
@@ -872,15 +1192,23 @@ export default function CommunityPage() {
                         >
                           <ThumbsUp
                             size={16}
-                            fill={selectedQuery.reactions?.likedByCurrentUser ? "currentColor" : "none"}
+                            fill={
+                              selectedQuery.reactions?.likedByCurrentUser
+                                ? "currentColor"
+                                : "none"
+                            }
                           />
-                          Like {selectedQuery.reactions?.totalLikes || 0}
+                          Like {selectedQuery.reactions?.totalLikes ?? 0}
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => queryReaction(selectedQuery, "DISLIKE")}
-                          aria-pressed={Boolean(selectedQuery.reactions?.dislikedByCurrentUser)}
+                          onClick={() =>
+                            queryReaction(selectedQuery, "DISLIKE")
+                          }
+                          aria-pressed={Boolean(
+                            selectedQuery.reactions?.dislikedByCurrentUser,
+                          )}
                           className={`${actionButton} ${
                             selectedQuery.reactions?.dislikedByCurrentUser
                               ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
@@ -889,16 +1217,23 @@ export default function CommunityPage() {
                         >
                           <ThumbsDown
                             size={16}
-                            fill={selectedQuery.reactions?.dislikedByCurrentUser ? "currentColor" : "none"}
+                            fill={
+                              selectedQuery.reactions?.dislikedByCurrentUser
+                                ? "currentColor"
+                                : "none"
+                            }
                           />
-                          Dislike {selectedQuery.reactions?.totalDislikes || 0}
+                          Dislike {selectedQuery.reactions?.totalDislikes ?? 0}
                         </button>
 
                         <button
                           onClick={() =>
                             document
                               .getElementById("answer-box")
-                              ?.scrollIntoView({ behavior: "smooth", block: "center" })
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              })
                           }
                           className={actionButton}
                         >
@@ -911,20 +1246,14 @@ export default function CommunityPage() {
                           className={actionButton}
                         >
                           <Share2 size={16} />
-                          Share
+                          Share on WhatsApp
                         </button>
 
                         <button
-                          onClick={(event) => forwardQuery(event, selectedQuery)}
+                          onClick={(event) =>
+                            copyQueryContent(event, selectedQuery)
+                          }
                           className={actionButton}
-                        >
-                          <Forward size={16} />
-                          WhatsApp
-                        </button>
-
-                        <button
-                          onClick={(event) => copyQueryContent(event, selectedQuery)}
-                          className={`${actionButton} col-span-2 sm:col-span-1`}
                         >
                           <Copy size={16} />
                           Copy
@@ -1017,9 +1346,16 @@ export default function CommunityPage() {
                         ))
                       ) : (
                         <div className="rounded-xl border border-dashed border-slate-200 py-7 text-center">
-                          <MessageCircle className="mx-auto text-[#5b2d90]" size={28} />
-                          <h3 className="mt-2 text-sm font-bold text-slate-800">No answers yet</h3>
-                          <p className="mt-0.5 text-xs text-slate-500">Be the first person to help.</p>
+                          <MessageCircle
+                            className="mx-auto text-[#5b2d90]"
+                            size={28}
+                          />
+                          <h3 className="mt-2 text-sm font-bold text-slate-800">
+                            No answers yet
+                          </h3>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            Be the first person to help.
+                          </p>
                         </div>
                       )}
                     </div>
@@ -1038,7 +1374,10 @@ export default function CommunityPage() {
                             More in {getQueryCategoryLabel(selectedQuery)}
                           </h2>
                         </div>
-                        <MessageCircle size={18} className="mt-1 shrink-0 text-[#5b2d90]" />
+                        <MessageCircle
+                          size={18}
+                          className="mt-1 shrink-0 text-[#5b2d90]"
+                        />
                       </div>
 
                       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
@@ -1257,7 +1596,6 @@ export default function CommunityPage() {
                     onLike={() => queryReaction(query, "LIKE")}
                     onDislike={() => queryReaction(query, "DISLIKE")}
                     onShare={(event) => shareQuery(event, query)}
-                    onForward={(event) => forwardQuery(event, query)}
                     onCopy={(event) => copyQueryContent(event, query)}
                   />
                 ))}
@@ -1266,14 +1604,19 @@ export default function CommunityPage() {
               <div className="rounded-2xl border border-dashed border-purple-200 bg-white px-5 py-16 text-center">
                 <MessageCircle className="mx-auto text-[#5b2d90]" size={40} />
                 <h3 className="mt-4 text-xl font-black">
-                  {showMyQueriesOnly ? "You have not posted any queries yet" : "No questions found"}
+                  {showMyQueriesOnly
+                    ? "You have not posted any queries yet"
+                    : "No questions found"}
                 </h3>
                 <p className="mt-2 text-sm text-slate-500">
                   {showMyQueriesOnly
                     ? "Ask your first community question to see it here."
                     : "Try another search or ask the first question."}
                 </p>
-                <button onClick={openCreateModal} className={`${primaryButton} mt-5`}>
+                <button
+                  onClick={openCreateModal}
+                  className={`${primaryButton} mt-5`}
+                >
                   <Plus size={17} />
                   Ask a Question
                 </button>
@@ -1338,7 +1681,6 @@ export default function CommunityPage() {
         />
       )}
 
-
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -1348,13 +1690,147 @@ export default function CommunityPage() {
   );
 }
 
+function OnlineUsersPanel({
+  users,
+  count,
+  connected,
+  loading,
+  error,
+  onRetry,
+  updatedAt,
+}: {
+  users: CommunityOnlineUser[];
+  count: number;
+  connected: boolean;
+  loading: boolean;
+  error: string;
+  onRetry: (silent?: boolean) => Promise<void>;
+  updatedAt: Date | null;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleUsers = expanded ? users : users.slice(0, 5);
+  const hiddenCount = Math.max(0, users.length - visibleUsers.length);
+
+  return (
+    <section className="relative mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:mb-5">
+      <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-emerald-100/70 blur-3xl" />
+      <div className="relative flex flex-col gap-3 bg-gradient-to-r from-white via-emerald-50/50 to-purple-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5b2d90] to-[#9b66c8] text-white shadow-md">
+            <Users size={19} />
+            <span className={`absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-[3px] border-white ${connected ? "animate-pulse bg-emerald-400" : "bg-amber-400"}`} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-base font-black tracking-tight text-slate-950 sm:text-lg">
+                {count} {count === 1 ? "member" : "members"} online
+              </h2>
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${connected ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                {connected ? <Wifi size={12} /> : <WifiOff size={12} />}
+                {connected ? "Live" : "Reconnecting"}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+              <p className="text-xs font-medium text-slate-600 sm:text-sm">
+                Active in the AskOxy community
+              </p>
+            </div>
+            {/* <p className="mt-1 text-[10px] font-medium text-slate-400 sm:text-[11px]">
+              Refreshes every 5 seconds{updatedAt ? ` · Checked ${updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}
+            </p> */}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void onRetry()}
+          disabled={loading}
+          className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-9 sm:px-0"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          <span className="sm:hidden">{loading ? "Refreshing" : "Refresh now"}</span>
+        </button>
+      </div>
+
+      <div className="relative border-t border-slate-100 px-4 py-3 sm:px-5">
+        {visibleUsers.length > 0 ? (
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {visibleUsers.map((user) => (
+              <div
+                key={user.userId}
+                className="flex min-w-[170px] items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 transition hover:border-emerald-200 hover:bg-emerald-50/60"
+                title={`${user.name} · ${badgeLabel(user.badge, user.name)}`}
+              >
+                <div className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5b2d90] to-[#9363bd] text-[10px] font-black text-white">
+                  {initials(user.name)}
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+                </div>
+                <div className="min-w-0">
+                  <strong className="flex max-w-[150px] items-center gap-1 truncate text-xs text-slate-800">
+                    <span className="truncate">
+                      {user.name || "Community User"}
+                    </span>
+                    {isVerified(user.badge) && (
+                      <BadgeCheck
+                        size={13}
+                        className="shrink-0 text-blue-600"
+                      />
+                    )}
+                  </strong>
+                  <span className="block max-w-[150px] truncate text-[10px] font-semibold text-slate-400">
+                    {badgeLabel(user.badge)}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="inline-flex min-h-12 items-center rounded-xl border border-dashed border-purple-200 bg-purple-50 px-3 text-xs font-black text-[#5b2d90] transition hover:bg-purple-100"
+              >
+                +{hiddenCount} more
+              </button>
+            )}
+
+            {expanded && users.length > 5 && (
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                className="inline-flex min-h-12 items-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-500 transition hover:bg-slate-50"
+              >
+                Show less
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex min-h-14 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5">
+            <span
+              className={`h-2.5 w-2.5 shrink-0 rounded-full ${connected ? "bg-emerald-500" : "bg-amber-400"}`}
+            />
+            <p className="text-xs leading-5 text-slate-500">
+              {loading
+                ? "Loading the current online members..."
+                : "No online members are available in the latest presence update."}
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <p className="mt-2 text-xs font-medium text-amber-700">{error}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function QueryCard({
   query,
   onOpen,
   onLike,
   onDislike,
   onShare,
-  onForward,
   onCopy,
 }: {
   query: CommunityQuery;
@@ -1362,7 +1838,6 @@ function QueryCard({
   onLike: () => void;
   onDislike: () => void;
   onShare: (event: MouseEvent<HTMLButtonElement>) => void;
-  onForward: (event: MouseEvent<HTMLButtonElement>) => void;
   onCopy: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
@@ -1404,16 +1879,16 @@ function QueryCard({
           </span>
           <span className="inline-flex items-center gap-1.5">
             <ThumbsUp size={14} />
-            {query.reactions?.totalLikes || 0}
+            {query.reactions?.totalLikes ?? 0}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <ThumbsDown size={14} />
-            {query.reactions?.totalDislikes || 0}
+            {query.reactions?.totalDislikes ?? 0}
           </span>
         </div>
       </button>
 
-      <div className="grid grid-cols-2 gap-1.5 border-t border-slate-100 bg-slate-50/70 p-2 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-1.5 border-t border-slate-100 bg-slate-50/70 p-2 sm:grid-cols-4">
         <button
           type="button"
           onClick={(event) => {
@@ -1431,7 +1906,7 @@ function QueryCard({
             size={15}
             fill={query.reactions?.likedByCurrentUser ? "currentColor" : "none"}
           />
-          Like
+          Like {query.reactions?.totalLikes ?? 0}
         </button>
         <button
           type="button"
@@ -1448,9 +1923,11 @@ function QueryCard({
         >
           <ThumbsDown
             size={15}
-            fill={query.reactions?.dislikedByCurrentUser ? "currentColor" : "none"}
+            fill={
+              query.reactions?.dislikedByCurrentUser ? "currentColor" : "none"
+            }
           />
-          Dislike
+          Dislike {query.reactions?.totalDislikes ?? 0}
         </button>
         <button
           type="button"
@@ -1458,20 +1935,12 @@ function QueryCard({
           className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold text-slate-600 transition hover:bg-white hover:text-[#5b2d90] sm:text-xs"
         >
           <Share2 size={15} />
-          Share
-        </button>
-        <button
-          type="button"
-          onClick={onForward}
-          className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold text-slate-600 transition hover:bg-white hover:text-[#5b2d90] sm:text-xs"
-        >
-          <Forward size={15} />
-          Forward
+          WhatsApp
         </button>
         <button
           type="button"
           onClick={onCopy}
-          className="col-span-2 inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold text-slate-600 transition hover:bg-white hover:text-[#5b2d90] sm:col-span-1 sm:text-xs"
+          className="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold text-slate-600 transition hover:bg-white hover:text-[#5b2d90] sm:text-xs"
         >
           <Copy size={15} />
           Copy
@@ -1671,7 +2140,8 @@ function CommentItem({
                 )}
               </strong>
               <span className="mt-0.5 block text-[11px] text-slate-400">
-                {badgeLabel(comment.user?.badge, comment.user?.name)} · {timeAgo(comment.createdAt)}
+                {badgeLabel(comment.user?.badge, comment.user?.name)} ·{" "}
+                {timeAgo(comment.createdAt)}
               </span>
             </div>
 
@@ -1739,66 +2209,76 @@ function CommentItem({
             </p>
           )}
 
-          {!editing && <div className="mt-2 flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => react("LIKE")}
-              aria-pressed={Boolean(comment.reactions?.likedByCurrentUser)}
-              className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
-                comment.reactions?.likedByCurrentUser
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
-              }`}
-            >
-              <ThumbsUp
-                size={14}
-                fill={comment.reactions?.likedByCurrentUser ? "currentColor" : "none"}
-              />
-              Like {comment.reactions?.totalLikes || 0}
-            </button>
-            <button
-              type="button"
-              onClick={() => react("DISLIKE")}
-              aria-pressed={Boolean(comment.reactions?.dislikedByCurrentUser)}
-              className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
-                comment.reactions?.dislikedByCurrentUser
-                  ? "bg-rose-100 text-rose-700"
-                  : "text-slate-500 hover:bg-rose-50 hover:text-rose-700"
-              }`}
-            >
-              <ThumbsDown
-                size={14}
-                fill={comment.reactions?.dislikedByCurrentUser ? "currentColor" : "none"}
-              />
-              Dislike {comment.reactions?.totalDislikes || 0}
-            </button>
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(comment.comment);
-                  showToast("Comment copied");
-                } catch {
-                  showToast("Unable to copy comment");
-                }
-              }}
-              className="inline-flex min-h-7 items-center gap-1 rounded-md px-2 text-[11px] font-bold text-slate-500 transition hover:bg-white"
-            >
-              <Copy size={14} />
-              Copy
-            </button>
-            <button
-              type="button"
-              onClick={() => {
+          {!editing && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => react("LIKE")}
+                aria-pressed={Boolean(comment.reactions?.likedByCurrentUser)}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
+                  comment.reactions?.likedByCurrentUser
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
+                }`}
+              >
+                <ThumbsUp
+                  size={14}
+                  fill={
+                    comment.reactions?.likedByCurrentUser
+                      ? "currentColor"
+                      : "none"
+                  }
+                />
+                Like {comment.reactions?.totalLikes ?? 0}
+              </button>
+              <button
+                type="button"
+                onClick={() => react("DISLIKE")}
+                aria-pressed={Boolean(comment.reactions?.dislikedByCurrentUser)}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
+                  comment.reactions?.dislikedByCurrentUser
+                    ? "bg-rose-100 text-rose-700"
+                    : "text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+                }`}
+              >
+                <ThumbsDown
+                  size={14}
+                  fill={
+                    comment.reactions?.dislikedByCurrentUser
+                      ? "currentColor"
+                      : "none"
+                  }
+                />
+                Dislike {comment.reactions?.totalDislikes ?? 0}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(comment.comment);
+                    showToast("Comment copied");
+                  } catch {
+                    showToast("Unable to copy comment");
+                  }
+                }}
+                className="inline-flex min-h-7 items-center gap-1 rounded-md px-2 text-[11px] font-bold text-slate-500 transition hover:bg-white"
+              >
+                <Copy size={14} />
+                Copy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   if (!requireRegistration()) return;
                   setReplyOpen((value) => !value);
                 }}
-              className="inline-flex min-h-7 items-center gap-1 rounded-md px-2 text-[11px] font-bold text-slate-500 transition hover:bg-slate-50"
-            >
-              <Reply size={14} />
-              Reply
-            </button>
-          </div>}
+                className="inline-flex min-h-7 items-center gap-1 rounded-md px-2 text-[11px] font-bold text-slate-500 transition hover:bg-slate-50"
+              >
+                <Reply size={14} />
+                Reply
+              </button>
+            </div>
+          )}
 
           {replyOpen && (
             <form onSubmit={submitReply} className="mt-2">
@@ -2033,7 +2513,11 @@ function QueryModal({
           <button type="button" onClick={onClose} className={secondaryButton}>
             Cancel
           </button>
-          <button type="submit" disabled={savingQuery} className={primaryButton}>
+          <button
+            type="submit"
+            disabled={savingQuery}
+            className={primaryButton}
+          >
             {savingQuery
               ? isEditing
                 ? "Saving..."
@@ -2058,9 +2542,7 @@ function LoadingCards({
   return (
     <div
       className={
-        singleColumn
-          ? "grid gap-4"
-          : "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        singleColumn ? "grid gap-4" : "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       }
     >
       {Array.from({ length: count }).map((_, index) => (
