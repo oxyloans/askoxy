@@ -29,6 +29,7 @@ import CompanyEmployeeLogin from "./Employee/CompanyEmployeeLogin";
 import EmployeeJobDashboard from "./Employee/EmployeeJobDashboard";
 import AddCompanyEmployee from "./AskoxyAdmin/AddCompanyEmployee";
 import EmployeesList from "./AskoxyAdmin/EmployeesList";
+import JourneysVsCampaignsVsInterestedUsers from "./AskoxyAdmin/JourneysVsCampaignsVsInterestedUsers";
 
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -142,6 +143,7 @@ const RAKBANKAIIntelligenceReport2026 = lazy(() => import("./components/RAKBANKA
 const UAEBanksAIIntelligenceHub = lazy(() => import("./components/UAEBanksAIIntelligenceHub"));
 const RadhAIVoicePageCEO = lazy(() => import("./components/talktoceo/RadhAIVoicePageLanguage"));
 const CbsDataPage = lazy(() => import("./AskoxyAdmin/CbsDataPage"));
+const FDBucketData = lazy(() => import("./AskoxyAIAdmin/FDBucketData"));
 const InternshipPage = lazy(() => import("./StudyAbroad/InternshipPage"));
 const BusinessCardLogin = lazy(() => import("./BusinessCard/BusinessCardLogin"));
 const BusinessCardRegister = lazy(() => import("./BusinessCard/BusinessCardRegister"));
@@ -874,7 +876,7 @@ const App: React.FC = () => {
               <Route path="/oxybfsai" element={<Billing />} />
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
               <Route path="/oxycommunity" element={<CommunityPage />} />
-              <Route element={<OxyLayout/>}>
+              <Route element={<OxyLayout />}>
                 <Route path="/oxynews" element={<OxyNewsHomePage />} />
                 <Route path="/article/:id" element={<ArticlePage />} />
                 <Route path="/explore" element={<ExplorePage />} />
@@ -1958,6 +1960,10 @@ const App: React.FC = () => {
                 <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
                 <Route path="addleaguejourney" element={<AddLeagueJourney />} />
                 <Route
+                  path="journeyvscampaignsvsinteresteusers"
+                  element={<JourneysVsCampaignsVsInterestedUsers />}
+                />
+                <Route
                   path="leaguejourneyusers"
                   element={<LeagueJourneysAdmin />}
                 />
@@ -2019,6 +2025,7 @@ const App: React.FC = () => {
                 />
                 <Route path="pincodeorders" element={<OrdersByPincode />} />
                 <Route path="cbsdata" element={<CbsDataPage />} />
+                <Route path="fd-bucket-data" element={<FDBucketData />} />
                 <Route path="alljobdetails" element={<JobsAdminPage />} />
                 <Route path="userAppliedJobs" element={<UserAppliedJob />} />
                 <Route path="assistants" element={<AssistantDashboard />} />

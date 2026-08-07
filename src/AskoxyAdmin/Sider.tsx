@@ -142,325 +142,340 @@ const Sidebar: React.FC = () => {
   const title =
     primaryType === "HELPDESKSUPERADMIN" ? "Interested Users" : "Dashboard";
 
-  const sidebarCategories = useMemo<SidebarCategory[]>(() => [
-    {
-      title: "Helpdesk Dashboard",
-      icon: <FaHeadset className="text-green-400" />,
-      roles: ["HELPDESKSUPERADMIN"],
-      items: [
-        {
-          title: "HelpDesk Dashboard",
-          icon: <FaTachometerAlt className="text-blue-400" />,
-          link: "/admin/helpdashboard",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "HelpDesk Team",
-          icon: <FaConciergeBell className="text-pink-400" />,
-          link: "/admin/helpDeskUsers",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        // {
-        //   title: "Assistants Dashboard",
-        //   icon: <FaRobot className="text-blue-400" />,
-        //   link: "/admin/assistants",
-        //   roles: ["HELPDESKSUPERADMIN"],
-        // },
-        {
-          title: "Vector Store Dashboard",
-          icon: <FaDatabase className="text-teal-400" />,
-          link: "/admin/vectorstore",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-      ],
-    },
-    {
-      title: "AskOxy Users",
-      icon: <FaUsers className="text-purple-400" />,
-      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-      items: [
-        {
-          title: title,
-          icon: <FaTachometerAlt className="text-blue-400" />,
-          link: "/admin/dashboard",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "Registered Users",
-          icon: <FaUser className="text-purple-400" />,
-          link: "/admin/registeredUsers",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "League Journey Users",
-          icon: <FaGraduationCap className="text-cyan-400" />,
-          link: "/admin/leaguejourneyusers",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "Askoxy Assigned Data",
-          icon: <FaClipboardList className="text-yellow-400" />,
-          link: "/admin/assignedData",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "Users Recent Orders ",
-          icon: <FaClipboardList className="text-yellow-400" />,
-          link: "/admin/userOrdersIntegration",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
+  const sidebarCategories = useMemo<SidebarCategory[]>(
+    () => [
+      {
+        title: "Helpdesk Dashboard",
+        icon: <FaHeadset className="text-green-400" />,
+        roles: ["HELPDESKSUPERADMIN"],
+        items: [
+          {
+            title: "HelpDesk Dashboard",
+            icon: <FaTachometerAlt className="text-blue-400" />,
+            link: "/admin/helpdashboard",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "HelpDesk Team",
+            icon: <FaConciergeBell className="text-pink-400" />,
+            link: "/admin/helpDeskUsers",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          // {
+          //   title: "Assistants Dashboard",
+          //   icon: <FaRobot className="text-blue-400" />,
+          //   link: "/admin/assistants",
+          //   roles: ["HELPDESKSUPERADMIN"],
+          // },
+          {
+            title: "Vector Store Dashboard",
+            icon: <FaDatabase className="text-teal-400" />,
+            link: "/admin/vectorstore",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+        ],
+      },
+      {
+        title: "AskOxy Users",
+        icon: <FaUsers className="text-purple-400" />,
+        roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        items: [
+          {
+            title: title,
+            icon: <FaTachometerAlt className="text-blue-400" />,
+            link: "/admin/dashboard",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Registered Users",
+            icon: <FaUser className="text-purple-400" />,
+            link: "/admin/registeredUsers",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "League Journey Users",
+            icon: <FaGraduationCap className="text-cyan-400" />,
+            link: "/admin/leaguejourneyusers",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "FD Bucket Data",
+            icon: <FaDatabase className="text-emerald-500" />,
+            link: "/admin/fd-bucket-data",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Askoxy Assigned Data",
+            icon: <FaClipboardList className="text-yellow-400" />,
+            link: "/admin/assignedData",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Users Recent Orders ",
+            icon: <FaClipboardList className="text-yellow-400" />,
+            link: "/admin/userOrdersIntegration",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
 
-        {
-          title: "Ram Mohan Darisa",
-          icon: <FaUserTie className="text-green-500" />,
-          link: "/admin/rammohandarisa",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "Sudheer Vakkalagadda",
-          icon: <FaLaptopCode className="text-purple-500" />,
-          link: "/admin/sudheervakkalagadda",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "All AskOxy Users",
-          icon: <FaRegAddressCard className="text-green-400" />,
-          link: "/admin/dataAssigned",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "All Kukatpally Data",
-          icon: <EnvironmentOutlined className="text-green-400" />,
-          link: "/admin/kukatpally",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "Kukatpally Assign Data",
-          icon: <RiFileUserLine className="text-yellow-400" />,
-          link: "/admin/kukatpallyassignedData",
-          roles: ["HELPDESKADMIN"],
-        },
-        {
-          title: "Advocate Data",
-          icon: <BookOutlined className="text-green-400" />,
-          link: "/admin/advocates",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "All Talwar Data",
-          icon: <SafetyCertificateOutlined className="text-red-500" />,
-          link: "/admin/talwardata",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "All Mumbai Data",
-          icon: <ApartmentOutlined className="text-blue-500" />,
-          link: "/admin/mumbaidata",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "Freelancers Partners",
-          icon: <FaHandshake className="text-orange-400" />,
-          link: "/admin/partners-dashboard",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Freelance Requirements",
-          icon: <RiListUnordered className="text-blue-400" />,
-          link: "/admin/freelance-requirements",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Assigned Talwar Data",
-          icon: <RiFileCheckLine className="text-red-500" />,
-          link: "/admin/assignedtalwarData",
-          roles: ["HELPDESKADMIN"],
-        },
-        {
-          title: "Referred Data",
-          icon: <FaUsers className="text-blue-500" />,
-          link: "/admin/referredData",
-          roles: ["HELPDESKADMIN"],
-        },
-      ],
-    },
-    {
-      title: "Company Related",
-      icon: <FaBuilding className="text-cyan-400" />,
-      roles: ["HELPDESKSUPERADMIN"],
-      items: [
-        {
-          title: "Add Company Employee",
-          icon: <FaUserPlus className="text-cyan-400" />,
-          link: "/admin/addcompanyemployee",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Employees List",
-          icon: <FaUsers className="text-emerald-400" />,
-          link: "/admin/employeeslist",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-      ],
-    },
-    {
-      title: "Services/Blogs & Jobs",
-      icon: <FaServer className="text-orange-400" />,
-      roles: ["HELPDESKSUPERADMIN"],
-      items: [
-        {
-          title: "Add Service / Product",
-          icon: <FaStore className="text-green-400" />,
-          link: "/admin/campaignsadd",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Add We are hiring",
-          icon: <FaBriefcase className="text-green-400" />,
-          link: "/admin/wearehiringadd",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
+          {
+            title: "Ram Mohan Darisa",
+            icon: <FaUserTie className="text-green-500" />,
+            link: "/admin/rammohandarisa",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Sudheer Vakkalagadda",
+            icon: <FaLaptopCode className="text-purple-500" />,
+            link: "/admin/sudheervakkalagadda",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "All AskOxy Users",
+            icon: <FaRegAddressCard className="text-green-400" />,
+            link: "/admin/dataAssigned",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "All Kukatpally Data",
+            icon: <EnvironmentOutlined className="text-green-400" />,
+            link: "/admin/kukatpally",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Kukatpally Assign Data",
+            icon: <RiFileUserLine className="text-yellow-400" />,
+            link: "/admin/kukatpallyassignedData",
+            roles: ["HELPDESKADMIN"],
+          },
+          {
+            title: "Advocate Data",
+            icon: <BookOutlined className="text-green-400" />,
+            link: "/admin/advocates",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "All Talwar Data",
+            icon: <SafetyCertificateOutlined className="text-red-500" />,
+            link: "/admin/talwardata",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "All Mumbai Data",
+            icon: <ApartmentOutlined className="text-blue-500" />,
+            link: "/admin/mumbaidata",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Freelancers Partners",
+            icon: <FaHandshake className="text-orange-400" />,
+            link: "/admin/partners-dashboard",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Freelance Requirements",
+            icon: <RiListUnordered className="text-blue-400" />,
+            link: "/admin/freelance-requirements",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Assigned Talwar Data",
+            icon: <RiFileCheckLine className="text-red-500" />,
+            link: "/admin/assignedtalwarData",
+            roles: ["HELPDESKADMIN"],
+          },
+          {
+            title: "Referred Data",
+            icon: <FaUsers className="text-blue-500" />,
+            link: "/admin/referredData",
+            roles: ["HELPDESKADMIN"],
+          },
+        ],
+      },
+      {
+        title: "Company Related",
+        icon: <FaBuilding className="text-cyan-400" />,
+        roles: ["HELPDESKSUPERADMIN"],
+        items: [
+          {
+            title: "Add Company Employee",
+            icon: <FaUserPlus className="text-cyan-400" />,
+            link: "/admin/addcompanyemployee",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Employees List",
+            icon: <FaUsers className="text-emerald-400" />,
+            link: "/admin/employeeslist",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+        ],
+      },
+      {
+        title: "Services/Blogs & Jobs",
+        icon: <FaServer className="text-orange-400" />,
+        roles: ["HELPDESKSUPERADMIN"],
+        items: [
+          {
+            title: "Add Service / Product",
+            icon: <FaStore className="text-green-400" />,
+            link: "/admin/campaignsadd",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Add We are hiring",
+            icon: <FaBriefcase className="text-green-400" />,
+            link: "/admin/wearehiringadd",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
 
-        {
-          title: "Add League Journey",
-          icon: <FaPlusCircle className="text-yellow-400" />,
-          link: "/admin/addleaguejourney",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
+          {
+            title: "Add League Journey",
+            icon: <FaPlusCircle className="text-yellow-400" />,
+            link: "/admin/addleaguejourney",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Journey vs Campaigns vs Interested Users",
+            icon: <FaUsers className="text-sky-400" />,
+            link: "/admin/journeyvscampaignsvsinteresteusers",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
 
-        {
-          title: "All Role Based Blogs",
-          icon: <RiListUnordered className="text-purple-400" />,
-          link: "/admin/allroleblogs",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Send Poll Based Rewards",
-          icon: <FaGift className="text-amber-400" />,
-          link: "/admin/sendpollbasedrewards",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "View Poll Based Rewards",
-          icon: <FaTrophy className="text-yellow-400" />,
-          link: "/admin/viewpollbasedrewards",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Add Blog",
-          icon: <FaBlog className="text-green-400" />,
-          link: "/admin/addblogs",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Add Jobs",
-          icon: <MdWork className="text-green-400" />,
-          link: "/admin/addjobs",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "All Job Details",
-          icon: <SolutionOutlined style={{ color: "#ffff" }} />,
-          link: "/admin/alljobdetails",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Applied Jobs by Users",
-          icon: <UserOutlined style={{ color: "#ffff" }} />,
-          link: "/admin/userAppliedJobs",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "All Service & Blogs Details",
-          icon: <RiListUnordered className="text-purple-400" />,
-          link: "/admin/allcampaignsdetails",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-      ],
-    },
-    {
-      title: "Stats & Stock",
-      icon: <FaChartBar className="text-indigo-400" />,
-      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-      items: [
-        {
-          title: "Orders stats",
-          icon: <FaChartBar className="text-blue-400" />,
-          link: "/admin/orderstats",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Orders Report",
-          icon: <FaClipboardList className="text-blue-400" />,
-          link: "/admin/orderReport",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Stock update",
-          icon: <FaBoxes className="text-blue-400" />,
-          link: "/admin/updatestock",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-        {
-          title: "Orders by Pincode",
-          icon: <RiMapPin2Line className="text-purple-400" />,
-          link: "/admin/pincodeorders",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-      ],
-    },
-    {
-      title: "CBS Data",
-      icon: <FaGraduationCap className="text-teal-400" />,
-      roles: ["HELPDESKSUPERADMIN"],
-      items: [
-        {
-          title: "CBS Data",
-          icon: <FaGraduationCap className="text-teal-400" />,
-          link: "/admin/cbsdata",
-          roles: ["HELPDESKSUPERADMIN"],
-        },
-      ],
-    },
-    {
-      title: "Queries & Feedback",
-      icon: <FaQuestionCircle className="text-cyan-400" />,
-      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-      items: [
-        {
-          title: "All Queries",
-          icon: <FaDatabase className="text-yellow-400" />,
-          link: "/admin/allqueries",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-      ],
-    },
-    {
-      title: "Lender Callbacks",
-      icon: <FaComments className="text-pink-400" />,
-      roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-      items: [
-        {
-          title: "Lender Calling Follow-ups",
-          icon: <FaHeadset className="text-emerald-400" />,
-          link: "/admin/lender-calling-followups",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "Super Admin Comments",
-          icon: <RiAdminLine className="text-purple-400" />,
-          link: "/admin/superAdminComments",
-          roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
-        },
-        {
-          title: "My Calls",
-          icon: <FaPhone className="text-blue-400" />,
-          link: "/admin/todaycalls",
-          roles: ["HELPDESKADMIN"],
-        },
-      ],
-    },
-  ], [title]);
+          {
+            title: "All Role Based Blogs",
+            icon: <RiListUnordered className="text-purple-400" />,
+            link: "/admin/allroleblogs",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Send Poll Based Rewards",
+            icon: <FaGift className="text-amber-400" />,
+            link: "/admin/sendpollbasedrewards",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "View Poll Based Rewards",
+            icon: <FaTrophy className="text-yellow-400" />,
+            link: "/admin/viewpollbasedrewards",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Add Blog",
+            icon: <FaBlog className="text-green-400" />,
+            link: "/admin/addblogs",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Add Jobs",
+            icon: <MdWork className="text-green-400" />,
+            link: "/admin/addjobs",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "All Job Details",
+            icon: <SolutionOutlined style={{ color: "#ffff" }} />,
+            link: "/admin/alljobdetails",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Applied Jobs by Users",
+            icon: <UserOutlined style={{ color: "#ffff" }} />,
+            link: "/admin/userAppliedJobs",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "All Service & Blogs Details",
+            icon: <RiListUnordered className="text-purple-400" />,
+            link: "/admin/allcampaignsdetails",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+        ],
+      },
+      {
+        title: "Stats & Stock",
+        icon: <FaChartBar className="text-indigo-400" />,
+        roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        items: [
+          {
+            title: "Orders stats",
+            icon: <FaChartBar className="text-blue-400" />,
+            link: "/admin/orderstats",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Orders Report",
+            icon: <FaClipboardList className="text-blue-400" />,
+            link: "/admin/orderReport",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Stock update",
+            icon: <FaBoxes className="text-blue-400" />,
+            link: "/admin/updatestock",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+          {
+            title: "Orders by Pincode",
+            icon: <RiMapPin2Line className="text-purple-400" />,
+            link: "/admin/pincodeorders",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+        ],
+      },
+      {
+        title: "CBS Data",
+        icon: <FaGraduationCap className="text-teal-400" />,
+        roles: ["HELPDESKSUPERADMIN"],
+        items: [
+          {
+            title: "CBS Data",
+            icon: <FaGraduationCap className="text-teal-400" />,
+            link: "/admin/cbsdata",
+            roles: ["HELPDESKSUPERADMIN"],
+          },
+        ],
+      },
+      {
+        title: "Queries & Feedback",
+        icon: <FaQuestionCircle className="text-cyan-400" />,
+        roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        items: [
+          {
+            title: "All Queries",
+            icon: <FaDatabase className="text-yellow-400" />,
+            link: "/admin/allqueries",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+        ],
+      },
+      {
+        title: "Lender Callbacks",
+        icon: <FaComments className="text-pink-400" />,
+        roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+        items: [
+          {
+            title: "Lender Calling Follow-ups",
+            icon: <FaHeadset className="text-emerald-400" />,
+            link: "/admin/lender-calling-followups",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "Super Admin Comments",
+            icon: <RiAdminLine className="text-purple-400" />,
+            link: "/admin/superAdminComments",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
+          {
+            title: "My Calls",
+            icon: <FaPhone className="text-blue-400" />,
+            link: "/admin/todaycalls",
+            roles: ["HELPDESKADMIN"],
+          },
+        ],
+      },
+    ],
+    [title],
+  );
 
   const standaloneItems: SidebarItem[] = [
     {

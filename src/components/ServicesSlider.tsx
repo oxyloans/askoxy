@@ -119,7 +119,21 @@ const ServicesSlider: React.FC = () => {
     }
     return `${uploadurlwithId}/${clean.replace(/^\//, "")}`;
   };
-
+  const getCampaignFirstImage1 = (campaign: Campaign) => {
+    const firstImage =
+      typeof campaign.imageUrls?.[0] === "string"
+        ? campaign.imageUrls?.[0]
+        : campaign.imageUrls?.[0]?.imageUrl ||
+          campaign.imageUrl ||
+          campaign.images?.[0]?.imageUrl ||
+          "";
+    if (!firstImage) return "";
+    const clean = firstImage.trim();
+    if (/^https?:\/\//i.test(clean)) {
+      return clean;
+    }
+    return `${clean.replace(/^\//, "")}`;
+  };
   const fetchJobs = async () => {
     try {
       setJobsLoading(true);
@@ -824,7 +838,7 @@ const ServicesSlider: React.FC = () => {
               transition={{ duration: 0.4 }}
             >
               {displayedBlogs.map((campaign, index) => {
-                const mediaUrl = getCampaignFirstImage(campaign);
+                const mediaUrl = getCampaignFirstImage1(campaign);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
                 const title = getCampaignTitle(campaign);
                 const publishedDate = formatPublishedDate(campaign.createdAt);

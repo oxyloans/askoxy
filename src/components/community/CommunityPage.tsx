@@ -194,7 +194,7 @@ const badgeLabel = (badge?: string | null, profileName?: string) => {
     normalizedBadge === "EMPLOYEE" ||
     normalizedBadge === "EMPLOYEE_VERIFIED"
   ) {
-    return "Employee";
+    return "OXY EMPLOYEE";
   }
   return profileName?.trim() || "Community User";
 };
@@ -1044,8 +1044,8 @@ export default function CommunityPage() {
       {!selectedQuery && (
         <>
           <section className="relative overflow-hidden ">
-            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 animate-pulse rounded-full   bg-purple-50/80 blur-4xl" />
-            <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-amber-100/70 blur-3xl" />
+            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 animate-pulse rounded-lg   bg-purple-50/80 blur-4xl" />
+            <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-lg bg-amber-50/70 blur-3xl" />
 
             <div className="relative mx-auto grid w-[calc(100%-24px)] max-w-7xl items-center gap-6 py-8 sm:w-[calc(100%-40px)] sm:py-12 lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
               <div className="animate-[fadeIn_.55s_ease-out]">

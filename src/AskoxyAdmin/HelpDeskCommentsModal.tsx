@@ -246,11 +246,8 @@ const HelpDeskCommentsModal: React.FC<Props> = ({
         { headers: { "Content-Type": "application/json" } },
       );
       message.success("Comment added successfully");
-      setNewComment("");
-      setUserResponse(undefined);
-      setCallingType(undefined);
-      setIsActive(undefined);
-      await fetchComments();
+      resetForm();
+      onClose();
     } catch (error) {
       console.error("Error submitting comment:", error);
       message.error("Failed to add comment");
