@@ -1,0 +1,1855 @@
+From 3dcf9508f0a8c2a756722accf3453df2c47164ec Mon Sep 17 00:00:00 2001
+From: root <ramadevi@oxyloans.com>
+Date: Thu, 25 Jun 2026 17:13:16 +0530
+Subject: [PATCH 1/3] =?UTF-8?q?Add=20CLAUDE=5FRULES.md=20=E2=80=94=20dev?=
+ =?UTF-8?q?=20rules=20for=20AI-assisted=20coding=20sessions?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Defines mandatory test DB list, no-real-OTP/SMS/WhatsApp policy,
+read-only AI layer rules, secret hygiene, and branching conventions.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+---
+ CLAUDE_RULES.md | 52 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 52 insertions(+)
+ create mode 100644 CLAUDE_RULES.md
+
+diff --git a/CLAUDE_RULES.md b/CLAUDE_RULES.md
+new file mode 100644
+index 0000000..d4a926f
+--- /dev/null
++++ b/CLAUDE_RULES.md
+@@ -0,0 +1,52 @@
++# Claude Code Rules — AskOxy.ai
++
++## CRITICAL — Always follow these rules
++
++## DATABASE RULES
++- NEVER use live/production database
++- ONLY use these test databases:
++  - Testcartdb
++  - Testordersdb
++  - Testoxyai
++  - Testproductdb
++  - Testreferencedb
++  - Testuserdb
++- Wait for approval before any INSERT/UPDATE/DELETE
++
++## COMMUNICATION RULES
++- NEVER send real OTP SMS to users
++- NEVER send real emails to users
++- NEVER send real WhatsApp messages
++- Log all to console only in test mode
++- OTP bypass value: 1234
++- Hidden test login available
++
++## TEST MODE PROPERTIES
++- test.mode=true
++- otp.bypass.enabled=true
++- otp.bypass.value=1234
++- test.login.enabled=true
++- email.sending.enabled=false
++- sms.sending.enabled=false
++- whatsapp.sending.enabled=false
++
++## AI LAYER RULES
++- All AI queries READ ONLY
++- @Transactional(readOnly = true) always
++- No writes from AI layer ever
++
++## SECURITY RULES
++- No live credentials in any commit
++- No production passwords in code
++- No API keys committed to git
++
++## BRANCH RULES
++- Never push to main/master directly
++- Work on feature branches only
++- Always show diff before committing
++
++## BEFORE EVERY SESSION
++- Read this file first
++- Confirm test DB configured
++- Confirm test mode enabled
++- Show current branch
+-- 
+2.50.1 (Apple Git-155)
+
+
+From 5c7b14dc4798e5c36f3d551fc3e21e28d935df23 Mon Sep 17 00:00:00 2001
+From: root <ramadevi@oxyloans.com>
+Date: Wed, 8 Jul 2026 16:54:25 +0530
+Subject: [PATCH 2/3] Secure S3 images: CloudFront for products, pre-signed
+ URLs for private docs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Add askoxyImgUrl() helper in Config.tsx — rewrites askoxy S3 URLs to
+  CloudFront (d15sy6qj2uhi5q.cloudfront.net) after bucket was made private
+- Apply CloudFront rewrite across Home, categories, itemsdisplay, Cart,
+  AistoreCreation, AllAistore, agentApi for all product images
+- Add utils/presignedUrl.ts — fetches expiring pre-signed URLs from backend
+  for sensitive documents (resumes, KYC, study-abroad docs)
+- Update FreelancerList, AppliedJobs, StudyAbroad/Documents to use
+  pre-signed URLs on download/view (backend endpoint: GET /user-service/presigned-url)
+- Fix setupProxy.js: use meta.oxyloans.com domain instead of dead IP
+- Fix HiddenLogin.tsx: route through /local-api proxy in development
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+---
+ src/AIStores/AllAistore.tsx        |   4 +-
+ src/ChatScreen/agentApi.ts         |   7 +-
+ src/Config.tsx                     |  18 +-
+ src/Dashboard/AppliedJobs.tsx      |   6 +-
+ src/Dashboard/Home.tsx             | 470 ++++++++++++++---------------
+ src/Pages/Auth/HiddenLogin.tsx     |   4 +-
+ src/StudyAbroad/Documents.tsx      |   8 +-
+ src/components/AistoreCreation.tsx |   8 +-
+ src/components/FreelancerList.tsx  |   6 +-
+ src/kart/Cart.tsx                  |  48 ++-
+ src/kart/categories.tsx            | 305 +++++++++++--------
+ src/kart/itemsdisplay.tsx          | 146 ++++++---
+ src/setupProxy.js                  |  17 ++
+ src/utils/presignedUrl.ts          |  46 +++
+ 14 files changed, 651 insertions(+), 442 deletions(-)
+ create mode 100644 src/setupProxy.js
+ create mode 100644 src/utils/presignedUrl.ts
+
+diff --git a/src/AIStores/AllAistore.tsx b/src/AIStores/AllAistore.tsx
+index 95912e3..bee604e 100644
+--- a/src/AIStores/AllAistore.tsx
++++ b/src/AIStores/AllAistore.tsx
+@@ -7,7 +7,7 @@ import React, {
+ } from "react";
+ import { useLocation, useNavigate, useParams } from "react-router-dom";
+ import { useSearch } from "../BharathAIStore/context/SearchContext";
+-import BASE_URL, { uploadurlwithId } from "../Config";
++import BASE_URL, { uploadurlwithId, askoxyImgUrl } from "../Config";
+ import axiosInstance from "../utils/axiosInstance";
+ import axios from "axios";
+ import Logo from "../assets/img/WhatsApp Image 2025-12-15 at 12.29.33 PM.jpeg";
+@@ -1359,7 +1359,7 @@ const AllAIStore: React.FC = () => {
+                                 {/* Image on top if valid */}
+                                 {hasValidImage && (
+                                   <img
+-                                    src={`https://askoxy.s3.ap-south-1.amazonaws.com${agent.profileImageUrl!}`}
++                                    src={askoxyImgUrl(`https://askoxy.s3.ap-south-1.amazonaws.com${agent.profileImageUrl!}`)}
+                                     alt={agent.agentName ?? ''}
+                                     className="absolute inset-0 h-full w-full object-cover bg-white"
+                                     loading="lazy"
+diff --git a/src/ChatScreen/agentApi.ts b/src/ChatScreen/agentApi.ts
+index 4669c0f..9837dd0 100644
+--- a/src/ChatScreen/agentApi.ts
++++ b/src/ChatScreen/agentApi.ts
+@@ -1,4 +1,4 @@
+-import { resolveCartAgentBase, uploadurlwithId } from "../Config";
++import { resolveCartAgentBase, uploadurlwithId, askoxyImgUrl } from "../Config";
+ import { customerApi } from "../utils/axiosInstances";
+ 
+ function cartAgentBase(): string {
+@@ -192,12 +192,13 @@ export function resolveProductImageUrl(raw?: string | null): string | null {
+   if (raw == null) return null;
+   const path = String(raw).trim();
+   if (!path || path === "null" || path === "undefined") return null;
+-  if (/^https?:\/\//i.test(path)) return path;
++  if (/^https?:\/\//i.test(path)) return askoxyImgUrl(path) ?? path;
+   if (path.startsWith("null/")) {
+     return `https://oxybricksv1.s3.ap-south-1.amazonaws.com/${path.slice(5)}`;
+   }
+   if (path.includes("amazonaws.com")) {
+-    return path.startsWith("http") ? path : `https://${path.replace(/^\/+/, "")}`;
++    const full = path.startsWith("http") ? path : `https://${path.replace(/^\/+/, "")}`;
++    return askoxyImgUrl(full) ?? full;
+   }
+   if (!path.includes("/")) {
+     return `${uploadurlwithId}${path}`;
+diff --git a/src/Config.tsx b/src/Config.tsx
+index eb9485e..67c14ec 100644
+--- a/src/Config.tsx
++++ b/src/Config.tsx
+@@ -8,8 +8,11 @@
+ 
+ const userType = localStorage.getItem("userType") || "live";
+ 
++// In local dev, proxy through /local-api to avoid API gateway origin block
+ const BASE_URL =
+-  userType === "live"
++  process.env.NODE_ENV === "development"
++    ? "/local-api"
++    : userType === "live"
+     ? "https://meta.oxyloans.com/api"
+     : "https://meta.oxyglobal.tech/api";
+ 
+@@ -29,7 +32,18 @@ export function resolveCartAgentBase(): string {
+ }
+ 
+ export const CART_AGENT_LOCAL_BASE = resolveCartAgentBase();
+-    
++
++const ASKOXY_S3_HOST = "askoxy.s3.ap-south-1.amazonaws.com";
++const ASKOXY_CDN_HOST = "d15sy6qj2uhi5q.cloudfront.net";
++
++/** Rewrite private askoxy S3 URLs to CloudFront so images load after bucket was secured */
++export function askoxyImgUrl(url: string | null | undefined): string | undefined {
++  if (!url) return undefined;
++  return url
++    .replace(`https://${ASKOXY_S3_HOST}`, `https://${ASKOXY_CDN_HOST}`)
++    .replace(`http://${ASKOXY_S3_HOST}`, `https://${ASKOXY_CDN_HOST}`);
++}
++
+ // encrypted URL
+ const encryptedUploadUrl =
+ "aHR0cHM6Ly9veHlicmlja3N2MS5zMy5hcC1zb3V0aC0xLmFtYXpvbmF3cy5jb20vbnVsbC80NTg4MGU2Mi1hY2FmLTQ2NDUtYTgzZS1kMWM4NDk4ZTkyM2U="
+diff --git a/src/Dashboard/AppliedJobs.tsx b/src/Dashboard/AppliedJobs.tsx
+index d2092ba..7a15c7e 100644
+--- a/src/Dashboard/AppliedJobs.tsx
++++ b/src/Dashboard/AppliedJobs.tsx
+@@ -17,6 +17,7 @@ import {
+   FileTextOutlined,
+ } from "@ant-design/icons";
+ import customerApi from "../utils/axiosInstances";
++import { getPresignedUrl } from "../utils/presignedUrl";
+ 
+ const { Title, Text } = Typography;
+ const { confirm } = Modal;
+@@ -283,9 +284,10 @@ const AppliedJobs: React.FC = () => {
+               <Button
+                 size="small"
+                 type="primary"
+-                onClick={() => {
++                onClick={async () => {
++                  const url = await getPresignedUrl(job.resumeUrl) ?? job.resumeUrl!;
+                   const link = document.createElement('a');
+-                  link.href = job.resumeUrl!;
++                  link.href = url;
+                   link.download = 'resume.pdf';
+                   link.target = '_blank';
+                   document.body.appendChild(link);
+diff --git a/src/Dashboard/Home.tsx b/src/Dashboard/Home.tsx
+index be1f776..debb044 100644
+--- a/src/Dashboard/Home.tsx
++++ b/src/Dashboard/Home.tsx
+@@ -31,7 +31,7 @@ import {
+ } from "lucide-react";
+ import { useNavigate } from "react-router-dom";
+ import Footer from "../components/Footer";
+-import BASE_URL from "../Config";
++import BASE_URL, { askoxyImgUrl } from "../Config";
+ import checkProfileCompletion from "../until/ProfileCheck";
+ import { CartContext } from "../until/CartContext";
+ import ProductOfferModals from "./ProductOffermodals";
+@@ -814,16 +814,19 @@ const Home: React.FC = () => {
+     },
+   ];
+ 
+-  const totalSets = Math.ceil(headerImages.length / IMAGES_PER_SET);
++  const totalSets = headerImages.length; // one image at a time
+   useEffect(() => {
+-    if (isHovered) return; // NEW: Skip interval if an image is being hovered
++    if (isHovered) return;
+     const interval = setInterval(() => {
+-      setCurrentSet((prev) => (prev + 1) % totalSets);
++      setCurrentSet((prev) => (prev + 1) % headerImages.length);
+     }, 4500);
+-
+     return () => clearInterval(interval);
+   }, [headerImages.length, isHovered]);
+ 
++  const riceRef = useRef<HTMLDivElement>(null);
++  const groceryRef = useRef<HTMLDivElement>(null);
++  const comboRef = useRef<HTMLDivElement>(null);
++
+   const handleItemClick = (item: Item | DashboardItem) => {
+     if ("itemId" in item && item.itemId) {
+       navigate(`/main/itemsdisplay/${item.itemId}`, {
+@@ -1207,7 +1210,7 @@ const Home: React.FC = () => {
+         >
+           <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-50 relative group">
+             <motion.img
+-              src={item.image ?? "https://via.placeholder.com/150"}
++              src={askoxyImgUrl(item.image) ?? "https://via.placeholder.com/150"}
+               alt={item.title}
+               className="w-full h-full object-contain"
+               whileHover={{ scale: 1.05 }}
+@@ -1874,272 +1877,241 @@ const Home: React.FC = () => {
+         )}
+       </Modal>
+ 
+-      {/* Header Images Section */}
+-      <div className="w-full py-2">
+-        <div className="px-2 sm:px-3 md:px-4 lg:px-5 mx-auto max-w-7xl">
+-          <div className="relative" style={{ minHeight: "180px" }}>
+-            <div
+-              className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3"
+-              style={{ perspective: 1000 }}
+-            >
+-              <AnimatePresence mode="wait">
+-                {headerImages
+-                  .slice(
+-                    currentSet * (isMobile ? 1 : IMAGES_PER_SET),
+-                    currentSet * (isMobile ? 1 : IMAGES_PER_SET) +
+-                      (isMobile ? 1 : IMAGES_PER_SET),
+-                  )
+-
+-                  .map((image, idx) => (
+-                    <motion.div
+-                      key={`${image.id}-${currentSet}-${idx}`}
+-                      initial={{ rotateY: 90, opacity: 0 }}
+-                      animate={{ rotateY: 0, opacity: 1 }}
+-                      exit={{ rotateY: -90, opacity: 0 }}
+-                      transition={{ duration: 0.5 }}
+-                      className="cursor-pointer overflow-hidden rounded-lg flex items-center justify-center"
+-                      style={{
+-                        transformStyle: "preserve-3d",
+-                        backfaceVisibility: "hidden",
+-                        height: isMobile ? "100px" : "160px",
+-                      }}
+-                      onClick={image.onClick}
+-                      onMouseEnter={() => setIsHovered(true)}
+-                      onMouseLeave={() => setIsHovered(false)}
+-                      whileHover={{
+-                        scale: 1.05,
+-                        rotateY: 0,
+-                        transition: { duration: 0.3 },
+-                      }}
+-                    >
+-                      <img
+-                        src={image.src}
+-                        alt={image.alt || "Header"}
+-                        className="max-h-full max-w-full object-contain rounded-lg"
+-                        style={{
+-                          borderRadius: "12px",
+-                        }}
+-                      />
+-                    </motion.div>
+-                  ))}
+-              </AnimatePresence>
+-            </div>
++      {/* ── HERO BANNER ── */}
++      <div className="w-full px-3 sm:px-4 pt-3 pb-2 max-w-7xl mx-auto">
++        <div className="relative rounded-2xl overflow-hidden bg-gray-100" style={{ height: isMobile ? "180px" : "280px" }}>
++          <AnimatePresence mode="wait">
++            {headerImages[currentSet] && (
++              <motion.img
++                key={headerImages[currentSet].id}
++                src={headerImages[currentSet].src}
++                alt={headerImages[currentSet].alt || "Banner"}
++                onClick={headerImages[currentSet].onClick}
++                initial={{ opacity: 0 }}
++                animate={{ opacity: 1 }}
++                exit={{ opacity: 0 }}
++                transition={{ duration: 0.5 }}
++                className="absolute inset-0 w-full h-full object-cover cursor-pointer"
++              />
++            )}
++          </AnimatePresence>
++          {/* Dot indicators */}
++          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
++            {headerImages.map((_, i) => (
++              <button
++                key={i}
++                onClick={() => setCurrentSet(i)}
++                className={`rounded-full transition-all ${currentSet === i ? "w-5 h-2 bg-white" : "w-2 h-2 bg-white/50"}`}
++              />
++            ))}
+           </div>
+         </div>
+       </div>
+ 
+-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2">
+-        <section ref={productsRef} className="mb-2">
+-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+-            {/* Heading - Left Side */}
+-            <h2 className="text-xl font-bold text-purple-800 flex items-center">
+-              <ShoppingBag className="text-purple-600 mr-2" size={20} />
+-              Our Products
+-            </h2>
++      {/* ── TRUST STRIP ── */}
++      <div className="w-full bg-gradient-to-r from-purple-50 to-green-50 border-y border-purple-100 px-3 sm:px-4 py-2 mb-1">
++        <div className="flex gap-4 sm:gap-8 overflow-x-auto scrollbar-hide max-w-7xl mx-auto">
++          {[
++            { icon: "⚡", label: "Same / Next Day", sub: "Order by 2 PM → today" },
++            { icon: "🚫💰", label: "No Platform Fee", sub: "Other apps charge ₹5–15" },
++            { icon: "🌾", label: "Direct from Mills", sub: "Fresh, not warehouse stock" },
++            { icon: "💸", label: "10–15% Cheaper", sub: "vs leading quick-commerce" },
++            { icon: "📍", label: "Free Delivery Zone", sub: "Radius-based, no surprise fee" },
++          ].map((t) => (
++            <div key={t.label} className="flex items-center gap-2 shrink-0 py-1">
++              <span className="text-xl">{t.icon}</span>
++              <div>
++                <p className="text-xs font-bold text-gray-800 whitespace-nowrap">{t.label}</p>
++                <p className="text-[10px] text-gray-500 whitespace-nowrap">{t.sub}</p>
++              </div>
++            </div>
++          ))}
++        </div>
++      </div>
+ 
+-            {/* Button - Right Side */}
+-            <motion.button
+-              whileHover={{ scale: 1.05 }}
+-              whileTap={{ scale: 0.95 }}
+-              className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center justify-center hover:bg-purple-700 transition-colors"
+-              onClick={viewAllProducts}
+-            >
+-              See All
+-              <ArrowRight size={16} className="ml-1" />
+-            </motion.button>
+-          </div>
++      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3">
+ 
+-          {/* Filter Tabs as Cards */}
+-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2 sm:gap-3 mb-6">
+-            <AnimatePresence>
+-              {categories.map((category, index) => (
+-                <motion.div
+-                  key={category.categoryName}
+-                  custom={index}
+-                  initial={{ opacity: 0, y: 10 }}
+-                  animate={{ opacity: 1, y: 0 }}
+-                  exit={{ opacity: 0 }}
+-                  whileHover={{
+-                    scale: 1.02,
+-                    boxShadow: "0 3px 10px rgba(147, 51, 234, 0.1)",
+-                  }}
+-                  whileTap={{ scale: 0.98 }}
+-                  className={`bg-white rounded-lg shadow-sm overflow-hidden relative border border-gray-100 ${
+-                    activeCategory === category.categoryName
+-                      ? "border-purple-200"
+-                      : ["Combo Offer", "Special Deals"].includes(
+-                            category.categoryName,
+-                          )
+-                        ? "border-purple-300 animate-pulse-border"
+-                        : ""
+-                  } cursor-pointer`}
+-                  onClick={() => handleCategoryChange(category.categoryName)}
+-                >
+-                  <div className="aspect-square mb-2 overflow-hidden rounded-md bg-gray-50 relative">
+-                    <motion.img
+-                      src={
+-                        category.categoryImage ||
+-                        "https://via.placeholder.com/120"
+-                      }
+-                      alt={category.categoryName}
+-                      className="w-full h-full object-contain"
+-                      whileHover={{ scale: 1.05 }}
+-                      transition={{
+-                        type: "spring",
+-                        stiffness: 300,
+-                        damping: 10,
+-                      }}
+-                    />
+-                    {activeCategory === category.categoryName && (
+-                      <motion.div
+-                        className="absolute inset-0 bg-purple-600 bg-opacity-10 flex items-center justify-center"
+-                        initial={{ opacity: 0 }}
+-                        animate={{ opacity: 1 }}
+-                      >
+-                        {/* <Star className="text-purple-600" size={20} /> */}
+-                      </motion.div>
+-                    )}
+-                  </div>
+-                  <div className="p-2 text-center">
+-                    <h3
+-                      className={`font-bold text-md transition-colors ${
+-                        category.categoryName === "Special Deals"
+-                          ? "text-purple-600 hover:text-purple-500"
+-                          : "text-purple-700 hover:text-purple-600"
+-                      }`}
+-                    >
+-                      {category.categoryName}
+-                    </h3>
+-                  </div>
+-                </motion.div>
+-              ))}
+-            </AnimatePresence>
++        {/* ── GREETING + QUICK CATEGORY PILLS ── */}
++        <div className="mb-4">
++          <p className="text-base font-bold text-gray-800 mb-3">
++            {(() => {
++              const h = new Date().getHours();
++              const greeting = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
++              return `${greeting} 👋 What are you stocking up on?`;
++            })()}
++          </p>
++          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
++            {[
++              { label: "🌾 Rice", ref: riceRef },
++              { label: "🛒 Dal & Groceries", ref: groceryRef },
++              { label: "🎁 Combo Deals", ref: comboRef },
++              { label: "📦 All", ref: null },
++            ].map((p) => (
++              <button
++                key={p.label}
++                onClick={() => {
++                  if (p.ref?.current) {
++                    p.ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
++                  } else {
++                    viewAllProducts();
++                  }
++                }}
++                className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all bg-white text-purple-700 border-purple-200 hover:bg-purple-600 hover:text-white hover:border-purple-600"
++              >
++                {p.label}
++              </button>
++            ))}
+           </div>
++        </div>
+ 
+-          {activeCategory === "Rice" && (
+-            <div className="mb-6 flex flex-wrap gap-3">
+-              {weightFilters.map((filter) => (
+-                <button
+-                  key={filter.value}
+-                  onClick={() =>
+-                    setSelectedWeight(
+-                      selectedWeight === filter.value ? null : filter.value,
+-                    )
+-                  }
+-                  className={`px-3 py-1 rounded-full text-sm border transition ${
+-                    selectedWeight === filter.value
+-                      ? "bg-purple-600 text-white border-purple-600"
+-                      : "bg-white text-gray-700 border-gray-300"
+-                  }`}
+-                >
+-                  {filter.label}
++        {/* ── RICE SECTION ── */}
++        {(() => {
++          const riceProds = categories.find(c => c.categoryName === "Rice")?.itemsResponseDtoList || [];
++          if (riceProds.length === 0 && !productsLoading) return null;
++          return (
++            <section ref={riceRef} className="mb-6">
++              <div className="flex items-center justify-between mb-3">
++                <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
++                  🌾 <span>Rice & Grains</span>
++                </h2>
++                <button onClick={() => { handleCategoryChange("Rice"); viewAllProducts(); }} className="text-sm text-purple-600 font-medium flex items-center gap-1 hover:text-purple-800">
++                  See all <ChevronRight size={14} />
+                 </button>
++              </div>
++              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
++                {productsLoading
++                  ? Array.from({ length: 5 }).map((_, i) => (
++                      <div key={i} className="shrink-0 w-36 rounded-xl bg-gray-100 animate-pulse" style={{ height: 220 }} />
++                    ))
++                  : riceProds.slice(0, 12).map((item, idx) => {
++                      const dashItem: DashboardItem = {
++                        id: item.itemId, itemId: item.itemId, title: item.itemName,
++                        image: item.itemImage || ProductImg1, description: `₹${item.itemPrice}`,
++                        path: `/item/${item.itemId}`, icon: null,
++                        itemName: item.itemName, itemImage: item.itemImage,
++                        itemPrice: item.itemPrice, itemMrp: item.itemMrp,
++                        quantity: item.quantity, weight: item.weight, units: item.units,
++                        bmvCoins: item.bmvCoins,
++                      };
++                      return (
++                        <div key={item.itemId} className="shrink-0 w-36">
++                          {renderProductItem(dashItem, idx)}
++                        </div>
++                      );
++                    })}
++              </div>
++            </section>
++          );
++        })()}
++
++        {/* ── GROCERIES SECTION ── */}
++        {(() => {
++          const grocProds = categories.find(c => c.categoryName === "Groceries")?.itemsResponseDtoList || [];
++          if (grocProds.length === 0 && !productsLoading) return null;
++          return (
++            <section ref={groceryRef} className="mb-6">
++              <div className="flex items-center justify-between mb-3">
++                <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
++                  🛒 <span>Dal, Oil & More</span>
++                </h2>
++                <button onClick={() => { handleCategoryChange("Groceries"); viewAllProducts(); }} className="text-sm text-purple-600 font-medium flex items-center gap-1 hover:text-purple-800">
++                  See all <ChevronRight size={14} />
++                </button>
++              </div>
++              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
++                {productsLoading
++                  ? Array.from({ length: 5 }).map((_, i) => (
++                      <div key={i} className="shrink-0 w-36 rounded-xl bg-gray-100 animate-pulse" style={{ height: 220 }} />
++                    ))
++                  : grocProds.slice(0, 12).map((item, idx) => {
++                      const dashItem: DashboardItem = {
++                        id: item.itemId, itemId: item.itemId, title: item.itemName,
++                        image: item.itemImage || ProductImg1, description: `₹${item.itemPrice}`,
++                        path: `/item/${item.itemId}`, icon: null,
++                        itemName: item.itemName, itemImage: item.itemImage,
++                        itemPrice: item.itemPrice, itemMrp: item.itemMrp,
++                        quantity: item.quantity, weight: item.weight, units: item.units,
++                        bmvCoins: item.bmvCoins,
++                      };
++                      return (
++                        <div key={item.itemId} className="shrink-0 w-36">
++                          {renderProductItem(dashItem, idx)}
++                        </div>
++                      );
++                    })}
++              </div>
++            </section>
++          );
++        })()}
++
++        {/* ── COMBO DEALS SECTION ── */}
++        {comboOffers.length > 0 && (
++          <section ref={comboRef} className="mb-6">
++            <div className="flex items-center justify-between mb-3">
++              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
++                🎁 <span>Combo Deals</span>
++              </h2>
++              <button onClick={() => navigate("/main/agent-offers")} className="text-sm text-purple-600 font-medium flex items-center gap-1 hover:text-purple-800">
++                See all <ChevronRight size={14} />
++              </button>
++            </div>
++            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
++              {comboOffers.slice(0, 10).map((item, idx) => (
++                <div key={item.itemId ?? item.id} className="shrink-0 w-36">
++                  {renderProductItem(item, idx)}
++                </div>
+               ))}
+             </div>
+-          )}
+-          {/* Product Items (Shown when a category is selected) */}
+-          {activeCategory && (
+-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
++          </section>
++        )}
++
++        {/* ── FILTERED PRODUCT GRID (when a category is active) ── */}
++        {activeCategory && !["Rice", "Groceries", "Combo Offer"].includes(activeCategory) && (
++          <section className="mb-6">
++            <div className="flex items-center justify-between mb-3">
++              <h2 className="text-base font-bold text-gray-900">{activeCategory}</h2>
++              <button onClick={viewAllProducts} className="text-sm text-purple-600 font-medium flex items-center gap-1">
++                See all <ChevronRight size={14} />
++              </button>
++            </div>
++            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+               <AnimatePresence>
+-                {productsLoading ? (
+-                  Array.from({ length: 6 }).map((_, index) => (
+-                    <ProductSkeleton key={`skeleton-${index}`} index={index} />
+-                  ))
+-                ) : displayProducts.length > 0 ? (
+-                  displayProducts.map((product, index) =>
+-                    renderProductItem(product, index),
+-                  )
+-                ) : (
+-                  <div className="col-span-full py-8 text-center">
+-                    <p className="text-gray-500">
+-                      No products found for this category. Please try another
+-                      category or check back later.
+-                    </p>
+-                  </div>
+-                )}
++                {productsLoading
++                  ? Array.from({ length: 6 }).map((_, i) => <ProductSkeleton key={i} index={i} />)
++                  : displayProducts.map((p, i) => renderProductItem(p, i))}
+               </AnimatePresence>
+             </div>
+-          )}
+-
+-          {/* Load More and View All Buttons */}
+-          {activeCategory &&
+-            !productsLoading &&
+-            products.length > displayProducts.length && (
+-              <div className="mt-8 text-center flex justify-center space-x-4">
+-                <motion.button
+-                  whileHover={{ scale: 1.05 }}
+-                  whileTap={{ scale: 0.95 }}
+-                  onClick={loadMoreProducts}
+-                  className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg font-medium inline-flex items-center"
+-                >
+-                  Load More
+-                  <TrendingUp size={16} className="ml-2" />
+-                </motion.button>
+-                <motion.button
+-                  whileHover={{ scale: 1.05 }}
+-                  whileTap={{ scale: 0.95 }}
+-                  className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+-                  onClick={viewAllProducts}
+-                >
+-                  See All
+-                  <ArrowRight size={16} className="ml-1" />
+-                </motion.button>
+-              </div>
+-            )}
+-        </section>
++          </section>
++        )}
+ 
+-        {/* Services Section */}
+-        <section className="mb-12">
+-          <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+-            <h2 className="text-xl font-bold text-purple-800 flex items-center">
+-              <Settings className="text-purple-600 mr-2" size={20} />
+-              Our Services
++        {/* ── SERVICES SECTION ── */}
++        <section className="mb-8">
++          <div className="flex items-center justify-between mb-3">
++            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
++              <Sparkles size={16} className="text-purple-600" /> Our Services
+             </h2>
+-            <motion.button
+-              whileHover={{ scale: 1.05 }}
+-              whileTap={{ scale: 0.95 }}
+-              className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium flex items-center hover:bg-purple-700 transition-colors"
+-              onClick={viewAllServices}
+-            >
+-              See All
+-              <ArrowRight size={16} className="ml-1" />
+-            </motion.button>
++            <button onClick={viewAllServices} className="text-sm text-purple-600 font-medium flex items-center gap-1 hover:text-purple-800">
++              See all <ChevronRight size={14} />
++            </button>
+           </div>
+-
+-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
++          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+             {loading
+-              ? Array.from({ length: 3 }).map((_, index) => (
+-                  <div
+-                    key={`skeleton-service-${index}`}
+-                    className="rounded-xl overflow-hidden animate-pulse bg-transparent"
+-                  >
+-                    <div className="h-40 bg-gray-200"></div>
+-                    <div className="p-4 text-center">
+-                      <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+-                    </div>
+-                  </div>
++              ? Array.from({ length: 3 }).map((_, i) => (
++                  <div key={i} className="shrink-0 w-40 h-28 rounded-xl bg-gray-100 animate-pulse" />
+                 ))
+-              : services.map((service, index) => (
++              : services.map((service) => (
+                   <motion.div
+                     key={service.id}
+-                    custom={index}
+-                    initial="hidden"
+-                    animate="visible"
+-                    variants={serviceCardVariants}
+-                    className="overflow-hidden cursor-pointer"
++                    whileHover={{ scale: 1.03 }}
++                    whileTap={{ scale: 0.97 }}
++                    className="shrink-0 w-40 rounded-xl overflow-hidden border border-gray-100 shadow-sm cursor-pointer bg-white"
+                     onClick={() => navigate(service.path)}
+                   >
+-                    <div className="aspect-video overflow-hidden">
+-                      <img
+-                        src={service.image}
+-                        alt={service.title}
+-                        className="w-full h-full object-contain"
+-                      />
++                    <div className="h-24 overflow-hidden bg-gray-50">
++                      <img src={service.image} alt={service.title} className="w-full h-full object-contain" />
+                     </div>
+-                    <div className="p-4 text-center">
+-                      <h3 className="text-green-600 font-bold text-lg">
+-                        {service.title}
+-                      </h3>
++                    <div className="px-2 py-1.5 text-center">
++                      <p className="text-xs font-semibold text-purple-700 line-clamp-1">{service.title}</p>
+                     </div>
+                   </motion.div>
+                 ))}
+@@ -2331,7 +2303,7 @@ const Home: React.FC = () => {
+                   <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+                     {addonItem.itemImage ? (
+                       <img
+-                        src={addonItem.itemImage}
++                        src={askoxyImgUrl(addonItem.itemImage) ?? ""}
+                         alt={addonItem.itemName}
+                         className="w-full h-full object-contain p-1.5"
+                         onError={(e) => {
+diff --git a/src/Pages/Auth/HiddenLogin.tsx b/src/Pages/Auth/HiddenLogin.tsx
+index 7151ddc..d033f1c 100644
+--- a/src/Pages/Auth/HiddenLogin.tsx
++++ b/src/Pages/Auth/HiddenLogin.tsx
+@@ -166,7 +166,9 @@ const HiddenLogin = () => {
+     }
+ 
+     const BASE_URL =
+-      userType === "live"
++      process.env.NODE_ENV === "development"
++        ? "/local-api"
++        : userType === "live"
+         ? "https://meta.oxyloans.com/api"
+         : "https://meta.oxyglobal.tech/api";
+ 
+diff --git a/src/StudyAbroad/Documents.tsx b/src/StudyAbroad/Documents.tsx
+index 8f0355f..40a4b6a 100644
+--- a/src/StudyAbroad/Documents.tsx
++++ b/src/StudyAbroad/Documents.tsx
+@@ -1,4 +1,5 @@
+ import React, { useState, useEffect } from 'react';
++import { getPresignedUrl } from '../utils/presignedUrl';
+ import { FileText, Plus, Eye, Download, Search, Filter, Upload, Calendar, CheckCircle, Clock, AlertCircle, X } from 'lucide-react';
+ 
+ interface Document {
+@@ -689,11 +690,12 @@ const Documents: React.FC<DocumentsProps> = ({ onNavigate }) => {
+                     <span>View</span>
+                   </button> */}
+                   {doc.documentPath && (
+-                    <button 
+-                      onClick={() => {
++                    <button
++                      onClick={async () => {
+                         if (doc.documentPath) {
++                          const url = await getPresignedUrl(doc.documentPath) ?? doc.documentPath;
+                           const link = document.createElement('a');
+-                          link.href = doc.documentPath;
++                          link.href = url;
+                           link.download = doc.name;
+                           document.body.appendChild(link);
+                           link.click();
+diff --git a/src/components/AistoreCreation.tsx b/src/components/AistoreCreation.tsx
+index e4a120b..cb71732 100644
+--- a/src/components/AistoreCreation.tsx
++++ b/src/components/AistoreCreation.tsx
+@@ -29,7 +29,7 @@ import {
+   DeleteOutlined,
+ } from "@ant-design/icons";
+ 
+-import BASE_URL,{uploadurlwithId} from "../Config";
++import BASE_URL,{uploadurlwithId, askoxyImgUrl} from "../Config";
+ import type { FormInstance } from "antd/es/form";
+ import customerApi from "../utils/axiosInstances";
+ 
+@@ -1670,9 +1670,9 @@ const saveAgentsToStore = async (): Promise<void> => {
+                   if (!url || url === "null" || url === "undefined") {
+                     return <div style={{ textAlign: "center", color: "#999", fontSize: 12 }}>No Image</div>;
+                   }
+-                  const src = url.startsWith("http")
+-                    ? url
+-                    : `https://askoxy.s3.ap-south-1.amazonaws.com${url}`;
++                  const src = askoxyImgUrl(
++                    url.startsWith("http") ? url : `https://askoxy.s3.ap-south-1.amazonaws.com${url}`
++                  ) ?? "";
+                   return (
+                     <div style={{ textAlign: "center" }}>
+                       <Image
+diff --git a/src/components/FreelancerList.tsx b/src/components/FreelancerList.tsx
+index 073a557..febcacd 100644
+--- a/src/components/FreelancerList.tsx
++++ b/src/components/FreelancerList.tsx
+@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
+ import { Modal } from "antd";
+ import Logo from "../assets/img/askoxylogonew.png";
+ import BASE_URL, { uploadurlwithId } from "../Config";
++import { getPresignedUrl } from "../utils/presignedUrl";
+ import "./FreelancerList.css";
+ import { FiArrowRight } from "react-icons/fi";
+ import customerApi from "../utils/axiosInstances";
+@@ -371,12 +372,13 @@ const FreelancerList: React.FC = () => {
+                     <div className="mt-5 flex w-full min-w-0 flex-col gap-2 sm:flex-row">
+                       <button
+                         type="button"
+-                        onClick={() => {
++                        onClick={async () => {
+                           if (!freelancer.resumeUrl) {
+                             alert("Resume not available for this freelancer.");
+                             return;
+                           }
+-                          const fileUrl = `${uploadurlwithId}${freelancer.resumeUrl}`;
++                          const rawUrl = `${uploadurlwithId}${freelancer.resumeUrl}`;
++                          const fileUrl = await getPresignedUrl(rawUrl) ?? rawUrl;
+                           setCurrentResumeUrl(`https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`);
+                           setShowResumeModal(true);
+                           setIsLoading(true);
+diff --git a/src/kart/Cart.tsx b/src/kart/Cart.tsx
+index 668f345..935520e 100644
+--- a/src/kart/Cart.tsx
++++ b/src/kart/Cart.tsx
+@@ -2219,14 +2219,26 @@ const CartPage: React.FC = () => {
+                     )}
+                   </div>
+                   {cartData.length > 0 && (
+-                    <div className="flex justify-between mb-2 text-gray-700">
+-                      <span>Delivery Fee</span>
+-                      <span className="font-semibold">
+-                        {deliveryFee === null
+-                          ? "N/A"
+-                          : `₹${Number(deliveryFee || 0).toFixed(2)}`}
+-                      </span>
+-                    </div>
++                    <>
++                      <div className="flex justify-between mb-2 text-gray-700">
++                        <span>Delivery Fee</span>
++                        <span className="font-semibold">
++                          {deliveryFee === null
++                            ? "N/A"
++                            : deliveryFee === 0
++                            ? <span className="text-green-600 font-bold">FREE 🎉</span>
++                            : `₹${Number(deliveryFee).toFixed(2)}`}
++                        </span>
++                      </div>
++                      {deliveryFee === 0 && (
++                        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-2">
++                          <span className="text-green-500 text-base">📍</span>
++                          <p className="text-xs text-green-700 font-medium">
++                            Your area gets <strong>free delivery</strong> — most apps charge ₹25–40 extra here!
++                          </p>
++                        </div>
++                      )}
++                    </>
+                   )}
+ 
+                   <div className="mb-4">
+@@ -2340,6 +2352,26 @@ const CartPage: React.FC = () => {
+                       </ul>
+                     </div>
+                   )}
++                  {/* Delivery promise — shown only when checkout is possible */}
++                  {!isCheckoutDisabled() && deliveryFee !== null && (() => {
++                    const hour = new Date().getHours();
++                    const beforeCutoff = hour < 14; // before 2 PM
++                    return (
++                      <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium mb-1 ${
++                        beforeCutoff
++                          ? "bg-green-50 border border-green-200 text-green-800"
++                          : "bg-amber-50 border border-amber-200 text-amber-800"
++                      }`}>
++                        <span className="text-base">{beforeCutoff ? "🚚" : "📅"}</span>
++                        <span>
++                          {beforeCutoff
++                            ? "Order now → delivered today. You can also pick a future slot at checkout."
++                            : "Order now → delivered tomorrow. Or pick a preferred date at checkout."}
++                        </span>
++                      </div>
++                    );
++                  })()}
++
+                   <button
+                     className={`w-full py-3 px-6 rounded-lg transition ${
+                       isCheckoutDisabled() || deliveryFee === null
+diff --git a/src/kart/categories.tsx b/src/kart/categories.tsx
+index f1d815c..5b8d13e 100644
+--- a/src/kart/categories.tsx
++++ b/src/kart/categories.tsx
+@@ -5,7 +5,7 @@ import axios from "axios";
+ import { message, Modal } from "antd";
+ import { motion, AnimatePresence } from "framer-motion";
+ import { Loader2 } from "lucide-react";
+-import BASE_URL from "../Config";
++import BASE_URL, { askoxyImgUrl } from "../Config";
+ import { ShoppingBag, ChevronLeft, ChevronRight, Info } from "lucide-react";
+ 
+ interface Item {
+@@ -173,17 +173,15 @@ const Categories: React.FC<CategoriesProps> = ({
+   const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(
+     "0",
+   );
+-  const categoryTypes = [
+-    "ALL",
+-    "RICE",
+-    "GOLD",
+-    "GROCERY",
+-    "SILVER",
+-    "AIBOOK",
+-    "CONTAINERS",
+-    "COMBO",
+-  ];
+-  const [activeCategoryType, setActiveCategoryType] = useState<string>("ALL");
++  const categoryTypes = ["ALL", "RICE", "GROCERY", "COMBO"];
++
++  const categoryTypeLabels: Record<string, string> = {
++    ALL: "All",
++    RICE: "🌾 Rice",
++    GROCERY: "🛒 Dal, Oil & More",
++    COMBO: "🎁 Combos",
++  };
++  const [activeCategoryType, setActiveCategoryType] = useState<string>("RICE");
+   const [activeWeightFilter, setActiveWeightFilter] = useState<string | null>(
+     null,
+   );
+@@ -198,6 +196,8 @@ const Categories: React.FC<CategoriesProps> = ({
+     { label: "1 KG", value: "1.0" },
+     { label: "5 KG", value: "5.0" },
+     { label: "10 KG", value: "10.0" },
++    { label: "15 KG", value: "15.0" },
++    { label: "20 KG", value: "20.0" },
+     { label: "26 KG", value: "26.0" },
+   ];
+ 
+@@ -740,10 +740,13 @@ const Categories: React.FC<CategoriesProps> = ({
+       }
+     }
+ 
+-    // 3️⃣ Apply weight filter (optional)
++    // 3️⃣ Apply weight filter — only match KG-unit items to avoid 15g cream matching 15KG
+     if (activeWeightFilter) {
+       const filterValue = parseFloat(activeWeightFilter).toFixed(1);
+       items = items.filter((item) => {
++        const unit = (item.units || "").toLowerCase().trim();
++        const isKgUnit = unit === "kg" || unit === "kgs" || unit === "kilogram";
++        if (!isKgUnit) return false;
+         const itemWeight = parseFloat(item.weight.toString()).toFixed(1);
+         return itemWeight === filterValue;
+       });
+@@ -934,6 +937,27 @@ const Categories: React.FC<CategoriesProps> = ({
+     `}
+       </style>
+ 
++      {/* ── Why AskOxy trust strip ── */}
++      <div className="w-full bg-gradient-to-r from-purple-50 to-green-50 border-b border-purple-100 px-2 sm:px-4 py-2">
++        <div className="flex gap-3 sm:gap-6 overflow-x-auto scrollbar-hide">
++          {[
++            { icon: "🚫💰", label: "No Platform Fee", sub: "Other apps charge ₹5–15 extra" },
++            { icon: "⚡", label: "Same / Next Day", sub: "Order by 2 PM → delivered today" },
++            { icon: "🌾", label: "Direct from Mills", sub: "Fresh, not warehouse-stored" },
++            { icon: "💸", label: "10–15% Cheaper", sub: "vs leading quick-commerce apps" },
++            { icon: "⭐", label: "Best Value Packs", sub: "10kg–20kg save the most" },
++          ].map((item) => (
++            <div key={item.label} className="flex items-center gap-2 shrink-0 py-1">
++              <span className="text-lg sm:text-xl">{item.icon}</span>
++              <div>
++                <p className="text-xs font-bold text-gray-800 whitespace-nowrap">{item.label}</p>
++                <p className="text-[10px] text-gray-500 whitespace-nowrap">{item.sub}</p>
++              </div>
++            </div>
++          ))}
++        </div>
++      </div>
++
+       {/* CategoryType Filter */}
+       <div className="w-full px-1 sm:px-4 mb-3 sm:mb-4 mt-2 sm:mt-4 border-b border-gray-300">
+         <div className="flex md:flex-wrap overflow-x-auto md:overflow-x-visible scrollbar-hide gap-2 sm:gap-4 pb-2 px-1 scroll-smooth snap-x">
+@@ -953,7 +977,7 @@ const Categories: React.FC<CategoriesProps> = ({
+               } 
+         w-1/2 sm:w-auto`} // 🟢 👈 Force 2 buttons per row on mobile
+             >
+-              {type}
++              {categoryTypeLabels[type] ?? type}
+             </motion.button>
+           ))}
+         </div>
+@@ -1103,7 +1127,7 @@ const Categories: React.FC<CategoriesProps> = ({
+                 {category.categoryLogo || category.categoryImage ? (
+                   <img
+                     src={
+-                      (category.categoryLogo || category.categoryImage) ?? ""
++                      askoxyImgUrl((category.categoryLogo || category.categoryImage) ?? "") ?? ""
+                     }
+                     alt={category.categoryName}
+                     className="w-full h-full object-cover rounded-md"
+@@ -1133,25 +1157,34 @@ const Categories: React.FC<CategoriesProps> = ({
+                 )}
+               </div>
+               <p
+-                className={`text-xs font-medium leading-tight text-center line-clamp-2 ${
++                className={`text-[10px] sm:text-xs font-medium leading-tight text-center line-clamp-2 ${
+                   activeCategory === category.categoryName
+                     ? "text-purple-600"
+                     : "text-gray-700"
+                 }`}
+               >
+-                {category.categoryName.length > 8
+-                  ? category.categoryName.substring(0, 8) + "..."
+-                  : category.categoryName}
++                {category.categoryName}
+               </p>
+             </motion.button>
+           ))}
+         </div>
+       </div>
+ 
+-      {/* Weight Filters - Only for RICE and fully visible row */}
+-      {activeCategoryType === "RICE" && (
+-        <div className="mb-3 sm:mb-5 px-2">
+-          <div className="flex flex-wrap gap-2 justify-start">
++      {/* Weight Filters — show for RICE, GROCERY and ALL */}
++      {(activeCategoryType === "RICE" || activeCategoryType === "GROCERY" || activeCategoryType === "ALL") && (
++        <div className="mb-3 sm:mb-4 px-2">
++          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
++            <span className="text-xs text-gray-500 font-medium whitespace-nowrap shrink-0">Pack size:</span>
++            <button
++              onClick={() => setActiveWeightFilter(null)}
++              className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
++                !activeWeightFilter
++                  ? "bg-purple-600 text-white border-purple-600 shadow"
++                  : "bg-white text-purple-600 border-purple-300 hover:bg-purple-50"
++              }`}
++            >
++              All
++            </button>
+             {weightFilters.map((filter) => (
+               <motion.button
+                 key={filter.value}
+@@ -1159,12 +1192,12 @@ const Categories: React.FC<CategoriesProps> = ({
+                 whileTap={{ scale: 0.97 }}
+                 onClick={() => handleWeightFilterClick(filter.value)}
+                 disabled={disabledFilters[filter.value]}
+-                className={`w-[70px] text-center px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
++                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                   activeWeightFilter === filter.value
+-                    ? "bg-purple-600 text-white shadow"
++                    ? "bg-purple-600 text-white border-purple-600 shadow"
+                     : disabledFilters[filter.value]
+-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+-                      : "bg-white text-purple-600 border border-purple-300 hover:bg-purple-50"
++                      ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
++                      : "bg-white text-purple-600 border-purple-300 hover:bg-purple-50"
+                 }`}
+               >
+                 {filter.label}
+@@ -1213,175 +1246,175 @@ const Categories: React.FC<CategoriesProps> = ({
+           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 sm:gap-4 px-2 sm:px-0">
+             {getCurrentCategoryItems().map((item) => {
+               const qty = Number(item.quantity ?? 0);
+-
+               const isSoldOut = qty <= 0;
+-
+               const discount = calculateDiscount(item.itemMrp, item.itemPrice);
+               const isInCart = cartItems[item.itemId] > 0;
+               const isLoading = loadingItems.items[item.itemId];
+               const loadingStatus = loadingItems.status[item.itemId];
++              const weight = parseFloat(String(item.weight ?? "0"));
++              const unit = (item.units || "").toLowerCase().trim();
++              const isKgUnit = unit === "kg" || unit === "kgs" || unit === "kilogram";
++              const perKgPrice = isKgUnit && weight > 0 ? (item.itemPrice / weight).toFixed(0) : null;
++              const savingsAmount = item.itemMrp > item.itemPrice ? Math.round(item.itemMrp - item.itemPrice) : 0;
++              const isBestValue = isKgUnit && weight >= 10 && weight <= 20;
++              const cartQty = cartItems[item.itemId] || 0;
+ 
+               return (
+                 <div
+                   key={item.itemId}
+-                  className="flex flex-col justify-between bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group"
++                  className="flex flex-col justify-between bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group relative"
+                 >
+-                  <div
+-                    className="aspect-square relative overflow-hidden bg-gray-50 cursor-pointer"
+-                    onClick={() => onItemClick(item)}
+-                  >
++                  {/* Top badges row */}
++                  <div className="absolute top-2 left-2 right-2 z-10 flex items-start justify-between pointer-events-none">
++                    <div className="flex flex-col gap-1">
++                      {isBestValue && !isSoldOut && (
++                        <span className="bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm leading-tight">
++                          BEST VALUE
++                        </span>
++                      )}
++                      {discount > 0 && !isBestValue && (
++                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm leading-tight">
++                          {discount}% OFF
++                        </span>
++                      )}
++                    </div>
+                     {isSoldOut && (
+-                      <div className="absolute top-2 right-2 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
++                      <span className="bg-gray-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm leading-tight">
+                         SOLD OUT
+-                      </div>
++                      </span>
+                     )}
++                  </div>
+ 
++                  {/* Image */}
++                  <div
++                    className="aspect-square relative overflow-hidden bg-gray-50 cursor-pointer"
++                    onClick={() => onItemClick(item)}
++                  >
+                     {item.itemImage ? (
+                       <img
+-                        src={item.itemImage}
++                        src={askoxyImgUrl(item.itemImage) ?? ""}
+                         alt={item.itemName}
+-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
++                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${isSoldOut ? "opacity-50" : ""}`}
+                         onError={(e) => {
+                           const target = e.target as HTMLImageElement;
+-                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+-                            item.itemName,
+-                          )}&background=f3f4f6&color=6b7280&size=200`;
++                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.itemName)}&background=f3f4f6&color=6b7280&size=200`;
+                         }}
+                       />
+                     ) : (
+-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-200">
+-                        <span className="text-purple-600 font-semibold text-sm sm:text-lg">
++                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100">
++                        <span className="text-purple-400 font-bold text-2xl">
+                           {item.itemName.charAt(0)}
+                         </span>
+                       </div>
+                     )}
+-                    {discount > 0 && (
+-                      <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-red-500 text-white text-xs font-bold px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
+-                        {discount}% OFF
+-                      </div>
+-                    )}
+                   </div>
+ 
+-                  <div className="flex flex-col flex-grow p-2 sm:p-4">
+-                    <div className="space-y-1">
+-                      <h3 className="font-semibold text-xs sm:text-base text-gray-800 line-clamp-2">
+-                        {item.itemName}
+-                      </h3>
+-                      <p className="text-xs text-gray-500">
++                  {/* Card body */}
++                  <div className="flex flex-col flex-grow p-2 sm:p-3">
++                    {/* Name */}
++                    <h3 className="font-semibold text-xs sm:text-sm text-gray-800 line-clamp-2 leading-tight mb-1">
++                      {item.itemName}
++                    </h3>
++
++                    {/* Weight + per-kg price */}
++                    <div className="flex items-center justify-between mb-1.5">
++                      <p className="text-xs text-gray-500 font-medium">
+                         {item.weight} {item.units}
+                       </p>
++                      {perKgPrice && (
++                        <p className="text-[10px] text-gray-400">
++                          ₹{perKgPrice}/kg
++                        </p>
++                      )}
+                     </div>
+ 
+-                    <div className="flex items-center justify-between mt-2">
+-                      <div className="flex items-center space-x-1 sm:space-x-2">
+-                        <span className="text-sm sm:text-lg font-bold text-purple-600">
+-                          ₹{item.itemPrice}
++                    {/* Price row */}
++                    <div className="flex items-baseline gap-1.5 mb-1">
++                      <span className="text-sm sm:text-base font-bold text-gray-900">
++                        ₹{item.itemPrice}
++                      </span>
++                      {item.itemMrp > item.itemPrice && (
++                        <span className="text-xs text-gray-400 line-through">
++                          ₹{item.itemMrp}
+                         </span>
+-                        {item.itemMrp > item.itemPrice && (
+-                          <span className="text-xs sm:text-sm text-gray-400 line-through">
+-                            ₹{item.itemMrp}
+-                          </span>
+-                        )}
+-                      </div>
++                      )}
+                     </div>
++
++                    {/* Savings */}
++                    {savingsAmount > 0 && (
++                      <p className="text-[10px] sm:text-xs text-green-600 font-semibold mb-1">
++                        You save ₹{savingsAmount}
++                      </p>
++                    )}
++
++                    {/* BMV Coins */}
+                     {item.bmvCoins !== undefined && item.bmvCoins > 0 && (
+                       <div
+-                        className="w-full flex items-center justify-between text-xs rounded px-2 py-1 mt-1"
++                        className="w-full flex items-center justify-between text-[10px] rounded px-1.5 py-0.5 mb-1"
+                         style={{ backgroundColor: "#FFF8DC", color: "#B8860B" }}
+                       >
+-                        <div className="flex items-center gap-1">
+-                          <span className="font-bold">{item.bmvCoins}</span>{" "}
+-                          BMVCOINS
+-                        </div>
++                        <span className="font-bold">{item.bmvCoins} BMVCOINS</span>
+                         <Info
+-                          className="w-4 h-4 text-black-600 cursor-pointer hover:text-purple-800"
++                          className="w-3 h-3 cursor-pointer"
+                           onClick={(e) => {
+                             e.stopPropagation();
+-                            setBmvModalItem(item); // 👈 store the current item!
++                            setBmvModalItem(item);
+                             setIsBmvModalVisible(true);
+                           }}
+                         />
+                       </div>
+                     )}
+ 
+-                    <div className="flex-grow"></div>
++                    <div className="flex-grow" />
+ 
+-                    <div className="pt-2 sm:pt-3 mt-auto">
++                    {/* Add to cart / stepper */}
++                    <div className="pt-2 mt-auto">
+                       {!isInCart ? (
+                         <motion.button
+-                          whileHover={{ scale: 1.02 }}
+-                          whileTap={{ scale: 0.98 }}
++                          whileHover={{ scale: isSoldOut ? 1 : 1.02 }}
++                          whileTap={{ scale: isSoldOut ? 1 : 0.97 }}
+                           onClick={() => {
+-                            if (!item?.itemId) {
+-                              message.error("Invalid item. Please refresh the page.");
+-                              return;
+-                            }
++                            if (!item?.itemId) { message.error("Invalid item."); return; }
+                             handleAddToCart(item);
+                           }}
+                           disabled={isSoldOut || isLoading}
+-                          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-2 px-2 sm:px-3 rounded-lg font-medium text-xs sm:text-sm hover:from-purple-700 hover:to-purple-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1 sm:space-x-2"
++                          className="w-full flex items-center justify-center gap-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white py-1.5 rounded-lg font-bold text-xs transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                         >
+                           {isLoading ? (
+-                            <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
++                            <Loader2 className="w-3 h-3 animate-spin" />
+                           ) : isSoldOut ? (
+                             "Sold Out"
+                           ) : (
+                             <>
+-                              <svg
+-                                className="w-3 h-3 sm:w-4 sm:h-4"
+-                                fill="none"
+-                                stroke="currentColor"
+-                                viewBox="0 0 24 24"
+-                              >
+-                                <path
+-                                  strokeLinecap="round"
+-                                  strokeLinejoin="round"
+-                                  strokeWidth={2}
+-                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+-                                />
+-                              </svg>
+-                              <span>Add to Cart</span>
++                              <span className="text-base leading-none">+</span>
++                              <span>ADD</span>
+                             </>
+                           )}
+                         </motion.button>
+                       ) : (
+-                        <div className="flex items-center justify-between bg-purple-50 rounded-lg p-1">
++                        <div className="flex items-center justify-between bg-purple-600 rounded-lg px-1 py-0.5">
+                           <motion.button
+-                            whileHover={{ scale: 1.1 }}
+                             whileTap={{ scale: 0.9 }}
+-                            onClick={() =>
+-                              handleQuantityChange(item, false, "decrease")
+-                            }
++                            onClick={() => handleQuantityChange(item, false, "decrease")}
+                             disabled={isLoading && loadingStatus === "decrease"}
+-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors disabled:opacity-50"
++                            className="w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-lg disabled:opacity-50"
+                           >
+                             {isLoading && loadingStatus === "decrease" ? (
+-                              <Loader2 className="w-2 h-2 sm:w-3 sm:h-3 animate-spin" />
+-                            ) : (
+-                              <span className="text-xs sm:text-sm font-bold">
+-                                −
+-                              </span>
+-                            )}
++                              <Loader2 className="w-3 h-3 animate-spin" />
++                            ) : "−"}
+                           </motion.button>
+-                          <span className="px-2 sm:px-3 py-1 bg-white rounded-md font-semibold text-purple-600 min-w-[1.5rem] min-w-[2.5rem] sm:min-w-[2.5rem] text-center text-xs sm:text-sm">
+-                            {cartItems[item.itemId] || 0}
++                          <span className="text-white font-bold text-sm min-w-[20px] text-center">
++                            {cartQty}
+                           </span>
+                           <motion.button
+-                            whileHover={{ scale: 1.1 }}
+                             whileTap={{ scale: 0.9 }}
+-                            onClick={() =>
+-                              handleQuantityChange(item, true, "increase")
+-                            }
++                            onClick={() => handleQuantityChange(item, true, "increase")}
+                             disabled={isLoading && loadingStatus === "increase"}
+-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors disabled:opacity-50"
++                            className="w-7 h-7 rounded-md text-white flex items-center justify-center font-bold text-lg disabled:opacity-50"
+                           >
+                             {isLoading && loadingStatus === "increase" ? (
+-                              <Loader2 className="w-2 h-2 sm:w-3 sm:h-3 animate-spin" />
+-                            ) : (
+-                              <span className="text-xs sm:text-sm font-bold">
+-                                +
+-                              </span>
+-                            )}
++                              <Loader2 className="w-3 h-3 animate-spin" />
++                            ) : "+"}
+                           </motion.button>
+                         </div>
+                       )}
+@@ -1516,7 +1549,7 @@ const Categories: React.FC<CategoriesProps> = ({
+                   <div className="w-2/3 sm:w-3/4 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+                     {addonItem.itemImage ? (
+                       <img
+-                        src={addonItem.itemImage}
++                        src={askoxyImgUrl(addonItem.itemImage) ?? ""}
+                         alt={addonItem.itemName}
+                         className="w-full h-full object-contain p-1.5"
+                         onError={(e) => {
+@@ -1644,6 +1677,36 @@ const Categories: React.FC<CategoriesProps> = ({
+         </div>
+       </Modal>
+ 
++      {/* ── Sticky cart bar (Blinkit-style) ── */}
++      {Object.values(cartItems).reduce((a, b) => a + b, 0) > 0 && (() => {
++        const totalQty = Object.values(cartItems).reduce((a, b) => a + b, 0);
++        return (
++          <div className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 sm:px-6 sm:pb-4 pointer-events-none">
++            <motion.div
++              initial={{ y: 80, opacity: 0 }}
++              animate={{ y: 0, opacity: 1 }}
++              className="pointer-events-auto max-w-2xl mx-auto bg-purple-600 rounded-2xl shadow-2xl flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5"
++            >
++              <div className="flex items-center gap-2">
++                <div className="bg-purple-500 rounded-lg px-2 py-1">
++                  <span className="text-white font-bold text-sm">{totalQty}</span>
++                </div>
++                <span className="text-white text-sm font-medium">
++                  {totalQty === 1 ? "item" : "items"} in cart
++                </span>
++              </div>
++              <button
++                onClick={() => navigate("/main/dashboard/cart")}
++                className="flex items-center gap-2 bg-white text-purple-600 font-bold text-sm px-4 py-2 rounded-xl hover:bg-purple-50 transition-colors"
++              >
++                View Cart
++                <ChevronRight size={16} />
++              </button>
++            </motion.div>
++          </div>
++        );
++      })()}
++
+       <Modal
+         title={
+           <span className="text-xl sm:text-2xl font-extrabold text-purple-700 flex items-center gap-2">
+diff --git a/src/kart/itemsdisplay.tsx b/src/kart/itemsdisplay.tsx
+index 27a6cc4..cbdb568 100644
+--- a/src/kart/itemsdisplay.tsx
++++ b/src/kart/itemsdisplay.tsx
+@@ -31,7 +31,7 @@ import {
+ import Footer from "../components/Footer";
+ import { CartContext } from "../until/CartContext";
+ import { AxiosError } from "axios";
+-import BASE_URL from "../Config";
++import BASE_URL, { askoxyImgUrl } from "../Config";
+ 
+ interface Item {
+   itemId: string;
+@@ -1105,7 +1105,7 @@ const ItemDisplayPage = () => {
+                     {getAllImages().length > 0 ? (
+                       <>
+                         <img
+-                          src={getAllImages()[currentImageIndex]?.imageUrl}
++                          src={askoxyImgUrl(getAllImages()[currentImageIndex]?.imageUrl)}
+                           alt={itemDetails?.itemName}
+                           onClick={() =>
+                             openFullscreen(
+@@ -1129,7 +1129,19 @@ const ItemDisplayPage = () => {
+                             e.currentTarget.style.transformOrigin = "center";
+                           }}
+                           className="w-full h-full object-contain cursor-zoom-in transition-transform duration-300 ease-in-out hover:scale-[2]"
++                          onError={(e) => {
++                            const t = e.currentTarget;
++                            t.onerror = null;
++                            t.src = "";
++                            t.style.display = "none";
++                            const placeholder = t.parentElement?.querySelector(".img-placeholder") as HTMLElement | null;
++                            if (placeholder) placeholder.style.display = "flex";
++                          }}
+                         />
++                        <div className="img-placeholder hidden w-full h-full flex-col items-center justify-center text-gray-400 bg-gray-50">
++                          <Package2 className="w-16 h-16 mb-2" />
++                          <span className="text-xs">Image not available</span>
++                        </div>
+ 
+                         {getAllImages().length > 1 && (
+                           <>
+@@ -1168,7 +1180,7 @@ const ItemDisplayPage = () => {
+                           }`}
+                         >
+                           <img
+-                            src={image.imageUrl}
++                            src={askoxyImgUrl(image.imageUrl)}
+                             alt={`${itemDetails?.itemName} ${index + 1}`}
+                             className="w-full h-full object-contain"
+                           />
+@@ -1229,10 +1241,30 @@ const ItemDisplayPage = () => {
+                           </>
+                         )}
+                     </div>
+-                    <p className="text-sm text-gray-600">
+-                      Weight: {itemDetails?.itemWeight || itemDetails?.weight}
+-                      {itemDetails?.weightUnit || itemDetails?.units}
+-                    </p>
++                    {itemDetails?.itemMrp && itemDetails.itemMrp > itemDetails.itemPrice && (
++                      <p className="text-sm font-semibold text-green-600">
++                        You save ₹{(itemDetails.itemMrp - itemDetails.itemPrice).toFixed(0)} on this order
++                      </p>
++                    )}
++                    <div className="flex items-center gap-3 flex-wrap">
++                      <p className="text-sm text-gray-600">
++                        Weight: {itemDetails?.itemWeight || itemDetails?.weight}
++                        {itemDetails?.weightUnit || itemDetails?.units}
++                      </p>
++                      {(() => {
++                        const unit = (itemDetails?.weightUnit || itemDetails?.units || "").toLowerCase();
++                        const weight = Number(itemDetails?.itemWeight || itemDetails?.weight || 0);
++                        const isKg = unit === "kg" || unit === "kgs" || unit === "kilogram";
++                        if (isKg && weight > 0 && itemDetails?.itemPrice) {
++                          return (
++                            <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-medium">
++                              ₹{(itemDetails.itemPrice / weight).toFixed(0)}/kg
++                            </span>
++                          );
++                        }
++                        return null;
++                      })()}
++                    </div>
+                   </div>
+                   {itemDetails?.bmvCoins !== undefined &&
+                     itemDetails.bmvCoins > 0 && (
+@@ -1270,6 +1302,11 @@ const ItemDisplayPage = () => {
+                     </div>
+                   )}
+ 
++                  <div className="flex items-center gap-2 text-xs bg-green-50 border border-green-100 rounded-lg px-3 py-2">
++                    <span className="text-green-600 text-base">🚚</span>
++                    <span className="text-green-800 font-medium">Order before 2 PM → <strong>delivered today</strong> · After 2 PM → <strong>tomorrow</strong></span>
++                  </div>
++
+                   <div className="border-t pt-4">
+                     {itemDetails && (
+                       <div className="space-y-3">
+@@ -1374,11 +1411,25 @@ const ItemDisplayPage = () => {
+                     )}
+                   </div>
+ 
++                  {/* Trust badges */}
++                  <div className="grid grid-cols-3 gap-2 text-center">
++                    {[
++                      { icon: "🚫💰", text: "No Platform Fee" },
++                      { icon: "🌾", text: "Direct Sourcing" },
++                      { icon: "✅", text: "Quality Checked" },
++                    ].map((b) => (
++                      <div key={b.text} className="bg-gray-50 rounded-lg py-2 px-1">
++                        <div className="text-lg">{b.icon}</div>
++                        <div className="text-[10px] text-gray-600 font-medium leading-tight mt-1">{b.text}</div>
++                      </div>
++                    ))}
++                  </div>
++
+                   <button
+                     onClick={() => handleChatView(itemDetails?.itemName ?? "")}
+-                    className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all"
++                    className="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-400 rounded-lg py-2 transition-all"
+                   >
+-                    <Bot className="w-5 h-5" />
++                    <Bot className="w-4 h-4" />
+                     <span>Ask AI about this product</span>
+                   </button>
+                 </div>
+@@ -1483,51 +1534,56 @@ const ItemDisplayPage = () => {
+                 </div>
+               </div>
+             ) : (
+-              <div className="bg-white rounded-xl p-6 shadow-sm sticky top-4">
+-                <h3 className="text-lg font-semibold mb-4">Related Products</h3>
++              <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm lg:sticky lg:top-4">
++                <h3 className="text-base font-semibold mb-3 text-gray-900">You may also like</h3>
+ 
+                 {relatedItems.length > 0 ? (
+-                  <div className="space-y-4">
++                  /* Horizontal scroll on mobile, vertical list on desktop sidebar */
++                  <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-hide">
+                     {relatedItems.map((item) => (
+                       <div
+                         key={item.itemId}
+-                        className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
++                        className="flex-shrink-0 w-36 lg:w-auto lg:flex-shrink border rounded-xl p-3 hover:shadow-md hover:border-purple-200 transition-all cursor-pointer"
+                         onClick={() => handleRelatedItemClick(item)}
+                       >
+-                        <div className="flex space-x-3">
+-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
++                        {/* Mobile: vertical card. Desktop: horizontal row */}
++                        <div className="lg:hidden flex flex-col items-center gap-2">
++                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
+                             {item.itemImage || item.image ? (
+-                              <img
+-                                src={item.itemImage || item.image}
+-                                alt={item.itemName}
+-                                className="w-full h-full object-contain"
+-                              />
++                              <img src={askoxyImgUrl(item.itemImage || item.image)} alt={item.itemName} className="w-full h-full object-contain" />
+                             ) : (
+-                              <div className="w-full h-full flex items-center justify-center">
+-                                <Package2 className="w-6 h-6 text-gray-400" />
+-                              </div>
++                              <div className="w-full h-full flex items-center justify-center"><Package2 className="w-6 h-6 text-gray-400" /></div>
+                             )}
+                           </div>
++                          <div className="w-full text-center">
++                            <p className="text-xs text-gray-800 font-medium line-clamp-2 leading-tight">{item.itemName}</p>
++                            <p className="text-[10px] text-gray-400 mt-0.5">{(item.itemWeight || item.weight)}{item.weightUnit || item.units}</p>
++                            <div className="flex items-center justify-center gap-1 mt-1">
++                              <span className="font-bold text-purple-600 text-sm">₹{item.itemPrice}</span>
++                              {item.itemMrp && item.itemMrp > item.itemPrice && (
++                                <span className="text-[10px] text-gray-400 line-through">₹{item.itemMrp}</span>
++                              )}
++                            </div>
++                          </div>
++                        </div>
+ 
++                        {/* Desktop sidebar: horizontal row */}
++                        <div className="hidden lg:flex space-x-3">
++                          <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
++                            {item.itemImage || item.image ? (
++                              <img src={askoxyImgUrl(item.itemImage || item.image)} alt={item.itemName} className="w-full h-full object-contain" />
++                            ) : (
++                              <div className="w-full h-full flex items-center justify-center"><Package2 className="w-5 h-5 text-gray-400" /></div>
++                            )}
++                          </div>
+                           <div className="flex-1 min-w-0">
+-                            <h4 className="font-medium text-gray-900 text-sm truncate">
+-                              {item.itemName}
+-                            </h4>
+-                            <p className="text-xs text-gray-500 mt-1">
+-                              {(item.itemWeight || item.weight) +
+-                                " " +
+-                                (item.weightUnit || item.units || "")}
+-                            </p>
+-                            <div className="flex items-center justify-between mt-2">
+-                              <span className="font-bold text-purple-600 text-sm">
+-                                ₹{item.itemPrice}
+-                              </span>
+-                              {item.itemMrp &&
+-                                item.itemMrp > item.itemPrice && (
+-                                  <span className="text-xs text-gray-500 line-through">
+-                                    ₹{item.itemMrp}
+-                                  </span>
+-                                )}
++                            <p className="font-medium text-gray-900 text-xs line-clamp-2 leading-snug">{item.itemName}</p>
++                            <p className="text-[10px] text-gray-400 mt-0.5">{(item.itemWeight || item.weight)}{item.weightUnit || item.units}</p>
++                            <div className="flex items-center gap-2 mt-1">
++                              <span className="font-bold text-purple-600 text-sm">₹{item.itemPrice}</span>
++                              {item.itemMrp && item.itemMrp > item.itemPrice && (
++                                <span className="text-xs text-gray-400 line-through">₹{item.itemMrp}</span>
++                              )}
+                             </div>
+                           </div>
+                         </div>
+@@ -1537,7 +1593,7 @@ const ItemDisplayPage = () => {
+                 ) : (
+                   <div className="text-center py-8">
+                     <Package2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+-                    <p className="text-gray-500">No related products found</p>
++                    <p className="text-gray-500 text-sm">No related products found</p>
+                   </div>
+                 )}
+               </div>
+@@ -1573,7 +1629,7 @@ const ItemDisplayPage = () => {
+                 {goldPriceModal.images.map((image, index) => (
+                   <div key={index} className="relative group">
+                     <img
+-                      src={image.imageUrl}
++                      src={askoxyImgUrl(image.imageUrl)}
+                       alt={`Gold item ${index + 1}`}
+                       className="w-full h-32 object-contain rounded-lg bg-gray-50 cursor-pointer transition-transform hover:scale-105"
+                       onClick={() => openFullscreen(image, index)}
+@@ -1639,7 +1695,7 @@ const ItemDisplayPage = () => {
+             </div>
+ 
+             <img
+-              src={fullscreenImage.imageUrl}
++              src={askoxyImgUrl(fullscreenImage.imageUrl)}
+               alt={`Gold item ${fullscreenImage.index + 1} - Fullscreen`}
+               className="max-w-full max-h-full object-contain"
+               onClick={(e) => e.stopPropagation()}
+@@ -1790,7 +1846,7 @@ const ItemDisplayPage = () => {
+                   <div className="w-4/5 aspect-square mx-auto bg-gradient-to-br from-purple-50 to-purple-100 rounded-md overflow-hidden border border-purple-100">
+                     {addonItem.itemImage ? (
+                       <img
+-                        src={addonItem.itemImage}
++                        src={askoxyImgUrl(addonItem.itemImage)}
+                         alt={addonItem.itemName}
+                         className="w-full h-full object-contain p-1.5"
+                         onError={(e) => {
+diff --git a/src/setupProxy.js b/src/setupProxy.js
+new file mode 100644
+index 0000000..26e3cf5
+--- /dev/null
++++ b/src/setupProxy.js
+@@ -0,0 +1,17 @@
++const { createProxyMiddleware } = require("http-proxy-middleware");
++
++module.exports = function (app) {
++  app.use(
++    "/local-api",
++    createProxyMiddleware({
++      target: "https://meta.oxyloans.com",
++      changeOrigin: true,
++      pathRewrite: { "^/local-api": "/api" },
++      secure: true,
++      onProxyReq: (proxyReq) => {
++        proxyReq.setHeader("Origin", "https://www.askoxy.ai");
++        proxyReq.setHeader("Referer", "https://www.askoxy.ai/");
++      },
++    })
++  );
++};
+diff --git a/src/utils/presignedUrl.ts b/src/utils/presignedUrl.ts
+new file mode 100644
+index 0000000..66e9fa4
+--- /dev/null
++++ b/src/utils/presignedUrl.ts
+@@ -0,0 +1,46 @@
++import { useState, useEffect } from "react";
++import BASE_URL from "../Config";
++
++const CACHE = new Map<string, { url: string; expiresAt: number }>();
++
++/**
++ * Fetches a short-lived pre-signed URL for a private S3 file.
++ * Results are cached for 10 minutes (server issues 15-min URLs).
++ */
++export async function getPresignedUrl(fileUrl: string | null | undefined): Promise<string | null> {
++  if (!fileUrl) return null;
++
++  const cached = CACHE.get(fileUrl);
++  if (cached && Date.now() < cached.expiresAt) return cached.url;
++
++  const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") || "";
++
++  try {
++    const response = await fetch(
++      `${BASE_URL}/user-service/presigned-url?fileUrl=${encodeURIComponent(fileUrl)}`,
++      { headers: { Authorization: `Bearer ${token}` } }
++    );
++    if (!response.ok) return fileUrl;
++    const data = await response.json();
++    const presigned: string = data.url || data.presignedUrl || data.signedUrl;
++    if (!presigned) return fileUrl;
++    CACHE.set(fileUrl, { url: presigned, expiresAt: Date.now() + 10 * 60 * 1000 });
++    return presigned;
++  } catch {
++    return fileUrl; // network error — fallback to raw URL
++  }
++}
++
++/** React hook — returns null while loading, then the pre-signed URL */
++export function usePresignedUrl(fileUrl: string | null | undefined): string | null {
++  const [url, setUrl] = useState<string | null>(null);
++
++  useEffect(() => {
++    if (!fileUrl) { setUrl(null); return; }
++    let cancelled = false;
++    getPresignedUrl(fileUrl).then(u => { if (!cancelled) setUrl(u ?? null); });
++    return () => { cancelled = true; };
++  }, [fileUrl]);
++
++  return url;
++}
+-- 
+2.50.1 (Apple Git-155)
+
+
+From 459c5f3d6953fcf0f486a28760e0ea5af9aeb4f2 Mon Sep 17 00:00:00 2001
+From: root <ramadevi@oxyloans.com>
+Date: Thu, 6 Aug 2026 19:36:22 +0530
+Subject: [PATCH 3/3] Fix blog images: use PresignedImage for oxybricksv1
+ private bucket
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+---
+ src/Dashboard/BlogPage.tsx        | 5 +++--
+ src/components/BlogDetails.tsx    | 3 ++-
+ src/components/ServicesSlider.tsx | 3 ++-
+ src/utils/presignedUrl.ts         | 9 ++++++++-
+ 4 files changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/src/Dashboard/BlogPage.tsx b/src/Dashboard/BlogPage.tsx
+index 713e06b..e43f7f3 100644
+--- a/src/Dashboard/BlogPage.tsx
++++ b/src/Dashboard/BlogPage.tsx
+@@ -17,6 +17,7 @@ import {
+ import { uploadurlwithId } from "../Config";
+ import axiosInstance from "../utils/axiosInstance";
+ import BASE_URL from "../Config";
++import { PresignedImage } from "../utils/presignedUrl";
+ 
+ const Header1 = React.lazy(() => import("../components/Header"));
+ const Footer = React.lazy(() => import("../components/Footer"));
+@@ -596,7 +597,7 @@ const BlogsPage: React.FC = () => {
+               {/* Image area */}
+               <div className="bpCardImg">
+                 {showImage ? (
+-                  <img src={mediaUrl} alt={title} loading="lazy" />
++                  <PresignedImage src={mediaUrl} alt={title} loading="lazy" />
+                 ) : showVideo ? (
+                   <video src={mediaUrl} autoPlay muted loop playsInline />
+                 ) : (
+@@ -906,7 +907,7 @@ const BlogsPage: React.FC = () => {
+                           key={`${file.imageId || file.imageUrl}-${index}`}
+                         >
+                           {showImage ? (
+-                            <img
++                            <PresignedImage
+                               src={mediaUrl}
+                               alt={`Blog media ${index + 1}`}
+                             />
+diff --git a/src/components/BlogDetails.tsx b/src/components/BlogDetails.tsx
+index 4041650..28d9698 100644
+--- a/src/components/BlogDetails.tsx
++++ b/src/components/BlogDetails.tsx
+@@ -30,6 +30,7 @@ import {
+ } from "./servicesapi";
+ import type { Campaign } from "./servicesapi";
+ import { uploadurlwithId } from "../Config";
++import { PresignedImage } from "../utils/presignedUrl";
+ 
+ const { TextArea } = Input;
+ 
+@@ -1015,7 +1016,7 @@ const handleWriteToUsSubmitButton = async () => {
+                               <source src={src} type={getVideoType(src)} />
+                             </video>
+                           ) : (
+-                            <img
++                            <PresignedImage
+                               src={src}
+                               alt={getCampaignTitle(campaign)}
+                               className="w-full h-[260px] sm:h-[420px] object-contain bg-slate-100"
+diff --git a/src/components/ServicesSlider.tsx b/src/components/ServicesSlider.tsx
+index a9a6a2c..11c701e 100644
+--- a/src/components/ServicesSlider.tsx
++++ b/src/components/ServicesSlider.tsx
+@@ -5,6 +5,7 @@ import { Modal } from "antd";
+ 
+ import { fetchCampaigns, fetchAllGames, Campaign } from "./servicesapi";
+ import BASE_URL, { uploadurlwithId } from "../Config";
++import { PresignedImage } from "../utils/presignedUrl";
+ 
+ type Freelancer = {
+   id: string;
+@@ -609,7 +610,7 @@ const ServicesSlider: React.FC = () => {
+                             playsInline
+                           />
+                         ) : (
+-                          <img
++                          <PresignedImage
+                             src={mediaUrl}
+                             alt={getCampaignTitle(campaign)}
+                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+diff --git a/src/utils/presignedUrl.ts b/src/utils/presignedUrl.ts
+index 66e9fa4..83b5ef9 100644
+--- a/src/utils/presignedUrl.ts
++++ b/src/utils/presignedUrl.ts
+@@ -1,4 +1,4 @@
+-import { useState, useEffect } from "react";
++import React, { useState, useEffect } from "react";
+ import BASE_URL from "../Config";
+ 
+ const CACHE = new Map<string, { url: string; expiresAt: number }>();
+@@ -44,3 +44,10 @@ export function usePresignedUrl(fileUrl: string | null | undefined): string | nu
+ 
+   return url;
+ }
++
++/** Drop-in replacement for <img> that resolves private S3 URLs via pre-signed URLs */
++export function PresignedImage({ src, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { src?: string }) {
++  const resolved = usePresignedUrl(src ?? null);
++  if (!resolved) return null;
++  return React.createElement("img", { src: resolved, ...props });
++}
+-- 
+2.50.1 (Apple Git-155)
+

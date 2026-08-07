@@ -15,6 +15,16 @@ const BASE_URL =
 
 const DEFAULT_CART_AGENT_BASE = `${BASE_URL}/cart-service/agent`;
 
+const ASKOXY_S3_HOST = "askoxy.s3.ap-south-1.amazonaws.com";
+const ASKOXY_CDN_HOST = "d15sy6qj2uhi5q.cloudfront.net";
+
+export function askoxyImgUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url
+    .replace(`https://${ASKOXY_S3_HOST}`, `https://${ASKOXY_CDN_HOST}`)
+    .replace(`http://${ASKOXY_S3_HOST}`, `https://${ASKOXY_CDN_HOST}`);
+}
+
 /**
  * Cart agent APIs (offers, chat) — always local cart-management-service in dev.
  * REACT_APP_CART_AGENT_BASE may override (e.g. /local-api/... via setupProxy.js).
@@ -41,27 +51,23 @@ export const uploadurlwithId = atob(encryptedUploadUrl);
 
 export default BASE_URL;
 
-export const askoxyImgUrl = () => {
-  return "d15sy6qj2uhi5q.cloudfront.net";
-};
-
 export const resolveAskoxyUrl = (url?: string | null): string => {
   if (!url) return "";
   const cleanUrl = url.trim();
   if (cleanUrl.includes("askoxy.s3.ap-south-1.amazonaws.com")) {
-    return cleanUrl.replace("askoxy.s3.ap-south-1.amazonaws.com", askoxyImgUrl());
+    return cleanUrl.replace("askoxy.s3.ap-south-1.amazonaws.com", ASKOXY_CDN_HOST);
   }
   if (cleanUrl.includes("oxybricksv1.s3.ap-south-1.amazonaws.com")) {
-    return cleanUrl.replace("oxybricksv1.s3.ap-south-1.amazonaws.com", askoxyImgUrl());
+    return cleanUrl.replace("oxybricksv1.s3.ap-south-1.amazonaws.com", ASKOXY_CDN_HOST);
   }
   if (cleanUrl.includes("askoxy.s3.amazonaws.com")) {
-    return cleanUrl.replace("askoxy.s3.amazonaws.com", askoxyImgUrl());
+    return cleanUrl.replace("askoxy.s3.amazonaws.com", ASKOXY_CDN_HOST);
   }
   if (cleanUrl.startsWith("/")) {
-    return `https://${askoxyImgUrl()}${cleanUrl}`;
+    return `https://${ASKOXY_CDN_HOST}${cleanUrl}`;
   }
   if (!/^https?:\/\//i.test(cleanUrl) && !cleanUrl.startsWith("data:") && !cleanUrl.startsWith("static/")) {
-    return `https://${askoxyImgUrl()}/${cleanUrl}`;
+    return `https://${ASKOXY_CDN_HOST}/${cleanUrl}`;
   }
   return cleanUrl;
 };
