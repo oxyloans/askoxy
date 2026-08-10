@@ -32,6 +32,7 @@ const BlogsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMyBlogsLoading, setIsMyBlogsLoading] = useState(false);
 
+
   // Edit modal state
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editCampaign, setEditCampaign] = useState<Campaign | null>(null);
@@ -58,32 +59,30 @@ const BlogsPage: React.FC = () => {
     }
     setIsMyBlogsLoading(true);
     try {
-      const { data } = await axiosInstance.get(
-        `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`,
+      const { data } = await axios.get(
+        "https://meta.oxyloans.com/api/marketing-service/campgin/getAllCampaignDetails",
         { params: { createdPersonId: userId } },
       );
-      const responseBody = data?.data ?? data;
-      const list = Array.isArray(responseBody)
-        ? responseBody
-        : responseBody?.content || responseBody?.campaigns || responseBody?.results || [];
+      const responseData = data?.data ?? data;
+      const list = Array.isArray(responseData) ? responseData : [];
       const normalized = list.map((c: any, index: number) => ({
         ...c,
         campaignId: c.campaignId || c.id || "",
         id: c.id || c.campaignId || "",
-        imageUrls: Array.isArray(c.imageUrls) && c.imageUrls.length > 0
-          ? c.imageUrls
-          : Array.isArray(c.images) && c.images.length > 0
-            ? c.images
-            : c.imageUrl
-              ? [{ imageUrl: c.imageUrl, status: true }]
-              : [],
+        imageUrls:
+          Array.isArray(c.imageUrls) && c.imageUrls.length > 0
+            ? c.imageUrls
+            : Array.isArray(c.images) && c.images.length > 0
+              ? c.images
+              : c.imageUrl
+                ? [{ imageUrl: c.imageUrl, status: true }]
+                : [],
         __originalIndex: index,
       }));
       const sorted = sortNewestFirst(
         normalized.filter(
           (c: any) =>
-            !c.campainInputType ||
-            String(c.campainInputType).trim().toUpperCase() === "BLOG",
+            String(c.campainInputType || "").trim().toUpperCase() === "BLOG",
         ),
       );
       setMyBlogs(sorted as Campaign[]);
@@ -288,8 +287,10 @@ const BlogsPage: React.FC = () => {
         const tA = parseDateValue(a?.createdAt);
         const tB = parseDateValue(b?.createdAt);
         if (tB !== tA) return tB - tA;
-        const iA = typeof a?.__originalIndex === "number" ? a.__originalIndex : 999999;
-        const iB = typeof b?.__originalIndex === "number" ? b.__originalIndex : 999999;
+        const iA =
+          typeof a?.__originalIndex === "number" ? a.__originalIndex : 999999;
+        const iB =
+          typeof b?.__originalIndex === "number" ? b.__originalIndex : 999999;
         return iA - iB;
       });
   }, [games]);
@@ -407,13 +408,15 @@ const BlogsPage: React.FC = () => {
 
   const handleRemoveEditFile = (index: number) => {
     setEditFileList((prev) =>
-      prev.map((item, i) =>
-        i === index
-          ? item.isNew
-            ? null  // new uploads: fully remove
-            : { ...item, status: false }  // existing: set status false so backend removes
-          : item
-      ).filter(Boolean)
+      prev
+        .map((item, i) =>
+          i === index
+            ? item.isNew
+              ? null // new uploads: fully remove
+              : { ...item, status: false } // existing: set status false so backend removes
+            : item,
+        )
+        .filter(Boolean),
     );
   };
 
@@ -435,7 +438,12 @@ const BlogsPage: React.FC = () => {
         const response = await axios.post(
           "https://meta.oxyloans.com/api/upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar",
           uploadFormData,
-          { headers: { "Content-Type": "multipart/form-data" ,Authorization: `Bearer ${localStorage.getItem("accessToken")}` } },
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          },
         );
 
         if (response.data?.uploadStatus === "UPLOADED") {
@@ -780,6 +788,7 @@ const BlogsPage: React.FC = () => {
 
           {/* ── Content ── */}
           <div style={{ marginTop: 20 }}>
+           
             {isLoading || (activeTab === "MY" && isMyBlogsLoading) ? (
               <div
                 style={{
@@ -913,14 +922,14 @@ const BlogsPage: React.FC = () => {
               {editFileList.length > 0 && (
                 <div className="bpEditMediaGrid">
                   {editFileList
-                    .filter((file: any) => file.status !== false && file !== null)
+                    .filter(
+                      (file: any) => file.status !== false && file !== null,
+                    )
                     .map((file: any, index: number) => {
                       const rawUrl = file.imageUrl || "";
                       // console.log("rawUrl from blogs:", rawUrl);
                       // console.log("rawUrl from blogs:", `${buildMediaUrl}`);
-                      const mediaUrl = rawUrl
-                        ? buildMediaUrl(rawUrl)
-                        : "";
+                      const mediaUrl = rawUrl ? buildMediaUrl(rawUrl) : "";
                       const showImage = isImage(mediaUrl);
                       const showVideo = isVideo(mediaUrl);
 

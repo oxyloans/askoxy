@@ -1,6 +1,7 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { stopTokenRefresh } from "../utils/tokenRefresh";
+import { PLAN_CONTEXT_KEY, PLAN_DAY_KEY, PLAN_VIEW_KEY } from "./NinetyDayUseCaseNavigation";
 
 type ModuleKey = "lo-system" | "fm-system" | "cm-system";
 type ViewType = "business" | "system";
@@ -522,12 +523,13 @@ const DayChip = ({
 
 const ProgressBar = ({ value, max }: { value: number; max: number }) => {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  const roundedPct = Math.round(pct);
   return (
     <div className="w-full">
       <div className="flex items-center justify-between text-xs text-slate-600">
         <span>Progress</span>
         <span className="font-semibold" style={{ color: C3 }}>
-          {value}/{max} days
+          {value}/{max} days · {roundedPct}%
         </span>
       </div>
       <div
@@ -815,6 +817,20 @@ function BookPreviewModal({
 
 export default function NinetyDayPlanPage() {
   const navigate = useNavigate();
+  const initialParams = new URLSearchParams(window.location.search);
+  const requestedInitialDay = Number(
+    initialParams.get("day") || sessionStorage.getItem(PLAN_DAY_KEY) || 1,
+  );
+  const initialDay =
+    Number.isInteger(requestedInitialDay) &&
+    requestedInitialDay >= 1 &&
+    requestedInitialDay <= 90
+      ? requestedInitialDay
+      : 1;
+  const requestedInitialView =
+    initialParams.get("view") || sessionStorage.getItem(PLAN_VIEW_KEY);
+  const initialView: ViewType =
+    requestedInitialView === "system" ? "system" : "business";
 
   const useCases: UseCase[] = useMemo(() => {
     const base: Array<
@@ -1233,11 +1249,15 @@ export default function NinetyDayPlanPage() {
     return days;
   }, []);
 
-  const [tab, setTab] = useState<"usecases" | "integration">("usecases");
-  const [viewType, setViewType] = useState<ViewType>("business");
+  const [tab, setTab] = useState<"usecases" | "integration">(
+    initialDay <= 51 ? "usecases" : "integration",
+  );
+  const [viewType, setViewType] = useState<ViewType>(initialView);
   const [query, setQuery] = useState("");
-  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [selectedDay, setSelectedDay] = useState<number>(initialDay);
   const [moduleFilter, setModuleFilter] = useState<ModuleKey | "all">("all");
+  const useCasesSectionRef = useRef<HTMLElement | null>(null);
+  const integrationSectionRef = useRef<HTMLElement | null>(null);
 
   /** ✅ Book plan state */
   const [bookDay, setBookDay] = useState<number>(1);
@@ -1269,10 +1289,49 @@ export default function NinetyDayPlanPage() {
 
   const openSelectedUseCase = useCallback(() => {
     if (!selectedUseCase) return;
+    sessionStorage.setItem(PLAN_CONTEXT_KEY, JSON.stringify(useCases.map(({ day, useCaseId, title, module }) => ({ day, useCaseId, title, module }))));
+    sessionStorage.setItem(PLAN_DAY_KEY, String(selectedUseCase.day));
+    sessionStorage.setItem(PLAN_VIEW_KEY, viewType);
     navigate(
       `/${selectedUseCase.module}/${selectedUseCase.useCaseId}/${viewType}`
     );
-  }, [navigate, selectedUseCase, viewType]);
+  }, [navigate, selectedUseCase, useCases, viewType]);
+
+  const selectPhaseAndScroll = useCallback((nextTab: "usecases" | "integration", day: number) => {
+    setTab(nextTab);
+    setSelectedDay(day);
+    window.setTimeout(() => {
+      const dayCard = document.querySelector<HTMLElement>(`[data-plan-day="${day}"]`);
+      (dayCard || (nextTab === "usecases" ? useCasesSectionRef.current : integrationSectionRef.current))?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const day = Number(params.get("day") || sessionStorage.getItem(PLAN_DAY_KEY));
+    const mode = params.get("view") || sessionStorage.getItem(PLAN_VIEW_KEY);
+    if (day >= 1 && day <= 90) {
+      setSelectedDay(day);
+      setTab(day <= 51 ? "usecases" : "integration");
+    }
+    if (mode === "business" || mode === "system") setViewType(mode);
+    if (day >= 1 && day <= 90) {
+      window.setTimeout(() => {
+        (day <= 51 ? useCasesSectionRef.current : integrationSectionRef.current)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem(PLAN_DAY_KEY, String(selectedDay));
+    sessionStorage.setItem(PLAN_VIEW_KEY, viewType);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("day", String(selectedDay));
+    params.set("view", viewType);
+    const nextUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", nextUrl);
+  }, [selectedDay, viewType]);
 
   const filteredUseCases = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1363,8 +1422,7 @@ export default function NinetyDayPlanPage() {
 
               <button
                 onClick={handleLogout}
-                className="self-start sm:self-auto inline-flex items-center justify-center rounded-2xl border bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                style={{ borderColor: `${C2}66`, color: C3 }}
+                className="self-start sm:self-auto inline-flex items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
               >
                 Log Out
               </button>
@@ -1386,15 +1444,13 @@ export default function NinetyDayPlanPage() {
                   <PrimaryBtn
                     label="Start Day-1 (Customer ID Creation)"
                     onClick={() => {
-                      setTab("usecases");
-                      setSelectedDay(1);
+                      selectPhaseAndScroll("usecases", 1);
                     }}
                   />
                   <SecondaryBtn
                     label="Jump to Build Phase (Day-52)"
                     onClick={() => {
-                      setTab("integration");
-                      setSelectedDay(52);
+                      selectPhaseAndScroll("integration", 52);
                     }}
                   />
                 </div>
@@ -1538,7 +1594,7 @@ export default function NinetyDayPlanPage() {
                   {/* Tabs */}
                   <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <button
-                      onClick={() => setTab("usecases")}
+                      onClick={() => selectPhaseAndScroll("usecases", selectedDay <= 51 ? selectedDay : 1)}
                       className={cx(
                         "rounded-2xl border px-5 py-3 text-sm font-semibold transition",
                         tab === "usecases"
@@ -1553,7 +1609,7 @@ export default function NinetyDayPlanPage() {
                       Days 1–51
                     </button>
                     <button
-                      onClick={() => setTab("integration")}
+                      onClick={() => selectPhaseAndScroll("integration", selectedDay >= 52 ? selectedDay : 52)}
                       className={cx(
                         "rounded-2xl border px-5 py-3 text-sm font-semibold transition",
                         tab === "integration"
@@ -1575,17 +1631,16 @@ export default function NinetyDayPlanPage() {
         </div>
       </header>
 
-{/* ✅ 30-DAY AI TOOLS PLAN - ENHANCED UI/UX */}
-<section className="mx-auto max-w-7xl px-4 sm:px-6 pb-10">
+{/* <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-10">
   <SoftCard className="overflow-hidden">
-    {/* Top hero strip with animated gradient */}
+ 
     <div
       className="relative px-5 sm:px-7 py-8"
       style={{
         background: "linear-gradient(135deg, rgba(54,77,105,0.98), rgba(144,183,215,0.95), rgba(23,59,99,0.98))",
       }}
     >
-      {/* Animated background orbs */}
+    
       <div
         className="absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl opacity-40 animate-pulse"
         style={{ background: "rgba(255,255,255,0.4)", animationDuration: "3s" }}
@@ -1597,7 +1652,7 @@ export default function NinetyDayPlanPage() {
 
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
-          {/* Enhanced badge row */}
+       
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-xs font-extrabold text-white border border-white/30 shadow-lg backdrop-blur-sm">
               <span className="text-base">✨</span> Top 30 AI Tools
@@ -1618,7 +1673,7 @@ export default function NinetyDayPlanPage() {
           </p>
         </div>
 
-        {/* Enhanced navigation controls */}
+        
         <div className="flex gap-2.5 shrink-0">
           <button
             onClick={() => setAiDay((d) => Math.max(1, d - 1))}
@@ -1639,9 +1694,9 @@ export default function NinetyDayPlanPage() {
       </div>
     </div>
 
-    {/* Enhanced body section */}
+   
     <div className="p-6 sm:p-8">
-      {/* Day chips with better spacing */}
+     
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm font-bold text-slate-700">📌 Select Your Learning Day</p>
         <div className="flex items-center gap-2">
@@ -1652,7 +1707,7 @@ export default function NinetyDayPlanPage() {
         </div>
       </div>
 
-      {/* Scrollable day chips with shadow indicators */}
+     
       <div className="relative">
         <div className="flex gap-2.5 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
           {aiDayChips.map((d) => (
@@ -1667,7 +1722,7 @@ export default function NinetyDayPlanPage() {
         </div>
       </div>
 
-      {/* Enhanced selected day content card */}
+     
       <div
         className="mt-6 rounded-[32px] border bg-gradient-to-br from-white via-white to-slate-50/50 p-6 sm:p-8 shadow-xl"
         style={{
@@ -1675,7 +1730,7 @@ export default function NinetyDayPlanPage() {
         }}
       >
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          {/* Left content */}
+         
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
               <span
@@ -1701,7 +1756,7 @@ export default function NinetyDayPlanPage() {
               {selectedAiTool.content}
             </p>
 
-            {/* Progress indicator */}
+            
             <div className="mt-5 flex items-center gap-3">
               <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
                 <div
@@ -1718,7 +1773,7 @@ export default function NinetyDayPlanPage() {
             </div>
           </div>
 
-          {/* Right action button */}
+         
           <div className="w-full lg:w-[280px] flex flex-col gap-3">
             <button
               onClick={() => window.open(selectedAiTool.link, "_blank")}
@@ -1741,7 +1796,7 @@ export default function NinetyDayPlanPage() {
         </div>
       </div>
 
-      {/* Quick stats footer */}
+      
       <div className="mt-6 grid grid-cols-3 gap-4">
         <div className="text-center p-4 rounded-2xl bg-slate-50 border border-slate-200">
           <div className="text-2xl font-extrabold" style={{ color: C3 }}>{aiDay}</div>
@@ -1758,7 +1813,8 @@ export default function NinetyDayPlanPage() {
       </div>
     </div>
   </SoftCard>
-</section>
+</section> */}
+
 
       {/* TOOLBAR */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -1803,11 +1859,11 @@ export default function NinetyDayPlanPage() {
               <div className="flex items-center gap-2">
                 <SecondaryBtn
                   label="Go Day-51"
-                  onClick={() => setSelectedDay(51)}
+                  onClick={() => selectPhaseAndScroll("usecases", 51)}
                 />
                 <PrimaryBtn
                   label="Go Day-52"
-                  onClick={() => setSelectedDay(52)}
+                  onClick={() => selectPhaseAndScroll("integration", 52)}
                 />
               </div>
             )}
@@ -1817,13 +1873,14 @@ export default function NinetyDayPlanPage() {
 
       {/* CONTENT */}
       {tab === "usecases" ? (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
+        <section ref={useCasesSectionRef} className="mx-auto max-w-7xl scroll-mt-24 px-4 sm:px-6 py-8 sm:py-10">
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredUseCases.map((u) => {
               const selected = u.day === selectedDay;
               return (
                 <div
                   key={u.day}
+                  data-plan-day={u.day}
                   className={cx(
                     "group relative overflow-hidden rounded-3xl border bg-white/90 backdrop-blur-sm transition",
                     "hover:shadow-xl"
@@ -1867,6 +1924,9 @@ export default function NinetyDayPlanPage() {
                         onClick={() => {
                           setSelectedDay(u.day);
                           setViewType("business");
+                          sessionStorage.setItem(PLAN_CONTEXT_KEY, JSON.stringify(useCases.map(({ day, useCaseId, title, module }) => ({ day, useCaseId, title, module }))));
+                          sessionStorage.setItem(PLAN_DAY_KEY, String(u.day));
+                          sessionStorage.setItem(PLAN_VIEW_KEY, "business");
                           navigate(`/${u.module}/${u.useCaseId}/business`);
                         }}
                         className={cx(
@@ -1890,6 +1950,9 @@ export default function NinetyDayPlanPage() {
                         onClick={() => {
                           setSelectedDay(u.day);
                           setViewType("system");
+                          sessionStorage.setItem(PLAN_CONTEXT_KEY, JSON.stringify(useCases.map(({ day, useCaseId, title, module }) => ({ day, useCaseId, title, module }))));
+                          sessionStorage.setItem(PLAN_DAY_KEY, String(u.day));
+                          sessionStorage.setItem(PLAN_VIEW_KEY, "system");
                           navigate(`/${u.module}/${u.useCaseId}/system`);
                         }}
                         className={cx(
@@ -1945,23 +2008,21 @@ export default function NinetyDayPlanPage() {
                 </div>
                 <PrimaryBtn
                   label="Go to Day-52"
-                  onClick={() => {
-                    setTab("integration");
-                    setSelectedDay(52);
-                  }}
+                  onClick={() => selectPhaseAndScroll("integration", 52)}
                 />
               </div>
             </SoftCard>
           </div>
         </section>
       ) : (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
+        <section ref={integrationSectionRef} className="mx-auto max-w-7xl scroll-mt-24 px-4 sm:px-6 py-8 sm:py-10">
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {phaseTasks.map((t) => {
               const selected = t.day === selectedDay;
               return (
                 <div
                   key={t.day}
+                  data-plan-day={t.day}
                   className="group relative overflow-hidden rounded-3xl border bg-white/90 backdrop-blur-sm transition hover:shadow-xl"
                   style={{
                     borderColor: selected ? `${C3}55` : `${C2}66`,

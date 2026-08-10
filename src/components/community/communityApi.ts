@@ -414,6 +414,33 @@ export const reactToQuery = async (id: number, type: ReactionType) => {
   );
 };
 
+type QueryReactionStatusResponse = {
+  queryId?: number;
+  userId?: string;
+  reaction?: ReactionType | null;
+};
+
+export const getQueryReactionForUser = async (
+  queryId: number,
+  userId: string,
+): Promise<ReactionType | null> => {
+  try {
+    const response = await api.get<QueryReactionStatusResponse | ApiResponse<QueryReactionStatusResponse>>(
+      `/api/user-service/community/queries/${queryId}/reactions/user/${encodeURIComponent(userId)}`,
+    );
+    if (!response.data) return null;
+    const root = response.data as QueryReactionStatusResponse & {
+      data?: QueryReactionStatusResponse;
+    };
+    const reaction = root.data?.reaction ?? root.reaction ?? null;
+    return reaction === "LIKE" || reaction === "DISLIKE" ? reaction : null;
+  } catch (error) {
+    const status = (error as AxiosError)?.response?.status;
+    if (status === 404 || status === 204) return null;
+    throw error;
+  }
+};
+
 export const getComments = async (queryId: number) => {
   const response = await api.get<ApiResponse<CommunityComment[]>>(
     `/api/user-service/api/community/queries/${queryId}/comments`,

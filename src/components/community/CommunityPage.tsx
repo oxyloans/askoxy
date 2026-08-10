@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Client, IMessage } from "@stomp/stompjs";
+import axios from "axios";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -62,6 +63,7 @@ import {
   getCommunityWebSocketUrl,
   getErrorMessage,
   getQueries,
+  getQueryReactionForUser,
   getQueryById,
   normalizeCommunityOnlineUsers,
   reactToComment,
@@ -75,6 +77,20 @@ import { getCategoryLabel, getQueryCategoryLabel } from "./communityCategories";
 type QueryFormValues = Omit<CreateQueryPayload, "categoryId"> & {
   categoryId: number | "";
 };
+
+type ProfileFormValues = {
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+const emptyProfileForm: ProfileFormValues = {
+  firstName: "",
+  lastName: "",
+  email: "",
+};
+
+const PROFILE_API_BASE = "https://meta.oxyloans.com/api/user-service";
 
 const emptyQuery: QueryFormValues = {
   categoryId: "",
@@ -167,6 +183,18 @@ const applySavedQueryReaction = (
     },
   };
 };
+
+const applyQueryReactionStatus = (
+  query: CommunityQuery,
+  reaction: ReactionType | null,
+): CommunityQuery => ({
+  ...query,
+  reactions: {
+    ...query.reactions,
+    likedByCurrentUser: reaction === "LIKE",
+    dislikedByCurrentUser: reaction === "DISLIKE",
+  },
+});
 
 const initials = (name?: string) =>
   (name || "U")
@@ -324,6 +352,12 @@ export default function CommunityPage() {
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileForm, setProfileForm] =
+    useState<ProfileFormValues>(emptyProfileForm);
+  const [profileFormError, setProfileFormError] = useState("");
   const [showMyQueriesOnly, setShowMyQueriesOnly] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<CommunityOnlineUser[]>([]);
   const [onlineUsersCount, setOnlineUsersCount] = useState(0);
@@ -337,6 +371,91 @@ export default function CommunityPage() {
     setToastMessage(message);
     window.setTimeout(() => setToastMessage(""), 2200);
   }, []);
+
+  useEffect(() => {
+    if (!currentUserId || !accessToken) return;
+
+    let cancelled = false;
+    const loadProfile = async () => {
+      setProfileLoading(true);
+      try {
+        const response = await axios.get(
+          `${PROFILE_API_BASE}/getProfile/${encodeURIComponent(currentUserId)}`,
+          { headers: { Authorization: `Bearer ${accessToken.replace(/^Bearer\s+/i, "")}` } },
+        );
+        if (cancelled) return;
+
+        const profile = response.data?.data ?? response.data ?? {};
+        const firstName = String(profile.firstName ?? profile.userFirstName ?? "").trim();
+        const lastName = String(profile.lastName ?? profile.userLastName ?? "").trim();
+        const email = String(profile.email ?? profile.customerEmail ?? "").trim();
+        const userName = String(profile.userName ?? "").trim();
+
+        setProfileForm({ firstName, lastName, email });
+        setProfileModalOpen(!firstName || !lastName || !email || !userName);
+      } catch (err) {
+        console.error("Unable to load community profile:", err);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    };
+
+    void loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, currentUserId]);
+
+  const saveProfile = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!currentUserId) return;
+
+    const firstName = profileForm.firstName.trim();
+    const lastName = profileForm.lastName.trim();
+    const email = profileForm.email.trim().toLowerCase();
+    const namePattern = /^[\p{L}][\p{L} .'-]*$/u;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (firstName.length < 2 || !namePattern.test(firstName)) {
+      setProfileFormError("Enter a valid first name using letters only.");
+      return;
+    }
+    if (lastName.length < 1 || !namePattern.test(lastName)) {
+      setProfileFormError("Enter a valid last name using letters only.");
+      return;
+    }
+    if (!emailPattern.test(email) || email.length > 254) {
+      setProfileFormError("Enter a valid email address.");
+      return;
+    }
+
+    setProfileSaving(true);
+    setProfileFormError("");
+    try {
+      const response = await axios.patch(
+        `${PROFILE_API_BASE}/profileUpdate`,
+        {
+          userFirstName: firstName,
+          userLastName: lastName,
+          customerEmail: email,
+          customerId: currentUserId,
+        },
+        { headers: { Authorization: `Bearer ${accessToken?.replace(/^Bearer\s+/i, "")}` } },
+      );
+
+      if (response.data?.errorMessage) {
+        throw new Error(response.data.errorMessage);
+      }
+
+      setProfileForm({ firstName, lastName, email });
+      setProfileModalOpen(false);
+      showToast("Profile updated successfully");
+    } catch (err) {
+      setProfileFormError(getErrorMessage(err) || "Unable to update your profile. Please try again.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const loadCommunityCategories = useCallback(async () => {
     setCategoriesLoading(true);
@@ -363,7 +482,7 @@ export default function CommunityPage() {
 
   const redirectToRegistration = useCallback(() => {
     const returnUrl = `${window.location.pathname}${window.location.search}`;
-    sessionStorage.setItem("redirectAfterLogin", returnUrl);
+    sessionStorage.setItem("redirectPath", returnUrl);
     navigate("/whatsapplogin");
   }, [navigate]);
 
@@ -373,7 +492,7 @@ export default function CommunityPage() {
       return;
     }
 
-    sessionStorage.setItem("redirectAfterLogin", "/main/dashboard/home");
+    sessionStorage.setItem("redirectPath", "/main/dashboard/home");
     navigate("/whatsapplogin");
   }, [isRegistered, navigate]);
 
@@ -615,11 +734,28 @@ export default function CommunityPage() {
         sortBy,
       });
 
-      setQueries(
-        result.queries.map((query) =>
-          applySavedQueryReaction(query, currentUserId),
-        ),
-      );
+      const queriesWithReactions = currentUserId
+        ? await Promise.all(
+            result.queries.map(async (query) => {
+              try {
+                const reaction = await getQueryReactionForUser(
+                  query.id,
+                  currentUserId,
+                );
+                saveQueryReaction(currentUserId, query.id, reaction);
+                return applyQueryReactionStatus(query, reaction);
+              } catch (reactionError) {
+                console.error(
+                  `Unable to load reaction for query ${query.id}:`,
+                  reactionError,
+                );
+                return applySavedQueryReaction(query, currentUserId);
+              }
+            }),
+          )
+        : result.queries;
+
+      setQueries(queriesWithReactions);
       setTotalPages(Math.max(result.totalPages, 1));
       setTotalElements(result.totalElements);
     } catch (err) {
@@ -642,12 +778,15 @@ export default function CommunityPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
 
       try {
-        const [detail, nestedComments] = await Promise.all([
+        const [detail, nestedComments, reaction] = await Promise.all([
           getQueryById(query.id),
           getComments(query.id),
+          currentUserId
+            ? getQueryReactionForUser(query.id, currentUserId).catch(() => null)
+            : Promise.resolve(null),
         ]);
 
-        setSelectedQuery(applySavedQueryReaction(detail, currentUserId));
+        setSelectedQuery(applyQueryReactionStatus(detail, reaction));
         setComments(nestedComments.filter(Boolean) as CommunityComment[]);
       } catch (err) {
         if (!handleUnauthorized(err)) setError(getErrorMessage(err));
@@ -669,13 +808,16 @@ export default function CommunityPage() {
       setError("");
 
       try {
-        const [detail, nestedComments] = await Promise.all([
+        const [detail, nestedComments, reaction] = await Promise.all([
           getQueryById(queryId),
           getComments(queryId),
+          currentUserId
+            ? getQueryReactionForUser(queryId, currentUserId).catch(() => null)
+            : Promise.resolve(null),
         ]);
 
         if (!active) return;
-        setSelectedQuery(applySavedQueryReaction(detail, currentUserId));
+        setSelectedQuery(applyQueryReactionStatus(detail, reaction));
         setComments(nestedComments.filter(Boolean) as CommunityComment[]);
       } catch (err) {
         if (!active) return;
@@ -1681,12 +1823,91 @@ export default function CommunityPage() {
         />
       )}
 
+      {profileModalOpen && (
+        <ProfileCompletionModal
+          form={profileForm}
+          setForm={setProfileForm}
+          error={profileFormError}
+          saving={profileSaving}
+          loading={profileLoading}
+          onClose={() => setProfileModalOpen(false)}
+          onSubmit={saveProfile}
+        />
+      )}
+
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
       `}</style>
     </main>
+  );
+}
+
+function ProfileCompletionModal({
+  form,
+  setForm,
+  error,
+  saving,
+  loading,
+  onClose,
+  onSubmit,
+}: {
+  form: ProfileFormValues;
+  setForm: React.Dispatch<React.SetStateAction<ProfileFormValues>>;
+  error: string;
+  saving: boolean;
+  loading: boolean;
+  onClose: () => void;
+  onSubmit: (event: FormEvent) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5">
+      <form
+        onSubmit={onSubmit}
+        className="w-full max-w-lg rounded-3xl bg-white p-5 shadow-2xl sm:p-7"
+        noValidate
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <span className="text-xs font-black uppercase tracking-[0.15em] text-[#5b2d90]">
+              One quick step
+            </span>
+            <h2 className="mt-2 text-2xl font-black text-slate-950">Complete your profile</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Add your name and email so community members can recognize you.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-500 hover:bg-slate-100" aria-label="Close profile form">
+            <X size={21} />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <label className="text-sm font-bold text-slate-800">
+            First name
+            <input autoFocus value={form.firstName} onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))} maxLength={50} autoComplete="given-name" placeholder="Enter first name" className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]" />
+          </label>
+          <label className="text-sm font-bold text-slate-800">
+            Last name
+            <input value={form.lastName} onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))} maxLength={50} autoComplete="family-name" placeholder="Enter last name" className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]" />
+          </label>
+        </div>
+        <label className="mt-4 block text-sm font-bold text-slate-800">
+          Email address
+          <input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} maxLength={254} autoComplete="email" placeholder="name@example.com" className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]" />
+        </label>
+
+        {error && <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} disabled={saving} className={secondaryButton}>Not now</button>
+          <button type="submit" disabled={saving || loading} className={primaryButton}>
+            {saving ? "Saving..." : "Save and continue"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -1732,7 +1953,7 @@ function OnlineUsersPanel({
             </div>
             <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
               <p className="text-xs font-medium text-slate-600 sm:text-sm">
-                Active in the AskOxy community
+                Active in the oxy community
               </p>
             </div>
             {/* <p className="mt-1 text-[10px] font-medium text-slate-400 sm:text-[11px]">

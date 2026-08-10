@@ -1,15 +1,14 @@
-import React, {  useState } from "react";
+import React, { useState } from "react";
 import { adminApi as axios } from "../utils/axiosInstances";
 import Sidebar from "./Sider";
 import { message, Button, Modal } from "antd";
 import {
- 
   CopyOutlined,
   FacebookOutlined,
   InstagramOutlined,
 } from "@ant-design/icons";
 import BASE_URL from "../Config";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface MediaItem {
   url: string;
@@ -59,6 +58,7 @@ const AddBlog: React.FC = () => {
   const [mediaErrorMessage, setMediaErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
   const navigate = useNavigate();
+  const location = useLocation();
   const [nameErrorMessage, setNameErrorMessage] = useState<string>("");
   const [descErrormessage, setDescErrorMessage] = useState<string>("");
   const [socialMediaCaptionErrorMessage, setSocialMediaCaptionErrorMessage] =
@@ -70,8 +70,18 @@ const AddBlog: React.FC = () => {
     facebook: "",
     instagram: "",
   });
-  const primaryType = localStorage.getItem("admin_primaryType");
-  const userId = localStorage.getItem("userId");
+  const primaryType = (localStorage.getItem("admin_primaryType") || "")
+    .trim()
+    .toUpperCase();
+
+  const userId = (localStorage.getItem("userId") || "").trim();
+
+  // The same AddBlog page is used by both Admin and User.
+  // Do not trust admin_primaryType alone because it can remain in localStorage
+  // after switching from an admin session to a normal user session.
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isHelpdeskSuperAdmin =
+    isAdminRoute && primaryType === "HELPDESKSUPERADMIN";
   const [charCounts, setCharCounts] = useState<{
     campaignType: number;
     campaignDescription: number;
@@ -299,12 +309,16 @@ const AddBlog: React.FC = () => {
           campainInputType: "SERVICE",
           createdPersonId: localStorage.getItem("userId") || "",
         });
-        if (primaryType === "HELPDESKSUPERADMIN") {
-          navigate("/admin/allcampaignsdetails");
+        // Redirect based on the CURRENT page context + localStorage role.
+        // Admin Add Blog -> admin campaigns page
+        // User Add Blog  -> user's My Blogs page
+        if (isHelpdeskSuperAdmin) {
+          navigate("/admin/allcampaignsdetails", { replace: true });
+        } else if (userId) {
+          navigate("/main/dashboard/myblogs", { replace: true });
         } else {
-          if (userId) {
-            navigate("/main/dashboard/myblogs");
-          }
+          // Fallback if the session is missing/expired.
+          navigate("/main/dashboard/myblogs", { replace: true });
         }
       } else {
         setErrorMessage(
@@ -631,7 +645,7 @@ const AddBlog: React.FC = () => {
               >
                 Blog Added By
               </label>
-              {primaryType === "HELPDESKSUPERADMIN" ? (
+              {isHelpdeskSuperAdmin ? (
                 <select
                   id="campaignTypeAddBy"
                   name="campaignTypeAddBy"

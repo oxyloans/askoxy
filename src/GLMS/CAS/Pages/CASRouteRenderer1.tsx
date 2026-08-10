@@ -18,6 +18,7 @@ import {
 } from "react-feather";
 import ReactMarkdown from "react-markdown";
 import BASE_URL from "../../../Config";
+import NinetyDayUseCaseNavigation from "../../../components/NinetyDayUseCaseNavigation";
 
 interface Message {
   role: "user" | "assistant";
@@ -163,7 +164,7 @@ const CASRouteRenderer1: React.FC = () => {
   // Handle mode switch
   const handleModeSwitch = (mode: "business" | "system") => {
     setCurrentMode(mode);
-    navigate(`/los/${useCaseId}/${mode}`);
+    navigate(`/lo-system/${useCaseId}/${mode}`);
   };
   const handleInterest = () => {
     const userId = localStorage.getItem("userId");
@@ -181,8 +182,9 @@ const CASRouteRenderer1: React.FC = () => {
     }
   };
 
-  const handleLosClick = () => {
-    window.location.href = "/ninetydayplan";
+  const handleBackToPlan = () => {
+    const day = sessionStorage.getItem("ninetyDayPlanSelectedDay") || "1";
+    navigate(`/ninetydayplan?day=${day}&view=${type || currentMode}`);
   };
 
   // Enhanced question selection with better UX
@@ -430,13 +432,13 @@ const CASRouteRenderer1: React.FC = () => {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex gap-2 lg:gap-3 items-center">
-              
               <button
-                onClick={handleLosClick}
-                className="bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-2 rounded-lg text-sm font-medium transition hover:shadow-md"
+                onClick={handleBackToPlan}
+                className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 hover:shadow-md"
               >
-                Go To 90dayjobplan
+                ← 90-Day Job Plan
               </button>
+              
               <button
                 onClick={handleOpenChat}
                 className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-4 py-2 rounded-lg text-sm font-medium transition hover:shadow-md flex items-center gap-2 relative"
@@ -466,6 +468,12 @@ const CASRouteRenderer1: React.FC = () => {
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden pt-2 pb-4 space-y-3 animate-slide-down">
+              <button
+                onClick={handleBackToPlan}
+                className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+              >
+                ← 90-Day Job Plan
+              </button>
               {/* Mobile Mode Switch */}
               {/* <div className="flex bg-gray-100 rounded-full p-1 mx-2 text-sm">
                 <button
@@ -503,17 +511,12 @@ const CASRouteRenderer1: React.FC = () => {
                   </span>
                 )}
               </button>
-              <button
-                onClick={handleLosClick}
-                className="w-full bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-3 rounded-xl text-sm font-medium"
-              >
-                Go To 90dayjobplan
-              </button>
              
             </div>
           )}
         </div>
       </header>
+      <NinetyDayUseCaseNavigation useCaseId={useCaseId} viewType={type || currentMode} />
 
      
       <main className="min-h-screen bg-gray-50  rounded-xl shadow-lg">

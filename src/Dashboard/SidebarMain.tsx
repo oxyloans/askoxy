@@ -275,16 +275,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <FaTools size={16} />,
         },
         {
-          to: "/main/dashboard/leaguejourneys",
-          label: "League Journeys",
-          icon: <HiSparkles size={16} />,
-        },
-        {
-          to: "/main/dashboard/myblogs",
-          label: "Blog Management",
-          icon: <AiFillFileText size={16} />,
-        },
-        {
           to: "/main/viewjobdetails/default/ALL",
           label: "Explore Jobs",
           icon: <FaBriefcase size={16} />,
@@ -294,6 +284,17 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "Job Applications",
           icon: <FaRegCheckCircle size={16} />,
         },
+        {
+          to: "/main/dashboard/leaguejourneys",
+          label: "League Journeys",
+          icon: <HiSparkles size={16} />,
+        },
+        {
+          to: "/main/dashboard/myblogs",
+          label: "Blog Management",
+          icon: <AiFillFileText size={16} />,
+        },
+        
       ],
     },
 
@@ -320,7 +321,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       type: "item",
       to: "/oxycommunity",
       icon: <FaComments size={18} />,
-      label: "Community",
+      label: "Oxy Community",
     },
     // {
     //   type: "item",

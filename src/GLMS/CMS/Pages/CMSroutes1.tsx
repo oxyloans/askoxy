@@ -16,6 +16,7 @@ import Askoxylogo from "../../../assets/img/askoxylogonew.png";
 import { Sparkles, MessageCircle, Copy, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import BASE_URL from "../../../Config";
+import NinetyDayUseCaseNavigation from "../../../components/NinetyDayUseCaseNavigation";
 
 interface Message {
   role: "user" | "assistant";
@@ -58,7 +59,7 @@ const CMSroutes1: React.FC = () => {
   // Handle mode switch
   const handleModeSwitch = (mode: "business" | "system") => {
     setCurrentMode(mode);
-    navigate(`/cms/${useCaseId}/${mode}`);
+    navigate(`/cm-system/${useCaseId}/${mode}`);
   };
   const predefinedQuestions = [
     {
@@ -180,8 +181,9 @@ const CMSroutes1: React.FC = () => {
     }
   };
 
-  const handleCmsClick = () => {
-    window.location.href = "/ninetydayplan";
+  const handleBackToPlan = () => {
+    const day = sessionStorage.getItem("ninetyDayPlanSelectedDay") || "1";
+    navigate(`/ninetydayplan?day=${day}&view=${type || currentMode}`);
   };
 
   // Enhanced question selection with better UX
@@ -429,15 +431,15 @@ const CMSroutes1: React.FC = () => {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex gap-2 lg:gap-3 items-center">
+              <button
+                onClick={handleBackToPlan}
+                className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 hover:shadow-md"
+              >
+                ← 90-Day Job Plan
+              </button>
               {/* Mode Switch */}
 
               {/* Buttons */}
-              <button
-                onClick={handleCmsClick}
-                className="bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-2 rounded-lg text-sm font-medium transition hover:shadow-md"
-              >
-                Go To 90dayjobplan
-              </button>
               <button
                 onClick={handleOpenChat}
                 className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 px-4 py-2 rounded-lg text-sm font-medium transition hover:shadow-md flex items-center gap-2 relative"
@@ -466,6 +468,12 @@ const CMSroutes1: React.FC = () => {
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden pt-2 pb-4 space-y-3 animate-slide-down">
+              <button
+                onClick={handleBackToPlan}
+                className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+              >
+                ← 90-Day Job Plan
+              </button>
               {/* Mobile Mode Switch */}
 
               {/* Mobile Buttons */}
@@ -481,16 +489,11 @@ const CMSroutes1: React.FC = () => {
                   </span>
                 )}
               </button>
-              <button
-                onClick={handleCmsClick}
-                className="w-full bg-gradient-to-r from-indigo-100 to-blue-100 text-blue-700 hover:from-indigo-200 hover:to-blue-200 px-4 py-3 rounded-xl text-sm font-medium"
-              >
-                Go To 90dayjobplan
-              </button>
             </div>
           )}
         </div>
       </header>
+      <NinetyDayUseCaseNavigation useCaseId={useCaseId} viewType={type || currentMode} />
 
       {/* Main Content */}
       {/* <main className="px-4 py-8 sm:px-6 lg:px-8">

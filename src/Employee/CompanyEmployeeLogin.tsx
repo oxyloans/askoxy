@@ -14,7 +14,9 @@ import {
   User,
 } from 'lucide-react';
 
-const API_BASE_URL = 'https://meta.oxyloans.com/api';
+import BASE_URL from "../Config";
+import { getCookie, saveCookie } from './employeeAuthCookie';
+
 const EMPLOYEE_DASHBOARD_ROUTE = '/employeedashboard';
 
 interface LoginFormState {
@@ -104,6 +106,12 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (getCookie('companyContactPersonId')?.id) {
+      navigate(EMPLOYEE_DASHBOARD_ROUTE, { replace: true });
+    }
+  }, [navigate]);
+
   const [formData, setFormData] = useState<LoginFormState>({
     identifier: '',
     password: '',
@@ -130,7 +138,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/marketing-service/campgin/company-login`,
+        `${BASE_URL}/marketing-service/campgin/company-login`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -146,6 +154,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
         .catch(() => null)) as ApiResponse<EmployeeData> | null;
 
       if (!response.ok || !result?.status || !result.data) {
+
         setLoginFeedback(getLoginFeedback(response.status, result?.message));
         setFormData((previous) => ({ ...previous, password: '' }));
         setShowPassword(false);
@@ -156,6 +165,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
         setPendingEmployee(result.data);
         setShowResetModal(true);
       } else {
+        saveCookie('companyContactPersonId', result.data.id);
         setSuccessEmployee(result.data);
       }
     } catch {
@@ -168,6 +178,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
   };
 
   const handlePasswordResetSuccess = (employee: EmployeeData) => {
+    saveCookie('companyContactPersonId', employee.id);
     setShowResetModal(false);
     setPendingEmployee(null);
     onLoginSuccess?.(employee);
@@ -323,7 +334,11 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
                   <button
                     type="submit"
                     className="cel-primary-button"
-                    disabled={isSubmitting}
+                    disabled={
+                      isSubmitting ||
+                      !formData.identifier.trim() ||
+                      !formData.password
+                    }
                   >
                     <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
                     {isSubmitting ? <LoaderCircle className="cel-spin" /> : <ArrowRight />}
@@ -419,7 +434,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/marketing-service/campgin/company-change-password`,
+        `${BASE_URL}/marketing-service/campgin/company-change-password`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -540,20 +555,8 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
 );
 
 const loginStyles = `
-  html,
-  body,
-  #root {
-    width: 100%;
-    min-width: 0;
-    min-height: 100%;
-    margin: 0;
-    background: #030612;
-  }
-
-  body {
-    overflow-x: hidden;
-  }
-
+  /* All login theme rules stay below .cel-page so this screen cannot
+     override the application's theme after navigation. */
   .cel-page,
   .cel-page * {
     box-sizing: border-box;
@@ -567,9 +570,11 @@ const loginStyles = `
     position: relative;
     isolation: isolate;
     width: 100%;
+    min-width: 0;
     min-height: 100vh;
     min-height: 100svh;
     min-height: 100dvh;
+    margin: 0;
     overflow-x: clip;
     overflow-y: auto;
     color: #ffffff;

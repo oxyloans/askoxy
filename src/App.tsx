@@ -30,6 +30,9 @@ import EmployeeJobDashboard from "./Employee/EmployeeJobDashboard";
 import AddCompanyEmployee from "./AskoxyAdmin/AddCompanyEmployee";
 import EmployeesList from "./AskoxyAdmin/EmployeesList";
 import JourneysVsCampaignsVsInterestedUsers from "./AskoxyAdmin/JourneysVsCampaignsVsInterestedUsers";
+import EmployeeApplicationsComingSoon from "./Employee/EmployeeApplicationsComingSoon";
+import EmployeeJobComingSoon from "./Employee/EmployeeJobComingSoon";
+import JobPostForm from "./Employee/JobPostForm";
 
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
@@ -638,7 +641,20 @@ const LoadingSpinner = React.memo(() => {
     </div>
   );
 });
+const CommunityAuthGate: React.FC = () => {
+  const location = useLocation();
+  const userId = localStorage.getItem("userId");
 
+  if (userId && userId.trim() !== "") {
+    return <CommunityPage />;
+  }
+
+  const returnUrl = `${location.pathname}${location.search}${location.hash}`;
+
+  sessionStorage.setItem("redirectPath", returnUrl);
+
+  return <Navigate to="/whatsapplogin" replace />;
+};
 const App: React.FC = () => {
   const location = useLocation();
 
@@ -875,7 +891,7 @@ const App: React.FC = () => {
               <Route path="/adcb" element={<ADCBAIIntelligenceReport2026 />} />
               <Route path="/oxybfsai" element={<Billing />} />
               <Route path="/oxybfsai-landing" element={<Finvide3DLanding />} />
-              <Route path="/oxycommunity" element={<CommunityPage />} />
+              <Route path="/oxycommunity" element={<CommunityAuthGate />} />
               <Route element={<OxyLayout />}>
                 <Route path="/oxynews" element={<OxyNewsHomePage />} />
                 <Route path="/article/:id" element={<ArticlePage />} />
@@ -1294,11 +1310,32 @@ const App: React.FC = () => {
                 path="/companyemployeelogin"
                 element={<CompanyEmployeeLogin />}
               />
+
               <Route
                 path="/employeedashboard"
                 element={<EmployeeJobDashboard />}
-              />
-             
+              >
+                <Route
+                  index
+                  element={<Navigate to="alljobsbycompanyemployee" replace />}
+                />
+
+                <Route
+                  path="addjobbycompanyemployee"
+                  element={<JobPostForm />}
+                />
+
+                <Route
+                  path="alljobsbycompanyemployee"
+                  element={<EmployeeJobComingSoon />}
+                />
+
+                <Route
+                  path="applicationsbycompanyemployee"
+                  element={<EmployeeApplicationsComingSoon />}
+                />
+              </Route>
+
               {/* Other Landing / Service pages */}
               <Route
                 path="/goldandsilveranddiamonds"
@@ -1951,7 +1988,7 @@ const App: React.FC = () => {
                   element={<AllCampaignsDetails />}
                 />
                 <Route path="campaignsadd" element={<CampaignsAdd />} />
-                 <Route
+                <Route
                   path="addcompanyemployee"
                   element={<AddCompanyEmployee />}
                 />
