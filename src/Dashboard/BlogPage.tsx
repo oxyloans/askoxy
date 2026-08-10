@@ -30,6 +30,7 @@ const BlogsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMyBlogsLoading, setIsMyBlogsLoading] = useState(false);
 
   // Edit modal state
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -51,12 +52,20 @@ const BlogsPage: React.FC = () => {
     "";
 
   const loadMyBlogs = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setMyBlogs([]);
+      return;
+    }
+    setIsMyBlogsLoading(true);
     try {
       const { data } = await axiosInstance.get(
-        `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails?createdPersonId=${userId}`,
+        `${BASE_URL}/marketing-service/campgin/getAllCampaignDetails`,
+        { params: { createdPersonId: userId } },
       );
-      const list = Array.isArray(data) ? data : data?.data || [];
+      const responseBody = data?.data ?? data;
+      const list = Array.isArray(responseBody)
+        ? responseBody
+        : responseBody?.content || responseBody?.campaigns || responseBody?.results || [];
       const normalized = list.map((c: any, index: number) => ({
         ...c,
         campaignId: c.campaignId || c.id || "",
@@ -70,12 +79,20 @@ const BlogsPage: React.FC = () => {
               : [],
         __originalIndex: index,
       }));
-      const sorted = normalized
-        .filter((c: any) => c.campainInputType === "BLOG")
-        .sort(sortNewestFirst);
+      const sorted = sortNewestFirst(
+        normalized.filter(
+          (c: any) =>
+            !c.campainInputType ||
+            String(c.campainInputType).trim().toUpperCase() === "BLOG",
+        ),
+      );
       setMyBlogs(sorted as Campaign[]);
     } catch (err) {
       console.error("Error loading my blogs:", err);
+      setMyBlogs([]);
+      message.error("Unable to load your blogs. Please try again.");
+    } finally {
+      setIsMyBlogsLoading(false);
     }
   };
 
@@ -763,7 +780,7 @@ const BlogsPage: React.FC = () => {
 
           {/* ── Content ── */}
           <div style={{ marginTop: 20 }}>
-            {isLoading ? (
+            {isLoading || (activeTab === "MY" && isMyBlogsLoading) ? (
               <div
                 style={{
                   display: "flex",

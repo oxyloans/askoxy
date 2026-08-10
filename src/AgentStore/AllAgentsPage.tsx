@@ -1408,7 +1408,7 @@ const AllAgentsPage: React.FC = () => {
       console.log("Final PATCH Payload:", payload);
 
       const res = await authFetch(
-        `${BASE_URL}/ai-service/agent/newAgentPublish`,
+        `${BASE_URL}/ai-service/new-agent/newAgentPublish`,
         {
           method: "PATCH",
           body: JSON.stringify(payload),
