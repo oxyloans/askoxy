@@ -344,7 +344,7 @@ const UserOrdersIntegration: React.FC = () => {
       const [usersRes, ordersRes] = await Promise.all([usersReq, ordersReq]);
 
       const usersList: UserData[] = usersRes.data?.activeUsersResponse || [];
-      const totalCount: number = usersRes.data?.totalCount || 0;
+      const totalCount: number = usersRes.data?.totalCount ;
       const ordersList: OrderData[] = ordersRes.data?.content || [];
 
       setUsers(usersList);

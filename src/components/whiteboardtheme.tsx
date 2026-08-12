@@ -13,6 +13,7 @@ import web5 from "../assets/img/web5.png";
 import arrow0 from "../assets/img/arrow0.png";
 import arrow1 from "../assets/img/arrow1.png";
 import speak0 from "../assets/img/speak0.png";
+import speak1 from "../assets/img/speak1.png";
 import line1 from "../assets/img/line1.png";
 import line2 from "../assets/img/line2.png";
 import line3 from "../assets/img/line3.png";
@@ -58,7 +59,7 @@ const Whiteboardtheme: React.FC = () => {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem("userId");
-      const redirectPath = "/main/viewjobdetails/default/ALL";
+      const redirectPath = "/main/viewjobdetails/327983c8-50a6-40bd-8428-4d4fbaae1be4/ALL";
       if (userId) {
         navigate(redirectPath);
       } else {
@@ -123,21 +124,25 @@ const Whiteboardtheme: React.FC = () => {
     if (type === "oxybricks") return navigate("/fpl");
   };
 
-  const openWalkInModal = () => {
-    setModalActionType("signin");
-    setIsWalkInModalOpen(true);
-  };
-
   const jobsCountCard = (desktop = false) => (
     <button
       type="button"
-      onClick={openWalkInModal}
-      className="flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl   text-center  transition-all duration-300 hover:-translate-y-1 active:scale-95"
-      style={{ width: desktop ? "clamp(130px, 11vw, 175px)" : "132px" }}
+      onClick={handleSignIn}
+      className="flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
+      style={{
+        width: desktop ? "clamp(140px, 12vw, 196px)" : "148px",
+        height: desktop ? "clamp(120px, 10.4vw, 164px)" : "148px",
+      }}
       aria-label={`${jobsCount.activeJobs} active jobs across ${jobsCount.totalCompanies} companies. Apply now`}
     >
-      {/* counts */}
-      <span className="flex flex-col gap-2 px-2.5 pb-2 pt-2.5">
+      <img
+        src={speak1}
+        alt="Join the Sovereign AI hiring program"
+        className="h-full w-full select-none object-contain"
+        draggable={false}
+      />
+      {/* Counts remain available to assistive technology. */}
+      <span className="sr-only">
         <span className="grid grid-cols-[44px_1fr] items-center gap-1.5">
           <strong className="text-right text-[18px] font-extrabold leading-none text-[#5543C8] sm:text-[14px] md:text-[16px]">
             {isJobsCountLoading ? "—" : jobsCount.activeJobs}
@@ -157,10 +162,10 @@ const Whiteboardtheme: React.FC = () => {
       </span>
 
       {/* divider */}
-      <span className="mx-2 block border-t border-[#e8e3ff]" />
+      <span className="hidden" />
 
       {/* Apply Now */}
-      <span className="flex w-full items-center justify-center gap-1 whitespace-nowrap px-2 py-2 text-[10px] font-bold leading-none text-[#5543C8] sm:text-[10px] md:text-[12px]">
+      <span className="sr-only">
         Apply Now
         <svg
           viewBox="0 0 20 20"
@@ -280,31 +285,31 @@ const Whiteboardtheme: React.FC = () => {
 
             <div className="relative">
               <div className="relative z-20 mb-2 grid grid-cols-2 items-start px-3 sm:mb-4 sm:px-6 md:hidden">
-                <div className="relative flex h-[158px] w-[132px] flex-col items-center sm:h-[174px] sm:w-[148px]">
-                  <div className="flex h-[132px] w-[132px] items-center justify-center pt-1 sm:h-[148px] sm:w-[148px] ">
+                <div className="relative flex h-[174px] w-[148px] flex-col items-center">
+                  <div className="flex h-[148px] w-[148px] items-center justify-center">
                     <button
                       type="button"
                       onClick={() => navigate("/sovereign-ai")}
-                      className="flex h-[132px] w-[132px] cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95 sm:h-[148px] sm:w-[148px]"
+                      className="flex h-full w-full cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95"
                       aria-label="Speak with Sovereign AI"
                     >
                       <img
                         src={speak0}
                         alt="Speak with Sovereign AI"
-                        className="h-full w-full object-contain -translate-x-6"
+                        className="h-full w-full object-contain"
                       />
                     </button>
                   </div>
                   <img
                     src={arrow0}
                     alt=""
-                    className="absolute bottom-0 left-1/2 h-[44px] w-[44px] -translate-x-1/2 object-contain sm:h-[48px] sm:w-[48px]"
+                    className="absolute bottom-0 left-1/2 h-[48px] w-[60px] -translate-x-1/2 object-contain"
                   />
                 </div>
 
-                <div className="relative ml-auto flex h-[158px] w-[132px] flex-col items-center sm:h-[170px] ">
+                <div className="relative ml-auto flex h-[174px] w-[148px] flex-col items-center">
                   <div
-                    className="flex h-[132px] w-[132px] items-center justify-center pt-4 sm:pt-3  translate-x-1/4"
+                    className="flex h-[148px] w-[148px] items-center justify-center"
                     
                   >
                     {jobsCountCard()}
@@ -312,7 +317,7 @@ const Whiteboardtheme: React.FC = () => {
                   <img
                     src={arrow1}
                     alt=""
-                    className="absolute bottom-0 left-1/2 h-[44px] w-[44px] -translate-x-1/2 object-contain sm:h-[48px] sm:w-[48px]"
+                    className="absolute bottom-0 left-1/2 h-[48px] w-[60px] -translate-x-1/2 object-contain"
                   />
                 </div>
               </div>
@@ -342,7 +347,7 @@ const Whiteboardtheme: React.FC = () => {
 
                 <div
                   className="pointer-events-auto absolute top-0 -translate-x-1/2"
-                  style={{ left: "84.222%" }}
+                  style={{ left: "85%" }}
                 >
                   {jobsCountCard(true)}
                 </div>
@@ -362,9 +367,9 @@ const Whiteboardtheme: React.FC = () => {
                   alt=""
                   className="absolute object-contain"
                   style={{
-                    left: "73%",
+                    left: "71.5%",
                     top: "62%",
-                    width: "clamp(65px, 6vw, 100px)",
+                    width: "clamp(60px, 5.2vw, 88px)",
                   }}
                 />
               </div>

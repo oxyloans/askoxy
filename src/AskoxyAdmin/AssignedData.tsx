@@ -324,7 +324,7 @@ const AssignedDataPage: React.FC = () => {
       setLoading(true);
 
       const response = await adminApi.post<ApiResponse>(
-        `${BASE_URL}/user-service/assigned-users//${storedUniqueId}`,
+        `${BASE_URL}/user-service/assigned-users/${storedUniqueId}`,
         {
           pageNo: currentPage,
           pageSize: pageSize,

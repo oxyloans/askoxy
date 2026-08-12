@@ -4,42 +4,60 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  Clock3,
   Eye,
   EyeOff,
   LayoutDashboard,
   LoaderCircle,
   Lock,
+  Mail,
   ShieldCheck,
   User,
 } from 'lucide-react';
 
-import BASE_URL from "../Config";
 import { getCookie, saveCookie } from './employeeAuthCookie';
+
+import BASE_URL from "../Config"
 
 const EMPLOYEE_DASHBOARD_ROUTE = '/employeedashboard';
 
-interface LoginFormState {
-  identifier: string;
-  password: string;
+// Single endpoint that now handles email-check, existing-user login and
+// new-user OTP registration, all keyed off which fields are present in the
+// request body.
+const USER_EMAIL_PASSWORD_URL = `${BASE_URL}/user-service/userEmailPassword`;
+
+const PRIMARY_TYPE = 'JOBS';
+
+interface EmailCheckResponse {
+  timeInMilliSeconds: string | null;
+  emailOtpSession: string | null;
+  whatsappOtpSession: string | null;
+  salt: string | null;
+  status: string | null;
+  token: string | null;
+  accessToken: string | null;
+  userId: string | null;
+  refreshToke: string | null;
+  id: string | null;
+  primaryType: string | null;
+  name: string | null;
+}
+
+interface ApiErrorResponse {
+  error?: string;
+  message?: string;
 }
 
 interface EmployeeData {
   id: string;
+  userId?: string | null;
   name: string;
-  companyEmailId: string;
-  companyName: string;
-  personRole: string;
-  mustResetPassword: boolean;
+  email: string;
+  primaryType?: string | null;
+  token?: string | null;
+  accessToken?: string | null;
 }
 
-interface ApiResponse<T> {
-  status: boolean;
-  message: string;
-  data: T | null;
-}
-
-type LoginFeedbackType = 'invalid' | 'pending' | 'rejected' | 'server';
+type LoginFeedbackType = 'invalid' | 'server';
 
 interface LoginFeedback {
   type: LoginFeedbackType;
@@ -47,46 +65,25 @@ interface LoginFeedback {
   message: string;
 }
 
+// Which tab the user has picked.
+type Intent = 'login' | 'register';
+
+// If the user picked a tab that doesn't match what the email check
+// actually returns (e.g. picked "Register" but the account already
+// exists), we surface a clickable way to jump to the right form instead
+// of silently overriding their choice.
+interface IntentMismatch {
+  actual: 'exists' | 'new';
+}
+
 interface EmployeeLoginProps {
   onLoginSuccess?: (employee: EmployeeData) => void;
 }
 
-const getLoginFeedback = (
-  httpStatus: number,
-  apiMessage?: string
-): LoginFeedback => {
+const getLoginFeedback = (httpStatus: number, apiMessage?: string): LoginFeedback => {
   const message = apiMessage?.trim() || '';
-  const normalizedMessage = message.toLowerCase();
 
-  if (
-    normalizedMessage.includes('rejected') ||
-    normalizedMessage.includes('access has been rejected')
-  ) {
-    return {
-      type: 'rejected',
-      title: 'Access Rejected',
-      message: message || 'Please contact your administrator for assistance.',
-    };
-  }
-
-  if (
-    httpStatus === 403 ||
-    normalizedMessage.includes('pending') ||
-    normalizedMessage.includes('approval') ||
-    normalizedMessage.includes('created')
-  ) {
-    return {
-      type: 'pending',
-      title: 'Admin Approval Pending',
-      message: 'Your account is waiting for administrator approval.',
-    };
-  }
-
-  if (
-    httpStatus === 401 ||
-    normalizedMessage.includes('invalid email') ||
-    normalizedMessage.includes('invalid password')
-  ) {
+  if (httpStatus === 409 || httpStatus === 401) {
     return {
       type: 'invalid',
       title: 'Unable to Sign In',
@@ -101,9 +98,16 @@ const getLoginFeedback = (
   };
 };
 
-const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
-  onLoginSuccess,
-}) => {
+const extractApiError = (result: unknown): string | undefined => {
+  if (!result || typeof result !== 'object') return undefined;
+  const r = result as ApiErrorResponse;
+  return r.error || r.message;
+};
+
+const hasLoginTokens = (result: EmailCheckResponse | null): boolean =>
+  Boolean(result && (result.token || result.accessToken) && (result.id || result.userId));
+
+const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -112,95 +116,133 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
     }
   }, [navigate]);
 
-  const [formData, setFormData] = useState<LoginFormState>({
-    identifier: '',
-    password: '',
-  });
+  const [intent, setIntent] = useState<Intent>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginFeedback, setLoginFeedback] = useState<LoginFeedback | null>(null);
-  const [pendingEmployee, setPendingEmployee] = useState<EmployeeData | null>(null);
-  const [showResetModal, setShowResetModal] = useState(false);
+  const [feedback, setFeedback] = useState<LoginFeedback | null>(null);
+  const [mismatch, setMismatch] = useState<IntentMismatch | null>(null);
+
+  // Carried over from the email-check response, needed to complete OTP
+  // verification for a brand-new employee.
+  const [otpSession, setOtpSession] = useState('');
+  const [otpSalt, setOtpSalt] = useState('');
+
+  const [showOtpModal, setShowOtpModal] = useState(false);
   const [successEmployee, setSuccessEmployee] = useState<EmployeeData | null>(null);
 
-  const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    field: keyof LoginFormState
-  ) => {
-    setFormData((previous) => ({ ...previous, [field]: event.target.value }));
-    setLoginFeedback(null);
+  const buildEmployee = (result: EmailCheckResponse, fallbackName?: string): EmployeeData => ({
+    id: (result.id || result.userId) as string,
+    userId: result.userId,
+    name: result.name || fallbackName || 'Employee',
+    email: email.trim(),
+    primaryType: result.primaryType,
+    token: result.token,
+    accessToken: result.accessToken,
+  });
+
+  const finishLogin = (employee: EmployeeData) => {
+    saveCookie('companyContactPersonId', employee.id);
+    setSuccessEmployee(employee);
   };
 
+  // Single handler for both tabs. Login sends email+password together in
+  // one call, exactly like a normal sign-in form. Register sends email
+  // only, since the password gets created inside the OTP popup.
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoginFeedback(null);
+    setFeedback(null);
+    setMismatch(null);
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/company-login`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            companyEmailId: formData.identifier.trim(),
-            password: formData.password,
-          }),
-        }
-      );
+      const body: Record<string, string> = { email: email.trim() };
+      if (intent === 'login') {
+        body.password = password;
+      }
 
-      const result = (await response
-        .json()
-        .catch(() => null)) as ApiResponse<EmployeeData> | null;
+      const response = await fetch(USER_EMAIL_PASSWORD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-      if (!response.ok || !result?.status || !result.data) {
+      const result = (await response.json().catch(() => null)) as
+        | EmailCheckResponse
+        | ApiErrorResponse
+        | null;
 
-        setLoginFeedback(getLoginFeedback(response.status, result?.message));
-        setFormData((previous) => ({ ...previous, password: '' }));
-        setShowPassword(false);
+      // Login (or registration completion) succeeded.
+      if (response.ok && hasLoginTokens(result as EmailCheckResponse)) {
+        finishLogin(buildEmployee(result as EmailCheckResponse));
         return;
       }
 
-      if (result.data.mustResetPassword) {
-        setPendingEmployee(result.data);
-        setShowResetModal(true);
-      } else {
-        saveCookie('companyContactPersonId', result.data.id);
-        setSuccessEmployee(result.data);
+      // No account exists yet for this email — OTP was just sent.
+      if (response.ok && (result as EmailCheckResponse)?.emailOtpSession) {
+        const otpResult = result as EmailCheckResponse;
+        setOtpSession(otpResult.emailOtpSession || '');
+        setOtpSalt(otpResult.salt || '');
+
+        if (intent === 'register') {
+          setShowOtpModal(true);
+        } else {
+          // They were on the Login tab, but there's no account to log into.
+          setMismatch({ actual: 'new' });
+        }
+        return;
       }
+
+      if (response.status === 409) {
+        if (intent === 'register') {
+          // Account already exists — registering again doesn't apply.
+          setMismatch({ actual: 'exists' });
+        } else {
+          // Existing account, wrong (or missing) password.
+          setFeedback(getLoginFeedback(response.status, extractApiError(result)));
+          setPassword('');
+          setShowPassword(false);
+        }
+        return;
+      }
+
+      setFeedback(getLoginFeedback(response.status, extractApiError(result)));
     } catch {
-      setLoginFeedback(getLoginFeedback(0));
-      setFormData((previous) => ({ ...previous, password: '' }));
-      setShowPassword(false);
+      setFeedback(getLoginFeedback(0));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handlePasswordResetSuccess = (employee: EmployeeData) => {
-    saveCookie('companyContactPersonId', employee.id);
-    setShowResetModal(false);
-    setPendingEmployee(null);
-    onLoginSuccess?.(employee);
-    navigate(EMPLOYEE_DASHBOARD_ROUTE);
+  // Lets the user jump straight to the correct form after a mismatch,
+  // without re-hitting the endpoint.
+  const handleSwitchToActualFlow = () => {
+    if (!mismatch) return;
+
+    if (mismatch.actual === 'exists') {
+      setIntent('login');
+      setPassword('');
+    } else {
+      setIntent('register');
+      setShowOtpModal(true);
+    }
+
+    setMismatch(null);
+  };
+
+  const handleOtpRegistrationSuccess = (employee: EmployeeData) => {
+    setShowOtpModal(false);
+    finishLogin(employee);
   };
 
   const handleContinueAfterSuccess = () => {
     if (successEmployee) {
       onLoginSuccess?.(successEmployee);
     }
-
     setSuccessEmployee(null);
     navigate(EMPLOYEE_DASHBOARD_ROUTE);
   };
-
-  const resetLogin = () => {
-    setLoginFeedback(null);
-    setFormData({ identifier: '', password: '' });
-    setShowPassword(false);
-  };
-
-  const isPending = loginFeedback?.type === 'pending';
 
   return (
     <main className="cel-page">
@@ -238,62 +280,75 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
             <p>Sign in with your company email to continue.</p>
           </div>
 
-          <div className={`cel-card ${isPending ? 'cel-card-pending' : ''}`}>
+          <div className="cel-card">
             <div className="cel-window-dots" aria-hidden="true">
               <i />
               <i />
               <i />
             </div>
 
-            {isPending ? (
-              <section className="cel-pending" role="status" aria-live="polite">
-                <span className="cel-pending-icon" aria-hidden="true">
-                  <Clock3 />
-                </span>
-                <p>Account Status</p>
-                <h2>
-                  ADMIN APPROVAL
-                  <strong>PENDING</strong>
-                </h2>
-                <span className="cel-pending-message">
-                  Your account is waiting for administrator approval.
-                </span>
-                {formData.identifier && (
-                  <small className="cel-pending-email">{formData.identifier}</small>
-                )}
-                <button type="button" onClick={resetLogin} className="cel-secondary-button">
-                  Try Another Account
-                </button>
-              </section>
-            ) : (
-              <>
-                <div className="cel-card-heading">
-                  <span className="cel-card-icon" aria-hidden="true">
-                    <User />
-                  </span>
-                  <div>
-                    <p>Welcome Back</p>
-                    <h2>Employee Login</h2>
-                  </div>
-                </div>
+            <div className="cel-tabs" role="tablist" aria-label="Choose login or register">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={intent === 'login'}
+                className={`cel-tab ${intent === 'login' ? 'cel-tab-active' : ''}`}
+                onClick={() => {
+                  setIntent('login');
+                  setFeedback(null);
+                  setMismatch(null);
+                }}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={intent === 'register'}
+                className={`cel-tab ${intent === 'register' ? 'cel-tab-active' : ''}`}
+                onClick={() => {
+                  setIntent('register');
+                  setFeedback(null);
+                  setMismatch(null);
+                }}
+              >
+                Register
+              </button>
+            </div>
 
-                <form className="cel-form" onSubmit={handleSubmit} noValidate>
-                  <label htmlFor="company-email">Company Email</label>
-                  <div className="cel-input-wrap">
-                    <User />
-                    <input
-                      id="company-email"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="username"
-                      placeholder="name@company.com"
-                      value={formData.identifier}
-                      onChange={(event) => handleChange(event, 'identifier')}
-                      disabled={isSubmitting}
-                      required
-                    />
-                  </div>
+            <div className="cel-card-heading">
+              <span className="cel-card-icon" aria-hidden="true">
+                <User />
+              </span>
+              <div>
+                <p>{intent === 'login' ? 'Employee Access' : 'New Employee'}</p>
+                <h2>{intent === 'login' ? 'Sign In' : 'Create Account'}</h2>
+              </div>
+            </div>
 
+            <form className="cel-form" onSubmit={handleSubmit} noValidate>
+              <label htmlFor="company-email">Company Email</label>
+              <div className="cel-input-wrap">
+                <Mail />
+                <input
+                  id="company-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="username"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setFeedback(null);
+                    setMismatch(null);
+                  }}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+
+              {intent === 'login' && (
+                <>
                   <label htmlFor="company-password">Password</label>
                   <div className="cel-input-wrap">
                     <Lock />
@@ -302,8 +357,12 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="current-password"
                       placeholder="Enter your password"
-                      value={formData.password}
-                      onChange={(event) => handleChange(event, 'password')}
+                      value={password}
+                      onChange={(event) => {
+                        setPassword(event.target.value);
+                        setFeedback(null);
+                        setMismatch(null);
+                      }}
                       disabled={isSubmitting}
                       required
                     />
@@ -317,51 +376,82 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({
                       {showPassword ? <EyeOff /> : <Eye />}
                     </button>
                   </div>
+                </>
+              )}
 
-                  {loginFeedback && (
-                    <div
-                      className={`cel-feedback cel-feedback-${loginFeedback.type}`}
-                      role="alert"
-                    >
-                      <AlertCircle />
-                      <span>
-                        <strong>{loginFeedback.title}</strong>
-                        <small>{loginFeedback.message}</small>
-                      </span>
-                    </div>
-                  )}
+              <p className="cel-hint">
+                {intent === 'login'
+                  ? "New here? Switch to the Register tab above."
+                  : 'Already have an account? Switch to the Login tab above.'}
+              </p>
 
+              {mismatch && (
+                <div className="cel-mismatch" role="alert">
+                  <AlertCircle />
+                  <span>
+                    {mismatch.actual === 'exists'
+                      ? 'An account already exists for this email.'
+                      : "We couldn't find an account for this email."}
+                  </span>
                   <button
-                    type="submit"
-                    className="cel-primary-button"
-                    disabled={
-                      isSubmitting ||
-                      !formData.identifier.trim() ||
-                      !formData.password
-                    }
+                    type="button"
+                    className="cel-mismatch-button"
+                    onClick={handleSwitchToActualFlow}
                   >
-                    <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
-                    {isSubmitting ? <LoaderCircle className="cel-spin" /> : <ArrowRight />}
+                    {mismatch.actual === 'exists' ? 'Switch to Login' : 'Switch to Register'}
                   </button>
-                </form>
-              </>
-            )}
+                </div>
+              )}
+
+              {feedback && (
+                <div className={`cel-feedback cel-feedback-${feedback.type}`} role="alert">
+                  <AlertCircle />
+                  <span>
+                    <strong>{feedback.title}</strong>
+                    <small>{feedback.message}</small>
+                  </span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="cel-primary-button"
+                disabled={
+                  isSubmitting ||
+                  !email.trim() ||
+                  (intent === 'login' && !password) ||
+                  Boolean(mismatch)
+                }
+              >
+                <span>
+                  {isSubmitting
+                    ? intent === 'login'
+                      ? 'Signing In...'
+                      : 'Checking...'
+                    : intent === 'login'
+                      ? 'Sign In'
+                      : 'Continue to Register'}
+                </span>
+                {isSubmitting ? <LoaderCircle className="cel-spin" /> : <ArrowRight />}
+              </button>
+            </form>
           </div>
         </section>
       </div>
 
-      {showResetModal && pendingEmployee && (
-        <ChangePasswordModal
-          employee={pendingEmployee}
-          onSuccess={handlePasswordResetSuccess}
+      {showOtpModal && (
+        <OtpRegistrationModal
+          email={email.trim()}
+          otpSession={otpSession}
+          salt={otpSalt}
+          onClose={() => setShowOtpModal(false)}
+          onSuccess={handleOtpRegistrationSuccess}
+          buildEmployee={buildEmployee}
         />
       )}
 
       {successEmployee && (
-        <LoginSuccessModal
-          employee={successEmployee}
-          onContinue={handleContinueAfterSuccess}
-        />
+        <LoginSuccessModal employee={successEmployee} onContinue={handleContinueAfterSuccess} />
       )}
     </main>
   );
@@ -372,10 +462,7 @@ interface LoginSuccessModalProps {
   onContinue: () => void;
 }
 
-const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({
-  employee,
-  onContinue,
-}) => {
+const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({ employee, onContinue }) => {
   useEffect(() => {
     const timer = window.setTimeout(onContinue, 1200);
     return () => window.clearTimeout(timer);
@@ -395,16 +482,25 @@ const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({
   );
 };
 
-interface ChangePasswordModalProps {
-  employee: EmployeeData;
+interface OtpRegistrationModalProps {
+  email: string;
+  otpSession: string;
+  salt: string;
+  onClose: () => void;
   onSuccess: (employee: EmployeeData) => void;
+  buildEmployee: (result: EmailCheckResponse, fallbackName?: string) => EmployeeData;
 }
 
-const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
-  employee,
+const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
+  email,
+  otpSession,
+  salt,
+  onClose,
   onSuccess,
+  buildEmployee,
 }) => {
-  const [oldPassword, setOldPassword] = useState('');
+  const [name, setName] = useState('');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswords, setShowPasswords] = useState(false);
@@ -415,45 +511,51 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     event.preventDefault();
     setError('');
 
-    if (newPassword.length < 8) {
-      setError('New password must contain at least 8 characters.');
+    if (!name.trim()) {
+      setError('Please enter your name.');
       return;
     }
-
+    if (!otp.trim()) {
+      setError('Please enter the OTP sent to your email.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError('Password must contain at least 8 characters.');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setError('New password and confirmation do not match.');
-      return;
-    }
-
-    if (newPassword === oldPassword) {
-      setError('Choose a password different from your current password.');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${BASE_URL}/marketing-service/campgin/company-change-password`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: employee.id,
-            oldPassword,
-            newPassword,
-          }),
-        }
-      );
+      const response = await fetch(USER_EMAIL_PASSWORD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          emailOtp: otp.trim(),
+          emailOtpSession: otpSession,
+          password: newPassword,
+          primaryType: PRIMARY_TYPE,
+          salt,
+          name: name.trim(),
+        }),
+      });
 
-      const result = (await response.json()) as ApiResponse<EmployeeData>;
+      const result = (await response.json().catch(() => null)) as
+        | EmailCheckResponse
+        | ApiErrorResponse
+        | null;
 
-      if (!response.ok || !result.status || !result.data) {
-        setError(result.message || 'Unable to update password.');
+      if (!response.ok || !hasLoginTokens(result as EmailCheckResponse)) {
+        setError(extractApiError(result) || 'Unable to verify OTP. Please try again.');
         return;
       }
 
-      onSuccess(result.data);
+      onSuccess(buildEmployee(result as EmailCheckResponse, name.trim()));
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -463,35 +565,76 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
   return (
     <div className="cel-modal" role="dialog" aria-modal="true">
-      <div className="cel-modal-card">
+      <div className="cel-modal-card cel-modal-card-wide">
         <span className="cel-card-icon" aria-hidden="true">
           <ShieldCheck />
         </span>
-        <h3>Update Password</h3>
-        <p>Create a new password to continue.</p>
+        <p className="cel-modal-eyebrow">Employee Registration</p>
+        <h3>Verify Your Email</h3>
+        <p>
+          This email isn't registered yet, so we're creating your account. We sent a one-time
+          code to <strong>{email}</strong> — enter it below along with your name and a password
+          to finish registering.
+        </p>
 
         <form className="cel-form" onSubmit={handleSubmit}>
-          <PasswordInput
-            id="current-password"
-            label="Current Password"
-            value={oldPassword}
-            onChange={setOldPassword}
-            visible={showPasswords}
-          />
-          <PasswordInput
-            id="new-password"
-            label="New Password"
-            value={newPassword}
-            onChange={setNewPassword}
-            visible={showPasswords}
-          />
-          <PasswordInput
-            id="confirm-password"
-            label="Confirm Password"
-            value={confirmPassword}
-            onChange={setConfirmPassword}
-            visible={showPasswords}
-          />
+          <div className="cel-form-row">
+            <div className="cel-form-field">
+              <label htmlFor="otp-name">Full Name</label>
+              <div className="cel-input-wrap">
+                <User />
+                <input
+                  id="otp-name"
+                  type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="cel-form-field">
+              <label htmlFor="otp-code">Email OTP</label>
+              <div className="cel-input-wrap">
+                <ShieldCheck />
+                <input
+                  id="otp-code"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(event) => setOtp(event.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="cel-form-row">
+            <div className="cel-form-field">
+              <PasswordInput
+                id="otp-new-password"
+                label="Set Password"
+                value={newPassword}
+                onChange={setNewPassword}
+                visible={showPasswords}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="cel-form-field">
+              <PasswordInput
+                id="otp-confirm-password"
+                label="Confirm Password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                visible={showPasswords}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
 
           <button
             type="button"
@@ -509,13 +652,18 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             </div>
           )}
 
+          <button type="submit" className="cel-primary-button" disabled={isSubmitting}>
+            {isSubmitting ? 'Verifying...' : 'Verify & Continue'}
+            {isSubmitting ? <LoaderCircle className="cel-spin" /> : <ArrowRight />}
+          </button>
+
           <button
-            type="submit"
-            className="cel-primary-button"
+            type="button"
+            className="cel-secondary-button"
+            onClick={onClose}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Updating...' : 'Update Password'}
-            {isSubmitting ? <LoaderCircle className="cel-spin" /> : <ArrowRight />}
+            Cancel
           </button>
         </form>
       </div>
@@ -529,6 +677,7 @@ interface PasswordInputProps {
   value: string;
   onChange: (value: string) => void;
   visible: boolean;
+  disabled?: boolean;
 }
 
 const PasswordInput: React.FC<PasswordInputProps> = ({
@@ -537,6 +686,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
   value,
   onChange,
   visible,
+  disabled,
 }) => (
   <>
     <label htmlFor={id}>{label}</label>
@@ -547,7 +697,8 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
         type={visible ? 'text' : 'password'}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        autoComplete={id === 'current-password' ? 'current-password' : 'new-password'}
+        autoComplete="new-password"
+        disabled={disabled}
         required
       />
     </div>
@@ -707,8 +858,7 @@ const loginStyles = `
   }
 
   .cel-brand-icon,
-  .cel-card-icon,
-  .cel-pending-icon {
+  .cel-card-icon {
     display: grid;
     place-items: center;
   }
@@ -787,8 +937,7 @@ const loginStyles = `
   }
 
   .cel-caption,
-  .cel-card-heading p,
-  .cel-pending > p {
+  .cel-card-heading p {
     margin: 0;
     color: #b7c0ff;
     font-size: 0.72rem;
@@ -897,10 +1046,6 @@ const loginStyles = `
   .cel-window-dots i:nth-child(3) {
     background: #28c840;
     box-shadow: 0 0 12px rgba(40, 200, 64, 0.68);
-  }
-
-  .cel-card-pending {
-    padding: 0;
   }
 
   .cel-card-heading {
@@ -1100,6 +1245,109 @@ const loginStyles = `
     outline-offset: 3px;
   }
 
+  .cel-hint {
+    margin: 14px 0 0;
+    color: rgba(235, 239, 255, 0.58);
+    font-size: 0.76rem;
+    line-height: 1.55;
+  }
+
+  .cel-hint strong {
+    color: #cdd6ff;
+  }
+
+  .cel-modal-eyebrow {
+    margin: 14px 0 0 !important;
+    color: #b7c0ff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  .cel-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 22px;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(8, 14, 36, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .cel-tab {
+    min-height: 40px;
+    padding: 0 12px;
+    color: rgba(224, 229, 255, 0.62);
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 750;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .cel-tab:hover {
+    color: #ffffff;
+  }
+
+  .cel-tab-active {
+    color: #ffffff;
+    background: linear-gradient(100deg, #4d6dff 0%, #705cff 50%, #ba4fff 100%);
+    box-shadow:
+      0 10px 26px rgba(83, 79, 235, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  }
+
+  .cel-mismatch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+    margin-top: 17px;
+    padding: 13px 14px;
+    color: #ffd28a;
+    border: 1px solid rgba(245, 158, 11, 0.30);
+    border-radius: 13px;
+    background: linear-gradient(145deg, rgba(145, 89, 14, 0.24), rgba(88, 53, 10, 0.16));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .cel-mismatch > svg {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+  }
+
+  .cel-mismatch > span {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+
+  .cel-mismatch-button {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 10px;
+    background: linear-gradient(100deg, #4d6dff 0%, #705cff 50%, #ba4fff 100%);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .cel-mismatch-button:hover {
+    filter: brightness(1.08);
+  }
+
   .cel-feedback {
     display: flex;
     align-items: flex-start;
@@ -1133,8 +1381,7 @@ const loginStyles = `
     opacity: 0.76;
   }
 
-  .cel-feedback-invalid,
-  .cel-feedback-rejected {
+  .cel-feedback-invalid {
     color: #ffbac8;
     border-color: rgba(251, 113, 133, 0.30);
     background: linear-gradient(145deg, rgba(136, 28, 58, 0.25), rgba(85, 18, 43, 0.18));
@@ -1146,87 +1393,8 @@ const loginStyles = `
     background: linear-gradient(145deg, rgba(145, 89, 14, 0.24), rgba(88, 53, 10, 0.16));
   }
 
-  .cel-feedback-pending {
-    color: #b8efff;
-    border-color: rgba(76, 201, 240, 0.30);
-    background: linear-gradient(145deg, rgba(24, 105, 143, 0.24), rgba(37, 44, 103, 0.20));
-  }
-
-  .cel-pending {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: clamp(420px, 60svh, 520px);
-    padding: clamp(38px, 6vw, 54px) clamp(18px, 4vw, 34px);
-    text-align: center;
-  }
-
-  .cel-pending-icon {
-    width: 76px;
-    height: 76px;
-    margin-bottom: 20px;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 25px;
-    background: linear-gradient(145deg, #536dfe 0%, #845dff 56%, #c950f3 100%);
-    box-shadow:
-      0 20px 48px rgba(98, 101, 245, 0.34),
-      inset 0 1px 0 rgba(255, 255, 255, 0.26);
-  }
-
-  .cel-pending-icon svg {
-    width: 32px;
-    height: 32px;
-  }
-
-  .cel-pending h2 {
-    margin: 18px 0 0;
-    color: #ffffff;
-    font-size: clamp(2.25rem, 4.6vw, 4rem);
-    font-weight: 850;
-    line-height: 0.94;
-    letter-spacing: -0.055em;
-  }
-
-  .cel-pending h2 strong {
-    display: block;
-    padding-bottom: 0.05em;
-    color: transparent;
-    font-weight: inherit;
-    background: linear-gradient(105deg, #8ff1ff 0%, #9a86ff 38%, #ff7bd7 70%, #ffd370 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    filter:
-      drop-shadow(0 4px 0 rgba(56, 43, 139, 0.46))
-      drop-shadow(0 16px 30px rgba(116, 75, 255, 0.28));
-  }
-
-  .cel-pending-message {
-    max-width: 350px;
-    margin-top: 18px;
-    color: rgba(235, 239, 255, 0.70);
-    font-size: 0.94rem;
-    line-height: 1.62;
-  }
-
-  .cel-pending-email {
-    display: block;
-    max-width: 100%;
-    margin-top: 14px;
-    padding: 8px 13px;
-    overflow: hidden;
-    color: rgba(255, 255, 255, 0.76);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.055);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .cel-secondary-button {
-    margin-top: 24px;
+    margin-top: 14px;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.17);
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.045));
@@ -1280,10 +1448,36 @@ const loginStyles = `
     -webkit-backdrop-filter: blur(28px);
   }
 
+  /* Wider variant for forms with paired fields (e.g. registration OTP modal),
+     so two inputs can sit comfortably side by side on larger screens. */
+  .cel-modal-card-wide {
+    width: min(100%, 600px);
+  }
+
+  /* Pairs two fields on one row on wider screens; collapses to a single
+     column automatically on narrow/mobile viewports (see breakpoint below). */
+  .cel-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 14px;
+  }
+
+  .cel-form-field {
+    min-width: 0;
+  }
+
+  .cel-form-row .cel-form-field label {
+    margin-top: 15px;
+  }
+
   .cel-modal-card > p {
     margin: 8px 0 0;
     color: rgba(235, 239, 255, 0.66);
     line-height: 1.55;
+  }
+
+  .cel-modal-card > p strong {
+    color: #ffffff;
   }
 
   .cel-success-card {
@@ -1413,10 +1607,6 @@ const loginStyles = `
       border-radius: 24px;
     }
 
-    .cel-card-pending {
-      padding: 0;
-    }
-
     .cel-window-dots {
       top: 16px;
       right: 17px;
@@ -1445,18 +1635,13 @@ const loginStyles = `
       min-height: 50px;
     }
 
-    .cel-pending {
-      min-height: 430px;
-      padding: 38px 18px;
-    }
-
-    .cel-pending h2 {
-      font-size: clamp(2rem, 11vw, 3.1rem);
-    }
-
     .cel-modal-card {
       padding: 25px 18px;
       border-radius: 22px;
+    }
+
+    .cel-form-row {
+      grid-template-columns: 1fr;
     }
 
     .cel-orb,
@@ -1478,10 +1663,6 @@ const loginStyles = `
       padding-left: 15px;
       padding-right: 15px;
     }
-
-    .cel-card-pending {
-      padding: 0;
-    }
   }
 
   @media (max-height: 680px) and (min-width: 901px) {
@@ -1492,10 +1673,6 @@ const loginStyles = `
 
     .cel-copy h1 {
       font-size: clamp(3rem, 5vw, 4.7rem);
-    }
-
-    .cel-pending {
-      min-height: 390px;
     }
   }
 
@@ -1514,3 +1691,9 @@ const loginStyles = `
 `;
 
 export default CompanyEmployeeLogin;
+
+
+
+
+
+

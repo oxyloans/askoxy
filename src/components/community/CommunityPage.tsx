@@ -323,6 +323,7 @@ export default function CommunityPage() {
   const accessToken = readCommunityToken();
   const isRegistered = Boolean(currentUserId && accessToken);
   const savedProfileName = getSavedProfileName();
+  const [profileName, setProfileName] = useState(savedProfileName);
 
   const [queries, setQueries] = useState<CommunityQuery[]>([]);
   const [communityCategories, setCommunityCategories] = useState<
@@ -366,45 +367,55 @@ export default function CommunityPage() {
   const [presenceError, setPresenceError] = useState("");
   const [presenceUpdatedAt, setPresenceUpdatedAt] = useState<Date | null>(null);
   const presenceRequestInFlight = useRef(false);
+  const queryReactionRequests = useRef(new Set<number>());
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
     window.setTimeout(() => setToastMessage(""), 2200);
   }, []);
 
-  useEffect(() => {
-    if (!currentUserId || !accessToken) return;
-
-    let cancelled = false;
-    const loadProfile = async () => {
+  const loadProfile = useCallback(
+    async (openIncompleteProfile = true) => {
+      if (!currentUserId || !accessToken) return;
       setProfileLoading(true);
       try {
         const response = await axios.get(
           `${PROFILE_API_BASE}/getProfile/${encodeURIComponent(currentUserId)}`,
           { headers: { Authorization: `Bearer ${accessToken.replace(/^Bearer\s+/i, "")}` } },
         );
-        if (cancelled) return;
-
         const profile = response.data?.data ?? response.data ?? {};
         const firstName = String(profile.firstName ?? profile.userFirstName ?? "").trim();
         const lastName = String(profile.lastName ?? profile.userLastName ?? "").trim();
         const email = String(profile.email ?? profile.customerEmail ?? "").trim();
         const userName = String(profile.userName ?? "").trim();
+        const resolvedName = userName || [firstName, lastName].filter(Boolean).join(" ").trim();
 
         setProfileForm({ firstName, lastName, email });
-        setProfileModalOpen(!firstName || !lastName || !email || !userName);
+        setProfileName(resolvedName || "Community User");
+        if (openIncompleteProfile) {
+          setProfileModalOpen(!resolvedName || !firstName || !lastName || !email);
+        }
+        return profile;
       } catch (err) {
         console.error("Unable to load community profile:", err);
       } finally {
-        if (!cancelled) setProfileLoading(false);
+        setProfileLoading(false);
       }
-    };
+    },
+    [accessToken, currentUserId],
+  );
 
+const formatReactionCount = (
+  count: number | null | undefined,
+  label: "Like" | "Dislike",
+) => {
+  const safeCount = Number(count) || 0;
+  return `${safeCount} ${label}${safeCount === 1 ? "" : "s"}`;
+};
+
+  useEffect(() => {
     void loadProfile();
-    return () => {
-      cancelled = true;
-    };
-  }, [accessToken, currentUserId]);
+  }, [loadProfile]);
 
   const saveProfile = async (event: FormEvent) => {
     event.preventDefault();
@@ -413,7 +424,7 @@ export default function CommunityPage() {
     const firstName = profileForm.firstName.trim();
     const lastName = profileForm.lastName.trim();
     const email = profileForm.email.trim().toLowerCase();
-    const namePattern = /^[\p{L}][\p{L} .'-]*$/u;
+    const namePattern = /^[A-Za-z][A-Za-z .'-]*$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (firstName.length < 2 || !namePattern.test(firstName)) {
@@ -447,7 +458,7 @@ export default function CommunityPage() {
         throw new Error(response.data.errorMessage);
       }
 
-      setProfileForm({ firstName, lastName, email });
+      await loadProfile(false);
       setProfileModalOpen(false);
       showToast("Profile updated successfully");
     } catch (err) {
@@ -538,12 +549,19 @@ export default function CommunityPage() {
     const snapshotCount =
       countResult.status === "fulfilled" ? countResult.value : null;
 
-    if (snapshotUsers) setOnlineUsers(snapshotUsers);
+    const otherUsers = snapshotUsers?.filter(
+      (user) => String(user.userId) !== String(currentUserId),
+    );
+
+    if (otherUsers) setOnlineUsers(otherUsers);
 
     if (snapshotUsers || snapshotCount !== null) {
-      setOnlineUsersCount(
-        Math.max(snapshotCount ?? 0, snapshotUsers?.length ?? 0),
+      const countWithoutCurrentUser = Math.max(
+        0,
+        (snapshotCount ?? snapshotUsers?.length ?? 0) -
+          (snapshotUsers?.some((user) => String(user.userId) === String(currentUserId)) ? 1 : 0),
       );
+      setOnlineUsersCount(Math.max(countWithoutCurrentUser, otherUsers?.length ?? 0));
       setPresenceUpdatedAt(new Date());
       setPresenceError("");
     }
@@ -560,7 +578,7 @@ export default function CommunityPage() {
 
     setPresenceLoading(false);
     presenceRequestInFlight.current = false;
-  }, [accessToken, handleUnauthorized]);
+  }, [accessToken, currentUserId, handleUnauthorized]);
 
   useEffect(() => {
     if (!isRegistered || !accessToken) {
@@ -641,7 +659,9 @@ export default function CommunityPage() {
 
       client.subscribe("/topic/community/presence", (message: IMessage) => {
         try {
-          const users = normalizeCommunityOnlineUsers(JSON.parse(message.body));
+          const users = normalizeCommunityOnlineUsers(JSON.parse(message.body)).filter(
+            (user) => String(user.userId) !== String(currentUserId),
+          );
           setOnlineUsers(users);
           setOnlineUsersCount(users.length);
           setPresenceUpdatedAt(new Date());
@@ -719,7 +739,7 @@ export default function CommunityPage() {
       stopHeartbeat();
       void client.deactivate();
     };
-  }, [accessToken, isRegistered]);
+  }, [accessToken, currentUserId, isRegistered]);
 
   const loadQueries = useCallback(async () => {
     setLoading(true);
@@ -982,7 +1002,13 @@ export default function CommunityPage() {
 
   const queryReaction = async (query: CommunityQuery, type: ReactionType) => {
     if (!requireRegistration()) return;
+    if (queryReactionRequests.current.has(query.id)) return;
+    if (
+      (type === "LIKE" && query.reactions?.likedByCurrentUser) ||
+      (type === "DISLIKE" && query.reactions?.dislikedByCurrentUser)
+    ) return;
 
+    queryReactionRequests.current.add(query.id);
     try {
       const reactions = await reactToQuery(query.id, type);
       saveQueryReaction(
@@ -1004,6 +1030,8 @@ export default function CommunityPage() {
       );
     } catch (err) {
       if (!handleUnauthorized(err)) setError(getErrorMessage(err));
+    } finally {
+      queryReactionRequests.current.delete(query.id);
     }
   };
 
@@ -1161,7 +1189,7 @@ export default function CommunityPage() {
               <div className="hidden min-h-10 max-w-[210px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 sm:flex">
                 <UserCircle size={18} className="shrink-0 text-[#5b2d90]" />
                 <span className="truncate text-sm font-bold text-slate-700">
-                  {savedProfileName}
+                  {profileName}
                 </span>
               </div>
             )}
@@ -1340,7 +1368,10 @@ export default function CommunityPage() {
                                 : "none"
                             }
                           />
-                          Like {selectedQuery.reactions?.totalLikes ?? 0}
+                          {formatReactionCount(
+                            selectedQuery.reactions?.totalLikes,
+                            "Like",
+                          )}
                         </button>
 
                         <button
@@ -1365,7 +1396,10 @@ export default function CommunityPage() {
                                 : "none"
                             }
                           />
-                          Dislike {selectedQuery.reactions?.totalDislikes ?? 0}
+                          {formatReactionCount(
+                            selectedQuery.reactions?.totalDislikes,
+                            "Dislike",
+                          )}
                         </button>
 
                         <button
@@ -1861,50 +1895,91 @@ function ProfileCompletionModal({
   onClose: () => void;
   onSubmit: (event: FormEvent) => void;
 }) {
+  const fieldClass =
+    "mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#5b2d90] focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-slate-100 sm:text-sm";
+
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5">
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center overflow-y-auto bg-slate-950/65 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+      role="presentation"
+    >
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-lg rounded-3xl bg-white p-5 shadow-2xl sm:p-7"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="community-profile-title"
+        aria-describedby="community-profile-description"
+        className="relative max-h-[96dvh] w-full overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-w-xl sm:rounded-[28px]"
         noValidate
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <span className="text-xs font-black uppercase tracking-[0.15em] text-[#5b2d90]">
-              One quick step
-            </span>
-            <h2 className="mt-2 text-2xl font-black text-slate-950">Complete your profile</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Add your name and email so community members can recognize you.
-            </p>
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#4b1f78] via-[#642f94] to-[#8d55b5] px-5 pb-6 pt-5 text-white sm:px-8 sm:pb-7 sm:pt-7">
+          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-fuchsia-300/20 blur-3xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur">
+                <img src={askoxyLogo} alt="" className="h-5 w-5 rounded-full bg-white object-contain" />
+                <span className="text-xs font-extrabold tracking-wide">ASKOXY.AI Community</span>
+              </div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-purple-100">One quick step</p>
+              <h2 id="community-profile-title" className="mt-1.5 text-2xl font-black tracking-tight sm:text-[28px]">
+                Complete your profile
+              </h2>
+              <p id="community-profile-description" className="mt-2 max-w-md text-sm leading-6 text-purple-50/90">
+                Help people recognize you when you ask questions, share answers, and join conversations.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/20 disabled:opacity-50"
+              aria-label="Close profile form"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-500 hover:bg-slate-100" aria-label="Close profile form">
-            <X size={21} />
-          </button>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <label className="text-sm font-bold text-slate-800">
-            First name
-            <input autoFocus value={form.firstName} onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))} maxLength={50} autoComplete="given-name" placeholder="Enter first name" className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]" />
-          </label>
-          <label className="text-sm font-bold text-slate-800">
-            Last name
-            <input value={form.lastName} onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))} maxLength={50} autoComplete="family-name" placeholder="Enter last name" className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]" />
-          </label>
-        </div>
-        <label className="mt-4 block text-sm font-bold text-slate-800">
-          Email address
-          <input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} maxLength={254} autoComplete="email" placeholder="name@example.com" className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]" />
-        </label>
+        <div className="px-5 py-6 sm:px-8 sm:py-7">
+          {loading ? (
+            <div className="grid min-h-[210px] place-items-center text-center" aria-live="polite">
+              <div>
+                <RefreshCw className="mx-auto h-7 w-7 animate-spin text-[#5b2d90]" />
+                <p className="mt-3 text-sm font-semibold text-slate-600">Loading your profile…</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="text-sm font-bold text-slate-800">
+                  First name <span className="text-rose-500" aria-hidden="true">*</span>
+                  <input autoFocus required value={form.firstName} onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))} maxLength={50} autoComplete="given-name" placeholder="Enter first name" disabled={saving} className={fieldClass} />
+                </label>
+                <label className="text-sm font-bold text-slate-800">
+                  Last name <span className="text-rose-500" aria-hidden="true">*</span>
+                  <input required value={form.lastName} onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))} maxLength={50} autoComplete="family-name" placeholder="Enter last name" disabled={saving} className={fieldClass} />
+                </label>
+              </div>
+              <label className="mt-4 block text-sm font-bold text-slate-800">
+                Email address <span className="text-rose-500" aria-hidden="true">*</span>
+                <input required type="email" inputMode="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} maxLength={254} autoComplete="email" placeholder="name@example.com" disabled={saving} className={fieldClass} />
+              </label>
+              <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-500">
+                <BadgeCheck size={16} className="mt-0.5 shrink-0 text-emerald-600" />
+                Your profile details help keep the community genuine and trustworthy.
+              </p>
 
-        {error && <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+              {error && <div role="alert" aria-live="assertive" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-5 text-red-700">{error}</div>}
 
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button type="button" onClick={onClose} disabled={saving} className={secondaryButton}>Not now</button>
-          <button type="submit" disabled={saving || loading} className={primaryButton}>
-            {saving ? "Saving..." : "Save and continue"}
-          </button>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" onClick={onClose} disabled={saving} className={`${secondaryButton} w-full sm:w-auto`}>Not now</button>
+                <button type="submit" disabled={saving} className={`${primaryButton} w-full sm:min-w-[170px] sm:w-auto`}>
+                  {saving ? <><RefreshCw size={17} className="animate-spin" /> Saving profile…</> : <><BadgeCheck size={17} /> Save and continue</>}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </form>
     </div>
@@ -2061,6 +2136,19 @@ function QueryCard({
   onShare: (event: MouseEvent<HTMLButtonElement>) => void;
   onCopy: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
+  function formatReactionCount(
+    totalReactions: number | undefined,
+    label: string,
+  ): React.ReactNode {
+    const count = totalReactions ?? 0;
+
+    if (count <= 0) {
+      return label;
+    }
+
+    return `${count} ${label}${count === 1 ? "" : "s"}`;
+  }
+
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-purple-200 hover:shadow-[0_14px_30px_rgba(91,45,144,0.10)]">
       <button
@@ -2127,7 +2215,7 @@ function QueryCard({
             size={15}
             fill={query.reactions?.likedByCurrentUser ? "currentColor" : "none"}
           />
-          Like {query.reactions?.totalLikes ?? 0}
+          {formatReactionCount(query.reactions?.totalLikes, "Like")}
         </button>
         <button
           type="button"
@@ -2148,7 +2236,7 @@ function QueryCard({
               query.reactions?.dislikedByCurrentUser ? "currentColor" : "none"
             }
           />
-          Dislike {query.reactions?.totalDislikes ?? 0}
+          {formatReactionCount(query.reactions?.totalDislikes, "Dislike")}
         </button>
         <button
           type="button"
@@ -2341,6 +2429,11 @@ function CommentItem({
     }
   };
 
+  function formatReactionCount(totalLikes: number, arg1: string): React.ReactNode {
+    const count = Number(totalLikes) || 0;
+    return count > 0 ? `${count} ${arg1}${count === 1 ? "" : "s"}` : arg1;
+  }
+
   return (
     <div
       className={depth > 0 ? "border-l border-purple-100 pl-2 sm:pl-3" : ""}
@@ -2450,7 +2543,7 @@ function CommentItem({
                       : "none"
                   }
                 />
-                Like {comment.reactions?.totalLikes ?? 0}
+                {formatReactionCount(comment.reactions?.totalLikes, "Like")}
               </button>
               <button
                 type="button"
@@ -2470,7 +2563,10 @@ function CommentItem({
                       : "none"
                   }
                 />
-                Dislike {comment.reactions?.totalDislikes ?? 0}
+                {formatReactionCount(
+                  comment.reactions?.totalDislikes,
+                  "Dislike",
+                )}
               </button>
               <button
                 type="button"
