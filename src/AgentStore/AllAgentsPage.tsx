@@ -258,13 +258,18 @@ const AllAgentsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AllAgentDataResponse | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [deleteType, setDeleteType] = useState<"soft" | "permanent" | null>(
-    null,
-  );
+  // const [deleteType, setDeleteType] = useState<"soft" | "permanent" | null>(
+  //   null,
+  // );
+  // const [finalDeleteConfirm, setFinalDeleteConfirm] = useState<null | {
+  //   agentId: string;
+  //   assistantId: string | null;
+  //   type: "soft" | "permanent";
+  // }>(null);
+  const [restoring, setRestoring] = useState<string | null>(null);
   const [finalDeleteConfirm, setFinalDeleteConfirm] = useState<null | {
     agentId: string;
     assistantId: string | null;
-    type: "soft" | "permanent";
   }>(null);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
@@ -1438,7 +1443,6 @@ const AllAgentsPage: React.FC = () => {
     }
   };
 
-  // VIEW files
   const fetchUploadedFiles = async (assistantId: string) => {
     if (!assistantId) {
       message.error("Missing assistantId.");
@@ -1513,22 +1517,19 @@ const AllAgentsPage: React.FC = () => {
     assistantId: string | null,
     agentId: string,
   ) => {
-    if (!assistantId) {
-      message.error("Missing assistantId. Cannot delete this assistant.");
+    if (!agentId) {
+      message.error("Missing agentId. Cannot delete this assistant.");
       return;
     }
     if (deleting) return;
 
     setDeleting(agentId);
     try {
-      const url = `${BASE_URL}/ai-service/agent/deleteId/${encodeURIComponent(
-        assistantId,
+      const url = `${BASE_URL}/ai-service/new-agent/deleteId/${encodeURIComponent(
+        agentId,
       )}`;
       const res = await authFetch(url, { method: "DELETE" });
       const txt = await res.text().catch(() => "");
-
-      // Backend sometimes returns 500 even though the delete is completed.
-      // For this specific delete flow, remove it from UI and refresh silently instead of showing a false error.
       if (!res.ok && res.status < 500) {
         throw new Error(
           `Delete failed: ${res.status} ${res.statusText}. ${txt || ""}`,
@@ -1557,7 +1558,7 @@ const AllAgentsPage: React.FC = () => {
     } finally {
       setDeleting(null);
       setDeleteConfirmId(null);
-      setDeleteType(null);
+      // setDeleteType(null);
       setFinalDeleteConfirm(null);
     }
   };
@@ -1566,8 +1567,8 @@ const AllAgentsPage: React.FC = () => {
     assistantId: string | null,
     agentId: string,
   ) => {
-    if (!assistantId) {
-      message.error("Missing assistantId. Cannot delete this assistant.");
+    if (!agentId) {
+      message.error("Missing agentId. Cannot delete this assistant.");
       return;
     }
     if (deleting) return;
@@ -1575,7 +1576,7 @@ const AllAgentsPage: React.FC = () => {
     setDeleting(agentId);
     try {
       const url = new URL(
-        "/api/ai-service/agent/delete/" + encodeURIComponent(assistantId),
+        "/api/ai-service/agent/delete/" + encodeURIComponent(agentId),
         BASE_URL,
       );
       const res = await authFetch(url.toString(), { method: "DELETE" });
@@ -1611,8 +1612,57 @@ const AllAgentsPage: React.FC = () => {
     } finally {
       setDeleting(null);
       setDeleteConfirmId(null);
-      setDeleteType(null);
+      // setDeleteType(null);
       setFinalDeleteConfirm(null);
+    }
+  };
+
+  const restoreAssistant = async (
+    assistantId: string | null,
+    agentId: string,
+  ) => {
+    if (!agentId) {
+      message.error("Missing agentId. Cannot restore this assistant.");
+      return;
+    }
+    if (restoring) return;
+
+    setRestoring(agentId);
+    try {
+      // ⚠️ Confirm this endpoint with your backend — assumed to mirror deleteId
+      const url = `${BASE_URL}/ai-service/new-agent/restoreId/${encodeURIComponent(
+        agentId,
+      )}`;
+      const res = await authFetch(url, { method: "PATCH" });
+      const txt = await res.text().catch(() => "");
+
+      if (!res.ok && res.status < 500) {
+        throw new Error(
+          `Restore failed: ${res.status} ${res.statusText}. ${txt || ""}`,
+        );
+      }
+
+      // Update status locally so the card moves out of "DELETED" immediately
+      setData((old) =>
+        old
+          ? {
+              ...old,
+              assistants: old.assistants.map((a) =>
+                a.id === agentId ? { ...a, status: "APPROVED" } : a,
+              ),
+            }
+          : old,
+      );
+
+      if (!res.ok && res.status >= 500) {
+        await refreshData();
+      }
+
+      message.success("Agent restored successfully.");
+    } catch (e: any) {
+      message.error(e?.message || "Failed to restore assistant.");
+    } finally {
+      setRestoring(null);
     }
   };
 
@@ -1643,7 +1693,6 @@ const AllAgentsPage: React.FC = () => {
           }`,
         );
       message.success(`Files uploaded successfully`);
-      // optional: refresh file list if modal is open for this assistant
       if (fileModalOpen === assistantId) fetchUploadedFiles(assistantId);
     } catch (e: any) {
       message.error(e?.message || "File upload failed.");
@@ -1846,7 +1895,8 @@ const AllAgentsPage: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAssistants.map((a) => {
-                  const isUploadingImg = uploading === a.assistantId;
+                  const isUploadingImg =
+                    !!a.assistantId && uploading === a.assistantId;
                   return (
                     <div
                       key={a.id}
@@ -2081,30 +2131,35 @@ const AllAgentsPage: React.FC = () => {
                         </label>
 
                         {/* Files */}
-                        <label className="inline-flex items-center gap-2 text-xs cursor-pointer bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors">
-                          <span className="font-medium">Upload Files</span>
-                          <input
-                            type="file"
-                            className="hidden"
-                            multiple
-                            onChange={(e) => {
-                              const list = e.target.files;
-                              if (list && list.length > 0) {
-                                if (a.assistantId)
-                                  uploadFiles(a.assistantId, Array.from(list));
-                                else
+                        {a.status !== "DELETED" && (
+                          <label className="inline-flex items-center gap-2 text-xs cursor-pointer bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2 rounded-lg transition-colors">
+                            <span className="font-medium">Upload Files</span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              multiple
+                              onChange={(e) => {
+                                const list = e.target.files;
+                                if (list && list.length > 0) {
+                                  if (a.assistantId)
+                                    uploadFiles(
+                                      a.assistantId,
+                                      Array.from(list),
+                                    );
+                                  else
+                                    message.error(
+                                      "This agent has no assistantId yet. Open/Edit & save the agent, then upload.",
+                                    );
+                                } else {
                                   message.error(
-                                    "This agent has no assistantId yet. Open/Edit & save the agent, then upload.",
+                                    "Please choose at least one file.",
                                   );
-                              } else {
-                                message.error(
-                                  "Please choose at least one file.",
-                                );
-                              }
-                              e.currentTarget.value = "";
-                            }}
-                          />
-                        </label>
+                                }
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                        )}
 
                         <Button
                           size="small"
@@ -2121,260 +2176,306 @@ const AllAgentsPage: React.FC = () => {
                         {/* ✅ Action Buttons: Edit | View | Delete */}
                         <div className="flex gap-2 ml-auto flex-wrap justify-end w-full sm:w-auto">
                           {/* Responsive action row — User History + Certificate */}
-                          <div
-                            className={`mt-3 w-full flex flex-wrap items-center gap-2 sm:gap-2.5
+                          {a.status !== "DELETED" && (
+                            <div
+                              className={`mt-3 w-full flex flex-wrap items-center gap-2 sm:gap-2.5
     ${
       a.status === "APPROVED" && a.assistantId ? "justify-start" : "justify-end"
     }`}
-                            style={{
-                              paddingRight:
-                                a.status !== "APPROVED" ? "4px" : "0px",
-                            }}
-                          >
-                            {/* A single source of truth for equal button sizing */}
-                            {/*
+                              style={{
+                                paddingRight:
+                                  a.status !== "APPROVED" ? "4px" : "0px",
+                              }}
+                            >
+                              {/* A single source of truth for equal button sizing */}
+                              {/*
     w-[148px] on mobile; w-[168px] on sm+.
     h-9 keeps heights identical.
   */}
-                            {(() => {
-                              const baseBtn =
-                                "inline-flex items-center justify-center gap-1.5 h-9 w-[148px] sm:w-[168px] " +
-                                "rounded-md text-[11px] sm:text-xs font-semibold transition-all shadow-sm " +
-                                "disabled:opacity-60 disabled:cursor-not-allowed truncate";
+                              {(() => {
+                                const baseBtn =
+                                  "inline-flex items-center justify-center gap-1.5 h-9 w-[148px] sm:w-[168px] " +
+                                  "rounded-md text-[11px] sm:text-xs font-semibold transition-all shadow-sm " +
+                                  "disabled:opacity-60 disabled:cursor-not-allowed truncate";
 
-                              return (
-                                <>
-                                  {/* User History Button (always visible) */}
-                                  <button
-                                    onClick={() => {
-                                      setSelectedUserId(null);
-                                      setHistoryOpenFor(a.id);
-                                      fetchCreatorAgentDetails(
-                                        a.id,
-                                        resolvedUserId,
-                                      );
-                                    }}
-                                    title="View public chat history (creator view)"
-                                    className={`${baseBtn} border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 hover:from-purple-100 hover:to-purple-200`}
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      className="w-4 h-4 flex-none"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="1.8"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
+                                return (
+                                  <>
+                                    {/* User History Button (always visible) */}
+                                    <button
+                                      onClick={() => {
+                                        setSelectedUserId(null);
+                                        setHistoryOpenFor(a.id);
+                                        fetchCreatorAgentDetails(
+                                          a.id,
+                                          resolvedUserId,
+                                        );
+                                      }}
+                                      title="View public chat history (creator view)"
+                                      className={`${baseBtn} border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 hover:from-purple-100 hover:to-purple-200`}
                                     >
-                                      <circle cx="12" cy="12" r="10" />
-                                      <polyline points="12 6 12 12 16 14" />
-                                    </svg>
-                                    <span className="truncate">
-                                      User History
-                                    </span>
-                                  </button>
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="w-4 h-4 flex-none"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                      </svg>
+                                      <span className="truncate">
+                                        User History
+                                      </span>
+                                    </button>
 
-                                  {/* Certificate actions — only for Approved + assistantId */}
-                                  {a.assistantId &&
-                                    a.status === "APPROVED" &&
-                                    (a.certificateUrl ? (
-                                      <a
-                                        href={a.certificateUrl}
-                                        target="_blank"
-                                        rel="noreferrer noopener"
-                                        title="Download AI Agent Certificate"
-                                        aria-label="Download Certificate"
-                                        className={`${baseBtn} border border-green-200 bg-green-50 text-green-700 hover:bg-green-100`}
-                                      >
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          className="w-3.5 h-3.5 flex-none"
-                                          viewBox="0 0 24 24"
-                                          fill="currentColor"
+                                    {/* Certificate actions — only for Approved + assistantId */}
+                                    {a.assistantId &&
+                                      a.status === "APPROVED" &&
+                                      (a.certificateUrl ? (
+                                        <a
+                                          href={a.certificateUrl}
+                                          target="_blank"
+                                          rel="noreferrer noopener"
+                                          title="Download AI Agent Certificate"
+                                          aria-label="Download Certificate"
+                                          className={`${baseBtn} border border-green-200 bg-green-50 text-green-700 hover:bg-green-100`}
                                         >
-                                          <path d="M12 5c-5.5 0-9.6 5.1-10 6 .4.9 4.5 6 10 6s9.6-5.1 10-6c-.4-.9-4.5-6-10-6Zm0 9.5A3.5 3.5 0 1 1 12 7a3.5 3.5 0 0 1 0 7.5Z" />
-                                        </svg>
-                                        <span className="truncate">
-                                          Download Certificate
-                                        </span>
-                                      </a>
-                                    ) : (
-                                      <button
-                                        disabled={certLoadingFor === a.id}
-                                        onClick={() => generateCertificate(a)}
-                                        title="Generate AI Agent Certificate"
-                                        aria-label="Generate Certificate"
-                                        className={`${baseBtn} border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100`}
-                                      >
-                                        {certLoadingFor === a.id ? (
-                                          <svg
-                                            className="animate-spin h-3.5 w-3.5 flex-none"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                          >
-                                            <circle
-                                              className="opacity-25"
-                                              cx="12"
-                                              cy="12"
-                                              r="10"
-                                              stroke="currentColor"
-                                              strokeWidth="4"
-                                            />
-                                            <path
-                                              className="opacity-75"
-                                              d="M4 12a8 8 0 018-8"
-                                              fill="currentColor"
-                                            />
-                                          </svg>
-                                        ) : (
                                           <svg
                                             xmlns="http://www.w3.org/2000/svg"
-                                            className="h-3.5 w-3.5 flex-none"
+                                            className="w-3.5 h-3.5 flex-none"
                                             viewBox="0 0 24 24"
                                             fill="currentColor"
                                           >
-                                            <path d="M6 2a1 1 0 00-1 1v16.382l3.447-1.724a2 2 0 011.106-.15L12 18l2.447-.492a2 2 0 011.106.15L19 19.382V3a1 1 0 10-2 0v12.618l-1.553-.776a4 4 0 00-2.212-.3L12 15.764l-1.235-.222a4 4 0 00-2.212.3L7 15.618V3a1 1 0 00-1-1z" />
+                                            <path d="M12 5c-5.5 0-9.6 5.1-10 6 .4.9 4.5 6 10 6s9.6-5.1 10-6c-.4-.9-4.5-6-10-6Zm0 9.5A3.5 3.5 0 1 1 12 7a3.5 3.5 0 0 1 0 7.5Z" />
                                           </svg>
-                                        )}
-                                        <span className="truncate">
-                                          {certLoadingFor === a.id
-                                            ? "Generating Certificate…"
-                                            : "Generate Certificate"}
-                                        </span>
-                                      </button>
-                                    ))}
-                                </>
-                              );
-                            })()}
-                          </div>
-
+                                          <span className="truncate">
+                                            Download Certificate
+                                          </span>
+                                        </a>
+                                      ) : (
+                                        <button
+                                          disabled={certLoadingFor === a.id}
+                                          onClick={() => generateCertificate(a)}
+                                          title="Generate AI Agent Certificate"
+                                          aria-label="Generate Certificate"
+                                          className={`${baseBtn} border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100`}
+                                        >
+                                          {certLoadingFor === a.id ? (
+                                            <svg
+                                              className="animate-spin h-3.5 w-3.5 flex-none"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                            >
+                                              <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                              />
+                                              <path
+                                                className="opacity-75"
+                                                d="M4 12a8 8 0 018-8"
+                                                fill="currentColor"
+                                              />
+                                            </svg>
+                                          ) : (
+                                            <svg
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              className="h-3.5 w-3.5 flex-none"
+                                              viewBox="0 0 24 24"
+                                              fill="currentColor"
+                                            >
+                                              <path d="M6 2a1 1 0 00-1 1v16.382l3.447-1.724a2 2 0 011.106-.15L12 18l2.447-.492a2 2 0 011.106.15L19 19.382V3a1 1 0 10-2 0v12.618l-1.553-.776a4 4 0 00-2.212-.3L12 15.764l-1.235-.222a4 4 0 00-2.212.3L7 15.618V3a1 1 0 00-1-1z" />
+                                            </svg>
+                                          )}
+                                          <span className="truncate">
+                                            {certLoadingFor === a.id
+                                              ? "Generating Certificate…"
+                                              : "Generate Certificate"}
+                                          </span>
+                                        </button>
+                                      ))}
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
                           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2">
-                            {/* 👁️ View Button */}
-                            <button
-                              onClick={() =>
-                                navigate(
-                                  `/${a.assistantId}/${a.id}/${a.agentName}`,
-                                )
-                              }
-                              title="View Agent in a new tab"
-                              className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
-      bg-[#008cba] text-white
-      hover:bg-[#0073a0] transition-all shadow-sm
-      flex-1 sm:flex-none justify-center"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                className="w-4 h-4"
-                              >
-                                <path d="M12 5c-5.5 0-9.6 5.1-10 6 .4.9 4.5 6 10 6s9.6-5.1 10-6c-.4-.9-4.5-6-10-6Zm0 9.5A3.5 3.5 0 1 1 12 7a3.5 3.5 0 0 1 0 7.5Z" />
-                              </svg>
-                              <span>View</span>
-                            </button>
-
-                            {/* Business Card Button */}
-                            {a.businessCardId && (
+                            {a.status === "DELETED" ? (
+                              /* ♻️ Restore Button only */
                               <button
                                 onClick={() => {
-                                  setCurrentBusinessCardId(a.businessCardId!);
-                                  fetchBusinessCardData(a.businessCardId!);
+                                  if (restoring === a.id) return;
+                                  restoreAssistant(a.assistantId, a.id);
                                 }}
-                                title="View Business Card Details"
-                                disabled={businessCardLoading}
-                                className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
-      bg-[#3B82F6] text-white
-      hover:bg-[#2563EB] transition-all shadow-sm
-      flex-1 sm:flex-none justify-center disabled:opacity-60"
+                                title="Restore Agent"
+                                disabled={restoring === a.id}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-semibold
+        bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm
+        disabled:opacity-60 disabled:cursor-not-allowed flex-1 sm:flex-none"
                               >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill="currentColor"
-                                  className="w-4 h-4"
-                                >
-                                  <path d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4Zm0 2h16v12H4V6Zm2 2v2h4V8H6Zm0 4v2h8v-2H6Z" />
-                                </svg>
-                                <span>
-                                  {businessCardLoading
-                                    ? "Loading..."
-                                    : "Business Card"}
-                                </span>
-                              </button>
-                            )}
-
-                            {/* ✏️ Edit Button (same row) */}
-                            <button
-                              onClick={() => openEditAgent(a)}
-                              title="Edit AI Agent"
-                              className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold 
-      bg-gradient-to-r from-purple-600 to-purple-700 text-white
-      hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm
-      flex-1 sm:flex-none justify-center"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                className="w-4 h-4"
-                              >
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.84 1.84 3.75 3.75 1.84-1.84Z" />
-                              </svg>
-                              <span>Edit</span>
-                            </button>
-
-                            {/* 🗑️ Delete Button */}
-                            <button
-                              onClick={() => {
-                                if (deleting === a.id) return;
-                                setDeleteConfirmId(a.id);
-                                setDeleteType(null);
-                              }}
-                              title="Delete Agent"
-                              disabled={deleting === a.id}
-                              className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-semibold
-      bg-red-600 text-white hover:bg-red-700 transition-all shadow-sm
-      disabled:opacity-60 disabled:cursor-not-allowed flex-1 sm:flex-none"
-                            >
-                              {deleting === a.id ? (
-                                <>
-                                  <svg
-                                    className="animate-spin h-4 w-4"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-25"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                      className="opacity-75"
+                                {restoring === a.id ? (
+                                  <>
+                                    <svg
+                                      className="animate-spin h-4 w-4"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                      ></circle>
+                                      <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                                      ></path>
+                                    </svg>
+                                    <span>Restoring…</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
                                       fill="currentColor"
-                                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-                                    ></path>
-                                  </svg>
-                                  <span>Deleting…</span>
-                                </>
-                              ) : (
-                                <>
+                                      className="w-4 h-4"
+                                    >
+                                      <path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z" />
+                                    </svg>
+                                    <span>Restore</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <>
+                                {/* 👁️ View Button */}
+                                <button
+                                  onClick={() =>
+                                    navigate(
+                                      `/${a.assistantId}/${a.id}/${a.agentName}`,
+                                    )
+                                  }
+                                  title="View Agent in a new tab"
+                                  className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold bg-[#008cba] text-white hover:bg-[#0073a0] transition-all shadow-sm flex-1 sm:flex-none justify-center"
+                                >
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24"
                                     fill="currentColor"
                                     className="w-4 h-4"
                                   >
-                                    <path d="M9 3a1 1 0 0 0-.894.553L7.382 5H4a1 1 0 0 0 0 2h.293l.853 12.18A2 2 0 0 0 7.14 21h9.72a2 2 0 0 0 1.994-1.82L19.707 7H20a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 15 3H9Z" />
+                                    <path d="M12 5c-5.5 0-9.6 5.1-10 6 .4.9 4.5 6 10 6s9.6-5.1 10-6c-.4-.9-4.5-6-10-6Zm0 9.5A3.5 3.5 0 1 1 12 7a3.5 3.5 0 0 1 0 7.5Z" />
                                   </svg>
-                                  <span>Delete</span>
-                                </>
-                              )}
-                            </button>
+                                  <span>View</span>
+                                </button>
+
+                                {/* Business Card Button */}
+                                {a.businessCardId && (
+                                  <button
+                                    onClick={() => {
+                                      setCurrentBusinessCardId(
+                                        a.businessCardId!,
+                                      );
+                                      fetchBusinessCardData(a.businessCardId!);
+                                    }}
+                                    title="View Business Card Details"
+                                    disabled={businessCardLoading}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold bg-[#3B82F6] text-white hover:bg-[#2563EB] transition-all shadow-sm flex-1 sm:flex-none justify-center disabled:opacity-60"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="currentColor"
+                                      className="w-4 h-4"
+                                    >
+                                      <path d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4Zm0 2h16v12H4V6Zm2 2v2h4V8H6Zm0 4v2h8v-2H6Z" />
+                                    </svg>
+                                    <span>
+                                      {businessCardLoading
+                                        ? "Loading..."
+                                        : "Business Card"}
+                                    </span>
+                                  </button>
+                                )}
+
+                                {/* ✏️ Edit Button */}
+                                <button
+                                  onClick={() => openEditAgent(a)}
+                                  title="Edit AI Agent"
+                                  className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm flex-1 sm:flex-none justify-center"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-4 h-4"
+                                  >
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.84 1.84 3.75 3.75 1.84-1.84Z" />
+                                  </svg>
+                                  <span>Edit</span>
+                                </button>
+
+                                {/* 🗑️ Delete Button */}
+                                <button
+                                  onClick={() => {
+                                    if (deleting === a.id) return;
+                                    setDeleteConfirmId(a.id);
+                                  }}
+                                  title="Delete Agent"
+                                  disabled={deleting === a.id}
+                                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-semibold bg-red-600 text-white hover:bg-red-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                                >
+                                  {deleting === a.id ? (
+                                    <>
+                                      <svg
+                                        className="animate-spin h-4 w-4"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                                        ></path>
+                                      </svg>
+                                      <span>Deleting…</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        className="w-4 h-4"
+                                      >
+                                        <path d="M9 3a1 1 0 0 0-.894.553L7.382 5H4a1 1 0 0 0 0 2h.293l.853 12.18A2 2 0 0 0 7.14 21h9.72a2 2 0 0 0 1.994-1.82L19.707 7H20a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 15 3H9Z" />
+                                      </svg>
+                                      <span>Delete</span>
+                                    </>
+                                  )}
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -3139,28 +3240,12 @@ const AllAgentsPage: React.FC = () => {
                       {deleteConfirmId === a.id && (
                         <DeleteConfirmModal
                           isOpen={true}
-                          deleteType={deleteType}
-                          onClose={() => {
+                          onClose={() => setDeleteConfirmId(null)}
+                          onConfirmDelete={() => {
                             setDeleteConfirmId(null);
-                            setDeleteType(null);
-                          }}
-                          onSelectType={(type) => setDeleteType(type)}
-                          onConfirmSoft={() => {
-                            setDeleteConfirmId(null);
-                            setDeleteType(null);
                             setFinalDeleteConfirm({
                               agentId: a.id,
                               assistantId: a.assistantId,
-                              type: "soft",
-                            });
-                          }}
-                          onConfirmPermanent={() => {
-                            setDeleteConfirmId(null);
-                            setDeleteType(null);
-                            setFinalDeleteConfirm({
-                              agentId: a.id,
-                              assistantId: a.assistantId,
-                              type: "permanent",
                             });
                           }}
                         />
@@ -3210,17 +3295,10 @@ const AllAgentsPage: React.FC = () => {
                 disabled={!!deleting}
                 onClick={() => {
                   if (!finalDeleteConfirm || deleting) return;
-                  if (finalDeleteConfirm.type === "soft") {
-                    softDeleteAssistant(
-                      finalDeleteConfirm.assistantId,
-                      finalDeleteConfirm.agentId,
-                    );
-                  } else {
-                    permanentDeleteAssistant(
-                      finalDeleteConfirm.assistantId,
-                      finalDeleteConfirm.agentId,
-                    );
-                  }
+                  softDeleteAssistant(
+                    finalDeleteConfirm.assistantId,
+                    finalDeleteConfirm.agentId,
+                  );
                 }}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >

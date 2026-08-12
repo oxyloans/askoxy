@@ -229,6 +229,12 @@ const Sidebar: React.FC = () => {
             link: "/admin/sudheervakkalagadda",
             roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
           },
+           {
+            title: "Rotary 3150 Members" ,
+            icon:  <FaUsers className="text-blue-500" />,
+            link: "/admin/rotarydata",
+            roles: ["HELPDESKSUPERADMIN", "HELPDESKADMIN"],
+          },
           {
             title: "All AskOxy Users",
             icon: <FaRegAddressCard className="text-green-400" />,
@@ -599,6 +605,26 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
+      <style>{`
+        .sidebar-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+          background-color: rgba(148, 163, 184, 0.4);
+          border-radius: 9999px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(148, 163, 184, 0.65);
+        }
+      `}</style>
+
       {showSessionModal && (
         <div style={{ zIndex: 9999, position: "fixed" }}>
           <SessionModal
@@ -681,7 +707,7 @@ const Sidebar: React.FC = () => {
 
           <nav className="mt-2 px-2">
             <ul
-              className="max-h-[calc(100dvh-150px)] space-y-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 pb-24
+              className="sidebar-scroll max-h-[calc(100dvh-150px)] space-y-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 pb-24
               sm:max-h-[calc(100dvh-150px)]"
             >
               {visibleCategories.map((category, categoryIndex) => {

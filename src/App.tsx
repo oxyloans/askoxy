@@ -29,46 +29,87 @@ import CompanyEmployeeLogin from "./Employee/CompanyEmployeeLogin";
 import EmployeeJobDashboard from "./Employee/EmployeeJobDashboard";
 import AddCompanyEmployee from "./AskoxyAdmin/AddCompanyEmployee";
 import EmployeesList from "./AskoxyAdmin/EmployeesList";
+import RotaryDataPage from "./AskoxyAdmin/RotaryData";
 import JourneysVsCampaignsVsInterestedUsers from "./AskoxyAdmin/JourneysVsCampaignsVsInterestedUsers";
 import EmployeeApplicationsComingSoon from "./Employee/EmployeeApplicationsComingSoon";
 import EmployeeJobComingSoon from "./Employee/EmployeeJobComingSoon";
 import JobPostForm from "./Employee/JobPostForm";
 
-
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
 const NinetyDayPlanPage = lazy(() => import("./components/NinetyDayPlanPage"));
-const CASRouteRenderer1 = lazy(() => import("./GLMS/CAS/Pages/CASRouteRenderer1"));
+const CASRouteRenderer1 = lazy(
+  () => import("./GLMS/CAS/Pages/CASRouteRenderer1"),
+);
 const FMSRoutes1 = lazy(() => import("./GLMS/FMS/Pages/FMSRoutes1"));
 const CMSroutes1 = lazy(() => import("./GLMS/CMS/Pages/CMSroutes1"));
 const FreelancerForm = lazy(() => import("./components/FreelancerForm"));
-const FloatingCallButton = lazy(() => import("./components/FloatingCallButton"));
-const FloatingGiftOffersButton = lazy(() => import("./components/FloatingGiftOffersButton"));
-const UserOrdersIntegration = lazy(() => import("./AskoxyAdmin/UserOrdersIntegration"));
+const FloatingCallButton = lazy(
+  () => import("./components/FloatingCallButton"),
+);
+const FloatingGiftOffersButton = lazy(
+  () => import("./components/FloatingGiftOffersButton"),
+);
+const UserOrdersIntegration = lazy(
+  () => import("./AskoxyAdmin/UserOrdersIntegration"),
+);
 const CampaignBlogPage = lazy(() => import("./FREEAIBOOK/CampaignBlogPage"));
 const InvoiceGenerator = lazy(() => import("./components/InvoiceGenerator"));
 const ChatApp = lazy(() => import("./ChatScreen/ChatApp"));
-const VideoCreationPage = lazy(() => import("./BharathAIStore/pages/VideoCreation"));
+const VideoCreationPage = lazy(
+  () => import("./BharathAIStore/pages/VideoCreation"),
+);
 const GoldRates = lazy(() => import("./components/GoldRates"));
 const GoldRatesPage = lazy(() => import("./components/GoldRatesPage"));
 const GoldSilverTargets = lazy(() => import("./components/GoldSilverTargets"));
-const FreelancersByUserId = lazy(() => import("./components/FreelancersByUserId"));
+const FreelancersByUserId = lazy(
+  () => import("./components/FreelancersByUserId"),
+);
 const DataReading = lazy(() => import("./ChatScreen/DataReading"));
-const RotaryPosterStudio = lazy(() => import("./components/DynamicPosterDesignforRotary"));
+const RotaryPosterStudio = lazy(
+  () => import("./components/DynamicPosterDesignforRotary"),
+);
 const RotaryLandingPage = lazy(() => import("./components/RotaryLanding"));
-const CandidateDetail = lazy(() => import("./AIMockInterview/admin/CandidateDetail").then(m => ({ default: m.CandidateDetail })));
-const ImageCreation = lazy(() => import("./BharathAIStore/pages/ImageCreation"));
-const AdminDashboard = lazy(() => import("./AIMockInterview/admin/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const FeedbackForm = lazy(() => import("./AIMockInterview").then(m => ({ default: m.FeedbackForm })));
-const MultiLevelSelection = lazy(() => import("./AIMockInterview").then(m => ({ default: m.MultiLevelSelection })));
-const ProctoredInterview = lazy(() => import("./AIMockInterview").then(m => ({ default: m.ProctoredInterview })));
+const RotaryDataCollection = lazy(
+  () => import("./components/RotaryDataCollection"),
+);
+const CandidateDetail = lazy(() =>
+  import("./AIMockInterview/admin/CandidateDetail").then((m) => ({
+    default: m.CandidateDetail,
+  })),
+);
+const ImageCreation = lazy(
+  () => import("./BharathAIStore/pages/ImageCreation"),
+);
+const AdminDashboard = lazy(() =>
+  import("./AIMockInterview/admin/AdminDashboard").then((m) => ({
+    default: m.AdminDashboard,
+  })),
+);
+const FeedbackForm = lazy(() =>
+  import("./AIMockInterview").then((m) => ({ default: m.FeedbackForm })),
+);
+const MultiLevelSelection = lazy(() =>
+  import("./AIMockInterview").then((m) => ({ default: m.MultiLevelSelection })),
+);
+const ProctoredInterview = lazy(() =>
+  import("./AIMockInterview").then((m) => ({ default: m.ProctoredInterview })),
+);
 const CampaignStats = lazy(() => import("./components/CampaignStatsAccenture"));
 const AccentureJobsPage = lazy(() => import("./components/AccentureJobsPage"));
-const AccenturePresentation = lazy(() => import("./Dashboard/AccenturePresentation"));
+const AccenturePresentation = lazy(
+  () => import("./Dashboard/AccenturePresentation"),
+);
 const MinisterMeetingPage = lazy(() => import("./components/MinisterPage"));
-const TechmahindraJobsPage = lazy(() => import("./components/TechmahindraJobsPage"));
-const AllCompaniesJobsPage = lazy(() => import("./components/AllCompaniesJobsPage"));
-const LenderBorrowerPartnerLandingPage = lazy(() => import("./components/LenderPage"));
+const TechmahindraJobsPage = lazy(
+  () => import("./components/TechmahindraJobsPage"),
+);
+const AllCompaniesJobsPage = lazy(
+  () => import("./components/AllCompaniesJobsPage"),
+);
+const LenderBorrowerPartnerLandingPage = lazy(
+  () => import("./components/LenderPage"),
+);
 const GoldLandingPage = lazy(() => import("./components/GoldLandingPage"));
 const JPLLandingPage = lazy(() => import("./components/JPL/JPLLandingPage"));
 const BroadRidgeJobsPage = lazy(() => import("./components/BroadRidgepage"));
@@ -77,88 +118,210 @@ const JobAnalysisResult = lazy(() => import("./components/JobAnalysisResult"));
 const ExamPage = lazy(() => import("./components/ExamPage"));
 const ExamQuestionPage = lazy(() => import("./components/ExamQuestionPage"));
 const ExamResultsPage = lazy(() => import("./components/ExamResultsPage"));
-const Partnersdasboard = lazy(() => import("./AskoxyAdmin/Freelanceradmin/Partnersdasboard"));
-const AdminRequirementList = lazy(() => import("./AskoxyAdmin/Freelanceradmin/AdminRequirementList"));
-const AssignedFreelancerAdmin = lazy(() => import("./AskoxyAdmin/Freelanceradmin/AssignedFreelancerslistAdmin"));
-const EmployeeProtectedRoutes = lazy(() => import("./auth/EmployeeProtectedRoute"));
-const AssignedFreelancersPage = lazy(() => import("./FreelanceMarketplace/AssignedFreelancersPage"));
-const FreelancerProfiles = lazy(() => import("./FreelanceMarketplace/FreelancerProfiles"));
-const RequirementList = lazy(() => import("./FreelanceMarketplace/RequirementList"));
-const EmployeeDashboard = lazy(() => import("./FreelanceMarketplace/EmployeeDashboard"));
-const EmployeeLogin = lazy(() => import("./FreelanceMarketplace/EmployeeLogin"));
-const EmployeeRegister = lazy(() => import("./FreelanceMarketplace/EmployeeRegister"));
+const Partnersdasboard = lazy(
+  () => import("./AskoxyAdmin/Freelanceradmin/Partnersdasboard"),
+);
+const AdminRequirementList = lazy(
+  () => import("./AskoxyAdmin/Freelanceradmin/AdminRequirementList"),
+);
+const AssignedFreelancerAdmin = lazy(
+  () => import("./AskoxyAdmin/Freelanceradmin/AssignedFreelancerslistAdmin"),
+);
+const EmployeeProtectedRoutes = lazy(
+  () => import("./auth/EmployeeProtectedRoute"),
+);
+const AssignedFreelancersPage = lazy(
+  () => import("./FreelanceMarketplace/AssignedFreelancersPage"),
+);
+const FreelancerProfiles = lazy(
+  () => import("./FreelanceMarketplace/FreelancerProfiles"),
+);
+const RequirementList = lazy(
+  () => import("./FreelanceMarketplace/RequirementList"),
+);
+const EmployeeDashboard = lazy(
+  () => import("./FreelanceMarketplace/EmployeeDashboard"),
+);
+const EmployeeLogin = lazy(
+  () => import("./FreelanceMarketplace/EmployeeLogin"),
+);
+const EmployeeRegister = lazy(
+  () => import("./FreelanceMarketplace/EmployeeRegister"),
+);
 const FinvibeLanding = lazy(() => import("./Finvibe/Landing"));
 const Finvide3DLanding = lazy(() => import("./Finvibe/Finvibe3DLanding"));
 const FinvibeLayout = lazy(() => import("./Finvibe/FinvibeLayout"));
 const FinvibeHomePage = lazy(() => import("./Finvibe/components/HomePage"));
 const FinvibeStage1Page = lazy(() => import("./Finvibe/components/Stage1Page"));
 const FinvibeStage2Page = lazy(() => import("./Finvibe/components/Stage2Page"));
-const FinvibeGenerationPage = lazy(() => import("./Finvibe/components/GenerationPage"));
+const FinvibeGenerationPage = lazy(
+  () => import("./Finvibe/components/GenerationPage"),
+);
 const OxyGPT = lazy(() => import("./Finvibe/components/Oxyclaude"));
 const OxyStreamClaude = lazy(() => import("./Finvibe/OxyStreamClaude"));
 const Billing = lazy(() => import("./Finvibe/components/Billing"));
-const SendPollBasedRewards = lazy(() => import("./AskoxyAdmin/SendPollBasedRewards"));
-const ViewPollBasedRewards = lazy(() => import("./AskoxyAdmin/ViewPollBasedRewards"));
+const SendPollBasedRewards = lazy(
+  () => import("./AskoxyAdmin/SendPollBasedRewards"),
+);
+const ViewPollBasedRewards = lazy(
+  () => import("./AskoxyAdmin/ViewPollBasedRewards"),
+);
 const PlatformRedirect = lazy(() => import("./components/PlatformRedirect"));
 const HiringLandingPage = lazy(() => import("./components/HiringLandingPage"));
 const WalkInJourneyPage = lazy(() => import("./components/WalkInJourneyPage"));
-const DRACertificationLanding = lazy(() => import("./components/DRACertificationLanding"));
+const DRACertificationLanding = lazy(
+  () => import("./components/DRACertificationLanding"),
+);
 const GCCMate = lazy(() => import("./components/GCCMateLandingPage/GCCMate"));
-const EmployerJobSeekerPage = lazy(() => import("./components/JPL/EmployerJobSeekerPage"));
-const EmployerMentorSection = lazy(() => import("./components/JPL/EmployerMentorSection"));
-const RecruitmentKnightRidersPage = lazy(() => import("./components/JPL/RecruitmentKnightRidersPage"));
-const RoyalJobSeekersPage = lazy(() => import("./components/JPL/RoyalJobSeekersPage"));
-const MarketplaceRaisersPage = lazy(() => import("./components/JPL/MarketplaceRaisersPage"));
-const TrainingInstituteGiantsPage = lazy(() => import("./components/JPL/TalentSuperKingsPage"));
+const EmployerJobSeekerPage = lazy(
+  () => import("./components/JPL/EmployerJobSeekerPage"),
+);
+const EmployerMentorSection = lazy(
+  () => import("./components/JPL/EmployerMentorSection"),
+);
+const RecruitmentKnightRidersPage = lazy(
+  () => import("./components/JPL/RecruitmentKnightRidersPage"),
+);
+const RoyalJobSeekersPage = lazy(
+  () => import("./components/JPL/RoyalJobSeekersPage"),
+);
+const MarketplaceRaisersPage = lazy(
+  () => import("./components/JPL/MarketplaceRaisersPage"),
+);
+const TrainingInstituteGiantsPage = lazy(
+  () => import("./components/JPL/TalentSuperKingsPage"),
+);
 const LoginAdmin = lazy(() => import("./AIMockInterview/admin/LoginAdmin"));
-const ResumeAIToolsPage = lazy(() => import("./components/JPL/ResumeAIToolsPage"));
+const ResumeAIToolsPage = lazy(
+  () => import("./components/JPL/ResumeAIToolsPage"),
+);
 const ReferBuddyPage = lazy(() => import("./components/JPL/ReferBuddyPage"));
 const ProxyLendPage = lazy(() => import("./components/Services/ProxyLend"));
 const RadhAIPage = lazy(() => import("./components/talktoceo/radhai"));
 const TalkToCEO = lazy(() => import("./components/talktoceo/TalkToCEO"));
-const RadhAIVoicePage = lazy(() => import("./components/talktoceo/RadhAIVoicePage"));
-const RadhAICloneAdminPage = lazy(() => import("./components/talktoceo/RadhAICloneAdminPage"));
-const SudheerVakkalagadda = lazy(() => import("./AskoxyAdmin/SudheerVakkalagadda"));
-const RadhAIRAndDPage = lazy(() => import("./components/talktoceo/RadhAIRAndDPage"));
-const RadhAIAdminDashboard = lazy(() => import("./components/talktoceo/RadhAIAdminDashboard"));
-const UploadPage = lazy(() => import("./components/EmailCampaign/index").then(m => ({ default: m.UploadPage })));
-const SendCampaignPage = lazy(() => import("./components/EmailCampaign/index").then(m => ({ default: m.SendCampaignPage })));
-const AllDocumentsPage = lazy(() => import("./components/EmailCampaign/index").then(m => ({ default: m.AllDocumentsPage })));
-const AllCampaignsRoute = lazy(() => import("./components/EmailCampaign/index").then(m => ({ default: m.AllCampaignsRoute })));
-const ScorecardPage = lazy(() => import("./components/EmailCampaign/index").then(m => ({ default: m.ScorecardPage })));
-const ConversationsPage = lazy(() => import("./components/EmailCampaign/index").then(m => ({ default: m.ConversationsPage })));
-const GoogleAnalyticsDashboard = lazy(() => import("./components/GoogleAnalyticsDashboard"));
-const OxyBricksFractionalPage = lazy(() => import("./components/FractionalPage"));
-const Assignedtasksbasedstatus = lazy(() => import("./Taskmanagement/Assignedtasksbasedstatus"));
-const EmiratesNBDAIIntelligenceReport2026 = lazy(() => import("./components/EmiratesNBDAIIntelligenceReport2026"));
-const FABAIIntelligenceReport2026 = lazy(() => import("./components/FABAIIntelligenceReport2026"));
-const ADIBAIIntelligenceReport2026 = lazy(() => import("./components/ADIBAIIntelligenceReport2026"));
-const DIBAIIntelligenceReport2026 = lazy(() => import("./components/DIBAIIntelligenceReport2026"));
+const RadhAIVoicePage = lazy(
+  () => import("./components/talktoceo/RadhAIVoicePage"),
+);
+const RadhAICloneAdminPage = lazy(
+  () => import("./components/talktoceo/RadhAICloneAdminPage"),
+);
+const SudheerVakkalagadda = lazy(
+  () => import("./AskoxyAdmin/SudheerVakkalagadda"),
+);
+const RadhAIRAndDPage = lazy(
+  () => import("./components/talktoceo/RadhAIRAndDPage"),
+);
+const RadhAIAdminDashboard = lazy(
+  () => import("./components/talktoceo/RadhAIAdminDashboard"),
+);
+const UploadPage = lazy(() =>
+  import("./components/EmailCampaign/index").then((m) => ({
+    default: m.UploadPage,
+  })),
+);
+const SendCampaignPage = lazy(() =>
+  import("./components/EmailCampaign/index").then((m) => ({
+    default: m.SendCampaignPage,
+  })),
+);
+const AllDocumentsPage = lazy(() =>
+  import("./components/EmailCampaign/index").then((m) => ({
+    default: m.AllDocumentsPage,
+  })),
+);
+const AllCampaignsRoute = lazy(() =>
+  import("./components/EmailCampaign/index").then((m) => ({
+    default: m.AllCampaignsRoute,
+  })),
+);
+const ScorecardPage = lazy(() =>
+  import("./components/EmailCampaign/index").then((m) => ({
+    default: m.ScorecardPage,
+  })),
+);
+const ConversationsPage = lazy(() =>
+  import("./components/EmailCampaign/index").then((m) => ({
+    default: m.ConversationsPage,
+  })),
+);
+const GoogleAnalyticsDashboard = lazy(
+  () => import("./components/GoogleAnalyticsDashboard"),
+);
+const OxyBricksFractionalPage = lazy(
+  () => import("./components/FractionalPage"),
+);
+const Assignedtasksbasedstatus = lazy(
+  () => import("./Taskmanagement/Assignedtasksbasedstatus"),
+);
+const EmiratesNBDAIIntelligenceReport2026 = lazy(
+  () => import("./components/EmiratesNBDAIIntelligenceReport2026"),
+);
+const FABAIIntelligenceReport2026 = lazy(
+  () => import("./components/FABAIIntelligenceReport2026"),
+);
+const ADIBAIIntelligenceReport2026 = lazy(
+  () => import("./components/ADIBAIIntelligenceReport2026"),
+);
+const DIBAIIntelligenceReport2026 = lazy(
+  () => import("./components/DIBAIIntelligenceReport2026"),
+);
 const Finvibe3DLanding = lazy(() => import("./Finvibe/Finvibe3DLanding"));
 const UseCaseEngineDemo = lazy(() => import("./Finvibe/UseCaseEngineDemo"));
 const LiveAIDemo = lazy(() => import("./Finvibe/LiveAIDemo"));
-const ADCBAIIntelligenceReport2026 = lazy(() => import("./components/ADCBAIIntelligenceReport2026"));
-const CBDAIIntelligenceReport2026 = lazy(() => import("./components/CBDAIIntelligenceReport2026"));
-const SIBAIIntelligenceReport2026 = lazy(() => import("./components/SIBAIIntelligenceReport2026"));
-const MashreqAIIntelligenceReport2026 = lazy(() => import("./components/MashreqAIIntelligenceReport2026"));
-const NBFAIIntelligenceReport2026 = lazy(() => import("./components/NBFAIIntelligenceReport2026"));
-const RAKBANKAIIntelligenceReport2026 = lazy(() => import("./components/RAKBANKAIIntelligenceReport2026"));
-const UAEBanksAIIntelligenceHub = lazy(() => import("./components/UAEBanksAIIntelligenceHub"));
-const RadhAIVoicePageCEO = lazy(() => import("./components/talktoceo/RadhAIVoicePageLanguage"));
+const ADCBAIIntelligenceReport2026 = lazy(
+  () => import("./components/ADCBAIIntelligenceReport2026"),
+);
+const CBDAIIntelligenceReport2026 = lazy(
+  () => import("./components/CBDAIIntelligenceReport2026"),
+);
+const SIBAIIntelligenceReport2026 = lazy(
+  () => import("./components/SIBAIIntelligenceReport2026"),
+);
+const MashreqAIIntelligenceReport2026 = lazy(
+  () => import("./components/MashreqAIIntelligenceReport2026"),
+);
+const NBFAIIntelligenceReport2026 = lazy(
+  () => import("./components/NBFAIIntelligenceReport2026"),
+);
+const RAKBANKAIIntelligenceReport2026 = lazy(
+  () => import("./components/RAKBANKAIIntelligenceReport2026"),
+);
+const UAEBanksAIIntelligenceHub = lazy(
+  () => import("./components/UAEBanksAIIntelligenceHub"),
+);
+const RadhAIVoicePageCEO = lazy(
+  () => import("./components/talktoceo/RadhAIVoicePageLanguage"),
+);
 const CbsDataPage = lazy(() => import("./AskoxyAdmin/CbsDataPage"));
 const FDBucketData = lazy(() => import("./AskoxyAIAdmin/FDBucketData"));
 const InternshipPage = lazy(() => import("./StudyAbroad/InternshipPage"));
-const BusinessCardLogin = lazy(() => import("./BusinessCard/BusinessCardLogin"));
-const BusinessCardRegister = lazy(() => import("./BusinessCard/BusinessCardRegister"));
-const BusinessCardProtectedRoute = lazy(() => import("./auth/BusinessCardProtectedRoute"));
+const BusinessCardLogin = lazy(
+  () => import("./BusinessCard/BusinessCardLogin"),
+);
+const BusinessCardRegister = lazy(
+  () => import("./BusinessCard/BusinessCardRegister"),
+);
+const BusinessCardProtectedRoute = lazy(
+  () => import("./auth/BusinessCardProtectedRoute"),
+);
 const CeoDetailsPage = lazy(() => import("./BusinessCard/CeoDetailsPage"));
-const ProcessBusinessCardPage = lazy(() => import("./BusinessCard/ProcessBusinessCardPage"));
-const CeoUploadDetailsPage = lazy(() => import("./BusinessCard/CeoUploadDetailsPage"));
-const CeoDetailsListPage = lazy(() => import("./BusinessCard/CeoDetailsListPage"));
+const ProcessBusinessCardPage = lazy(
+  () => import("./BusinessCard/ProcessBusinessCardPage"),
+);
+const CeoUploadDetailsPage = lazy(
+  () => import("./BusinessCard/CeoUploadDetailsPage"),
+);
+const CeoDetailsListPage = lazy(
+  () => import("./BusinessCard/CeoDetailsListPage"),
+);
 const AddLeagueJourney = lazy(() => import("./AskoxyAdmin/AddLeagueJourney"));
 const BorrowerChatPage = lazy(() => import("./components/BorrowerChatPage"));
-const AdminDashboardPage = lazy(() => import("./components/Admindashboardpage"));
-const LeagueJourneysAdmin = lazy(() => import("./AskoxyAdmin/LeagueJourneysAdmin"));
+const AdminDashboardPage = lazy(
+  () => import("./components/Admindashboardpage"),
+);
+const LeagueJourneysAdmin = lazy(
+  () => import("./AskoxyAdmin/LeagueJourneysAdmin"),
+);
 const JobTraining90DaysPage = lazy(
   () => import("./Jobplan/jobplanlandingpage"),
 );
@@ -463,7 +626,6 @@ const InsuranceAgentsPage = lazy(
   () => import("./BharathAIStore/pages/InsuranceAgentsPage"),
 );
 
-
 const CartCaCsService = lazy(() => import("./components/CartCaCsService"));
 const ServiceCAList = lazy(() => import("./components/ServiceCAList"));
 const ServiceDashboard = lazy(() => import("./components/ServiceDashboard"));
@@ -528,7 +690,9 @@ const TaxInvoice = lazy(() => import("./components/TaxInvoice"));
 const AccentureServices = lazy(
   () => import("./components/CampaignStatsAccenture"),
 );
-const CommunityPage = lazy(() => import("./components/community/CommunityPage"));
+const CommunityPage = lazy(
+  () => import("./components/community/CommunityPage"),
+);
 
 const VoiceAdminDashboard = lazy(() => import("./AIvoicesupport/Dashboard"));
 const VoiceAdminInbound = lazy(() => import("./AIvoicesupport/InboundCalls"));
@@ -542,7 +706,6 @@ const VoiceAdminInstructions = lazy(
 );
 const MakeACall = lazy(() => import("./AIvoicesupport/components/makeacall"));
 const VoiceAdminLogin = lazy(() => import("./AIvoicesupport/Login"));
-
 
 // Simple centered loader component
 const LoadingSpinner = React.memo(() => {
@@ -573,7 +736,9 @@ const LoadingSpinner = React.memo(() => {
       .oxy-dot:nth-child(3) { animation-delay: 0.4s; }
     `;
     document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   return (
@@ -584,7 +749,8 @@ const LoadingSpinner = React.memo(() => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)",
+        background:
+          "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)",
         fontFamily: "Arial, sans-serif",
         gap: 0,
       }}
@@ -592,7 +758,6 @@ const LoadingSpinner = React.memo(() => {
       {/* Card */}
       <div
         style={{
-         
           padding: "40px 48px 36px",
           display: "flex",
           flexDirection: "column",
@@ -630,10 +795,15 @@ const LoadingSpinner = React.memo(() => {
           />
         </div>
 
-       
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          
-          <span style={{ fontSize: 14, color: "#6b7280", marginLeft: 6, fontWeight: 500 }}>
+          <span
+            style={{
+              fontSize: 14,
+              color: "#6b7280",
+              marginLeft: 6,
+              fontWeight: 500,
+            }}
+          >
             Loading, please wait…
           </span>
         </div>
@@ -748,7 +918,9 @@ const App: React.FC = () => {
       "/broadridge/jobs",
       "blog/:id/:type",
       "/credera/jobs",
-      "/jpl","/fpl","/oxygold",
+      "/jpl",
+      "/fpl",
+      "/oxygold",
       "/viewjobdetails/default/ALL",
     ];
     if (validEntryPoints.includes(location.pathname)) {
@@ -1025,6 +1197,7 @@ const App: React.FC = () => {
                 path="/rotarydistrict3150AiAgent"
                 element={<RotaryLandingPage />}
               />
+              <Route path="/rotary-data" element={<RotaryDataCollection />} />
               <Route
                 path="/accenture-services"
                 element={<AccentureServices />}
@@ -1789,6 +1962,10 @@ const App: React.FC = () => {
                   path="/main/job-analysis-result"
                   element={<JobAnalysisResult />}
                 />
+                <Route
+                  path="/main/rotary-data"
+                  element={<RotaryDataCollection />}
+                />
                 <Route path="/main/exam" element={<ExamPage />} />
                 <Route
                   path="/main/exam/question/:questionNumber"
@@ -1993,6 +2170,7 @@ const App: React.FC = () => {
                   element={<AddCompanyEmployee />}
                 />
                 <Route path="employeeslist" element={<EmployeesList />} />
+                <Route path="rotarydata" element={<RotaryDataPage />} />
                 <Route path="kukatpally" element={<AllKukatpallyDataPage />} />
                 <Route path="wearehiringadd" element={<WeAreHiringAdd />} />
                 <Route path="addleaguejourney" element={<AddLeagueJourney />} />

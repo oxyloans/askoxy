@@ -243,6 +243,11 @@ const MyRotaryServices: React.FC = () => {
     window.location.href = EXPLORE_AI_AGENT_LINK;
   };
 
+  const openRotaryDataCollection = () => {
+    // Public form: works both logged in (under /main) and without login.
+    navigate(userId ? "/main/rotary-data" : "/rotary-data");
+  };
+
   const submitInterestHandler = async (role: string) => {
     if (isButtonDisabled) return;
 
@@ -298,52 +303,52 @@ const MyRotaryServices: React.FC = () => {
     }
   };
 
-const handleWriteToUsSubmitButton = async () => {
-  if (!query || query.trim() === "") {
-    setQueryError("Please enter your query before submitting.");
-    return;
-  }
-
-  const safeEmail = email || "";
-  const safeMobile = finalMobileNumber || "";
-  const safeUserId = userId || "";
-
-  if (!safeEmail) {
-    message.error("Please update your email.");
-    return;
-  }
-
-  if (!safeMobile) {
-    message.error("Please update your mobile number.");
-    return;
-  }
-
-  try {
-    setIsLoading(true);
-    const success = await submitWriteToUsQuery(
-      safeEmail,
-      safeMobile,
-      query,
-      "ROTARIAN",
-      safeUserId
-    );
-
-    if (success) {
-      setSuccessOpen(true);
-      setIsOpen(false);
-      setQuery("");
-      setQueryError(undefined);
-    } else {
-      message.error("Failed to submit your query. Please try again.");
+  const handleWriteToUsSubmitButton = async () => {
+    if (!query || query.trim() === "") {
+      setQueryError("Please enter your query before submitting.");
+      return;
     }
-  } catch (error) {
-    console.error("Error sending query:", error);
-    message.error("Failed to submit your query. Please try again.");
-    setQueryError("Failed to submit your query. Please try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    const safeEmail = email || "";
+    const safeMobile = finalMobileNumber || "";
+    const safeUserId = userId || "";
+
+    if (!safeEmail) {
+      message.error("Please update your email.");
+      return;
+    }
+
+    if (!safeMobile) {
+      message.error("Please update your mobile number.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const success = await submitWriteToUsQuery(
+        safeEmail,
+        safeMobile,
+        query,
+        "ROTARIAN",
+        safeUserId,
+      );
+
+      if (success) {
+        setSuccessOpen(true);
+        setIsOpen(false);
+        setQuery("");
+        setQueryError(undefined);
+      } else {
+        message.error("Failed to submit your query. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error sending query:", error);
+      message.error("Failed to submit your query. Please try again.");
+      setQueryError("Failed to submit your query. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const Pill = useMemo(
     () =>
@@ -425,6 +430,48 @@ const handleWriteToUsSubmitButton = async () => {
             </div>
           </header>
         )}
+
+        {/* COMPLETE YOUR PROFILE - Highlighted so it's the first thing seen on landing */}
+        <motion.section
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6"
+        >
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 shadow-2xl">
+            <div className="absolute inset-0 rounded-2xl sm:rounded-3xl ring-4 ring-amber-300/50 animate-pulse pointer-events-none" />
+            <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 p-5 sm:p-6">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                <User className="h-7 w-7 text-white" />
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">
+                    Complete Your Profile
+                  </h2>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-600 text-white text-xs font-bold shadow-sm">
+                    Action Needed
+                  </span>
+                </div>
+                <p className="text-sm sm:text-base text-gray-700 mt-1">
+                  Add your details, business, products & services so the Rotary
+                  network can discover and connect with you.
+                </p>
+              </div>
+
+              <button
+                onClick={openRotaryDataCollection}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold shadow-lg hover:shadow-xl hover:from-amber-700 hover:to-orange-700 transition-all active:scale-95 w-full sm:w-auto whitespace-nowrap"
+                type="button"
+              >
+                <User className="h-5 w-5" />
+                Complete Now
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </motion.section>
 
         {/* Enhanced Hero Banner Section */}
         <motion.section
