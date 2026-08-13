@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 import BASE_URL from '../Config';
-import { getCookie } from './employeeAuthCookie';
+import { getEmployeeAuth } from './employeeAuthCookie';
 
 interface EmployeeJob {
   id: string;
@@ -76,9 +76,13 @@ const EmployeeJobComingSoon: React.FC = () => {
 
   const loadJobs = useCallback(
     async (signal?: AbortSignal, isRefresh = false) => {
-      const employeeSession = getCookie('companyContactPersonId');
+      // getEmployeeAuth() validates the cookie's shape AND that
+      // primaryType === "JOBS" in one call. A missing/corrupt cookie or a
+      // wrong-role session sends the employee back to login instead of
+      // letting this page fire a request with a bad/missing id.
+      const auth = getEmployeeAuth();
 
-      if (!employeeSession?.id) {
+      if (!auth) {
         navigate(LOGIN_ROUTE, { replace: true });
         return;
       }
@@ -91,7 +95,7 @@ const EmployeeJobComingSoon: React.FC = () => {
       try {
         const response = await fetch(
           `${BASE_URL}/marketing-service/campgin/getalljobsbyuserid?userId=${encodeURIComponent(
-            employeeSession.id
+            auth.id
           )}`,
           {
             method: 'GET',
@@ -191,6 +195,15 @@ const EmployeeJobComingSoon: React.FC = () => {
 
   const handleStatusChange = async (jobId: string, currentStatus: boolean) => {
     if (updatingStatusIds.has(jobId)) return;
+
+    // Re-validate right before mutating anything. If the session expired
+    // or lost JOBS access while this page was open, block the update and
+    // send the employee back to login instead of firing a stale request.
+    const auth = getEmployeeAuth();
+    if (!auth) {
+      navigate(LOGIN_ROUTE, { replace: true });
+      return;
+    }
 
     const nextStatus = !currentStatus;
     setUpdatingStatusIds((current) => new Set(current).add(jobId));
@@ -1073,3 +1086,25 @@ const employeeJobsStyles = `
 `;
 
 export default EmployeeJobComingSoon;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

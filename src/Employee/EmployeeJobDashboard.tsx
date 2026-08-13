@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 
-import { clearCookie, getCookie } from "./employeeAuthCookie";
+import { clearEmployeeAuth, getEmployeeAuth } from "./employeeAuthCookie";
 import "./EmployeeJobDashboard.css";
 
 interface SidebarItem {
@@ -45,7 +45,7 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     label: "Applications",
-    description: "Candidate review coming soon",
+    description: "Review job candidates",
     path: APPLICATIONS_ROUTE,
     icon: <FileText />,
   },
@@ -55,6 +55,7 @@ const EmployeeJobDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [employeeId, setEmployeeId] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -69,15 +70,22 @@ const EmployeeJobDashboard: React.FC = () => {
     [location.pathname]
   );
 
+  // getEmployeeAuth() is the single source of truth for "is this a valid
+  // employee session with primaryType === JOBS". It returns null for a
+  // missing cookie, corrupted JSON, a legacy plain-id cookie, OR a cookie
+  // whose primaryType isn't JOBS — every one of those sends the user back
+  // to login rather than silently letting them into the wrong workspace.
   useEffect(() => {
-    const employeeSession = getCookie("companyContactPersonId");
+    const auth = getEmployeeAuth();
 
-    if (!employeeSession?.id) {
+    if (!auth) {
+      clearEmployeeAuth();
       navigate(LOGIN_ROUTE, { replace: true });
       return;
     }
 
-    setEmployeeId(employeeSession.id);
+    setEmployeeId(auth.id);
+    setCompanyName(auth.companyName || "");
     setSessionChecked(true);
   }, [navigate]);
 
@@ -103,7 +111,7 @@ const EmployeeJobDashboard: React.FC = () => {
   }, [sidebarOpen]);
 
   const handleLogout = () => {
-    clearCookie("companyContactPersonId");
+    clearEmployeeAuth();
     navigate(LOGIN_ROUTE, { replace: true });
   };
 
@@ -155,7 +163,7 @@ const EmployeeJobDashboard: React.FC = () => {
             <span className="ejd-avatar" aria-hidden="true"><UserRound /></span>
             <span className="ejd-profile-copy">
               <small>Signed in as</small>
-              <strong>Company employee</strong>
+              <strong>{companyName || "Company employee"}</strong>
               <span>ID · {shortEmployeeId(employeeId)}</span>
             </span>
             <ShieldCheck className="ejd-profile-shield" aria-label="Verified session" />
@@ -270,3 +278,14 @@ function mobileLabel(value: string): string {
 }
 
 export default EmployeeJobDashboard;
+
+
+
+
+
+
+
+
+
+
+

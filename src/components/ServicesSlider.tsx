@@ -88,10 +88,10 @@ const ServicesSlider: React.FC = () => {
     const timestamp = getTimestamp(value);
     return timestamp
       ? new Date(timestamp).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
       : "";
   };
 
@@ -109,9 +109,9 @@ const ServicesSlider: React.FC = () => {
       typeof campaign.imageUrls?.[0] === "string"
         ? campaign.imageUrls?.[0]
         : campaign.imageUrls?.[0]?.imageUrl ||
-          campaign.imageUrl ||
-          campaign.images?.[0]?.imageUrl ||
-          "";
+        campaign.imageUrl ||
+        campaign.images?.[0]?.imageUrl ||
+        "";
     if (!firstImage) return "";
     const clean = firstImage.trim();
     if (/^https?:\/\//i.test(clean)) {
@@ -119,14 +119,79 @@ const ServicesSlider: React.FC = () => {
     }
     return `${uploadurlwithId}/${clean.replace(/^\//, "")}`;
   };
+
+  function ImageWithFallback({
+    src,
+    alt,
+    title,
+    imgClassName,
+    wrapperClassName,
+  }: {
+    src?: string | null;
+    alt?: string;
+    title?: string;
+    imgClassName?: string;
+    wrapperClassName?: string;
+  }) {
+    const [failed, setFailed] = useState(false);
+
+    const pickBg = (key = "") => {
+      const colors = [
+        "bg-sky-600",
+        "bg-emerald-600",
+        "bg-violet-600",
+        "bg-rose-600",
+        "bg-teal-600",
+        "bg-indigo-600",
+        "bg-slate-600",
+      ];
+      let h = 0;
+      for (let i = 0; i < key.length; i++) {
+        h = (h << 5) - h + key.charCodeAt(i);
+        h |= 0;
+      }
+      return colors[Math.abs(h) % colors.length];
+    };
+
+    const makeInitials = (text = "") =>
+      (text || "")
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w.charAt(0).toUpperCase())
+        .join("");
+
+    if (!src || failed) {
+      const bg = pickBg(title || alt || "default");
+      return (
+        <div
+          className={`flex h-full w-full items-center justify-center p-5 text-center text-4xl sm:text-5xl font-extrabold uppercase tracking-wider text-white ${bg} ${wrapperClassName || ""
+            }`}
+        >
+          {makeInitials(title || alt) || "?"}
+        </div>
+      );
+    }
+
+    return (
+      // eslint-disable-next-line jsx-a11y/img-redundant-alt
+      <img
+        src={src}
+        alt={alt || "image"}
+        className={imgClassName}
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
   const getCampaignFirstImage1 = (campaign: Campaign) => {
     const firstImage =
       typeof campaign.imageUrls?.[0] === "string"
         ? campaign.imageUrls?.[0]
         : campaign.imageUrls?.[0]?.imageUrl ||
-          campaign.imageUrl ||
-          campaign.images?.[0]?.imageUrl ||
-          "";
+        campaign.imageUrl ||
+        campaign.images?.[0]?.imageUrl ||
+        "";
     if (!firstImage) return "";
     const clean = firstImage.trim();
     if (/^https?:\/\//i.test(clean)) {
@@ -303,29 +368,29 @@ const ServicesSlider: React.FC = () => {
   const displayedJobs = Array.isArray(jobs)
     ? showAllJobs
       ? [...jobs].sort(
-          (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt),
-        )
+        (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt),
+      )
       : [...jobs]
-          .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt))
-          .slice(0, 5)
+        .sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt))
+        .slice(0, 5)
     : [];
 
   const allServices = showAllServices
     ? [
-        ...services,
-        ...nonBlogCampaigns
-          .filter(
-            (campaign) =>
-              getCampaignTitle(campaign).trim() !==
-              "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
-          )
-          .map((campaign) => ({
-            image: getCampaignFirstImage(campaign),
-            title: getCampaignTitle(campaign),
-            path: "",
-            campaign,
-          })),
-      ]
+      ...services,
+      ...nonBlogCampaigns
+        .filter(
+          (campaign) =>
+            getCampaignTitle(campaign).trim() !==
+            "AI AGENTS 2 EARN MONEY | ZERO INVESTMENT | LIFETIME EARNINGS",
+        )
+        .map((campaign) => ({
+          image: getCampaignFirstImage(campaign),
+          title: getCampaignTitle(campaign),
+          path: "",
+          campaign,
+        })),
+    ]
     : services.slice(0, 4);
 
   useEffect(() => {
@@ -579,29 +644,15 @@ const ServicesSlider: React.FC = () => {
                             playsInline
                           />
                         ) : (
-                          <img
+                          <ImageWithFallback
                             src={mediaUrl}
                             alt={title}
-                            className="w-full h-full object-contain bg-gray-100 transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
+                            title={title}
+                            imgClassName="w-full h-full object-contain bg-gray-100 transition-transform duration-300 group-hover:scale-105"
                           />
-
-                          // <img
-                          //   src={mediaUrl}
-                          //   alt={title}
-                          //   className="w-full h-full object-fill transition-transform duration-300 group-hover:scale-105"
-                          //   loading="lazy"
-                          // />
                         )
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center p-5 text-center text-2xl font-extrabold uppercase tracking-wider text-white">
-                          {title
-                            .split(/\s+/)
-                            .filter(Boolean)
-                            .slice(0, 2)
-                            .map((word) => word[0])
-                            .join("") || "J"}
-                        </div>
+                        <ImageWithFallback title={title} alt={title} wrapperClassName="w-full h-full" />
                       )}
 
                       <div className="absolute top-2 left-2">
@@ -641,7 +692,7 @@ const ServicesSlider: React.FC = () => {
 
             {!showAllLeagueJourneys &&
               displayedLeagueJourneys.length <
-                leagueJourneyCampaigns.length && (
+              leagueJourneyCampaigns.length && (
                 <div className="mt-8 text-center">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -675,10 +726,10 @@ const ServicesSlider: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
-                Our <span className="text-yellow-500">Services</span>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#008cba] via-[#1ab394] to-[#1e3a8a] leading-tight">
+                Our <span className="text-[#008cba]">Services</span>
               </h2>
-              <div className="w-24 h-1.5 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-2 mx-auto sm:mx-0 rounded-full"></div>
+              <div className="w-24 h-1.5 bg-gradient-to-r from-[#008cba] via-[#1ab394] to-[#1e3a8a] mt-2 mx-auto sm:mx-0 rounded-full"></div>
             </motion.div>
           </div>
 
@@ -732,11 +783,12 @@ const ServicesSlider: React.FC = () => {
                 onClick={() => handleServiceClick(service)}
               >
                 <div className="w-full h-36 flex items-center justify-center mb-3 overflow-hidden">
-                  <img
+                  <ImageWithFallback
                     src={service.image}
                     alt={service.title}
-                    className="w-full h-full object-contain transition-transform duration-300"
-                    loading="lazy"
+                    title={service.title}
+                    imgClassName="w-full h-full object-contain transition-transform duration-300"
+                    wrapperClassName="w-full h-full"
                   />
                 </div>
                 <h3 className="text-center text-sm sm:text-base font-medium text-gray-800 transition-colors duration-300 line-clamp-2">
@@ -756,14 +808,14 @@ const ServicesSlider: React.FC = () => {
           allServices.length < services.length + nonBlogCampaigns.length && (
             <div className="mt-6 text-center">
               <motion.button
-  whileHover={{ scale: 1.02 }}
-  whileTap={{ scale: 0.98 }}
-  className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/30 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
-  onClick={() => setShowAllServices(true)}
->
-  View all services
-  <span className="ml-2">→</span>
-</motion.button>
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-[#4C1D95] via-[#7C3AED] to-[#A855F7] text-white font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/30 hover:from-[#3B0764] hover:via-[#6D28D9] hover:to-[#9333EA] text-sm"
+                onClick={() => setShowAllServices(true)}
+              >
+                View all services
+                <span className="ml-2">→</span>
+              </motion.button>
             </div>
           )}
       </div>
@@ -838,7 +890,7 @@ const ServicesSlider: React.FC = () => {
               transition={{ duration: 0.4 }}
             >
               {displayedBlogs.map((campaign, index) => {
-                const mediaUrl = getCampaignFirstImage1(campaign);
+                const mediaUrl = getCampaignFirstImage(campaign);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(mediaUrl);
                 const title = getCampaignTitle(campaign);
                 const publishedDate = formatPublishedDate(campaign.createdAt);
@@ -865,28 +917,15 @@ const ServicesSlider: React.FC = () => {
                             playsInline
                           />
                         ) : (
-                          // <img
-                          //   src={mediaUrl}
-                          //   alt={title}
-                          //   className="w-full h-full object-contain bg-gray-100 transition-transform duration-300 group-hover:scale-105"
-                          //   loading="lazy"
-                          // />
-                          <img
+                          <ImageWithFallback
                             src={mediaUrl}
                             alt={title}
-                            className="w-full h-full object-fill transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
+                            title={title}
+                            imgClassName="w-full h-full object-fill transition-transform duration-300 group-hover:scale-105"
                           />
                         )
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center p-5 text-center text-2xl font-extrabold uppercase tracking-wider text-white">
-                          {title
-                            .split(/\s+/)
-                            .filter(Boolean)
-                            .slice(0, 2)
-                            .map((word) => word[0])
-                            .join("") || "B"}
-                        </div>
+                        <ImageWithFallback title={title} alt={title} wrapperClassName="w-full h-full" />
                       )}
 
                       <div className="absolute top-2 left-2">
@@ -957,10 +996,10 @@ const ServicesSlider: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3c1973] to-[#1e3a8a] leading-tight">
-                Our <span className="text-yellow-500">Jobs</span>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#008cba] via-[#1ab394] to-[#1e3a8a] leading-tight">
+                Our <span className="text-[#008cba]">Jobs</span>
               </h2>
-              <div className="w-24 h-1.5 bg-gradient-to-r from-yellow-500 via-purple-600 to-blue-500 mt-2 mx-auto sm:mx-0 rounded-full"></div>
+              <div className="w-24 h-1.5 bg-gradient-to-r from-[#008cba] via-[#1ab394] to-[#1e3a8a] mt-2 mx-auto sm:mx-0 rounded-full"></div>
             </motion.div>
           </div>
 

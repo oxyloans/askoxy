@@ -366,6 +366,11 @@ export default function CommunityPage() {
   const [presenceConnected, setPresenceConnected] = useState(false);
   const [presenceError, setPresenceError] = useState("");
   const [presenceUpdatedAt, setPresenceUpdatedAt] = useState<Date | null>(null);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [tutorialIframeSrc, setTutorialIframeSrc] = useState<string | null>(null);
+  const tutorialWatchButtonRef = useRef<HTMLButtonElement | null>(null);
+  const tutorialCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const tutorialModalRef = useRef<HTMLDivElement | null>(null);
   const presenceRequestInFlight = useRef(false);
   const queryReactionRequests = useRef(new Set<number>());
 
@@ -373,6 +378,61 @@ export default function CommunityPage() {
     setToastMessage(message);
     window.setTimeout(() => setToastMessage(""), 2200);
   }, []);
+
+  const closeTutorial = useCallback(() => {
+    setTutorialOpen(false);
+    setTutorialIframeSrc(null);
+    try {
+      tutorialWatchButtonRef.current?.focus();
+    } catch { }
+    document.body.style.overflow = "";
+  }, []);
+
+  useEffect(() => {
+    if (!tutorialOpen) return;
+
+    // prevent background scroll while modal is open
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // focus the close button when modal opens
+    setTimeout(() => tutorialCloseButtonRef.current?.focus(), 0);
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeTutorial();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        const root = tutorialModalRef.current;
+        if (!root) return;
+        const focusable = Array.from(
+          root.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter(Boolean);
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = prev;
+    };
+  }, [tutorialOpen, closeTutorial]);
 
   const loadProfile = useCallback(
     async (openIncompleteProfile = true) => {
@@ -405,13 +465,13 @@ export default function CommunityPage() {
     [accessToken, currentUserId],
   );
 
-const formatReactionCount = (
-  count: number | null | undefined,
-  label: "Like" | "Dislike",
-) => {
-  const safeCount = Number(count) || 0;
-  return `${safeCount} ${label}${safeCount === 1 ? "" : "s"}`;
-};
+  const formatReactionCount = (
+    count: number | null | undefined,
+    label: "Like" | "Dislike",
+  ) => {
+    const safeCount = Number(count) || 0;
+    return `${safeCount} ${label}${safeCount === 1 ? "" : "s"}`;
+  };
 
   useEffect(() => {
     void loadProfile();
@@ -559,7 +619,7 @@ const formatReactionCount = (
       const countWithoutCurrentUser = Math.max(
         0,
         (snapshotCount ?? snapshotUsers?.length ?? 0) -
-          (snapshotUsers?.some((user) => String(user.userId) === String(currentUserId)) ? 1 : 0),
+        (snapshotUsers?.some((user) => String(user.userId) === String(currentUserId)) ? 1 : 0),
       );
       setOnlineUsersCount(Math.max(countWithoutCurrentUser, otherUsers?.length ?? 0));
       setPresenceUpdatedAt(new Date());
@@ -682,11 +742,11 @@ const formatReactionCount = (
       if (disposed) return;
       try {
         console.debug("[community ws] STOMP error frame:", frame);
-      } catch {}
+      } catch { }
       setPresenceConnected(false);
       setPresenceError(
         (frame && (frame.headers?.message || frame.body)) ||
-          "Community presence connection failed.",
+        "Community presence connection failed.",
       );
       stopHeartbeat();
     };
@@ -695,7 +755,7 @@ const formatReactionCount = (
       if (disposed) return;
       try {
         console.debug("[community ws] WebSocket error:", event);
-      } catch {}
+      } catch { }
       setPresenceConnected(false);
       setPresenceError(
         "Unable to connect to live community presence. Retrying...",
@@ -707,7 +767,7 @@ const formatReactionCount = (
       if (disposed) return;
       try {
         console.debug("[community ws] WebSocket close:", event);
-      } catch {}
+      } catch { }
       setPresenceConnected(false);
       stopHeartbeat();
     };
@@ -722,7 +782,7 @@ const formatReactionCount = (
         maskedToken,
         hasAccessToken: Boolean(accessToken),
       });
-    } catch {}
+    } catch { }
 
     client.activate();
 
@@ -756,23 +816,23 @@ const formatReactionCount = (
 
       const queriesWithReactions = currentUserId
         ? await Promise.all(
-            result.queries.map(async (query) => {
-              try {
-                const reaction = await getQueryReactionForUser(
-                  query.id,
-                  currentUserId,
-                );
-                saveQueryReaction(currentUserId, query.id, reaction);
-                return applyQueryReactionStatus(query, reaction);
-              } catch (reactionError) {
-                console.error(
-                  `Unable to load reaction for query ${query.id}:`,
-                  reactionError,
-                );
-                return applySavedQueryReaction(query, currentUserId);
-              }
-            }),
-          )
+          result.queries.map(async (query) => {
+            try {
+              const reaction = await getQueryReactionForUser(
+                query.id,
+                currentUserId,
+              );
+              saveQueryReaction(currentUserId, query.id, reaction);
+              return applyQueryReactionStatus(query, reaction);
+            } catch (reactionError) {
+              console.error(
+                `Unable to load reaction for query ${query.id}:`,
+                reactionError,
+              );
+              return applySavedQueryReaction(query, currentUserId);
+            }
+          }),
+        )
         : result.queries;
 
       setQueries(queriesWithReactions);
@@ -959,9 +1019,9 @@ const formatReactionCount = (
       };
       const savedQuery = editingQuery
         ? await updateQuery(editingQuery.id, {
-            ...payload,
-            version: editingQuery.version,
-          })
+          ...payload,
+          version: editingQuery.version,
+        })
         : await createQuery(payload);
       showToast(
         editingQuery
@@ -1168,7 +1228,7 @@ const formatReactionCount = (
             )}
             {isRegistered && (
               <div
-                className="hidden min-h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-black text-emerald-700 md:inline-flex"
+                className="hidden min-h-10 items-center gap-2 px-3 text-xs font-black text-emerald-900 md:inline-flex"
                 title={
                   presenceConnected
                     ? "Live community presence connected"
@@ -1176,13 +1236,12 @@ const formatReactionCount = (
                 }
               >
                 <span
-                  className={`h-2.5 w-2.5 rounded-full ${
-                    presenceConnected
-                      ? "animate-pulse bg-emerald-500"
-                      : "bg-amber-400"
-                  }`}
+                  className={`h-2.5 w-2.5 rounded-full ${presenceConnected
+                    ? "animate-pulse bg-emerald-500"
+                    : "bg-amber-400"
+                    }`}
                 />
-                {onlineUsersCount} online
+                <span className="ml-1">{onlineUsersCount} online</span>
               </div>
             )}
             {isRegistered && (
@@ -1232,9 +1291,7 @@ const formatReactionCount = (
                 </h1>
 
                 <p className="mt-4 max-w-2xl text-[14px] leading-6 text-slate-600 sm:text-base sm:leading-7">
-                  Learn more about ASKOXY services, ask practical questions,
-                  share real experiences and receive useful guidance from users,
-                  employees and verified members.
+                  Watch the short video to learn how to ask a helpful community question.
                 </p>
 
                 <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
@@ -1244,6 +1301,29 @@ const formatReactionCount = (
                   >
                     <Lightbulb size={18} />
                     Ask Your First Question
+                  </button>
+                  <button
+                    ref={tutorialWatchButtonRef}
+                    onClick={() => {
+                      setTutorialIframeSrc(
+                        "https://drive.google.com/file/d/1dikM7p_R6ky--S3X6GfXjNs9JjTX2uC8/preview",
+                      );
+                      setTutorialOpen(true);
+                    }}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold text-white bg-gradient-to-r from-[#5b2d90] to-[#8b5bb6] shadow-[0_8px_20px_rgba(91,45,144,0.18)] transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#8b5bb6]/40"
+                    aria-label="Watch video"
+                    title="Watch Video"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="mr-2 h-4 w-4 text-white"
+                      aria-hidden
+                    >
+                      <path d="M3 22v-20l18 10-18 10z" />
+                    </svg>
+                    Watch Video
                   </button>
                   {!isRegistered && (
                     <button
@@ -1354,11 +1434,10 @@ const formatReactionCount = (
                           aria-pressed={Boolean(
                             selectedQuery.reactions?.likedByCurrentUser,
                           )}
-                          className={`${actionButton} ${
-                            selectedQuery.reactions?.likedByCurrentUser
-                              ? "border-blue-300 bg-blue-50 text-blue-700 shadow-sm"
-                              : "hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                          }`}
+                          className={`${actionButton} ${selectedQuery.reactions?.likedByCurrentUser
+                            ? "border-blue-300 bg-blue-50 text-blue-700 shadow-sm"
+                            : "hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                            }`}
                         >
                           <ThumbsUp
                             size={16}
@@ -1382,11 +1461,10 @@ const formatReactionCount = (
                           aria-pressed={Boolean(
                             selectedQuery.reactions?.dislikedByCurrentUser,
                           )}
-                          className={`${actionButton} ${
-                            selectedQuery.reactions?.dislikedByCurrentUser
-                              ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
-                              : "hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
-                          }`}
+                          className={`${actionButton} ${selectedQuery.reactions?.dislikedByCurrentUser
+                            ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
+                            : "hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                            }`}
                         >
                           <ThumbsDown
                             size={16}
@@ -1582,7 +1660,7 @@ const formatReactionCount = (
           </section>
         ) : (
           <>
-            <section className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm sm:p-3">
+            <section className="  p-2.5  sm:p-3">
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -1693,11 +1771,10 @@ const formatReactionCount = (
                       setShowMyQueriesOnly(false);
                       setPageNumber(0);
                     }}
-                    className={`flex min-h-10 flex-1 items-center justify-center rounded-lg px-4 text-sm font-bold transition sm:flex-none ${
-                      !showMyQueriesOnly
-                        ? "bg-[#5b2d90] text-white shadow-sm"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-[#5b2d90]"
-                    }`}
+                    className={`flex min-h-10 flex-1 items-center justify-center rounded-lg px-4 text-sm font-bold transition sm:flex-none ${!showMyQueriesOnly
+                      ? "bg-[#5b2d90] text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-[#5b2d90]"
+                      }`}
                   >
                     All Queries
                   </button>
@@ -1708,19 +1785,17 @@ const formatReactionCount = (
                       setShowMyQueriesOnly(true);
                       setPageNumber(0);
                     }}
-                    className={`flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition sm:flex-none ${
-                      showMyQueriesOnly
-                        ? "bg-[#5b2d90] text-white shadow-sm"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-[#5b2d90]"
-                    }`}
+                    className={`flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition sm:flex-none ${showMyQueriesOnly
+                      ? "bg-[#5b2d90] text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-[#5b2d90]"
+                      }`}
                   >
                     My Queries
                     <span
-                      className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-black ${
-                        showMyQueriesOnly
-                          ? "bg-white/20 text-white"
-                          : "bg-purple-50 text-[#5b2d90]"
-                      }`}
+                      className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-black ${showMyQueriesOnly
+                        ? "bg-white/20 text-white"
+                        : "bg-purple-50 text-[#5b2d90]"
+                        }`}
                     >
                       {myQueries.length}
                     </span>
@@ -1869,6 +1944,61 @@ const formatReactionCount = (
         />
       )}
 
+      {tutorialOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="community-tutorial-title"
+          ref={tutorialModalRef}
+        >
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={closeTutorial}
+            aria-hidden
+          />
+
+          <div
+            className="relative z-10 w-full max-w-3xl rounded-xl bg-white p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="community-tutorial-title" className="sr-only">
+              Watch tutorial
+            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <div />
+              <button
+                type="button"
+                ref={tutorialCloseButtonRef}
+                onClick={closeTutorial}
+                className="text-sm font-semibold text-slate-600"
+                aria-label="Close tutorial"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="aspect-[16/9] w-full">
+              {tutorialIframeSrc ? (
+                <iframe
+                  src={tutorialIframeSrc}
+                  title="AskOxy tutorial"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  loading="lazy"
+                  className="h-full w-full rounded-md"
+                />
+              ) : (
+                <div className="h-full w-full rounded-md bg-slate-50 flex items-center justify-center text-sm text-slate-500">
+                  Loading video…
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -2008,9 +2138,9 @@ function OnlineUsersPanel({
   const hiddenCount = Math.max(0, users.length - visibleUsers.length);
 
   return (
-    <section className="relative mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:mb-5">
-      <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-emerald-100/70 blur-3xl" />
-      <div className="relative flex flex-col gap-3 bg-gradient-to-r from-white via-emerald-50/50 to-purple-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <section className="relative  overflow-hidden  sm:mb-5">
+      <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 " />
+      <div className="relative flex flex-col gap-3  px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5b2d90] to-[#9b66c8] text-white shadow-md">
             <Users size={19} />
@@ -2037,7 +2167,7 @@ function OnlineUsersPanel({
           </div>
         </div>
 
-        <button
+        {/* <button
           type="button"
           onClick={() => void onRetry()}
           disabled={loading}
@@ -2045,7 +2175,7 @@ function OnlineUsersPanel({
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           <span className="sm:hidden">{loading ? "Refreshing" : "Refresh now"}</span>
-        </button>
+        </button> */}
       </div>
 
       <div className="relative border-t border-slate-100 px-4 py-3 sm:px-5">
@@ -2054,7 +2184,7 @@ function OnlineUsersPanel({
             {visibleUsers.map((user) => (
               <div
                 key={user.userId}
-                className="flex min-w-[170px] items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 transition hover:border-emerald-200 hover:bg-emerald-50/60"
+                className="flex min-w-[170px] items-center gap-2.5  px-3 py-2 transition hover:border-emerald-200 hover:bg-emerald-50/60"
                 title={`${user.name} · ${badgeLabel(user.badge, user.name)}`}
               >
                 <div className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5b2d90] to-[#9363bd] text-[10px] font-black text-white">
@@ -2204,11 +2334,10 @@ function QueryCard({
             event.stopPropagation();
             onLike();
           }}
-          className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold transition sm:text-xs ${
-            query.reactions?.likedByCurrentUser
-              ? "bg-blue-100 text-blue-700 shadow-sm"
-              : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-          }`}
+          className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold transition sm:text-xs ${query.reactions?.likedByCurrentUser
+            ? "bg-blue-100 text-blue-700 shadow-sm"
+            : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+            }`}
           aria-pressed={Boolean(query.reactions?.likedByCurrentUser)}
         >
           <ThumbsUp
@@ -2224,11 +2353,10 @@ function QueryCard({
             onDislike();
           }}
           aria-pressed={Boolean(query.reactions?.dislikedByCurrentUser)}
-          className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold transition sm:text-xs ${
-            query.reactions?.dislikedByCurrentUser
-              ? "bg-rose-100 text-rose-700 shadow-sm"
-              : "text-slate-600 hover:bg-rose-50 hover:text-rose-700"
-          }`}
+          className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-bold transition sm:text-xs ${query.reactions?.dislikedByCurrentUser
+            ? "bg-rose-100 text-rose-700 shadow-sm"
+            : "text-slate-600 hover:bg-rose-50 hover:text-rose-700"
+            }`}
         >
           <ThumbsDown
             size={15}
@@ -2269,9 +2397,8 @@ function Author({
   return (
     <div className="flex min-w-0 items-center gap-3">
       <div
-        className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5b2d90] to-[#9363bd] font-black text-white ${
-          compact ? "h-9 w-9 text-xs" : "h-11 w-11 text-sm"
-        }`}
+        className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5b2d90] to-[#9363bd] font-black text-white ${compact ? "h-9 w-9 text-xs" : "h-11 w-11 text-sm"
+          }`}
       >
         {initials(user?.name)}
       </div>
@@ -2328,13 +2455,13 @@ function CommentItem({
       node.id === id
         ? updater(node)
         : {
-            ...node,
-            replies: replaceInTree(
-              (node.replies || []).filter(Boolean) as CommunityComment[],
-              id,
-              updater,
-            ),
-          },
+          ...node,
+          replies: replaceInTree(
+            (node.replies || []).filter(Boolean) as CommunityComment[],
+            id,
+            updater,
+          ),
+        },
     );
 
   const removeFromTree = (
@@ -2529,11 +2656,10 @@ function CommentItem({
                 type="button"
                 onClick={() => react("LIKE")}
                 aria-pressed={Boolean(comment.reactions?.likedByCurrentUser)}
-                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
-                  comment.reactions?.likedByCurrentUser
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
-                }`}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${comment.reactions?.likedByCurrentUser
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
+                  }`}
               >
                 <ThumbsUp
                   size={14}
@@ -2549,11 +2675,10 @@ function CommentItem({
                 type="button"
                 onClick={() => react("DISLIKE")}
                 aria-pressed={Boolean(comment.reactions?.dislikedByCurrentUser)}
-                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${
-                  comment.reactions?.dislikedByCurrentUser
-                    ? "bg-rose-100 text-rose-700"
-                    : "text-slate-500 hover:bg-rose-50 hover:text-rose-700"
-                }`}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition ${comment.reactions?.dislikedByCurrentUser
+                  ? "bg-rose-100 text-rose-700"
+                  : "text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+                  }`}
               >
                 <ThumbsDown
                   size={14}
@@ -2758,24 +2883,24 @@ function QueryModal({
 
         {communityCategories.find((item) => item.id === queryForm.categoryId)
           ?.categoryName === "OTHER" && (
-          <label className="mt-5 block text-sm font-bold text-slate-800">
-            Category name
-            <input
-              value={queryForm.otherCategoryName || ""}
-              onChange={(event) =>
-                setQueryForm((current) => ({
-                  ...current,
-                  otherCategoryName: event.target.value,
-                }))
-              }
-              minLength={3}
-              maxLength={100}
-              required
-              placeholder="Enter category name"
-              className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]"
-            />
-          </label>
-        )}
+            <label className="mt-5 block text-sm font-bold text-slate-800">
+              Category name
+              <input
+                value={queryForm.otherCategoryName || ""}
+                onChange={(event) =>
+                  setQueryForm((current) => ({
+                    ...current,
+                    otherCategoryName: event.target.value,
+                  }))
+                }
+                minLength={3}
+                maxLength={100}
+                required
+                placeholder="Enter category name"
+                className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-[#5b2d90]"
+              />
+            </label>
+          )}
 
         <label className="mt-5 block text-sm font-bold text-slate-800">
           Question

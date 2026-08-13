@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import BASE_URL from "../Config";
-import { getCookie } from "./employeeAuthCookie";
+import { getEmployeeAuth } from "./employeeAuthCookie";
 
 export type JobType =
   | "fulltime"
@@ -176,18 +176,28 @@ export default function JobPostForm(): JSX.Element {
   const [aiError, setAiError] = useState<string | null>(null);
   const [popup, setPopup] = useState<PopupState | null>(null);
 
-  useEffect(() => {
-    const employeeSession = getCookie("companyContactPersonId");
+  // sessionCompanyName is carried from the validated auth cookie so the
+  // submitted job can be tagged with the employee's company without asking
+  // them to retype it on every posting.
+  const [sessionCompanyName, setSessionCompanyName] = useState("");
 
-    if (!employeeSession?.id) {
+  useEffect(() => {
+    // getEmployeeAuth() validates the cookie's shape AND that
+    // primaryType === "JOBS" in one call. Any failure — missing cookie,
+    // corrupted JSON, wrong role — sends the employee back to login instead
+    // of letting them reach the job-post form with a bad/missing session.
+    const auth = getEmployeeAuth();
+
+    if (!auth) {
       navigate(LOGIN_ROUTE, { replace: true });
       return;
     }
 
     setForm((previous) => ({
       ...previous,
-      companyContactPersonId: employeeSession.id,
+      companyContactPersonId: auth.id,
     }));
+    setSessionCompanyName(auth.companyName || "");
     setCheckingSession(false);
   }, [navigate]);
 
@@ -340,6 +350,18 @@ export default function JobPostForm(): JSX.Element {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // Defense in depth: re-validate the session right before submit, not
+    // just on mount. If the cookie was cleared, expired, or its
+    // primaryType no longer matches JOBS while the user sat on this page,
+    // block the submit and send them back to login instead of firing the
+    // request with a stale/invalid companyContactPersonId.
+    const auth = getEmployeeAuth();
+    if (!auth) {
+      navigate(LOGIN_ROUTE, { replace: true });
+      return;
+    }
+
     const validationErrors = validate(form);
     setErrors(validationErrors);
 
@@ -356,7 +378,7 @@ export default function JobPostForm(): JSX.Element {
       .join(", ");
 
     const payload: CompanyPersonJobAddDto = {
-      companyContactPersonId: form.companyContactPersonId.trim(),
+      companyContactPersonId: auth.id,
       jobTitle: form.jobTitle.trim(),
       designation: form.designation.trim() || undefined,
       locations: normalizedLocations,
@@ -365,6 +387,7 @@ export default function JobPostForm(): JSX.Element {
       skills: form.skills.trim(),
       industry: form.industry.trim() || "IT",
       jobType: form.jobType,
+      companyName: auth.companyName || undefined,
     };
 
     if (form.salaryMin && form.salaryMax && form.payRateFrequencyType) {
@@ -432,7 +455,11 @@ export default function JobPostForm(): JSX.Element {
           <div>
             <span className="jpf-eyebrow">Job Management</span>
             <h1 id="jpf-title">Create a new job</h1>
-            <p>Add the role details, requirements and salary information.</p>
+            <p>
+              {sessionCompanyName
+                ? `Posting as ${sessionCompanyName}. Add the role details, requirements and salary information.`
+                : "Add the role details, requirements and salary information."}
+            </p>
           </div>
         </div>
 
@@ -1167,3 +1194,14 @@ const jobPostStyles = `
     .jpf-back-button { transition: none; }
   }
 `;
+
+
+
+
+
+
+
+
+
+
+

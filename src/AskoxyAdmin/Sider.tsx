@@ -305,15 +305,15 @@ const Sidebar: React.FC = () => {
           {
             title: "Add Company Employee",
             icon: <FaUserPlus className="text-cyan-400" />,
-            link: "/admin/addcompanyemployee",
+            link: "/admin/addcompanyemployeenew",
             roles: ["HELPDESKSUPERADMIN"],
           },
-          {
-            title: "Employees List",
-            icon: <FaUsers className="text-emerald-400" />,
-            link: "/admin/employeeslist",
-            roles: ["HELPDESKSUPERADMIN"],
-          },
+          // {
+          //   title: "Employees List",
+          //   icon: <FaUsers className="text-emerald-400" />,
+          //   link: "/admin/employeeslist",
+          //   roles: ["HELPDESKSUPERADMIN"],
+          // },
         ],
       },
       {

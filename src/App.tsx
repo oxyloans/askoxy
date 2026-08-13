@@ -34,6 +34,7 @@ import JourneysVsCampaignsVsInterestedUsers from "./AskoxyAdmin/JourneysVsCampai
 import EmployeeApplicationsComingSoon from "./Employee/EmployeeApplicationsComingSoon";
 import EmployeeJobComingSoon from "./Employee/EmployeeJobComingSoon";
 import JobPostForm from "./Employee/JobPostForm";
+import AddCompanyEmployeeNew from "./AskoxyAdmin/Addcompanyemployeenew";
 
 // ─── Previously-eager imports converted to lazy ───────────────────────────────
 const AppliedJobs = lazy(() => import("./Dashboard/AppliedJobs"));
@@ -2166,8 +2167,8 @@ const App: React.FC = () => {
                 />
                 <Route path="campaignsadd" element={<CampaignsAdd />} />
                 <Route
-                  path="addcompanyemployee"
-                  element={<AddCompanyEmployee />}
+                  path="addcompanyemployeenew"
+                  element={<AddCompanyEmployeeNew />}
                 />
                 <Route path="employeeslist" element={<EmployeesList />} />
                 <Route path="rotarydata" element={<RotaryDataPage />} />

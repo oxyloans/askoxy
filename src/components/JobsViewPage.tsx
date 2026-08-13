@@ -422,28 +422,31 @@ const JobViewPage: React.FC = () => {
     }
   };
 
+  const pendingOpenModal = useRef(false);
+
   useEffect(() => {
-    if (location.state?.openApplyModal && selectedJob) {
+    if (location.state?.openApplyModal) {
+      pendingOpenModal.current = true;
+      const { openApplyModal, ...restState } = location.state || {};
+      navigate(location.pathname, { replace: true, state: restState });
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    if (pendingOpenModal.current && selectedJob) {
+      pendingOpenModal.current = false;
       setApplySelectedJob({
         jobDesignation: selectedJob.jobDesignation,
         companyName: selectedJob.companyName,
       });
-
       const examPassed = sessionStorage.getItem("examPassed");
       if (examPassed === "true") {
-        // Coming from exam flow — open JobApplicationModal directly
         setIsModalOpen(true);
       } else {
         setShowResumeModal(true);
       }
-
-      const { openApplyModal, ...restState } = location.state || {};
-      navigate(location.pathname, {
-        replace: true,
-        state: restState,
-      });
     }
-  }, [location.state, selectedJob]);
+  }, [selectedJob]);
 
   useEffect(() => {
     filterJobs();

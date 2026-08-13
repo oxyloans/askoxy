@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowRight,
+  Briefcase,
+  Building2,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -14,7 +16,8 @@ import {
   User,
 } from 'lucide-react';
 
-import { getCookie, saveCookie } from './employeeAuthCookie';
+import { getEmployeeAuth, saveEmployeeAuth } from './employeeAuthCookie';
+import { setEmployeeAccessToken, setEmployeeRefreshToken } from '../utils/cookieUtils';
 
 import BASE_URL from "../Config"
 
@@ -24,6 +27,7 @@ const EMPLOYEE_DASHBOARD_ROUTE = '/employeedashboard';
 // new-user OTP registration, all keyed off which fields are present in the
 // request body.
 const USER_EMAIL_PASSWORD_URL = `${BASE_URL}/user-service/userEmailPassword`;
+const CHANGE_PASSWORD_URL = `${BASE_URL}/user-service/change-password`;
 
 const PRIMARY_TYPE = 'JOBS';
 
@@ -40,11 +44,15 @@ interface EmailCheckResponse {
   id: string | null;
   primaryType: string | null;
   name: string | null;
+  companyName: string | null;
+  designation: string | null;
+  requiredToChangePassword?: boolean | null;
 }
 
 interface ApiErrorResponse {
   error?: string;
   message?: string;
+  errorMessage?: string;
 }
 
 interface EmployeeData {
@@ -53,6 +61,7 @@ interface EmployeeData {
   name: string;
   email: string;
   primaryType?: string | null;
+  companyName?: string | null;
   token?: string | null;
   accessToken?: string | null;
 }
@@ -101,17 +110,26 @@ const getLoginFeedback = (httpStatus: number, apiMessage?: string): LoginFeedbac
 const extractApiError = (result: unknown): string | undefined => {
   if (!result || typeof result !== 'object') return undefined;
   const r = result as ApiErrorResponse;
-  return r.error || r.message;
+  return r.error || r.message || r.errorMessage;
 };
 
 const hasLoginTokens = (result: EmailCheckResponse | null): boolean =>
   Boolean(result && (result.token || result.accessToken) && (result.id || result.userId));
 
+// Central place that decides whether an authenticated response is actually
+// allowed into the Employee Workspace. Anything that isn't primaryType
+// "JOBS" is rejected here, before a cookie is ever written.
+const isAuthorizedForJobsWorkspace = (result: EmailCheckResponse): boolean =>
+  result.primaryType === PRIMARY_TYPE;
+
 const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (getCookie('companyContactPersonId')?.id) {
+    // getEmployeeAuth() already validates primaryType === "JOBS" internally,
+    // so a stale/foreign-role cookie will correctly return null here instead
+    // of bouncing the user straight to the dashboard.
+    if (getEmployeeAuth()) {
       navigate(EMPLOYEE_DASHBOARD_ROUTE, { replace: true });
     }
   }, [navigate]);
@@ -131,6 +149,7 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
 
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [successEmployee, setSuccessEmployee] = useState<EmployeeData | null>(null);
+  const [passwordChangeEmployee, setPasswordChangeEmployee] = useState<EmployeeData | null>(null);
 
   const buildEmployee = (result: EmailCheckResponse, fallbackName?: string): EmployeeData => ({
     id: (result.id || result.userId) as string,
@@ -138,13 +157,27 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
     name: result.name || fallbackName || 'Employee',
     email: email.trim(),
     primaryType: result.primaryType,
+    companyName: result.companyName,
     token: result.token,
     accessToken: result.accessToken,
   });
 
+  // Only id / primaryType / companyName go into the cookie as JSON.
+  // Tokens stay out of client-readable cookies deliberately (XSS surface) —
+  // keep them in memory / an httpOnly cookie set by the backend instead.
   const finishLogin = (employee: EmployeeData) => {
-    saveCookie('companyContactPersonId', employee.id);
+    saveEmployeeAuth({
+      id: employee.id,
+      primaryType: employee.primaryType ?? null,
+      companyName: employee.companyName ?? null,
+    });
     setSuccessEmployee(employee);
+  };
+
+  const saveEmployeeTokens = (result: EmailCheckResponse) => {
+    const accessToken = result.accessToken || result.token;
+    if (accessToken) setEmployeeAccessToken(accessToken);
+    if (result.refreshToke) setEmployeeRefreshToken(result.refreshToke);
   };
 
   // Single handler for both tabs. Login sends email+password together in
@@ -175,7 +208,31 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
 
       // Login (or registration completion) succeeded.
       if (response.ok && hasLoginTokens(result as EmailCheckResponse)) {
-        finishLogin(buildEmployee(result as EmailCheckResponse));
+        const loginResult = result as EmailCheckResponse;
+
+        if (!isAuthorizedForJobsWorkspace(loginResult)) {
+          setFeedback({
+            type: 'invalid',
+            title: 'Access Not Allowed',
+            message: 'This account is not registered for the Employee Workspace. Please use an account created for employee access.',
+          });
+          setPassword('');
+          setShowPassword(false);
+          return;
+        }
+
+        const employee = buildEmployee(loginResult);
+        saveEmployeeTokens(loginResult);
+
+        // A temporary password must be replaced before workspace access.
+        if (loginResult.requiredToChangePassword) {
+          setPasswordChangeEmployee(employee);
+          setPassword('');
+          setShowPassword(false);
+          return;
+        }
+
+        finishLogin(employee);
         return;
       }
 
@@ -233,6 +290,13 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
 
   const handleOtpRegistrationSuccess = (employee: EmployeeData) => {
     setShowOtpModal(false);
+    finishLogin(employee);
+  };
+
+  const handlePasswordChanged = () => {
+    if (!passwordChangeEmployee) return;
+    const employee = passwordChangeEmployee;
+    setPasswordChangeEmployee(null);
     finishLogin(employee);
   };
 
@@ -450,6 +514,10 @@ const CompanyEmployeeLogin: React.FC<EmployeeLoginProps> = ({ onLoginSuccess }) 
         />
       )}
 
+      {passwordChangeEmployee && (
+        <ChangePasswordModal employee={passwordChangeEmployee} onSuccess={handlePasswordChanged} />
+      )}
+
       {successEmployee && (
         <LoginSuccessModal employee={successEmployee} onContinue={handleContinueAfterSuccess} />
       )}
@@ -461,6 +529,132 @@ interface LoginSuccessModalProps {
   employee: EmployeeData;
   onContinue: () => void;
 }
+
+interface ChangePasswordModalProps {
+  employee: EmployeeData;
+  onSuccess: () => void;
+}
+
+const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ employee, onSuccess }) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+
+    if (newPassword.length < 8) {
+      setError('Password must contain at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('New password and confirmation do not match.');
+      return;
+    }
+
+    const accessToken = employee.accessToken || employee.token;
+    const userId = employee.userId || employee.id;
+    if (!accessToken || !userId) {
+      setError('Your login session is incomplete. Please sign in again.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(CHANGE_PASSWORD_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ userId, newPassword }),
+      });
+      const result = (await response.json().catch(() => null)) as ApiErrorResponse | null;
+
+      if (!response.ok) {
+        setError(extractApiError(result) || 'Unable to change password. Please try again.');
+        return;
+      }
+
+      onSuccess();
+    } catch {
+      setError('Unable to connect to the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="cel-modal" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
+      <div className="cel-modal-card">
+        <div className="cel-modal-heading">
+          <span className="cel-card-icon" aria-hidden="true">
+            <Lock />
+          </span>
+          <p className="cel-modal-eyebrow">Password Update Required</p>
+        </div>
+        <h3 id="change-password-title">Create a new password</h3>
+        <p>Your account requires a password change before you can enter the workspace.</p>
+
+        <form className="cel-form" onSubmit={handleSubmit} noValidate>
+          <label htmlFor="required-new-password">New Password</label>
+          <div className="cel-input-wrap">
+            <Lock />
+            <input
+              id="required-new-password"
+              type={showPasswords ? 'text' : 'password'}
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
+              value={newPassword}
+              onChange={(event) => { setNewPassword(event.target.value); setError(''); }}
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+
+          <label htmlFor="required-confirm-password">Confirm New Password</label>
+          <div className="cel-input-wrap">
+            <Lock />
+            <input
+              id="required-confirm-password"
+              type={showPasswords ? 'text' : 'password'}
+              autoComplete="new-password"
+              placeholder="Re-enter your new password"
+              value={confirmPassword}
+              onChange={(event) => { setConfirmPassword(event.target.value); setError(''); }}
+              disabled={isSubmitting}
+              required
+            />
+            <button
+              type="button"
+              className="cel-eye-button"
+              onClick={() => setShowPasswords((previous) => !previous)}
+              aria-label={showPasswords ? 'Hide passwords' : 'Show passwords'}
+              disabled={isSubmitting}
+            >
+              {showPasswords ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
+
+          {error && (
+            <div className="cel-feedback cel-feedback-invalid" role="alert">
+              <AlertCircle />
+              <span><strong>Password not changed</strong><small>{error}</small></span>
+            </div>
+          )}
+
+          <button type="submit" className="cel-primary-button" disabled={isSubmitting || !newPassword || !confirmPassword}>
+            <span>{isSubmitting ? 'Changing Password...' : 'Change Password'}</span>
+            {isSubmitting ? <LoaderCircle className="cel-spin" /> : <ArrowRight />}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({ employee, onContinue }) => {
   useEffect(() => {
@@ -500,6 +694,8 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
   buildEmployee,
 }) => {
   const [name, setName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [designation, setDesignation] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -513,6 +709,14 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
 
     if (!name.trim()) {
       setError('Please enter your name.');
+      return;
+    }
+    if (!companyName.trim()) {
+      setError('Please enter your company name.');
+      return;
+    }
+    if (!designation.trim()) {
+      setError('Please enter your designation.');
       return;
     }
     if (!otp.trim()) {
@@ -542,6 +746,8 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
           primaryType: PRIMARY_TYPE,
           salt,
           name: name.trim(),
+          companyName: companyName.trim(),
+          designation: designation.trim(),
         }),
       });
 
@@ -555,7 +761,14 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
         return;
       }
 
-      onSuccess(buildEmployee(result as EmailCheckResponse, name.trim()));
+      const otpResult = result as EmailCheckResponse;
+
+      if (otpResult.primaryType !== PRIMARY_TYPE) {
+        setError('This account is not registered for the Employee Workspace. Please use an account created for employee access.');
+        return;
+      }
+
+      onSuccess(buildEmployee(otpResult, name.trim()));
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -566,15 +779,15 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
   return (
     <div className="cel-modal" role="dialog" aria-modal="true">
       <div className="cel-modal-card cel-modal-card-wide">
-        <span className="cel-card-icon" aria-hidden="true">
-          <ShieldCheck />
-        </span>
-        <p className="cel-modal-eyebrow">Employee Registration</p>
+        <div className="cel-modal-heading">
+          <span className="cel-card-icon" aria-hidden="true">
+            <ShieldCheck />
+          </span>
+          <p className="cel-modal-eyebrow">Employee Registration</p>
+        </div>
         <h3>Verify Your Email</h3>
         <p>
-          This email isn't registered yet, so we're creating your account. We sent a one-time
-          code to <strong>{email}</strong> — enter it below along with your name and a password
-          to finish registering.
+          OTP sent to <strong>{email}</strong> — please fill the details below to continue.
         </p>
 
         <form className="cel-form" onSubmit={handleSubmit}>
@@ -586,6 +799,7 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
                 <input
                   id="otp-name"
                   type="text"
+                  placeholder="e.g. Virat"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   disabled={isSubmitting}
@@ -603,8 +817,43 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
                   type="text"
                   inputMode="numeric"
                   maxLength={6}
+                  placeholder="6-digit code"
                   value={otp}
                   onChange={(event) => setOtp(event.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="cel-form-row">
+            <div className="cel-form-field">
+              <label htmlFor="otp-company-name">Company Name</label>
+              <div className="cel-input-wrap">
+                <Building2 />
+                <input
+                  id="otp-company-name"
+                  type="text"
+                  placeholder="e.g. Askoxy"
+                  value={companyName}
+                  onChange={(event) => setCompanyName(event.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="cel-form-field">
+              <label htmlFor="otp-designation">Designation</label>
+              <div className="cel-input-wrap">
+                <Briefcase />
+                <input
+                  id="otp-designation"
+                  type="text"
+                  placeholder="e.g. Software Engineer"
+                  value={designation}
+                  onChange={(event) => setDesignation(event.target.value)}
                   disabled={isSubmitting}
                   required
                 />
@@ -617,6 +866,7 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
               <PasswordInput
                 id="otp-new-password"
                 label="Set Password"
+                placeholder="At least 8 characters"
                 value={newPassword}
                 onChange={setNewPassword}
                 visible={showPasswords}
@@ -628,6 +878,7 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
               <PasswordInput
                 id="otp-confirm-password"
                 label="Confirm Password"
+                placeholder="Re-enter your password"
                 value={confirmPassword}
                 onChange={setConfirmPassword}
                 visible={showPasswords}
@@ -674,6 +925,7 @@ const OtpRegistrationModal: React.FC<OtpRegistrationModalProps> = ({
 interface PasswordInputProps {
   id: string;
   label: string;
+  placeholder?: string;
   value: string;
   onChange: (value: string) => void;
   visible: boolean;
@@ -683,6 +935,7 @@ interface PasswordInputProps {
 const PasswordInput: React.FC<PasswordInputProps> = ({
   id,
   label,
+  placeholder,
   value,
   onChange,
   visible,
@@ -695,6 +948,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
       <input
         id={id}
         type={visible ? 'text' : 'password'}
+        placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         autoComplete="new-password"
@@ -1072,12 +1326,19 @@ const loginStyles = `
     height: 21px;
   }
 
-  .cel-card-heading h2,
-  .cel-modal-card h3 {
+  .cel-card-heading h2 {
     margin: 5px 0 0;
     color: #ffffff;
     font-size: 1.36rem;
     line-height: 1.2;
+  }
+
+  .cel-modal-card h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.25;
   }
 
   .cel-form {
@@ -1256,12 +1517,30 @@ const loginStyles = `
     color: #cdd6ff;
   }
 
+  .cel-modal-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 18px;
+  }
+
+  .cel-modal-heading .cel-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .cel-modal-heading .cel-card-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
   .cel-modal-eyebrow {
-    margin: 14px 0 0 !important;
+    margin: 0 !important;
     color: #b7c0ff;
-    font-size: 0.72rem;
+    font-size: 1.05rem;
     font-weight: 800;
-    letter-spacing: 0.11em;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
   }
 
@@ -1432,7 +1711,7 @@ const loginStyles = `
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 31px;
+    padding: 32px 34px;
     color: #f8faff;
     border: 1px solid rgba(255, 255, 255, 0.19);
     border-radius: 26px;
@@ -1459,7 +1738,7 @@ const loginStyles = `
   .cel-form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0 14px;
+    gap: 0 16px;
   }
 
   .cel-form-field {
@@ -1467,17 +1746,23 @@ const loginStyles = `
   }
 
   .cel-form-row .cel-form-field label {
-    margin-top: 15px;
+    margin-top: 18px;
+  }
+
+  .cel-form-row:first-of-type .cel-form-field label {
+    margin-top: 0;
   }
 
   .cel-modal-card > p {
-    margin: 8px 0 0;
-    color: rgba(235, 239, 255, 0.66);
-    line-height: 1.55;
+    margin: 6px 0 22px;
+    color: rgba(235, 239, 255, 0.62);
+    font-size: 0.86rem;
+    line-height: 1.5;
   }
 
   .cel-modal-card > p strong {
-    color: #ffffff;
+    color: #7fe3ff;
+    font-weight: 700;
   }
 
   .cel-success-card {
